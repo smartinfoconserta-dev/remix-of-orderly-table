@@ -22,12 +22,12 @@ export interface Categoria {
 }
 
 export const categorias: Categoria[] = [
-  { id: "lanches", nome: "Lanches", icone: "🍔" },
-  { id: "porcoes", nome: "Porções", icone: "🍟" },
-  { id: "bebidas", nome: "Bebidas", icone: "🥤" },
-  { id: "sobremesas", nome: "Sobremesas", icone: "🍰" },
-  { id: "combos", nome: "Combos", icone: "🎁" },
-  { id: "promocoes", nome: "Promoções", icone: "🔥" },
+  { id: "lanches", nome: "Lanches", icone: "beef" },
+  { id: "porcoes", nome: "Porções", icone: "french-fries" },
+  { id: "bebidas", nome: "Bebidas", icone: "cup-soda" },
+  { id: "sobremesas", nome: "Sobremesas", icone: "cake-slice" },
+  { id: "combos", nome: "Combos", icone: "package" },
+  { id: "promocoes", nome: "Promoções", icone: "flame" },
 ];
 
 const adicionaisLanche: Adicional[] = [
