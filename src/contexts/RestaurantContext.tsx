@@ -170,13 +170,28 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       prev.map((m) => (m.id === mesaId ? { ...m, chamarGarcom: false } : m))
     );
   }, []);
+  const fecharConta = useCallback((mesaId: string) => {
+    setMesas((prev) =>
+      prev.map((m) => {
+        if (m.id !== mesaId) return m;
+        return {
+          ...m,
+          carrinho: [],
+          pedidos: [],
+          total: 0,
+          chamarGarcom: false,
+          status: "livre" as const,
+        };
+      })
+    );
+  }, []);
 
   return (
     <RestaurantContext.Provider
       value={{
         mesas, getMesa, updateMesa, addToCart, updateCartItemQty,
         removeFromCart, confirmarPedido,
-        chamarGarcom: chamarGarcomFn, dismissChamarGarcom,
+        chamarGarcom: chamarGarcomFn, dismissChamarGarcom, fecharConta,
       }}
     >
       {children}
