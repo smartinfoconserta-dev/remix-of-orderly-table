@@ -1,4 +1,4 @@
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState, useCallback } from "react";
 import { useRestaurant, type ItemCarrinho } from "@/contexts/RestaurantContext";
 import AppLayout from "@/components/AppLayout";
@@ -6,16 +6,28 @@ import StatusBadge from "@/components/StatusBadge";
 import CartDrawer from "@/components/CartDrawer";
 import MenuOverlay from "@/components/MenuOverlay";
 import StickyOrderButton from "@/components/StickyOrderButton";
-import { Plus } from "lucide-react";
+import { Plus, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from "@/components/ui/alert-dialog";
 
 const formatPrice = (v: number) => `R$ ${v.toFixed(2).replace(".", ",")}`;
 
 const MesaPage = () => {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const { getMesa, addToCart, updateCartItemQty, removeFromCart, confirmarPedido, dismissChamarGarcom } = useRestaurant();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [showExitAlert, setShowExitAlert] = useState(false);
 
   const mesa = getMesa(id || "");
   const carrinho = mesa?.carrinho ?? [];
@@ -42,6 +54,14 @@ const MesaPage = () => {
     toast.success("Pedido confirmado!", { duration: 1500, icon: "🎉" });
   }, [id, confirmarPedido]);
 
+  const handleBack = useCallback(() => {
+    if (carrinho.length > 0) {
+      setShowExitAlert(true);
+    } else {
+      navigate(-1);
+    }
+  }, [carrinho.length, navigate]);
+
   if (!mesa) {
     return (
       <AppLayout title="Mesa não encontrada" showBack>
@@ -57,6 +77,7 @@ const MesaPage = () => {
       <AppLayout
         title={`Mesa ${String(mesa.numero).padStart(2, "0")}`}
         showBack
+        onBack={handleBack}
         headerRight={
           <div className="flex items-center gap-2">
             <CartDrawer
@@ -201,6 +222,32 @@ const MesaPage = () => {
         total={carrinho.reduce((acc, item) => acc + item.precoUnitario * item.quantidade, 0)}
         onConfirmar={handleConfirmar}
       />
+
+      {/* Exit alert for pending cart items */}
+      <AlertDialog open={showExitAlert} onOpenChange={setShowExitAlert}>
+        <AlertDialogContent className="bg-card border-border max-w-sm">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-foreground">
+              <AlertTriangle className="w-5 h-5 text-status-pendente" />
+              Itens não enviados
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-muted-foreground">
+              Existem {carrinho.length} {carrinho.length === 1 ? "item" : "itens"} no carrinho que ainda não {carrinho.length === 1 ? "foi enviado" : "foram enviados"}.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-2 sm:gap-2">
+            <AlertDialogCancel className="rounded-xl font-bold">
+              Voltar e revisar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => navigate(-1)}
+              className="rounded-xl font-bold bg-secondary text-foreground hover:bg-secondary/80"
+            >
+              Sair mesmo assim
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 };

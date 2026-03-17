@@ -6,18 +6,26 @@ export interface AppLayoutProps {
   children: React.ReactNode;
   showBack?: boolean;
   headerRight?: React.ReactNode;
+  onBack?: () => void;
 }
 
-const AppLayout = ({ title, children, showBack = false, headerRight }: AppLayoutProps) => {
+const AppLayout = ({ title, children, showBack = false, headerRight, onBack }: AppLayoutProps) => {
   const navigate = useNavigate();
+
+  const handleBack = () => {
+    if (onBack) {
+      onBack();
+    } else {
+      navigate(-1);
+    }
+  };
 
   return (
     <div className="min-h-svh flex flex-col bg-background">
-      {/* Header */}
       <header className="flex items-center gap-3 px-4 md:px-6 py-4 border-b border-border bg-surface shrink-0">
         {showBack && (
           <button
-            onClick={() => navigate(-1)}
+            onClick={handleBack}
             className="surface-card flex items-center justify-center w-10 h-10 rounded-md"
           >
             <ArrowLeft className="w-5 h-5 text-foreground" />
@@ -28,8 +36,6 @@ const AppLayout = ({ title, children, showBack = false, headerRight }: AppLayout
         </h1>
         {headerRight && <div className="flex items-center shrink-0">{headerRight}</div>}
       </header>
-
-      {/* Content */}
       <main className="flex-1 overflow-y-auto p-4 md:p-6">
         {children}
       </main>
