@@ -53,7 +53,6 @@ const MesaPage = () => {
     setHighlightedInvalidItems((prev) => prev.filter((uid) => invalidItemIds.includes(uid)));
   }, [invalidItemIds]);
 
-  // Auto-dismiss chamar garçom when opening mesa
   useEffect(() => {
     if (mesa?.chamarGarcom && id) {
       dismissChamarGarcom(id);

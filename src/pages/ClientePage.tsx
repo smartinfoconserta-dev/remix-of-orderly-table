@@ -36,7 +36,7 @@ const ClientePage = () => {
 
   const handleChamarGarcom = useCallback(() => {
     chamarGarcom(MESA_CLIENTE);
-    toast.success("Garçom a caminho!", { duration: 1000, icon: "🔔" });
+    toast.success("Garçom a caminho", { duration: 1000, icon: "🔔" });
   }, [chamarGarcom]);
 
   const handleAddToCart = useCallback((item: ItemCarrinho) => {
