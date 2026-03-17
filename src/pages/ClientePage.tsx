@@ -9,6 +9,7 @@ import CartDrawer from "@/components/CartDrawer";
 import StickyOrderButton from "@/components/StickyOrderButton";
 import CategoryTabs from "@/components/CategoryTabs";
 import { useIsMobile } from "@/hooks/use-mobile";
+import CategoryIcon from "@/components/CategoryIcon";
 import { toast } from "sonner";
 
 const MESA_CLIENTE = "mesa-1";
