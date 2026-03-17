@@ -27,6 +27,7 @@ export interface Mesa {
   carrinho: ItemCarrinho[];
   pedidos: PedidoRealizado[];
   chamarGarcom: boolean;
+  chamadoEm: number | null;
 }
 
 function derivarStatus(m: Pick<Mesa, "carrinho" | "pedidos">): Mesa["status"] {
@@ -59,6 +60,7 @@ const criarMesasIniciais = (): Mesa[] =>
     carrinho: [],
     pedidos: [],
     chamarGarcom: false,
+    chamadoEm: null,
   }));
 
 export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -128,7 +130,8 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         if (m.id !== mesaId || m.carrinho.length === 0) return m;
 
         const totalPedido = m.carrinho.reduce(
-          (acc, item) => acc + item.precoUnitario * item.quantidade, 0
+          (acc, item) => acc + item.precoUnitario * item.quantidade,
+          0
         );
 
         const snapshot: ItemCarrinho[] = m.carrinho.map((item) => ({
@@ -160,16 +163,21 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   }, []);
 
   const chamarGarcomFn = useCallback((mesaId: string) => {
+    const chamadoEm = Date.now();
+
     setMesas((prev) =>
-      prev.map((m) => (m.id === mesaId ? { ...m, chamarGarcom: true } : m))
+      prev.map((m) => (m.id === mesaId ? { ...m, chamarGarcom: true, chamadoEm } : m))
     );
   }, []);
 
   const dismissChamarGarcom = useCallback((mesaId: string) => {
     setMesas((prev) =>
-      prev.map((m) => (m.id === mesaId ? { ...m, chamarGarcom: false } : m))
+      prev.map((m) =>
+        m.id === mesaId ? { ...m, chamarGarcom: false, chamadoEm: null } : m
+      )
     );
   }, []);
+
   const fecharConta = useCallback((mesaId: string) => {
     setMesas((prev) =>
       prev.map((m) => {
@@ -180,6 +188,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           pedidos: [],
           total: 0,
           chamarGarcom: false,
+          chamadoEm: null,
           status: "livre" as const,
         };
       })
@@ -189,9 +198,16 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   return (
     <RestaurantContext.Provider
       value={{
-        mesas, getMesa, updateMesa, addToCart, updateCartItemQty,
-        removeFromCart, confirmarPedido,
-        chamarGarcom: chamarGarcomFn, dismissChamarGarcom, fecharConta,
+        mesas,
+        getMesa,
+        updateMesa,
+        addToCart,
+        updateCartItemQty,
+        removeFromCart,
+        confirmarPedido,
+        chamarGarcom: chamarGarcomFn,
+        dismissChamarGarcom,
+        fecharConta,
       }}
     >
       {children}
