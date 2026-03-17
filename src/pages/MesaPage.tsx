@@ -77,6 +77,7 @@ const MesaPage = () => {
       <AppLayout
         title={`Mesa ${String(mesa.numero).padStart(2, "0")}`}
         showBack
+        onBack={handleBack}
         headerRight={
           <div className="flex items-center gap-2">
             <CartDrawer
