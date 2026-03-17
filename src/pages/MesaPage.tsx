@@ -37,9 +37,12 @@ const MesaPage = () => {
   const invalidItemIds = useMemo(() => {
     return carrinho
       .filter((item) => {
-        const produto = produtos.find((p) => p.id === item.produtoId);
-        const hasRequiredOptions = Boolean(produto?.categoria === "combos");
-        const hasValidRequiredSelection = !hasRequiredOptions || item.removidos.length > 0 || item.adicionais.length > 0;
+        const produto = produtos.find((p) => p.id === item.produtoId) as
+          | (typeof produtos)[number] & { opcoesObrigatorias?: string[]; minimoObrigatorio?: number }
+          | undefined;
+        const minimoObrigatorio = produto?.minimoObrigatorio ?? produto?.opcoesObrigatorias?.length ?? 0;
+        const totalOpcoesSelecionadas = item.removidos.length + item.adicionais.length;
+        const hasValidRequiredSelection = totalOpcoesSelecionadas >= minimoObrigatorio;
 
         return item.quantidade <= 0 || !hasValidRequiredSelection;
       })
