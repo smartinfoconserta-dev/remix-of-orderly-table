@@ -186,6 +186,50 @@ const MesaPage = () => {
               ))}
             </div>
           )}
+
+          {/* Fechar Conta */}
+          {mesa.pedidos.length > 0 && (
+            <div className="flex flex-col gap-3 pt-2">
+              {!confirmFechar ? (
+                <Button
+                  variant="destructive"
+                  onClick={() => setConfirmFechar(true)}
+                  className="w-full h-14 rounded-xl text-lg font-black"
+                >
+                  Fechar Conta
+                </Button>
+              ) : (
+                <div className="surface-card p-5 flex flex-col gap-4 items-center">
+                  <p className="text-foreground text-base font-bold text-center">
+                    Confirmar fechamento da mesa?
+                  </p>
+                  <p className="text-muted-foreground text-sm text-center">
+                    Total: {formatPrice(mesa.total)}
+                  </p>
+                  <div className="flex gap-3 w-full">
+                    <Button
+                      variant="outline"
+                      onClick={() => setConfirmFechar(false)}
+                      className="flex-1 h-12 rounded-xl text-base font-bold"
+                    >
+                      Cancelar
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      onClick={() => {
+                        fecharConta(id!);
+                        toast.success("Mesa finalizada", { duration: 1500, icon: "✅" });
+                        navigate("/garcom");
+                      }}
+                      className="flex-1 h-12 rounded-xl text-base font-black"
+                    >
+                      Confirmar
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </AppLayout>
 
