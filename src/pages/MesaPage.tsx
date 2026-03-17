@@ -1,4 +1,4 @@
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState, useCallback } from "react";
 import { useRestaurant, type ItemCarrinho } from "@/contexts/RestaurantContext";
 import AppLayout from "@/components/AppLayout";
@@ -6,16 +6,28 @@ import StatusBadge from "@/components/StatusBadge";
 import CartDrawer from "@/components/CartDrawer";
 import MenuOverlay from "@/components/MenuOverlay";
 import StickyOrderButton from "@/components/StickyOrderButton";
-import { Plus } from "lucide-react";
+import { Plus, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from "@/components/ui/alert-dialog";
 
 const formatPrice = (v: number) => `R$ ${v.toFixed(2).replace(".", ",")}`;
 
 const MesaPage = () => {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const { getMesa, addToCart, updateCartItemQty, removeFromCart, confirmarPedido, dismissChamarGarcom } = useRestaurant();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [showExitAlert, setShowExitAlert] = useState(false);
 
   const mesa = getMesa(id || "");
   const carrinho = mesa?.carrinho ?? [];
