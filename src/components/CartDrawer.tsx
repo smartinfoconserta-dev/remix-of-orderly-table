@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { ShoppingCart, Minus, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -8,23 +7,26 @@ interface Props {
   carrinho: ItemCarrinho[];
   onUpdateQty: (uid: string, delta: number) => void;
   onRemove: (uid: string) => void;
-  onConfirmar: () => void;
+  onConfirmar: () => boolean | void;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 const formatPrice = (v: number) => `R$ ${v.toFixed(2).replace(".", ",")}`;
 
-const CartDrawer = ({ carrinho, onUpdateQty, onRemove, onConfirmar }: Props) => {
-  const [open, setOpen] = useState(false);
+const CartDrawer = ({ carrinho, onUpdateQty, onRemove, onConfirmar, open, onOpenChange }: Props) => {
   const subtotal = carrinho.reduce((acc, item) => acc + item.precoUnitario * item.quantidade, 0);
   const totalItens = carrinho.reduce((acc, item) => acc + item.quantidade, 0);
 
   const handleConfirmar = () => {
-    onConfirmar();
-    setOpen(false);
+    const result = onConfirmar();
+    if (result !== false) {
+      onOpenChange?.(false);
+    }
   };
 
   return (
-    <Sheet open={open} onOpenChange={setOpen}>
+    <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetTrigger asChild>
         <button className="relative flex items-center gap-2 px-5 py-3 rounded-xl bg-primary text-primary-foreground font-bold text-base active:scale-95 transition-transform">
           <ShoppingCart className="w-5 h-5" />

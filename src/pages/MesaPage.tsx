@@ -28,6 +28,7 @@ const MesaPage = () => {
   const navigate = useNavigate();
   const { getMesa, addToCart, updateCartItemQty, removeFromCart, confirmarPedido, dismissChamarGarcom } = useRestaurant();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [cartOpen, setCartOpen] = useState(false);
   const [showExitAlert, setShowExitAlert] = useState(false);
   const [highlightedInvalidItems, setHighlightedInvalidItems] = useState<string[]>([]);
 
@@ -117,12 +118,13 @@ const MesaPage = () => {
               onUpdateQty={(uid, delta) => updateCartItemQty(id!, uid, delta)}
               onRemove={(uid) => removeFromCart(id!, uid)}
               onConfirmar={handleConfirmar}
+              open={cartOpen}
+              onOpenChange={setCartOpen}
             />
           </div>
         }
       >
         <div className="flex flex-col gap-6 max-w-lg mx-auto">
-          {/* Resumo rápido */}
           <div className="surface-card p-5 flex items-center gap-4">
             <StatusBadge status={mesa.status} />
             <div className="h-8 w-px bg-border" />
@@ -136,7 +138,6 @@ const MesaPage = () => {
             )}
           </div>
 
-          {/* Alerta carrinho pendente */}
           {carrinho.length > 0 && (
             <div className="flex items-center gap-2 px-4 py-3 rounded-xl border border-status-pendente/30 bg-status-pendente/5">
               <span className="text-status-pendente text-sm font-bold">
@@ -145,7 +146,6 @@ const MesaPage = () => {
             </div>
           )}
 
-          {/* Botão Adicionar Itens */}
           <Button
             onClick={() => setMenuOpen(true)}
             className="w-full h-14 rounded-xl text-lg font-black gap-2"
@@ -154,7 +154,6 @@ const MesaPage = () => {
             Adicionar Itens
           </Button>
 
-          {/* Histórico de Pedidos */}
           {mesa.pedidos.length > 0 && (
             <div className="flex flex-col gap-3">
               <h2 className="text-foreground text-base font-bold px-1">Histórico de Pedidos</h2>
@@ -203,7 +202,6 @@ const MesaPage = () => {
             </div>
           )}
 
-          {/* Carrinho pendente */}
           {carrinho.length > 0 && (
             <div className="flex flex-col gap-3">
               <h2 className="text-foreground text-base font-bold px-1">Carrinho Pendente</h2>
@@ -277,7 +275,6 @@ const MesaPage = () => {
         </div>
       </AppLayout>
 
-      {/* Menu overlay fullscreen */}
       <MenuOverlay
         open={menuOpen}
         onClose={() => setMenuOpen(false)}
@@ -286,11 +283,13 @@ const MesaPage = () => {
 
       <StickyOrderButton
         total={carrinho.reduce((acc, item) => acc + item.precoUnitario * item.quantidade, 0)}
-        onConfirmar={handleConfirmar}
-        onValidate={validatePendingCart}
+        onOpenCart={() => {
+          if (validatePendingCart()) {
+            setCartOpen(true);
+          }
+        }}
       />
 
-      {/* Exit alert for pending cart items */}
       <AlertDialog open={showExitAlert} onOpenChange={setShowExitAlert}>
         <AlertDialogContent className="bg-card border-border max-w-sm">
           <AlertDialogHeader>
