@@ -1,4 +1,5 @@
-import { ShoppingCart, Minus, Plus, Trash2, X } from "lucide-react";
+import { useState } from "react";
+import { ShoppingCart, Minus, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import type { ItemCarrinho } from "@/contexts/RestaurantContext";
@@ -13,11 +14,17 @@ interface Props {
 const formatPrice = (v: number) => `R$ ${v.toFixed(2).replace(".", ",")}`;
 
 const CartDrawer = ({ carrinho, onUpdateQty, onRemove, onConfirmar }: Props) => {
+  const [open, setOpen] = useState(false);
   const subtotal = carrinho.reduce((acc, item) => acc + item.precoUnitario * item.quantidade, 0);
   const totalItens = carrinho.reduce((acc, item) => acc + item.quantidade, 0);
 
+  const handleConfirmar = () => {
+    onConfirmar();
+    setOpen(false);
+  };
+
   return (
-    <Sheet>
+    <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
         <button className="relative flex items-center gap-2 px-5 py-3 rounded-xl bg-primary text-primary-foreground font-bold text-base active:scale-95 transition-transform">
           <ShoppingCart className="w-5 h-5" />
@@ -44,11 +51,9 @@ const CartDrawer = ({ carrinho, onUpdateQty, onRemove, onConfirmar }: Props) => 
           </div>
         ) : (
           <>
-            {/* Items list */}
             <div className="flex-1 overflow-y-auto p-4 space-y-3">
               {carrinho.map((item) => (
                 <div key={item.uid} className="bg-secondary rounded-xl p-4 space-y-2">
-                  {/* Name + price */}
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1">
                       <h4 className="text-foreground text-sm font-bold">{item.nome}</h4>
@@ -71,7 +76,6 @@ const CartDrawer = ({ carrinho, onUpdateQty, onRemove, onConfirmar }: Props) => 
                     </button>
                   </div>
 
-                  {/* Qty + price */}
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <button
@@ -98,14 +102,13 @@ const CartDrawer = ({ carrinho, onUpdateQty, onRemove, onConfirmar }: Props) => 
               ))}
             </div>
 
-            {/* Footer */}
             <div className="p-4 border-t border-border space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground text-base font-medium">Subtotal</span>
                 <span className="text-foreground text-xl font-black">{formatPrice(subtotal)}</span>
               </div>
               <Button
-                onClick={onConfirmar}
+                onClick={handleConfirmar}
                 className="w-full h-14 rounded-xl text-lg font-black"
               >
                 Confirmar Pedido — {formatPrice(subtotal)}
