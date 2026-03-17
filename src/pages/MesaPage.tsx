@@ -1,4 +1,4 @@
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState, useCallback } from "react";
 import { useRestaurant, type ItemCarrinho } from "@/contexts/RestaurantContext";
 import AppLayout from "@/components/AppLayout";
