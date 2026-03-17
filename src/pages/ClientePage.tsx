@@ -9,6 +9,7 @@ import CartDrawer from "@/components/CartDrawer";
 import StickyOrderButton from "@/components/StickyOrderButton";
 import CategoryTabs from "@/components/CategoryTabs";
 import { useIsMobile } from "@/hooks/use-mobile";
+import CategoryIcon from "@/components/CategoryIcon";
 import { toast } from "sonner";
 
 const MESA_CLIENTE = "mesa-1";
@@ -177,7 +178,7 @@ const ClientePage = () => {
                       : "text-muted-foreground hover:bg-secondary hover:text-foreground"
                   }`}
                 >
-                  <span className="text-xl">{cat.icone}</span>
+                  <CategoryIcon name={cat.icone} className="w-5 h-5" />
                   <span>{cat.nome}</span>
                 </button>
               ))}
