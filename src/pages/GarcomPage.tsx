@@ -4,7 +4,7 @@ import AppLayout from "@/components/AppLayout";
 import MesaCard from "@/components/MesaCard";
 
 const GarcomPage = () => {
-  const { mesas } = useRestaurant();
+  const { mesas, dismissChamarGarcom } = useRestaurant();
   const navigate = useNavigate();
 
   return (
@@ -14,7 +14,10 @@ const GarcomPage = () => {
           <MesaCard
             key={mesa.id}
             mesa={mesa}
-            onClick={() => navigate(`/mesa/${mesa.id}`)}
+            onClick={() => {
+              dismissChamarGarcom(mesa.id);
+              navigate(`/mesa/${mesa.id}`);
+            }}
           />
         ))}
       </div>

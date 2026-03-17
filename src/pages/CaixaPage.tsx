@@ -9,17 +9,28 @@ import { toast } from "sonner";
 const formatPrice = (v: number) => `R$ ${v.toFixed(2).replace(".", ",")}`;
 
 const CaixaPage = () => {
-  const { mesas, fecharConta } = useRestaurant();
+  const { mesas, fecharConta, dismissChamarGarcom } = useRestaurant();
   const [mesaSelecionada, setMesaSelecionada] = useState<string | null>(null);
   const [confirmFechar, setConfirmFechar] = useState(false);
 
   const mesa = mesaSelecionada ? mesas.find((m) => m.id === mesaSelecionada) : null;
-  const hasSomethingToClose = Boolean(mesa && (mesa.total > 0 || mesa.pedidos.length > 0 || mesa.carrinho.length > 0));
+  const hasSomethingToClose = Boolean(
+    mesa && (mesa.total > 0 || mesa.pedidos.length > 0 || mesa.carrinho.length > 0)
+  );
 
   const handleVoltar = useCallback(() => {
     setMesaSelecionada(null);
     setConfirmFechar(false);
   }, []);
+
+  const handleSelecionarMesa = useCallback(
+    (mesaId: string) => {
+      dismissChamarGarcom(mesaId);
+      setMesaSelecionada(mesaId);
+      setConfirmFechar(false);
+    },
+    [dismissChamarGarcom]
+  );
 
   const handleFechar = useCallback(() => {
     if (!mesaSelecionada) return;
@@ -30,7 +41,11 @@ const CaixaPage = () => {
   }, [mesaSelecionada, fecharConta]);
 
   return (
-    <AppLayout title={mesa ? `Mesa ${String(mesa.numero).padStart(2, "0")}` : "Caixa"} showBack onBack={mesa ? handleVoltar : undefined}>
+    <AppLayout
+      title={mesa ? `Mesa ${String(mesa.numero).padStart(2, "0")}` : "Caixa"}
+      showBack
+      onBack={mesa ? handleVoltar : undefined}
+    >
       {!mesa ? (
         <div className="flex flex-col gap-4">
           <h2 className="text-foreground text-base font-bold px-1">Mesas</h2>
@@ -39,7 +54,7 @@ const CaixaPage = () => {
               <MesaCard
                 key={m.id}
                 mesa={m}
-                onClick={() => setMesaSelecionada(m.id)}
+                onClick={() => handleSelecionarMesa(m.id)}
                 showTotal
               />
             ))}
