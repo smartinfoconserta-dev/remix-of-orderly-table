@@ -2,6 +2,7 @@ import { useState, useCallback } from "react";
 import { useRestaurant } from "@/contexts/RestaurantContext";
 import AppLayout from "@/components/AppLayout";
 import StatusBadge from "@/components/StatusBadge";
+import MesaCard from "@/components/MesaCard";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
