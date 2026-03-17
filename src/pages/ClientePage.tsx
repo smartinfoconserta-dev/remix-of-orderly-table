@@ -174,6 +174,11 @@ const ClientePage = () => {
         onClose={() => setProdutoSelecionado(null)}
         onAdd={handleAddToCart}
       />
+
+      <StickyOrderButton
+        total={carrinho.reduce((acc, item) => acc + item.precoUnitario * item.quantidade, 0)}
+        onConfirmar={handleConfirmar}
+      />
     </div>
   );
 };
