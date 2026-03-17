@@ -5,6 +5,7 @@ import AppLayout from "@/components/AppLayout";
 import StatusBadge from "@/components/StatusBadge";
 import CartDrawer from "@/components/CartDrawer";
 import MenuOverlay from "@/components/MenuOverlay";
+import StickyOrderButton from "@/components/StickyOrderButton";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -230,6 +231,7 @@ const MesaPage = () => {
               )}
             </div>
           )}
+          {carrinho.length > 0 && <div className="h-20" />}
         </div>
       </AppLayout>
 
@@ -238,6 +240,11 @@ const MesaPage = () => {
         open={menuOpen}
         onClose={() => setMenuOpen(false)}
         onAddItem={handleAddItem}
+      />
+
+      <StickyOrderButton
+        total={carrinho.reduce((acc, item) => acc + item.precoUnitario * item.quantidade, 0)}
+        onConfirmar={handleConfirmar}
       />
     </>
   );

@@ -6,6 +6,7 @@ import { categorias, produtos, banners, type Produto } from "@/data/menuData";
 import { useRestaurant, type ItemCarrinho } from "@/contexts/RestaurantContext";
 import ProductModal from "@/components/ProductModal";
 import CartDrawer from "@/components/CartDrawer";
+import StickyOrderButton from "@/components/StickyOrderButton";
 import { toast } from "sonner";
 
 // Default to mesa-1 for cliente mode (self-service)
@@ -163,6 +164,8 @@ const ClientePage = () => {
             </button>
           ))}
         </div>
+        {/* Bottom spacer for sticky button */}
+        {carrinho.length > 0 && <div className="h-20" />}
       </main>
 
       {/* Modal do produto com customização */}
@@ -170,6 +173,11 @@ const ClientePage = () => {
         produto={produtoSelecionado}
         onClose={() => setProdutoSelecionado(null)}
         onAdd={handleAddToCart}
+      />
+
+      <StickyOrderButton
+        total={carrinho.reduce((acc, item) => acc + item.precoUnitario * item.quantidade, 0)}
+        onConfirmar={handleConfirmar}
       />
     </div>
   );
