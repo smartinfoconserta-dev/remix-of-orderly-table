@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { categorias, produtos, banners, type Produto } from "@/data/menuData";
 import { useRestaurant, type ItemCarrinho } from "@/contexts/RestaurantContext";
 import ProductModal from "@/components/ProductModal";
@@ -13,6 +14,15 @@ import CategoryIcon from "@/components/CategoryIcon";
 import { toast } from "sonner";
 
 const MESA_CLIENTE = "mesa-1";
+const RESTAURANTE = {
+  nome: "Obsidian",
+  logoFallback: "OB",
+};
+
+const formatMesaLabel = (mesaId: string) => {
+  const numeroMesa = mesaId.replace(/\D/g, "") || "1";
+  return `Mesa ${numeroMesa.padStart(2, "0")}`;
+};
 
 const ClientePage = () => {
   const navigate = useNavigate();
@@ -25,6 +35,7 @@ const ClientePage = () => {
 
   const mesa = getMesa(MESA_CLIENTE);
   const carrinho = mesa?.carrinho ?? [];
+  const mesaLabel = formatMesaLabel(MESA_CLIENTE);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -51,17 +62,38 @@ const ClientePage = () => {
     return true;
   }, [confirmarPedido]);
 
+  const restaurantIdentity = (
+    <div className="flex items-center gap-3 min-w-0 pointer-events-none select-none">
+      <Avatar className="h-10 w-10 rounded-xl border border-border bg-secondary shadow-sm">
+        <AvatarFallback className="rounded-xl bg-secondary text-foreground text-xs font-extrabold tracking-[0.18em]">
+          {RESTAURANTE.logoFallback}
+        </AvatarFallback>
+      </Avatar>
+      <div className="min-w-0">
+        <p className="text-foreground text-base md:text-lg font-extrabold tracking-tight truncate">
+          {RESTAURANTE.nome}
+        </p>
+        <p className="text-muted-foreground text-xs md:text-sm font-medium truncate">
+          {mesaLabel}
+        </p>
+      </div>
+    </div>
+  );
+
   const header = (
-    <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-md border-b border-border px-4 md:px-6 py-3 flex items-center justify-between gap-2">
-      <button
-        onClick={() => navigate("/")}
-        className="flex items-center gap-2 text-muted-foreground active:scale-95 transition-transform"
-      >
-        <ArrowLeft className="w-5 h-5" />
-        <span className="text-sm font-medium hidden sm:inline">Voltar</span>
-      </button>
-      <h1 className="text-foreground text-lg font-bold">Cardápio</h1>
-      <div className="flex items-center gap-2">
+    <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-md border-b border-border px-4 md:px-6 py-3 flex items-center justify-between gap-3">
+      <div className="flex items-center gap-3 min-w-0 flex-1">
+        <button
+          onClick={() => navigate("/")}
+          className="flex items-center gap-2 text-muted-foreground active:scale-95 transition-transform shrink-0"
+        >
+          <ArrowLeft className="w-5 h-5" />
+          <span className="text-sm font-medium hidden xl:inline">Voltar</span>
+        </button>
+        {isMobile && restaurantIdentity}
+      </div>
+      {!isMobile && <h1 className="text-foreground text-lg font-bold shrink-0">Cardápio</h1>}
+      <div className="flex items-center gap-2 shrink-0">
         <CartDrawer
           carrinho={carrinho}
           onUpdateQty={(uid, delta) => updateCartItemQty(MESA_CLIENTE, uid, delta)}
@@ -167,7 +199,10 @@ const ClientePage = () => {
         </>
       ) : (
         <div className="flex flex-1 overflow-hidden">
-          <aside className="w-52 lg:w-56 shrink-0 border-r border-border bg-card overflow-y-auto">
+          <aside className="w-64 lg:w-72 shrink-0 border-r border-border bg-card overflow-y-auto">
+            <div className="sticky top-0 z-10 border-b border-border bg-card/95 backdrop-blur-md px-4 lg:px-5 py-4">
+              {restaurantIdentity}
+            </div>
             <nav className="flex flex-col gap-0 py-2">
               {categorias.map((cat) => (
                 <button
