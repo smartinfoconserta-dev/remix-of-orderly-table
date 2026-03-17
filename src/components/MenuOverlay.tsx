@@ -14,7 +14,7 @@ interface Props {
 const MenuOverlay = ({ open, onClose, onAddItem }: Props) => {
   const [categoriaAtiva, setCategoriaAtiva] = useState(categorias[0].id);
   const [produtoSelecionado, setProdutoSelecionado] = useState<Produto | null>(null);
-  const categoriasRef = useRef<HTMLDivElement>(null);
+  
 
   const produtosFiltrados = produtos.filter((p) => p.categoria === categoriaAtiva);
 
