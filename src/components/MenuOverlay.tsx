@@ -88,7 +88,7 @@ const MenuOverlay = ({ open, onClose, onAddItem }: Props) => {
                 <p className="text-muted-foreground text-xs md:text-sm line-clamp-2 flex-1">
                   {produto.descricao}
                 </p>
-                <p className="text-primary text-lg md:text-xl font-black mt-1">
+                <p className="text-foreground text-lg md:text-xl font-black mt-1">
                   R$ {produto.preco.toFixed(2).replace(".", ",")}
                 </p>
               </div>
