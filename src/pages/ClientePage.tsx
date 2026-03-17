@@ -13,7 +13,7 @@ const MESA_CLIENTE = "mesa-1";
 
 const ClientePage = () => {
   const navigate = useNavigate();
-  const { getMesa, addToCart, updateCartItemQty, removeFromCart, confirmarPedido } = useRestaurant();
+  const { getMesa, addToCart, updateCartItemQty, removeFromCart, confirmarPedido, chamarGarcom } = useRestaurant();
   const [categoriaAtiva, setCategoriaAtiva] = useState(categorias[0].id);
   const [bannerIndex, setBannerIndex] = useState(0);
   const [produtoSelecionado, setProdutoSelecionado] = useState<Produto | null>(null);

@@ -8,7 +8,7 @@ export interface ItemCarrinho {
   quantidade: number;
   removidos: string[];
   adicionais: { nome: string; preco: number }[];
-  precoUnitario: number; // base + adicionais
+  precoUnitario: number;
 }
 
 export interface PedidoRealizado {
@@ -26,9 +26,9 @@ export interface Mesa {
   total: number;
   carrinho: ItemCarrinho[];
   pedidos: PedidoRealizado[];
+  chamarGarcom: boolean;
 }
 
-/** Derive mesa status from its data — single source of truth */
 function derivarStatus(m: Pick<Mesa, "carrinho" | "pedidos">): Mesa["status"] {
   if (m.pedidos.length > 0) return "consumo";
   if (m.carrinho.length > 0) return "pendente";
@@ -43,6 +43,8 @@ interface RestaurantContextType {
   updateCartItemQty: (mesaId: string, uid: string, delta: number) => void;
   removeFromCart: (mesaId: string, uid: string) => void;
   confirmarPedido: (mesaId: string) => void;
+  chamarGarcom: (mesaId: string) => void;
+  dismissChamarGarcom: (mesaId: string) => void;
 }
 
 const RestaurantContext = createContext<RestaurantContextType | null>(null);
@@ -55,6 +57,7 @@ const criarMesasIniciais = (): Mesa[] =>
     total: 0,
     carrinho: [],
     pedidos: [],
+    chamarGarcom: false,
   }));
 
 export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -91,12 +94,18 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     setMesas((prev) =>
       prev.map((m) => {
         if (m.id !== mesaId) return m;
+        const newQty = (m.carrinho.find((i) => i.uid === uid)?.quantidade ?? 1) + delta;
+        if (newQty < 1) {
+          const updated = { ...m, carrinho: m.carrinho.filter((i) => i.uid !== uid) };
+          updated.status = derivarStatus(updated);
+          return updated;
+        }
         const carrinho = m.carrinho.map((item) =>
-          item.uid === uid
-            ? { ...item, quantidade: Math.max(1, item.quantidade + delta) }
-            : item
+          item.uid === uid ? { ...item, quantidade: newQty } : item
         );
-        return { ...m, carrinho };
+        const updated = { ...m, carrinho };
+        updated.status = derivarStatus(updated);
+        return updated;
       })
     );
   }, []);
@@ -118,11 +127,9 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         if (m.id !== mesaId || m.carrinho.length === 0) return m;
 
         const totalPedido = m.carrinho.reduce(
-          (acc, item) => acc + item.precoUnitario * item.quantidade,
-          0
+          (acc, item) => acc + item.precoUnitario * item.quantidade, 0
         );
 
-        // Deep-clone cart items — no shared references
         const snapshot: ItemCarrinho[] = m.carrinho.map((item) => ({
           ...item,
           removidos: [...item.removidos],
@@ -140,21 +147,36 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           }),
         };
 
-        const updated: Mesa = {
+        return {
           ...m,
           carrinho: [],
           pedidos: [...m.pedidos, novoPedido],
           total: m.total + totalPedido,
-          status: "consumo",
+          status: "consumo" as const,
         };
-        return updated;
       })
+    );
+  }, []);
+
+  const chamarGarcomFn = useCallback((mesaId: string) => {
+    setMesas((prev) =>
+      prev.map((m) => (m.id === mesaId ? { ...m, chamarGarcom: true } : m))
+    );
+  }, []);
+
+  const dismissChamarGarcom = useCallback((mesaId: string) => {
+    setMesas((prev) =>
+      prev.map((m) => (m.id === mesaId ? { ...m, chamarGarcom: false } : m))
     );
   }, []);
 
   return (
     <RestaurantContext.Provider
-      value={{ mesas, getMesa, updateMesa, addToCart, updateCartItemQty, removeFromCart, confirmarPedido }}
+      value={{
+        mesas, getMesa, updateMesa, addToCart, updateCartItemQty,
+        removeFromCart, confirmarPedido,
+        chamarGarcom: chamarGarcomFn, dismissChamarGarcom,
+      }}
     >
       {children}
     </RestaurantContext.Provider>
