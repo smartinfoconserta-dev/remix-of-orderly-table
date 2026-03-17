@@ -69,11 +69,12 @@ const MesaCard = ({ mesa, onClick, showTotal }: Props) => {
       </div>
 
       {/* Total */}
-      {showTotal && total > 0 && (
+      {showTotal && (
         <span className="text-primary text-sm font-black tabular-nums mt-0.5">
           {formatPrice(total)}
         </span>
       )}
+
     </button>
   );
 };
