@@ -2,6 +2,7 @@ import { useState, useCallback } from "react";
 import { useRestaurant } from "@/contexts/RestaurantContext";
 import AppLayout from "@/components/AppLayout";
 import StatusBadge from "@/components/StatusBadge";
+import MesaCard from "@/components/MesaCard";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
@@ -38,22 +39,12 @@ const CaixaPage = () => {
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
               {mesasAtivas.map((m) => (
-                <button
+                <MesaCard
                   key={m.id}
+                  mesa={m}
                   onClick={() => setMesaSelecionada(m.id)}
-                  className="surface-card p-5 flex flex-col items-center gap-2 min-h-[120px] active:scale-[0.97] transition-transform"
-                >
-                  <span className="text-muted-foreground text-[10px] uppercase tracking-[0.2em] font-bold">
-                    Mesa
-                  </span>
-                  <span className="text-foreground text-3xl font-black tabular-nums">
-                    {String(m.numero).padStart(2, "0")}
-                  </span>
-                  <StatusBadge status={m.status} />
-                  <span className="text-primary text-lg font-black mt-1">
-                    {formatPrice(m.total)}
-                  </span>
-                </button>
+                  showTotal
+                />
               ))}
             </div>
           )}
