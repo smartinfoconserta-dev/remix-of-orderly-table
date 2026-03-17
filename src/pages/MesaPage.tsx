@@ -90,35 +90,28 @@ const MesaPage = () => {
         }
       >
         <div className="flex flex-col gap-6 max-w-lg mx-auto">
-          {/* Status Card */}
-          <div className="surface-card p-6 flex flex-col items-center gap-4">
-            <span className="text-muted-foreground text-xs uppercase tracking-[0.2em] font-bold">
-              Status
-            </span>
+          {/* Resumo rápido */}
+          <div className="surface-card p-5 flex items-center gap-4">
             <StatusBadge status={mesa.status} />
+            <div className="h-8 w-px bg-border" />
+            <span className="text-foreground text-2xl font-black tabular-nums flex-1">
+              {formatPrice(mesa.total)}
+            </span>
+            {mesa.pedidos.length > 0 && (
+              <span className="text-muted-foreground text-xs font-semibold tabular-nums">
+                {mesa.pedidos.length} pedido{mesa.pedidos.length !== 1 ? "s" : ""}
+              </span>
+            )}
           </div>
 
-          {/* Resumo */}
-          <div className="surface-card p-6 flex flex-col gap-3">
-            <div className="flex items-center justify-between">
-              <span className="text-muted-foreground text-sm font-medium">Total</span>
-              <span className="text-foreground text-2xl font-black tabular-nums">
-                {formatPrice(mesa.total)}
+          {/* Alerta carrinho pendente */}
+          {carrinho.length > 0 && (
+            <div className="flex items-center gap-2 px-4 py-3 rounded-xl border border-status-pendente/30 bg-status-pendente/5">
+              <span className="text-status-pendente text-sm font-bold">
+                ⚠ {carrinho.length} {carrinho.length === 1 ? "item aguardando" : "itens aguardando"} envio
               </span>
             </div>
-            <div className="flex items-center justify-between">
-              <span className="text-muted-foreground text-sm font-medium">Pedidos</span>
-              <span className="text-foreground text-lg font-bold tabular-nums">
-                {mesa.pedidos.length}
-              </span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-muted-foreground text-sm font-medium">Itens no carrinho</span>
-              <span className="text-foreground text-lg font-bold tabular-nums">
-                {carrinho.length}
-              </span>
-            </div>
-          </div>
+          )}
 
           {/* Botão Adicionar Itens */}
           <Button
