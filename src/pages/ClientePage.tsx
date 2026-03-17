@@ -46,7 +46,8 @@ const ClientePage = () => {
 
   const handleConfirmar = useCallback(() => {
     confirmarPedido(MESA_CLIENTE);
-    toast.success("Pedido confirmado!", { duration: 1500, icon: "🎉" });
+    toast.success("Pedido enviado", { duration: 1200, icon: "✅" });
+    return true;
   }, [confirmarPedido]);
 
   const header = (
