@@ -1,16 +1,16 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { toast } from "@/hooks/use-toast";
 import { Send, Check } from "lucide-react";
 
 interface Props {
   total: number;
-  onConfirmar: () => void;
+  onConfirmar: () => boolean | void;
+  onValidate?: () => boolean;
 }
 
 const formatPrice = (v: number) => `R$ ${v.toFixed(2).replace(".", ",")}`;
 
-const StickyOrderButton = ({ total, onConfirmar }: Props) => {
+const StickyOrderButton = ({ total, onConfirmar, onValidate }: Props) => {
   const [sending, setSending] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const lockRef = useRef(false);
@@ -50,6 +50,8 @@ const StickyOrderButton = ({ total, onConfirmar }: Props) => {
     if (lockRef.current || isEmpty) return;
 
     if (!confirming) {
+      if (onValidate?.() === false) return;
+
       setConfirming(true);
       clearConfirmTimeout();
       confirmTimeoutRef.current = window.setTimeout(() => {
@@ -61,12 +63,12 @@ const StickyOrderButton = ({ total, onConfirmar }: Props) => {
 
     clearConfirmTimeout();
     setConfirming(false);
+
+    if (onValidate?.() === false) return;
+    if (onConfirmar() === false) return;
+
     lockRef.current = true;
     setSending(true);
-    onConfirmar();
-    toast({
-      title: "Pedido enviado",
-    });
 
     clearSendingTimeout();
     sendingTimeoutRef.current = window.setTimeout(() => {
@@ -74,7 +76,7 @@ const StickyOrderButton = ({ total, onConfirmar }: Props) => {
       lockRef.current = false;
       sendingTimeoutRef.current = null;
     }, 2000);
-  }, [onConfirmar, isEmpty, confirming, clearConfirmTimeout, clearSendingTimeout]);
+  }, [onConfirmar, onValidate, isEmpty, confirming, clearConfirmTimeout, clearSendingTimeout]);
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-40 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] pointer-events-none">
