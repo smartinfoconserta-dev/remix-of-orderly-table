@@ -240,6 +240,11 @@ const MesaPage = () => {
         onClose={() => setMenuOpen(false)}
         onAddItem={handleAddItem}
       />
+
+      <StickyOrderButton
+        total={carrinho.reduce((acc, item) => acc + item.precoUnitario * item.quantidade, 0)}
+        onConfirmar={handleConfirmar}
+      />
     </>
   );
 };
