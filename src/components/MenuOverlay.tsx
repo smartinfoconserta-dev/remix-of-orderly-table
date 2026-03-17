@@ -41,29 +41,12 @@ const MenuOverlay = ({ open, onClose, onAddItem }: Props) => {
       </header>
 
       {/* Categorias scroll horizontal */}
-      <div className="relative">
-        <div className="absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-background to-transparent z-10 pointer-events-none" />
-        <div
-          ref={categoriasRef}
-          className="flex gap-2 overflow-x-auto px-4 py-3 scrollbar-hide"
-          style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
-        >
-          {categorias.map((cat) => (
-            <button
-              key={cat.id}
-              onClick={() => setCategoriaAtiva(cat.id)}
-              className={`flex-shrink-0 flex items-center gap-2 px-5 py-3 rounded-xl text-base font-bold transition-all active:scale-95 ${
-                categoriaAtiva === cat.id
-                  ? "bg-primary text-primary-foreground shadow-lg shadow-primary/30"
-                  : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
-              }`}
-            >
-              <span className="text-xl">{cat.icone}</span>
-              {cat.nome}
-            </button>
-          ))}
-        </div>
-      </div>
+      <CategoryTabs
+        categorias={categorias}
+        categoriaAtiva={categoriaAtiva}
+        onSelect={setCategoriaAtiva}
+        paddingClassName="px-4 py-3"
+      />
 
       {/* Grid de produtos */}
       <main className="flex-1 overflow-y-auto px-4 pt-3 pb-6">
