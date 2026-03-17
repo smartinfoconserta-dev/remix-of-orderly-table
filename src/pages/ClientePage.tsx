@@ -166,19 +166,19 @@ const ClientePage = () => {
         /* ===== TABLET+: sidebar fixa + conteúdo à direita ===== */
         <div className="flex flex-1 overflow-hidden">
           {/* Sidebar fixa */}
-          <aside className="w-56 lg:w-64 shrink-0 border-r border-border bg-card overflow-y-auto">
-            <nav className="flex flex-col gap-0.5 p-3">
+          <aside className="w-52 lg:w-56 shrink-0 border-r border-border bg-card overflow-y-auto">
+            <nav className="flex flex-col gap-0 py-2">
               {categorias.map((cat) => (
                 <button
                   key={cat.id}
                   onClick={() => setCategoriaAtiva(cat.id)}
-                  className={`flex items-center gap-3 px-4 py-4 rounded-xl text-sm font-semibold transition-all text-left ${
+                  className={`flex items-center gap-3 px-4 py-3.5 text-sm font-medium transition-all text-left border-l-2 ${
                     categoriaAtiva === cat.id
-                      ? "bg-primary/15 text-foreground border border-primary/30"
-                      : "text-muted-foreground hover:bg-secondary/60 hover:text-foreground border border-transparent"
+                      ? "border-l-primary bg-secondary/50 text-foreground"
+                      : "border-l-transparent text-muted-foreground hover:bg-secondary/30 hover:text-foreground"
                   }`}
                 >
-                  <CategoryIcon name={cat.icone} className="w-4 h-4 opacity-70" />
+                  <CategoryIcon name={cat.icone} className="w-3.5 h-3.5" />
                   <span>{cat.nome}</span>
                 </button>
               ))}
