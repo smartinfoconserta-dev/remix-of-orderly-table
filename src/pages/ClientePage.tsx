@@ -6,6 +6,7 @@ import { categorias, produtos, banners, type Produto } from "@/data/menuData";
 import { useRestaurant, type ItemCarrinho } from "@/contexts/RestaurantContext";
 import ProductModal from "@/components/ProductModal";
 import CartDrawer from "@/components/CartDrawer";
+import StickyOrderButton from "@/components/StickyOrderButton";
 import { toast } from "sonner";
 
 // Default to mesa-1 for cliente mode (self-service)
