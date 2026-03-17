@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -7,6 +7,7 @@ import { useRestaurant, type ItemCarrinho } from "@/contexts/RestaurantContext";
 import ProductModal from "@/components/ProductModal";
 import CartDrawer from "@/components/CartDrawer";
 import StickyOrderButton from "@/components/StickyOrderButton";
+import CategoryTabs from "@/components/CategoryTabs";
 import { toast } from "sonner";
 
 // Default to mesa-1 for cliente mode (self-service)

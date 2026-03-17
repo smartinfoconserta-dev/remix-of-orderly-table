@@ -1,7 +1,8 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { X } from "lucide-react";
 import { categorias, produtos, type Produto } from "@/data/menuData";
 import ProductModal from "@/components/ProductModal";
+import CategoryTabs from "@/components/CategoryTabs";
 import type { ItemCarrinho } from "@/contexts/RestaurantContext";
 
 interface Props {
