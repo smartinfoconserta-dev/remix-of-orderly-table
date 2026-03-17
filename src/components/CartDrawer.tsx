@@ -79,10 +79,16 @@ const CartDrawer = ({ carrinho, onUpdateQty, onRemove, onConfirmar }: Props) => 
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <button
-                        onClick={() => onUpdateQty(item.uid, -1)}
+                        onClick={() => {
+                          if (item.quantidade <= 1) {
+                            onRemove(item.uid);
+                          } else {
+                            onUpdateQty(item.uid, -1);
+                          }
+                        }}
                         className="w-9 h-9 rounded-lg bg-background flex items-center justify-center text-foreground active:scale-90 transition-transform"
                       >
-                        <Minus className="w-4 h-4" />
+                        {item.quantidade <= 1 ? <Trash2 className="w-4 h-4 text-destructive" /> : <Minus className="w-4 h-4" />}
                       </button>
                       <span className="text-foreground text-base font-bold min-w-[2ch] text-center">
                         {item.quantidade}
