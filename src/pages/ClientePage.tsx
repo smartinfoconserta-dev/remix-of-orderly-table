@@ -33,11 +33,9 @@ const ClientePage = () => {
   const produtosFiltrados = produtos.filter((p) => p.categoria === categoriaAtiva);
 
   const handleChamarGarcom = useCallback(() => {
-    toast.success("Garçom chamado! Aguarde um momento.", {
-      duration: 3000,
-      icon: "🔔",
-    });
-  }, []);
+    chamarGarcom(MESA_CLIENTE);
+    toast.success("Garçom a caminho!", { duration: 1000, icon: "🔔" });
+  }, [chamarGarcom]);
 
   const handleAddToCart = useCallback((item: ItemCarrinho) => {
     addToCart(MESA_CLIENTE, item);
