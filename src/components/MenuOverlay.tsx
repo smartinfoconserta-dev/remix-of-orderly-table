@@ -2,7 +2,7 @@ import { useState, useCallback } from "react";
 import { X } from "lucide-react";
 import { categorias, produtos, type Produto } from "@/data/menuData";
 import ProductModal from "@/components/ProductModal";
-import CategoryTabs from "@/components/CategoryTabs";
+import CategoryIcon from "@/components/CategoryIcon";
 import type { ItemCarrinho } from "@/contexts/RestaurantContext";
 
 interface Props {
@@ -14,7 +14,6 @@ interface Props {
 const MenuOverlay = ({ open, onClose, onAddItem }: Props) => {
   const [categoriaAtiva, setCategoriaAtiva] = useState(categorias[0].id);
   const [produtoSelecionado, setProdutoSelecionado] = useState<Produto | null>(null);
-  
 
   const produtosFiltrados = produtos.filter((p) => p.categoria === categoriaAtiva);
 
@@ -40,48 +39,60 @@ const MenuOverlay = ({ open, onClose, onAddItem }: Props) => {
         </button>
       </header>
 
-      {/* Categorias scroll horizontal */}
-      <CategoryTabs
-        categorias={categorias}
-        categoriaAtiva={categoriaAtiva}
-        onSelect={setCategoriaAtiva}
-        paddingClassName="px-4 py-3"
-      />
-
-      {/* Grid de produtos */}
-      <main className="flex-1 overflow-y-auto px-4 pt-3 pb-6">
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
-          {produtosFiltrados.map((produto) => (
+      {/* Two-column layout */}
+      <div className="flex-1 flex overflow-hidden">
+        {/* Sidebar - Categorias */}
+        <nav className="w-[220px] shrink-0 border-r border-border overflow-y-auto bg-background">
+          {categorias.map((cat) => (
             <button
-              key={produto.id}
-              onClick={() => setProdutoSelecionado(produto)}
-              className="surface-card overflow-hidden text-left flex flex-col active:scale-[0.97] transition-transform"
+              key={cat.id}
+              onClick={() => setCategoriaAtiva(cat.id)}
+              className={`w-full flex items-center gap-3 px-4 py-3.5 text-sm font-medium transition-colors text-left border-l-2 ${
+                categoriaAtiva === cat.id
+                  ? "border-l-primary bg-secondary/50 text-foreground"
+                  : "border-l-transparent text-muted-foreground hover:bg-secondary/30 hover:text-foreground"
+              }`}
             >
-              <div className="aspect-[4/3] overflow-hidden">
-                <img
-                  src={produto.imagem}
-                  alt={produto.nome}
-                  className="w-full h-full object-cover"
-                  loading="lazy"
-                />
-              </div>
-              <div className="p-3 md:p-4 flex flex-col gap-1 flex-1">
-                <h3 className="text-foreground text-sm md:text-base font-bold line-clamp-1">
-                  {produto.nome}
-                </h3>
-                <p className="text-muted-foreground text-xs md:text-sm line-clamp-2 flex-1">
-                  {produto.descricao}
-                </p>
-                <p className="text-foreground text-lg md:text-xl font-black mt-1">
-                  R$ {produto.preco.toFixed(2).replace(".", ",")}
-                </p>
-              </div>
+              <CategoryIcon name={cat.icone} className="w-3.5 h-3.5 opacity-70" />
+              <span>{cat.nome}</span>
             </button>
           ))}
-        </div>
-      </main>
+        </nav>
 
-      {/* ProductModal reutilizado */}
+        {/* Grid de produtos */}
+        <main className="flex-1 overflow-y-auto px-4 pt-3 pb-6">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
+            {produtosFiltrados.map((produto) => (
+              <button
+                key={produto.id}
+                onClick={() => setProdutoSelecionado(produto)}
+                className="surface-card overflow-hidden text-left flex flex-col active:scale-[0.97] transition-transform"
+              >
+                <div className="aspect-[4/3] overflow-hidden">
+                  <img
+                    src={produto.imagem}
+                    alt={produto.nome}
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                  />
+                </div>
+                <div className="p-3 md:p-4 flex flex-col gap-1 flex-1">
+                  <h3 className="text-foreground text-sm md:text-base font-bold line-clamp-1">
+                    {produto.nome}
+                  </h3>
+                  <p className="text-muted-foreground text-xs md:text-sm line-clamp-2 flex-1">
+                    {produto.descricao}
+                  </p>
+                  <p className="text-foreground text-lg md:text-xl font-black mt-1">
+                    R$ {produto.preco.toFixed(2).replace(".", ",")}
+                  </p>
+                </div>
+              </button>
+            ))}
+          </div>
+        </main>
+      </div>
+
       <ProductModal
         produto={produtoSelecionado}
         onClose={() => setProdutoSelecionado(null)}
