@@ -164,6 +164,8 @@ const ClientePage = () => {
             </button>
           ))}
         </div>
+        {/* Bottom spacer for sticky button */}
+        {carrinho.length > 0 && <div className="h-20" />}
       </main>
 
       {/* Modal do produto com customização */}
