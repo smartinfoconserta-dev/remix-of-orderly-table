@@ -3,21 +3,24 @@ import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { categorias, produtos, banners, type Produto } from "@/data/menuData";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
+import { useRestaurant, type ItemCarrinho } from "@/contexts/RestaurantContext";
+import ProductModal from "@/components/ProductModal";
+import CartDrawer from "@/components/CartDrawer";
 import { toast } from "sonner";
+
+// Default to mesa-1 for cliente mode (self-service)
+const MESA_CLIENTE = "mesa-1";
 
 const ClientePage = () => {
   const navigate = useNavigate();
+  const { getMesa, addToCart, updateCartItemQty, removeFromCart, confirmarPedido } = useRestaurant();
   const [categoriaAtiva, setCategoriaAtiva] = useState(categorias[0].id);
   const [bannerIndex, setBannerIndex] = useState(0);
   const [produtoSelecionado, setProdutoSelecionado] = useState<Produto | null>(null);
   const categoriasRef = useRef<HTMLDivElement>(null);
+
+  const mesa = getMesa(MESA_CLIENTE);
+  const carrinho = mesa?.carrinho ?? [];
 
   // Banner auto-rotate
   useEffect(() => {
@@ -36,10 +39,20 @@ const ClientePage = () => {
     });
   }, []);
 
+  const handleAddToCart = useCallback((item: ItemCarrinho) => {
+    addToCart(MESA_CLIENTE, item);
+    toast.success("Item adicionado!", { duration: 1000, icon: "✅" });
+  }, [addToCart]);
+
+  const handleConfirmar = useCallback(() => {
+    confirmarPedido(MESA_CLIENTE);
+    toast.success("Pedido confirmado!", { duration: 1500, icon: "🎉" });
+  }, [confirmarPedido]);
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header fixo */}
-      <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-md border-b border-border px-4 md:px-6 py-3 flex items-center justify-between">
+      <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-md border-b border-border px-4 md:px-6 py-3 flex items-center justify-between gap-2">
         <button
           onClick={() => navigate("/")}
           className="flex items-center gap-2 text-muted-foreground active:scale-95 transition-transform"
@@ -48,13 +61,21 @@ const ClientePage = () => {
           <span className="text-sm font-medium hidden sm:inline">Voltar</span>
         </button>
         <h1 className="text-foreground text-lg font-bold">Cardápio</h1>
-        <Button
-          onClick={handleChamarGarcom}
-          className="rounded-xl gap-2 text-base font-bold px-5 py-2.5 h-auto bg-destructive hover:bg-destructive/90 text-destructive-foreground"
-        >
-          <Bell className="w-5 h-5" />
-          Chamar Garçom
-        </Button>
+        <div className="flex items-center gap-2">
+          <CartDrawer
+            carrinho={carrinho}
+            onUpdateQty={(uid, delta) => updateCartItemQty(MESA_CLIENTE, uid, delta)}
+            onRemove={(uid) => removeFromCart(MESA_CLIENTE, uid)}
+            onConfirmar={handleConfirmar}
+          />
+          <Button
+            onClick={handleChamarGarcom}
+            className="rounded-xl gap-2 text-base font-bold px-5 py-2.5 h-auto bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+          >
+            <Bell className="w-5 h-5" />
+            <span className="hidden sm:inline">Chamar Garçom</span>
+          </Button>
+        </div>
       </header>
 
       {/* Banner rotativo */}
@@ -74,7 +95,6 @@ const ClientePage = () => {
               <p className="text-foreground text-2xl md:text-3xl font-black mt-1">{banner.destaque}</p>
             </div>
           ))}
-          {/* Dots */}
           <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-2">
             {banners.map((_, i) => (
               <button
@@ -91,7 +111,6 @@ const ClientePage = () => {
 
       {/* Categorias scroll horizontal */}
       <div className="relative mt-4">
-        {/* Fade direita */}
         <div className="absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-background to-transparent z-10 pointer-events-none" />
         <div
           ref={categoriasRef}
@@ -148,38 +167,12 @@ const ClientePage = () => {
         </div>
       </main>
 
-      {/* Modal do produto */}
-      <Dialog open={!!produtoSelecionado} onOpenChange={() => setProdutoSelecionado(null)}>
-        <DialogContent className="max-w-lg rounded-2xl border-border bg-card p-0 overflow-hidden">
-          {produtoSelecionado && (
-            <>
-              <div className="aspect-video overflow-hidden">
-                <img
-                  src={produtoSelecionado.imagem}
-                  alt={produtoSelecionado.nome}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <div className="p-6">
-                <DialogHeader>
-                  <DialogTitle className="text-foreground text-2xl font-black">
-                    {produtoSelecionado.nome}
-                  </DialogTitle>
-                  <DialogDescription className="text-muted-foreground text-base mt-2">
-                    {produtoSelecionado.descricao}
-                  </DialogDescription>
-                </DialogHeader>
-                <p className="text-primary text-3xl font-black mt-4">
-                  R$ {produtoSelecionado.preco.toFixed(2).replace(".", ",")}
-                </p>
-                <p className="text-muted-foreground text-sm mt-4">
-                  Em breve você poderá adicionar este item ao carrinho.
-                </p>
-              </div>
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
+      {/* Modal do produto com customização */}
+      <ProductModal
+        produto={produtoSelecionado}
+        onClose={() => setProdutoSelecionado(null)}
+        onAdd={handleAddToCart}
+      />
     </div>
   );
 };

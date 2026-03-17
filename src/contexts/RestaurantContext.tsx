@@ -1,15 +1,19 @@
 import React, { createContext, useContext, useState, useCallback } from "react";
 
-export interface ItemPedido {
-  id: string;
+export interface ItemCarrinho {
+  uid: string; // unique per cart entry
+  produtoId: string;
   nome: string;
-  preco: number;
+  precoBase: number;
   quantidade: number;
+  removidos: string[];
+  adicionais: { nome: string; preco: number }[];
+  precoUnitario: number; // base + adicionais
 }
 
 export interface PedidoRealizado {
   id: string;
-  itens: ItemPedido[];
+  itens: ItemCarrinho[];
   total: number;
   horario: string;
 }
@@ -19,7 +23,7 @@ export interface Mesa {
   numero: number;
   status: "livre" | "pendente" | "consumo";
   total: number;
-  carrinho: ItemPedido[];
+  carrinho: ItemCarrinho[];
   pedidos: PedidoRealizado[];
 }
 
@@ -27,6 +31,10 @@ interface RestaurantContextType {
   mesas: Mesa[];
   getMesa: (id: string) => Mesa | undefined;
   updateMesa: (id: string, updates: Partial<Mesa>) => void;
+  addToCart: (mesaId: string, item: ItemCarrinho) => void;
+  updateCartItemQty: (mesaId: string, uid: string, delta: number) => void;
+  removeFromCart: (mesaId: string, uid: string) => void;
+  confirmarPedido: (mesaId: string) => void;
 }
 
 const RestaurantContext = createContext<RestaurantContextType | null>(null);
@@ -55,8 +63,73 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     );
   }, []);
 
+  const addToCart = useCallback((mesaId: string, item: ItemCarrinho) => {
+    setMesas((prev) =>
+      prev.map((m) =>
+        m.id === mesaId
+          ? { ...m, carrinho: [...m.carrinho, item] }
+          : m
+      )
+    );
+  }, []);
+
+  const updateCartItemQty = useCallback((mesaId: string, uid: string, delta: number) => {
+    setMesas((prev) =>
+      prev.map((m) => {
+        if (m.id !== mesaId) return m;
+        const carrinho = m.carrinho
+          .map((item) =>
+            item.uid === uid
+              ? { ...item, quantidade: Math.max(1, item.quantidade + delta) }
+              : item
+          );
+        return { ...m, carrinho };
+      })
+    );
+  }, []);
+
+  const removeFromCart = useCallback((mesaId: string, uid: string) => {
+    setMesas((prev) =>
+      prev.map((m) =>
+        m.id === mesaId
+          ? { ...m, carrinho: m.carrinho.filter((item) => item.uid !== uid) }
+          : m
+      )
+    );
+  }, []);
+
+  const confirmarPedido = useCallback((mesaId: string) => {
+    setMesas((prev) =>
+      prev.map((m) => {
+        if (m.id !== mesaId || m.carrinho.length === 0) return m;
+        const totalPedido = m.carrinho.reduce(
+          (acc, item) => acc + item.precoUnitario * item.quantidade,
+          0
+        );
+        const novoPedido: PedidoRealizado = {
+          id: `pedido-${Date.now()}`,
+          itens: [...m.carrinho],
+          total: totalPedido,
+          horario: new Date().toLocaleTimeString("pt-BR", {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+        };
+        return {
+          ...m,
+          carrinho: [],
+          pedidos: [...m.pedidos, novoPedido],
+          total: m.total + totalPedido,
+          status: "consumo" as const,
+        };
+      })
+    );
+  }, []);
+
   return (
-    <RestaurantContext.Provider value={{ mesas, getMesa, updateMesa }}>
+    <RestaurantContext.Provider
+      value={{ mesas, getMesa, updateMesa, addToCart, updateCartItemQty, removeFromCart, confirmarPedido }}
+    >
       {children}
     </RestaurantContext.Provider>
   );
