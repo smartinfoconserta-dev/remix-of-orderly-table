@@ -1,5 +1,6 @@
 import { useCallback, useRef, useState } from "react";
 import type { Categoria } from "@/data/menuData";
+import CategoryIcon from "@/components/CategoryIcon";
 
 interface Props {
   categorias: Categoria[];
