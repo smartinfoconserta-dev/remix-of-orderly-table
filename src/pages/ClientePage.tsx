@@ -13,7 +13,7 @@ const MESA_CLIENTE = "mesa-1";
 
 const ClientePage = () => {
   const navigate = useNavigate();
-  const { getMesa, addToCart, updateCartItemQty, removeFromCart, confirmarPedido } = useRestaurant();
+  const { getMesa, addToCart, updateCartItemQty, removeFromCart, confirmarPedido, chamarGarcom } = useRestaurant();
   const [categoriaAtiva, setCategoriaAtiva] = useState(categorias[0].id);
   const [bannerIndex, setBannerIndex] = useState(0);
   const [produtoSelecionado, setProdutoSelecionado] = useState<Produto | null>(null);
@@ -33,11 +33,9 @@ const ClientePage = () => {
   const produtosFiltrados = produtos.filter((p) => p.categoria === categoriaAtiva);
 
   const handleChamarGarcom = useCallback(() => {
-    toast.success("Garçom chamado! Aguarde um momento.", {
-      duration: 3000,
-      icon: "🔔",
-    });
-  }, []);
+    chamarGarcom(MESA_CLIENTE);
+    toast.success("Garçom a caminho!", { duration: 1000, icon: "🔔" });
+  }, [chamarGarcom]);
 
   const handleAddToCart = useCallback((item: ItemCarrinho) => {
     addToCart(MESA_CLIENTE, item);
