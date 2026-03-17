@@ -6,7 +6,7 @@ import StatusBadge from "@/components/StatusBadge";
 import CartDrawer from "@/components/CartDrawer";
 import MenuOverlay from "@/components/MenuOverlay";
 import StickyOrderButton from "@/components/StickyOrderButton";
-import { Plus, AlertTriangle } from "lucide-react";
+import { Plus, Minus, Trash2, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import {
@@ -176,10 +176,10 @@ const MesaPage = () => {
             <div className="flex flex-col gap-3">
               <h2 className="text-foreground text-base font-bold px-1">Carrinho Pendente</h2>
               {carrinho.map((item) => (
-                <div key={item.uid} className="surface-card p-4 flex items-start justify-between gap-2">
+                <div key={item.uid} className="surface-card p-4 flex items-start gap-3">
                   <div className="flex-1 min-w-0">
                     <p className="text-foreground text-sm font-medium">
-                      {item.quantidade}x {item.nome}
+                      {item.nome}
                     </p>
                     {item.adicionais.length > 0 && (
                       <p className="text-primary text-xs">
@@ -191,10 +191,37 @@ const MesaPage = () => {
                         Sem {item.removidos.join(", ")}
                       </p>
                     )}
+                    <p className="text-muted-foreground text-xs mt-1 tabular-nums">
+                      {formatPrice(item.precoUnitario * item.quantidade)}
+                    </p>
                   </div>
-                  <span className="text-foreground text-sm font-bold whitespace-nowrap">
-                    {formatPrice(item.precoUnitario * item.quantidade)}
-                  </span>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <button
+                      onClick={() => {
+                        if (item.quantidade <= 1) {
+                          removeFromCart(id!, item.uid);
+                        } else {
+                          updateCartItemQty(id!, item.uid, -1);
+                        }
+                      }}
+                      className="w-7 h-7 rounded-lg bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      {item.quantidade <= 1 ? (
+                        <Trash2 className="w-3.5 h-3.5 text-destructive" />
+                      ) : (
+                        <Minus className="w-3.5 h-3.5" />
+                      )}
+                    </button>
+                    <span className="text-foreground text-sm font-bold tabular-nums w-6 text-center">
+                      {item.quantidade}
+                    </span>
+                    <button
+                      onClick={() => updateCartItemQty(id!, item.uid, 1)}
+                      className="w-7 h-7 rounded-lg bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
