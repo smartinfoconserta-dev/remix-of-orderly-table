@@ -112,7 +112,6 @@ const MesaPage = () => {
               </span>
             </div>
           )}
-          </div>
 
           {/* Botão Adicionar Itens */}
           <Button
