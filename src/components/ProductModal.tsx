@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { Minus, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -16,12 +16,17 @@ const ProductModal = ({ produto, onClose, onAdd }: Props) => {
   const [adicionaisSelecionados, setAdicionaisSelecionados] = useState<string[]>([]);
   const [quantidade, setQuantidade] = useState(1);
 
-  // Reset state when product changes
-  const resetState = () => {
+  const resetState = useCallback(() => {
     setRemovidos([]);
     setAdicionaisSelecionados([]);
     setQuantidade(1);
-  };
+  }, []);
+
+  useEffect(() => {
+    if (produto) {
+      resetState();
+    }
+  }, [produto?.id, resetState]);
 
   const toggleRemover = (ingrediente: string) => {
     setRemovidos((prev) =>
@@ -77,7 +82,6 @@ const ProductModal = ({ produto, onClose, onAdd }: Props) => {
       <DialogContent className="max-w-lg rounded-2xl border-border bg-card p-0 overflow-hidden max-h-[90vh] flex flex-col">
         {produto && (
           <>
-            {/* Image */}
             <div className="relative aspect-video overflow-hidden flex-shrink-0">
               <img
                 src={produto.imagem}
@@ -92,9 +96,7 @@ const ProductModal = ({ produto, onClose, onAdd }: Props) => {
               </button>
             </div>
 
-            {/* Scrollable content */}
             <div className="flex-1 overflow-y-auto p-5 pb-0 space-y-5">
-              {/* Header */}
               <div>
                 <h2 className="text-foreground text-xl md:text-2xl font-black">{produto.nome}</h2>
                 <p className="text-muted-foreground text-sm md:text-base mt-1">{produto.descricao}</p>
@@ -103,7 +105,6 @@ const ProductModal = ({ produto, onClose, onAdd }: Props) => {
                 </p>
               </div>
 
-              {/* Remover ingredientes */}
               {produto.ingredientesRemoviveis && produto.ingredientesRemoviveis.length > 0 && (
                 <div>
                   <h3 className="text-foreground text-sm font-bold mb-2">Remover ingredientes</h3>
@@ -128,7 +129,6 @@ const ProductModal = ({ produto, onClose, onAdd }: Props) => {
                 </div>
               )}
 
-              {/* Adicionais */}
               {produto.adicionais && produto.adicionais.length > 0 && (
                 <div>
                   <h3 className="text-foreground text-sm font-bold mb-2">Adicionais</h3>
@@ -154,7 +154,6 @@ const ProductModal = ({ produto, onClose, onAdd }: Props) => {
                 </div>
               )}
 
-              {/* Quantidade */}
               <div>
                 <h3 className="text-foreground text-sm font-bold mb-2">Quantidade</h3>
                 <div className="flex items-center gap-4">
@@ -176,17 +175,15 @@ const ProductModal = ({ produto, onClose, onAdd }: Props) => {
                 </div>
               </div>
 
-              {/* Spacer for sticky button */}
               <div className="h-20" />
             </div>
 
-            {/* Sticky add button */}
             <div className="sticky bottom-0 p-4 bg-card border-t border-border">
               <Button
                 onClick={handleAdd}
                 className="w-full h-14 rounded-xl text-lg font-black gap-2"
               >
-                Adicionar — R$ {precoTotal.toFixed(2).replace(".", ",")}
+                + Adicionar — R$ {precoTotal.toFixed(2).replace(".", ",")}
               </Button>
             </div>
           </>
