@@ -19,7 +19,7 @@ const ClientePage = () => {
   const [categoriaAtiva, setCategoriaAtiva] = useState(categorias[0].id);
   const [bannerIndex, setBannerIndex] = useState(0);
   const [produtoSelecionado, setProdutoSelecionado] = useState<Produto | null>(null);
-  const categoriasRef = useRef<HTMLDivElement>(null);
+  
 
   const mesa = getMesa(MESA_CLIENTE);
   const carrinho = mesa?.carrinho ?? [];
