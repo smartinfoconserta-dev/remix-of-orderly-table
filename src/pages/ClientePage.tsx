@@ -167,18 +167,18 @@ const ClientePage = () => {
         <div className="flex flex-1 overflow-hidden">
           {/* Sidebar fixa */}
           <aside className="w-56 lg:w-64 shrink-0 border-r border-border bg-card overflow-y-auto">
-            <nav className="flex flex-col gap-1 p-3">
+            <nav className="flex flex-col gap-0.5 p-3">
               {categorias.map((cat) => (
                 <button
                   key={cat.id}
                   onClick={() => setCategoriaAtiva(cat.id)}
-                  className={`flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-bold transition-all text-left ${
+                  className={`flex items-center gap-3 px-4 py-4 rounded-xl text-sm font-semibold transition-all text-left ${
                     categoriaAtiva === cat.id
-                      ? "bg-primary text-primary-foreground shadow-md shadow-primary/20"
-                      : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                      ? "bg-primary/15 text-foreground border border-primary/30"
+                      : "text-muted-foreground hover:bg-secondary/60 hover:text-foreground border border-transparent"
                   }`}
                 >
-                  <CategoryIcon name={cat.icone} className="w-5 h-5" />
+                  <CategoryIcon name={cat.icone} className="w-4 h-4 opacity-70" />
                   <span>{cat.nome}</span>
                 </button>
               ))}
