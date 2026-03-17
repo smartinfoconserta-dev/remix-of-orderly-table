@@ -79,7 +79,7 @@ const ClientePage = () => {
 
   const bannerSection = (
     <div className="px-4 md:px-6 pt-4">
-      <div className="relative overflow-hidden rounded-2xl h-32 md:h-40">
+      <div className="relative overflow-hidden rounded-2xl h-32 md:h-40 border border-border bg-card">
         {banners.map((banner, i) => (
           <div
             key={banner.id}
@@ -87,9 +87,9 @@ const ClientePage = () => {
               i === bannerIndex ? "opacity-100 translate-x-0" : "opacity-0 translate-x-full"
             }`}
           >
-            <p className="text-foreground text-xl md:text-2xl font-black">{banner.titulo}</p>
-            <p className="text-foreground/80 text-sm md:text-base mt-1">{banner.subtitulo}</p>
-            <p className="text-foreground text-2xl md:text-3xl font-black mt-1">{banner.destaque}</p>
+            <p className="text-foreground text-lg md:text-xl font-bold">{banner.titulo}</p>
+            <p className="text-muted-foreground text-sm md:text-base mt-1">{banner.subtitulo}</p>
+            <p className="text-primary text-2xl md:text-3xl font-black mt-1">{banner.destaque}</p>
           </div>
         ))}
         <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-2">
