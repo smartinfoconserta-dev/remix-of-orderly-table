@@ -1,13 +1,14 @@
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 
-interface AppLayoutProps {
+export interface AppLayoutProps {
   title: string;
   children: React.ReactNode;
   showBack?: boolean;
+  headerRight?: React.ReactNode;
 }
 
-const AppLayout = ({ title, children, showBack = false }: AppLayoutProps) => {
+const AppLayout = ({ title, children, showBack = false, headerRight }: AppLayoutProps) => {
   const navigate = useNavigate();
 
   return (
