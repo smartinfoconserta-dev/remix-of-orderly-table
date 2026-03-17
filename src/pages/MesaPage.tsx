@@ -1,6 +1,7 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { useRestaurant, type ItemCarrinho } from "@/contexts/RestaurantContext";
+import { produtos } from "@/data/menuData";
 import AppLayout from "@/components/AppLayout";
 import StatusBadge from "@/components/StatusBadge";
 import CartDrawer from "@/components/CartDrawer";
@@ -28,9 +29,26 @@ const MesaPage = () => {
   const { getMesa, addToCart, updateCartItemQty, removeFromCart, confirmarPedido, dismissChamarGarcom } = useRestaurant();
   const [menuOpen, setMenuOpen] = useState(false);
   const [showExitAlert, setShowExitAlert] = useState(false);
+  const [highlightedInvalidItems, setHighlightedInvalidItems] = useState<string[]>([]);
 
   const mesa = getMesa(id || "");
   const carrinho = mesa?.carrinho ?? [];
+
+  const invalidItemIds = useMemo(() => {
+    return carrinho
+      .filter((item) => {
+        const produto = produtos.find((p) => p.id === item.produtoId);
+        const hasRequiredOptions = Boolean(produto?.categoria === "combos");
+        const hasValidRequiredSelection = !hasRequiredOptions || item.removidos.length > 0 || item.adicionais.length > 0;
+
+        return item.quantidade <= 0 || !hasValidRequiredSelection;
+      })
+      .map((item) => item.uid);
+  }, [carrinho]);
+
+  useEffect(() => {
+    setHighlightedInvalidItems((prev) => prev.filter((uid) => invalidItemIds.includes(uid)));
+  }, [invalidItemIds]);
 
   // Auto-dismiss chamar garçom when opening mesa
   useEffect(() => {
@@ -48,11 +66,23 @@ const MesaPage = () => {
     [id, addToCart]
   );
 
+  const validatePendingCart = useCallback(() => {
+    if (invalidItemIds.length === 0) return true;
+
+    setHighlightedInvalidItems(invalidItemIds);
+    toast.error("Revise o pedido antes de enviar", { duration: 1400 });
+    return false;
+  }, [invalidItemIds]);
+
   const handleConfirmar = useCallback(() => {
-    if (!id) return;
+    if (!id) return false;
+    if (!validatePendingCart()) return false;
+
     confirmarPedido(id);
-    toast.success("Pedido confirmado!", { duration: 1500, icon: "🎉" });
-  }, [id, confirmarPedido]);
+    setHighlightedInvalidItems([]);
+    toast.success("Pedido enviado", { duration: 1200, icon: "✅" });
+    return true;
+  }, [id, confirmarPedido, validatePendingCart]);
 
   const handleBack = useCallback(() => {
     if (carrinho.length > 0) {
@@ -175,55 +205,69 @@ const MesaPage = () => {
           {carrinho.length > 0 && (
             <div className="flex flex-col gap-3">
               <h2 className="text-foreground text-base font-bold px-1">Carrinho Pendente</h2>
-              {carrinho.map((item) => (
-                <div key={item.uid} className="surface-card p-4 flex items-start gap-3">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-foreground text-sm font-medium">
-                      {item.nome}
-                    </p>
-                    {item.adicionais.length > 0 && (
-                      <p className="text-primary text-xs">
-                        + {item.adicionais.map((a) => a.nome).join(", ")}
+              {carrinho.map((item) => {
+                const isInvalid = highlightedInvalidItems.includes(item.uid);
+
+                return (
+                  <div
+                    key={item.uid}
+                    className={`surface-card p-4 flex items-start gap-3 border transition-colors ${
+                      isInvalid ? "border-destructive/40 bg-destructive/5" : "border-border"
+                    }`}
+                  >
+                    <div className="flex-1 min-w-0">
+                      <p className="text-foreground text-sm font-medium">
+                        {item.nome}
                       </p>
-                    )}
-                    {item.removidos.length > 0 && (
-                      <p className="text-destructive text-xs">
-                        Sem {item.removidos.join(", ")}
-                      </p>
-                    )}
-                    <p className="text-muted-foreground text-xs mt-1 tabular-nums">
-                      {formatPrice(item.precoUnitario * item.quantidade)}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-1.5 shrink-0">
-                    <button
-                      onClick={() => {
-                        if (item.quantidade <= 1) {
-                          removeFromCart(id!, item.uid);
-                        } else {
-                          updateCartItemQty(id!, item.uid, -1);
-                        }
-                      }}
-                      className="w-7 h-7 rounded-lg bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                      {item.quantidade <= 1 ? (
-                        <Trash2 className="w-3.5 h-3.5 text-destructive" />
-                      ) : (
-                        <Minus className="w-3.5 h-3.5" />
+                      {item.adicionais.length > 0 && (
+                        <p className="text-primary text-xs">
+                          + {item.adicionais.map((a) => a.nome).join(", ")}
+                        </p>
                       )}
-                    </button>
-                    <span className="text-foreground text-sm font-bold tabular-nums w-6 text-center">
-                      {item.quantidade}
-                    </span>
-                    <button
-                      onClick={() => updateCartItemQty(id!, item.uid, 1)}
-                      className="w-7 h-7 rounded-lg bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                      <Plus className="w-3.5 h-3.5" />
-                    </button>
+                      {item.removidos.length > 0 && (
+                        <p className="text-destructive text-xs">
+                          Sem {item.removidos.join(", ")}
+                        </p>
+                      )}
+                      {isInvalid && (
+                        <p className="text-destructive text-xs font-semibold mt-1">
+                          Revise este item antes de enviar
+                        </p>
+                      )}
+                      <p className="text-muted-foreground text-xs mt-1 tabular-nums">
+                        {formatPrice(item.precoUnitario * item.quantidade)}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <button
+                        onClick={() => {
+                          if (item.quantidade <= 1) {
+                            removeFromCart(id!, item.uid);
+                          } else {
+                            updateCartItemQty(id!, item.uid, -1);
+                          }
+                        }}
+                        className="w-7 h-7 rounded-lg bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        {item.quantidade <= 1 ? (
+                          <Trash2 className="w-3.5 h-3.5 text-destructive" />
+                        ) : (
+                          <Minus className="w-3.5 h-3.5" />
+                        )}
+                      </button>
+                      <span className="text-foreground text-sm font-bold tabular-nums w-6 text-center">
+                        {item.quantidade}
+                      </span>
+                      <button
+                        onClick={() => updateCartItemQty(id!, item.uid, 1)}
+                        className="w-7 h-7 rounded-lg bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
 
@@ -241,6 +285,7 @@ const MesaPage = () => {
       <StickyOrderButton
         total={carrinho.reduce((acc, item) => acc + item.precoUnitario * item.quantidade, 0)}
         onConfirmar={handleConfirmar}
+        onValidate={validatePendingCart}
       />
 
       {/* Exit alert for pending cart items */}
