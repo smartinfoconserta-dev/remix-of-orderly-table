@@ -13,8 +13,10 @@ const formatPrice = (v: number) => `R$ ${v.toFixed(2).replace(".", ",")}`;
 
 const MesaPage = () => {
   const { id } = useParams<{ id: string }>();
-  const { getMesa, addToCart, updateCartItemQty, removeFromCart, confirmarPedido, dismissChamarGarcom } = useRestaurant();
+  const navigate = useNavigate();
+  const { getMesa, addToCart, updateCartItemQty, removeFromCart, confirmarPedido, dismissChamarGarcom, fecharConta } = useRestaurant();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [confirmFechar, setConfirmFechar] = useState(false);
 
   const mesa = getMesa(id || "");
   const carrinho = mesa?.carrinho ?? [];
