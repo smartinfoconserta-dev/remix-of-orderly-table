@@ -45,6 +45,7 @@ interface RestaurantContextType {
   confirmarPedido: (mesaId: string) => void;
   chamarGarcom: (mesaId: string) => void;
   dismissChamarGarcom: (mesaId: string) => void;
+  fecharConta: (mesaId: string) => void;
 }
 
 const RestaurantContext = createContext<RestaurantContextType | null>(null);
