@@ -231,6 +231,7 @@ const MesaPage = () => {
               )}
             </div>
           )}
+          {carrinho.length > 0 && <div className="h-20" />}
         </div>
       </AppLayout>
 
