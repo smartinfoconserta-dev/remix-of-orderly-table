@@ -5,6 +5,7 @@ import AppLayout from "@/components/AppLayout";
 import StatusBadge from "@/components/StatusBadge";
 import CartDrawer from "@/components/CartDrawer";
 import MenuOverlay from "@/components/MenuOverlay";
+import StickyOrderButton from "@/components/StickyOrderButton";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
