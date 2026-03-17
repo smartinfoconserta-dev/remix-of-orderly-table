@@ -6,7 +6,7 @@ import StatusBadge from "@/components/StatusBadge";
 import CartDrawer from "@/components/CartDrawer";
 import MenuOverlay from "@/components/MenuOverlay";
 import StickyOrderButton from "@/components/StickyOrderButton";
-import { Plus, AlertTriangle } from "lucide-react";
+import { Plus, Minus, Trash2, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import {
