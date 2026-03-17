@@ -8,6 +8,8 @@ export interface ItemCarrinho {
   quantidade: number;
   removidos: string[];
   adicionais: { nome: string; preco: number }[];
+  bebida?: string | null;
+  observacoes?: string;
   precoUnitario: number;
 }
 
