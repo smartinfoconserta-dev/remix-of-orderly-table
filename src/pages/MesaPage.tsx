@@ -54,6 +54,14 @@ const MesaPage = () => {
     toast.success("Pedido confirmado!", { duration: 1500, icon: "🎉" });
   }, [id, confirmarPedido]);
 
+  const handleBack = useCallback(() => {
+    if (carrinho.length > 0) {
+      setShowExitAlert(true);
+    } else {
+      navigate(-1);
+    }
+  }, [carrinho.length, navigate]);
+
   if (!mesa) {
     return (
       <AppLayout title="Mesa não encontrada" showBack>
