@@ -1,13 +1,14 @@
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 
-interface AppLayoutProps {
+export interface AppLayoutProps {
   title: string;
   children: React.ReactNode;
   showBack?: boolean;
+  headerRight?: React.ReactNode;
 }
 
-const AppLayout = ({ title, children, showBack = false }: AppLayoutProps) => {
+const AppLayout = ({ title, children, showBack = false, headerRight }: AppLayoutProps) => {
   const navigate = useNavigate();
 
   return (
@@ -22,9 +23,10 @@ const AppLayout = ({ title, children, showBack = false }: AppLayoutProps) => {
             <ArrowLeft className="w-5 h-5 text-foreground" />
           </button>
         )}
-        <h1 className="text-foreground text-lg md:text-xl font-bold tracking-tight truncate">
+        <h1 className="text-foreground text-lg md:text-xl font-bold tracking-tight truncate flex-1">
           {title}
         </h1>
+        {headerRight && <div className="flex items-center shrink-0">{headerRight}</div>}
       </header>
 
       {/* Content */}
