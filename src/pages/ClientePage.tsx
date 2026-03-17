@@ -21,6 +21,7 @@ const ClientePage = () => {
   const [categoriaAtiva, setCategoriaAtiva] = useState(categorias[0].id);
   const [bannerIndex, setBannerIndex] = useState(0);
   const [produtoSelecionado, setProdutoSelecionado] = useState<Produto | null>(null);
+  const [cartOpen, setCartOpen] = useState(false);
 
   const mesa = getMesa(MESA_CLIENTE);
   const carrinho = mesa?.carrinho ?? [];
@@ -66,6 +67,8 @@ const ClientePage = () => {
           onUpdateQty={(uid, delta) => updateCartItemQty(MESA_CLIENTE, uid, delta)}
           onRemove={(uid) => removeFromCart(MESA_CLIENTE, uid)}
           onConfirmar={handleConfirmar}
+          open={cartOpen}
+          onOpenChange={setCartOpen}
         />
         <Button
           onClick={handleChamarGarcom}
@@ -145,7 +148,6 @@ const ClientePage = () => {
       {header}
 
       {isMobile ? (
-        /* ===== MOBILE: banner + horizontal tabs + grid ===== */
         <>
           {bannerSection}
 
@@ -164,9 +166,7 @@ const ClientePage = () => {
           </main>
         </>
       ) : (
-        /* ===== TABLET+: sidebar fixa + conteúdo à direita ===== */
         <div className="flex flex-1 overflow-hidden">
-          {/* Sidebar fixa */}
           <aside className="w-52 lg:w-56 shrink-0 border-r border-border bg-card overflow-y-auto">
             <nav className="flex flex-col gap-0 py-2">
               {categorias.map((cat) => (
@@ -186,7 +186,6 @@ const ClientePage = () => {
             </nav>
           </aside>
 
-          {/* Conteúdo principal */}
           <main className="flex-1 overflow-y-auto">
             {bannerSection}
             <div className="px-6 pt-4 pb-6">
@@ -205,7 +204,7 @@ const ClientePage = () => {
 
       <StickyOrderButton
         total={carrinho.reduce((acc, item) => acc + item.precoUnitario * item.quantidade, 0)}
-        onConfirmar={handleConfirmar}
+        onOpenCart={() => setCartOpen(true)}
       />
     </div>
   );
