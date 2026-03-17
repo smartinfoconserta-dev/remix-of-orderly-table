@@ -98,13 +98,13 @@ const CategoryTabs = ({
               }
               onSelect(cat.id);
             }}
-            className={`flex-shrink-0 inline-flex items-center gap-2 px-5 py-3 rounded-xl text-base font-bold transition-all active:scale-95 ${
+            className={`flex-shrink-0 inline-flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-semibold transition-all active:scale-95 border ${
               categoriaAtiva === cat.id
-                ? "bg-primary text-primary-foreground shadow-lg shadow-primary/30"
-                : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                ? "bg-primary/15 text-foreground border-primary/30"
+                : "bg-secondary/60 text-muted-foreground border-transparent hover:bg-secondary hover:text-foreground"
             }`}
           >
-            <CategoryIcon name={cat.icone} className="w-5 h-5" />
+            <CategoryIcon name={cat.icone} className="w-4 h-4 opacity-70" />
             <span>{cat.nome}</span>
           </button>
         ))}
