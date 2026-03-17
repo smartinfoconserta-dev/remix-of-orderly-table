@@ -23,7 +23,7 @@ export interface Categoria {
 
 export const categorias: Categoria[] = [
   { id: "lanches", nome: "Lanches", icone: "beef" },
-  { id: "porcoes", nome: "Porções", icone: "french-fries" },
+  { id: "porcoes", nome: "Porções", icone: "popcorn" },
   { id: "bebidas", nome: "Bebidas", icone: "cup-soda" },
   { id: "sobremesas", nome: "Sobremesas", icone: "cake-slice" },
   { id: "combos", nome: "Combos", icone: "package" },

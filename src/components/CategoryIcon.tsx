@@ -1,8 +1,8 @@
-import { Beef, CupSoda, CakeSlice, Package, Flame, CircleDot } from "lucide-react";
+import { Beef, CupSoda, CakeSlice, Package, Flame, Popcorn } from "lucide-react";
 
 const iconMap: Record<string, React.FC<{ className?: string }>> = {
   beef: Beef,
-  "french-fries": CircleDot, // Lucide has no fries icon; using a neutral fallback
+  popcorn: Popcorn,
   "cup-soda": CupSoda,
   "cake-slice": CakeSlice,
   package: Package,
