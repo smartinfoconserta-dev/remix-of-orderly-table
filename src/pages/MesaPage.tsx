@@ -13,6 +13,7 @@ import { toast } from "sonner";
 const formatPrice = (v: number) => `R$ ${v.toFixed(2).replace(".", ",")}`;
 
 const MesaPage = () => {
+  const { id } = useParams<{ id: string }>();
   const { getMesa, addToCart, updateCartItemQty, removeFromCart, confirmarPedido, dismissChamarGarcom } = useRestaurant();
   const [menuOpen, setMenuOpen] = useState(false);
 
