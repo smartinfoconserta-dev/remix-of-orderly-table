@@ -81,23 +81,23 @@ export const produtos: Produto[] = [
 export const banners = [
   {
     id: "b1",
-    titulo: "🔥 Combo Família",
+    titulo: "Combo Família",
     subtitulo: "2 lanches + porção + 2 bebidas por apenas",
     destaque: "R$ 89,90",
-    cor: "from-primary/80 to-primary/40",
+    cor: "from-white/10 to-white/[0.03]",
   },
   {
     id: "b2",
-    titulo: "🍔 2 por 1 Smash",
+    titulo: "2 por 1 Smash",
     subtitulo: "Toda terça e quinta",
     destaque: "Aproveite!",
-    cor: "from-orange-600/80 to-orange-400/40",
+    cor: "from-white/[0.07] to-white/[0.02]",
   },
   {
     id: "b3",
-    titulo: "🎉 Happy Hour",
+    titulo: "Happy Hour",
     subtitulo: "Porções com 30% OFF até 19h",
     destaque: "Imperdível",
-    cor: "from-emerald-600/80 to-emerald-400/40",
+    cor: "from-white/[0.08] to-white/[0.03]",
   },
 ];
