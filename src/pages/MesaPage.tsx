@@ -222,6 +222,32 @@ const MesaPage = () => {
         total={carrinho.reduce((acc, item) => acc + item.precoUnitario * item.quantidade, 0)}
         onConfirmar={handleConfirmar}
       />
+
+      {/* Exit alert for pending cart items */}
+      <AlertDialog open={showExitAlert} onOpenChange={setShowExitAlert}>
+        <AlertDialogContent className="bg-card border-border max-w-sm">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-foreground">
+              <AlertTriangle className="w-5 h-5 text-status-pendente" />
+              Itens não enviados
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-muted-foreground">
+              Existem {carrinho.length} {carrinho.length === 1 ? "item" : "itens"} no carrinho que ainda não {carrinho.length === 1 ? "foi enviado" : "foram enviados"}.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-2 sm:gap-2">
+            <AlertDialogCancel className="rounded-xl font-bold">
+              Voltar e revisar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => navigate(-1)}
+              className="rounded-xl font-bold bg-secondary text-foreground hover:bg-secondary/80"
+            >
+              Sair mesmo assim
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 };
