@@ -178,7 +178,7 @@ const ClientePage = () => {
                       : "text-muted-foreground hover:bg-secondary hover:text-foreground"
                   }`}
                 >
-                  <span className="text-xl">{cat.icone}</span>
+                  <CategoryIcon name={cat.icone} className="w-5 h-5" />
                   <span>{cat.nome}</span>
                 </button>
               ))}

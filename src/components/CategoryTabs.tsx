@@ -104,7 +104,7 @@ const CategoryTabs = ({
                 : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
             }`}
           >
-            <span className="text-xl">{cat.icone}</span>
+            <CategoryIcon name={cat.icone} className="w-5 h-5" />
             <span>{cat.nome}</span>
           </button>
         ))}
