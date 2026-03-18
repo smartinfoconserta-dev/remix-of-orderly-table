@@ -8,7 +8,7 @@ import CategoryIcon from "@/components/CategoryIcon";
 import ProductModal from "@/components/ProductModal";
 import CartDrawer from "@/components/CartDrawer";
 import MinhaContaDrawer from "@/components/MinhaContaDrawer";
-import StatusBadge from "@/components/StatusBadge";
+
 import {
   AlertDialog,
   AlertDialogAction,
