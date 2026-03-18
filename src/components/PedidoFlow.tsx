@@ -50,6 +50,7 @@ const CARD_STAGGER_STEP_MS = 50;
 const CARD_ANIMATION_DURATION_MS = 200;
 const PRODUCT_MODAL_OPEN_DELAY_MS = 120;
 const CLIENT_IDLE_TIMEOUT_MS = 60000;
+const ORDER_SUBMIT_LOCK_MS = 2000;
 const TABLET_MIN_WIDTH = 768;
 const TABLET_MAX_WIDTH = 1279;
 
@@ -91,6 +92,8 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
   const cardsAnimationTimerRef = useRef<number | null>(null);
   const openProductTimerRef = useRef<number | null>(null);
   const idleTimeoutRef = useRef<number | null>(null);
+  const orderSubmissionCooldownRef = useRef<number | null>(null);
+  const orderSubmissionLockRef = useRef(false);
   const mobileListTopRef = useRef<HTMLDivElement>(null);
   const desktopMainRef = useRef<HTMLElement>(null);
 
@@ -143,6 +146,9 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
       }
       if (idleTimeoutRef.current) {
         window.clearTimeout(idleTimeoutRef.current);
+      }
+      if (orderSubmissionCooldownRef.current) {
+        window.clearTimeout(orderSubmissionCooldownRef.current);
       }
     };
   }, []);
@@ -343,15 +349,27 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
   }, [carrinho]);
 
   const handleConfirmar = useCallback(async () => {
-    if (carrinho.length === 0) return false;
+    if (carrinho.length === 0 || orderSubmissionLockRef.current) return false;
     if (!validatePendingCart()) return false;
 
-    await new Promise((resolve) => window.setTimeout(resolve, 900));
-    confirmarPedido(mesaId, {
-      modo,
-      operador: modo === "garcom" ? currentGarcom : undefined,
-    });
-    return true;
+    orderSubmissionLockRef.current = true;
+
+    if (orderSubmissionCooldownRef.current) {
+      window.clearTimeout(orderSubmissionCooldownRef.current);
+    }
+
+    try {
+      confirmarPedido(mesaId, {
+        modo,
+        operador: modo === "garcom" ? currentGarcom : undefined,
+      });
+      return true;
+    } finally {
+      orderSubmissionCooldownRef.current = window.setTimeout(() => {
+        orderSubmissionLockRef.current = false;
+        orderSubmissionCooldownRef.current = null;
+      }, ORDER_SUBMIT_LOCK_MS);
+    }
   }, [carrinho.length, confirmarPedido, currentGarcom, mesaId, modo, validatePendingCart]);
 
   const handleSuccessAcknowledge = useCallback(() => {
