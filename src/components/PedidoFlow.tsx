@@ -445,7 +445,6 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
   const mobileContent = (
     <>
       {bannerSection}
-      {flowSummary}
       <div className="mt-4">
         <CategoryTabs
           categorias={categorias}
