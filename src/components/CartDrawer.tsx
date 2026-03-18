@@ -17,6 +17,7 @@ interface Props {
 }
 
 const formatPrice = (v: number) => `R$ ${v.toFixed(2).replace(".", ",")}`;
+const MIN_SUBMIT_LOADING_MS = 800;
 
 const CartDrawer = ({
   carrinho,
@@ -44,14 +45,26 @@ const CartDrawer = ({
     if (carrinho.length === 0 || isSubmitting) return;
 
     setIsSubmitting(true);
-    const result = await onConfirmar();
+    const startedAt = Date.now();
+    let shouldShowSuccess = false;
 
-    if (result === false) {
-      setIsSubmitting(false);
-      return;
+    try {
+      const result = await onConfirmar();
+      shouldShowSuccess = result !== false;
+    } catch {
+      shouldShowSuccess = false;
+    }
+
+    const elapsed = Date.now() - startedAt;
+    const remaining = Math.max(0, MIN_SUBMIT_LOADING_MS - elapsed);
+
+    if (remaining > 0) {
+      await new Promise((resolve) => window.setTimeout(resolve, remaining));
     }
 
     setIsSubmitting(false);
+
+    if (!shouldShowSuccess) return;
     setSubmitSuccess(true);
   };
 
