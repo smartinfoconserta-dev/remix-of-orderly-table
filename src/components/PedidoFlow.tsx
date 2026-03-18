@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { AlertTriangle, ArrowLeft, Bell, Wallet } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Bell, MoonStar, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import CategoryTabs from "@/components/CategoryTabs";
@@ -48,6 +48,9 @@ const CATEGORY_SKELETON_DURATION_MS = 100;
 const CARD_STAGGER_STEP_MS = 50;
 const CARD_ANIMATION_DURATION_MS = 200;
 const PRODUCT_MODAL_OPEN_DELAY_MS = 120;
+const CLIENT_IDLE_TIMEOUT_MS = 60000;
+const TABLET_MIN_WIDTH = 768;
+const TABLET_MAX_WIDTH = 1279;
 
 const formatPrice = (v: number) => `R$ ${v.toFixed(2).replace(".", ",")}`;
 
@@ -80,11 +83,13 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
   const [cartOpen, setCartOpen] = useState(false);
   const [contaOpen, setContaOpen] = useState(false);
   const [showExitAlert, setShowExitAlert] = useState(false);
+  const [isClientIdle, setIsClientIdle] = useState(false);
   const categorySwitchTimerRef = useRef<number | null>(null);
   const categoryEnterTimerRef = useRef<number | null>(null);
   const categorySkeletonTimerRef = useRef<number | null>(null);
   const cardsAnimationTimerRef = useRef<number | null>(null);
   const openProductTimerRef = useRef<number | null>(null);
+  const idleTimeoutRef = useRef<number | null>(null);
   const mobileListTopRef = useRef<HTMLDivElement>(null);
   const desktopMainRef = useRef<HTMLElement>(null);
 
@@ -94,6 +99,8 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
   const mesaLabel = formatMesaLabel(mesaId);
   const nomeAtendimento = garcomNome?.trim() || currentGarcom?.nome || "Equipe de salão";
   const isHomeActive = categoriaExibida === HOME_TAB_ID;
+  const isTabletViewport = !isMobile && typeof window !== "undefined" && window.innerWidth >= TABLET_MIN_WIDTH && window.innerWidth <= TABLET_MAX_WIDTH;
+  const shouldEnableClientIdle = modo === "cliente" && isTabletViewport;
   const produtosFiltrados = useMemo(
     () => produtos.filter((p) => p.categoria === categoriaExibida),
     [categoriaExibida],
@@ -133,6 +140,9 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
       if (openProductTimerRef.current) {
         window.clearTimeout(openProductTimerRef.current);
       }
+      if (idleTimeoutRef.current) {
+        window.clearTimeout(idleTimeoutRef.current);
+      }
     };
   }, []);
 
@@ -152,6 +162,50 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
       setCardsAnimatedIn(true);
     }, 16);
   }, [categoriaExibida, showCategorySkeleton]);
+
+  useEffect(() => {
+    if (!shouldEnableClientIdle) {
+      if (idleTimeoutRef.current) {
+        window.clearTimeout(idleTimeoutRef.current);
+        idleTimeoutRef.current = null;
+      }
+      setIsClientIdle(false);
+      return;
+    }
+
+    const scheduleIdleState = () => {
+      if (idleTimeoutRef.current) {
+        window.clearTimeout(idleTimeoutRef.current);
+      }
+
+      idleTimeoutRef.current = window.setTimeout(() => {
+        setIsClientIdle(true);
+      }, CLIENT_IDLE_TIMEOUT_MS);
+    };
+
+    const handleUserActivity = () => {
+      setIsClientIdle(false);
+      scheduleIdleState();
+    };
+
+    scheduleIdleState();
+
+    const activityEvents: Array<keyof WindowEventMap> = ["pointerdown", "pointermove", "touchstart", "click", "scroll"];
+    activityEvents.forEach((eventName) => {
+      window.addEventListener(eventName, handleUserActivity, { passive: true });
+    });
+
+    return () => {
+      activityEvents.forEach((eventName) => {
+        window.removeEventListener(eventName, handleUserActivity);
+      });
+
+      if (idleTimeoutRef.current) {
+        window.clearTimeout(idleTimeoutRef.current);
+        idleTimeoutRef.current = null;
+      }
+    };
+  }, [shouldEnableClientIdle]);
 
   const handleOpenProductModal = useCallback((produto: Produto) => {
     setSelectedProductCardId(produto.id);
@@ -183,6 +237,7 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
       setCategoryTransitionState("exit");
       setShowCategorySkeleton(categoriaId !== HOME_TAB_ID);
       setSelectedProductCardId(null);
+      setIsClientIdle(false);
 
       if (openProductTimerRef.current) {
         window.clearTimeout(openProductTimerRef.current);
@@ -242,6 +297,7 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
       setProdutoSelecionado(null);
       setSelectedProductCardId(null);
       setCartOpen(true);
+      setIsClientIdle(false);
     },
     [addToCart, mesaId],
   );
@@ -249,6 +305,7 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
   const handleChamarGarcom = useCallback(() => {
     chamarGarcom(mesaId);
     toast.success("Garçom a caminho", { duration: 1000, icon: "🔔" });
+    setIsClientIdle(false);
   }, [chamarGarcom, mesaId]);
 
   const validatePendingCart = useCallback(() => {
@@ -285,6 +342,7 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
     setSelectedProductCardId(null);
     setProdutoSelecionado(null);
     setBannerIndex(0);
+    setIsClientIdle(false);
 
     if (categorySwitchTimerRef.current) {
       window.clearTimeout(categorySwitchTimerRef.current);
@@ -500,6 +558,27 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
     </div>
   );
 
+  const idleOverlay = shouldEnableClientIdle ? (
+    <button
+      type="button"
+      onClick={() => setIsClientIdle(false)}
+      aria-hidden={!isClientIdle}
+      tabIndex={isClientIdle ? 0 : -1}
+      className={`fixed inset-0 z-[70] flex items-center justify-center bg-background/80 px-6 backdrop-blur-sm transition-all duration-500 ${
+        isClientIdle ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0"
+      }`}
+    >
+      <div className="rounded-[2rem] border border-border bg-card/85 px-8 py-7 text-center shadow-lg animate-enter">
+        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border border-border bg-secondary text-foreground">
+          <MoonStar className="h-6 w-6" />
+        </div>
+        <p className="mt-4 text-sm font-semibold uppercase tracking-[0.22em] text-muted-foreground">Modo inativo</p>
+        <h2 className="mt-2 text-2xl font-black text-foreground">Toque para continuar</h2>
+        <p className="mt-2 max-w-sm text-sm text-muted-foreground">A interface foi suavizada para operação contínua no tablet, mantendo o sistema ativo ao fundo.</p>
+      </div>
+    </button>
+  ) : null;
+
   const mobileContent = (
     <>
       {bannerSection}
@@ -512,12 +591,14 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
         />
       </div>
       <div ref={mobileListTopRef} />
-      <main className="flex-1 px-4 pb-6 pt-4">{showCategorySkeleton ? skeletonGrid : isHomeActive ? homeContent : productGrid}</main>
+      <main className={`flex-1 px-4 pb-6 pt-4 transition-all duration-500 ${isClientIdle ? "brightness-[0.55] saturate-50" : "brightness-100 saturate-100"}`}>
+        {showCategorySkeleton ? skeletonGrid : isHomeActive ? homeContent : productGrid}
+      </main>
     </>
   );
 
   const desktopContent = (
-    <div className="flex flex-1 overflow-hidden">
+    <div className={`flex flex-1 overflow-hidden transition-all duration-500 ${isClientIdle ? "brightness-[0.55] saturate-50" : "brightness-100 saturate-100"}`}>
       <aside className="w-64 shrink-0 overflow-y-auto border-r border-border bg-card lg:w-72">
         <div className="sticky top-0 z-10 border-b border-border bg-card/95 px-4 py-4 backdrop-blur-md lg:px-5">
           <p className="text-base font-bold text-foreground">Categorias</p>
@@ -566,6 +647,7 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
         {isMobile ? mobileContent : desktopContent}
         <ProductModal produto={produtoSelecionado} onClose={handleCloseProductModal} onAdd={handleAddToCart} />
         <MinhaContaDrawer pedidos={mesa.pedidos} total={mesa.total} open={contaOpen} onOpenChange={setContaOpen} />
+        {idleOverlay}
       </div>
 
       <AlertDialog open={showExitAlert} onOpenChange={setShowExitAlert}>
