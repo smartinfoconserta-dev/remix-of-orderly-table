@@ -92,6 +92,8 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
   const cardsAnimationTimerRef = useRef<number | null>(null);
   const openProductTimerRef = useRef<number | null>(null);
   const idleTimeoutRef = useRef<number | null>(null);
+  const orderSubmissionCooldownRef = useRef<number | null>(null);
+  const orderSubmissionLockRef = useRef(false);
   const mobileListTopRef = useRef<HTMLDivElement>(null);
   const desktopMainRef = useRef<HTMLElement>(null);
 
