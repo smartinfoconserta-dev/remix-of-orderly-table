@@ -228,7 +228,6 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
       setProdutoSelecionado(null);
       setSelectedProductCardId(null);
       setCartOpen(true);
-      toast.success("Item configurado e adicionado ao carrinho", { duration: 1200, icon: "🛒" });
     },
     [addToCart, mesaId],
   );
