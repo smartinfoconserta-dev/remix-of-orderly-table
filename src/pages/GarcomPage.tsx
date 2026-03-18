@@ -43,6 +43,7 @@ const GarcomPage = () => {
           <MesaCard
             key={mesa.id}
             mesa={mesa}
+            showIndicators={false}
             onClick={() => {
               dismissChamarGarcom(mesa.id);
               navigate(`/mesa/${mesa.id}`, { state: { garcomNome: currentGarcom.nome } });
