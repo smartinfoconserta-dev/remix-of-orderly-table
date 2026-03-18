@@ -153,6 +153,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
   } = useRestaurant();
   const { currentCaixa, currentGerente, logout, verifyManagerAccess } = useAuth();
   const [mesaSelecionada, setMesaSelecionada] = useState<string | null>(null);
+  const [comandaOpen, setComandaOpen] = useState(false);
   const [confirmFechar, setConfirmFechar] = useState(false);
   const [closingPayments, setClosingPayments] = useState<SplitPayment[]>([]);
   const [closingPaymentMethod, setClosingPaymentMethod] = useState<PaymentMethod>("dinheiro");
