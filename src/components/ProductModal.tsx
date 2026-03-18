@@ -42,6 +42,7 @@ const defaultBebidaOptions = ["Coca-Cola 350ml", "Guaraná 350ml", "Água sem g�
 const defaultEmbalagemOptions = ["Consumir na mesa", "Para viagem"];
 const standardFlowOrder: StepId[] = ["adicionais", "bebida", "remover", "tipo", "embalagem", "quantidade"];
 const ADD_BUTTON_LOCK_MS = 500;
+const STEP_TRANSITION_MS = 250;
 
 const formatPrice = (value: number) => `R$ ${value.toFixed(2).replace(".", ",")}`;
 
@@ -87,7 +88,13 @@ const resolveSteps = (produto: Produto | null): StepId[] => {
 const ProductModal = ({ produto, onClose, onAdd }: Props) => {
   const [pedidoAtual, setPedidoAtual] = useState<PedidoAtual>(() => createPedidoAtual());
   const [isAddLocked, setIsAddLocked] = useState(false);
+  const [displayStep, setDisplayStep] = useState<StepId>("quantidade");
+  const [previousStep, setPreviousStep] = useState<StepId | null>(null);
+  const [transitionDirection, setTransitionDirection] = useState<1 | -1>(1);
+  const [transitionPhase, setTransitionPhase] = useState<"idle" | "preparing" | "running">("idle");
   const addLockTimeoutRef = useRef<number | null>(null);
+  const stepTransitionTimeoutRef = useRef<number | null>(null);
+  const stepTransitionFrameRef = useRef<number | null>(null);
 
   const tipoOptions = useMemo(() => getTipoOptions(produto), [produto]);
   const bebidaOptions = useMemo(
@@ -107,28 +114,89 @@ const ProductModal = ({ produto, onClose, onAdd }: Props) => {
     }
   }, []);
 
+  const clearStepTransition = useCallback(() => {
+    if (stepTransitionTimeoutRef.current) {
+      window.clearTimeout(stepTransitionTimeoutRef.current);
+      stepTransitionTimeoutRef.current = null;
+    }
+
+    if (stepTransitionFrameRef.current) {
+      window.cancelAnimationFrame(stepTransitionFrameRef.current);
+      stepTransitionFrameRef.current = null;
+    }
+  }, []);
+
   const resetPedidoAtual = useCallback((produtoId: string | null = null) => {
     setPedidoAtual(createPedidoAtual(produtoId));
   }, []);
 
   useEffect(() => {
     clearAddLockTimeout();
+    clearStepTransition();
     setIsAddLocked(false);
+    setPreviousStep(null);
+    setTransitionPhase("idle");
 
     if (produto) {
+      const resolvedSteps = resolveSteps(produto);
+      setDisplayStep(resolvedSteps[0] ?? "quantidade");
       resetPedidoAtual(produto.id);
       return;
     }
 
+    setDisplayStep("quantidade");
     resetPedidoAtual();
-  }, [produto, resetPedidoAtual, clearAddLockTimeout]);
+  }, [produto, resetPedidoAtual, clearAddLockTimeout, clearStepTransition]);
 
-  useEffect(() => () => clearAddLockTimeout(), [clearAddLockTimeout]);
+  useEffect(
+    () => () => {
+      clearAddLockTimeout();
+      clearStepTransition();
+    },
+    [clearAddLockTimeout, clearStepTransition],
+  );
 
   const activeStepIndex = Math.min(Math.max(pedidoAtual.etapaAtual - 1, 0), Math.max(flowSteps.length - 1, 0));
   const activeStep = flowSteps[activeStepIndex] ?? "quantidade";
   const isLastStep = activeStepIndex === flowSteps.length - 1;
   const activeDefinition = stepMeta[activeStep];
+
+  useEffect(() => {
+    if (!produto) return;
+    if (activeStep === displayStep) return;
+
+    const prefersReducedMotion =
+      typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    if (prefersReducedMotion) {
+      clearStepTransition();
+      setPreviousStep(null);
+      setDisplayStep(activeStep);
+      setTransitionPhase("idle");
+      return;
+    }
+
+    const fromIndex = flowSteps.indexOf(displayStep);
+    const toIndex = flowSteps.indexOf(activeStep);
+    const direction: 1 | -1 = fromIndex === -1 || toIndex === -1 || toIndex >= fromIndex ? 1 : -1;
+
+    clearStepTransition();
+    setTransitionDirection(direction);
+    setPreviousStep(displayStep);
+    setDisplayStep(activeStep);
+    setTransitionPhase("preparing");
+
+    stepTransitionFrameRef.current = window.requestAnimationFrame(() => {
+      setTransitionPhase("running");
+      stepTransitionFrameRef.current = null;
+    });
+
+    stepTransitionTimeoutRef.current = window.setTimeout(() => {
+      setPreviousStep(null);
+      setTransitionPhase("idle");
+      stepTransitionTimeoutRef.current = null;
+    }, STEP_TRANSITION_MS);
+  }, [activeStep, clearStepTransition, displayStep, flowSteps, produto]);
 
   const updatePedidoAtual = useCallback(<K extends keyof PedidoAtual>(field: K, value: PedidoAtual[K]) => {
     setPedidoAtual((prev) => ({ ...prev, [field]: value }));
@@ -241,6 +309,9 @@ const ProductModal = ({ produto, onClose, onAdd }: Props) => {
   const handleOpenChange = (open: boolean) => {
     if (!open) {
       clearAddLockTimeout();
+      clearStepTransition();
+      setPreviousStep(null);
+      setTransitionPhase("idle");
       setIsAddLocked(false);
       resetPedidoAtual();
       onClose();
