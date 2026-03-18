@@ -310,7 +310,7 @@ const ProductModal = ({ produto, onClose, onAdd }: Props) => {
         onChange: setTipoSelecionado,
         options: tipoOptions,
         title: "Tipo do preparo",
-        description: "Etapa obrigatória para padronizar a execução na cozinha.",
+        description: "Defina o padrão do item antes de seguir para o fechamento do pedido.",
       });
     }
 
@@ -319,8 +319,8 @@ const ProductModal = ({ produto, onClose, onAdd }: Props) => {
         value: embalagemSelecionada,
         onChange: setEmbalagemSelecionada,
         options: embalagemOptions,
-        title: "Embalagem do pedido",
-        description: "Defina como o item deve ser entregue ao cliente.",
+        title: "Viagem ou consumo local",
+        description: "Informe como este item será servido para evitar erros de entrega.",
       });
     }
 
