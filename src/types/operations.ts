@@ -2,6 +2,12 @@ export type UserRole = "garcom" | "caixa" | "gerente";
 
 export type PaymentMethod = "dinheiro" | "credito" | "debito" | "pix";
 
+export interface SplitPayment {
+  id: string;
+  formaPagamento: PaymentMethod;
+  valor: number;
+}
+
 export interface OperationalUser {
   id: string;
   nome: string;

@@ -589,13 +589,19 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         if (!hasContent) return mesa;
 
         const now = new Date();
-        if (input?.usuario) {
+        if (input?.usuario && input.pagamentos.length > 0) {
+          const pagamentos = input.pagamentos.map((payment) => ({ ...payment }));
+          const resumoPagamento = pagamentos.length === 1
+            ? pagamentos[0].formaPagamento
+            : `${pagamentos.length} formas de pagamento`;
+
           fechamento = {
             id: `fechamento-${now.getTime()}-${mesa.id}`,
             mesaId,
             mesaNumero: mesa.numero,
             total: mesa.total,
-            formaPagamento: input.formaPagamento,
+            formaPagamento: pagamentos[0].formaPagamento,
+            pagamentos,
             criadoEm: formatDateTime(now),
             criadoEmIso: now.toISOString(),
             caixaId: input.usuario.id,
@@ -604,7 +610,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
           eventInput = {
             tipo: "caixa",
-            descricao: `Caixa ${input.usuario.nome} fechou conta da ${formatMesaNumero(mesa.numero)} em ${input.formaPagamento}`,
+            descricao: `Caixa ${input.usuario.nome} fechou conta da ${formatMesaNumero(mesa.numero)} com ${resumoPagamento}`,
             mesaId,
             usuarioId: input.usuario.id,
             usuarioNome: input.usuario.nome,

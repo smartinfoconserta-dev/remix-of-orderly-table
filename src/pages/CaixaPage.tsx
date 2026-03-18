@@ -723,7 +723,13 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                 </Button>
                 <Button
                   variant="destructive"
-                  onClick={() => setConfirmFechar((prev) => !prev)}
+                  onClick={() => {
+                    if (confirmFechar) {
+                      resetCloseAccountState();
+                      return;
+                    }
+                    setConfirmFechar(true);
+                  }}
                   disabled={!hasSomethingToClose}
                   className="rounded-xl font-black"
                 >
@@ -733,40 +739,109 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
             </div>
 
             {confirmFechar && (
-              <div className="surface-card flex flex-col gap-4 p-5">
+              <div className="surface-card flex flex-col gap-5 p-5">
                 <div>
-                  <p className="text-base font-black text-foreground">Confirmar fechamento da conta?</p>
+                  <p className="text-base font-black text-foreground">Fechamento com múltiplos pagamentos</p>
                   <p className="mt-1 text-sm text-muted-foreground">
-                    Mesa {String(mesa.numero).padStart(2, "0")} • Total {formatPrice(mesa.total)} • Operador {currentOperator.nome}
+                    Mesa {String(mesa.numero).padStart(2, "0")} • Operador {currentOperator.nome}
                   </p>
                 </div>
 
-                <div className="space-y-2">
-                  <p className="text-sm font-semibold text-foreground">Forma de pagamento</p>
-                  <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
-                    {paymentMethodOptions.map((option) => {
-                      const Icon = option.icon;
-                      return (
-                        <Button
-                          key={option.value}
-                          type="button"
-                          variant={formaPagamento === option.value ? "default" : "outline"}
-                          className="rounded-xl font-bold"
-                          onClick={() => setFormaPagamento(option.value)}
-                        >
-                          <Icon className="h-4 w-4" />
-                          {option.label}
-                        </Button>
-                      );
-                    })}
+                <div className="grid gap-3 md:grid-cols-3">
+                  <div className="rounded-2xl border border-border bg-secondary/60 p-4">
+                    <p className="text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">Total da conta</p>
+                    <p className="mt-2 text-xl font-black text-foreground">{formatPrice(totalConta)}</p>
+                  </div>
+                  <div className="rounded-2xl border border-border bg-secondary/60 p-4">
+                    <p className="text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">Total pago</p>
+                    <p className="mt-2 text-xl font-black text-foreground">{formatPrice(totalPago)}</p>
+                  </div>
+                  <div className="rounded-2xl border border-border bg-secondary/60 p-4">
+                    <p className="text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">Valor restante</p>
+                    <p className="mt-2 text-xl font-black text-foreground">{formatPrice(valorRestante)}</p>
                   </div>
                 </div>
 
+                <div className="grid gap-3 rounded-2xl border border-border bg-card p-4 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] md:items-end">
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold text-foreground">Forma</label>
+                    <Select value={closingPaymentMethod} onValueChange={(value) => setClosingPaymentMethod(value as PaymentMethod)}>
+                      <SelectTrigger className="rounded-xl">
+                        <SelectValue placeholder="Selecione a forma" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {paymentMethodOptions.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold text-foreground">Valor</label>
+                    <Input
+                      value={closingPaymentValue}
+                      onChange={(event) => setClosingPaymentValue(event.target.value)}
+                      placeholder="Ex.: 25,00"
+                      inputMode="decimal"
+                      autoComplete="off"
+                    />
+                  </div>
+
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleAddPayment}
+                    disabled={valorRestante === 0}
+                    className="rounded-xl font-black"
+                  >
+                    + Adicionar pagamento
+                  </Button>
+                </div>
+
+                <div className="space-y-3">
+                  <p className="text-sm font-semibold text-foreground">Pagamentos adicionados</p>
+                  {closingPayments.length === 0 ? (
+                    <div className="rounded-2xl bg-secondary p-4 text-sm text-muted-foreground">
+                      Nenhum pagamento adicionado ainda.
+                    </div>
+                  ) : (
+                    closingPayments.map((payment) => (
+                      <div key={payment.id} className="flex items-center justify-between gap-3 rounded-2xl border border-border bg-card p-4">
+                        <div>
+                          <p className="text-sm font-bold text-foreground">{getPaymentMethodLabel(payment.formaPagamento)}</p>
+                          <p className="mt-1 text-sm text-muted-foreground">{formatPrice(payment.valor)}</p>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => handleRemovePayment(payment.id)}
+                          className="rounded-xl font-bold"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                          Remover
+                        </Button>
+                      </div>
+                    ))
+                  )}
+                </div>
+
+                <p className="text-sm text-muted-foreground">
+                  O fechamento só será liberado quando o total pago for exatamente igual ao total da conta.
+                </p>
+
                 <div className="flex gap-3">
-                  <Button variant="outline" onClick={() => setConfirmFechar(false)} className="flex-1 rounded-xl font-bold">
+                  <Button variant="outline" onClick={resetCloseAccountState} className="flex-1 rounded-xl font-bold">
                     Cancelar
                   </Button>
-                  <Button variant="destructive" onClick={handleFechar} className="flex-1 rounded-xl font-black">
+                  <Button
+                    variant="destructive"
+                    onClick={handleFechar}
+                    disabled={!fechamentoPronto || closingPayments.length === 0}
+                    className="flex-1 rounded-xl font-black"
+                  >
                     Confirmar fechamento
                   </Button>
                 </div>
