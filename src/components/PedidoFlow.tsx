@@ -379,28 +379,6 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
     </div>
   );
 
-  const flowSummary = (
-    <div className="px-4 pt-4 md:px-6">
-      <div className="surface-card flex flex-wrap items-center gap-3 p-4 md:gap-4 md:p-5">
-        <StatusBadge status={mesa.status} />
-        <div className="hidden h-8 w-px bg-border md:block" />
-        <div className="min-w-0 flex-1">
-          <p className="text-sm font-bold text-foreground md:text-base">
-            {modo === "cliente" ? "Fluxo guiado antes do carrinho" : `${mesaLabel} em atendimento`}
-          </p>
-          <p className="text-xs text-muted-foreground md:text-sm">
-            {modo === "cliente"
-              ? "Configure o item por etapas e confirme apenas no carrinho"
-              : `Garçom: ${nomeAtendimento}`}
-          </p>
-        </div>
-        <span className="text-lg font-black tabular-nums text-foreground md:text-2xl">
-          {formatPrice(mesa.total + totalCarrinho)}
-        </span>
-      </div>
-    </div>
-  );
-
   const categoryGridClasses =
     categoryTransitionState === "exit"
       ? "opacity-0 -translate-x-[10px]"
