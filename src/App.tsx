@@ -12,7 +12,8 @@ const App = () => (
     <Route path="/cliente" element={<ClientePage />} />
     <Route path="/garcom" element={<GarcomPage />} />
     <Route path="/mesa/:id" element={<MesaPage />} />
-    <Route path="/caixa" element={<CaixaPage />} />
+    <Route path="/caixa" element={<CaixaPage accessMode="caixa" />} />
+    <Route path="/gerente" element={<CaixaPage accessMode="gerente" />} />
     <Route path="*" element={<NotFound />} />
   </Routes>
 );

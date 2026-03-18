@@ -25,6 +25,7 @@ interface LoginResult {
 interface AuthContextType {
   currentGarcom: OperationalUser | null;
   currentCaixa: OperationalUser | null;
+  currentGerente: OperationalUser | null;
   getProfilesByRole: (role: UserRole) => OperationalUser[];
   loginWithPin: (role: UserRole, nome: string, pin: string) => Promise<LoginResult>;
   verifyManagerAccess: (nome: string, pin: string) => Promise<LoginResult>;
@@ -96,6 +97,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const currentGarcom = useMemo(() => getCurrentUser("garcom"), [getCurrentUser]);
   const currentCaixa = useMemo(() => getCurrentUser("caixa"), [getCurrentUser]);
+  const currentGerente = useMemo(() => getCurrentUser("gerente"), [getCurrentUser]);
 
   const getProfilesByRole = useCallback(
     (role: UserRole) => state.users.filter((user) => user.role === role).map(toPublicUser),
@@ -187,6 +189,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       value={{
         currentGarcom,
         currentCaixa,
+        currentGerente,
         getProfilesByRole,
         loginWithPin,
         verifyManagerAccess,
