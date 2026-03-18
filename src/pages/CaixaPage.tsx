@@ -898,7 +898,9 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                           <p className="mt-1 text-xs text-muted-foreground">
                             {pedido.origem === "garcom"
                               ? `Lançado por ${pedido.garcomNome ?? "garçom identificado"}`
-                              : "Lançado pelo cliente"}
+                              : pedido.origem === "caixa"
+                                ? `Lançado pelo caixa ${pedido.caixaNome ?? "identificado"}`
+                                : "Lançado pelo cliente"}
                             {` • Enviado às ${pedido.criadoEm}`}
                           </p>
                         </div>
