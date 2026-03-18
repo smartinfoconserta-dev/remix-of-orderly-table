@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { ShoppingCart, Minus, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -7,7 +8,7 @@ interface Props {
   carrinho: ItemCarrinho[];
   onUpdateQty: (uid: string, delta: number) => void;
   onRemove: (uid: string) => void;
-  onConfirmar: () => boolean | void;
+  onConfirmar: () => Promise<boolean | void> | boolean | void;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
 }
@@ -17,12 +18,34 @@ const formatPrice = (v: number) => `R$ ${v.toFixed(2).replace(".", ",")}`;
 const CartDrawer = ({ carrinho, onUpdateQty, onRemove, onConfirmar, open, onOpenChange }: Props) => {
   const subtotal = carrinho.reduce((acc, item) => acc + item.precoUnitario * item.quantidade, 0);
   const totalItens = carrinho.reduce((acc, item) => acc + item.quantidade, 0);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitSuccess, setSubmitSuccess] = useState(false);
 
-  const handleConfirmar = () => {
-    const result = onConfirmar();
-    if (result !== false) {
-      onOpenChange?.(false);
+  useEffect(() => {
+    if (!open) {
+      setIsSubmitting(false);
+      setSubmitSuccess(false);
     }
+  }, [open]);
+
+  const handleConfirmar = async () => {
+    if (carrinho.length === 0 || isSubmitting) return;
+
+    setIsSubmitting(true);
+    const result = await onConfirmar();
+
+    if (result === false) {
+      setIsSubmitting(false);
+      return;
+    }
+
+    setSubmitSuccess(true);
+
+    window.setTimeout(() => {
+      setSubmitSuccess(false);
+      setIsSubmitting(false);
+      onOpenChange?.(false);
+    }, 900);
   };
 
   return (
@@ -68,6 +91,10 @@ const CartDrawer = ({ carrinho, onUpdateQty, onRemove, onConfirmar, open, onOpen
                         <p className="text-destructive text-xs mt-0.5">
                           Sem {item.removidos.join(", ")}
                         </p>
+                      )}
+                      {item.bebida && <p className="text-muted-foreground text-xs mt-0.5">Bebida: {item.bebida}</p>}
+                      {item.observacoes && (
+                        <p className="text-muted-foreground text-xs mt-0.5">Obs.: {item.observacoes}</p>
                       )}
                     </div>
                     <button
@@ -117,9 +144,10 @@ const CartDrawer = ({ carrinho, onUpdateQty, onRemove, onConfirmar, open, onOpen
               </div>
               <Button
                 onClick={handleConfirmar}
+                disabled={isSubmitting || submitSuccess}
                 className="w-full h-14 rounded-xl text-lg font-black"
               >
-                Confirmar Pedido — {formatPrice(subtotal)}
+                {submitSuccess ? "Pedido enviado com sucesso" : isSubmitting ? "Enviando pedido..." : "Enviar pedido"}
               </Button>
             </div>
           </>
