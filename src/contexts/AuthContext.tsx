@@ -25,6 +25,7 @@ interface LoginResult {
 interface AuthContextType {
   currentGarcom: OperationalUser | null;
   currentCaixa: OperationalUser | null;
+  currentGerente: OperationalUser | null;
   getProfilesByRole: (role: UserRole) => OperationalUser[];
   loginWithPin: (role: UserRole, nome: string, pin: string) => Promise<LoginResult>;
   verifyManagerAccess: (nome: string, pin: string) => Promise<LoginResult>;
