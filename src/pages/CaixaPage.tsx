@@ -262,6 +262,10 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
     );
   }
 
+  if (mesa && comandaOpen) {
+    return <PedidoFlow modo="caixa" mesaId={mesa.id} garcomNome={currentOperator.nome} onBack={() => setComandaOpen(false)} />;
+  }
+
   const hasSomethingToClose = Boolean(mesa && (mesa.total > 0 || mesa.pedidos.length > 0 || mesa.carrinho.length > 0));
 
   const handleAddPayment = () => {
