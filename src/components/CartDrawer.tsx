@@ -202,15 +202,12 @@ const CartDrawer = ({
 
       <Dialog open={submitSuccess}>
         <DialogContent className="max-w-sm border-border bg-card p-8 text-center [&>button]:hidden">
-          <div className="flex flex-col items-center gap-5">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-secondary text-primary">
-              <CheckCircle2 className="h-8 w-8" />
+          <div className="flex flex-col items-center gap-6">
+            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-secondary text-primary animate-in zoom-in-50 fade-in-0 duration-300 ease-in-out">
+              <CheckCircle2 className="h-10 w-10" />
             </div>
-            <div className="space-y-2">
-              <h3 className="text-xl font-black text-foreground">Pedido enviado com sucesso</h3>
-              <p className="text-sm text-muted-foreground">Seu carrinho foi finalizado e o atendimento voltou para a tela inicial.</p>
-            </div>
-            <Button onClick={handleSuccessOk} className="h-12 w-full rounded-2xl text-base font-black">
+            <h3 className="text-2xl font-black text-foreground">Pedido enviado com sucesso</h3>
+            <Button onClick={handleSuccessOk} className="h-12 w-full rounded-2xl text-base font-black transition-transform duration-100 ease-in-out active:scale-[0.97]">
               OK
             </Button>
           </div>
