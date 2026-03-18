@@ -477,7 +477,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           carrinho: [],
           pedidos: [...mesa.pedidos, novoPedido],
           total: mesa.total + totalPedido,
-          status: "consumo",
+          status: "consumo" as const,
         };
       });
 
