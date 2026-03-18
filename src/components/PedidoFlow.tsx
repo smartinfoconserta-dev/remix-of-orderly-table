@@ -459,30 +459,26 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
           {homeHeroSlides.map((slide, index) => (
             <div
               key={slide.id}
-              className={`absolute inset-0 transition-all duration-700 ease-out ${
-                index === bannerIndex ? "opacity-100 scale-100" : "pointer-events-none opacity-0 scale-[1.02]"
-              }`}
+              aria-hidden={index !== bannerIndex}
+              className={`absolute inset-0 transition-opacity duration-700 ease-out ${index === bannerIndex ? "opacity-100" : "pointer-events-none opacity-0"}`}
             >
               <img src={slide.image} alt={slide.alt} className="h-full w-full object-cover" loading={index === 0 ? "eager" : "lazy"} />
-              <div className="absolute inset-0 bg-gradient-to-t from-background/60 via-background/10 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-background/40 via-transparent to-transparent" />
             </div>
           ))}
         </div>
 
-        <div className="absolute bottom-4 left-4 right-4 flex items-end justify-between gap-4 md:bottom-5 md:left-5 md:right-5">
-          <div className="rounded-full border border-border bg-background/65 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.22em] text-foreground backdrop-blur-md">
-            {homeHeroSlides[bannerIndex]?.label}
-          </div>
-          <div className="flex items-center gap-2 rounded-full border border-border bg-background/50 px-3 py-2 backdrop-blur-md">
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 flex flex-col items-center gap-3 px-4 pb-4 md:pb-5">
+          <div className="flex items-center gap-2 rounded-full bg-background/35 px-3 py-2 backdrop-blur-md">
             {homeHeroSlides.map((slide, index) => (
-              <button
+              <span
                 key={slide.id}
-                type="button"
-                aria-label={`Ir para banner ${index + 1}`}
-                onClick={() => setBannerIndex(index)}
-                className={`h-2 rounded-full transition-all duration-300 ${index === bannerIndex ? "w-7 bg-primary" : "w-2 bg-foreground/35 hover:bg-foreground/55"}`}
+                className={`h-1.5 rounded-full transition-all duration-500 ${index === bannerIndex ? "w-8 bg-primary" : "w-1.5 bg-background/70"}`}
               />
             ))}
+          </div>
+          <div className="rounded-full bg-background/35 px-3 py-1 text-[10px] font-medium uppercase tracking-[0.22em] text-foreground/90 backdrop-blur-md md:text-[11px]">
+            {homeHeroSlides[bannerIndex]?.label}
           </div>
         </div>
       </div>
