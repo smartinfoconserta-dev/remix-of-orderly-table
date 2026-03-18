@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ShoppingCart, Minus, Plus, Trash2 } from "lucide-react";
+import { CheckCircle2, Minus, Plus, ShoppingCart, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import type { ItemCarrinho } from "@/contexts/RestaurantContext";
@@ -9,13 +9,24 @@ interface Props {
   onUpdateQty: (uid: string, delta: number) => void;
   onRemove: (uid: string) => void;
   onConfirmar: () => Promise<boolean | void> | boolean | void;
+  onContinueOrdering?: () => void;
+  onSuccessAcknowledge?: () => void;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
 }
 
 const formatPrice = (v: number) => `R$ ${v.toFixed(2).replace(".", ",")}`;
 
-const CartDrawer = ({ carrinho, onUpdateQty, onRemove, onConfirmar, open, onOpenChange }: Props) => {
+const CartDrawer = ({
+  carrinho,
+  onUpdateQty,
+  onRemove,
+  onConfirmar,
+  onContinueOrdering,
+  onSuccessAcknowledge,
+  open,
+  onOpenChange,
+}: Props) => {
   const subtotal = carrinho.reduce((acc, item) => acc + item.precoUnitario * item.quantidade, 0);
   const totalItens = carrinho.reduce((acc, item) => acc + item.quantidade, 0);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -39,73 +50,82 @@ const CartDrawer = ({ carrinho, onUpdateQty, onRemove, onConfirmar, open, onOpen
       return;
     }
 
+    setIsSubmitting(false);
     setSubmitSuccess(true);
+  };
 
-    window.setTimeout(() => {
-      setSubmitSuccess(false);
-      setIsSubmitting(false);
-      onOpenChange?.(false);
-    }, 900);
+  const handleSuccessOk = () => {
+    setSubmitSuccess(false);
+    onSuccessAcknowledge?.();
+    onOpenChange?.(false);
   };
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetTrigger asChild>
-        <button className="relative flex items-center gap-2 px-5 py-3 rounded-xl bg-primary text-primary-foreground font-bold text-base active:scale-95 transition-transform">
-          <ShoppingCart className="w-5 h-5" />
-          <span>Carrinho</span>
+        <button className="relative flex items-center gap-2 rounded-xl bg-primary px-5 py-3 text-base font-bold text-primary-foreground transition-transform active:scale-95">
+          <ShoppingCart className="h-5 w-5" />
+          <span>Ver carrinho</span>
           {totalItens > 0 && (
-            <span className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-destructive text-destructive-foreground text-xs font-black flex items-center justify-center">
+            <span className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-destructive text-xs font-black text-destructive-foreground">
               {totalItens}
             </span>
           )}
         </button>
       </SheetTrigger>
-      <SheetContent side="right" className="w-full sm:max-w-md bg-card border-border p-0 flex flex-col">
-        <SheetHeader className="p-5 pb-3 border-b border-border">
-          <SheetTitle className="text-foreground text-xl font-black">Seu Carrinho</SheetTitle>
+
+      <SheetContent side="right" className="flex w-full flex-col border-border bg-card p-0 sm:max-w-md">
+        <SheetHeader className="border-b border-border p-5 pb-3">
+          <SheetTitle className="text-xl font-black text-foreground">Carrinho do pedido</SheetTitle>
         </SheetHeader>
 
-        {carrinho.length === 0 ? (
-          <div className="flex-1 flex flex-col items-center justify-center gap-3 p-6">
-            <ShoppingCart className="w-16 h-16 text-muted-foreground/30" />
-            <p className="text-muted-foreground text-base font-medium">Carrinho vazio</p>
-            <p className="text-muted-foreground text-sm text-center">
-              Adicione itens do cardápio para começar
-            </p>
+        {submitSuccess ? (
+          <div className="flex flex-1 flex-col items-center justify-center gap-5 p-6 text-center">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-secondary text-primary">
+              <CheckCircle2 className="h-8 w-8" />
+            </div>
+            <div className="space-y-2">
+              <h3 className="text-xl font-black text-foreground">Pedido enviado com sucesso</h3>
+              <p className="text-sm text-muted-foreground">O carrinho foi finalizado e o fluxo voltou para a tela inicial do atendimento.</p>
+            </div>
+            <Button onClick={handleSuccessOk} className="h-12 w-full rounded-2xl text-base font-black">
+              OK
+            </Button>
+          </div>
+        ) : carrinho.length === 0 ? (
+          <div className="flex flex-1 flex-col items-center justify-center gap-3 p-6">
+            <ShoppingCart className="h-16 w-16 text-muted-foreground/30" />
+            <p className="text-base font-medium text-muted-foreground">Carrinho vazio</p>
+            <p className="text-center text-sm text-muted-foreground">Adicione itens pelo fluxo guiado para montar o pedido.</p>
           </div>
         ) : (
           <>
-            <div className="flex-1 overflow-y-auto p-4 space-y-3">
+            <div className="flex-1 space-y-3 overflow-y-auto p-4">
               {carrinho.map((item) => (
-                <div key={item.uid} className="bg-secondary rounded-xl p-4 space-y-2">
+                <div key={item.uid} className="space-y-3 rounded-2xl bg-secondary p-4">
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1">
-                      <h4 className="text-foreground text-sm font-bold">{item.nome}</h4>
+                      <h4 className="text-sm font-bold text-foreground">{item.nome}</h4>
                       {item.adicionais.length > 0 && (
-                        <p className="text-primary text-xs mt-0.5">
-                          + {item.adicionais.map((a) => a.nome).join(", ")}
-                        </p>
+                        <p className="mt-0.5 text-xs text-primary">+ {item.adicionais.map((a) => a.nome).join(", ")}</p>
                       )}
                       {item.removidos.length > 0 && (
-                        <p className="text-destructive text-xs mt-0.5">
-                          Sem {item.removidos.join(", ")}
-                        </p>
+                        <p className="mt-0.5 text-xs text-destructive">Sem {item.removidos.join(", ")}</p>
                       )}
-                      {item.bebida && <p className="text-muted-foreground text-xs mt-0.5">Bebida: {item.bebida}</p>}
-                      {item.observacoes && (
-                        <p className="text-muted-foreground text-xs mt-0.5">Obs.: {item.observacoes}</p>
-                      )}
+                      {item.bebida && <p className="mt-0.5 text-xs text-muted-foreground">Bebida: {item.bebida}</p>}
+                      {item.tipo && <p className="mt-0.5 text-xs text-muted-foreground">Tipo: {item.tipo}</p>}
+                      {item.embalagem && <p className="mt-0.5 text-xs text-muted-foreground">Embalagem: {item.embalagem}</p>}
+                      {item.observacoes && <p className="mt-0.5 text-xs text-muted-foreground">Obs.: {item.observacoes}</p>}
                     </div>
                     <button
                       onClick={() => onRemove(item.uid)}
-                      className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-destructive transition-colors"
+                      className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-destructive"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Trash2 className="h-4 w-4" />
                     </button>
                   </div>
 
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between gap-3">
                     <div className="flex items-center gap-3">
                       <button
                         onClick={() => {
@@ -115,40 +135,51 @@ const CartDrawer = ({ carrinho, onUpdateQty, onRemove, onConfirmar, open, onOpen
                             onUpdateQty(item.uid, -1);
                           }
                         }}
-                        className="w-9 h-9 rounded-lg bg-background flex items-center justify-center text-foreground active:scale-90 transition-transform"
+                        className="flex h-9 w-9 items-center justify-center rounded-xl bg-background text-foreground transition-transform active:scale-90"
                       >
-                        {item.quantidade <= 1 ? <Trash2 className="w-4 h-4 text-destructive" /> : <Minus className="w-4 h-4" />}
+                        {item.quantidade <= 1 ? <Trash2 className="h-4 w-4 text-destructive" /> : <Minus className="h-4 w-4" />}
                       </button>
-                      <span className="text-foreground text-base font-bold min-w-[2ch] text-center">
-                        {item.quantidade}
-                      </span>
+                      <span className="min-w-[2ch] text-center text-base font-bold text-foreground">{item.quantidade}</span>
                       <button
                         onClick={() => onUpdateQty(item.uid, 1)}
-                        className="w-9 h-9 rounded-lg bg-background flex items-center justify-center text-foreground active:scale-90 transition-transform"
+                        className="flex h-9 w-9 items-center justify-center rounded-xl bg-background text-foreground transition-transform active:scale-90"
                       >
-                        <Plus className="w-4 h-4" />
+                        <Plus className="h-4 w-4" />
                       </button>
                     </div>
-                    <span className="text-foreground text-base font-black">
-                      {formatPrice(item.precoUnitario * item.quantidade)}
-                    </span>
+                    <span className="text-base font-black text-foreground">{formatPrice(item.precoUnitario * item.quantidade)}</span>
                   </div>
                 </div>
               ))}
             </div>
 
-            <div className="p-4 border-t border-border space-y-3">
+            <div className="space-y-3 border-t border-border p-4">
               <div className="flex items-center justify-between">
-                <span className="text-muted-foreground text-base font-medium">Subtotal</span>
-                <span className="text-foreground text-xl font-black">{formatPrice(subtotal)}</span>
+                <span className="text-base font-medium text-muted-foreground">Subtotal</span>
+                <span className="text-xl font-black text-foreground">{formatPrice(subtotal)}</span>
               </div>
-              <Button
-                onClick={handleConfirmar}
-                disabled={isSubmitting || submitSuccess}
-                className="w-full h-14 rounded-xl text-lg font-black"
-              >
-                {submitSuccess ? "Pedido enviado com sucesso" : isSubmitting ? "Enviando pedido..." : "Enviar pedido"}
-              </Button>
+
+              <div className="grid gap-3 sm:grid-cols-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    onContinueOrdering?.();
+                    onOpenChange?.(false);
+                  }}
+                  className="h-12 rounded-2xl font-bold"
+                >
+                  Adicionar mais itens
+                </Button>
+                <Button
+                  type="button"
+                  onClick={handleConfirmar}
+                  disabled={isSubmitting}
+                  className="h-12 rounded-2xl font-black"
+                >
+                  {isSubmitting ? "Enviando..." : "Enviar pedido"}
+                </Button>
+              </div>
             </div>
           </>
         )}

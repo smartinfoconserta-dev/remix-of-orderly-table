@@ -9,6 +9,8 @@ export interface ItemCarrinho {
   removidos: string[];
   adicionais: { nome: string; preco: number }[];
   bebida?: string | null;
+  tipo?: string | null;
+  embalagem?: string | null;
   observacoes?: string;
   precoUnitario: number;
 }
