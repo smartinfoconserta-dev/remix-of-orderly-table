@@ -287,16 +287,25 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
     [categoriaAtiva, categoriaExibida, isMobile],
   );
 
+  const navigateBack = useCallback(() => {
+    if (onBack) {
+      onBack();
+      return;
+    }
+
+    navigate(modo === "garcom" ? "/garcom" : "/caixa");
+  }, [modo, navigate, onBack]);
+
   const handleBack = useCallback(() => {
     if (modo === "cliente") return;
 
-    if (modo === "garcom" && carrinho.length > 0) {
+    if (carrinho.length > 0) {
       setShowExitAlert(true);
       return;
     }
 
-    navigate("/garcom");
-  }, [carrinho.length, modo, navigate]);
+    navigateBack();
+  }, [carrinho.length, modo, navigateBack]);
 
   const handleAddToCart = useCallback(
     (item: ItemCarrinho) => {
@@ -339,10 +348,12 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
       window.clearTimeout(orderSubmissionCooldownRef.current);
     }
 
+    const operador = modo === "garcom" ? currentGarcom : modo === "caixa" ? currentCaixa : undefined;
+
     try {
       confirmarPedido(mesaId, {
         modo,
-        operador: modo === "garcom" ? currentGarcom : undefined,
+        operador,
       });
       return true;
     } finally {
@@ -351,7 +362,7 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
         orderSubmissionCooldownRef.current = null;
       }, ORDER_SUBMIT_LOCK_MS);
     }
-  }, [carrinho.length, confirmarPedido, currentGarcom, mesaId, modo, validatePendingCart]);
+  }, [carrinho.length, confirmarPedido, currentCaixa, currentGarcom, mesaId, modo, validatePendingCart]);
 
   const handleSuccessAcknowledge = useCallback(() => {
     if (categorySwitchTimerRef.current) {
