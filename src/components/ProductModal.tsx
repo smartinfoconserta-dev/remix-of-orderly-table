@@ -524,7 +524,7 @@ const ProductModal = ({ produto, onClose, onAdd }: Props) => {
                       Avançar
                     </Button>
                   ) : (
-                    <Button type="button" onClick={handleAdd} className="h-12 rounded-2xl px-6 font-black md:min-w-[240px]">
+                    <Button type="button" onClick={handleAdd} disabled={isAddLocked} className="h-12 rounded-2xl px-6 font-black md:min-w-[240px] disabled:pointer-events-none disabled:opacity-70">
                       Adicionar ao carrinho
                     </Button>
                   )}
