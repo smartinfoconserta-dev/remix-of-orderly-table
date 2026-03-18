@@ -565,7 +565,41 @@ const ProductModal = ({ produto, onClose, onAdd }: Props) => {
               </aside>
 
               <section className="min-h-0 overflow-y-auto p-5 md:p-6">
-                {renderStepContent()}
+                <div className="relative min-h-full overflow-hidden">
+                  {previousStep ? (
+                    <div
+                      className={`absolute inset-0 transition-all ease-in-out ${
+                        transitionDirection === 1
+                          ? transitionPhase === "running"
+                            ? "-translate-x-full opacity-0"
+                            : "translate-x-0 opacity-100"
+                          : transitionPhase === "running"
+                            ? "translate-x-full opacity-0"
+                            : "translate-x-0 opacity-100"
+                      }`}
+                      style={{ transitionDuration: `${STEP_TRANSITION_MS}ms` }}
+                    >
+                      {renderStepContent(previousStep)}
+                    </div>
+                  ) : null}
+
+                  <div
+                    className={`relative transition-all ease-in-out ${
+                      previousStep
+                        ? transitionDirection === 1
+                          ? transitionPhase === "preparing"
+                            ? "translate-x-full opacity-0"
+                            : "translate-x-0 opacity-100"
+                          : transitionPhase === "preparing"
+                            ? "-translate-x-full opacity-0"
+                            : "translate-x-0 opacity-100"
+                        : "translate-x-0 opacity-100"
+                    }`}
+                    style={{ transitionDuration: `${STEP_TRANSITION_MS}ms` }}
+                  >
+                    {renderStepContent(displayStep)}
+                  </div>
+                </div>
                 <div className="h-6" />
               </section>
             </div>
