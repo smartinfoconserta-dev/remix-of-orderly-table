@@ -23,10 +23,11 @@ const infoCards = [
     qrLabel: "QR Code do Instagram do restaurante",
     qrImage: qrInstagram,
     articleClassName:
-      "bg-[linear-gradient(135deg,hsl(var(--primary)/0.2)_0%,hsl(var(--card))_54%,hsl(var(--card))_100%)] shadow-[0_30px_70px_-42px_hsl(var(--primary)/0.45)]",
+      "bg-[linear-gradient(135deg,hsl(var(--primary)/0.2)_0%,hsl(var(--card))_45%,hsl(var(--card))_100%)] shadow-[0_32px_80px_-42px_hsl(var(--primary)/0.46)]",
     iconWrapClassName:
-      "border border-primary/20 bg-primary/12 text-primary shadow-[0_18px_40px_-26px_hsl(var(--primary)/0.7)]",
-    glowClassName: "bg-primary/18",
+      "border border-primary/25 bg-[linear-gradient(180deg,hsl(var(--primary)/0.22)_0%,hsl(var(--primary)/0.1)_100%)] text-primary shadow-[0_24px_48px_-24px_hsl(var(--primary)/0.8)]",
+    qrGlowClassName: "bg-primary/18",
+    badgeClassName: "border-primary/20 bg-primary/10 text-primary",
   },
   {
     id: "wifi",
@@ -37,10 +38,11 @@ const infoCards = [
     qrLabel: "QR Code do Wi‑Fi do restaurante",
     qrImage: qrWifi,
     articleClassName:
-      "bg-[linear-gradient(135deg,hsl(var(--secondary))_0%,hsl(var(--card))_55%,hsl(var(--card))_100%)] shadow-[0_30px_70px_-42px_hsl(var(--foreground)/0.22)]",
+      "bg-[linear-gradient(135deg,hsl(var(--secondary))_0%,hsl(var(--card))_52%,hsl(var(--card))_100%)] shadow-[0_32px_80px_-44px_hsl(var(--foreground)/0.26)]",
     iconWrapClassName:
-      "border border-border bg-secondary text-foreground shadow-[0_18px_40px_-26px_hsl(var(--foreground)/0.45)]",
-    glowClassName: "bg-foreground/10",
+      "border border-border bg-[linear-gradient(180deg,hsl(var(--secondary-foreground)/0.08)_0%,hsl(var(--secondary))_100%)] text-foreground shadow-[0_24px_48px_-24px_hsl(var(--foreground)/0.5)]",
+    qrGlowClassName: "bg-foreground/10",
+    badgeClassName: "border-border bg-background/55 text-foreground/80",
   },
 ] as const;
 
@@ -56,34 +58,44 @@ const RestaurantHomeSection = ({ config, featuredProducts, onOpenProduct }: Prop
               key={card.id}
               className={`relative overflow-hidden rounded-[1.75rem] border border-border p-5 backdrop-blur-sm md:p-6 ${card.articleClassName}`}
             >
-              <div className="absolute inset-0 bg-[linear-gradient(180deg,hsl(var(--background)/0.06)_0%,hsl(var(--background)/0.3)_100%)]" />
-              <div className={`absolute -left-12 top-1/2 h-36 w-36 -translate-y-1/2 rounded-full blur-3xl ${card.glowClassName}`} />
-              <div className="absolute -right-8 -top-8 h-28 w-28 rounded-full border border-border/60 bg-background/10 blur-2xl" />
+              <div className="absolute inset-0 bg-[linear-gradient(180deg,hsl(var(--background)/0.02)_0%,hsl(var(--background)/0.28)_100%)]" />
+              <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-foreground/15 to-transparent" />
+              <div className="absolute -left-10 top-10 h-28 w-28 rounded-full bg-background/20 blur-3xl" />
+              <div className={`absolute right-6 top-1/2 h-28 w-28 -translate-y-1/2 rounded-full blur-3xl ${card.qrGlowClassName}`} />
 
-              <div className="relative flex items-center justify-between gap-4">
-                <div className="min-w-0 max-w-[15rem] space-y-4">
-                  <span className="inline-flex rounded-full border border-border bg-background/45 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.24em] text-foreground/80 backdrop-blur-md md:text-xs">
+              <div className="relative flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-w-0 flex-1 space-y-4">
+                  <span className={`inline-flex rounded-full border px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.24em] backdrop-blur-md md:text-xs ${card.badgeClassName}`}>
                     {card.badge}
                   </span>
 
-                  <div className="space-y-2">
-                    <div className={`flex h-12 w-12 items-center justify-center rounded-2xl ${card.iconWrapClassName}`}>
-                      <Icon className="h-5 w-5" />
+                  <div className="flex items-start gap-4">
+                    <div className={`relative flex h-14 w-14 shrink-0 items-center justify-center rounded-[1.1rem] ${card.iconWrapClassName}`}>
+                      <div className="absolute inset-[1px] rounded-[calc(1.1rem-1px)] border border-foreground/10" />
+                      <Icon className="relative z-10 h-6 w-6" />
                     </div>
-                    <div className="space-y-1.5">
+
+                    <div className="min-w-0 space-y-1.5">
                       <h2 className="text-xl font-black tracking-tight text-foreground md:text-[1.35rem]">{card.title}</h2>
-                      <p className="text-sm leading-relaxed text-muted-foreground">{card.subtitle}</p>
+                      <p className="max-w-[18rem] text-sm leading-relaxed text-muted-foreground">{card.subtitle}</p>
                     </div>
                   </div>
                 </div>
 
-                <div className="shrink-0 rounded-[1.4rem] border border-border bg-background/90 p-2.5 shadow-[inset_0_1px_0_hsl(var(--background)),0_18px_40px_-28px_hsl(var(--foreground)/0.85)] backdrop-blur-md">
-                  <img
-                    src={card.qrImage}
-                    alt={card.qrLabel}
-                    className="h-28 w-28 rounded-[1rem] object-cover md:h-32 md:w-32"
-                    loading="lazy"
-                  />
+                <div className="relative shrink-0 self-end sm:self-auto">
+                  <div className={`absolute inset-3 rounded-[1.35rem] blur-2xl ${card.qrGlowClassName}`} />
+                  <div className="relative rounded-[1.55rem] border border-border bg-[linear-gradient(180deg,hsl(var(--background)/0.96)_0%,hsl(var(--secondary))_100%)] p-2 shadow-[inset_0_1px_0_hsl(var(--foreground)/0.08),0_24px_50px_-28px_hsl(var(--foreground)/0.95)] backdrop-blur-md">
+                    <div className="rounded-[1.2rem] bg-card p-2">
+                      <div className="rounded-[1rem] bg-background p-2 shadow-[inset_0_1px_0_hsl(var(--foreground)/0.08)]">
+                        <img
+                          src={card.qrImage}
+                          alt={card.qrLabel}
+                          className="h-28 w-28 rounded-[0.9rem] object-cover md:h-32 md:w-32"
+                          loading="lazy"
+                        />
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </article>
