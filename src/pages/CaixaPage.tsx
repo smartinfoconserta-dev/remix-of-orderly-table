@@ -699,6 +699,65 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
               </div>
             </div>
 
+            {accessMode === "gerente" && (
+              <div className="surface-card flex flex-col gap-4 p-5">
+                <div className="flex items-start gap-3">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-secondary text-foreground">
+                    <Smartphone className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-black text-foreground">Operação do tablet</h2>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      {tabletMesaId === mesa.id
+                        ? "Este tablet está vinculado à mesa atual. Você pode desvincular ou trocar para outra mesa com autenticação do gerente."
+                        : tabletMesa
+                          ? `O tablet está vinculado à Mesa ${String(tabletMesa.numero).padStart(2, "0")}.`
+                          : "Nenhum tablet está vinculado neste momento."}
+                    </p>
+                  </div>
+                </div>
+
+                {tabletMesaId === mesa.id ? (
+                  <>
+                    <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
+                      <div className="space-y-2">
+                        <label className="text-sm font-semibold text-foreground">Trocar para outra mesa</label>
+                        <Input
+                          value={tabletTargetMesaNumber}
+                          onChange={(event) => setTabletTargetMesaNumber(event.target.value.replace(/\D/g, "").slice(0, 2))}
+                          placeholder="Ex.: 12"
+                          inputMode="numeric"
+                          autoComplete="off"
+                        />
+                      </div>
+                      <Button type="button" onClick={handlePrepareTabletBinding} className="rounded-xl font-black">
+                        Trocar para outra mesa
+                      </Button>
+                    </div>
+
+                    <div className="flex flex-wrap gap-3">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => openCriticalAction({ type: "desvincular_tablet", mesaId: mesa.id, mesaNumero: mesa.numero })}
+                        className="rounded-xl font-bold"
+                      >
+                        Desvincular tablet
+                      </Button>
+                    </div>
+                  </>
+                ) : tabletMesa ? (
+                  <div className="rounded-2xl border border-border bg-secondary/60 p-4 text-sm text-foreground">
+                    Para trocar o tablet para esta mesa, abra a Mesa {String(tabletMesa.numero).padStart(2, "0")} e use a opção de troca.
+                  </div>
+                ) : (
+                  <div className="rounded-2xl border border-border bg-secondary/60 p-4 text-sm text-foreground">
+                    O tablet será vinculado inicialmente pelo próprio fluxo do cliente no primeiro acesso.
+                  </div>
+                )}
+              </div>
+            )}
+
             {confirmFechar && (
               <div className="surface-card flex flex-col gap-5 p-5">
                 <div>
