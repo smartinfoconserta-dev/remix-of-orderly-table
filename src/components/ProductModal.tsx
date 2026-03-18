@@ -512,10 +512,11 @@ const ProductModal = ({ produto, onClose, onAdd }: Props) => {
   return (
     <Dialog open={!!produto} onOpenChange={handleOpenChange}>
       <DialogContent
+        hideCloseButton
         useDefaultAnimation={false}
         overlayClassName="bg-foreground/70 backdrop-blur-sm data-[state=open]:duration-250 data-[state=closed]:duration-250 data-[state=open]:ease-out data-[state=closed]:ease-out"
         contentAnimationClassName="data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0 data-[state=open]:zoom-in-95 data-[state=closed]:zoom-out-95 data-[state=open]:duration-220 data-[state=closed]:duration-220 data-[state=open]:ease-out data-[state=closed]:ease-out"
-        className="max-h-[94vh] max-w-6xl overflow-hidden rounded-[2rem] border-border bg-card p-0 [&>button]:hidden"
+        className="max-h-[94vh] max-w-6xl overflow-hidden rounded-[2rem] border-border bg-card p-0"
       >
         {produto && (
           <div className="flex max-h-[94vh] flex-col overflow-hidden">

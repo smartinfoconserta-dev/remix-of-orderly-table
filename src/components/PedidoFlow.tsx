@@ -406,9 +406,11 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
         <div className="surface-card w-full max-w-md space-y-2 p-6 text-center">
           <h1 className="text-xl font-bold text-foreground">Mesa não encontrada</h1>
           <p className="text-muted-foreground">Não foi possível localizar a mesa informada.</p>
-          <Button onClick={() => navigate(modo === "cliente" ? "/" : "/garcom")} className="rounded-xl">
-            Voltar
-          </Button>
+          {modo !== "cliente" ? (
+            <Button onClick={() => navigate("/garcom")} className="rounded-xl">
+              Voltar
+            </Button>
+          ) : null}
         </div>
       </div>
     );
