@@ -349,15 +349,27 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
   }, [carrinho]);
 
   const handleConfirmar = useCallback(async () => {
-    if (carrinho.length === 0) return false;
+    if (carrinho.length === 0 || orderSubmissionLockRef.current) return false;
     if (!validatePendingCart()) return false;
 
-    await new Promise((resolve) => window.setTimeout(resolve, 900));
-    confirmarPedido(mesaId, {
-      modo,
-      operador: modo === "garcom" ? currentGarcom : undefined,
-    });
-    return true;
+    orderSubmissionLockRef.current = true;
+
+    if (orderSubmissionCooldownRef.current) {
+      window.clearTimeout(orderSubmissionCooldownRef.current);
+    }
+
+    try {
+      confirmarPedido(mesaId, {
+        modo,
+        operador: modo === "garcom" ? currentGarcom : undefined,
+      });
+      return true;
+    } finally {
+      orderSubmissionCooldownRef.current = window.setTimeout(() => {
+        orderSubmissionLockRef.current = false;
+        orderSubmissionCooldownRef.current = null;
+      }, ORDER_SUBMIT_LOCK_MS);
+    }
   }, [carrinho.length, confirmarPedido, currentGarcom, mesaId, modo, validatePendingCart]);
 
   const handleSuccessAcknowledge = useCallback(() => {
