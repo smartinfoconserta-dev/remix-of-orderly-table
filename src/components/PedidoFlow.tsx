@@ -208,6 +208,26 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
     };
   }, [shouldEnableClientIdle]);
 
+  useEffect(() => {
+    if (modo !== "cliente") return;
+
+    const lockClientRoute = () => {
+      if (window.location.pathname !== "/cliente") {
+        navigate("/cliente", { replace: true });
+        return;
+      }
+
+      window.history.pushState({ clienteLocked: true }, "", window.location.href);
+    };
+
+    lockClientRoute();
+    window.addEventListener("popstate", lockClientRoute);
+
+    return () => {
+      window.removeEventListener("popstate", lockClientRoute);
+    };
+  }, [modo, navigate]);
+
   const handleOpenProductModal = useCallback((produto: Produto) => {
     setSelectedProductCardId(produto.id);
 
