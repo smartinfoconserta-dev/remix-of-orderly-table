@@ -28,6 +28,7 @@ const stepMeta: Record<StepId, { label: string; optional: boolean }> = {
 
 const defaultBebidaOptions = ["Coca-Cola 350ml", "Guaraná 350ml", "Água sem gás"];
 const defaultEmbalagemOptions = ["Consumir na mesa", "Para viagem"];
+const standardFlowOrder: StepId[] = ["adicionais", "bebida", "remover", "tipo", "embalagem", "quantidade"];
 
 const formatPrice = (value: number) => `R$ ${value.toFixed(2).replace(".", ",")}`;
 
@@ -41,36 +42,21 @@ const getTipoOptions = (produto: Produto | null) => {
   return ["Padrão da casa", "Porção para compartilhar", "Execução rápida"];
 };
 
+const isComboProduct = (produto: Produto | null) => produto?.categoria === "combos";
+
 const isStepAvailable = (produto: Produto | null, step: StepId) => {
   if (!produto) return false;
   if (step === "adicionais") return Boolean(produto.adicionais?.length);
-  if (step === "bebida") return Boolean(produto.bebidaOptions?.length);
+  if (step === "bebida") return isComboProduct(produto) && Boolean((produto.bebidaOptions?.length ?? 0) || defaultBebidaOptions.length);
   if (step === "remover") return Boolean(produto.ingredientesRemoviveis?.length);
-  if (step === "tipo") return Boolean(produto.tipoOptions?.length);
-  if (step === "embalagem") return Boolean(produto.embalagemOptions?.length);
-  return true;
-};
-
-const deriveDefaultSteps = (produto: Produto | null): StepId[] => {
-  if (!produto) return ["quantidade"];
-
-  const defaults: StepId[] = [];
-  if (produto.adicionais?.length) defaults.push("adicionais");
-  if (produto.bebidaOptions?.length) defaults.push("bebida");
-  if (produto.ingredientesRemoviveis?.length) defaults.push("remover");
-  defaults.push("quantidade");
-  return defaults;
+  if (step === "tipo" || step === "embalagem" || step === "quantidade") return true;
+  return false;
 };
 
 const resolveSteps = (produto: Produto | null): StepId[] => {
-  const baseSteps = produto?.etapasFluxo?.length ? produto.etapasFluxo : deriveDefaultSteps(produto);
-  const filtered = baseSteps.filter((step, index) => baseSteps.indexOf(step) === index && isStepAvailable(produto, step));
+  if (!produto) return ["quantidade"];
 
-  if (!filtered.includes("quantidade")) {
-    filtered.push("quantidade");
-  }
-
-  return filtered;
+  return standardFlowOrder.filter((step) => isStepAvailable(produto, step));
 };
 
 const ProductModal = ({ produto, onClose, onAdd }: Props) => {
@@ -151,7 +137,11 @@ const ProductModal = ({ produto, onClose, onAdd }: Props) => {
     quantidade: `${quantidade} item(ns) • ${formatPrice(precoTotal)}`,
   };
 
-  const goToStep = (stepId: StepId) => setActiveStep(stepId);
+  const goToStep = (stepId: StepId) => {
+    const targetIndex = flowSteps.findIndex((step) => step === stepId);
+    if (targetIndex === -1 || targetIndex > activeStepIndex) return;
+    setActiveStep(stepId);
+  };
 
   const goToNextStep = () => {
     if (isLastStep) return;
@@ -320,7 +310,7 @@ const ProductModal = ({ produto, onClose, onAdd }: Props) => {
         onChange: setTipoSelecionado,
         options: tipoOptions,
         title: "Tipo do preparo",
-        description: "Etapa obrigatória para padronizar a execução na cozinha.",
+        description: "Defina o padrão do item antes de seguir para o fechamento do pedido.",
       });
     }
 
@@ -329,8 +319,8 @@ const ProductModal = ({ produto, onClose, onAdd }: Props) => {
         value: embalagemSelecionada,
         onChange: setEmbalagemSelecionada,
         options: embalagemOptions,
-        title: "Embalagem do pedido",
-        description: "Defina como o item deve ser entregue ao cliente.",
+        title: "Viagem ou consumo local",
+        description: "Informe como este item será servido para evitar erros de entrega.",
       });
     }
 
@@ -422,7 +412,8 @@ const ProductModal = ({ produto, onClose, onAdd }: Props) => {
                         key={step}
                         type="button"
                         onClick={() => goToStep(step)}
-                        className={`flex w-full items-center justify-between rounded-2xl border px-4 py-3 text-left transition-all ${
+                        disabled={index > activeStepIndex}
+                        className={`flex w-full items-center justify-between rounded-2xl border px-4 py-3 text-left transition-all disabled:cursor-not-allowed disabled:opacity-70 ${
                           selected
                             ? "border-primary bg-card text-foreground shadow-sm"
                             : "border-transparent bg-transparent text-muted-foreground hover:border-border hover:bg-card/70 hover:text-foreground"
