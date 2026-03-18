@@ -27,9 +27,10 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "sonner";
 
 interface PedidoFlowProps {
-  modo: "cliente" | "garcom";
+  modo: "cliente" | "garcom" | "caixa";
   mesaId: string;
   garcomNome?: string;
+  onBack?: () => void;
 }
 
 type CategoryTransitionState = "idle" | "exit" | "pre-enter";
