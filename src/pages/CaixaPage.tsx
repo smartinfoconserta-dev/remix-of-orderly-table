@@ -230,6 +230,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
   }, []);
 
   const handleVoltar = useCallback(() => {
+    setComandaOpen(false);
     setMesaSelecionada(null);
     resetCloseAccountState();
   }, [resetCloseAccountState]);
@@ -237,6 +238,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
   const handleSelecionarMesa = useCallback(
     (mesaId: string) => {
       dismissChamarGarcom(mesaId);
+      setComandaOpen(false);
       setMesaSelecionada(mesaId);
       resetCloseAccountState();
     },
