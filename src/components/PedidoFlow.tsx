@@ -8,7 +8,6 @@ import CategoryIcon from "@/components/CategoryIcon";
 import ProductModal from "@/components/ProductModal";
 import CartDrawer from "@/components/CartDrawer";
 import MinhaContaDrawer from "@/components/MinhaContaDrawer";
-
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,6 +19,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { banners, categorias, produtos, type Produto } from "@/data/menuData";
+import { useAuth } from "@/contexts/AuthContext";
 import { useRestaurant, type ItemCarrinho } from "@/contexts/RestaurantContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "sonner";
@@ -55,6 +55,7 @@ const formatMesaLabel = (mesaId: string) => {
 const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+  const { currentGarcom } = useAuth();
   const {
     getMesa,
     addToCart,
@@ -85,9 +86,9 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
 
   const mesa = getMesa(mesaId);
   const carrinho = mesa?.carrinho ?? [];
-  
+
   const mesaLabel = formatMesaLabel(mesaId);
-  const nomeAtendimento = garcomNome?.trim() || "Equipe de salão";
+  const nomeAtendimento = garcomNome?.trim() || currentGarcom?.nome || "Equipe de salão";
   const produtosFiltrados = produtos.filter((p) => p.categoria === categoriaExibida);
 
   useEffect(() => {
@@ -252,9 +253,12 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
     if (!validatePendingCart()) return false;
 
     await new Promise((resolve) => window.setTimeout(resolve, 900));
-    confirmarPedido(mesaId);
+    confirmarPedido(mesaId, {
+      modo,
+      operador: modo === "garcom" ? currentGarcom : undefined,
+    });
     return true;
-  }, [carrinho.length, confirmarPedido, mesaId, validatePendingCart]);
+  }, [carrinho.length, confirmarPedido, currentGarcom, mesaId, modo, validatePendingCart]);
 
   const handleSuccessAcknowledge = useCallback(() => {
     setCartOpen(false);
@@ -430,12 +434,12 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
     <div className="grid grid-cols-2 gap-3 md:grid-cols-2 md:gap-4 lg:grid-cols-3">
       {Array.from({ length: 6 }).map((_, index) => (
         <div key={`skeleton-${index}`} className="surface-card overflow-hidden">
-          <div className="aspect-[4/3] bg-muted/70 animate-pulse" />
+          <div className="aspect-[4/3] animate-pulse bg-muted/70" />
           <div className="space-y-2 p-3 md:p-4">
-            <div className="h-4 w-3/4 rounded-md bg-muted animate-pulse" />
-            <div className="h-3 w-full rounded-md bg-muted/80 animate-pulse" />
-            <div className="h-3 w-2/3 rounded-md bg-muted/80 animate-pulse" />
-            <div className="h-5 w-1/3 rounded-md bg-muted animate-pulse" />
+            <div className="h-4 w-3/4 animate-pulse rounded-md bg-muted" />
+            <div className="h-3 w-full animate-pulse rounded-md bg-muted/80" />
+            <div className="h-3 w-2/3 animate-pulse rounded-md bg-muted/80" />
+            <div className="h-5 w-1/3 animate-pulse rounded-md bg-muted" />
           </div>
         </div>
       ))}
@@ -484,7 +488,6 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
       </aside>
       <main ref={desktopMainRef} className="flex-1 overflow-y-auto pb-6">
         {bannerSection}
-        
         <div className="px-6 pt-4">{showCategorySkeleton ? skeletonGrid : productGrid}</div>
       </main>
     </div>
