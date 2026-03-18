@@ -137,7 +137,11 @@ const ProductModal = ({ produto, onClose, onAdd }: Props) => {
     quantidade: `${quantidade} item(ns) • ${formatPrice(precoTotal)}`,
   };
 
-  const goToStep = (stepId: StepId) => setActiveStep(stepId);
+  const goToStep = (stepId: StepId) => {
+    const targetIndex = flowSteps.findIndex((step) => step === stepId);
+    if (targetIndex === -1 || targetIndex > activeStepIndex) return;
+    setActiveStep(stepId);
+  };
 
   const goToNextStep = () => {
     if (isLastStep) return;
