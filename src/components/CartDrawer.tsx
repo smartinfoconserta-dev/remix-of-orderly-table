@@ -69,9 +69,9 @@ const CartDrawer = ({
   };
 
   const handleSuccessOk = () => {
+    onOpenChange?.(false);
     setSubmitSuccess(false);
     onSuccessAcknowledge?.();
-    onOpenChange?.(false);
   };
 
   return (

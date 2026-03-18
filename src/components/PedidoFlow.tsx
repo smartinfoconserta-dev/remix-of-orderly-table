@@ -217,7 +217,8 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
         return;
       }
 
-      window.history.pushState({ clienteLocked: true }, "", window.location.href);
+      if (window.history.state?.clienteLocked) return;
+      window.history.pushState({ ...window.history.state, clienteLocked: true }, "", window.location.href);
     };
 
     lockClientRoute();
