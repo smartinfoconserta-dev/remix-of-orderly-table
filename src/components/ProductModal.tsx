@@ -377,10 +377,10 @@ const ProductModal = ({ produto, onClose, onAdd }: Props) => {
     </div>
   );
 
-  const renderStepContent = () => {
+  const renderStepContent = (step: StepId) => {
     if (!produto) return null;
 
-    if (activeStep === "adicionais") {
+    if (step === "adicionais") {
       return (
         <div className="space-y-4">
           <div>
@@ -402,7 +402,7 @@ const ProductModal = ({ produto, onClose, onAdd }: Props) => {
       );
     }
 
-    if (activeStep === "bebida") {
+    if (step === "bebida") {
       return renderRadioStep({
         value: pedidoAtual.bebida ?? "",
         onChange: (value) => updatePedidoAtual("bebida", value),
@@ -412,7 +412,7 @@ const ProductModal = ({ produto, onClose, onAdd }: Props) => {
       });
     }
 
-    if (activeStep === "remover") {
+    if (step === "remover") {
       return (
         <div className="space-y-4">
           <div>
@@ -433,7 +433,7 @@ const ProductModal = ({ produto, onClose, onAdd }: Props) => {
       );
     }
 
-    if (activeStep === "tipo") {
+    if (step === "tipo") {
       return renderRadioStep({
         value: pedidoAtual.tipo ?? "",
         onChange: (value) => updatePedidoAtual("tipo", value),
@@ -443,7 +443,7 @@ const ProductModal = ({ produto, onClose, onAdd }: Props) => {
       });
     }
 
-    if (activeStep === "embalagem") {
+    if (step === "embalagem") {
       return renderRadioStep({
         value: pedidoAtual.viagem ?? "",
         onChange: (value) => updatePedidoAtual("viagem", value),
