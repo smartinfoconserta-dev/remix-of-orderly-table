@@ -535,59 +535,10 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                     ))}
                   </div>
 
-                  {accessMode === "gerente" && (
-                    <div className="surface-card flex flex-col gap-4 p-5">
-                      <div className="flex items-start gap-3">
-                        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-secondary text-foreground">
-                          <Smartphone className="h-5 w-5" />
-                        </div>
-                        <div>
-                          <h3 className="text-lg font-black text-foreground">Tablet da mesa</h3>
-                          <p className="mt-1 text-sm text-muted-foreground">Somente gerente pode desvincular o terminal atual ou trocar o vínculo para outra mesa.</p>
-                        </div>
-                      </div>
-
-                      <div className="rounded-2xl border border-border bg-secondary/60 p-4">
-                        <p className="text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">Vínculo atual</p>
-                        <p className="mt-2 text-lg font-black text-foreground">
-                          {tabletMesa ? `Mesa ${String(tabletMesa.numero).padStart(2, "0")}` : "Nenhuma mesa vinculada"}
-                        </p>
-                      </div>
-
-                      <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
-                        <div className="space-y-2">
-                          <label className="text-sm font-semibold text-foreground">Nova mesa do tablet</label>
-                          <Input
-                            value={tabletTargetMesaNumber}
-                            onChange={(event) => setTabletTargetMesaNumber(event.target.value.replace(/\D/g, "").slice(0, 2))}
-                            placeholder="Ex.: 12"
-                            inputMode="numeric"
-                            autoComplete="off"
-                          />
-                        </div>
-                        <Button type="button" onClick={handlePrepareTabletBinding} className="rounded-xl font-black">
-                          {tabletMesa ? "Trocar mesa do tablet" : "Vincular tablet"}
-                        </Button>
-                      </div>
-
-                      <div className="flex flex-wrap gap-3">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={() =>
-                            tabletMesa &&
-                            openCriticalAction({
-                              type: "desvincular_tablet",
-                              mesaId: tabletMesa.id,
-                              mesaNumero: tabletMesa.numero,
-                            })
-                          }
-                          disabled={!tabletMesa}
-                          className="rounded-xl font-bold"
-                        >
-                          Desvincular tablet
-                        </Button>
-                      </div>
+                  {accessMode === "gerente" && tabletMesa && (
+                    <div className="rounded-2xl border border-border bg-card p-4 text-sm text-muted-foreground">
+                      Tablet atualmente vinculado à Mesa <span className="font-black text-foreground">{String(tabletMesa.numero).padStart(2, "0")}</span>.
+                      Clique na mesa para desvincular ou trocar o terminal com autenticação do gerente.
                     </div>
                   )}
                 </div>
