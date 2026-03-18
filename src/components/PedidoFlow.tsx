@@ -300,12 +300,14 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
   );
 
   const handleBack = useCallback(() => {
+    if (modo === "cliente") return;
+
     if (modo === "garcom" && carrinho.length > 0) {
       setShowExitAlert(true);
       return;
     }
 
-    navigate(modo === "cliente" ? "/" : "/garcom");
+    navigate("/garcom");
   }, [carrinho.length, modo, navigate]);
 
   const handleAddToCart = useCallback(
