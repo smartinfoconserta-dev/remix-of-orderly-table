@@ -8,7 +8,7 @@ import CategoryIcon from "@/components/CategoryIcon";
 import ProductModal from "@/components/ProductModal";
 import CartDrawer from "@/components/CartDrawer";
 import MinhaContaDrawer from "@/components/MinhaContaDrawer";
-import StatusBadge from "@/components/StatusBadge";
+
 import {
   AlertDialog,
   AlertDialogAction,
@@ -85,7 +85,7 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
 
   const mesa = getMesa(mesaId);
   const carrinho = mesa?.carrinho ?? [];
-  const totalCarrinho = carrinho.reduce((acc, item) => acc + item.precoUnitario * item.quantidade, 0);
+  
   const mesaLabel = formatMesaLabel(mesaId);
   const nomeAtendimento = garcomNome?.trim() || "Equipe de salão";
   const produtosFiltrados = produtos.filter((p) => p.categoria === categoriaExibida);
@@ -379,28 +379,6 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
     </div>
   );
 
-  const flowSummary = (
-    <div className="px-4 pt-4 md:px-6">
-      <div className="surface-card flex flex-wrap items-center gap-3 p-4 md:gap-4 md:p-5">
-        <StatusBadge status={mesa.status} />
-        <div className="hidden h-8 w-px bg-border md:block" />
-        <div className="min-w-0 flex-1">
-          <p className="text-sm font-bold text-foreground md:text-base">
-            {modo === "cliente" ? "Fluxo guiado antes do carrinho" : `${mesaLabel} em atendimento`}
-          </p>
-          <p className="text-xs text-muted-foreground md:text-sm">
-            {modo === "cliente"
-              ? "Configure o item por etapas e confirme apenas no carrinho"
-              : `Garçom: ${nomeAtendimento}`}
-          </p>
-        </div>
-        <span className="text-lg font-black tabular-nums text-foreground md:text-2xl">
-          {formatPrice(mesa.total + totalCarrinho)}
-        </span>
-      </div>
-    </div>
-  );
-
   const categoryGridClasses =
     categoryTransitionState === "exit"
       ? "opacity-0 -translate-x-[10px]"
@@ -467,7 +445,6 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
   const mobileContent = (
     <>
       {bannerSection}
-      {flowSummary}
       <div className="mt-4">
         <CategoryTabs
           categorias={categorias}
@@ -507,7 +484,7 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
       </aside>
       <main ref={desktopMainRef} className="flex-1 overflow-y-auto pb-6">
         {bannerSection}
-        {flowSummary}
+        
         <div className="px-6 pt-4">{showCategorySkeleton ? skeletonGrid : productGrid}</div>
       </main>
     </div>
