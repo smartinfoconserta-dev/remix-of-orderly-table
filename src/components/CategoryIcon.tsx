@@ -1,6 +1,7 @@
-import { Beef, CupSoda, CakeSlice, Package, Flame, Popcorn } from "lucide-react";
+import { Beef, CupSoda, CakeSlice, Flame, House, Package, Popcorn } from "lucide-react";
 
 const iconMap: Record<string, React.FC<{ className?: string }>> = {
+  house: House,
   beef: Beef,
   popcorn: Popcorn,
   "cup-soda": CupSoda,
