@@ -32,6 +32,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRestaurant } from "@/contexts/RestaurantContext";
+import { clearBoundTabletMesaId, getBoundTabletMesaId, setBoundTabletMesaId } from "@/lib/tabletBinding";
 import type { PaymentMethod, UserRole } from "@/types/operations";
 
 const formatPrice = (v: number) => `R$ ${v.toFixed(2).replace(".", ",")}`;
@@ -58,6 +59,8 @@ const actionLabels: Record<string, string> = {
   chamar_garcom: "Chamada de garçom",
   lancar_pedido: "Lançamento de pedido",
   pedido_cliente: "Pedido do cliente",
+  desvincular_tablet: "Desvínculo do tablet",
+  vincular_tablet: "Vínculo do tablet",
 };
 
 type CriticalAction =
@@ -89,6 +92,18 @@ type CriticalAction =
       mesaNumero: number;
       pedidoId: string;
       pedidoNumero: number;
+    }
+  | {
+      type: "desvincular_tablet";
+      mesaId: string;
+      mesaNumero: number;
+    }
+  | {
+      type: "vincular_tablet";
+      mesaId: string | null;
+      mesaNumero: number | null;
+      proximaMesaId: string;
+      proximaMesaNumero: number;
     };
 
 interface CaixaPageProps {
@@ -124,8 +139,11 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
   const [criticalReason, setCriticalReason] = useState("");
   const [criticalError, setCriticalError] = useState<string | null>(null);
   const [isAuthorizingCriticalAction, setIsAuthorizingCriticalAction] = useState(false);
+  const [tabletMesaId, setTabletMesaId] = useState<string | null>(() => getBoundTabletMesaId());
+  const [tabletTargetMesaNumber, setTabletTargetMesaNumber] = useState("");
 
   const mesa = mesaSelecionada ? mesas.find((item) => item.id === mesaSelecionada) ?? null : null;
+  const tabletMesa = useMemo(() => (tabletMesaId ? mesas.find((item) => item.id === tabletMesaId) ?? null : null), [mesas, tabletMesaId]);
   const currentOperator = accessMode === "gerente" ? currentGerente : currentCaixa;
   const screenTitle = mesa
     ? `Mesa ${String(mesa.numero).padStart(2, "0")}`
@@ -245,6 +263,34 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
     setCriticalError(null);
   };
 
+  const handlePrepareTabletBinding = () => {
+    const mesaNumero = Number(tabletTargetMesaNumber);
+
+    if (!Number.isInteger(mesaNumero) || mesaNumero < 1) {
+      toast.error("Informe um número de mesa válido", { duration: 1400 });
+      return;
+    }
+
+    const proximaMesa = mesas.find((item) => item.numero === mesaNumero);
+    if (!proximaMesa) {
+      toast.error("Mesa não encontrada para este tablet", { duration: 1400 });
+      return;
+    }
+
+    if (tabletMesaId === proximaMesa.id) {
+      toast.error("O tablet já está vinculado a esta mesa", { duration: 1400 });
+      return;
+    }
+
+    openCriticalAction({
+      type: "vincular_tablet",
+      mesaId: tabletMesa?.id ?? null,
+      mesaNumero: tabletMesa?.numero ?? null,
+      proximaMesaId: proximaMesa.id,
+      proximaMesaNumero: proximaMesa.numero,
+    });
+  };
+
   const getCriticalActionCopy = () => {
     if (!criticalAction) return null;
 
@@ -272,6 +318,20 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
           title: "Autorizar exclusão de item do pedido",
           description: `${criticalAction.itemNome} será removido do Pedido #${criticalAction.pedidoNumero}.`,
           buttonLabel: "Autorizar exclusão",
+        };
+      case "desvincular_tablet":
+        return {
+          title: "Autorizar desvínculo do tablet",
+          description: `O terminal será liberado da Mesa ${String(criticalAction.mesaNumero).padStart(2, "0")}.`,
+          buttonLabel: "Desvincular tablet",
+        };
+      case "vincular_tablet":
+        return {
+          title: criticalAction.mesaNumero ? "Autorizar troca de mesa do tablet" : "Autorizar vínculo do tablet",
+          description: criticalAction.mesaNumero
+            ? `O terminal sairá da Mesa ${String(criticalAction.mesaNumero).padStart(2, "0")} e irá para a Mesa ${String(criticalAction.proximaMesaNumero).padStart(2, "0")}.`
+            : `O terminal será vinculado à Mesa ${String(criticalAction.proximaMesaNumero).padStart(2, "0")}.`,
+          buttonLabel: criticalAction.mesaNumero ? "Trocar mesa do tablet" : "Vincular tablet",
         };
       default:
         return null;
@@ -330,6 +390,19 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
         });
         toast.success("Item removido com autorização do gerente", { duration: 1200, icon: "🗑️" });
         break;
+      case "desvincular_tablet":
+        clearBoundTabletMesaId();
+        setTabletMesaId(null);
+        setTabletTargetMesaNumber("");
+        toast.success("Tablet desvinculado com autorização do gerente", { duration: 1200, icon: "📱" });
+        break;
+      case "vincular_tablet": {
+        const mesaVinculada = setBoundTabletMesaId(criticalAction.proximaMesaId);
+        setTabletMesaId(mesaVinculada);
+        setTabletTargetMesaNumber("");
+        toast.success(`Tablet vinculado à Mesa ${String(criticalAction.proximaMesaNumero).padStart(2, "0")}`, { duration: 1200, icon: "🔐" });
+        break;
+      }
     }
 
     resetCriticalDialog();
@@ -383,6 +456,62 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                       />
                     ))}
                   </div>
+
+                  {accessMode === "gerente" && (
+                    <div className="surface-card flex flex-col gap-4 p-5">
+                      <div className="flex items-start gap-3">
+                        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-secondary text-foreground">
+                          <Smartphone className="h-5 w-5" />
+                        </div>
+                        <div>
+                          <h3 className="text-lg font-black text-foreground">Tablet da mesa</h3>
+                          <p className="mt-1 text-sm text-muted-foreground">Somente gerente pode desvincular o terminal atual ou trocar o vínculo para outra mesa.</p>
+                        </div>
+                      </div>
+
+                      <div className="rounded-2xl border border-border bg-secondary/60 p-4">
+                        <p className="text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">Vínculo atual</p>
+                        <p className="mt-2 text-lg font-black text-foreground">
+                          {tabletMesa ? `Mesa ${String(tabletMesa.numero).padStart(2, "0")}` : "Nenhuma mesa vinculada"}
+                        </p>
+                      </div>
+
+                      <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
+                        <div className="space-y-2">
+                          <label className="text-sm font-semibold text-foreground">Nova mesa do tablet</label>
+                          <Input
+                            value={tabletTargetMesaNumber}
+                            onChange={(event) => setTabletTargetMesaNumber(event.target.value.replace(/\D/g, "").slice(0, 2))}
+                            placeholder="Ex.: 12"
+                            inputMode="numeric"
+                            autoComplete="off"
+                          />
+                        </div>
+                        <Button type="button" onClick={handlePrepareTabletBinding} className="rounded-xl font-black">
+                          {tabletMesa ? "Trocar mesa do tablet" : "Vincular tablet"}
+                        </Button>
+                      </div>
+
+                      <div className="flex flex-wrap gap-3">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() =>
+                            tabletMesa &&
+                            openCriticalAction({
+                              type: "desvincular_tablet",
+                              mesaId: tabletMesa.id,
+                              mesaNumero: tabletMesa.numero,
+                            })
+                          }
+                          disabled={!tabletMesa}
+                          className="rounded-xl font-bold"
+                        >
+                          Desvincular tablet
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </TabsContent>
 
@@ -792,6 +921,12 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
           </DialogHeader>
 
           <div className="space-y-4">
+            {criticalAction?.type === "vincular_tablet" && (
+              <div className="rounded-2xl border border-border bg-secondary/60 p-4 text-sm text-foreground">
+                <p className="font-semibold">Destino do tablet: Mesa {String(criticalAction.proximaMesaNumero).padStart(2, "0")}</p>
+              </div>
+            )}
+
             <div className="space-y-2">
               <label className="text-sm font-semibold text-foreground">Nome do gerente</label>
               <Input value={criticalManagerName} onChange={(event) => setCriticalManagerName(event.target.value)} placeholder="Ex.: Mariana" maxLength={40} />

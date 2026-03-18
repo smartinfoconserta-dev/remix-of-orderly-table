@@ -217,17 +217,17 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
   useEffect(() => {
     if (modo !== "cliente") return;
 
-    const lockClientRoute = () => {
-      if (window.location.pathname !== "/cliente") {
-        navigate("/cliente", { replace: true });
-        return;
-      }
-
-      if (window.history.state?.clienteLocked) return;
-      window.history.pushState({ ...window.history.state, clienteLocked: true }, "", window.location.href);
+    const reinforceClientLock = () => {
+      window.history.pushState({ ...window.history.state, clienteLocked: true, lockedAt: Date.now() }, "", "/cliente");
     };
 
-    lockClientRoute();
+    const lockClientRoute = () => {
+      navigate("/cliente", { replace: true });
+      reinforceClientLock();
+    };
+
+    navigate("/cliente", { replace: true });
+    reinforceClientLock();
     window.addEventListener("popstate", lockClientRoute);
 
     return () => {
