@@ -27,6 +27,7 @@ interface AuthContextType {
   currentCaixa: OperationalUser | null;
   getProfilesByRole: (role: UserRole) => OperationalUser[];
   loginWithPin: (role: UserRole, nome: string, pin: string) => Promise<LoginResult>;
+  verifyManagerAccess: (nome: string, pin: string) => Promise<LoginResult>;
   logout: (role: UserRole) => void;
 }
 
@@ -146,6 +147,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return { ok: true, user: authenticatedUser ?? undefined };
   }, []);
 
+  const verifyManagerAccess = useCallback(async (nome: string, pin: string): Promise<LoginResult> => {
+    const parsed = loginSchema.safeParse({ nome, pin });
+    if (!parsed.success) {
+      return { ok: false, error: parsed.error.issues[0]?.message ?? "Revise os dados informados" };
+    }
+
+    const nomeNormalizado = parsed.data.nome.trim();
+    const gerente = state.users.find(
+      (user) => user.role === "gerente" && user.nome.toLocaleLowerCase("pt-BR") === nomeNormalizado.toLocaleLowerCase("pt-BR"),
+    );
+
+    if (!gerente) {
+      return { ok: false, error: "Gerente não encontrado" };
+    }
+
+    if (gerente.pinHash !== hashPin(parsed.data.pin)) {
+      return { ok: false, error: "PIN do gerente inválido" };
+    }
+
+    return { ok: true, user: toPublicUser(gerente) };
+  }, [state.users]);
+
   const logout = useCallback((role: UserRole) => {
     setState((prev) => {
       const sessions = { ...prev.sessions };
@@ -161,6 +184,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         currentCaixa,
         getProfilesByRole,
         loginWithPin,
+        verifyManagerAccess,
         logout,
       }}
     >

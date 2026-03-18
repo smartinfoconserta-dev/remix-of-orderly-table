@@ -1,5 +1,5 @@
 import React, { createContext, useCallback, useContext, useEffect, useState } from "react";
-import type { CashMovementType, OperationalUser } from "@/types/operations";
+import type { CashMovementType, OperationalUser, PaymentMethod } from "@/types/operations";
 
 export interface ItemCarrinho {
   uid: string;
@@ -40,6 +40,9 @@ export interface EventoOperacional {
   usuarioNome?: string;
   acao?: string;
   valor?: number;
+  itemNome?: string;
+  motivo?: string;
+  pedidoNumero?: number;
 }
 
 export interface MovimentacaoCaixa {
@@ -58,6 +61,7 @@ export interface FechamentoConta {
   mesaId: string;
   mesaNumero: number;
   total: number;
+  formaPagamento: PaymentMethod;
   criadoEm: string;
   criadoEmIso: string;
   caixaId: string;
@@ -87,6 +91,16 @@ interface MovimentacaoInput {
   usuario: OperationalUser;
 }
 
+interface ActionAuditInput {
+  usuario: OperationalUser;
+  motivo?: string;
+}
+
+interface FecharContaInput {
+  usuario: OperationalUser;
+  formaPagamento: PaymentMethod;
+}
+
 interface RestaurantStore {
   mesas: Mesa[];
   eventos: EventoOperacional[];
@@ -102,14 +116,15 @@ interface RestaurantContextType {
   getMesa: (id: string) => Mesa | undefined;
   updateMesa: (id: string, updates: Partial<Mesa>) => void;
   addToCart: (mesaId: string, item: ItemCarrinho) => void;
-  updateCartItemQty: (mesaId: string, uid: string, delta: number, usuario?: OperationalUser) => void;
-  removeFromCart: (mesaId: string, uid: string, usuario?: OperationalUser) => void;
+  updateCartItemQty: (mesaId: string, uid: string, delta: number, audit?: ActionAuditInput) => void;
+  removeFromCart: (mesaId: string, uid: string, audit?: ActionAuditInput) => void;
   confirmarPedido: (mesaId: string, meta?: PedidoMeta) => void;
   chamarGarcom: (mesaId: string) => void;
   dismissChamarGarcom: (mesaId: string) => void;
-  fecharConta: (mesaId: string, usuario?: OperationalUser) => void;
-  zerarMesa: (mesaId: string, usuario?: OperationalUser) => void;
-  ajustarItemPedido: (mesaId: string, pedidoId: string, itemUid: string, delta: number, usuario: OperationalUser) => void;
+  fecharConta: (mesaId: string, input?: FecharContaInput) => void;
+  zerarMesa: (mesaId: string, audit?: ActionAuditInput) => void;
+  ajustarItemPedido: (mesaId: string, pedidoId: string, itemUid: string, delta: number, audit: ActionAuditInput) => void;
+  cancelarPedido: (mesaId: string, pedidoId: string, audit: ActionAuditInput) => void;
   registrarMovimentacaoCaixa: (input: MovimentacaoInput) => void;
 }
 
@@ -234,6 +249,11 @@ const normalizeMesa = (mesa: Partial<Mesa>, fallbackNumero: number): Mesa => {
   };
 };
 
+const normalizePaymentMethod = (value: unknown): PaymentMethod => {
+  if (value === "credito" || value === "debito" || value === "pix") return value;
+  return "dinheiro";
+};
+
 const readStore = (): RestaurantStore => {
   if (typeof window === "undefined") {
     return {
@@ -274,6 +294,9 @@ const readStore = (): RestaurantStore => {
             usuarioNome: evento.usuarioNome,
             acao: evento.acao,
             valor: typeof evento.valor === "number" ? evento.valor : undefined,
+            itemNome: typeof evento.itemNome === "string" ? evento.itemNome : undefined,
+            motivo: typeof evento.motivo === "string" ? evento.motivo : undefined,
+            pedidoNumero: typeof evento.pedidoNumero === "number" ? evento.pedidoNumero : undefined,
           }))
         : [],
       movimentacoesCaixa: Array.isArray((parsed as Partial<RestaurantStore>).movimentacoesCaixa)
@@ -294,6 +317,7 @@ const readStore = (): RestaurantStore => {
             mesaId: String(fechamento.mesaId ?? ""),
             mesaNumero: Number(fechamento.mesaNumero ?? 0),
             total: Number(fechamento.total ?? 0),
+            formaPagamento: normalizePaymentMethod((fechamento as Partial<FechamentoConta>).formaPagamento),
             criadoEm: String(fechamento.criadoEm ?? formatDateTime()),
             criadoEmIso: String(fechamento.criadoEmIso ?? new Date().toISOString()),
             caixaId: String(fechamento.caixaId ?? ""),
@@ -357,7 +381,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }));
   }, []);
 
-  const updateCartItemQty = useCallback((mesaId: string, uid: string, delta: number, usuario?: OperationalUser) => {
+  const updateCartItemQty = useCallback((mesaId: string, uid: string, delta: number, audit?: ActionAuditInput) => {
     setStore((prev) => {
       let eventInput: Omit<EventoOperacional, "id" | "criadoEm" | "criadoEmIso"> | null = null;
 
@@ -372,17 +396,19 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           ? mesa.carrinho.filter((item) => item.uid !== uid)
           : mesa.carrinho.map((item) => (item.uid === uid ? { ...item, quantidade: newQty } : item));
 
-        if (usuario) {
+        if (audit?.usuario) {
           eventInput = {
             tipo: "caixa",
             descricao:
               newQty < 1
-                ? `Caixa ${usuario.nome} cancelou item ${currentItem.nome} pendente da ${formatMesaNumero(mesa.numero)}`
-                : `Caixa ${usuario.nome} editou item ${currentItem.nome} pendente da ${formatMesaNumero(mesa.numero)}`,
+                ? `Caixa ${audit.usuario.nome} excluiu item ${currentItem.nome} pendente da ${formatMesaNumero(mesa.numero)}`
+                : `Caixa ${audit.usuario.nome} editou item ${currentItem.nome} pendente da ${formatMesaNumero(mesa.numero)}`,
             mesaId,
-            usuarioId: usuario.id,
-            usuarioNome: usuario.nome,
+            usuarioId: audit.usuario.id,
+            usuarioNome: audit.usuario.nome,
             acao: newQty < 1 ? "cancelar_item" : "editar_pedido",
+            itemNome: currentItem.nome,
+            motivo: newQty < 1 ? audit.motivo : undefined,
           };
         }
 
@@ -399,7 +425,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     });
   }, []);
 
-  const removeFromCart = useCallback((mesaId: string, uid: string, usuario?: OperationalUser) => {
+  const removeFromCart = useCallback((mesaId: string, uid: string, audit?: ActionAuditInput) => {
     setStore((prev) => {
       let eventInput: Omit<EventoOperacional, "id" | "criadoEm" | "criadoEmIso"> | null = null;
 
@@ -409,14 +435,16 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         const currentItem = mesa.carrinho.find((item) => item.uid === uid);
         if (!currentItem) return mesa;
 
-        if (usuario) {
+        if (audit?.usuario) {
           eventInput = {
             tipo: "caixa",
-            descricao: `Caixa ${usuario.nome} cancelou item ${currentItem.nome} pendente da ${formatMesaNumero(mesa.numero)}`,
+            descricao: `Caixa ${audit.usuario.nome} excluiu item ${currentItem.nome} pendente da ${formatMesaNumero(mesa.numero)}`,
             mesaId,
-            usuarioId: usuario.id,
-            usuarioNome: usuario.nome,
+            usuarioId: audit.usuario.id,
+            usuarioNome: audit.usuario.nome,
             acao: "cancelar_item",
+            itemNome: currentItem.nome,
+            motivo: audit.motivo,
           };
         }
 
@@ -525,7 +553,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }));
   }, []);
 
-  const fecharConta = useCallback((mesaId: string, usuario?: OperationalUser) => {
+  const fecharConta = useCallback((mesaId: string, input?: FecharContaInput) => {
     setStore((prev) => {
       let fechamento: FechamentoConta | null = null;
       let eventInput: Omit<EventoOperacional, "id" | "criadoEm" | "criadoEmIso"> | null = null;
@@ -537,24 +565,25 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         if (!hasContent) return mesa;
 
         const now = new Date();
-        if (usuario) {
+        if (input?.usuario) {
           fechamento = {
             id: `fechamento-${now.getTime()}-${mesa.id}`,
             mesaId,
             mesaNumero: mesa.numero,
             total: mesa.total,
+            formaPagamento: input.formaPagamento,
             criadoEm: formatDateTime(now),
             criadoEmIso: now.toISOString(),
-            caixaId: usuario.id,
-            caixaNome: usuario.nome,
+            caixaId: input.usuario.id,
+            caixaNome: input.usuario.nome,
           };
 
           eventInput = {
             tipo: "caixa",
-            descricao: `Caixa ${usuario.nome} fechou conta da ${formatMesaNumero(mesa.numero)}`,
+            descricao: `Caixa ${input.usuario.nome} fechou conta da ${formatMesaNumero(mesa.numero)} em ${input.formaPagamento}`,
             mesaId,
-            usuarioId: usuario.id,
-            usuarioNome: usuario.nome,
+            usuarioId: input.usuario.id,
+            usuarioNome: input.usuario.nome,
             acao: "fechar_conta",
             valor: mesa.total,
           };
@@ -572,21 +601,22 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     });
   }, []);
 
-  const zerarMesa = useCallback((mesaId: string, usuario?: OperationalUser) => {
+  const zerarMesa = useCallback((mesaId: string, audit?: ActionAuditInput) => {
     setStore((prev) => {
       let eventInput: Omit<EventoOperacional, "id" | "criadoEm" | "criadoEmIso"> | null = null;
 
       const mesas = prev.mesas.map((mesa) => {
         if (mesa.id !== mesaId) return mesa;
 
-        if (usuario) {
+        if (audit?.usuario) {
           eventInput = {
             tipo: "caixa",
-            descricao: `Caixa ${usuario.nome} zerou a ${formatMesaNumero(mesa.numero)}`,
+            descricao: `Caixa ${audit.usuario.nome} zerou a ${formatMesaNumero(mesa.numero)}`,
             mesaId,
-            usuarioId: usuario.id,
-            usuarioNome: usuario.nome,
+            usuarioId: audit.usuario.id,
+            usuarioNome: audit.usuario.nome,
             acao: "zerar_mesa",
+            motivo: audit.motivo,
           };
         }
 
@@ -601,7 +631,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     });
   }, []);
 
-  const ajustarItemPedido = useCallback((mesaId: string, pedidoId: string, itemUid: string, delta: number, usuario: OperationalUser) => {
+  const ajustarItemPedido = useCallback((mesaId: string, pedidoId: string, itemUid: string, delta: number, audit: ActionAuditInput) => {
     setStore((prev) => {
       let eventInput: Omit<EventoOperacional, "id" | "criadoEm" | "criadoEmIso"> | null = null;
 
@@ -619,17 +649,23 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
             const itens = newQty < 1
               ? pedido.itens.filter((item) => item.uid !== itemUid)
               : pedido.itens.map((item) => (item.uid === itemUid ? { ...item, quantidade: newQty } : item));
+            const pedidoCancelado = itens.length === 0;
 
             eventInput = {
               tipo: "caixa",
               descricao:
-                newQty < 1
-                  ? `Caixa ${usuario.nome} cancelou item ${targetItem.nome} do Pedido #${pedido.numeroPedido} da ${formatMesaNumero(mesa.numero)}`
-                  : `Caixa ${usuario.nome} editou item ${targetItem.nome} do Pedido #${pedido.numeroPedido} da ${formatMesaNumero(mesa.numero)}`,
+                pedidoCancelado
+                  ? `Caixa ${audit.usuario.nome} cancelou o Pedido #${pedido.numeroPedido} da ${formatMesaNumero(mesa.numero)}`
+                  : newQty < 1
+                    ? `Caixa ${audit.usuario.nome} excluiu item ${targetItem.nome} do Pedido #${pedido.numeroPedido} da ${formatMesaNumero(mesa.numero)}`
+                    : `Caixa ${audit.usuario.nome} editou item ${targetItem.nome} do Pedido #${pedido.numeroPedido} da ${formatMesaNumero(mesa.numero)}`,
               mesaId,
-              usuarioId: usuario.id,
-              usuarioNome: usuario.nome,
-              acao: newQty < 1 ? "cancelar_item" : "editar_pedido",
+              usuarioId: audit.usuario.id,
+              usuarioNome: audit.usuario.nome,
+              acao: pedidoCancelado ? "cancelar_pedido" : newQty < 1 ? "cancelar_item" : "editar_pedido",
+              itemNome: targetItem.nome,
+              motivo: newQty < 1 ? audit.motivo : undefined,
+              pedidoNumero: pedido.numeroPedido,
             };
 
             return {
@@ -643,6 +679,42 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         if (!eventInput) return mesa;
 
         const total = pedidos.reduce((acc, pedido) => acc + pedido.total, 0);
+        const updated = { ...mesa, pedidos, total };
+        updated.status = derivarStatus(updated);
+        return updated;
+      });
+
+      return {
+        ...prev,
+        mesas,
+        eventos: eventInput ? appendEvent(prev.eventos, eventInput) : prev.eventos,
+      };
+    });
+  }, []);
+
+  const cancelarPedido = useCallback((mesaId: string, pedidoId: string, audit: ActionAuditInput) => {
+    setStore((prev) => {
+      let eventInput: Omit<EventoOperacional, "id" | "criadoEm" | "criadoEmIso"> | null = null;
+
+      const mesas = prev.mesas.map((mesa) => {
+        if (mesa.id !== mesaId) return mesa;
+
+        const pedido = mesa.pedidos.find((item) => item.id === pedidoId);
+        if (!pedido) return mesa;
+
+        eventInput = {
+          tipo: "caixa",
+          descricao: `Caixa ${audit.usuario.nome} cancelou o Pedido #${pedido.numeroPedido} da ${formatMesaNumero(mesa.numero)}`,
+          mesaId,
+          usuarioId: audit.usuario.id,
+          usuarioNome: audit.usuario.nome,
+          acao: "cancelar_pedido",
+          motivo: audit.motivo,
+          pedidoNumero: pedido.numeroPedido,
+        };
+
+        const pedidos = mesa.pedidos.filter((item) => item.id !== pedidoId);
+        const total = pedidos.reduce((acc, item) => acc + item.total, 0);
         const updated = { ...mesa, pedidos, total };
         updated.status = derivarStatus(updated);
         return updated;
@@ -703,6 +775,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         fecharConta,
         zerarMesa,
         ajustarItemPedido,
+        cancelarPedido,
         registrarMovimentacaoCaixa,
       }}
     >
