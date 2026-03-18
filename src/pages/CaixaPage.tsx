@@ -32,7 +32,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRestaurant } from "@/contexts/RestaurantContext";
-import type { PaymentMethod } from "@/types/operations";
+import type { PaymentMethod, UserRole } from "@/types/operations";
 
 const formatPrice = (v: number) => `R$ ${v.toFixed(2).replace(".", ",")}`;
 
@@ -91,7 +91,11 @@ type CriticalAction =
       pedidoNumero: number;
     };
 
-const CaixaPage = () => {
+interface CaixaPageProps {
+  accessMode?: Extract<UserRole, "caixa" | "gerente">;
+}
+
+const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
   const {
     mesas,
     eventos,
@@ -105,11 +109,11 @@ const CaixaPage = () => {
     ajustarItemPedido,
     cancelarPedido,
   } = useRestaurant();
-  const { currentCaixa, logout, verifyManagerAccess } = useAuth();
+  const { currentCaixa, currentGerente, logout, verifyManagerAccess } = useAuth();
   const [mesaSelecionada, setMesaSelecionada] = useState<string | null>(null);
   const [confirmFechar, setConfirmFechar] = useState(false);
   const [formaPagamento, setFormaPagamento] = useState<PaymentMethod>("dinheiro");
-  const [financeUnlocked, setFinanceUnlocked] = useState(false);
+  const [financeUnlocked, setFinanceUnlocked] = useState(accessMode === "gerente");
   const [financeManagerName, setFinanceManagerName] = useState("");
   const [financeManagerPin, setFinanceManagerPin] = useState("");
   const [financeError, setFinanceError] = useState<string | null>(null);
@@ -120,6 +124,13 @@ const CaixaPage = () => {
   const [criticalReason, setCriticalReason] = useState("");
   const [criticalError, setCriticalError] = useState<string | null>(null);
   const [isAuthorizingCriticalAction, setIsAuthorizingCriticalAction] = useState(false);
+
+  const currentOperator = accessMode === "gerente" ? currentGerente : currentCaixa;
+  const screenTitle = mesa
+    ? `Mesa ${String(mesa.numero).padStart(2, "0")}`
+    : accessMode === "gerente"
+      ? "Gerente"
+      : "Caixa";
 
   const mesa = mesaSelecionada ? mesas.find((item) => item.id === mesaSelecionada) ?? null : null;
 
@@ -181,10 +192,10 @@ const CaixaPage = () => {
     setIsAuthorizingCriticalAction(false);
   }, []);
 
-  if (!currentCaixa) {
+  if (!currentOperator) {
     return (
-      <AppLayout title="Caixa" showBack>
-        <OperationalAccessCard role="caixa" />
+      <AppLayout title={accessMode === "gerente" ? "Gerente" : "Caixa"} showBack>
+        <OperationalAccessCard role={accessMode} />
       </AppLayout>
     );
   }
@@ -193,7 +204,7 @@ const CaixaPage = () => {
 
   const handleFechar = () => {
     if (!mesaSelecionada) return;
-    fecharConta(mesaSelecionada, { usuario: currentCaixa, formaPagamento });
+    fecharConta(mesaSelecionada, { usuario: currentOperator, formaPagamento });
     toast.success("Conta fechada com registro da forma de pagamento", { duration: 1400, icon: "✅" });
     setMesaSelecionada(null);
     setConfirmFechar(false);
@@ -229,7 +240,7 @@ const CaixaPage = () => {
 
   const openCriticalAction = (action: CriticalAction) => {
     setCriticalAction(action);
-    setCriticalManagerName("");
+    setCriticalManagerName(accessMode === "gerente" ? currentOperator.nome : "");
     setCriticalManagerPin("");
     setCriticalReason("");
     setCriticalError(null);
@@ -300,22 +311,22 @@ const CaixaPage = () => {
 
     switch (criticalAction.type) {
       case "zerar_mesa":
-        zerarMesa(criticalAction.mesaId, { usuario: currentCaixa, motivo });
+        zerarMesa(criticalAction.mesaId, { usuario: currentOperator, motivo });
         setMesaSelecionada(null);
         setConfirmFechar(false);
         toast.success("Mesa zerada com autorização do gerente", { duration: 1200, icon: "🧹" });
         break;
       case "cancelar_pedido":
-        cancelarPedido(criticalAction.mesaId, criticalAction.pedidoId, { usuario: currentCaixa, motivo });
+        cancelarPedido(criticalAction.mesaId, criticalAction.pedidoId, { usuario: currentOperator, motivo });
         toast.success("Pedido cancelado com autorização do gerente", { duration: 1200, icon: "🛡️" });
         break;
       case "remover_item_carrinho":
-        removeFromCart(criticalAction.mesaId, criticalAction.itemUid, { usuario: currentCaixa, motivo });
+        removeFromCart(criticalAction.mesaId, criticalAction.itemUid, { usuario: currentOperator, motivo });
         toast.success("Item removido com autorização do gerente", { duration: 1200, icon: "🗑️" });
         break;
       case "remover_item_pedido":
         ajustarItemPedido(criticalAction.mesaId, criticalAction.pedidoId, criticalAction.itemUid, -criticalAction.quantidade, {
-          usuario: currentCaixa,
+          usuario: currentOperator,
           motivo,
         });
         toast.success("Item removido com autorização do gerente", { duration: 1200, icon: "🗑️" });
@@ -328,11 +339,11 @@ const CaixaPage = () => {
   return (
     <>
       <AppLayout
-        title={mesa ? `Mesa ${String(mesa.numero).padStart(2, "0")}` : "Caixa"}
+        title={screenTitle}
         showBack
         onBack={mesa ? handleVoltar : undefined}
         headerRight={
-          <Button variant="outline" onClick={() => logout("caixa")} className="gap-2 rounded-xl font-bold">
+          <Button variant="outline" onClick={() => logout(accessMode)} className="gap-2 rounded-xl font-bold">
             <LogOut className="h-4 w-4" />
             <span className="hidden sm:inline">Sair</span>
           </Button>
@@ -341,16 +352,22 @@ const CaixaPage = () => {
         {!mesa ? (
           <div className="flex flex-col gap-6">
             <div className="rounded-2xl border border-border bg-card p-4 md:p-5">
-              <p className="text-sm font-bold text-foreground">Caixa logado: {currentCaixa.nome}</p>
+              <p className="text-sm font-bold text-foreground">
+                {accessMode === "gerente" ? "Gerente logado" : "Caixa logado"}: {currentOperator.nome}
+              </p>
               <p className="mt-1 text-sm text-muted-foreground">
-                A operação diária mostra apenas mesas, pedidos e fechamento; os relatórios completos ficam protegidos por gerente.
+                {accessMode === "gerente"
+                  ? "Acesso completo para relatórios financeiros, fechamento e auditoria operacional."
+                  : "A operação diária mostra apenas mesas, pedidos, pagamentos e fechamento por mesa, sem faturamento total."}
               </p>
             </div>
 
             <Tabs defaultValue="mesas" className="w-full">
-              <TabsList className="grid h-auto w-full grid-cols-3 rounded-2xl bg-secondary p-1">
+              <TabsList className={`grid h-auto w-full rounded-2xl bg-secondary p-1 ${accessMode === "gerente" ? "grid-cols-3" : "grid-cols-2"}`}>
                 <TabsTrigger value="mesas" className="rounded-xl py-2.5 font-bold">Mesas</TabsTrigger>
-                <TabsTrigger value="fechamento" className="rounded-xl py-2.5 font-bold">Fechamento do Caixa</TabsTrigger>
+                {accessMode === "gerente" && (
+                  <TabsTrigger value="fechamento" className="rounded-xl py-2.5 font-bold">Fechamento do Caixa</TabsTrigger>
+                )}
                 <TabsTrigger value="logs" className="rounded-xl py-2.5 font-bold">Logs</TabsTrigger>
               </TabsList>
 
@@ -370,77 +387,79 @@ const CaixaPage = () => {
                 </div>
               </TabsContent>
 
-              <TabsContent value="fechamento" className="mt-4">
-                {!financeUnlocked ? (
-                  <div className="surface-card mx-auto flex max-w-lg flex-col gap-4 p-5">
-                    <div className="flex items-start gap-3">
-                      <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-secondary text-foreground">
-                        <LockKeyhole className="h-5 w-5" />
+              {accessMode === "gerente" && (
+                <TabsContent value="fechamento" className="mt-4">
+                  {!financeUnlocked ? (
+                    <div className="surface-card mx-auto flex max-w-lg flex-col gap-4 p-5">
+                      <div className="flex items-start gap-3">
+                        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-secondary text-foreground">
+                          <LockKeyhole className="h-5 w-5" />
+                        </div>
+                        <div>
+                          <h2 className="text-lg font-black text-foreground">Relatórios protegidos</h2>
+                          <p className="mt-1 text-sm text-muted-foreground">
+                            Para visualizar o fechamento completo do caixa, valide o gerente já cadastrado neste dispositivo.
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <h2 className="text-lg font-black text-foreground">Relatórios protegidos</h2>
-                        <p className="mt-1 text-sm text-muted-foreground">
-                          Para visualizar o fechamento completo do caixa, valide o gerente já cadastrado neste dispositivo.
-                        </p>
+
+                      <div className="space-y-2">
+                        <label className="text-sm font-semibold text-foreground">Nome do gerente</label>
+                        <Input value={financeManagerName} onChange={(event) => setFinanceManagerName(event.target.value)} placeholder="Ex.: Mariana" maxLength={40} />
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-sm font-semibold text-foreground">PIN do gerente</label>
+                        <Input
+                          value={financeManagerPin}
+                          onChange={(event) => setFinanceManagerPin(event.target.value.replace(/\D/g, "").slice(0, 6))}
+                          placeholder="4 a 6 dígitos"
+                          inputMode="numeric"
+                          autoComplete="one-time-code"
+                        />
+                      </div>
+
+                      {financeError && <p className="rounded-xl border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive">{financeError}</p>}
+
+                      <Button onClick={handleUnlockFinance} className="h-12 rounded-xl text-base font-black" disabled={isUnlockingFinance}>
+                        <ShieldCheck className="h-4 w-4" />
+                        Liberar fechamento completo
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                      <div className="surface-card p-4">
+                        <p className="text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">Total do dia</p>
+                        <p className="mt-2 text-2xl font-black text-foreground">{formatPrice(resumoFinanceiro.totalDia)}</p>
+                      </div>
+                      <div className="surface-card p-4">
+                        <p className="text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">Dinheiro</p>
+                        <p className="mt-2 text-2xl font-black text-foreground">{formatPrice(resumoFinanceiro.dinheiro)}</p>
+                      </div>
+                      <div className="surface-card p-4">
+                        <p className="text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">Crédito</p>
+                        <p className="mt-2 text-2xl font-black text-foreground">{formatPrice(resumoFinanceiro.credito)}</p>
+                      </div>
+                      <div className="surface-card p-4">
+                        <p className="text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">Débito</p>
+                        <p className="mt-2 text-2xl font-black text-foreground">{formatPrice(resumoFinanceiro.debito)}</p>
+                      </div>
+                      <div className="surface-card p-4">
+                        <p className="text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">PIX</p>
+                        <p className="mt-2 text-2xl font-black text-foreground">{formatPrice(resumoFinanceiro.pix)}</p>
+                      </div>
+                      <div className="surface-card p-4">
+                        <p className="text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">Entradas extras</p>
+                        <p className="mt-2 text-2xl font-black text-foreground">{formatPrice(resumoFinanceiro.entradasExtras)}</p>
+                      </div>
+                      <div className="surface-card p-4 md:col-span-2 xl:col-span-3">
+                        <p className="text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">Saídas</p>
+                        <p className="mt-2 text-2xl font-black text-foreground">{formatPrice(resumoFinanceiro.saidas)}</p>
                       </div>
                     </div>
-
-                    <div className="space-y-2">
-                      <label className="text-sm font-semibold text-foreground">Nome do gerente</label>
-                      <Input value={financeManagerName} onChange={(event) => setFinanceManagerName(event.target.value)} placeholder="Ex.: Mariana" maxLength={40} />
-                    </div>
-
-                    <div className="space-y-2">
-                      <label className="text-sm font-semibold text-foreground">PIN do gerente</label>
-                      <Input
-                        value={financeManagerPin}
-                        onChange={(event) => setFinanceManagerPin(event.target.value.replace(/\D/g, "").slice(0, 6))}
-                        placeholder="4 a 6 dígitos"
-                        inputMode="numeric"
-                        autoComplete="one-time-code"
-                      />
-                    </div>
-
-                    {financeError && <p className="rounded-xl border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive">{financeError}</p>}
-
-                    <Button onClick={handleUnlockFinance} className="h-12 rounded-xl text-base font-black" disabled={isUnlockingFinance}>
-                      <ShieldCheck className="h-4 w-4" />
-                      Liberar fechamento completo
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                    <div className="surface-card p-4">
-                      <p className="text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">Total do dia</p>
-                      <p className="mt-2 text-2xl font-black text-foreground">{formatPrice(resumoFinanceiro.totalDia)}</p>
-                    </div>
-                    <div className="surface-card p-4">
-                      <p className="text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">Dinheiro</p>
-                      <p className="mt-2 text-2xl font-black text-foreground">{formatPrice(resumoFinanceiro.dinheiro)}</p>
-                    </div>
-                    <div className="surface-card p-4">
-                      <p className="text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">Crédito</p>
-                      <p className="mt-2 text-2xl font-black text-foreground">{formatPrice(resumoFinanceiro.credito)}</p>
-                    </div>
-                    <div className="surface-card p-4">
-                      <p className="text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">Débito</p>
-                      <p className="mt-2 text-2xl font-black text-foreground">{formatPrice(resumoFinanceiro.debito)}</p>
-                    </div>
-                    <div className="surface-card p-4">
-                      <p className="text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">PIX</p>
-                      <p className="mt-2 text-2xl font-black text-foreground">{formatPrice(resumoFinanceiro.pix)}</p>
-                    </div>
-                    <div className="surface-card p-4">
-                      <p className="text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">Entradas extras</p>
-                      <p className="mt-2 text-2xl font-black text-foreground">{formatPrice(resumoFinanceiro.entradasExtras)}</p>
-                    </div>
-                    <div className="surface-card p-4 md:col-span-2 xl:col-span-3">
-                      <p className="text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">Saídas</p>
-                      <p className="mt-2 text-2xl font-black text-foreground">{formatPrice(resumoFinanceiro.saidas)}</p>
-                    </div>
-                  </div>
-                )}
-              </TabsContent>
+                  )}
+                </TabsContent>
+              )}
 
               <TabsContent value="logs" className="mt-4">
                 <div className="surface-card p-5">
@@ -492,7 +511,7 @@ const CaixaPage = () => {
                   <StatusBadge status={mesa.status} />
                   <span className="text-3xl font-black text-foreground">{formatPrice(mesa.total)}</span>
                 </div>
-                <p className="mt-2 text-sm text-muted-foreground">Operador atual: {currentCaixa.nome}</p>
+                <p className="mt-2 text-sm text-muted-foreground">Operador atual: {currentOperator.nome}</p>
               </div>
               <div className="flex flex-col gap-2 sm:flex-row">
                 <Button
@@ -519,7 +538,7 @@ const CaixaPage = () => {
                 <div>
                   <p className="text-base font-black text-foreground">Confirmar fechamento da conta?</p>
                   <p className="mt-1 text-sm text-muted-foreground">
-                    Mesa {String(mesa.numero).padStart(2, "0")} • Total {formatPrice(mesa.total)} • Operador {currentCaixa.nome}
+                    Mesa {String(mesa.numero).padStart(2, "0")} • Total {formatPrice(mesa.total)} • Operador {currentOperator.nome}
                   </p>
                 </div>
 
@@ -630,7 +649,7 @@ const CaixaPage = () => {
                                         itemNome: item.nome,
                                         quantidade: item.quantidade,
                                       })
-                                    : ajustarItemPedido(mesa.id, pedido.id, item.uid, -1, { usuario: currentCaixa })
+                                    : ajustarItemPedido(mesa.id, pedido.id, item.uid, -1, { usuario: currentOperator })
                                 }
                               >
                                 <Minus className="h-4 w-4" />
@@ -639,7 +658,7 @@ const CaixaPage = () => {
                                 size="icon"
                                 variant="outline"
                                 className="rounded-xl"
-                                onClick={() => ajustarItemPedido(mesa.id, pedido.id, item.uid, 1, { usuario: currentCaixa })}
+                                onClick={() => ajustarItemPedido(mesa.id, pedido.id, item.uid, 1, { usuario: currentOperator })}
                               >
                                 <Plus className="h-4 w-4" />
                               </Button>
@@ -701,7 +720,7 @@ const CaixaPage = () => {
                                   itemUid: item.uid,
                                   itemNome: item.nome,
                                 })
-                              : updateCartItemQty(mesa.id, item.uid, -1, { usuario: currentCaixa })
+                              : updateCartItemQty(mesa.id, item.uid, -1, { usuario: currentOperator })
                           }
                         >
                           <Minus className="h-4 w-4" />
@@ -710,7 +729,7 @@ const CaixaPage = () => {
                           size="icon"
                           variant="outline"
                           className="rounded-xl"
-                          onClick={() => updateCartItemQty(mesa.id, item.uid, 1, { usuario: currentCaixa })}
+                          onClick={() => updateCartItemQty(mesa.id, item.uid, 1, { usuario: currentOperator })}
                         >
                           <Plus className="h-4 w-4" />
                         </Button>
