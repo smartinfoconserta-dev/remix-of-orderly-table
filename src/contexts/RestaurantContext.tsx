@@ -318,7 +318,7 @@ const resetMesa = (mesa: Mesa): Mesa => ({
   total: 0,
   chamarGarcom: false,
   chamadoEm: null,
-  status: "livre",
+  status: "livre" as const,
 });
 
 export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
