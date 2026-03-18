@@ -255,6 +255,12 @@ const normalizePaymentMethod = (value: unknown): PaymentMethod => {
   return "dinheiro";
 };
 
+const normalizeSplitPayment = (payment: Partial<SplitPayment>, index = 0): SplitPayment => ({
+  id: String(payment.id ?? `pag-${Date.now()}-${index}`),
+  formaPagamento: normalizePaymentMethod(payment.formaPagamento),
+  valor: Number(payment.valor ?? 0),
+});
+
 const readStore = (): RestaurantStore => {
   if (typeof window === "undefined") {
     return {
@@ -313,17 +319,34 @@ const readStore = (): RestaurantStore => {
           }))
         : [],
       fechamentos: Array.isArray((parsed as Partial<RestaurantStore>).fechamentos)
-        ? (parsed as Partial<RestaurantStore>).fechamentos!.map((fechamento) => ({
-            id: String(fechamento.id ?? `fech-${Date.now()}`),
-            mesaId: String(fechamento.mesaId ?? ""),
-            mesaNumero: Number(fechamento.mesaNumero ?? 0),
-            total: Number(fechamento.total ?? 0),
-            formaPagamento: normalizePaymentMethod((fechamento as Partial<FechamentoConta>).formaPagamento),
-            criadoEm: String(fechamento.criadoEm ?? formatDateTime()),
-            criadoEmIso: String(fechamento.criadoEmIso ?? new Date().toISOString()),
-            caixaId: String(fechamento.caixaId ?? ""),
-            caixaNome: String(fechamento.caixaNome ?? "Caixa"),
-          }))
+        ? (parsed as Partial<RestaurantStore>).fechamentos!.map((fechamento, index) => {
+            const pagamentos = Array.isArray((fechamento as Partial<FechamentoConta>).pagamentos)
+              ? (fechamento as Partial<FechamentoConta>).pagamentos!.map((payment, paymentIndex) =>
+                  normalizeSplitPayment(payment, paymentIndex),
+                )
+              : [
+                  normalizeSplitPayment(
+                    {
+                      formaPagamento: (fechamento as Partial<FechamentoConta>).formaPagamento,
+                      valor: Number(fechamento.total ?? 0),
+                    },
+                    index,
+                  ),
+                ];
+
+            return {
+              id: String(fechamento.id ?? `fech-${Date.now()}`),
+              mesaId: String(fechamento.mesaId ?? ""),
+              mesaNumero: Number(fechamento.mesaNumero ?? 0),
+              total: Number(fechamento.total ?? 0),
+              formaPagamento: pagamentos[0]?.formaPagamento ?? normalizePaymentMethod((fechamento as Partial<FechamentoConta>).formaPagamento),
+              pagamentos,
+              criadoEm: String(fechamento.criadoEm ?? formatDateTime()),
+              criadoEmIso: String(fechamento.criadoEmIso ?? new Date().toISOString()),
+              caixaId: String(fechamento.caixaId ?? ""),
+              caixaNome: String(fechamento.caixaNome ?? "Caixa"),
+            };
+          })
         : [],
     };
   } catch {
