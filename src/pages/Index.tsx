@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { User, HandPlatter, Wallet } from "lucide-react";
+import { BriefcaseBusiness, HandPlatter, User, Wallet } from "lucide-react";
 
 interface ModeCardProps {
   title: string;
@@ -37,24 +37,30 @@ const Index = () => {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full max-w-3xl">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-4xl">
         <ModeCard
           title="Cliente"
-          description="Autoatendimento na mesa"
+          description="Cardápio, pedidos e conta"
           icon={<User size={28} />}
           onClick={() => navigate("/cliente")}
         />
         <ModeCard
           title="Garçom"
-          description="Gestão de pedidos e mesas"
+          description="Mesas e lançamento de pedidos"
           icon={<HandPlatter size={28} />}
           onClick={() => navigate("/garcom")}
         />
         <ModeCard
           title="Caixa"
-          description="Fechamento e financeiro"
+          description="Mesas, pagamentos e fechamento"
           icon={<Wallet size={28} />}
           onClick={() => navigate("/caixa")}
+        />
+        <ModeCard
+          title="Gerente"
+          description="Acesso completo e relatórios"
+          icon={<BriefcaseBusiness size={28} />}
+          onClick={() => navigate("/gerente")}
         />
       </div>
     </div>
