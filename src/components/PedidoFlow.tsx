@@ -489,17 +489,27 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
             <article
               key={slide.id}
               aria-hidden={index !== bannerIndex}
-              className={`absolute inset-0 grid overflow-hidden transition-all duration-700 ease-out md:grid-cols-[minmax(0,1.05fr)_minmax(280px,0.95fr)] ${index === bannerIndex ? "opacity-100" : "pointer-events-none opacity-0"}`}
+              className={`absolute inset-0 overflow-hidden transition-all duration-700 ease-out ${index === bannerIndex ? "opacity-100" : "pointer-events-none opacity-0"}`}
             >
+              <img
+                src={slide.image}
+                alt={slide.alt}
+                className="absolute inset-0 h-full w-full object-cover"
+                style={{ objectPosition: "80% center" }}
+                loading={index === 0 ? "eager" : "lazy"}
+              />
+
               <div
-                className="relative flex min-h-[260px] items-end p-6 md:min-h-[340px] md:p-8"
+                className="absolute inset-0"
                 style={{
                   background:
-                    "linear-gradient(90deg, hsl(var(--background) / 0.85) 0%, hsl(var(--background) / 0.6) 40%, hsl(var(--background) / 0) 100%)",
+                    "linear-gradient(90deg, hsl(var(--background) / 0.92) 0%, hsl(var(--background) / 0.78) 34%, hsl(var(--background) / 0.36) 58%, hsl(var(--background) / 0.08) 100%)",
                 }}
-              >
-                <div className="absolute inset-y-0 right-0 hidden w-28 bg-gradient-to-r from-transparent to-background/30 md:block" />
-                <div className="relative z-10 max-w-xl space-y-3 md:space-y-4">
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-background/30 via-transparent to-transparent" />
+
+              <div className="relative z-10 flex min-h-[260px] items-end p-6 md:min-h-[340px] md:p-8">
+                <div className="max-w-xl space-y-3 md:space-y-4">
                   <span className="inline-flex rounded-full border border-border bg-background/45 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.24em] text-foreground/80 backdrop-blur-md md:text-xs">
                     {slide.label}
                   </span>
@@ -513,17 +523,6 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
                     {slide.price}
                   </p>
                 </div>
-              </div>
-
-              <div className="relative flex min-h-[220px] items-center justify-end bg-background md:min-h-[340px]">
-                <img
-                  src={slide.image}
-                  alt={slide.alt}
-                  className="h-full w-full object-cover object-right"
-                  style={{ objectPosition: "80% center" }}
-                  loading={index === 0 ? "eager" : "lazy"}
-                />
-                <div className="absolute inset-0 bg-gradient-to-l from-transparent via-background/10 to-background/35 md:to-transparent" />
               </div>
             </article>
           ))}
