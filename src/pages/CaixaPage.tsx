@@ -678,9 +678,12 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                 </div>
                 <p className="mt-2 text-sm text-muted-foreground">Operador atual: {currentOperator.nome}</p>
               </div>
-              <div className="flex flex-col gap-2 sm:flex-row">
+              <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-end">
                 <Button variant="outline" onClick={handleVoltar} className="rounded-xl font-bold">
                   Mesas
+                </Button>
+                <Button variant="outline" onClick={() => setComandaOpen(true)} className="rounded-xl font-bold">
+                  Abrir comanda
                 </Button>
                 <Button
                   variant="outline"
