@@ -92,7 +92,8 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
 
   const handleAddToCart = useCallback(
     (item: ItemCarrinho) => {
-      addToCart(mesaId, item);
+      addToCart(mesaId, { ...item, removidos: [...item.removidos], adicionais: item.adicionais.map((adicional) => ({ ...adicional })) });
+      setProdutoSelecionado(null);
       setCartOpen(true);
       toast.success("Item configurado e adicionado ao carrinho", { duration: 1200, icon: "🛒" });
     },
