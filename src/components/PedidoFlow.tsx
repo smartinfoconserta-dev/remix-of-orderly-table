@@ -491,8 +491,14 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
               aria-hidden={index !== bannerIndex}
               className={`absolute inset-0 grid overflow-hidden transition-all duration-700 ease-out md:grid-cols-[minmax(0,1.05fr)_minmax(280px,0.95fr)] ${index === bannerIndex ? "opacity-100" : "pointer-events-none opacity-0"}`}
             >
-              <div className="relative flex min-h-[260px] items-end bg-gradient-to-r from-background via-background/95 to-background/55 p-6 md:min-h-[340px] md:p-8">
-                <div className="absolute inset-y-0 right-0 hidden w-28 bg-gradient-to-r from-transparent to-background/35 md:block" />
+              <div
+                className="relative flex min-h-[260px] items-end p-6 md:min-h-[340px] md:p-8"
+                style={{
+                  background:
+                    "linear-gradient(90deg, hsl(var(--background) / 0.85) 0%, hsl(var(--background) / 0.6) 40%, hsl(var(--background) / 0) 100%)",
+                }}
+              >
+                <div className="absolute inset-y-0 right-0 hidden w-28 bg-gradient-to-r from-transparent to-background/30 md:block" />
                 <div className="relative z-10 max-w-xl space-y-3 md:space-y-4">
                   <span className="inline-flex rounded-full border border-border bg-background/45 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.24em] text-foreground/80 backdrop-blur-md md:text-xs">
                     {slide.label}
@@ -503,13 +509,21 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
                     </h2>
                     <p className="max-w-md text-sm text-muted-foreground md:text-base">{slide.description}</p>
                   </div>
-                  <p className="text-3xl font-black tracking-tight text-primary md:text-5xl">{slide.price}</p>
+                  <p className="text-3xl font-black tracking-tight text-primary drop-shadow-[0_10px_22px_hsl(var(--primary)/0.28)] md:text-5xl">
+                    {slide.price}
+                  </p>
                 </div>
               </div>
 
               <div className="relative min-h-[220px] md:min-h-[340px]">
-                <img src={slide.image} alt={slide.alt} className="h-full w-full object-cover" loading={index === 0 ? "eager" : "lazy"} />
-                <div className="absolute inset-0 bg-gradient-to-l from-transparent via-background/10 to-background/40 md:to-transparent" />
+                <img
+                  src={slide.image}
+                  alt={slide.alt}
+                  className="h-full w-full object-cover object-right"
+                  style={{ objectPosition: "right center" }}
+                  loading={index === 0 ? "eager" : "lazy"}
+                />
+                <div className="absolute inset-0 bg-gradient-to-l from-transparent via-background/10 to-background/35 md:to-transparent" />
               </div>
             </article>
           ))}
