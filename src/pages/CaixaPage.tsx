@@ -447,7 +447,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
 
     const motivo = criticalReason.trim();
 
-    switch (criticalAction.type) {
+      switch (criticalAction.type) {
       case "zerar_mesa":
         zerarMesa(criticalAction.mesaId, { usuario: currentOperator, motivo });
         setMesaSelecionada(null);
@@ -471,9 +471,10 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
         break;
       case "desvincular_tablet":
         clearBoundTabletMesaId();
+        clearTabletLoginUser();
         setTabletMesaId(null);
         setTabletTargetMesaNumber("");
-        toast.success("Tablet desvinculado com autorização do gerente", { duration: 1200, icon: "📱" });
+        toast.success("Tablet desvinculado e retorno ao login liberado", { duration: 1200, icon: "📱" });
         break;
       case "vincular_tablet": {
         const mesaVinculada = setBoundTabletMesaId(criticalAction.proximaMesaId);
