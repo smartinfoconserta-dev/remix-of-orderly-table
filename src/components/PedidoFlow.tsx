@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AlertTriangle, ArrowLeft, Bell, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -30,10 +30,16 @@ interface PedidoFlowProps {
   garcomNome?: string;
 }
 
+type CategoryTransitionState = "idle" | "exit" | "pre-enter";
+
 const RESTAURANTE = {
   nome: "Obsidian",
   logoFallback: "OB",
 };
+
+const CATEGORY_SWITCH_DELAY_MS = 150;
+const CATEGORY_EXIT_DURATION_MS = 150;
+const CATEGORY_ENTER_DURATION_MS = 130;
 
 const formatPrice = (v: number) => `R$ ${v.toFixed(2).replace(".", ",")}`;
 
@@ -55,18 +61,22 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
     dismissChamarGarcom,
   } = useRestaurant();
   const [categoriaAtiva, setCategoriaAtiva] = useState(categorias[0].id);
+  const [categoriaExibida, setCategoriaExibida] = useState(categorias[0].id);
+  const [categoryTransitionState, setCategoryTransitionState] = useState<CategoryTransitionState>("idle");
   const [bannerIndex, setBannerIndex] = useState(0);
   const [produtoSelecionado, setProdutoSelecionado] = useState<Produto | null>(null);
   const [cartOpen, setCartOpen] = useState(false);
   const [contaOpen, setContaOpen] = useState(false);
   const [showExitAlert, setShowExitAlert] = useState(false);
+  const categorySwitchTimerRef = useRef<number | null>(null);
+  const categoryEnterTimerRef = useRef<number | null>(null);
 
   const mesa = getMesa(mesaId);
   const carrinho = mesa?.carrinho ?? [];
   const totalCarrinho = carrinho.reduce((acc, item) => acc + item.precoUnitario * item.quantidade, 0);
   const mesaLabel = formatMesaLabel(mesaId);
   const nomeAtendimento = garcomNome?.trim() || "Equipe de salão";
-  const produtosFiltrados = produtos.filter((p) => p.categoria === categoriaAtiva);
+  const produtosFiltrados = produtos.filter((p) => p.categoria === categoriaExibida);
 
   useEffect(() => {
     const timer = window.setInterval(() => {
@@ -80,6 +90,43 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
       dismissChamarGarcom(mesaId);
     }
   }, [dismissChamarGarcom, mesa?.chamarGarcom, mesaId, modo]);
+
+  useEffect(() => {
+    return () => {
+      if (categorySwitchTimerRef.current) {
+        window.clearTimeout(categorySwitchTimerRef.current);
+      }
+      if (categoryEnterTimerRef.current) {
+        window.clearTimeout(categoryEnterTimerRef.current);
+      }
+    };
+  }, []);
+
+  const handleSelectCategoria = useCallback(
+    (categoriaId: string) => {
+      if (categoriaId === categoriaAtiva && categoriaId === categoriaExibida) return;
+
+      setCategoriaAtiva(categoriaId);
+      setCategoryTransitionState("exit");
+
+      if (categorySwitchTimerRef.current) {
+        window.clearTimeout(categorySwitchTimerRef.current);
+      }
+      if (categoryEnterTimerRef.current) {
+        window.clearTimeout(categoryEnterTimerRef.current);
+      }
+
+      categorySwitchTimerRef.current = window.setTimeout(() => {
+        setCategoriaExibida(categoriaId);
+        setCategoryTransitionState("pre-enter");
+
+        categoryEnterTimerRef.current = window.setTimeout(() => {
+          setCategoryTransitionState("idle");
+        }, 16);
+      }, CATEGORY_SWITCH_DELAY_MS);
+    },
+    [categoriaAtiva, categoriaExibida]
+  );
 
   const handleBack = useCallback(() => {
     if (modo === "garcom" && carrinho.length > 0) {
@@ -127,6 +174,8 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
   const handleSuccessAcknowledge = useCallback(() => {
     setCartOpen(false);
     setCategoriaAtiva(categorias[0].id);
+    setCategoriaExibida(categorias[0].id);
+    setCategoryTransitionState("idle");
     setProdutoSelecionado(null);
     window.scrollTo({ top: 0, behavior: isMobile ? "auto" : "smooth" });
   }, [isMobile]);
@@ -265,8 +314,20 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
     </div>
   );
 
+  const categoryGridClasses =
+    categoryTransitionState === "exit"
+      ? "opacity-0 -translate-x-[10px]"
+      : categoryTransitionState === "pre-enter"
+        ? "opacity-0 translate-x-[10px]"
+        : "opacity-100 translate-x-0";
+
   const productGrid = (
-    <div className="grid grid-cols-2 gap-3 md:grid-cols-2 md:gap-4 lg:grid-cols-3">
+    <div
+      className={`grid grid-cols-2 gap-3 transition-all ease-in-out md:grid-cols-2 md:gap-4 lg:grid-cols-3 ${categoryGridClasses}`}
+      style={{
+        transitionDuration: `${categoryTransitionState === "exit" ? CATEGORY_EXIT_DURATION_MS : CATEGORY_ENTER_DURATION_MS}ms`,
+      }}
+    >
       {produtosFiltrados.map((produto) => (
         <button
           key={produto.id}
@@ -305,7 +366,7 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
         <CategoryTabs
           categorias={categorias}
           categoriaAtiva={categoriaAtiva}
-          onSelect={setCategoriaAtiva}
+          onSelect={handleSelectCategoria}
           paddingClassName="px-4 pb-2"
         />
       </div>
@@ -324,7 +385,7 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
           {categorias.map((cat) => (
             <button
               key={cat.id}
-              onClick={() => setCategoriaAtiva(cat.id)}
+              onClick={() => handleSelectCategoria(cat.id)}
               className={`flex items-center gap-3 border-l-2 px-4 py-3.5 text-left text-sm font-medium transition-all ${
                 categoriaAtiva === cat.id
                   ? "border-l-primary bg-secondary/50 text-foreground"
