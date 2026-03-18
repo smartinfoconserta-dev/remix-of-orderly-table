@@ -646,7 +646,7 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
       className={`fixed inset-0 z-[70] transition-opacity duration-500 ${
         isClientIdle ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0"
       }`}
-      style={{ backgroundColor: "hsl(var(--background) / 0.7)" }}
+      style={{ backgroundColor: "hsl(var(--background) / 0.42)" }}
     />
   ) : null;
 
