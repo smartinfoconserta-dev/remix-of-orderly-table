@@ -43,6 +43,7 @@ const CATEGORY_ENTER_DURATION_MS = 130;
 const CATEGORY_SKELETON_DURATION_MS = 100;
 const CARD_STAGGER_STEP_MS = 50;
 const CARD_ANIMATION_DURATION_MS = 200;
+const PRODUCT_MODAL_OPEN_DELAY_MS = 120;
 
 const formatPrice = (v: number) => `R$ ${v.toFixed(2).replace(".", ",")}`;
 
@@ -68,6 +69,7 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
   const [categoryTransitionState, setCategoryTransitionState] = useState<CategoryTransitionState>("idle");
   const [showCategorySkeleton, setShowCategorySkeleton] = useState(false);
   const [cardsAnimatedIn, setCardsAnimatedIn] = useState(false);
+  const [selectedProductCardId, setSelectedProductCardId] = useState<string | null>(null);
   const [bannerIndex, setBannerIndex] = useState(0);
   const [produtoSelecionado, setProdutoSelecionado] = useState<Produto | null>(null);
   const [cartOpen, setCartOpen] = useState(false);
@@ -77,6 +79,7 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
   const categoryEnterTimerRef = useRef<number | null>(null);
   const categorySkeletonTimerRef = useRef<number | null>(null);
   const cardsAnimationTimerRef = useRef<number | null>(null);
+  const openProductTimerRef = useRef<number | null>(null);
   const mobileListTopRef = useRef<HTMLDivElement>(null);
   const desktopMainRef = useRef<HTMLElement>(null);
 
@@ -114,6 +117,9 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
       if (cardsAnimationTimerRef.current) {
         window.clearTimeout(cardsAnimationTimerRef.current);
       }
+      if (openProductTimerRef.current) {
+        window.clearTimeout(openProductTimerRef.current);
+      }
     };
   }, []);
 
@@ -134,6 +140,28 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
     }, 16);
   }, [categoriaExibida, showCategorySkeleton]);
 
+  const handleOpenProductModal = useCallback((produto: Produto) => {
+    setSelectedProductCardId(produto.id);
+
+    if (openProductTimerRef.current) {
+      window.clearTimeout(openProductTimerRef.current);
+    }
+
+    openProductTimerRef.current = window.setTimeout(() => {
+      setProdutoSelecionado(produto);
+    }, PRODUCT_MODAL_OPEN_DELAY_MS);
+  }, []);
+
+  const handleCloseProductModal = useCallback(() => {
+    if (openProductTimerRef.current) {
+      window.clearTimeout(openProductTimerRef.current);
+      openProductTimerRef.current = null;
+    }
+
+    setProdutoSelecionado(null);
+    setSelectedProductCardId(null);
+  }, []);
+
   const handleSelectCategoria = useCallback(
     (categoriaId: string) => {
       if (categoriaId === categoriaAtiva && categoriaId === categoriaExibida) return;
@@ -141,6 +169,12 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
       setCategoriaAtiva(categoriaId);
       setCategoryTransitionState("exit");
       setShowCategorySkeleton(true);
+      setSelectedProductCardId(null);
+
+      if (openProductTimerRef.current) {
+        window.clearTimeout(openProductTimerRef.current);
+        openProductTimerRef.current = null;
+      }
 
       if (isMobile) {
         mobileListTopRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -171,7 +205,7 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
         }, 16);
       }, CATEGORY_SWITCH_DELAY_MS);
     },
-    [categoriaAtiva, categoriaExibida, isMobile]
+    [categoriaAtiva, categoriaExibida, isMobile],
   );
 
   const handleBack = useCallback(() => {
@@ -191,10 +225,11 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
         adicionais: item.adicionais.map((adicional) => ({ ...adicional })),
       });
       setProdutoSelecionado(null);
+      setSelectedProductCardId(null);
       setCartOpen(true);
       toast.success("Item configurado e adicionado ao carrinho", { duration: 1200, icon: "🛒" });
     },
-    [addToCart, mesaId]
+    [addToCart, mesaId],
   );
 
   const handleChamarGarcom = useCallback(() => {
@@ -228,7 +263,14 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
     setCategoryTransitionState("idle");
     setShowCategorySkeleton(false);
     setCardsAnimatedIn(false);
+    setSelectedProductCardId(null);
     setProdutoSelecionado(null);
+
+    if (openProductTimerRef.current) {
+      window.clearTimeout(openProductTimerRef.current);
+      openProductTimerRef.current = null;
+    }
+
     window.scrollTo({ top: 0, behavior: isMobile ? "auto" : "smooth" });
   }, [isMobile]);
 
@@ -373,30 +415,36 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
         transitionDuration: `${categoryTransitionState === "exit" ? CATEGORY_EXIT_DURATION_MS : CATEGORY_ENTER_DURATION_MS}ms`,
       }}
     >
-      {produtosFiltrados.map((produto, index) => (
-        <button
-          key={produto.id}
-          onClick={() => setProdutoSelecionado(produto)}
-          className="surface-card flex flex-col overflow-hidden text-left will-change-transform active:scale-[0.97]"
-          style={{
-            opacity: cardsAnimatedIn ? 1 : 0,
-            transform: cardsAnimatedIn ? "translateY(0)" : "translateY(20px)",
-            transitionProperty: "opacity, transform",
-            transitionDuration: `${CARD_ANIMATION_DURATION_MS}ms`,
-            transitionTimingFunction: "ease-out",
-            transitionDelay: `${Math.min(index, 3) * CARD_STAGGER_STEP_MS}ms`,
-          }}
-        >
-          <div className="aspect-[4/3] overflow-hidden">
-            <img src={produto.imagem} alt={produto.nome} className="h-full w-full object-cover" loading="lazy" />
-          </div>
-          <div className="flex flex-1 flex-col gap-1 p-3 md:p-4">
-            <h2 className="line-clamp-1 text-sm font-bold text-foreground md:text-base">{produto.nome}</h2>
-            <p className="line-clamp-2 flex-1 text-xs text-muted-foreground md:text-sm">{produto.descricao}</p>
-            <p className="mt-1 text-lg font-black text-foreground md:text-xl">{formatPrice(produto.preco)}</p>
-          </div>
-        </button>
-      ))}
+      {produtosFiltrados.map((produto, index) => {
+        const isCardSelected = selectedProductCardId === produto.id;
+
+        return (
+          <button
+            key={produto.id}
+            onClick={() => handleOpenProductModal(produto)}
+            className={`surface-card flex flex-col overflow-hidden text-left will-change-transform active:scale-[0.97] ${
+              isCardSelected ? "shadow-[0_16px_36px_-14px_hsl(var(--foreground)/0.34)]" : ""
+            }`}
+            style={{
+              opacity: cardsAnimatedIn ? 1 : 0,
+              transform: `translateY(${cardsAnimatedIn ? 0 : 20}px) scale(${isCardSelected ? 1.03 : 1})`,
+              transitionProperty: "opacity, transform, box-shadow",
+              transitionDuration: `${CARD_ANIMATION_DURATION_MS}ms`,
+              transitionTimingFunction: "ease-out",
+              transitionDelay: `${Math.min(index, 3) * CARD_STAGGER_STEP_MS}ms`,
+            }}
+          >
+            <div className="aspect-[4/3] overflow-hidden">
+              <img src={produto.imagem} alt={produto.nome} className="h-full w-full object-cover" loading="lazy" />
+            </div>
+            <div className="flex flex-1 flex-col gap-1 p-3 md:p-4">
+              <h2 className="line-clamp-1 text-sm font-bold text-foreground md:text-base">{produto.nome}</h2>
+              <p className="line-clamp-2 flex-1 text-xs text-muted-foreground md:text-sm">{produto.descricao}</p>
+              <p className="mt-1 text-lg font-black text-foreground md:text-xl">{formatPrice(produto.preco)}</p>
+            </div>
+          </button>
+        );
+      })}
     </div>
   );
 
@@ -470,7 +518,7 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
       <div className="flex min-h-screen flex-col bg-background">
         {header}
         {isMobile ? mobileContent : desktopContent}
-        <ProductModal produto={produtoSelecionado} onClose={() => setProdutoSelecionado(null)} onAdd={handleAddToCart} />
+        <ProductModal produto={produtoSelecionado} onClose={handleCloseProductModal} onAdd={handleAddToCart} />
         <MinhaContaDrawer pedidos={mesa.pedidos} total={mesa.total} open={contaOpen} onOpenChange={setContaOpen} />
       </div>
 
