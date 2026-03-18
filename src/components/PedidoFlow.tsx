@@ -406,7 +406,7 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
           <p className="text-muted-foreground">Não foi possível localizar a mesa informada.</p>
           {modo !== "cliente" ? (
             <Button onClick={() => navigate("/garcom")} className="rounded-xl">
-              Voltar
+              Ir para mesas
             </Button>
           ) : null}
         </div>
@@ -435,7 +435,7 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
           <button onClick={handleBack} className="shrink-0 text-muted-foreground transition-transform active:scale-95">
             <div className="flex items-center gap-2">
               <ArrowLeft className="h-5 w-5" />
-              <span className="hidden text-sm font-medium xl:inline">Voltar</span>
+              <span className="hidden text-sm font-medium xl:inline">Mesas</span>
             </div>
           </button>
         )}
