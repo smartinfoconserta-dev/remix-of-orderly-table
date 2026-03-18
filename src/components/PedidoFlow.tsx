@@ -515,11 +515,11 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
                 </div>
               </div>
 
-              <div className="relative min-h-[220px] md:min-h-[340px]">
+              <div className="relative flex min-h-[220px] items-center justify-end bg-background md:min-h-[340px]">
                 <img
                   src={slide.image}
                   alt={slide.alt}
-                  className="h-full w-full object-cover object-right"
+                  className="h-full w-full object-contain object-right"
                   style={{ objectPosition: "right center" }}
                   loading={index === 0 ? "eager" : "lazy"}
                 />
