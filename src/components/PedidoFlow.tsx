@@ -85,7 +85,7 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
 
   const mesa = getMesa(mesaId);
   const carrinho = mesa?.carrinho ?? [];
-  const totalCarrinho = carrinho.reduce((acc, item) => acc + item.precoUnitario * item.quantidade, 0);
+  
   const mesaLabel = formatMesaLabel(mesaId);
   const nomeAtendimento = garcomNome?.trim() || "Equipe de salão";
   const produtosFiltrados = produtos.filter((p) => p.categoria === categoriaExibida);
