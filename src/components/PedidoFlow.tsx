@@ -8,7 +8,6 @@ import CategoryIcon from "@/components/CategoryIcon";
 import ProductModal from "@/components/ProductModal";
 import CartDrawer from "@/components/CartDrawer";
 import MinhaContaDrawer from "@/components/MinhaContaDrawer";
-import StickyOrderButton from "@/components/StickyOrderButton";
 import StatusBadge from "@/components/StatusBadge";
 import {
   AlertDialog,
@@ -309,10 +308,7 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
           paddingClassName="px-4 pb-2"
         />
       </div>
-      <main className="flex-1 px-4 pb-6 pt-4">
-        {productGrid}
-        {carrinho.length > 0 && <div className="h-20" />}
-      </main>
+      <main className="flex-1 px-4 pb-6 pt-4">{productGrid}</main>
     </>
   );
 
@@ -343,10 +339,7 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
       <main className="flex-1 overflow-y-auto pb-6">
         {bannerSection}
         {flowSummary}
-        <div className="px-6 pt-4">
-          {productGrid}
-          {carrinho.length > 0 && <div className="h-20" />}
-        </div>
+        <div className="px-6 pt-4">{productGrid}</div>
       </main>
     </div>
   );
@@ -367,14 +360,6 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
           open={contaOpen}
           onOpenChange={setContaOpen}
         />
-        {carrinho.length > 0 && (
-          <StickyOrderButton
-            total={totalCarrinho}
-            onOpenCart={() => setCartOpen(true)}
-            label="Ver carrinho"
-            showTotal={false}
-          />
-        )}
       </div>
 
       <AlertDialog open={showExitAlert} onOpenChange={setShowExitAlert}>
