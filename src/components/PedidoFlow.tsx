@@ -443,8 +443,8 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
   const header = (
     <header className="sticky top-0 z-50 flex items-center justify-between gap-3 border-b border-border bg-background/95 px-4 py-3 backdrop-blur-md md:px-6">
       <div className="flex min-w-0 flex-1 items-center gap-3">
-        {modo === "garcom" && (
-          <button onClick={handleBack} className="shrink-0 text-muted-foreground transition-transform active:scale-95">
+        {modo !== "cliente" && (
+          <button type="button" onClick={handleBack} className="shrink-0 text-muted-foreground transition-transform active:scale-95">
             <div className="flex items-center gap-2">
               <ArrowLeft className="h-5 w-5" />
               <span className="hidden text-sm font-medium xl:inline">Mesas</span>
@@ -454,7 +454,7 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
         {restaurantIdentity}
       </div>
       <div className="flex shrink-0 items-center gap-2">
-        {modo === "garcom" && (
+        {modo !== "cliente" && (
           <div className="hidden items-center rounded-xl border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground md:flex">
             {nomeAtendimento}
           </div>
