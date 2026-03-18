@@ -48,7 +48,12 @@ const emptyState: AuthState = {
   sessions: {},
 };
 
-const AuthContext = createContext<AuthContextType | null>(null);
+const authContextStore = globalThis as typeof globalThis & {
+  __obsidianAuthContext__?: React.Context<AuthContextType | null>;
+};
+
+const AuthContext = authContextStore.__obsidianAuthContext__ ?? createContext<AuthContextType | null>(null);
+authContextStore.__obsidianAuthContext__ = AuthContext;
 
 const hashPin = (pin: string) => btoa(`pin:${pin}`).split("").reverse().join("");
 
