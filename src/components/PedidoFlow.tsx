@@ -208,6 +208,26 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
     };
   }, [shouldEnableClientIdle]);
 
+  useEffect(() => {
+    if (modo !== "cliente") return;
+
+    const lockClientRoute = () => {
+      if (window.location.pathname !== "/cliente") {
+        navigate("/cliente", { replace: true });
+        return;
+      }
+
+      window.history.pushState({ clienteLocked: true }, "", window.location.href);
+    };
+
+    lockClientRoute();
+    window.addEventListener("popstate", lockClientRoute);
+
+    return () => {
+      window.removeEventListener("popstate", lockClientRoute);
+    };
+  }, [modo, navigate]);
+
   const handleOpenProductModal = useCallback((produto: Produto) => {
     setSelectedProductCardId(produto.id);
 
@@ -280,12 +300,14 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
   );
 
   const handleBack = useCallback(() => {
+    if (modo === "cliente") return;
+
     if (modo === "garcom" && carrinho.length > 0) {
       setShowExitAlert(true);
       return;
     }
 
-    navigate(modo === "cliente" ? "/" : "/garcom");
+    navigate("/garcom");
   }, [carrinho.length, modo, navigate]);
 
   const handleAddToCart = useCallback(
@@ -406,12 +428,14 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
   const header = (
     <header className="sticky top-0 z-50 flex items-center justify-between gap-3 border-b border-border bg-background/95 px-4 py-3 backdrop-blur-md md:px-6">
       <div className="flex min-w-0 flex-1 items-center gap-3">
-        <button onClick={handleBack} className="shrink-0 text-muted-foreground transition-transform active:scale-95">
-          <div className="flex items-center gap-2">
-            <ArrowLeft className="h-5 w-5" />
-            <span className="hidden text-sm font-medium xl:inline">Voltar</span>
-          </div>
-        </button>
+        {modo === "garcom" && (
+          <button onClick={handleBack} className="shrink-0 text-muted-foreground transition-transform active:scale-95">
+            <div className="flex items-center gap-2">
+              <ArrowLeft className="h-5 w-5" />
+              <span className="hidden text-sm font-medium xl:inline">Voltar</span>
+            </div>
+          </button>
+        )}
         {restaurantIdentity}
       </div>
       <div className="flex shrink-0 items-center gap-2">
