@@ -49,7 +49,7 @@ const CATEGORY_SKELETON_DURATION_MS = 100;
 const CARD_STAGGER_STEP_MS = 50;
 const CARD_ANIMATION_DURATION_MS = 200;
 const PRODUCT_MODAL_OPEN_DELAY_MS = 120;
-const CLIENT_IDLE_TIMEOUT_MS = 60000;
+const CLIENT_IDLE_TIMEOUT_MS = 30000;
 const ORDER_SUBMIT_LOCK_MS = 2000;
 const TABLET_MIN_WIDTH = 768;
 const TABLET_MAX_WIDTH = 1279;
@@ -646,7 +646,7 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
       className={`fixed inset-0 z-[70] transition-opacity duration-500 ${
         isClientIdle ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0"
       }`}
-      style={{ backgroundColor: "hsl(var(--background) / 0.7)" }}
+      style={{ backgroundColor: "hsl(var(--background) / 0.42)" }}
     />
   ) : null;
 
@@ -661,14 +661,14 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
         />
       </div>
       <div ref={mobileListTopRef} />
-      <main className={`flex-1 pb-6 pt-2 transition-all duration-500 ${isClientIdle ? "brightness-[0.55] saturate-50" : "brightness-100 saturate-100"}`}>
+      <main className={`flex-1 pb-6 pt-2 transition-all duration-500 ${isClientIdle ? "brightness-[0.2] saturate-50" : "brightness-100 saturate-100"}`}>
         <div className="px-4">{showCategorySkeleton ? skeletonGrid : isHomeActive ? homeContent : productGrid}</div>
       </main>
     </>
   );
 
   const desktopContent = (
-    <div className={`flex flex-1 overflow-hidden transition-all duration-500 ${isClientIdle ? "brightness-[0.55] saturate-50" : "brightness-100 saturate-100"}`}>
+    <div className={`flex flex-1 overflow-hidden transition-all duration-500 ${isClientIdle ? "brightness-[0.2] saturate-50" : "brightness-100 saturate-100"}`}>
       <aside className="w-[19rem] shrink-0 overflow-y-auto border-r border-border bg-card/95 px-3 py-3 lg:w-[21rem]">
         <div className="sticky top-0 z-10 rounded-[1.5rem] border border-border bg-background/85 px-5 py-5 backdrop-blur-md">
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">Navegação</p>
