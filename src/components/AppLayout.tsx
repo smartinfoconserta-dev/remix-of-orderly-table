@@ -1,4 +1,3 @@
-import { useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 
 export interface AppLayoutProps {
@@ -10,28 +9,20 @@ export interface AppLayoutProps {
 }
 
 const AppLayout = ({ title, children, showBack = false, headerRight, onBack }: AppLayoutProps) => {
-  const navigate = useNavigate();
-
-  const handleBack = () => {
-    if (onBack) {
-      onBack();
-    } else {
-      navigate(-1);
-    }
-  };
+  const shouldShowBack = showBack && Boolean(onBack);
 
   return (
     <div className="min-h-svh flex flex-col bg-background">
-      <header className="flex items-center gap-3 px-4 md:px-6 py-4 border-b border-border bg-surface shrink-0">
-        {showBack && (
+      <header className="flex items-center gap-3 border-b border-border bg-surface px-4 py-4 shrink-0 md:px-6">
+        {shouldShowBack && (
           <button
-            onClick={handleBack}
-            className="surface-card flex items-center justify-center w-10 h-10 rounded-md"
+            onClick={onBack}
+            className="surface-card flex h-10 w-10 items-center justify-center rounded-md"
           >
-            <ArrowLeft className="w-5 h-5 text-foreground" />
+            <ArrowLeft className="h-5 w-5 text-foreground" />
           </button>
         )}
-        <h1 className="text-foreground text-lg md:text-xl font-bold tracking-tight truncate flex-1">
+        <h1 className="text-lg font-bold tracking-tight text-foreground truncate flex-1 md:text-xl">
           {title}
         </h1>
         {headerRight && <div className="flex items-center shrink-0">{headerRight}</div>}

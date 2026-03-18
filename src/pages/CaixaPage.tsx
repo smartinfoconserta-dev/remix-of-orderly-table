@@ -39,6 +39,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRestaurant } from "@/contexts/RestaurantContext";
+import { useRouteLock } from "@/hooks/use-route-lock";
 import { clearBoundTabletMesaId, getBoundTabletMesaId, setBoundTabletMesaId } from "@/lib/tabletBinding";
 import type { PaymentMethod, SplitPayment, UserRole } from "@/types/operations";
 
@@ -173,6 +174,8 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
       ? "Gerente"
       : "Caixa";
 
+  useRouteLock(accessMode === "gerente" ? "/gerente" : "/caixa");
+
   const resumoFinanceiro = useMemo(() => {
     const totalDia = fechamentos.reduce((acc, fechamento) => acc + fechamento.total, 0);
     const entradasExtras = movimentacoesCaixa
@@ -244,7 +247,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
 
   if (!currentOperator) {
     return (
-      <AppLayout title={accessMode === "gerente" ? "Gerente" : "Caixa"} showBack>
+      <AppLayout title={accessMode === "gerente" ? "Gerente" : "Caixa"}>
         <OperationalAccessCard role={accessMode} />
       </AppLayout>
     );
@@ -483,8 +486,6 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
     <>
       <AppLayout
         title={screenTitle}
-        showBack
-        onBack={mesa ? handleVoltar : undefined}
         headerRight={
           <Button variant="outline" onClick={() => logout(accessMode)} className="gap-2 rounded-xl font-bold">
             <LogOut className="h-4 w-4" />
@@ -713,6 +714,9 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                 <p className="mt-2 text-sm text-muted-foreground">Operador atual: {currentOperator.nome}</p>
               </div>
               <div className="flex flex-col gap-2 sm:flex-row">
+                <Button variant="outline" onClick={handleVoltar} className="rounded-xl font-bold">
+                  Mesas
+                </Button>
                 <Button
                   variant="outline"
                   onClick={() => openCriticalAction({ type: "zerar_mesa", mesaId: mesa.id, mesaNumero: mesa.numero })}

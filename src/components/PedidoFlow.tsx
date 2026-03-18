@@ -214,26 +214,6 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
     };
   }, [shouldEnableClientIdle]);
 
-  useEffect(() => {
-    if (modo !== "cliente") return;
-
-    const reinforceClientLock = () => {
-      window.history.pushState({ ...window.history.state, clienteLocked: true, lockedAt: Date.now() }, "", "/cliente");
-    };
-
-    const lockClientRoute = () => {
-      navigate("/cliente", { replace: true });
-      reinforceClientLock();
-    };
-
-    navigate("/cliente", { replace: true });
-    reinforceClientLock();
-    window.addEventListener("popstate", lockClientRoute);
-
-    return () => {
-      window.removeEventListener("popstate", lockClientRoute);
-    };
-  }, [modo, navigate]);
 
   const handleOpenProductModal = useCallback((produto: Produto) => {
     setSelectedProductCardId(produto.id);
@@ -426,7 +406,7 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
           <p className="text-muted-foreground">Não foi possível localizar a mesa informada.</p>
           {modo !== "cliente" ? (
             <Button onClick={() => navigate("/garcom")} className="rounded-xl">
-              Voltar
+              Ir para mesas
             </Button>
           ) : null}
         </div>
@@ -455,7 +435,7 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
           <button onClick={handleBack} className="shrink-0 text-muted-foreground transition-transform active:scale-95">
             <div className="flex items-center gap-2">
               <ArrowLeft className="h-5 w-5" />
-              <span className="hidden text-sm font-medium xl:inline">Voltar</span>
+              <span className="hidden text-sm font-medium xl:inline">Mesas</span>
             </div>
           </button>
         )}
@@ -725,12 +705,12 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="gap-2 sm:gap-2">
-            <AlertDialogCancel className="rounded-xl font-bold">Voltar e revisar</AlertDialogCancel>
+            <AlertDialogCancel className="rounded-xl font-bold">Continuar no pedido</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => navigate("/garcom")}
               className="rounded-xl bg-secondary font-bold text-foreground hover:bg-secondary/80"
             >
-              Sair mesmo assim
+              Ir para mesas
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
