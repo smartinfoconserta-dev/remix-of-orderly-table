@@ -593,7 +593,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                             {pedido.origem === "garcom"
                               ? `Lançado por ${pedido.garcomNome ?? "garçom identificado"}`
                               : "Lançado pelo cliente"}
-                            {` • ${pedido.criadoEm}`}
+                            {` • Enviado às ${pedido.criadoEm}`}
                           </p>
                         </div>
                         <div className="flex items-center gap-2">

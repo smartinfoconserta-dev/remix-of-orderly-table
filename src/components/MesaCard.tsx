@@ -1,97 +1,65 @@
-import { useEffect, useState } from "react";
-import { Bell, ShoppingCart, Receipt } from "lucide-react";
+import { Bell, Receipt, ShoppingCart } from "lucide-react";
 import type { Mesa } from "@/contexts/RestaurantContext";
 
 const formatPrice = (v: number) => `R$ ${v.toFixed(2).replace(".", ",")}`;
-
-const formatRelativeCallTime = (chamadoEm: number | null, now: number) => {
-  if (!chamadoEm) return "";
-
-  const diffMinutes = Math.floor((now - chamadoEm) / 60000);
-
-  if (diffMinutes <= 0) return "agora";
-  if (diffMinutes === 1) return "há 1 min";
-  return `há ${diffMinutes} min`;
-};
 
 interface Props {
   mesa: Mesa;
   onClick: () => void;
   showTotal?: boolean;
+  showIndicators?: boolean;
 }
 
-const MesaCard = ({ mesa, onClick, showTotal }: Props) => {
-  const { status, chamarGarcom, chamadoEm, carrinho, pedidos, total } = mesa;
-  const [now, setNow] = useState(() => Date.now());
+const MesaCard = ({ mesa, onClick, showTotal = true, showIndicators = true }: Props) => {
+  const { status, chamarGarcom, carrinho, pedidos, total } = mesa;
 
-  useEffect(() => {
-    if (!chamarGarcom) return;
-
-    setNow(Date.now());
-    const interval = window.setInterval(() => setNow(Date.now()), 30000);
-
-    return () => window.clearInterval(interval);
-  }, [chamarGarcom, chamadoEm]);
-
-  const borderClass = chamarGarcom
-    ? "border-destructive/60 animate-pulse"
+  const toneClass = chamarGarcom
+    ? "border-destructive/45 bg-destructive/5"
     : status === "pendente"
-      ? "border-status-pendente/40"
+      ? "border-status-pendente/35 bg-status-pendente/10"
       : status === "consumo"
-        ? "border-status-livre/30"
-        : "border-border";
-
-  const bgClass = chamarGarcom
-    ? "bg-destructive/5"
-    : status === "pendente"
-      ? "bg-status-pendente/5"
-      : status === "consumo"
-        ? "bg-status-livre/5"
-        : "bg-card";
+        ? "border-status-consumo/30 bg-status-consumo/10"
+        : "border-border bg-secondary/45";
 
   return (
     <button
       onClick={onClick}
-      className={`relative flex flex-col items-center justify-center gap-2 p-5 md:p-6 min-h-[130px] md:min-h-[150px] rounded-xl border ${borderClass} ${bgClass} transition-all active:scale-[0.97]`}
+      className={`relative flex min-h-[136px] flex-col items-center justify-center gap-2 rounded-xl border p-5 text-center transition-all duration-150 hover:-translate-y-0.5 hover:shadow-lg active:scale-[0.985] ${toneClass}`}
     >
       {chamarGarcom && (
-        <span className="absolute top-2 right-2 w-6 h-6 rounded-full bg-destructive/90 text-destructive-foreground flex items-center justify-center">
-          <Bell className="w-3.5 h-3.5" />
+        <span className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-destructive/90 text-destructive-foreground">
+          <Bell className="h-3.5 w-3.5" />
         </span>
       )}
 
-      <span className="text-muted-foreground text-[10px] uppercase tracking-[0.2em] font-bold">
+      <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
         Mesa
       </span>
-      <span className="text-foreground text-3xl md:text-4xl font-black tabular-nums">
+      <span className="text-3xl font-black tabular-nums text-foreground md:text-4xl">
         {String(mesa.numero).padStart(2, "0")}
       </span>
 
       <StatusLabel status={status} chamarGarcom={chamarGarcom} />
 
-      {chamarGarcom && chamadoEm && (
-        <span className="text-[10px] font-semibold text-destructive/80">
-          {formatRelativeCallTime(chamadoEm, now)}
-        </span>
+      {showIndicators && (
+        <div className="mt-1 flex items-center gap-3">
+          {carrinho.length > 0 && (
+            <span className="flex items-center gap-1 text-[10px] font-semibold text-status-pendente">
+              <ShoppingCart className="h-3 w-3" />
+              {carrinho.length}
+            </span>
+          )}
+          {pedidos.length > 0 && (
+            <span className="flex items-center gap-1 text-[10px] font-semibold text-status-consumo">
+              <Receipt className="h-3 w-3" />
+              {pedidos.length}
+            </span>
+          )}
+        </div>
       )}
 
-      <div className="flex items-center gap-3 mt-1">
-        {carrinho.length > 0 && (
-          <span className="flex items-center gap-1 text-status-pendente text-[10px] font-semibold">
-            <ShoppingCart className="w-3 h-3" />
-            {carrinho.length}
-          </span>
-        )}
-        {pedidos.length > 0 && (
-          <span className="flex items-center gap-1 text-status-livre text-[10px] font-semibold">
-            <Receipt className="w-3 h-3" />
-            {pedidos.length}
-          </span>
-        )}
-      </div>
-
       {showTotal && (
-        <span className="text-primary text-sm font-black tabular-nums mt-0.5">
+        <span className="mt-1 text-sm font-black tabular-nums text-foreground">
           {formatPrice(total)}
         </span>
       )}
@@ -102,22 +70,31 @@ const MesaCard = ({ mesa, onClick, showTotal }: Props) => {
 const StatusLabel = ({ status, chamarGarcom }: { status: string; chamarGarcom: boolean }) => {
   if (chamarGarcom) {
     return (
-      <span className="text-[10px] font-bold uppercase tracking-widest text-destructive">
+      <span className="rounded-full border border-destructive/20 bg-destructive/10 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-destructive">
         Chamando
       </span>
     );
   }
 
-  const config: Record<string, { label: string; colorClass: string }> = {
-    livre: { label: "Livre", colorClass: "text-muted-foreground" },
-    pendente: { label: "Pendente", colorClass: "text-status-pendente" },
-    consumo: { label: "Em consumo", colorClass: "text-status-livre" },
+  const config: Record<string, { label: string; className: string }> = {
+    livre: {
+      label: "Livre",
+      className: "border-border bg-secondary text-muted-foreground",
+    },
+    pendente: {
+      label: "Pendente",
+      className: "border-status-pendente/25 bg-status-pendente/10 text-status-pendente",
+    },
+    consumo: {
+      label: "Em consumo",
+      className: "border-status-consumo/25 bg-status-consumo/10 text-status-consumo",
+    },
   };
 
-  const { label, colorClass } = config[status] ?? config.livre;
+  const { label, className } = config[status] ?? config.livre;
 
   return (
-    <span className={`text-[10px] font-bold uppercase tracking-widest ${colorClass}`}>
+    <span className={`rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-widest ${className}`}>
       {label}
     </span>
   );
