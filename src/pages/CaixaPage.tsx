@@ -174,6 +174,8 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
       ? "Gerente"
       : "Caixa";
 
+  useRouteLock(accessMode === "gerente" ? "/gerente" : "/caixa");
+
   const resumoFinanceiro = useMemo(() => {
     const totalDia = fechamentos.reduce((acc, fechamento) => acc + fechamento.total, 0);
     const entradasExtras = movimentacoesCaixa
@@ -245,7 +247,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
 
   if (!currentOperator) {
     return (
-      <AppLayout title={accessMode === "gerente" ? "Gerente" : "Caixa"} showBack>
+      <AppLayout title={accessMode === "gerente" ? "Gerente" : "Caixa"}>
         <OperationalAccessCard role={accessMode} />
       </AppLayout>
     );
