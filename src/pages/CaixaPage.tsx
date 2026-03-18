@@ -125,14 +125,13 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
   const [criticalError, setCriticalError] = useState<string | null>(null);
   const [isAuthorizingCriticalAction, setIsAuthorizingCriticalAction] = useState(false);
 
+  const mesa = mesaSelecionada ? mesas.find((item) => item.id === mesaSelecionada) ?? null : null;
   const currentOperator = accessMode === "gerente" ? currentGerente : currentCaixa;
   const screenTitle = mesa
     ? `Mesa ${String(mesa.numero).padStart(2, "0")}`
     : accessMode === "gerente"
       ? "Gerente"
       : "Caixa";
-
-  const mesa = mesaSelecionada ? mesas.find((item) => item.id === mesaSelecionada) ?? null : null;
 
   const resumoFinanceiro = useMemo(() => {
     const totalDia = fechamentos.reduce((acc, fechamento) => acc + fechamento.total, 0);
