@@ -23,10 +23,12 @@ export interface PedidoRealizado {
   total: number;
   criadoEm: string;
   criadoEmIso: string;
-  origem: "cliente" | "garcom";
+  origem: "cliente" | "garcom" | "caixa";
   mesaId: string;
   garcomId?: string;
   garcomNome?: string;
+  caixaId?: string;
+  caixaNome?: string;
 }
 
 export interface EventoOperacional {
@@ -81,7 +83,7 @@ export interface Mesa {
 }
 
 interface PedidoMeta {
-  modo: "cliente" | "garcom";
+  modo: "cliente" | "garcom" | "caixa";
   operador?: OperationalUser | null;
 }
 
