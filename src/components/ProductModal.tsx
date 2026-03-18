@@ -6,7 +6,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
-import type { Produto } from "@/data/menuData";
+import type { Produto, ProductStep } from "@/data/menuData";
 import type { ItemCarrinho } from "@/contexts/RestaurantContext";
 
 interface Props {
@@ -15,35 +15,77 @@ interface Props {
   onAdd: (item: ItemCarrinho) => void;
 }
 
-type StepId = "adicionais" | "bebida" | "remover" | "tipo" | "embalagem" | "quantidade";
+type StepId = ProductStep;
 
-const bebidaOptions = ["Sem bebida", "Coca-Cola 350ml", "Guaraná 350ml", "Água sem gás"];
-const embalagemOptions = ["Consumir na mesa", "Para viagem"];
+const stepMeta: Record<StepId, { label: string; optional: boolean }> = {
+  adicionais: { label: "Adicionais", optional: true },
+  bebida: { label: "Bebida", optional: true },
+  remover: { label: "Remover ingredientes", optional: true },
+  tipo: { label: "Tipo", optional: false },
+  embalagem: { label: "Embalagem", optional: false },
+  quantidade: { label: "Quantidade", optional: false },
+};
 
-const stepDefinitions: Array<{ id: StepId; label: string; optional?: boolean }> = [
-  { id: "adicionais", label: "Adicionais", optional: true },
-  { id: "bebida", label: "Bebida", optional: true },
-  { id: "remover", label: "Remover ingredientes", optional: true },
-  { id: "tipo", label: "Tipo" },
-  { id: "embalagem", label: "Embalagem" },
-  { id: "quantidade", label: "Quantidade" },
-];
+const defaultBebidaOptions = ["Coca-Cola 350ml", "Guaraná 350ml", "Água sem gás"];
+const defaultEmbalagemOptions = ["Consumir na mesa", "Para viagem"];
 
 const formatPrice = (value: number) => `R$ ${value.toFixed(2).replace(".", ",")}`;
 
 const getTipoOptions = (produto: Produto | null) => {
   if (!produto) return ["Padrão da casa"];
-
+  if (produto.tipoOptions?.length) return produto.tipoOptions;
   if (produto.categoria === "lanches") return ["Tradicional", "Artesanal", "No ponto da casa"];
   if (produto.categoria === "combos") return ["Completo", "Compartilhar", "Executivo"];
   if (produto.categoria === "bebidas") return ["Gelada", "Sem gelo", "Temperatura ambiente"];
   if (produto.categoria === "sobremesas") return ["Tradicional", "Servir agora", "Com calda extra"];
-
   return ["Padrão da casa", "Porção para compartilhar", "Execução rápida"];
+};
+
+const isStepAvailable = (produto: Produto | null, step: StepId) => {
+  if (!produto) return false;
+  if (step === "adicionais") return Boolean(produto.adicionais?.length);
+  if (step === "bebida") return Boolean(produto.bebidaOptions?.length);
+  if (step === "remover") return Boolean(produto.ingredientesRemoviveis?.length);
+  if (step === "tipo") return Boolean(produto.tipoOptions?.length);
+  if (step === "embalagem") return Boolean(produto.embalagemOptions?.length);
+  return true;
+};
+
+const deriveDefaultSteps = (produto: Produto | null): StepId[] => {
+  if (!produto) return ["quantidade"];
+
+  const defaults: StepId[] = [];
+  if (produto.adicionais?.length) defaults.push("adicionais");
+  if (produto.bebidaOptions?.length) defaults.push("bebida");
+  if (produto.ingredientesRemoviveis?.length) defaults.push("remover");
+  defaults.push("quantidade");
+  return defaults;
+};
+
+const resolveSteps = (produto: Produto | null): StepId[] => {
+  const baseSteps = produto?.etapasFluxo?.length ? produto.etapasFluxo : deriveDefaultSteps(produto);
+  const filtered = baseSteps.filter((step, index) => baseSteps.indexOf(step) === index && isStepAvailable(produto, step));
+
+  if (!filtered.includes("quantidade")) {
+    filtered.push("quantidade");
+  }
+
+  return filtered;
 };
 
 const ProductModal = ({ produto, onClose, onAdd }: Props) => {
   const tipoOptions = useMemo(() => getTipoOptions(produto), [produto]);
+  const bebidaOptions = useMemo(
+    () => ["Sem bebida", ...(produto?.bebidaOptions?.length ? produto.bebidaOptions : defaultBebidaOptions)],
+    [produto],
+  );
+  const embalagemOptions = useMemo(
+    () => (produto?.embalagemOptions?.length ? produto.embalagemOptions : defaultEmbalagemOptions),
+    [produto],
+  );
+  const flowSteps = useMemo(() => resolveSteps(produto), [produto]);
+  const initialStep = flowSteps[0] ?? "quantidade";
+
   const [removidos, setRemovidos] = useState<string[]>([]);
   const [adicionaisSelecionados, setAdicionaisSelecionados] = useState<string[]>([]);
   const [bebidaSelecionada, setBebidaSelecionada] = useState<string>(bebidaOptions[0]);
@@ -51,47 +93,40 @@ const ProductModal = ({ produto, onClose, onAdd }: Props) => {
   const [embalagemSelecionada, setEmbalagemSelecionada] = useState<string>(embalagemOptions[0]);
   const [observacoes, setObservacoes] = useState("");
   const [quantidade, setQuantidade] = useState(1);
-  const [activeStep, setActiveStep] = useState<StepId>("adicionais");
+  const [activeStep, setActiveStep] = useState<StepId>(initialStep);
 
   const resetState = useCallback(() => {
     setRemovidos([]);
     setAdicionaisSelecionados([]);
     setBebidaSelecionada(bebidaOptions[0]);
-    setTipoSelecionado(getTipoOptions(produto)[0]);
+    setTipoSelecionado(tipoOptions[0]);
     setEmbalagemSelecionada(embalagemOptions[0]);
     setObservacoes("");
     setQuantidade(1);
-    setActiveStep("adicionais");
-  }, [produto]);
+    setActiveStep(initialStep);
+  }, [bebidaOptions, embalagemOptions, initialStep, tipoOptions]);
 
   useEffect(() => {
     if (produto) {
-      setRemovidos([]);
-      setAdicionaisSelecionados([]);
-      setBebidaSelecionada(bebidaOptions[0]);
-      setTipoSelecionado(tipoOptions[0]);
-      setEmbalagemSelecionada(embalagemOptions[0]);
-      setObservacoes("");
-      setQuantidade(1);
-      setActiveStep("adicionais");
+      resetState();
     }
-  }, [produto?.id, tipoOptions]);
+  }, [produto?.id, resetState]);
 
-  const activeStepIndex = stepDefinitions.findIndex((step) => step.id === activeStep);
-  const isLastStep = activeStep === "quantidade";
-  const activeDefinition = stepDefinitions[activeStepIndex];
+  const activeStepIndex = flowSteps.findIndex((step) => step === activeStep);
+  const isLastStep = activeStep === flowSteps[flowSteps.length - 1];
+  const activeDefinition = stepMeta[activeStep];
 
   const toggleRemover = (ingrediente: string) => {
     setRemovidos((prev) =>
       prev.includes(ingrediente)
         ? prev.filter((r) => r !== ingrediente)
-        : [...prev, ingrediente]
+        : [...prev, ingrediente],
     );
   };
 
   const toggleAdicional = (id: string) => {
     setAdicionaisSelecionados((prev) =>
-      prev.includes(id) ? prev.filter((a) => a !== id) : [...prev, id]
+      prev.includes(id) ? prev.filter((a) => a !== id) : [...prev, id],
     );
   };
 
@@ -120,13 +155,13 @@ const ProductModal = ({ produto, onClose, onAdd }: Props) => {
 
   const goToNextStep = () => {
     if (isLastStep) return;
-    const nextStep = stepDefinitions[activeStepIndex + 1];
-    if (nextStep) setActiveStep(nextStep.id);
+    const nextStep = flowSteps[activeStepIndex + 1];
+    if (nextStep) setActiveStep(nextStep);
   };
 
   const goToPreviousStep = () => {
-    const previousStep = stepDefinitions[activeStepIndex - 1];
-    if (previousStep) setActiveStep(previousStep.id);
+    const previousStep = flowSteps[activeStepIndex - 1];
+    if (previousStep) setActiveStep(previousStep);
   };
 
   const handleSkip = () => {
@@ -146,9 +181,9 @@ const ProductModal = ({ produto, onClose, onAdd }: Props) => {
       quantidade,
       removidos,
       adicionais: adicionaisComPreco.map((a) => ({ nome: a.nome, preco: a.preco })),
-      bebida: bebidaSelecionada === "Sem bebida" ? null : bebidaSelecionada,
-      tipo: tipoSelecionado,
-      embalagem: embalagemSelecionada,
+      bebida: flowSteps.includes("bebida") && bebidaSelecionada !== "Sem bebida" ? bebidaSelecionada : null,
+      tipo: flowSteps.includes("tipo") ? tipoSelecionado : undefined,
+      embalagem: flowSteps.includes("embalagem") ? embalagemSelecionada : undefined,
       observacoes: observacoes.trim(),
       precoUnitario,
     });
@@ -233,23 +268,17 @@ const ProductModal = ({ produto, onClose, onAdd }: Props) => {
             <h3 className="text-base font-black text-foreground">Adicionais do item</h3>
             <p className="mt-1 text-sm text-muted-foreground">Selecione múltiplos complementos antes de seguir.</p>
           </div>
-          {produto.adicionais && produto.adicionais.length > 0 ? (
-            <div className="space-y-3">
-              {produto.adicionais.map((adicional) =>
-                renderCheckboxCard({
-                  checked: adicionaisSelecionados.includes(adicional.id),
-                  onCheckedChange: () => toggleAdicional(adicional.id),
-                  title: adicional.nome,
-                  subtitle: "Complemento opcional do preparo",
-                  price: `+ ${formatPrice(adicional.preco)}`,
-                })
-              )}
-            </div>
-          ) : (
-            <div className="rounded-2xl border border-dashed border-border bg-secondary/30 p-5 text-sm text-muted-foreground">
-              Este item não possui adicionais nesta etapa.
-            </div>
-          )}
+          <div className="space-y-3">
+            {produto.adicionais?.map((adicional) =>
+              renderCheckboxCard({
+                checked: adicionaisSelecionados.includes(adicional.id),
+                onCheckedChange: () => toggleAdicional(adicional.id),
+                title: adicional.nome,
+                subtitle: "Complemento opcional do preparo",
+                price: `+ ${formatPrice(adicional.preco)}`,
+              }),
+            )}
+          </div>
         </div>
       );
     }
@@ -271,22 +300,16 @@ const ProductModal = ({ produto, onClose, onAdd }: Props) => {
             <h3 className="text-base font-black text-foreground">Remover ingredientes</h3>
             <p className="mt-1 text-sm text-muted-foreground">Marque somente o que deve sair do preparo.</p>
           </div>
-          {produto.ingredientesRemoviveis && produto.ingredientesRemoviveis.length > 0 ? (
-            <div className="space-y-3">
-              {produto.ingredientesRemoviveis.map((ingrediente) =>
-                renderCheckboxCard({
-                  checked: removidos.includes(ingrediente),
-                  onCheckedChange: () => toggleRemover(ingrediente),
-                  title: ingrediente,
-                  subtitle: "Será removido deste item",
-                })
-              )}
-            </div>
-          ) : (
-            <div className="rounded-2xl border border-dashed border-border bg-secondary/30 p-5 text-sm text-muted-foreground">
-              Nenhum ingrediente removível disponível para este produto.
-            </div>
-          )}
+          <div className="space-y-3">
+            {produto.ingredientesRemoviveis?.map((ingrediente) =>
+              renderCheckboxCard({
+                checked: removidos.includes(ingrediente),
+                onCheckedChange: () => toggleRemover(ingrediente),
+                title: ingrediente,
+                subtitle: "Será removido deste item",
+              }),
+            )}
+          </div>
         </div>
       );
     }
@@ -390,15 +413,15 @@ const ProductModal = ({ produto, onClose, onAdd }: Props) => {
             <div className="grid min-h-0 flex-1 md:grid-cols-[300px_1fr]">
               <aside className="border-b border-border bg-secondary/20 p-4 md:border-b-0 md:border-r md:p-5">
                 <div className="space-y-2">
-                  {stepDefinitions.map((step, index) => {
-                    const selected = activeStep === step.id;
+                  {flowSteps.map((step, index) => {
+                    const selected = activeStep === step;
                     const completed = index < activeStepIndex;
 
                     return (
                       <button
-                        key={step.id}
+                        key={step}
                         type="button"
-                        onClick={() => goToStep(step.id)}
+                        onClick={() => goToStep(step)}
                         className={`flex w-full items-center justify-between rounded-2xl border px-4 py-3 text-left transition-all ${
                           selected
                             ? "border-primary bg-card text-foreground shadow-sm"
@@ -410,8 +433,8 @@ const ProductModal = ({ produto, onClose, onAdd }: Props) => {
                             {completed ? <Check className="h-4 w-4" /> : index + 1}
                           </div>
                           <div className="min-w-0">
-                            <p className="text-sm font-bold">{step.label}</p>
-                            <p className="mt-1 text-xs text-muted-foreground">{summaryByStep[step.id]}</p>
+                            <p className="text-sm font-bold">{stepMeta[step].label}</p>
+                            <p className="mt-1 text-xs text-muted-foreground">{summaryByStep[step]}</p>
                           </div>
                         </div>
                         <ChevronRight className={`h-4 w-4 shrink-0 ${selected ? "text-primary" : "text-muted-foreground"}`} />
@@ -435,15 +458,15 @@ const ProductModal = ({ produto, onClose, onAdd }: Props) => {
                 </div>
 
                 <div className="flex flex-col gap-3 sm:flex-row">
-                  {!isLastStep && activeDefinition?.optional ? (
-                    <Button type="button" variant="outline" onClick={handleSkip} className="h-12 rounded-2xl px-5 font-bold">
-                      Pular
+                  {activeStepIndex > 0 ? (
+                    <Button type="button" variant="outline" onClick={goToPreviousStep} className="h-12 rounded-2xl px-5 font-bold">
+                      Voltar
                     </Button>
                   ) : null}
 
-                  {!isLastStep && activeStepIndex > 0 && !activeDefinition?.optional ? (
-                    <Button type="button" variant="outline" onClick={goToPreviousStep} className="h-12 rounded-2xl px-5 font-bold">
-                      Voltar
+                  {!isLastStep && activeDefinition?.optional ? (
+                    <Button type="button" variant="outline" onClick={handleSkip} className="h-12 rounded-2xl px-5 font-bold">
+                      Pular
                     </Button>
                   ) : null}
 

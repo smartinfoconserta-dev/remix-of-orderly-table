@@ -93,9 +93,7 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
   }, [chamarGarcom, mesaId]);
 
   const validatePendingCart = useCallback(() => {
-    const possuiItemInvalido = carrinho.some(
-      (item) => item.quantidade <= 0 || !item.tipo?.trim() || !item.embalagem?.trim()
-    );
+    const possuiItemInvalido = carrinho.some((item) => item.quantidade <= 0);
 
     if (!possuiItemInvalido) return true;
 
