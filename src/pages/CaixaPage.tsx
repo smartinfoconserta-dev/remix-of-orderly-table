@@ -28,14 +28,31 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRestaurant } from "@/contexts/RestaurantContext";
 import { clearBoundTabletMesaId, getBoundTabletMesaId, setBoundTabletMesaId } from "@/lib/tabletBinding";
-import type { PaymentMethod, UserRole } from "@/types/operations";
+import type { PaymentMethod, SplitPayment, UserRole } from "@/types/operations";
 
 const formatPrice = (v: number) => `R$ ${v.toFixed(2).replace(".", ",")}`;
+const toCents = (value: number) => Math.round(value * 100);
+
+const parseCurrencyInput = (value: string) => {
+  const sanitized = value.trim().replace(/[^\d,.-]/g, "");
+  if (!sanitized) return Number.NaN;
+  if (sanitized.includes(",")) {
+    return Number(sanitized.replace(/\./g, "").replace(",", "."));
+  }
+  return Number(sanitized);
+};
 
 const paymentMethodOptions: Array<{
   value: PaymentMethod;
@@ -47,6 +64,9 @@ const paymentMethodOptions: Array<{
   { value: "debito", label: "Débito", icon: CreditCard },
   { value: "pix", label: "PIX", icon: Smartphone },
 ];
+
+const getPaymentMethodLabel = (method: PaymentMethod) =>
+  paymentMethodOptions.find((option) => option.value === method)?.label ?? method;
 
 const actionLabels: Record<string, string> = {
   cancelar_item: "Exclusão de item",
@@ -127,7 +147,9 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
   const { currentCaixa, currentGerente, logout, verifyManagerAccess } = useAuth();
   const [mesaSelecionada, setMesaSelecionada] = useState<string | null>(null);
   const [confirmFechar, setConfirmFechar] = useState(false);
-  const [formaPagamento, setFormaPagamento] = useState<PaymentMethod>("dinheiro");
+  const [closingPayments, setClosingPayments] = useState<SplitPayment[]>([]);
+  const [closingPaymentMethod, setClosingPaymentMethod] = useState<PaymentMethod>("dinheiro");
+  const [closingPaymentValue, setClosingPaymentValue] = useState("");
   const [financeUnlocked, setFinanceUnlocked] = useState(accessMode === "gerente");
   const [financeManagerName, setFinanceManagerName] = useState("");
   const [financeManagerPin, setFinanceManagerPin] = useState("");
@@ -159,21 +181,20 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
     const saidas = movimentacoesCaixa
       .filter((movimentacao) => movimentacao.tipo === "saida")
       .reduce((acc, movimentacao) => acc + movimentacao.valor, 0);
+    const sumByMethod = (method: PaymentMethod) =>
+      fechamentos.reduce((acc, fechamento) => {
+        const pagamentos = fechamento.pagamentos?.length
+          ? fechamento.pagamentos
+          : [{ id: fechamento.id, formaPagamento: fechamento.formaPagamento, valor: fechamento.total }];
+        return acc + pagamentos.filter((pagamento) => pagamento.formaPagamento === method).reduce((subtotal, pagamento) => subtotal + pagamento.valor, 0);
+      }, 0);
 
     return {
       totalDia,
-      dinheiro: fechamentos
-        .filter((fechamento) => fechamento.formaPagamento === "dinheiro")
-        .reduce((acc, fechamento) => acc + fechamento.total, 0),
-      credito: fechamentos
-        .filter((fechamento) => fechamento.formaPagamento === "credito")
-        .reduce((acc, fechamento) => acc + fechamento.total, 0),
-      debito: fechamentos
-        .filter((fechamento) => fechamento.formaPagamento === "debito")
-        .reduce((acc, fechamento) => acc + fechamento.total, 0),
-      pix: fechamentos
-        .filter((fechamento) => fechamento.formaPagamento === "pix")
-        .reduce((acc, fechamento) => acc + fechamento.total, 0),
+      dinheiro: sumByMethod("dinheiro"),
+      credito: sumByMethod("credito"),
+      debito: sumByMethod("debito"),
+      pix: sumByMethod("pix"),
       entradasExtras,
       saidas,
     };
@@ -184,20 +205,32 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
     [eventos, mesa],
   );
 
+  const totalConta = mesa?.total ?? 0;
+  const totalContaCents = toCents(totalConta);
+  const totalPago = useMemo(() => closingPayments.reduce((acc, pagamento) => acc + pagamento.valor, 0), [closingPayments]);
+  const totalPagoCents = toCents(totalPago);
+  const valorRestante = Math.max((totalContaCents - totalPagoCents) / 100, 0);
+  const fechamentoPronto = totalContaCents > 0 && totalPagoCents === totalContaCents;
+
+  const resetCloseAccountState = useCallback(() => {
+    setConfirmFechar(false);
+    setClosingPayments([]);
+    setClosingPaymentMethod("dinheiro");
+    setClosingPaymentValue("");
+  }, []);
+
   const handleVoltar = useCallback(() => {
     setMesaSelecionada(null);
-    setConfirmFechar(false);
-    setFormaPagamento("dinheiro");
-  }, []);
+    resetCloseAccountState();
+  }, [resetCloseAccountState]);
 
   const handleSelecionarMesa = useCallback(
     (mesaId: string) => {
       dismissChamarGarcom(mesaId);
       setMesaSelecionada(mesaId);
-      setConfirmFechar(false);
-      setFormaPagamento("dinheiro");
+      resetCloseAccountState();
     },
-    [dismissChamarGarcom],
+    [dismissChamarGarcom, resetCloseAccountState],
   );
 
   const resetCriticalDialog = useCallback(() => {
@@ -219,13 +252,51 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
 
   const hasSomethingToClose = Boolean(mesa && (mesa.total > 0 || mesa.pedidos.length > 0 || mesa.carrinho.length > 0));
 
+  const handleAddPayment = () => {
+    if (!mesa) return;
+
+    const valor = parseCurrencyInput(closingPaymentValue);
+    if (!Number.isFinite(valor) || valor <= 0) {
+      toast.error("Informe um valor válido para adicionar o pagamento", { duration: 1400 });
+      return;
+    }
+
+    if (toCents(valor) > toCents(valorRestante)) {
+      toast.error("O valor informado ultrapassa o restante da conta", { duration: 1400 });
+      return;
+    }
+
+    setClosingPayments((prev) => [
+      ...prev,
+      {
+        id: `pag-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        formaPagamento: closingPaymentMethod,
+        valor: Number(valor.toFixed(2)),
+      },
+    ]);
+    setClosingPaymentValue("");
+  };
+
+  const handleRemovePayment = (paymentId: string) => {
+    setClosingPayments((prev) => prev.filter((payment) => payment.id !== paymentId));
+  };
+
   const handleFechar = () => {
-    if (!mesaSelecionada) return;
-    fecharConta(mesaSelecionada, { usuario: currentOperator, formaPagamento });
-    toast.success("Conta fechada com registro da forma de pagamento", { duration: 1400, icon: "✅" });
+    if (!mesaSelecionada || !mesa) return;
+    if (!fechamentoPronto) {
+      toast.error("O fechamento só pode ser confirmado quando o total pago for igual ao total da conta", { duration: 1600 });
+      return;
+    }
+
+    fecharConta(mesaSelecionada, { usuario: currentOperator, pagamentos: closingPayments });
+    toast.success(
+      closingPayments.length > 1
+        ? "Conta fechada com múltiplas formas de pagamento"
+        : `Conta fechada em ${getPaymentMethodLabel(closingPayments[0].formaPagamento)}`,
+      { duration: 1400, icon: "✅" },
+    );
     setMesaSelecionada(null);
-    setConfirmFechar(false);
-    setFormaPagamento("dinheiro");
+    resetCloseAccountState();
   };
 
   const handleUnlockFinance = async () => {
@@ -652,7 +723,13 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                 </Button>
                 <Button
                   variant="destructive"
-                  onClick={() => setConfirmFechar((prev) => !prev)}
+                  onClick={() => {
+                    if (confirmFechar) {
+                      resetCloseAccountState();
+                      return;
+                    }
+                    setConfirmFechar(true);
+                  }}
                   disabled={!hasSomethingToClose}
                   className="rounded-xl font-black"
                 >
@@ -662,40 +739,109 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
             </div>
 
             {confirmFechar && (
-              <div className="surface-card flex flex-col gap-4 p-5">
+              <div className="surface-card flex flex-col gap-5 p-5">
                 <div>
-                  <p className="text-base font-black text-foreground">Confirmar fechamento da conta?</p>
+                  <p className="text-base font-black text-foreground">Fechamento com múltiplos pagamentos</p>
                   <p className="mt-1 text-sm text-muted-foreground">
-                    Mesa {String(mesa.numero).padStart(2, "0")} • Total {formatPrice(mesa.total)} • Operador {currentOperator.nome}
+                    Mesa {String(mesa.numero).padStart(2, "0")} • Operador {currentOperator.nome}
                   </p>
                 </div>
 
-                <div className="space-y-2">
-                  <p className="text-sm font-semibold text-foreground">Forma de pagamento</p>
-                  <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
-                    {paymentMethodOptions.map((option) => {
-                      const Icon = option.icon;
-                      return (
-                        <Button
-                          key={option.value}
-                          type="button"
-                          variant={formaPagamento === option.value ? "default" : "outline"}
-                          className="rounded-xl font-bold"
-                          onClick={() => setFormaPagamento(option.value)}
-                        >
-                          <Icon className="h-4 w-4" />
-                          {option.label}
-                        </Button>
-                      );
-                    })}
+                <div className="grid gap-3 md:grid-cols-3">
+                  <div className="rounded-2xl border border-border bg-secondary/60 p-4">
+                    <p className="text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">Total da conta</p>
+                    <p className="mt-2 text-xl font-black text-foreground">{formatPrice(totalConta)}</p>
+                  </div>
+                  <div className="rounded-2xl border border-border bg-secondary/60 p-4">
+                    <p className="text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">Total pago</p>
+                    <p className="mt-2 text-xl font-black text-foreground">{formatPrice(totalPago)}</p>
+                  </div>
+                  <div className="rounded-2xl border border-border bg-secondary/60 p-4">
+                    <p className="text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">Valor restante</p>
+                    <p className="mt-2 text-xl font-black text-foreground">{formatPrice(valorRestante)}</p>
                   </div>
                 </div>
 
+                <div className="grid gap-3 rounded-2xl border border-border bg-card p-4 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] md:items-end">
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold text-foreground">Forma</label>
+                    <Select value={closingPaymentMethod} onValueChange={(value) => setClosingPaymentMethod(value as PaymentMethod)}>
+                      <SelectTrigger className="rounded-xl">
+                        <SelectValue placeholder="Selecione a forma" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {paymentMethodOptions.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold text-foreground">Valor</label>
+                    <Input
+                      value={closingPaymentValue}
+                      onChange={(event) => setClosingPaymentValue(event.target.value)}
+                      placeholder="Ex.: 25,00"
+                      inputMode="decimal"
+                      autoComplete="off"
+                    />
+                  </div>
+
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleAddPayment}
+                    disabled={valorRestante === 0}
+                    className="rounded-xl font-black"
+                  >
+                    + Adicionar pagamento
+                  </Button>
+                </div>
+
+                <div className="space-y-3">
+                  <p className="text-sm font-semibold text-foreground">Pagamentos adicionados</p>
+                  {closingPayments.length === 0 ? (
+                    <div className="rounded-2xl bg-secondary p-4 text-sm text-muted-foreground">
+                      Nenhum pagamento adicionado ainda.
+                    </div>
+                  ) : (
+                    closingPayments.map((payment) => (
+                      <div key={payment.id} className="flex items-center justify-between gap-3 rounded-2xl border border-border bg-card p-4">
+                        <div>
+                          <p className="text-sm font-bold text-foreground">{getPaymentMethodLabel(payment.formaPagamento)}</p>
+                          <p className="mt-1 text-sm text-muted-foreground">{formatPrice(payment.valor)}</p>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => handleRemovePayment(payment.id)}
+                          className="rounded-xl font-bold"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                          Remover
+                        </Button>
+                      </div>
+                    ))
+                  )}
+                </div>
+
+                <p className="text-sm text-muted-foreground">
+                  O fechamento só será liberado quando o total pago for exatamente igual ao total da conta.
+                </p>
+
                 <div className="flex gap-3">
-                  <Button variant="outline" onClick={() => setConfirmFechar(false)} className="flex-1 rounded-xl font-bold">
+                  <Button variant="outline" onClick={resetCloseAccountState} className="flex-1 rounded-xl font-bold">
                     Cancelar
                   </Button>
-                  <Button variant="destructive" onClick={handleFechar} className="flex-1 rounded-xl font-black">
+                  <Button
+                    variant="destructive"
+                    onClick={handleFechar}
+                    disabled={!fechamentoPronto || closingPayments.length === 0}
+                    className="flex-1 rounded-xl font-black"
+                  >
                     Confirmar fechamento
                   </Button>
                 </div>

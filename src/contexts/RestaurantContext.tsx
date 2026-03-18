@@ -1,5 +1,5 @@
 import React, { createContext, useCallback, useContext, useEffect, useState } from "react";
-import type { CashMovementType, OperationalUser, PaymentMethod } from "@/types/operations";
+import type { CashMovementType, OperationalUser, PaymentMethod, SplitPayment } from "@/types/operations";
 
 export interface ItemCarrinho {
   uid: string;
@@ -62,6 +62,7 @@ export interface FechamentoConta {
   mesaNumero: number;
   total: number;
   formaPagamento: PaymentMethod;
+  pagamentos: SplitPayment[];
   criadoEm: string;
   criadoEmIso: string;
   caixaId: string;
@@ -98,7 +99,7 @@ interface ActionAuditInput {
 
 interface FecharContaInput {
   usuario: OperationalUser;
-  formaPagamento: PaymentMethod;
+  pagamentos: SplitPayment[];
 }
 
 interface RestaurantStore {
@@ -254,6 +255,12 @@ const normalizePaymentMethod = (value: unknown): PaymentMethod => {
   return "dinheiro";
 };
 
+const normalizeSplitPayment = (payment: Partial<SplitPayment>, index = 0): SplitPayment => ({
+  id: String(payment.id ?? `pag-${Date.now()}-${index}`),
+  formaPagamento: normalizePaymentMethod(payment.formaPagamento),
+  valor: Number(payment.valor ?? 0),
+});
+
 const readStore = (): RestaurantStore => {
   if (typeof window === "undefined") {
     return {
@@ -312,17 +319,34 @@ const readStore = (): RestaurantStore => {
           }))
         : [],
       fechamentos: Array.isArray((parsed as Partial<RestaurantStore>).fechamentos)
-        ? (parsed as Partial<RestaurantStore>).fechamentos!.map((fechamento) => ({
-            id: String(fechamento.id ?? `fech-${Date.now()}`),
-            mesaId: String(fechamento.mesaId ?? ""),
-            mesaNumero: Number(fechamento.mesaNumero ?? 0),
-            total: Number(fechamento.total ?? 0),
-            formaPagamento: normalizePaymentMethod((fechamento as Partial<FechamentoConta>).formaPagamento),
-            criadoEm: String(fechamento.criadoEm ?? formatDateTime()),
-            criadoEmIso: String(fechamento.criadoEmIso ?? new Date().toISOString()),
-            caixaId: String(fechamento.caixaId ?? ""),
-            caixaNome: String(fechamento.caixaNome ?? "Caixa"),
-          }))
+        ? (parsed as Partial<RestaurantStore>).fechamentos!.map((fechamento, index) => {
+            const pagamentos = Array.isArray((fechamento as Partial<FechamentoConta>).pagamentos)
+              ? (fechamento as Partial<FechamentoConta>).pagamentos!.map((payment, paymentIndex) =>
+                  normalizeSplitPayment(payment, paymentIndex),
+                )
+              : [
+                  normalizeSplitPayment(
+                    {
+                      formaPagamento: (fechamento as Partial<FechamentoConta>).formaPagamento,
+                      valor: Number(fechamento.total ?? 0),
+                    },
+                    index,
+                  ),
+                ];
+
+            return {
+              id: String(fechamento.id ?? `fech-${Date.now()}`),
+              mesaId: String(fechamento.mesaId ?? ""),
+              mesaNumero: Number(fechamento.mesaNumero ?? 0),
+              total: Number(fechamento.total ?? 0),
+              formaPagamento: pagamentos[0]?.formaPagamento ?? normalizePaymentMethod((fechamento as Partial<FechamentoConta>).formaPagamento),
+              pagamentos,
+              criadoEm: String(fechamento.criadoEm ?? formatDateTime()),
+              criadoEmIso: String(fechamento.criadoEmIso ?? new Date().toISOString()),
+              caixaId: String(fechamento.caixaId ?? ""),
+              caixaNome: String(fechamento.caixaNome ?? "Caixa"),
+            };
+          })
         : [],
     };
   } catch {
@@ -565,13 +589,19 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         if (!hasContent) return mesa;
 
         const now = new Date();
-        if (input?.usuario) {
+        if (input?.usuario && input.pagamentos.length > 0) {
+          const pagamentos = input.pagamentos.map((payment) => ({ ...payment }));
+          const resumoPagamento = pagamentos.length === 1
+            ? pagamentos[0].formaPagamento
+            : `${pagamentos.length} formas de pagamento`;
+
           fechamento = {
             id: `fechamento-${now.getTime()}-${mesa.id}`,
             mesaId,
             mesaNumero: mesa.numero,
             total: mesa.total,
-            formaPagamento: input.formaPagamento,
+            formaPagamento: pagamentos[0].formaPagamento,
+            pagamentos,
             criadoEm: formatDateTime(now),
             criadoEmIso: now.toISOString(),
             caixaId: input.usuario.id,
@@ -580,7 +610,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
           eventInput = {
             tipo: "caixa",
-            descricao: `Caixa ${input.usuario.nome} fechou conta da ${formatMesaNumero(mesa.numero)} em ${input.formaPagamento}`,
+            descricao: `Caixa ${input.usuario.nome} fechou conta da ${formatMesaNumero(mesa.numero)} com ${resumoPagamento}`,
             mesaId,
             usuarioId: input.usuario.id,
             usuarioNome: input.usuario.nome,
