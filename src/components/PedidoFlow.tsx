@@ -484,7 +484,7 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
       </aside>
       <main ref={desktopMainRef} className="flex-1 overflow-y-auto pb-6">
         {bannerSection}
-        {flowSummary}
+        
         <div className="px-6 pt-4">{showCategorySkeleton ? skeletonGrid : productGrid}</div>
       </main>
     </div>
