@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect } from "react";
+import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { Check, ChevronRight, Minus, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -41,6 +41,7 @@ const stepMeta: Record<StepId, { label: string; optional: boolean }> = {
 const defaultBebidaOptions = ["Coca-Cola 350ml", "Guaraná 350ml", "Água sem gás"];
 const defaultEmbalagemOptions = ["Consumir na mesa", "Para viagem"];
 const standardFlowOrder: StepId[] = ["adicionais", "bebida", "remover", "tipo", "embalagem", "quantidade"];
+const ADD_BUTTON_LOCK_MS = 500;
 
 const formatPrice = (value: number) => `R$ ${value.toFixed(2).replace(".", ",")}`;
 
@@ -85,6 +86,8 @@ const resolveSteps = (produto: Produto | null): StepId[] => {
 
 const ProductModal = ({ produto, onClose, onAdd }: Props) => {
   const [pedidoAtual, setPedidoAtual] = useState<PedidoAtual>(() => createPedidoAtual());
+  const [isAddLocked, setIsAddLocked] = useState(false);
+  const addLockTimeoutRef = useRef<number | null>(null);
 
   const tipoOptions = useMemo(() => getTipoOptions(produto), [produto]);
   const bebidaOptions = useMemo(
@@ -97,18 +100,30 @@ const ProductModal = ({ produto, onClose, onAdd }: Props) => {
   );
   const flowSteps = useMemo(() => resolveSteps(produto), [produto]);
 
+  const clearAddLockTimeout = useCallback(() => {
+    if (addLockTimeoutRef.current) {
+      window.clearTimeout(addLockTimeoutRef.current);
+      addLockTimeoutRef.current = null;
+    }
+  }, []);
+
   const resetPedidoAtual = useCallback((produtoId: string | null = null) => {
     setPedidoAtual(createPedidoAtual(produtoId));
   }, []);
 
   useEffect(() => {
+    clearAddLockTimeout();
+    setIsAddLocked(false);
+
     if (produto) {
       resetPedidoAtual(produto.id);
       return;
     }
 
     resetPedidoAtual();
-  }, [produto, resetPedidoAtual]);
+  }, [produto, resetPedidoAtual, clearAddLockTimeout]);
+
+  useEffect(() => () => clearAddLockTimeout(), [clearAddLockTimeout]);
 
   const activeStepIndex = Math.min(Math.max(pedidoAtual.etapaAtual - 1, 0), Math.max(flowSteps.length - 1, 0));
   const activeStep = flowSteps[activeStepIndex] ?? "quantidade";
@@ -193,30 +208,40 @@ const ProductModal = ({ produto, onClose, onAdd }: Props) => {
   };
 
   const handleAdd = () => {
-    if (!produto) return;
+    if (!produto || isAddLocked) return;
     if (!flowSteps.every((step) => validarEtapa(step))) return;
 
-    onAdd({
+    const itemSnapshot: ItemCarrinho = {
       uid: `${produto.id}-${Date.now()}`,
       produtoId: produto.id,
       nome: produto.nome,
       precoBase: produto.preco,
       quantidade: pedidoAtual.quantidade,
-      removidos: pedidoAtual.removidos,
+      removidos: [...pedidoAtual.removidos],
       adicionais: adicionaisComPreco.map((adicional) => ({ nome: adicional.nome, preco: adicional.preco })),
       bebida: flowSteps.includes("bebida") && pedidoAtual.bebida !== "Sem bebida" ? pedidoAtual.bebida : null,
       tipo: flowSteps.includes("tipo") ? pedidoAtual.tipo : undefined,
       embalagem: flowSteps.includes("embalagem") ? pedidoAtual.viagem : undefined,
       observacoes: pedidoAtual.observacao.trim(),
       precoUnitario,
-    });
+    };
 
-    resetPedidoAtual();
+    setIsAddLocked(true);
+    clearAddLockTimeout();
+    onAdd(itemSnapshot);
     onClose();
+    resetPedidoAtual();
+
+    addLockTimeoutRef.current = window.setTimeout(() => {
+      setIsAddLocked(false);
+      addLockTimeoutRef.current = null;
+    }, ADD_BUTTON_LOCK_MS);
   };
 
   const handleOpenChange = (open: boolean) => {
     if (!open) {
+      clearAddLockTimeout();
+      setIsAddLocked(false);
       resetPedidoAtual();
       onClose();
     }
