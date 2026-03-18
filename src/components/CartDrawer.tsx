@@ -69,9 +69,9 @@ const CartDrawer = ({
   };
 
   const handleSuccessOk = () => {
+    onOpenChange?.(false);
     setSubmitSuccess(false);
     onSuccessAcknowledge?.();
-    onOpenChange?.(false);
   };
 
   return (
@@ -190,8 +190,9 @@ const CartDrawer = ({
 
       <Dialog open={isSubmitting}>
         <DialogContent
+          hideCloseButton
           overlayClassName="bg-foreground/75 backdrop-blur-sm"
-          className="w-auto max-w-none border-0 bg-transparent p-0 shadow-none [&>button]:hidden"
+          className="w-auto max-w-none border-0 bg-transparent p-0 shadow-none"
         >
           <div className="flex flex-col items-center gap-4 text-center">
             <LoaderCircle className="h-12 w-12 animate-spin text-primary-foreground" />
@@ -201,7 +202,7 @@ const CartDrawer = ({
       </Dialog>
 
       <Dialog open={submitSuccess}>
-        <DialogContent className="max-w-sm border-border bg-card p-8 text-center [&>button]:hidden">
+        <DialogContent hideCloseButton className="max-w-sm border-border bg-card p-8 text-center">
           <div className="flex flex-col items-center gap-6">
             <div className="flex h-20 w-20 items-center justify-center rounded-full bg-secondary text-primary animate-in zoom-in-50 fade-in-0 duration-300 ease-in-out">
               <CheckCircle2 className="h-10 w-10" />

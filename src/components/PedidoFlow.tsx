@@ -217,7 +217,8 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
         return;
       }
 
-      window.history.pushState({ clienteLocked: true }, "", window.location.href);
+      if (window.history.state?.clienteLocked) return;
+      window.history.pushState({ ...window.history.state, clienteLocked: true }, "", window.location.href);
     };
 
     lockClientRoute();
@@ -354,19 +355,6 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
   }, [carrinho.length, confirmarPedido, currentGarcom, mesaId, modo, validatePendingCart]);
 
   const handleSuccessAcknowledge = useCallback(() => {
-    setCartOpen(false);
-    setContaOpen(false);
-    setShowExitAlert(false);
-    setCategoriaAtiva(HOME_TAB_ID);
-    setCategoriaExibida(HOME_TAB_ID);
-    setCategoryTransitionState("idle");
-    setShowCategorySkeleton(false);
-    setCardsAnimatedIn(true);
-    setSelectedProductCardId(null);
-    setProdutoSelecionado(null);
-    setBannerIndex(0);
-    setIsClientIdle(false);
-
     if (categorySwitchTimerRef.current) {
       window.clearTimeout(categorySwitchTimerRef.current);
       categorySwitchTimerRef.current = null;
@@ -392,10 +380,25 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
       openProductTimerRef.current = null;
     }
 
-    mobileListTopRef.current?.scrollIntoView({ behavior: isMobile ? "auto" : "smooth", block: "start" });
-    desktopMainRef.current?.scrollTo({ top: 0, behavior: isMobile ? "auto" : "smooth" });
-    window.scrollTo({ top: 0, behavior: isMobile ? "auto" : "smooth" });
-  }, [isMobile]);
+    setCartOpen(false);
+    setContaOpen(false);
+    setShowExitAlert(false);
+    setSelectedProductCardId(null);
+    setProdutoSelecionado(null);
+    setCategoriaAtiva(HOME_TAB_ID);
+    setCategoriaExibida(HOME_TAB_ID);
+    setCategoryTransitionState("idle");
+    setShowCategorySkeleton(false);
+    setCardsAnimatedIn(true);
+    setBannerIndex(0);
+    setIsClientIdle(false);
+
+    requestAnimationFrame(() => {
+      mobileListTopRef.current?.scrollIntoView({ behavior: "auto", block: "start" });
+      desktopMainRef.current?.scrollTo({ top: 0, behavior: "auto" });
+      window.scrollTo({ top: 0, behavior: "auto" });
+    });
+  }, []);
 
   if (!mesa) {
     return (
@@ -403,9 +406,11 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
         <div className="surface-card w-full max-w-md space-y-2 p-6 text-center">
           <h1 className="text-xl font-bold text-foreground">Mesa não encontrada</h1>
           <p className="text-muted-foreground">Não foi possível localizar a mesa informada.</p>
-          <Button onClick={() => navigate(modo === "cliente" ? "/" : "/garcom")} className="rounded-xl">
-            Voltar
-          </Button>
+          {modo !== "cliente" ? (
+            <Button onClick={() => navigate("/garcom")} className="rounded-xl">
+              Voltar
+            </Button>
+          ) : null}
         </div>
       </div>
     );
