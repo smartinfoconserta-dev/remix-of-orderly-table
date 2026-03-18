@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Bell, AlertTriangle } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import CategoryTabs from "@/components/CategoryTabs";
@@ -19,7 +19,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { categorias, produtos, banners, type Produto } from "@/data/menuData";
+import { banners, categorias, produtos, type Produto } from "@/data/menuData";
 import { useRestaurant, type ItemCarrinho } from "@/contexts/RestaurantContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "sonner";
@@ -59,19 +59,6 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
   const nomeAtendimento = garcomNome?.trim() || "Equipe de salão";
   const produtosFiltrados = produtos.filter((p) => p.categoria === categoriaAtiva);
 
-  const invalidItemIds = useMemo(() => {
-    return carrinho
-      .filter((item) => {
-        const produto = produtos.find((p) => p.id === item.produtoId) as
-          | (typeof produtos)[number] & { opcoesObrigatorias?: string[]; minimoObrigatorio?: number }
-          | undefined;
-        const minimoObrigatorio = produto?.minimoObrigatorio ?? produto?.opcoesObrigatorias?.length ?? 0;
-        const totalOpcoesSelecionadas = item.removidos.length + item.adicionais.length;
-        return item.quantidade <= 0 || totalOpcoesSelecionadas < minimoObrigatorio;
-      })
-      .map((item) => item.uid);
-  }, [carrinho]);
-
   useEffect(() => {
     const timer = window.setInterval(() => {
       setBannerIndex((prev) => (prev + 1) % banners.length);
@@ -96,7 +83,8 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
 
   const handleAddToCart = useCallback((item: ItemCarrinho) => {
     addToCart(mesaId, item);
-    toast.success("Item adicionado!", { duration: 1000, icon: "✅" });
+    setCartOpen(true);
+    toast.success("Item adicionado ao carrinho", { duration: 1200, icon: "🛒" });
   }, [addToCart, mesaId]);
 
   const handleChamarGarcom = useCallback(() => {
@@ -105,11 +93,16 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
   }, [chamarGarcom, mesaId]);
 
   const validatePendingCart = useCallback(() => {
-    if (invalidItemIds.length === 0) return true;
-    toast.error("Revise o pedido antes de enviar", { duration: 1400 });
+    const possuiItemInvalido = carrinho.some(
+      (item) => item.quantidade <= 0 || !item.tipo?.trim() || !item.embalagem?.trim()
+    );
+
+    if (!possuiItemInvalido) return true;
+
+    toast.error("Revise o fluxo guiado antes de enviar", { duration: 1400 });
     setCartOpen(true);
     return false;
-  }, [invalidItemIds.length]);
+  }, [carrinho]);
 
   const handleConfirmar = useCallback(async () => {
     if (carrinho.length === 0) return false;
@@ -117,15 +110,21 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
 
     await new Promise((resolve) => window.setTimeout(resolve, 900));
     confirmarPedido(mesaId);
-    toast.success("Pedido enviado com sucesso", { duration: 1200, icon: "✅" });
     return true;
   }, [carrinho.length, confirmarPedido, mesaId, validatePendingCart]);
 
+  const handleSuccessAcknowledge = useCallback(() => {
+    setCartOpen(false);
+    setCategoriaAtiva(categorias[0].id);
+    setProdutoSelecionado(null);
+    window.scrollTo({ top: 0, behavior: isMobile ? "auto" : "smooth" });
+  }, [isMobile]);
+
   if (!mesa) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center px-4">
-        <div className="surface-card w-full max-w-md p-6 text-center space-y-2">
-          <h1 className="text-foreground text-xl font-bold">Mesa não encontrada</h1>
+      <div className="flex min-h-screen items-center justify-center bg-background px-4">
+        <div className="surface-card w-full max-w-md space-y-2 p-6 text-center">
+          <h1 className="text-xl font-bold text-foreground">Mesa não encontrada</h1>
           <p className="text-muted-foreground">Não foi possível localizar a mesa informada.</p>
           <Button onClick={() => navigate(modo === "cliente" ? "/" : "/garcom")} className="rounded-xl">
             Voltar
@@ -136,17 +135,17 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
   }
 
   const restaurantIdentity = (
-    <div className="flex items-center gap-3 min-w-0">
+    <div className="flex min-w-0 items-center gap-3">
       <Avatar className="h-10 w-10 rounded-xl border border-border bg-secondary shadow-sm">
-        <AvatarFallback className="rounded-xl bg-secondary text-foreground text-xs font-extrabold tracking-[0.18em]">
+        <AvatarFallback className="rounded-xl bg-secondary text-xs font-extrabold tracking-[0.18em] text-foreground">
           {RESTAURANTE.logoFallback}
         </AvatarFallback>
       </Avatar>
       <div className="min-w-0">
-        <p className="text-foreground text-base md:text-lg font-extrabold tracking-tight truncate">
+        <p className="truncate text-base font-extrabold tracking-tight text-foreground md:text-lg">
           {RESTAURANTE.nome}
         </p>
-        <p className="text-muted-foreground text-xs md:text-sm font-medium truncate">
+        <p className="truncate text-xs font-medium text-muted-foreground md:text-sm">
           {mesaLabel}
         </p>
       </div>
@@ -154,20 +153,22 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
   );
 
   const header = (
-    <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-md border-b border-border px-4 md:px-6 py-3 flex items-center justify-between gap-3">
-      <div className="flex items-center gap-3 min-w-0 flex-1">
+    <header className="sticky top-0 z-50 flex items-center justify-between gap-3 border-b border-border bg-background/95 px-4 py-3 backdrop-blur-md md:px-6">
+      <div className="flex min-w-0 flex-1 items-center gap-3">
         <button
           onClick={handleBack}
-          className="flex items-center gap-2 text-muted-foreground active:scale-95 transition-transform shrink-0"
+          className="shrink-0 text-muted-foreground transition-transform active:scale-95"
         >
-          <ArrowLeft className="w-5 h-5" />
-          <span className="text-sm font-medium hidden xl:inline">Voltar</span>
+          <div className="flex items-center gap-2">
+            <ArrowLeft className="h-5 w-5" />
+            <span className="hidden text-sm font-medium xl:inline">Voltar</span>
+          </div>
         </button>
         {restaurantIdentity}
       </div>
-      <div className="flex items-center gap-2 shrink-0">
+      <div className="flex shrink-0 items-center gap-2">
         {modo === "garcom" && (
-          <div className="hidden md:flex items-center rounded-xl border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground">
+          <div className="hidden items-center rounded-xl border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground md:flex">
             {nomeAtendimento}
           </div>
         )}
@@ -176,15 +177,17 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
           onUpdateQty={(uid, delta) => updateCartItemQty(mesaId, uid, delta)}
           onRemove={(uid) => removeFromCart(mesaId, uid)}
           onConfirmar={handleConfirmar}
+          onContinueOrdering={() => setCartOpen(false)}
+          onSuccessAcknowledge={handleSuccessAcknowledge}
           open={cartOpen}
           onOpenChange={setCartOpen}
         />
         {modo === "cliente" && (
           <Button
             onClick={handleChamarGarcom}
-            className="rounded-xl gap-2 text-base font-bold px-5 py-2.5 h-auto bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+            className="h-auto gap-2 rounded-xl bg-destructive px-5 py-2.5 text-base font-bold text-destructive-foreground hover:bg-destructive/90"
           >
-            <Bell className="w-5 h-5" />
+            <Bell className="h-5 w-5" />
             <span className="hidden sm:inline">Chamar Garçom</span>
           </Button>
         )}
@@ -193,26 +196,26 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
   );
 
   const bannerSection = (
-    <div className="px-4 md:px-6 pt-4">
-      <div className="relative overflow-hidden rounded-2xl h-32 md:h-40 border border-border bg-card">
+    <div className="px-4 pt-4 md:px-6">
+      <div className="relative h-32 overflow-hidden rounded-2xl border border-border bg-card md:h-40">
         {banners.map((banner, i) => (
           <div
             key={banner.id}
-            className={`absolute inset-0 bg-gradient-to-r ${banner.cor} rounded-2xl flex flex-col justify-center px-6 md:px-10 transition-all duration-700 ease-in-out ${
-              i === bannerIndex ? "opacity-100 translate-x-0" : "opacity-0 translate-x-full"
+            className={`absolute inset-0 rounded-2xl bg-gradient-to-r ${banner.cor} flex flex-col justify-center px-6 transition-all duration-700 ease-in-out md:px-10 ${
+              i === bannerIndex ? "translate-x-0 opacity-100" : "translate-x-full opacity-0"
             }`}
           >
-            <p className="text-foreground text-lg md:text-xl font-bold">{banner.titulo}</p>
-            <p className="text-muted-foreground text-sm md:text-base mt-1">{banner.subtitulo}</p>
-            <p className="text-primary text-2xl md:text-3xl font-black mt-1">{banner.destaque}</p>
+            <p className="text-lg font-bold text-foreground md:text-xl">{banner.titulo}</p>
+            <p className="mt-1 text-sm text-muted-foreground md:text-base">{banner.subtitulo}</p>
+            <p className="mt-1 text-2xl font-black text-primary md:text-3xl">{banner.destaque}</p>
           </div>
         ))}
-        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-2">
+        <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-2">
           {banners.map((_, i) => (
             <button
               key={i}
               onClick={() => setBannerIndex(i)}
-              className={`w-2 h-2 rounded-full transition-all ${i === bannerIndex ? "bg-foreground w-6" : "bg-foreground/40"}`}
+              className={`h-2 rounded-full transition-all ${i === bannerIndex ? "w-6 bg-foreground" : "w-2 bg-foreground/40"}`}
             />
           ))}
         </div>
@@ -221,19 +224,21 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
   );
 
   const flowSummary = (
-    <div className="px-4 md:px-6 pt-4">
-      <div className="surface-card p-4 md:p-5 flex flex-wrap items-center gap-3 md:gap-4">
+    <div className="px-4 pt-4 md:px-6">
+      <div className="surface-card flex flex-wrap items-center gap-3 p-4 md:gap-4 md:p-5">
         <StatusBadge status={mesa.status} />
-        <div className="h-8 w-px bg-border hidden md:block" />
+        <div className="hidden h-8 w-px bg-border md:block" />
         <div className="min-w-0 flex-1">
-          <p className="text-foreground text-sm md:text-base font-bold">
-            {modo === "cliente" ? "Revise o carrinho antes de enviar" : `${mesaLabel} em atendimento`}
+          <p className="text-sm font-bold text-foreground md:text-base">
+            {modo === "cliente" ? "Fluxo guiado antes do carrinho" : `${mesaLabel} em atendimento`}
           </p>
-          <p className="text-muted-foreground text-xs md:text-sm">
-            {modo === "cliente" ? "Nenhum pedido é enviado direto do produto" : `Garçom: ${nomeAtendimento}`}
+          <p className="text-xs text-muted-foreground md:text-sm">
+            {modo === "cliente"
+              ? "Configure o item por etapas e confirme apenas no carrinho"
+              : `Garçom: ${nomeAtendimento}`}
           </p>
         </div>
-        <span className="text-foreground text-lg md:text-2xl font-black tabular-nums">
+        <span className="text-lg font-black tabular-nums text-foreground md:text-2xl">
           {formatPrice(mesa.total + totalCarrinho)}
         </span>
       </div>
@@ -241,29 +246,29 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
   );
 
   const productGrid = (
-    <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
+    <div className="grid grid-cols-2 gap-3 md:grid-cols-2 md:gap-4 lg:grid-cols-3">
       {produtosFiltrados.map((produto) => (
         <button
           key={produto.id}
           onClick={() => setProdutoSelecionado(produto)}
-          className="surface-card overflow-hidden text-left flex flex-col active:scale-[0.97] transition-transform"
+          className="surface-card flex flex-col overflow-hidden text-left transition-transform active:scale-[0.97]"
         >
           <div className="aspect-[4/3] overflow-hidden">
             <img
               src={produto.imagem}
               alt={produto.nome}
-              className="w-full h-full object-cover"
+              className="h-full w-full object-cover"
               loading="lazy"
             />
           </div>
-          <div className="p-3 md:p-4 flex flex-col gap-1 flex-1">
-            <h2 className="text-foreground text-sm md:text-base font-bold line-clamp-1">
+          <div className="flex flex-1 flex-col gap-1 p-3 md:p-4">
+            <h2 className="line-clamp-1 text-sm font-bold text-foreground md:text-base">
               {produto.nome}
             </h2>
-            <p className="text-muted-foreground text-xs md:text-sm line-clamp-2 flex-1">
+            <p className="line-clamp-2 flex-1 text-xs text-muted-foreground md:text-sm">
               {produto.descricao}
             </p>
-            <p className="text-foreground text-lg md:text-xl font-black mt-1">
+            <p className="mt-1 text-lg font-black text-foreground md:text-xl">
               {formatPrice(produto.preco)}
             </p>
           </div>
@@ -274,38 +279,40 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
 
   const historySection = mesa.pedidos.length > 0 && (
     <section className="flex flex-col gap-3 pt-6">
-      <h2 className="text-foreground text-base font-bold px-1">Pedidos enviados</h2>
+      <h2 className="px-1 text-base font-bold text-foreground">Pedidos enviados</h2>
       {mesa.pedidos.map((pedido) => (
-        <div key={pedido.id} className="bg-secondary rounded-xl p-4 space-y-3">
+        <div key={pedido.id} className="space-y-3 rounded-xl bg-secondary p-4">
           <div className="flex items-center justify-between gap-3">
-            <span className="text-foreground text-sm font-bold">Pedido #{pedido.numeroPedido}</span>
-            <span className="text-muted-foreground text-xs font-medium">{pedido.criadoEm}</span>
+            <span className="text-sm font-bold text-foreground">Pedido #{pedido.numeroPedido}</span>
+            <span className="text-xs font-medium text-muted-foreground">{pedido.criadoEm}</span>
           </div>
           <div className="space-y-2">
             {pedido.itens.map((item) => (
               <div key={item.uid} className="flex items-start justify-between gap-2">
-                <div className="flex-1 min-w-0">
-                  <p className="text-foreground text-sm font-medium">
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium text-foreground">
                     {item.quantidade}x {item.nome}
                   </p>
                   {item.adicionais.length > 0 && (
-                    <p className="text-primary text-xs">+ {item.adicionais.map((a) => a.nome).join(", ")}</p>
+                    <p className="text-xs text-primary">+ {item.adicionais.map((a) => a.nome).join(", ")}</p>
                   )}
                   {item.removidos.length > 0 && (
-                    <p className="text-destructive text-xs">Sem {item.removidos.join(", ")}</p>
+                    <p className="text-xs text-destructive">Sem {item.removidos.join(", ")}</p>
                   )}
-                  {item.bebida && <p className="text-muted-foreground text-xs">Bebida: {item.bebida}</p>}
-                  {item.observacoes && <p className="text-muted-foreground text-xs">Obs.: {item.observacoes}</p>}
+                  {item.bebida && <p className="text-xs text-muted-foreground">Bebida: {item.bebida}</p>}
+                  {item.tipo && <p className="text-xs text-muted-foreground">Tipo: {item.tipo}</p>}
+                  {item.embalagem && <p className="text-xs text-muted-foreground">Embalagem: {item.embalagem}</p>}
+                  {item.observacoes && <p className="text-xs text-muted-foreground">Obs.: {item.observacoes}</p>}
                 </div>
-                <span className="text-foreground text-sm font-bold whitespace-nowrap">
+                <span className="whitespace-nowrap text-sm font-bold text-foreground">
                   {formatPrice(item.precoUnitario * item.quantidade)}
                 </span>
               </div>
             ))}
           </div>
-          <div className="border-t border-border pt-2 flex items-center justify-between">
-            <span className="text-muted-foreground text-xs font-medium">Total do pedido</span>
-            <span className="text-foreground text-base font-black">{formatPrice(pedido.total)}</span>
+          <div className="flex items-center justify-between border-t border-border pt-2">
+            <span className="text-xs font-medium text-muted-foreground">Total do pedido</span>
+            <span className="text-base font-black text-foreground">{formatPrice(pedido.total)}</span>
           </div>
         </div>
       ))}
@@ -324,7 +331,7 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
           paddingClassName="px-4 pb-2"
         />
       </div>
-      <main className="flex-1 px-4 pt-4 pb-6">
+      <main className="flex-1 px-4 pb-6 pt-4">
         {productGrid}
         {historySection}
         {carrinho.length > 0 && <div className="h-20" />}
@@ -334,23 +341,23 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
 
   const desktopContent = (
     <div className="flex flex-1 overflow-hidden">
-      <aside className="w-64 lg:w-72 shrink-0 border-r border-border bg-card overflow-y-auto">
-        <div className="sticky top-0 z-10 border-b border-border bg-card/95 backdrop-blur-md px-4 lg:px-5 py-4">
-          <p className="text-foreground text-base font-bold">Categorias</p>
-          <p className="text-muted-foreground text-sm">Fluxo unificado de pedidos</p>
+      <aside className="w-64 shrink-0 overflow-y-auto border-r border-border bg-card lg:w-72">
+        <div className="sticky top-0 z-10 border-b border-border bg-card/95 px-4 py-4 backdrop-blur-md lg:px-5">
+          <p className="text-base font-bold text-foreground">Categorias</p>
+          <p className="text-sm text-muted-foreground">Fluxo profissional de autoatendimento</p>
         </div>
         <nav className="flex flex-col gap-0 py-2">
           {categorias.map((cat) => (
             <button
               key={cat.id}
               onClick={() => setCategoriaAtiva(cat.id)}
-              className={`flex items-center gap-3 px-4 py-3.5 text-sm font-medium transition-all text-left border-l-2 ${
+              className={`flex items-center gap-3 border-l-2 px-4 py-3.5 text-left text-sm font-medium transition-all ${
                 categoriaAtiva === cat.id
                   ? "border-l-primary bg-secondary/50 text-foreground"
                   : "border-l-transparent text-muted-foreground hover:bg-secondary/30 hover:text-foreground"
               }`}
             >
-              <CategoryIcon name={cat.icone} className="w-3.5 h-3.5" />
+              <CategoryIcon name={cat.icone} className="h-3.5 w-3.5" />
               <span>{cat.nome}</span>
             </button>
           ))}
@@ -370,7 +377,7 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
 
   return (
     <>
-      <div className="min-h-screen bg-background flex flex-col">
+      <div className="flex min-h-screen flex-col bg-background">
         {header}
         {isMobile ? mobileContent : desktopContent}
         <ProductModal
@@ -389,10 +396,10 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
       </div>
 
       <AlertDialog open={showExitAlert} onOpenChange={setShowExitAlert}>
-        <AlertDialogContent className="bg-card border-border max-w-sm">
+        <AlertDialogContent className="max-w-sm border-border bg-card">
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2 text-foreground">
-              <AlertTriangle className="w-5 h-5 text-status-pendente" />
+              <AlertTriangle className="h-5 w-5 text-status-pendente" />
               Itens não enviados
             </AlertDialogTitle>
             <AlertDialogDescription className="text-muted-foreground">
@@ -403,7 +410,7 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
             <AlertDialogCancel className="rounded-xl font-bold">Voltar e revisar</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => navigate("/garcom")}
-              className="rounded-xl font-bold bg-secondary text-foreground hover:bg-secondary/80"
+              className="rounded-xl bg-secondary font-bold text-foreground hover:bg-secondary/80"
             >
               Sair mesmo assim
             </AlertDialogAction>

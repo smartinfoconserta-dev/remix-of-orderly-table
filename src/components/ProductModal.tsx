@@ -1,7 +1,10 @@
 import { useState, useMemo, useCallback, useEffect } from "react";
 import { Check, ChevronRight, Minus, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
 import type { Produto } from "@/data/menuData";
 import type { ItemCarrinho } from "@/contexts/RestaurantContext";
@@ -12,23 +15,40 @@ interface Props {
   onAdd: (item: ItemCarrinho) => void;
 }
 
-type StepId = "adicionais" | "bebida" | "observacoes" | "quantidade";
+type StepId = "adicionais" | "bebida" | "remover" | "tipo" | "embalagem" | "quantidade";
 
-const steps: Array<{ id: StepId; label: string }> = [
-  { id: "adicionais", label: "Adicionais" },
-  { id: "bebida", label: "Bebida" },
-  { id: "observacoes", label: "Observações" },
+const bebidaOptions = ["Sem bebida", "Coca-Cola 350ml", "Guaraná 350ml", "Água sem gás"];
+const embalagemOptions = ["Consumir na mesa", "Para viagem"];
+
+const stepDefinitions: Array<{ id: StepId; label: string; optional?: boolean }> = [
+  { id: "adicionais", label: "Adicionais", optional: true },
+  { id: "bebida", label: "Bebida", optional: true },
+  { id: "remover", label: "Remover ingredientes", optional: true },
+  { id: "tipo", label: "Tipo" },
+  { id: "embalagem", label: "Embalagem" },
   { id: "quantidade", label: "Quantidade" },
 ];
 
-const bebidaOptions = ["Sem bebida", "Coca-Cola 350ml", "Guaraná 350ml", "Água sem gás"];
-
 const formatPrice = (value: number) => `R$ ${value.toFixed(2).replace(".", ",")}`;
 
+const getTipoOptions = (produto: Produto | null) => {
+  if (!produto) return ["Padrão da casa"];
+
+  if (produto.categoria === "lanches") return ["Tradicional", "Artesanal", "No ponto da casa"];
+  if (produto.categoria === "combos") return ["Completo", "Compartilhar", "Executivo"];
+  if (produto.categoria === "bebidas") return ["Gelada", "Sem gelo", "Temperatura ambiente"];
+  if (produto.categoria === "sobremesas") return ["Tradicional", "Servir agora", "Com calda extra"];
+
+  return ["Padrão da casa", "Porção para compartilhar", "Execução rápida"];
+};
+
 const ProductModal = ({ produto, onClose, onAdd }: Props) => {
+  const tipoOptions = useMemo(() => getTipoOptions(produto), [produto]);
   const [removidos, setRemovidos] = useState<string[]>([]);
   const [adicionaisSelecionados, setAdicionaisSelecionados] = useState<string[]>([]);
   const [bebidaSelecionada, setBebidaSelecionada] = useState<string>(bebidaOptions[0]);
+  const [tipoSelecionado, setTipoSelecionado] = useState<string>(tipoOptions[0]);
+  const [embalagemSelecionada, setEmbalagemSelecionada] = useState<string>(embalagemOptions[0]);
   const [observacoes, setObservacoes] = useState("");
   const [quantidade, setQuantidade] = useState(1);
   const [activeStep, setActiveStep] = useState<StepId>("adicionais");
@@ -37,16 +57,29 @@ const ProductModal = ({ produto, onClose, onAdd }: Props) => {
     setRemovidos([]);
     setAdicionaisSelecionados([]);
     setBebidaSelecionada(bebidaOptions[0]);
+    setTipoSelecionado(getTipoOptions(produto)[0]);
+    setEmbalagemSelecionada(embalagemOptions[0]);
     setObservacoes("");
     setQuantidade(1);
     setActiveStep("adicionais");
-  }, []);
+  }, [produto]);
 
   useEffect(() => {
     if (produto) {
-      resetState();
+      setRemovidos([]);
+      setAdicionaisSelecionados([]);
+      setBebidaSelecionada(bebidaOptions[0]);
+      setTipoSelecionado(tipoOptions[0]);
+      setEmbalagemSelecionada(embalagemOptions[0]);
+      setObservacoes("");
+      setQuantidade(1);
+      setActiveStep("adicionais");
     }
-  }, [produto?.id, resetState]);
+  }, [produto?.id, tipoOptions]);
+
+  const activeStepIndex = stepDefinitions.findIndex((step) => step.id === activeStep);
+  const isLastStep = activeStep === "quantidade";
+  const activeDefinition = stepDefinitions[activeStepIndex];
 
   const toggleRemover = (ingrediente: string) => {
     setRemovidos((prev) =>
@@ -75,17 +108,36 @@ const ProductModal = ({ produto, onClose, onAdd }: Props) => {
   const precoTotal = precoUnitario * quantidade;
 
   const summaryByStep: Record<StepId, string> = {
-    adicionais:
-      adicionaisComPreco.length > 0 || removidos.length > 0
-        ? `${adicionaisComPreco.length} adicional(is) • ${removidos.length} remoção(ões)`
-        : "Nenhuma personalização",
+    adicionais: adicionaisComPreco.length > 0 ? `${adicionaisComPreco.length} selecionado(s)` : "Opcional",
     bebida: bebidaSelecionada,
-    observacoes: observacoes.trim() ? "Observação preenchida" : "Sem observações",
-    quantidade: `${quantidade} unidade(s)`,
+    remover: removidos.length > 0 ? `${removidos.length} ingrediente(s)` : "Nenhum ajuste",
+    tipo: tipoSelecionado,
+    embalagem: embalagemSelecionada,
+    quantidade: `${quantidade} item(ns) • ${formatPrice(precoTotal)}`,
+  };
+
+  const goToStep = (stepId: StepId) => setActiveStep(stepId);
+
+  const goToNextStep = () => {
+    if (isLastStep) return;
+    const nextStep = stepDefinitions[activeStepIndex + 1];
+    if (nextStep) setActiveStep(nextStep.id);
+  };
+
+  const goToPreviousStep = () => {
+    const previousStep = stepDefinitions[activeStepIndex - 1];
+    if (previousStep) setActiveStep(previousStep.id);
+  };
+
+  const handleSkip = () => {
+    if (activeDefinition?.optional) {
+      goToNextStep();
+    }
   };
 
   const handleAdd = () => {
     if (!produto) return;
+
     onAdd({
       uid: `${produto.id}-${Date.now()}`,
       produtoId: produto.id,
@@ -95,9 +147,12 @@ const ProductModal = ({ produto, onClose, onAdd }: Props) => {
       removidos,
       adicionais: adicionaisComPreco.map((a) => ({ nome: a.nome, preco: a.preco })),
       bebida: bebidaSelecionada === "Sem bebida" ? null : bebidaSelecionada,
+      tipo: tipoSelecionado,
+      embalagem: embalagemSelecionada,
       observacoes: observacoes.trim(),
       precoUnitario,
     });
+
     resetState();
     onClose();
   };
@@ -109,166 +164,204 @@ const ProductModal = ({ produto, onClose, onAdd }: Props) => {
     }
   };
 
+  const renderCheckboxCard = ({
+    checked,
+    onCheckedChange,
+    title,
+    subtitle,
+    price,
+  }: {
+    checked: boolean;
+    onCheckedChange: () => void;
+    title: string;
+    subtitle: string;
+    price?: string;
+  }) => (
+    <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-border bg-card p-4 transition-all hover:border-primary/40 hover:bg-secondary/30">
+      <Checkbox checked={checked} onCheckedChange={onCheckedChange} className="mt-0.5" />
+      <div className="flex-1 space-y-1">
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-sm font-bold text-foreground">{title}</p>
+          {price ? <span className="text-sm font-black text-primary">{price}</span> : null}
+        </div>
+        <p className="text-xs text-muted-foreground">{subtitle}</p>
+      </div>
+    </label>
+  );
+
+  const renderRadioStep = ({
+    value,
+    onChange,
+    options,
+    title,
+    description,
+  }: {
+    value: string;
+    onChange: (value: string) => void;
+    options: string[];
+    title: string;
+    description: string;
+  }) => (
+    <div className="space-y-4">
+      <div>
+        <h3 className="text-base font-black text-foreground">{title}</h3>
+        <p className="mt-1 text-sm text-muted-foreground">{description}</p>
+      </div>
+      <RadioGroup value={value} onValueChange={onChange} className="space-y-3">
+        {options.map((option) => (
+          <label
+            key={option}
+            className="flex cursor-pointer items-start gap-3 rounded-2xl border border-border bg-card p-4 transition-all hover:border-primary/40 hover:bg-secondary/30"
+          >
+            <RadioGroupItem value={option} className="mt-0.5" />
+            <div className="flex-1">
+              <p className="text-sm font-bold text-foreground">{option}</p>
+            </div>
+          </label>
+        ))}
+      </RadioGroup>
+    </div>
+  );
+
   const renderStepContent = () => {
     if (!produto) return null;
 
     if (activeStep === "adicionais") {
       return (
-        <div className="space-y-5">
-          {produto.ingredientesRemoviveis && produto.ingredientesRemoviveis.length > 0 ? (
-            <section className="space-y-3">
-              <div>
-                <h3 className="text-foreground text-base font-bold">Remover ingredientes</h3>
-                <p className="text-muted-foreground text-sm">Marque o que deve sair do preparo.</p>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {produto.ingredientesRemoviveis.map((ing) => {
-                  const isRemovido = removidos.includes(ing);
-                  return (
-                    <button
-                      key={ing}
-                      type="button"
-                      onClick={() => toggleRemover(ing)}
-                      className={`rounded-xl border px-4 py-2.5 text-sm font-semibold transition-all active:scale-95 ${
-                        isRemovido
-                          ? "border-destructive/40 bg-destructive/10 text-foreground"
-                          : "border-border bg-secondary text-secondary-foreground"
-                      }`}
-                    >
-                      {isRemovido ? `Sem ${ing}` : ing}
-                    </button>
-                  );
-                })}
-              </div>
-            </section>
-          ) : null}
-
+        <div className="space-y-4">
+          <div>
+            <h3 className="text-base font-black text-foreground">Adicionais do item</h3>
+            <p className="mt-1 text-sm text-muted-foreground">Selecione múltiplos complementos antes de seguir.</p>
+          </div>
           {produto.adicionais && produto.adicionais.length > 0 ? (
-            <section className="space-y-3">
-              <div>
-                <h3 className="text-foreground text-base font-bold">Escolha adicionais</h3>
-                <p className="text-muted-foreground text-sm">Selecione os complementos desejados.</p>
-              </div>
-              <div className="space-y-2">
-                {produto.adicionais.map((ad) => {
-                  const selected = adicionaisSelecionados.includes(ad.id);
-                  return (
-                    <button
-                      key={ad.id}
-                      type="button"
-                      onClick={() => toggleAdicional(ad.id)}
-                      className={`flex w-full items-center justify-between rounded-2xl border px-4 py-3 text-left transition-all active:scale-[0.98] ${
-                        selected
-                          ? "border-primary bg-secondary text-foreground"
-                          : "border-border bg-card text-foreground"
-                      }`}
-                    >
-                      <div>
-                        <p className="text-sm font-semibold">{ad.nome}</p>
-                        <p className="text-muted-foreground text-xs">Adiciona ao preparo</p>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <span className="text-sm font-black text-primary">+ {formatPrice(ad.preco)}</span>
-                        {selected && <Check className="h-4 w-4 text-primary" />}
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            </section>
-          ) : null}
-
-          {(!produto.ingredientesRemoviveis || produto.ingredientesRemoviveis.length === 0) &&
-          (!produto.adicionais || produto.adicionais.length === 0) ? (
-            <div className="rounded-2xl border border-dashed border-border bg-secondary/40 p-5">
-              <p className="text-foreground text-sm font-semibold">Este item não possui personalizações nesta etapa.</p>
-              <p className="text-muted-foreground text-sm mt-1">Siga para bebida, observações ou ajuste a quantidade.</p>
+            <div className="space-y-3">
+              {produto.adicionais.map((adicional) =>
+                renderCheckboxCard({
+                  checked: adicionaisSelecionados.includes(adicional.id),
+                  onCheckedChange: () => toggleAdicional(adicional.id),
+                  title: adicional.nome,
+                  subtitle: "Complemento opcional do preparo",
+                  price: `+ ${formatPrice(adicional.preco)}`,
+                })
+              )}
             </div>
-          ) : null}
+          ) : (
+            <div className="rounded-2xl border border-dashed border-border bg-secondary/30 p-5 text-sm text-muted-foreground">
+              Este item não possui adicionais nesta etapa.
+            </div>
+          )}
         </div>
       );
     }
 
     if (activeStep === "bebida") {
+      return renderRadioStep({
+        value: bebidaSelecionada,
+        onChange: setBebidaSelecionada,
+        options: bebidaOptions,
+        title: "Bebida vinculada ao pedido",
+        description: "Escolha uma opção única para registrar junto ao item.",
+      });
+    }
+
+    if (activeStep === "remover") {
       return (
-        <div className="space-y-3">
+        <div className="space-y-4">
           <div>
-            <h3 className="text-foreground text-base font-bold">Deseja vincular uma bebida?</h3>
-            <p className="text-muted-foreground text-sm">Escolha uma opção para registrar a preferência do cliente.</p>
+            <h3 className="text-base font-black text-foreground">Remover ingredientes</h3>
+            <p className="mt-1 text-sm text-muted-foreground">Marque somente o que deve sair do preparo.</p>
           </div>
-          <div className="space-y-2">
-            {bebidaOptions.map((bebida) => {
-              const selected = bebidaSelecionada === bebida;
-              return (
-                <button
-                  key={bebida}
-                  type="button"
-                  onClick={() => setBebidaSelecionada(bebida)}
-                  className={`flex w-full items-center justify-between rounded-2xl border px-4 py-3 text-left transition-all active:scale-[0.98] ${
-                    selected
-                      ? "border-primary bg-secondary text-foreground"
-                      : "border-border bg-card text-foreground"
-                  }`}
-                >
-                  <div>
-                    <p className="text-sm font-semibold">{bebida}</p>
-                    <p className="text-muted-foreground text-xs">
-                      {bebida === "Sem bebida" ? "Nenhuma bebida vinculada" : "Preferência registrada com o item"}
-                    </p>
-                  </div>
-                  {selected && <Check className="h-4 w-4 text-primary" />}
-                </button>
-              );
-            })}
-          </div>
+          {produto.ingredientesRemoviveis && produto.ingredientesRemoviveis.length > 0 ? (
+            <div className="space-y-3">
+              {produto.ingredientesRemoviveis.map((ingrediente) =>
+                renderCheckboxCard({
+                  checked: removidos.includes(ingrediente),
+                  onCheckedChange: () => toggleRemover(ingrediente),
+                  title: ingrediente,
+                  subtitle: "Será removido deste item",
+                })
+              )}
+            </div>
+          ) : (
+            <div className="rounded-2xl border border-dashed border-border bg-secondary/30 p-5 text-sm text-muted-foreground">
+              Nenhum ingrediente removível disponível para este produto.
+            </div>
+          )}
         </div>
       );
     }
 
-    if (activeStep === "observacoes") {
-      return (
-        <div className="space-y-3">
-          <div>
-            <h3 className="text-foreground text-base font-bold">Observações do preparo</h3>
-            <p className="text-muted-foreground text-sm">Adicione instruções úteis para evitar erros no atendimento.</p>
-          </div>
-          <Textarea
-            value={observacoes}
-            onChange={(event) => setObservacoes(event.target.value)}
-            placeholder="Ex.: ponto da carne, sem gelo, mandar ketchup à parte..."
-            className="min-h-40 resize-none rounded-2xl border-border bg-card"
-            maxLength={180}
-          />
-          <p className="text-muted-foreground text-xs text-right">{observacoes.length}/180</p>
-        </div>
-      );
+    if (activeStep === "tipo") {
+      return renderRadioStep({
+        value: tipoSelecionado,
+        onChange: setTipoSelecionado,
+        options: tipoOptions,
+        title: "Tipo do preparo",
+        description: "Etapa obrigatória para padronizar a execução na cozinha.",
+      });
+    }
+
+    if (activeStep === "embalagem") {
+      return renderRadioStep({
+        value: embalagemSelecionada,
+        onChange: setEmbalagemSelecionada,
+        options: embalagemOptions,
+        title: "Embalagem do pedido",
+        description: "Defina como o item deve ser entregue ao cliente.",
+      });
     }
 
     return (
-      <div className="space-y-4">
+      <div className="space-y-5">
         <div>
-          <h3 className="text-foreground text-base font-bold">Defina a quantidade</h3>
-          <p className="text-muted-foreground text-sm">Revise o total antes de adicionar ao carrinho.</p>
+          <h3 className="text-base font-black text-foreground">Quantidade e observações finais</h3>
+          <p className="mt-1 text-sm text-muted-foreground">Revise o item antes de adicionar ao carrinho.</p>
         </div>
-        <div className="flex items-center justify-between rounded-2xl border border-border bg-card px-4 py-4">
-          <button
-            type="button"
-            onClick={() => setQuantidade((q) => Math.max(1, q - 1))}
-            className="flex h-12 w-12 items-center justify-center rounded-xl bg-secondary text-foreground transition-transform active:scale-90"
-          >
-            <Minus className="h-5 w-5" />
-          </button>
-          <div className="text-center">
-            <p className="text-foreground text-3xl font-black">{quantidade}</p>
-            <p className="text-muted-foreground text-sm">unidade(s)</p>
+
+        <div className="rounded-3xl border border-border bg-card p-4 md:p-5">
+          <div className="flex items-center justify-between gap-4">
+            <button
+              type="button"
+              onClick={() => setQuantidade((q) => Math.max(1, q - 1))}
+              className="flex h-12 w-12 items-center justify-center rounded-2xl border border-border bg-secondary text-foreground transition-transform active:scale-90"
+            >
+              <Minus className="h-5 w-5" />
+            </button>
+            <div className="text-center">
+              <p className="text-3xl font-black text-foreground">{quantidade}</p>
+              <p className="text-sm text-muted-foreground">unidade(s)</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setQuantidade((q) => q + 1)}
+              className="flex h-12 w-12 items-center justify-center rounded-2xl border border-border bg-secondary text-foreground transition-transform active:scale-90"
+            >
+              <Plus className="h-5 w-5" />
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={() => setQuantidade((q) => q + 1)}
-            className="flex h-12 w-12 items-center justify-center rounded-xl bg-secondary text-foreground transition-transform active:scale-90"
-          >
-            <Plus className="h-5 w-5" />
-          </button>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="observacoes-finais" className="text-sm font-bold text-foreground">
+            Observação
+          </Label>
+          <Textarea
+            id="observacoes-finais"
+            value={observacoes}
+            onChange={(event) => setObservacoes(event.target.value)}
+            placeholder="Ex.: sem cebola, servir separado, mandar guardanapos..."
+            className="min-h-32 resize-none rounded-2xl border-border bg-card"
+            maxLength={180}
+          />
+          <p className="text-right text-xs text-muted-foreground">{observacoes.length}/180</p>
+        </div>
+
+        <div className="rounded-3xl border border-border bg-secondary/30 p-4">
+          <div className="flex items-center justify-between text-sm text-muted-foreground">
+            <span>Subtotal atual</span>
+            <span>{quantidade} item(ns)</span>
+          </div>
+          <p className="mt-2 text-2xl font-black text-foreground">{formatPrice(precoTotal)}</p>
         </div>
       </div>
     );
@@ -276,70 +369,52 @@ const ProductModal = ({ produto, onClose, onAdd }: Props) => {
 
   return (
     <Dialog open={!!produto} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-h-[92vh] max-w-5xl overflow-hidden rounded-[2rem] border-border bg-card p-0">
+      <DialogContent className="max-h-[94vh] max-w-6xl overflow-hidden rounded-[2rem] border-border bg-card p-0">
         {produto && (
-          <div className="flex max-h-[92vh] flex-col overflow-hidden">
-            <div className="relative border-b border-border">
-              <div className="grid gap-0 md:grid-cols-[1.15fr_0.85fr]">
-                <div className="relative aspect-[16/8] overflow-hidden md:aspect-auto md:min-h-[220px]">
-                  <img src={produto.imagem} alt={produto.nome} className="h-full w-full object-cover" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-background via-background/20 to-transparent" />
-                  <div className="absolute bottom-0 left-0 right-0 p-5 md:p-6">
-                    <p className="text-muted-foreground text-xs font-semibold uppercase tracking-[0.22em]">Fluxo guiado</p>
-                    <h2 className="mt-2 text-foreground text-2xl font-black md:text-3xl">{produto.nome}</h2>
-                    <p className="mt-2 max-w-xl text-sm text-muted-foreground md:text-base">{produto.descricao}</p>
-                  </div>
-                </div>
-
-                <div className="flex flex-col justify-end gap-3 bg-card px-5 py-5 md:px-6">
-                  <div>
-                    <p className="text-muted-foreground text-xs font-semibold uppercase tracking-[0.22em]">Preço base</p>
-                    <p className="mt-2 text-foreground text-3xl font-black">{formatPrice(produto.preco)}</p>
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="rounded-2xl border border-border bg-secondary/50 p-3">
-                      <p className="text-muted-foreground text-xs">Configuração</p>
-                      <p className="mt-1 text-sm font-bold text-foreground">Etapa a etapa</p>
-                    </div>
-                    <div className="rounded-2xl border border-border bg-secondary/50 p-3">
-                      <p className="text-muted-foreground text-xs">Total atual</p>
-                      <p className="mt-1 text-sm font-bold text-foreground">{formatPrice(precoTotal)}</p>
-                    </div>
-                  </div>
-                </div>
+          <div className="flex max-h-[94vh] flex-col overflow-hidden">
+            <div className="relative border-b border-border bg-card px-5 py-5 md:px-6">
+              <div className="pr-12">
+                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">Autoatendimento guiado</p>
+                <h2 className="mt-2 text-2xl font-black text-foreground md:text-3xl">{produto.nome}</h2>
+                <p className="mt-2 max-w-2xl text-sm text-muted-foreground md:text-base">{produto.descricao}</p>
               </div>
-
               <button
                 type="button"
                 onClick={() => handleOpenChange(false)}
-                className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full border border-border bg-background/80 text-foreground backdrop-blur"
+                className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full border border-border bg-background text-foreground"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
 
-            <div className="grid min-h-0 flex-1 md:grid-cols-[280px_1fr]">
+            <div className="grid min-h-0 flex-1 md:grid-cols-[300px_1fr]">
               <aside className="border-b border-border bg-secondary/20 p-4 md:border-b-0 md:border-r md:p-5">
                 <div className="space-y-2">
-                  {steps.map((step, index) => {
+                  {stepDefinitions.map((step, index) => {
                     const selected = activeStep === step.id;
+                    const completed = index < activeStepIndex;
+
                     return (
                       <button
                         key={step.id}
                         type="button"
-                        onClick={() => setActiveStep(step.id)}
+                        onClick={() => goToStep(step.id)}
                         className={`flex w-full items-center justify-between rounded-2xl border px-4 py-3 text-left transition-all ${
                           selected
                             ? "border-primary bg-card text-foreground shadow-sm"
                             : "border-transparent bg-transparent text-muted-foreground hover:border-border hover:bg-card/70 hover:text-foreground"
                         }`}
                       >
-                        <div>
-                          <p className="text-[11px] font-semibold uppercase tracking-[0.18em]">Etapa {index + 1}</p>
-                          <p className="mt-1 text-sm font-bold">{step.label}</p>
-                          <p className="mt-1 text-xs text-muted-foreground">{summaryByStep[step.id]}</p>
+                        <div className="flex min-w-0 items-start gap-3">
+                          <div className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-black ${selected ? "bg-primary text-primary-foreground" : completed ? "bg-secondary text-foreground" : "border border-border text-muted-foreground"}`}>
+                            {completed ? <Check className="h-4 w-4" /> : index + 1}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-sm font-bold">{step.label}</p>
+                            <p className="mt-1 text-xs text-muted-foreground">{summaryByStep[step.id]}</p>
+                          </div>
                         </div>
-                        <ChevronRight className={`h-4 w-4 ${selected ? "text-primary" : "text-muted-foreground"}`} />
+                        <ChevronRight className={`h-4 w-4 shrink-0 ${selected ? "text-primary" : "text-muted-foreground"}`} />
                       </button>
                     );
                   })}
@@ -348,19 +423,40 @@ const ProductModal = ({ produto, onClose, onAdd }: Props) => {
 
               <section className="min-h-0 overflow-y-auto p-5 md:p-6">
                 {renderStepContent()}
-                <div className="h-8" />
+                <div className="h-6" />
               </section>
             </div>
 
             <div className="border-t border-border bg-card px-4 py-4 md:px-6">
               <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                 <div>
-                  <p className="text-muted-foreground text-sm">Resumo do item</p>
-                  <p className="text-foreground text-xl font-black">{formatPrice(precoTotal)}</p>
+                  <p className="text-sm text-muted-foreground">Subtotal do item</p>
+                  <p className="text-xl font-black text-foreground md:text-2xl">{formatPrice(precoTotal)}</p>
                 </div>
-                <Button onClick={handleAdd} className="h-14 rounded-2xl px-6 text-base font-black md:min-w-[280px]">
-                  Adicionar ao carrinho
-                </Button>
+
+                <div className="flex flex-col gap-3 sm:flex-row">
+                  {!isLastStep && activeDefinition?.optional ? (
+                    <Button type="button" variant="outline" onClick={handleSkip} className="h-12 rounded-2xl px-5 font-bold">
+                      Pular
+                    </Button>
+                  ) : null}
+
+                  {!isLastStep && activeStepIndex > 0 && !activeDefinition?.optional ? (
+                    <Button type="button" variant="outline" onClick={goToPreviousStep} className="h-12 rounded-2xl px-5 font-bold">
+                      Voltar
+                    </Button>
+                  ) : null}
+
+                  {!isLastStep ? (
+                    <Button type="button" onClick={goToNextStep} className="h-12 rounded-2xl px-6 font-black">
+                      Avançar
+                    </Button>
+                  ) : (
+                    <Button type="button" onClick={handleAdd} className="h-12 rounded-2xl px-6 font-black md:min-w-[240px]">
+                      Adicionar ao carrinho
+                    </Button>
+                  )}
+                </div>
               </div>
             </div>
           </div>
