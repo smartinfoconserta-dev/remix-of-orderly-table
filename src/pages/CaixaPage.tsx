@@ -486,8 +486,6 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
     <>
       <AppLayout
         title={screenTitle}
-        showBack
-        onBack={mesa ? handleVoltar : undefined}
         headerRight={
           <Button variant="outline" onClick={() => logout(accessMode)} className="gap-2 rounded-xl font-bold">
             <LogOut className="h-4 w-4" />
