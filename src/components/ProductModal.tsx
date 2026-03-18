@@ -625,11 +625,20 @@ const ProductModal = ({ produto, onClose, onAdd }: Props) => {
                   ) : null}
 
                   {!isLastStep ? (
-                    <Button type="button" onClick={proximaEtapa} className="h-12 rounded-2xl px-6 font-black">
+                    <Button
+                      type="button"
+                      onClick={proximaEtapa}
+                      className="h-12 rounded-2xl px-6 font-black transition-transform duration-100 ease-in-out active:scale-[0.97]"
+                    >
                       Avançar
                     </Button>
                   ) : (
-                    <Button type="button" onClick={handleAdd} disabled={isAddLocked} className="h-12 rounded-2xl px-6 font-black md:min-w-[240px] disabled:pointer-events-none disabled:opacity-70">
+                    <Button
+                      type="button"
+                      onClick={handleAdd}
+                      disabled={isAddLocked}
+                      className="h-12 rounded-2xl px-6 font-black transition-transform duration-100 ease-in-out active:scale-[0.97] md:min-w-[240px] disabled:pointer-events-none disabled:opacity-70"
+                    >
                       Adicionar ao carrinho
                     </Button>
                   )}

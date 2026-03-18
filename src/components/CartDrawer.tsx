@@ -164,7 +164,7 @@ const CartDrawer = ({
                     type="button"
                     onClick={handleConfirmar}
                     disabled={isSubmitting}
-                    className="h-12 rounded-2xl font-black"
+                    className="h-12 rounded-2xl font-black transition-transform duration-100 ease-in-out active:scale-[0.97]"
                   >
                     Enviar pedido
                   </Button>
