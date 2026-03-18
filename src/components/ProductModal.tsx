@@ -412,7 +412,8 @@ const ProductModal = ({ produto, onClose, onAdd }: Props) => {
                         key={step}
                         type="button"
                         onClick={() => goToStep(step)}
-                        className={`flex w-full items-center justify-between rounded-2xl border px-4 py-3 text-left transition-all ${
+                        disabled={index > activeStepIndex}
+                        className={`flex w-full items-center justify-between rounded-2xl border px-4 py-3 text-left transition-all disabled:cursor-not-allowed disabled:opacity-70 ${
                           selected
                             ? "border-primary bg-card text-foreground shadow-sm"
                             : "border-transparent bg-transparent text-muted-foreground hover:border-border hover:bg-card/70 hover:text-foreground"
