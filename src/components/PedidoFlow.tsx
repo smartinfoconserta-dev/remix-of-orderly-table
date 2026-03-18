@@ -519,8 +519,8 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
                 <img
                   src={slide.image}
                   alt={slide.alt}
-                  className="h-full w-full object-contain object-right"
-                  style={{ objectPosition: "right center" }}
+                  className="h-full w-full object-cover object-right"
+                  style={{ objectPosition: "80% center" }}
                   loading={index === 0 ? "eager" : "lazy"}
                 />
                 <div className="absolute inset-0 bg-gradient-to-l from-transparent via-background/10 to-background/35 md:to-transparent" />
