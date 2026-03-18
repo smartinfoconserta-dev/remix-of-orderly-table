@@ -17,6 +17,18 @@ interface Props {
 
 type StepId = ProductStep;
 
+interface PedidoAtual {
+  produtoId: string | null;
+  etapaAtual: number;
+  adicionais: string[];
+  bebida: string | null;
+  removidos: string[];
+  tipo: string | null;
+  viagem: string | null;
+  quantidade: number;
+  observacao: string;
+}
+
 const stepMeta: Record<StepId, { label: string; optional: boolean }> = {
   adicionais: { label: "Adicionais", optional: true },
   bebida: { label: "Bebida", optional: true },
@@ -31,6 +43,18 @@ const defaultEmbalagemOptions = ["Consumir na mesa", "Para viagem"];
 const standardFlowOrder: StepId[] = ["adicionais", "bebida", "remover", "tipo", "embalagem", "quantidade"];
 
 const formatPrice = (value: number) => `R$ ${value.toFixed(2).replace(".", ",")}`;
+
+const createPedidoAtual = (produtoId: string | null = null): PedidoAtual => ({
+  produtoId,
+  etapaAtual: 1,
+  adicionais: [],
+  bebida: null,
+  removidos: [],
+  tipo: null,
+  viagem: null,
+  quantidade: 1,
+  observacao: "",
+});
 
 const getTipoOptions = (produto: Produto | null) => {
   if (!produto) return ["Padrão da casa"];
@@ -60,6 +84,8 @@ const resolveSteps = (produto: Produto | null): StepId[] => {
 };
 
 const ProductModal = ({ produto, onClose, onAdd }: Props) => {
+  const [pedidoAtual, setPedidoAtual] = useState<PedidoAtual>(() => createPedidoAtual());
+
   const tipoOptions = useMemo(() => getTipoOptions(produto), [produto]);
   const bebidaOptions = useMemo(
     () => ["Sem bebida", ...(produto?.bebidaOptions?.length ? produto.bebidaOptions : defaultBebidaOptions)],
@@ -70,121 +96,128 @@ const ProductModal = ({ produto, onClose, onAdd }: Props) => {
     [produto],
   );
   const flowSteps = useMemo(() => resolveSteps(produto), [produto]);
-  const initialStep = flowSteps[0] ?? "quantidade";
 
-  const [removidos, setRemovidos] = useState<string[]>([]);
-  const [adicionaisSelecionados, setAdicionaisSelecionados] = useState<string[]>([]);
-  const [bebidaSelecionada, setBebidaSelecionada] = useState<string>(bebidaOptions[0]);
-  const [tipoSelecionado, setTipoSelecionado] = useState<string>(tipoOptions[0]);
-  const [embalagemSelecionada, setEmbalagemSelecionada] = useState<string>(embalagemOptions[0]);
-  const [observacoes, setObservacoes] = useState("");
-  const [quantidade, setQuantidade] = useState(1);
-  const [activeStep, setActiveStep] = useState<StepId>(initialStep);
-
-  const resetState = useCallback(() => {
-    setRemovidos([]);
-    setAdicionaisSelecionados([]);
-    setBebidaSelecionada(bebidaOptions[0]);
-    setTipoSelecionado(tipoOptions[0]);
-    setEmbalagemSelecionada(embalagemOptions[0]);
-    setObservacoes("");
-    setQuantidade(1);
-    setActiveStep(initialStep);
-  }, [bebidaOptions, embalagemOptions, initialStep, tipoOptions]);
+  const resetPedidoAtual = useCallback((produtoId: string | null = null) => {
+    setPedidoAtual(createPedidoAtual(produtoId));
+  }, []);
 
   useEffect(() => {
     if (produto) {
-      resetState();
+      resetPedidoAtual(produto.id);
+      return;
     }
-  }, [produto?.id, resetState]);
 
-  const activeStepIndex = flowSteps.findIndex((step) => step === activeStep);
-  const isLastStep = activeStep === flowSteps[flowSteps.length - 1];
+    resetPedidoAtual();
+  }, [produto, resetPedidoAtual]);
+
+  const activeStepIndex = Math.min(Math.max(pedidoAtual.etapaAtual - 1, 0), Math.max(flowSteps.length - 1, 0));
+  const activeStep = flowSteps[activeStepIndex] ?? "quantidade";
+  const isLastStep = activeStepIndex === flowSteps.length - 1;
   const activeDefinition = stepMeta[activeStep];
 
+  const updatePedidoAtual = useCallback(<K extends keyof PedidoAtual>(field: K, value: PedidoAtual[K]) => {
+    setPedidoAtual((prev) => ({ ...prev, [field]: value }));
+  }, []);
+
   const toggleRemover = (ingrediente: string) => {
-    setRemovidos((prev) =>
-      prev.includes(ingrediente)
-        ? prev.filter((r) => r !== ingrediente)
-        : [...prev, ingrediente],
-    );
+    setPedidoAtual((prev) => ({
+      ...prev,
+      removidos: prev.removidos.includes(ingrediente)
+        ? prev.removidos.filter((item) => item !== ingrediente)
+        : [...prev.removidos, ingrediente],
+    }));
   };
 
   const toggleAdicional = (id: string) => {
-    setAdicionaisSelecionados((prev) =>
-      prev.includes(id) ? prev.filter((a) => a !== id) : [...prev, id],
-    );
+    setPedidoAtual((prev) => ({
+      ...prev,
+      adicionais: prev.adicionais.includes(id)
+        ? prev.adicionais.filter((item) => item !== id)
+        : [...prev.adicionais, id],
+    }));
   };
 
   const adicionaisComPreco = useMemo(() => {
     if (!produto?.adicionais) return [];
-    return produto.adicionais.filter((a) => adicionaisSelecionados.includes(a.id));
-  }, [produto, adicionaisSelecionados]);
+    return produto.adicionais.filter((adicional) => pedidoAtual.adicionais.includes(adicional.id));
+  }, [pedidoAtual.adicionais, produto]);
 
   const precoUnitario = useMemo(() => {
     if (!produto) return 0;
-    return produto.preco + adicionaisComPreco.reduce((acc, a) => acc + a.preco, 0);
+    return produto.preco + adicionaisComPreco.reduce((acc, adicional) => acc + adicional.preco, 0);
   }, [produto, adicionaisComPreco]);
 
-  const precoTotal = precoUnitario * quantidade;
+  const precoTotal = precoUnitario * pedidoAtual.quantidade;
 
   const summaryByStep: Record<StepId, string> = {
     adicionais: adicionaisComPreco.length > 0 ? `${adicionaisComPreco.length} selecionado(s)` : "Opcional",
-    bebida: bebidaSelecionada,
-    remover: removidos.length > 0 ? `${removidos.length} ingrediente(s)` : "Nenhum ajuste",
-    tipo: tipoSelecionado,
-    embalagem: embalagemSelecionada,
-    quantidade: `${quantidade} item(ns) • ${formatPrice(precoTotal)}`,
+    bebida: pedidoAtual.bebida ?? "Opcional",
+    remover: pedidoAtual.removidos.length > 0 ? `${pedidoAtual.removidos.length} ingrediente(s)` : "Nenhum ajuste",
+    tipo: pedidoAtual.tipo ?? "Seleção obrigatória",
+    embalagem: pedidoAtual.viagem ?? "Seleção obrigatória",
+    quantidade: `${pedidoAtual.quantidade} item(ns) • ${formatPrice(precoTotal)}`,
   };
+
+  const validarEtapa = useCallback(
+    (stepId: StepId) => {
+      if (stepMeta[stepId].optional) return true;
+      if (stepId === "tipo") return Boolean(pedidoAtual.tipo);
+      if (stepId === "embalagem") return Boolean(pedidoAtual.viagem);
+      if (stepId === "quantidade") return pedidoAtual.quantidade >= 1;
+      return true;
+    },
+    [pedidoAtual.quantidade, pedidoAtual.tipo, pedidoAtual.viagem],
+  );
 
   const goToStep = (stepId: StepId) => {
     const targetIndex = flowSteps.findIndex((step) => step === stepId);
     if (targetIndex === -1 || targetIndex > activeStepIndex) return;
-    setActiveStep(stepId);
+
+    updatePedidoAtual("etapaAtual", targetIndex + 1);
   };
 
-  const goToNextStep = () => {
-    if (isLastStep) return;
-    const nextStep = flowSteps[activeStepIndex + 1];
-    if (nextStep) setActiveStep(nextStep);
+  const proximaEtapa = () => {
+    if (isLastStep || !validarEtapa(activeStep)) return;
+
+    updatePedidoAtual("etapaAtual", Math.min(pedidoAtual.etapaAtual + 1, flowSteps.length));
   };
 
-  const goToPreviousStep = () => {
-    const previousStep = flowSteps[activeStepIndex - 1];
-    if (previousStep) setActiveStep(previousStep);
+  const voltarEtapa = () => {
+    updatePedidoAtual("etapaAtual", Math.max(pedidoAtual.etapaAtual - 1, 1));
   };
 
   const handleSkip = () => {
     if (activeDefinition?.optional) {
-      goToNextStep();
+      proximaEtapa();
     }
   };
 
   const handleAdd = () => {
     if (!produto) return;
+    if (!flowSteps.every((step) => validarEtapa(step))) return;
 
     onAdd({
       uid: `${produto.id}-${Date.now()}`,
       produtoId: produto.id,
       nome: produto.nome,
       precoBase: produto.preco,
-      quantidade,
-      removidos,
-      adicionais: adicionaisComPreco.map((a) => ({ nome: a.nome, preco: a.preco })),
-      bebida: flowSteps.includes("bebida") && bebidaSelecionada !== "Sem bebida" ? bebidaSelecionada : null,
-      tipo: flowSteps.includes("tipo") ? tipoSelecionado : undefined,
-      embalagem: flowSteps.includes("embalagem") ? embalagemSelecionada : undefined,
-      observacoes: observacoes.trim(),
+      quantidade: pedidoAtual.quantidade,
+      removidos: pedidoAtual.removidos,
+      adicionais: adicionaisComPreco.map((adicional) => ({ nome: adicional.nome, preco: adicional.preco })),
+      bebida: flowSteps.includes("bebida") && pedidoAtual.bebida !== "Sem bebida" ? pedidoAtual.bebida : null,
+      tipo: flowSteps.includes("tipo") ? pedidoAtual.tipo : undefined,
+      embalagem: flowSteps.includes("embalagem") ? pedidoAtual.viagem : undefined,
+      observacoes: pedidoAtual.observacao.trim(),
       precoUnitario,
     });
 
-    resetState();
+    resetPedidoAtual();
     onClose();
   };
 
   const handleOpenChange = (open: boolean) => {
     if (!open) {
-      resetState();
+      resetPedidoAtual();
       onClose();
     }
   };
@@ -261,7 +294,7 @@ const ProductModal = ({ produto, onClose, onAdd }: Props) => {
           <div className="space-y-3">
             {produto.adicionais?.map((adicional) =>
               renderCheckboxCard({
-                checked: adicionaisSelecionados.includes(adicional.id),
+                checked: pedidoAtual.adicionais.includes(adicional.id),
                 onCheckedChange: () => toggleAdicional(adicional.id),
                 title: adicional.nome,
                 subtitle: "Complemento opcional do preparo",
@@ -275,8 +308,8 @@ const ProductModal = ({ produto, onClose, onAdd }: Props) => {
 
     if (activeStep === "bebida") {
       return renderRadioStep({
-        value: bebidaSelecionada,
-        onChange: setBebidaSelecionada,
+        value: pedidoAtual.bebida ?? "",
+        onChange: (value) => updatePedidoAtual("bebida", value),
         options: bebidaOptions,
         title: "Bebida vinculada ao pedido",
         description: "Escolha uma opção única para registrar junto ao item.",
@@ -293,7 +326,7 @@ const ProductModal = ({ produto, onClose, onAdd }: Props) => {
           <div className="space-y-3">
             {produto.ingredientesRemoviveis?.map((ingrediente) =>
               renderCheckboxCard({
-                checked: removidos.includes(ingrediente),
+                checked: pedidoAtual.removidos.includes(ingrediente),
                 onCheckedChange: () => toggleRemover(ingrediente),
                 title: ingrediente,
                 subtitle: "Será removido deste item",
@@ -306,8 +339,8 @@ const ProductModal = ({ produto, onClose, onAdd }: Props) => {
 
     if (activeStep === "tipo") {
       return renderRadioStep({
-        value: tipoSelecionado,
-        onChange: setTipoSelecionado,
+        value: pedidoAtual.tipo ?? "",
+        onChange: (value) => updatePedidoAtual("tipo", value),
         options: tipoOptions,
         title: "Tipo do preparo",
         description: "Defina o padrão do item antes de seguir para o fechamento do pedido.",
@@ -316,8 +349,8 @@ const ProductModal = ({ produto, onClose, onAdd }: Props) => {
 
     if (activeStep === "embalagem") {
       return renderRadioStep({
-        value: embalagemSelecionada,
-        onChange: setEmbalagemSelecionada,
+        value: pedidoAtual.viagem ?? "",
+        onChange: (value) => updatePedidoAtual("viagem", value),
         options: embalagemOptions,
         title: "Viagem ou consumo local",
         description: "Informe como este item será servido para evitar erros de entrega.",
@@ -335,18 +368,18 @@ const ProductModal = ({ produto, onClose, onAdd }: Props) => {
           <div className="flex items-center justify-between gap-4">
             <button
               type="button"
-              onClick={() => setQuantidade((q) => Math.max(1, q - 1))}
+              onClick={() => updatePedidoAtual("quantidade", Math.max(1, pedidoAtual.quantidade - 1))}
               className="flex h-12 w-12 items-center justify-center rounded-2xl border border-border bg-secondary text-foreground transition-transform active:scale-90"
             >
               <Minus className="h-5 w-5" />
             </button>
             <div className="text-center">
-              <p className="text-3xl font-black text-foreground">{quantidade}</p>
+              <p className="text-3xl font-black text-foreground">{pedidoAtual.quantidade}</p>
               <p className="text-sm text-muted-foreground">unidade(s)</p>
             </div>
             <button
               type="button"
-              onClick={() => setQuantidade((q) => q + 1)}
+              onClick={() => updatePedidoAtual("quantidade", pedidoAtual.quantidade + 1)}
               className="flex h-12 w-12 items-center justify-center rounded-2xl border border-border bg-secondary text-foreground transition-transform active:scale-90"
             >
               <Plus className="h-5 w-5" />
@@ -360,19 +393,19 @@ const ProductModal = ({ produto, onClose, onAdd }: Props) => {
           </Label>
           <Textarea
             id="observacoes-finais"
-            value={observacoes}
-            onChange={(event) => setObservacoes(event.target.value)}
+            value={pedidoAtual.observacao}
+            onChange={(event) => updatePedidoAtual("observacao", event.target.value)}
             placeholder="Ex.: sem cebola, servir separado, mandar guardanapos..."
             className="min-h-32 resize-none rounded-2xl border-border bg-card"
             maxLength={180}
           />
-          <p className="text-right text-xs text-muted-foreground">{observacoes.length}/180</p>
+          <p className="text-right text-xs text-muted-foreground">{pedidoAtual.observacao.length}/180</p>
         </div>
 
         <div className="rounded-3xl border border-border bg-secondary/30 p-4">
           <div className="flex items-center justify-between text-sm text-muted-foreground">
             <span>Subtotal atual</span>
-            <span>{quantidade} item(ns)</span>
+            <span>{pedidoAtual.quantidade} item(ns)</span>
           </div>
           <p className="mt-2 text-2xl font-black text-foreground">{formatPrice(precoTotal)}</p>
         </div>
@@ -450,7 +483,7 @@ const ProductModal = ({ produto, onClose, onAdd }: Props) => {
 
                 <div className="flex flex-col gap-3 sm:flex-row">
                   {activeStepIndex > 0 ? (
-                    <Button type="button" variant="outline" onClick={goToPreviousStep} className="h-12 rounded-2xl px-5 font-bold">
+                    <Button type="button" variant="outline" onClick={voltarEtapa} className="h-12 rounded-2xl px-5 font-bold">
                       Voltar
                     </Button>
                   ) : null}
@@ -462,7 +495,7 @@ const ProductModal = ({ produto, onClose, onAdd }: Props) => {
                   ) : null}
 
                   {!isLastStep ? (
-                    <Button type="button" onClick={goToNextStep} className="h-12 rounded-2xl px-6 font-black">
+                    <Button type="button" onClick={proximaEtapa} className="h-12 rounded-2xl px-6 font-black">
                       Avançar
                     </Button>
                   ) : (
