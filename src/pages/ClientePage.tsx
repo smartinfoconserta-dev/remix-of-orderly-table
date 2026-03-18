@@ -56,11 +56,14 @@ const ClientePage = () => {
     toast.success("Item adicionado!", { duration: 1000, icon: "✅" });
   }, [addToCart]);
 
-  const handleConfirmar = useCallback(() => {
+  const handleConfirmar = useCallback(async () => {
+    if (carrinho.length === 0) return false;
+
+    await new Promise((resolve) => window.setTimeout(resolve, 900));
     confirmarPedido(MESA_CLIENTE);
-    toast.success("Pedido enviado", { duration: 1200, icon: "✅" });
+    toast.success("Pedido enviado com sucesso", { duration: 1200, icon: "✅" });
     return true;
-  }, [confirmarPedido]);
+  }, [carrinho.length, confirmarPedido]);
 
   const restaurantIdentity = (
     <div className="flex items-center gap-3 min-w-0 pointer-events-none select-none">
@@ -237,10 +240,14 @@ const ClientePage = () => {
         onAdd={handleAddToCart}
       />
 
-      <StickyOrderButton
-        total={carrinho.reduce((acc, item) => acc + item.precoUnitario * item.quantidade, 0)}
-        onOpenCart={() => setCartOpen(true)}
-      />
+      {carrinho.length > 0 && (
+        <StickyOrderButton
+          total={carrinho.reduce((acc, item) => acc + item.precoUnitario * item.quantidade, 0)}
+          onOpenCart={() => setCartOpen(true)}
+          label="Ver carrinho"
+          showTotal={false}
+        />
+      )}
     </div>
   );
 };
