@@ -20,6 +20,7 @@ const CategoryTabs = ({
   const startXRef = useRef(0);
   const startScrollLeftRef = useRef(0);
   const draggedRef = useRef(false);
+  const buttonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const [isDragging, setIsDragging] = useState(false);
 
   const finishDrag = useCallback(() => {
@@ -91,20 +92,24 @@ const CategoryTabs = ({
         {categorias.map((cat) => (
           <button
             key={cat.id}
+            ref={(el) => {
+              buttonRefs.current[cat.id] = el;
+            }}
             onClick={(event) => {
               if (draggedRef.current) {
                 event.preventDefault();
                 return;
               }
               onSelect(cat.id);
+              buttonRefs.current[cat.id]?.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
             }}
-            className={`flex-shrink-0 inline-flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-semibold transition-all active:scale-95 border ${
+            className={`flex-shrink-0 inline-flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-semibold transition-all duration-300 ease-in-out active:scale-95 border will-change-transform ${
               categoriaAtiva === cat.id
-                ? "bg-primary/15 text-foreground border-primary/30"
+                ? "bg-primary/15 text-foreground border-primary/40 shadow-[0_0_0_1px_hsl(var(--primary)/0.35),0_0_18px_hsl(var(--primary)/0.20)]"
                 : "bg-secondary/60 text-muted-foreground border-transparent hover:bg-secondary hover:text-foreground"
             }`}
           >
-            <CategoryIcon name={cat.icone} className="w-4 h-4 opacity-70" />
+            <CategoryIcon name={cat.icone} className={`w-4 h-4 transition-opacity duration-300 ${categoriaAtiva === cat.id ? "opacity-100" : "opacity-70"}`} />
             <span>{cat.nome}</span>
           </button>
         ))}

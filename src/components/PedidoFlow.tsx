@@ -40,6 +40,7 @@ const RESTAURANTE = {
 const CATEGORY_SWITCH_DELAY_MS = 150;
 const CATEGORY_EXIT_DURATION_MS = 150;
 const CATEGORY_ENTER_DURATION_MS = 130;
+const CATEGORY_SKELETON_DURATION_MS = 100;
 
 const formatPrice = (v: number) => `R$ ${v.toFixed(2).replace(".", ",")}`;
 
@@ -63,6 +64,7 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
   const [categoriaAtiva, setCategoriaAtiva] = useState(categorias[0].id);
   const [categoriaExibida, setCategoriaExibida] = useState(categorias[0].id);
   const [categoryTransitionState, setCategoryTransitionState] = useState<CategoryTransitionState>("idle");
+  const [showCategorySkeleton, setShowCategorySkeleton] = useState(false);
   const [bannerIndex, setBannerIndex] = useState(0);
   const [produtoSelecionado, setProdutoSelecionado] = useState<Produto | null>(null);
   const [cartOpen, setCartOpen] = useState(false);
@@ -70,6 +72,9 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
   const [showExitAlert, setShowExitAlert] = useState(false);
   const categorySwitchTimerRef = useRef<number | null>(null);
   const categoryEnterTimerRef = useRef<number | null>(null);
+  const categorySkeletonTimerRef = useRef<number | null>(null);
+  const mobileListTopRef = useRef<HTMLDivElement>(null);
+  const desktopMainRef = useRef<HTMLElement>(null);
 
   const mesa = getMesa(mesaId);
   const carrinho = mesa?.carrinho ?? [];
@@ -99,6 +104,9 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
       if (categoryEnterTimerRef.current) {
         window.clearTimeout(categoryEnterTimerRef.current);
       }
+      if (categorySkeletonTimerRef.current) {
+        window.clearTimeout(categorySkeletonTimerRef.current);
+      }
     };
   }, []);
 
@@ -108,6 +116,13 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
 
       setCategoriaAtiva(categoriaId);
       setCategoryTransitionState("exit");
+      setShowCategorySkeleton(true);
+
+      if (isMobile) {
+        mobileListTopRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      } else {
+        desktopMainRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+      }
 
       if (categorySwitchTimerRef.current) {
         window.clearTimeout(categorySwitchTimerRef.current);
@@ -115,6 +130,13 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
       if (categoryEnterTimerRef.current) {
         window.clearTimeout(categoryEnterTimerRef.current);
       }
+      if (categorySkeletonTimerRef.current) {
+        window.clearTimeout(categorySkeletonTimerRef.current);
+      }
+
+      categorySkeletonTimerRef.current = window.setTimeout(() => {
+        setShowCategorySkeleton(false);
+      }, CATEGORY_SKELETON_DURATION_MS);
 
       categorySwitchTimerRef.current = window.setTimeout(() => {
         setCategoriaExibida(categoriaId);
@@ -125,7 +147,7 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
         }, 16);
       }, CATEGORY_SWITCH_DELAY_MS);
     },
-    [categoriaAtiva, categoriaExibida]
+    [categoriaAtiva, categoriaExibida, isMobile]
   );
 
   const handleBack = useCallback(() => {
@@ -176,6 +198,7 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
     setCategoriaAtiva(categorias[0].id);
     setCategoriaExibida(categorias[0].id);
     setCategoryTransitionState("idle");
+    setShowCategorySkeleton(false);
     setProdutoSelecionado(null);
     window.scrollTo({ top: 0, behavior: isMobile ? "auto" : "smooth" });
   }, [isMobile]);
@@ -358,6 +381,22 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
     </div>
   );
 
+  const skeletonGrid = (
+    <div className="grid grid-cols-2 gap-3 md:grid-cols-2 md:gap-4 lg:grid-cols-3">
+      {Array.from({ length: 6 }).map((_, index) => (
+        <div key={`skeleton-${index}`} className="surface-card overflow-hidden">
+          <div className="aspect-[4/3] bg-muted/70 animate-pulse" />
+          <div className="space-y-2 p-3 md:p-4">
+            <div className="h-4 w-3/4 rounded-md bg-muted animate-pulse" />
+            <div className="h-3 w-full rounded-md bg-muted/80 animate-pulse" />
+            <div className="h-3 w-2/3 rounded-md bg-muted/80 animate-pulse" />
+            <div className="h-5 w-1/3 rounded-md bg-muted animate-pulse" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+
   const mobileContent = (
     <>
       {bannerSection}
@@ -370,7 +409,8 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
           paddingClassName="px-4 pb-2"
         />
       </div>
-      <main className="flex-1 px-4 pb-6 pt-4">{productGrid}</main>
+      <div ref={mobileListTopRef} />
+      <main className="flex-1 px-4 pb-6 pt-4">{showCategorySkeleton ? skeletonGrid : productGrid}</main>
     </>
   );
 
@@ -386,9 +426,9 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
             <button
               key={cat.id}
               onClick={() => handleSelectCategoria(cat.id)}
-              className={`flex items-center gap-3 border-l-2 px-4 py-3.5 text-left text-sm font-medium transition-all ${
+              className={`relative flex items-center gap-3 border-l-2 px-4 py-3.5 text-left text-sm font-medium transition-all duration-300 ease-in-out ${
                 categoriaAtiva === cat.id
-                  ? "border-l-primary bg-secondary/50 text-foreground"
+                  ? "border-l-primary bg-secondary/50 text-foreground shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.25),0_0_16px_hsl(var(--primary)/0.12)]"
                   : "border-l-transparent text-muted-foreground hover:bg-secondary/30 hover:text-foreground"
               }`}
             >
@@ -398,10 +438,10 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
           ))}
         </nav>
       </aside>
-      <main className="flex-1 overflow-y-auto pb-6">
+      <main ref={desktopMainRef} className="flex-1 overflow-y-auto pb-6">
         {bannerSection}
         {flowSummary}
-        <div className="px-6 pt-4">{productGrid}</div>
+        <div className="px-6 pt-4">{showCategorySkeleton ? skeletonGrid : productGrid}</div>
       </main>
     </div>
   );
