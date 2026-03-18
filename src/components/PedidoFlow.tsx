@@ -355,19 +355,6 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
   }, [carrinho.length, confirmarPedido, currentGarcom, mesaId, modo, validatePendingCart]);
 
   const handleSuccessAcknowledge = useCallback(() => {
-    setCartOpen(false);
-    setContaOpen(false);
-    setShowExitAlert(false);
-    setCategoriaAtiva(HOME_TAB_ID);
-    setCategoriaExibida(HOME_TAB_ID);
-    setCategoryTransitionState("idle");
-    setShowCategorySkeleton(false);
-    setCardsAnimatedIn(true);
-    setSelectedProductCardId(null);
-    setProdutoSelecionado(null);
-    setBannerIndex(0);
-    setIsClientIdle(false);
-
     if (categorySwitchTimerRef.current) {
       window.clearTimeout(categorySwitchTimerRef.current);
       categorySwitchTimerRef.current = null;
@@ -393,10 +380,25 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
       openProductTimerRef.current = null;
     }
 
-    mobileListTopRef.current?.scrollIntoView({ behavior: isMobile ? "auto" : "smooth", block: "start" });
-    desktopMainRef.current?.scrollTo({ top: 0, behavior: isMobile ? "auto" : "smooth" });
-    window.scrollTo({ top: 0, behavior: isMobile ? "auto" : "smooth" });
-  }, [isMobile]);
+    setCartOpen(false);
+    setContaOpen(false);
+    setShowExitAlert(false);
+    setSelectedProductCardId(null);
+    setProdutoSelecionado(null);
+    setCategoriaAtiva(HOME_TAB_ID);
+    setCategoriaExibida(HOME_TAB_ID);
+    setCategoryTransitionState("idle");
+    setShowCategorySkeleton(false);
+    setCardsAnimatedIn(true);
+    setBannerIndex(0);
+    setIsClientIdle(false);
+
+    requestAnimationFrame(() => {
+      mobileListTopRef.current?.scrollIntoView({ behavior: "auto", block: "start" });
+      desktopMainRef.current?.scrollTo({ top: 0, behavior: "auto" });
+      window.scrollTo({ top: 0, behavior: "auto" });
+    });
+  }, []);
 
   if (!mesa) {
     return (
