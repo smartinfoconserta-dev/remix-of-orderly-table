@@ -28,6 +28,7 @@ const stepMeta: Record<StepId, { label: string; optional: boolean }> = {
 
 const defaultBebidaOptions = ["Coca-Cola 350ml", "Guaraná 350ml", "Água sem gás"];
 const defaultEmbalagemOptions = ["Consumir na mesa", "Para viagem"];
+const standardFlowOrder: StepId[] = ["adicionais", "bebida", "remover", "tipo", "embalagem", "quantidade"];
 
 const formatPrice = (value: number) => `R$ ${value.toFixed(2).replace(".", ",")}`;
 
@@ -41,36 +42,21 @@ const getTipoOptions = (produto: Produto | null) => {
   return ["Padrão da casa", "Porção para compartilhar", "Execução rápida"];
 };
 
+const isComboProduct = (produto: Produto | null) => produto?.categoria === "combos";
+
 const isStepAvailable = (produto: Produto | null, step: StepId) => {
   if (!produto) return false;
   if (step === "adicionais") return Boolean(produto.adicionais?.length);
-  if (step === "bebida") return Boolean(produto.bebidaOptions?.length);
+  if (step === "bebida") return isComboProduct(produto) && Boolean((produto.bebidaOptions?.length ?? 0) || defaultBebidaOptions.length);
   if (step === "remover") return Boolean(produto.ingredientesRemoviveis?.length);
-  if (step === "tipo") return Boolean(produto.tipoOptions?.length);
-  if (step === "embalagem") return Boolean(produto.embalagemOptions?.length);
-  return true;
-};
-
-const deriveDefaultSteps = (produto: Produto | null): StepId[] => {
-  if (!produto) return ["quantidade"];
-
-  const defaults: StepId[] = [];
-  if (produto.adicionais?.length) defaults.push("adicionais");
-  if (produto.bebidaOptions?.length) defaults.push("bebida");
-  if (produto.ingredientesRemoviveis?.length) defaults.push("remover");
-  defaults.push("quantidade");
-  return defaults;
+  if (step === "tipo" || step === "embalagem" || step === "quantidade") return true;
+  return false;
 };
 
 const resolveSteps = (produto: Produto | null): StepId[] => {
-  const baseSteps = produto?.etapasFluxo?.length ? produto.etapasFluxo : deriveDefaultSteps(produto);
-  const filtered = baseSteps.filter((step, index) => baseSteps.indexOf(step) === index && isStepAvailable(produto, step));
+  if (!produto) return ["quantidade"];
 
-  if (!filtered.includes("quantidade")) {
-    filtered.push("quantidade");
-  }
-
-  return filtered;
+  return standardFlowOrder.filter((step) => isStepAvailable(produto, step));
 };
 
 const ProductModal = ({ produto, onClose, onAdd }: Props) => {
