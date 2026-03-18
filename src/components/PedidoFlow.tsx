@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AlertTriangle, ArrowLeft, Bell, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,7 @@ import CategoryIcon from "@/components/CategoryIcon";
 import ProductModal from "@/components/ProductModal";
 import CartDrawer from "@/components/CartDrawer";
 import MinhaContaDrawer from "@/components/MinhaContaDrawer";
+import RestaurantHomeSection from "@/components/RestaurantHomeSection";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,7 +19,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { banners, categorias, produtos, type Produto } from "@/data/menuData";
+import { banners, categorias, homeSectionContent, produtos, type Categoria, type Produto } from "@/data/menuData";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRestaurant, type ItemCarrinho } from "@/contexts/RestaurantContext";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -37,6 +38,9 @@ const RESTAURANTE = {
   logoFallback: "OB",
 };
 
+const HOME_TAB_ID = "inicio";
+const HOME_TAB: Categoria = { id: HOME_TAB_ID, nome: "Início", icone: "house" };
+const navigationItems = [HOME_TAB, ...categorias];
 const CATEGORY_SWITCH_DELAY_MS = 150;
 const CATEGORY_EXIT_DURATION_MS = 150;
 const CATEGORY_ENTER_DURATION_MS = 130;
@@ -65,8 +69,8 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
     chamarGarcom,
     dismissChamarGarcom,
   } = useRestaurant();
-  const [categoriaAtiva, setCategoriaAtiva] = useState(categorias[0].id);
-  const [categoriaExibida, setCategoriaExibida] = useState(categorias[0].id);
+  const [categoriaAtiva, setCategoriaAtiva] = useState(HOME_TAB_ID);
+  const [categoriaExibida, setCategoriaExibida] = useState(HOME_TAB_ID);
   const [categoryTransitionState, setCategoryTransitionState] = useState<CategoryTransitionState>("idle");
   const [showCategorySkeleton, setShowCategorySkeleton] = useState(false);
   const [cardsAnimatedIn, setCardsAnimatedIn] = useState(false);
@@ -89,7 +93,15 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
 
   const mesaLabel = formatMesaLabel(mesaId);
   const nomeAtendimento = garcomNome?.trim() || currentGarcom?.nome || "Equipe de salão";
-  const produtosFiltrados = produtos.filter((p) => p.categoria === categoriaExibida);
+  const isHomeActive = categoriaExibida === HOME_TAB_ID;
+  const produtosFiltrados = useMemo(
+    () => produtos.filter((p) => p.categoria === categoriaExibida),
+    [categoriaExibida],
+  );
+  const featuredProducts = useMemo(
+    () => ["c1", "l2", "pr1"].map((id) => produtos.find((produto) => produto.id === id)).filter(Boolean) as Produto[],
+    [],
+  );
 
   useEffect(() => {
     const timer = window.setInterval(() => {
@@ -169,7 +181,7 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
 
       setCategoriaAtiva(categoriaId);
       setCategoryTransitionState("exit");
-      setShowCategorySkeleton(true);
+      setShowCategorySkeleton(categoriaId !== HOME_TAB_ID);
       setSelectedProductCardId(null);
 
       if (openProductTimerRef.current) {
@@ -193,9 +205,11 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
         window.clearTimeout(categorySkeletonTimerRef.current);
       }
 
-      categorySkeletonTimerRef.current = window.setTimeout(() => {
-        setShowCategorySkeleton(false);
-      }, CATEGORY_SKELETON_DURATION_MS);
+      if (categoriaId !== HOME_TAB_ID) {
+        categorySkeletonTimerRef.current = window.setTimeout(() => {
+          setShowCategorySkeleton(false);
+        }, CATEGORY_SKELETON_DURATION_MS);
+      }
 
       categorySwitchTimerRef.current = window.setTimeout(() => {
         setCategoriaExibida(categoriaId);
@@ -263,8 +277,8 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
     setCartOpen(false);
     setContaOpen(false);
     setShowExitAlert(false);
-    setCategoriaAtiva(categorias[0].id);
-    setCategoriaExibida(categorias[0].id);
+    setCategoriaAtiva(HOME_TAB_ID);
+    setCategoriaExibida(HOME_TAB_ID);
     setCategoryTransitionState("idle");
     setShowCategorySkeleton(false);
     setCardsAnimatedIn(true);
@@ -454,6 +468,22 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
     </div>
   );
 
+  const homeContent = (
+    <div
+      className={`transition-all ease-in-out ${categoryGridClasses}`}
+      style={{
+        transitionDuration: `${categoryTransitionState === "exit" ? CATEGORY_EXIT_DURATION_MS : CATEGORY_ENTER_DURATION_MS}ms`,
+      }}
+    >
+      <RestaurantHomeSection
+        content={homeSectionContent}
+        featuredProducts={featuredProducts}
+        onOpenProduct={handleOpenProductModal}
+        onOpenCategory={handleSelectCategoria}
+      />
+    </div>
+  );
+
   const skeletonGrid = (
     <div className="grid grid-cols-2 gap-3 md:grid-cols-2 md:gap-4 lg:grid-cols-3">
       {Array.from({ length: 6 }).map((_, index) => (
@@ -475,14 +505,14 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
       {bannerSection}
       <div className="mt-4">
         <CategoryTabs
-          categorias={categorias}
+          categorias={navigationItems}
           categoriaAtiva={categoriaAtiva}
           onSelect={handleSelectCategoria}
           paddingClassName="px-4 pb-2"
         />
       </div>
       <div ref={mobileListTopRef} />
-      <main className="flex-1 px-4 pb-6 pt-4">{showCategorySkeleton ? skeletonGrid : productGrid}</main>
+      <main className="flex-1 px-4 pb-6 pt-4">{showCategorySkeleton ? skeletonGrid : isHomeActive ? homeContent : productGrid}</main>
     </>
   );
 
@@ -494,6 +524,18 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
           <p className="text-sm text-muted-foreground">Fluxo profissional de autoatendimento</p>
         </div>
         <nav className="flex flex-col gap-0 py-2">
+          <button
+            onClick={() => handleSelectCategoria(HOME_TAB_ID)}
+            className={`relative flex items-center gap-3 border-l-2 px-4 py-3.5 text-left text-sm font-medium transition-all duration-300 ease-in-out ${
+              categoriaAtiva === HOME_TAB_ID
+                ? "border-l-primary bg-secondary/50 text-foreground shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.25),0_0_16px_hsl(var(--primary)/0.12)]"
+                : "border-l-transparent text-muted-foreground hover:bg-secondary/30 hover:text-foreground"
+            }`}
+          >
+            <CategoryIcon name={HOME_TAB.icone} className="h-3.5 w-3.5" />
+            <span>{HOME_TAB.nome}</span>
+          </button>
+          <div className="px-4 pb-2 pt-4 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Cardápio</div>
           {categorias.map((cat) => (
             <button
               key={cat.id}
@@ -512,7 +554,7 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
       </aside>
       <main ref={desktopMainRef} className="flex-1 overflow-y-auto pb-6">
         {bannerSection}
-        <div className="px-6 pt-4">{showCategorySkeleton ? skeletonGrid : productGrid}</div>
+        <div className="px-6 pt-4">{showCategorySkeleton ? skeletonGrid : isHomeActive ? homeContent : productGrid}</div>
       </main>
     </div>
   );

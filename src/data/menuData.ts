@@ -27,6 +27,44 @@ export interface Categoria {
   icone: string;
 }
 
+export interface HomeQuickLink {
+  categoriaId: string;
+  label: string;
+  title: string;
+}
+
+export interface HomeSectionConfig {
+  hero: {
+    kicker: string;
+    title: string;
+    description: string;
+    highlight: string;
+  };
+  quickLinks: HomeQuickLink[];
+  wifi: {
+    enabled: boolean;
+    title: string;
+    networkLabel: string;
+    passwordLabel: string;
+  };
+  instagram: {
+    enabled: boolean;
+    title: string;
+    handle: string;
+    description: string;
+    cta: string;
+  };
+  notice: {
+    title: string;
+    description: string;
+    helper: string;
+  };
+  bulletin: {
+    title: string;
+    items: string[];
+  };
+}
+
 export const categorias: Categoria[] = [
   { id: "lanches", nome: "Lanches", icone: "beef" },
   { id: "porcoes", nome: "Porções", icone: "popcorn" },
@@ -35,6 +73,48 @@ export const categorias: Categoria[] = [
   { id: "combos", nome: "Combos", icone: "package" },
   { id: "promocoes", nome: "Promoções", icone: "flame" },
 ];
+
+export const homeSectionContent: HomeSectionConfig = {
+  hero: {
+    kicker: "Boas-vindas",
+    title: "Peça com calma, veja os destaques e escolha o melhor momento da casa.",
+    description:
+      "Esta área inicial foi preparada para virar uma vitrine editável do restaurante, com promoções, avisos, conectividade e canais oficiais.",
+    highlight: "Casa aberta • pedidos saindo rápido",
+  },
+  quickLinks: [
+    { categoriaId: "promocoes", label: "Aproveite agora", title: "Promoções do dia" },
+    { categoriaId: "combos", label: "Mais pedidos", title: "Combos completos" },
+    { categoriaId: "lanches", label: "Clássicos", title: "Lanches da casa" },
+  ],
+  wifi: {
+    enabled: true,
+    title: "Conecte-se ao Wi‑Fi",
+    networkLabel: "Rede: OBSIDIAN_GUEST",
+    passwordLabel: "Senha: mesa+numero",
+  },
+  instagram: {
+    enabled: true,
+    title: "Acompanhe a loja",
+    handle: "@obsidian.burger",
+    description: "Novidades, promoções relâmpago e bastidores da cozinha publicados diariamente.",
+    cta: "Escaneie ou procure o perfil para seguir.",
+  },
+  notice: {
+    title: "Atendimento direto e cardápio sempre visível",
+    description:
+      "Use esta tela como ponto de entrada do salão: promoções, mensagens da casa e atalhos rápidos para categorias com maior giro.",
+    helper: "Se precisar, toque em “Chamar Garçom” a qualquer momento.",
+  },
+  bulletin: {
+    title: "Avisos importantes de hoje",
+    items: [
+      "Happy hour de porções até 19h.",
+      "Milkshake em produção limitada nesta noite.",
+      "Tempo médio atual de preparo: 18 a 25 minutos.",
+    ],
+  },
+};
 
 const adicionaisLanche: Adicional[] = [
   { id: "bacon", nome: "Bacon", preco: 5 },
