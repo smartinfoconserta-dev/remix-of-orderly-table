@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { AlertTriangle, ArrowLeft, Bell } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Bell, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import CategoryTabs from "@/components/CategoryTabs";
 import CategoryIcon from "@/components/CategoryIcon";
 import ProductModal from "@/components/ProductModal";
 import CartDrawer from "@/components/CartDrawer";
+import MinhaContaDrawer from "@/components/MinhaContaDrawer";
 import StickyOrderButton from "@/components/StickyOrderButton";
 import StatusBadge from "@/components/StatusBadge";
 import {
@@ -45,11 +46,20 @@ const formatMesaLabel = (mesaId: string) => {
 const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
-  const { getMesa, addToCart, updateCartItemQty, removeFromCart, confirmarPedido, chamarGarcom, dismissChamarGarcom } = useRestaurant();
+  const {
+    getMesa,
+    addToCart,
+    updateCartItemQty,
+    removeFromCart,
+    confirmarPedido,
+    chamarGarcom,
+    dismissChamarGarcom,
+  } = useRestaurant();
   const [categoriaAtiva, setCategoriaAtiva] = useState(categorias[0].id);
   const [bannerIndex, setBannerIndex] = useState(0);
   const [produtoSelecionado, setProdutoSelecionado] = useState<Produto | null>(null);
   const [cartOpen, setCartOpen] = useState(false);
+  const [contaOpen, setContaOpen] = useState(false);
   const [showExitAlert, setShowExitAlert] = useState(false);
 
   const mesa = getMesa(mesaId);
@@ -81,11 +91,14 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
     navigate(modo === "cliente" ? "/" : "/garcom");
   }, [carrinho.length, modo, navigate]);
 
-  const handleAddToCart = useCallback((item: ItemCarrinho) => {
-    addToCart(mesaId, item);
-    setCartOpen(true);
-    toast.success("Item adicionado ao carrinho", { duration: 1200, icon: "🛒" });
-  }, [addToCart, mesaId]);
+  const handleAddToCart = useCallback(
+    (item: ItemCarrinho) => {
+      addToCart(mesaId, item);
+      setCartOpen(true);
+      toast.success("Item adicionado ao carrinho", { duration: 1200, icon: "🛒" });
+    },
+    [addToCart, mesaId]
+  );
 
   const handleChamarGarcom = useCallback(() => {
     chamarGarcom(mesaId);
@@ -170,6 +183,15 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
             {nomeAtendimento}
           </div>
         )}
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => setContaOpen(true)}
+          className="h-auto gap-2 rounded-xl px-4 py-2.5 text-sm font-bold md:text-base"
+        >
+          <Wallet className="h-4 w-4 md:h-5 md:w-5" />
+          <span>Minha Conta</span>
+        </Button>
         <CartDrawer
           carrinho={carrinho}
           onUpdateQty={(uid, delta) => updateCartItemQty(mesaId, uid, delta)}
@@ -275,48 +297,6 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
     </div>
   );
 
-  const historySection = mesa.pedidos.length > 0 && (
-    <section className="flex flex-col gap-3 pt-6">
-      <h2 className="px-1 text-base font-bold text-foreground">Pedidos enviados</h2>
-      {mesa.pedidos.map((pedido) => (
-        <div key={pedido.id} className="space-y-3 rounded-xl bg-secondary p-4">
-          <div className="flex items-center justify-between gap-3">
-            <span className="text-sm font-bold text-foreground">Pedido #{pedido.numeroPedido}</span>
-            <span className="text-xs font-medium text-muted-foreground">{pedido.criadoEm}</span>
-          </div>
-          <div className="space-y-2">
-            {pedido.itens.map((item) => (
-              <div key={item.uid} className="flex items-start justify-between gap-2">
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium text-foreground">
-                    {item.quantidade}x {item.nome}
-                  </p>
-                  {item.adicionais.length > 0 && (
-                    <p className="text-xs text-primary">+ {item.adicionais.map((a) => a.nome).join(", ")}</p>
-                  )}
-                  {item.removidos.length > 0 && (
-                    <p className="text-xs text-destructive">Sem {item.removidos.join(", ")}</p>
-                  )}
-                  {item.bebida && <p className="text-xs text-muted-foreground">Bebida: {item.bebida}</p>}
-                  {item.tipo && <p className="text-xs text-muted-foreground">Tipo: {item.tipo}</p>}
-                  {item.embalagem && <p className="text-xs text-muted-foreground">Embalagem: {item.embalagem}</p>}
-                  {item.observacoes && <p className="text-xs text-muted-foreground">Obs.: {item.observacoes}</p>}
-                </div>
-                <span className="whitespace-nowrap text-sm font-bold text-foreground">
-                  {formatPrice(item.precoUnitario * item.quantidade)}
-                </span>
-              </div>
-            ))}
-          </div>
-          <div className="flex items-center justify-between border-t border-border pt-2">
-            <span className="text-xs font-medium text-muted-foreground">Total do pedido</span>
-            <span className="text-base font-black text-foreground">{formatPrice(pedido.total)}</span>
-          </div>
-        </div>
-      ))}
-    </section>
-  );
-
   const mobileContent = (
     <>
       {bannerSection}
@@ -331,7 +311,6 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
       </div>
       <main className="flex-1 px-4 pb-6 pt-4">
         {productGrid}
-        {historySection}
         {carrinho.length > 0 && <div className="h-20" />}
       </main>
     </>
@@ -366,7 +345,6 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
         {flowSummary}
         <div className="px-6 pt-4">
           {productGrid}
-          {historySection}
           {carrinho.length > 0 && <div className="h-20" />}
         </div>
       </main>
@@ -382,6 +360,12 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
           produto={produtoSelecionado}
           onClose={() => setProdutoSelecionado(null)}
           onAdd={handleAddToCart}
+        />
+        <MinhaContaDrawer
+          pedidos={mesa.pedidos}
+          total={mesa.total}
+          open={contaOpen}
+          onOpenChange={setContaOpen}
         />
         {carrinho.length > 0 && (
           <StickyOrderButton
