@@ -261,19 +261,44 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
 
   const handleSuccessAcknowledge = useCallback(() => {
     setCartOpen(false);
+    setContaOpen(false);
+    setShowExitAlert(false);
     setCategoriaAtiva(categorias[0].id);
     setCategoriaExibida(categorias[0].id);
     setCategoryTransitionState("idle");
     setShowCategorySkeleton(false);
-    setCardsAnimatedIn(false);
+    setCardsAnimatedIn(true);
     setSelectedProductCardId(null);
     setProdutoSelecionado(null);
+    setBannerIndex(0);
+
+    if (categorySwitchTimerRef.current) {
+      window.clearTimeout(categorySwitchTimerRef.current);
+      categorySwitchTimerRef.current = null;
+    }
+
+    if (categoryEnterTimerRef.current) {
+      window.clearTimeout(categoryEnterTimerRef.current);
+      categoryEnterTimerRef.current = null;
+    }
+
+    if (categorySkeletonTimerRef.current) {
+      window.clearTimeout(categorySkeletonTimerRef.current);
+      categorySkeletonTimerRef.current = null;
+    }
+
+    if (cardsAnimationTimerRef.current) {
+      window.clearTimeout(cardsAnimationTimerRef.current);
+      cardsAnimationTimerRef.current = null;
+    }
 
     if (openProductTimerRef.current) {
       window.clearTimeout(openProductTimerRef.current);
       openProductTimerRef.current = null;
     }
 
+    mobileListTopRef.current?.scrollIntoView({ behavior: isMobile ? "auto" : "smooth", block: "start" });
+    desktopMainRef.current?.scrollTo({ top: 0, behavior: isMobile ? "auto" : "smooth" });
     window.scrollTo({ top: 0, behavior: isMobile ? "auto" : "smooth" });
   }, [isMobile]);
 
