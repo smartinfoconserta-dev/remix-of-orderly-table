@@ -147,6 +147,9 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
       if (idleTimeoutRef.current) {
         window.clearTimeout(idleTimeoutRef.current);
       }
+      if (orderSubmissionCooldownRef.current) {
+        window.clearTimeout(orderSubmissionCooldownRef.current);
+      }
     };
   }, []);
 
