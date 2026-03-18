@@ -176,7 +176,7 @@ const CartDrawer = ({
       </Sheet>
 
       <Dialog open={isSubmitting}>
-        <DialogContent showCloseButton={false} className="max-w-sm border-border bg-card p-8 text-center">
+        <DialogContent className="max-w-sm border-border bg-card p-8 text-center [&>button]:hidden">
           <div className="flex flex-col items-center gap-4">
             <div className="flex h-16 w-16 items-center justify-center rounded-full bg-secondary text-primary">
               <LoaderCircle className="h-8 w-8 animate-spin" />
@@ -190,7 +190,7 @@ const CartDrawer = ({
       </Dialog>
 
       <Dialog open={submitSuccess}>
-        <DialogContent showCloseButton={false} className="max-w-sm border-border bg-card p-8 text-center">
+        <DialogContent className="max-w-sm border-border bg-card p-8 text-center [&>button]:hidden">
           <div className="flex flex-col items-center gap-5">
             <div className="flex h-16 w-16 items-center justify-center rounded-full bg-secondary text-primary">
               <CheckCircle2 className="h-8 w-8" />
