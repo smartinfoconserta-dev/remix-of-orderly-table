@@ -62,10 +62,10 @@ const formatMesaLabel = (mesaId: string) => {
   return `Mesa ${numeroMesa.padStart(2, "0")}`;
 };
 
-const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
+const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
-  const { currentGarcom } = useAuth();
+  const { currentGarcom, currentCaixa } = useAuth();
   const {
     getMesa,
     addToCart,
