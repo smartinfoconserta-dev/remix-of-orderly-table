@@ -479,20 +479,38 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
   const heroBanner = (
     <section className="px-4 pt-4 md:px-6">
       <div className="relative overflow-hidden rounded-[1.9rem] border border-border bg-card shadow-[0_30px_70px_-45px_hsl(var(--foreground)/0.9)]">
-        <div className="relative aspect-[16/7] min-h-[220px] w-full md:min-h-[320px]">
+        <div className="relative min-h-[260px] w-full md:min-h-[340px]">
           {homeHeroSlides.map((slide, index) => (
-            <div
+            <article
               key={slide.id}
               aria-hidden={index !== bannerIndex}
-              className={`absolute inset-0 transition-opacity duration-700 ease-out ${index === bannerIndex ? "opacity-100" : "pointer-events-none opacity-0"}`}
+              className={`absolute inset-0 grid overflow-hidden transition-all duration-700 ease-out md:grid-cols-[minmax(0,1.05fr)_minmax(280px,0.95fr)] ${index === bannerIndex ? "opacity-100" : "pointer-events-none opacity-0"}`}
             >
-              <img src={slide.image} alt={slide.alt} className="h-full w-full object-cover" loading={index === 0 ? "eager" : "lazy"} />
-              <div className="absolute inset-0 bg-gradient-to-t from-background/40 via-transparent to-transparent" />
-            </div>
+              <div className="relative flex min-h-[260px] items-end bg-gradient-to-r from-background via-background/95 to-background/55 p-6 md:min-h-[340px] md:p-8">
+                <div className="absolute inset-y-0 right-0 hidden w-28 bg-gradient-to-r from-transparent to-background/35 md:block" />
+                <div className="relative z-10 max-w-xl space-y-3 md:space-y-4">
+                  <span className="inline-flex rounded-full border border-border bg-background/45 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.24em] text-foreground/80 backdrop-blur-md md:text-xs">
+                    {slide.label}
+                  </span>
+                  <div className="space-y-2">
+                    <h2 className="max-w-lg text-3xl font-black tracking-tight text-foreground md:text-5xl md:leading-[0.95]">
+                      {slide.title}
+                    </h2>
+                    <p className="max-w-md text-sm text-muted-foreground md:text-base">{slide.description}</p>
+                  </div>
+                  <p className="text-3xl font-black tracking-tight text-primary md:text-5xl">{slide.price}</p>
+                </div>
+              </div>
+
+              <div className="relative min-h-[220px] md:min-h-[340px]">
+                <img src={slide.image} alt={slide.alt} className="h-full w-full object-cover" loading={index === 0 ? "eager" : "lazy"} />
+                <div className="absolute inset-0 bg-gradient-to-l from-transparent via-background/10 to-background/40 md:to-transparent" />
+              </div>
+            </article>
           ))}
         </div>
 
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 flex flex-col items-center gap-3 px-4 pb-4 md:pb-5">
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 flex flex-col items-center gap-3 px-4 pb-4 md:items-start md:px-8 md:pb-6">
           <div className="flex items-center gap-2 rounded-full bg-background/35 px-3 py-2 backdrop-blur-md">
             {homeHeroSlides.map((slide, index) => (
               <span
@@ -500,9 +518,6 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
                 className={`h-1.5 rounded-full transition-all duration-500 ${index === bannerIndex ? "w-8 bg-primary" : "w-1.5 bg-background/70"}`}
               />
             ))}
-          </div>
-          <div className="rounded-full bg-background/35 px-3 py-1 text-[10px] font-medium uppercase tracking-[0.22em] text-foreground/90 backdrop-blur-md md:text-[11px]">
-            {homeHeroSlides[bannerIndex]?.label}
           </div>
         </div>
       </div>
