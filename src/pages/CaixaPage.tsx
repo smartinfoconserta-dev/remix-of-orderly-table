@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import AppLayout from "@/components/AppLayout";
+import PedidoFlow from "@/components/PedidoFlow";
 import MesaCard from "@/components/MesaCard";
 import OperationalAccessCard from "@/components/OperationalAccessCard";
 import StatusBadge from "@/components/StatusBadge";
