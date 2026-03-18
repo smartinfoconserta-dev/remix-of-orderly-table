@@ -705,12 +705,12 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="gap-2 sm:gap-2">
-            <AlertDialogCancel className="rounded-xl font-bold">Voltar e revisar</AlertDialogCancel>
+            <AlertDialogCancel className="rounded-xl font-bold">Continuar no pedido</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => navigate("/garcom")}
               className="rounded-xl bg-secondary font-bold text-foreground hover:bg-secondary/80"
             >
-              Sair mesmo assim
+              Ir para mesas
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

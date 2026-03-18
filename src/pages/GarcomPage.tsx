@@ -1,29 +1,37 @@
-import { useNavigate } from "react-router-dom";
 import { LogOut } from "lucide-react";
-import { useRestaurant } from "@/contexts/RestaurantContext";
-import { useAuth } from "@/contexts/AuthContext";
+import { useSearchParams } from "react-router-dom";
+import PedidoFlow from "@/components/PedidoFlow";
 import AppLayout from "@/components/AppLayout";
 import MesaCard from "@/components/MesaCard";
 import OperationalAccessCard from "@/components/OperationalAccessCard";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/contexts/AuthContext";
+import { useRestaurant } from "@/contexts/RestaurantContext";
+import { useRouteLock } from "@/hooks/use-route-lock";
 
 const GarcomPage = () => {
   const { mesas, dismissChamarGarcom } = useRestaurant();
   const { currentGarcom, logout } = useAuth();
-  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const mesaIdSelecionada = searchParams.get("mesa")?.trim() ?? "";
+
+  useRouteLock("/garcom");
 
   if (!currentGarcom) {
     return (
-      <AppLayout title="Garçom" showBack>
+      <AppLayout title="Garçom">
         <OperationalAccessCard role="garcom" />
       </AppLayout>
     );
   }
 
+  if (mesaIdSelecionada) {
+    return <PedidoFlow modo="garcom" mesaId={mesaIdSelecionada} garcomNome={currentGarcom.nome} />;
+  }
+
   return (
     <AppLayout
       title="Mesas"
-      showBack
       headerRight={
         <Button variant="outline" onClick={() => logout("garcom")} className="gap-2 rounded-xl font-bold">
           <LogOut className="h-4 w-4" />
@@ -46,7 +54,7 @@ const GarcomPage = () => {
             showIndicators={false}
             onClick={() => {
               dismissChamarGarcom(mesa.id);
-              navigate(`/mesa/${mesa.id}`, { state: { garcomNome: currentGarcom.nome } });
+              setSearchParams({ mesa: mesa.id });
             }}
           />
         ))}

@@ -1,9 +1,12 @@
 import { useEffect, useState } from "react";
 import PedidoFlow from "@/components/PedidoFlow";
+import { useRouteLock } from "@/hooks/use-route-lock";
 import { TABLET_BINDING_CHANGED_EVENT, getBoundTabletMesaId, setBoundTabletMesaId } from "@/lib/tabletBinding";
 
 const ClientePage = () => {
   const [mesaId, setMesaId] = useState<string | null>(() => getBoundTabletMesaId());
+
+  useRouteLock("/cliente");
 
   useEffect(() => {
     if (!mesaId) return;

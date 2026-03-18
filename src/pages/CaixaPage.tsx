@@ -714,6 +714,9 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                 <p className="mt-2 text-sm text-muted-foreground">Operador atual: {currentOperator.nome}</p>
               </div>
               <div className="flex flex-col gap-2 sm:flex-row">
+                <Button variant="outline" onClick={handleVoltar} className="rounded-xl font-bold">
+                  Mesas
+                </Button>
                 <Button
                   variant="outline"
                   onClick={() => openCriticalAction({ type: "zerar_mesa", mesaId: mesa.id, mesaNumero: mesa.numero })}
