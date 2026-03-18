@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, useCallback } from "react";
+import React, { createContext, useCallback, useContext, useEffect, useState } from "react";
+import type { CashMovementType, OperationalUser } from "@/types/operations";
 
 export interface ItemCarrinho {
   uid: string;
@@ -21,6 +22,46 @@ export interface PedidoRealizado {
   itens: ItemCarrinho[];
   total: number;
   criadoEm: string;
+  criadoEmIso: string;
+  origem: "cliente" | "garcom";
+  mesaId: string;
+  garcomId?: string;
+  garcomNome?: string;
+}
+
+export interface EventoOperacional {
+  id: string;
+  tipo: "pedido" | "chamado" | "caixa" | "movimentacao";
+  descricao: string;
+  criadoEm: string;
+  criadoEmIso: string;
+  mesaId?: string;
+  usuarioId?: string;
+  usuarioNome?: string;
+  acao?: string;
+  valor?: number;
+}
+
+export interface MovimentacaoCaixa {
+  id: string;
+  tipo: CashMovementType;
+  descricao: string;
+  valor: number;
+  criadoEm: string;
+  criadoEmIso: string;
+  usuarioId: string;
+  usuarioNome: string;
+}
+
+export interface FechamentoConta {
+  id: string;
+  mesaId: string;
+  mesaNumero: number;
+  total: number;
+  criadoEm: string;
+  criadoEmIso: string;
+  caixaId: string;
+  caixaNome: string;
 }
 
 export interface Mesa {
@@ -34,26 +75,90 @@ export interface Mesa {
   chamadoEm: number | null;
 }
 
+interface PedidoMeta {
+  modo: "cliente" | "garcom";
+  operador?: OperationalUser | null;
+}
+
+interface MovimentacaoInput {
+  tipo: CashMovementType;
+  descricao: string;
+  valor: number;
+  usuario: OperationalUser;
+}
+
+interface RestaurantStore {
+  mesas: Mesa[];
+  eventos: EventoOperacional[];
+  movimentacoesCaixa: MovimentacaoCaixa[];
+  fechamentos: FechamentoConta[];
+}
+
+interface RestaurantContextType {
+  mesas: Mesa[];
+  eventos: EventoOperacional[];
+  movimentacoesCaixa: MovimentacaoCaixa[];
+  fechamentos: FechamentoConta[];
+  getMesa: (id: string) => Mesa | undefined;
+  updateMesa: (id: string, updates: Partial<Mesa>) => void;
+  addToCart: (mesaId: string, item: ItemCarrinho) => void;
+  updateCartItemQty: (mesaId: string, uid: string, delta: number, usuario?: OperationalUser) => void;
+  removeFromCart: (mesaId: string, uid: string, usuario?: OperationalUser) => void;
+  confirmarPedido: (mesaId: string, meta?: PedidoMeta) => void;
+  chamarGarcom: (mesaId: string) => void;
+  dismissChamarGarcom: (mesaId: string) => void;
+  fecharConta: (mesaId: string, usuario?: OperationalUser) => void;
+  zerarMesa: (mesaId: string, usuario?: OperationalUser) => void;
+  ajustarItemPedido: (mesaId: string, pedidoId: string, itemUid: string, delta: number, usuario: OperationalUser) => void;
+  registrarMovimentacaoCaixa: (input: MovimentacaoInput) => void;
+}
+
+const RestaurantContext = createContext<RestaurantContextType | null>(null);
+
+const RESTAURANT_STORAGE_KEY = "obsidian-restaurant-v2";
+
 function derivarStatus(m: Pick<Mesa, "carrinho" | "pedidos">): Mesa["status"] {
   if (m.pedidos.length > 0) return "consumo";
   if (m.carrinho.length > 0) return "pendente";
   return "livre";
 }
 
-interface RestaurantContextType {
-  mesas: Mesa[];
-  getMesa: (id: string) => Mesa | undefined;
-  updateMesa: (id: string, updates: Partial<Mesa>) => void;
-  addToCart: (mesaId: string, item: ItemCarrinho) => void;
-  updateCartItemQty: (mesaId: string, uid: string, delta: number) => void;
-  removeFromCart: (mesaId: string, uid: string) => void;
-  confirmarPedido: (mesaId: string) => void;
-  chamarGarcom: (mesaId: string) => void;
-  dismissChamarGarcom: (mesaId: string) => void;
-  fecharConta: (mesaId: string) => void;
-}
+const formatMesaNumero = (numero: number) => `Mesa ${String(numero).padStart(2, "0")}`;
 
-const RestaurantContext = createContext<RestaurantContextType | null>(null);
+const formatClock = (date = new Date()) =>
+  date.toLocaleTimeString("pt-BR", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
+const formatDateTime = (date = new Date()) =>
+  date.toLocaleString("pt-BR", {
+    day: "2-digit",
+    month: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
+const buildEvent = (
+  input: Omit<EventoOperacional, "id" | "criadoEm" | "criadoEmIso">,
+): EventoOperacional => {
+  const now = new Date();
+
+  return {
+    id: `evento-${now.getTime()}-${Math.random().toString(36).slice(2, 8)}`,
+    criadoEm: formatDateTime(now),
+    criadoEmIso: now.toISOString(),
+    ...input,
+  };
+};
+
+const appendEvent = (
+  eventos: EventoOperacional[],
+  input: Omit<EventoOperacional, "id" | "criadoEm" | "criadoEmIso">,
+) => [buildEvent(input), ...eventos].slice(0, 300);
+
+const calcularTotalItens = (itens: ItemCarrinho[]) =>
+  itens.reduce((acc, item) => acc + item.precoUnitario * item.quantidade, 0);
 
 const criarMesasIniciais = (): Mesa[] =>
   Array.from({ length: 20 }, (_, i) => ({
@@ -67,142 +172,526 @@ const criarMesasIniciais = (): Mesa[] =>
     chamadoEm: null,
   }));
 
+const cloneItem = (item: ItemCarrinho): ItemCarrinho => ({
+  ...item,
+  removidos: [...item.removidos],
+  adicionais: item.adicionais.map((adicional) => ({ ...adicional })),
+});
+
+const normalizeItem = (item: Partial<ItemCarrinho>, index = 0): ItemCarrinho => ({
+  uid: String(item.uid ?? `item-${Date.now()}-${index}`),
+  produtoId: String(item.produtoId ?? ""),
+  nome: String(item.nome ?? "Item"),
+  precoBase: Number(item.precoBase ?? item.precoUnitario ?? 0),
+  quantidade: Number(item.quantidade ?? 1),
+  removidos: Array.isArray(item.removidos) ? item.removidos.map(String) : [],
+  adicionais: Array.isArray(item.adicionais)
+    ? item.adicionais.map((adicional) => ({
+        nome: String(adicional.nome ?? "Adicional"),
+        preco: Number(adicional.preco ?? 0),
+      }))
+    : [],
+  bebida: item.bebida ?? null,
+  tipo: item.tipo ?? null,
+  embalagem: item.embalagem ?? null,
+  observacoes: item.observacoes ?? "",
+  precoUnitario: Number(item.precoUnitario ?? item.precoBase ?? 0),
+});
+
+const normalizePedido = (pedido: Partial<PedidoRealizado>, mesaId: string, index = 0): PedidoRealizado => {
+  const itens = Array.isArray(pedido.itens) ? pedido.itens.map((item, itemIndex) => normalizeItem(item, itemIndex)) : [];
+
+  return {
+    id: String(pedido.id ?? `pedido-${Date.now()}-${index}`),
+    numeroPedido: Number(pedido.numeroPedido ?? index + 1),
+    itens,
+    total: Number(pedido.total ?? calcularTotalItens(itens)),
+    criadoEm: typeof pedido.criadoEm === "string" ? pedido.criadoEm : formatClock(),
+    criadoEmIso: typeof pedido.criadoEmIso === "string" ? pedido.criadoEmIso : new Date().toISOString(),
+    origem: pedido.origem === "garcom" ? "garcom" : "cliente",
+    mesaId,
+    garcomId: pedido.garcomId,
+    garcomNome: pedido.garcomNome,
+  };
+};
+
+const normalizeMesa = (mesa: Partial<Mesa>, fallbackNumero: number): Mesa => {
+  const numero = Number(mesa.numero ?? fallbackNumero);
+  const id = String(mesa.id ?? `mesa-${numero}`);
+  const carrinho = Array.isArray(mesa.carrinho) ? mesa.carrinho.map((item, index) => normalizeItem(item, index)) : [];
+  const pedidos = Array.isArray(mesa.pedidos) ? mesa.pedidos.map((pedido, index) => normalizePedido(pedido, id, index)) : [];
+  const total = Number(mesa.total ?? pedidos.reduce((acc, pedido) => acc + pedido.total, 0));
+
+  return {
+    id,
+    numero,
+    status: derivarStatus({ carrinho, pedidos }),
+    total,
+    carrinho,
+    pedidos,
+    chamarGarcom: Boolean(mesa.chamarGarcom),
+    chamadoEm: typeof mesa.chamadoEm === "number" ? mesa.chamadoEm : null,
+  };
+};
+
+const readStore = (): RestaurantStore => {
+  if (typeof window === "undefined") {
+    return {
+      mesas: criarMesasIniciais(),
+      eventos: [],
+      movimentacoesCaixa: [],
+      fechamentos: [],
+    };
+  }
+
+  try {
+    const raw = window.localStorage.getItem(RESTAURANT_STORAGE_KEY);
+    if (!raw) {
+      return {
+        mesas: criarMesasIniciais(),
+        eventos: [],
+        movimentacoesCaixa: [],
+        fechamentos: [],
+      };
+    }
+
+    const parsed = JSON.parse(raw) as Partial<RestaurantStore> | Mesa[];
+    const rawMesas = Array.isArray(parsed) ? parsed : parsed.mesas;
+
+    return {
+      mesas: Array.isArray(rawMesas)
+        ? rawMesas.map((mesa, index) => normalizeMesa(mesa, index + 1))
+        : criarMesasIniciais(),
+      eventos: Array.isArray((parsed as Partial<RestaurantStore>).eventos)
+        ? (parsed as Partial<RestaurantStore>).eventos!.map((evento) => ({
+            id: String(evento.id ?? `evento-${Date.now()}`),
+            tipo: evento.tipo === "caixa" || evento.tipo === "movimentacao" || evento.tipo === "chamado" ? evento.tipo : "pedido",
+            descricao: String(evento.descricao ?? "Evento operacional"),
+            criadoEm: String(evento.criadoEm ?? formatDateTime()),
+            criadoEmIso: String(evento.criadoEmIso ?? new Date().toISOString()),
+            mesaId: evento.mesaId,
+            usuarioId: evento.usuarioId,
+            usuarioNome: evento.usuarioNome,
+            acao: evento.acao,
+            valor: typeof evento.valor === "number" ? evento.valor : undefined,
+          }))
+        : [],
+      movimentacoesCaixa: Array.isArray((parsed as Partial<RestaurantStore>).movimentacoesCaixa)
+        ? (parsed as Partial<RestaurantStore>).movimentacoesCaixa!.map((movimentacao) => ({
+            id: String(movimentacao.id ?? `mov-${Date.now()}`),
+            tipo: movimentacao.tipo === "saida" ? "saida" : "entrada",
+            descricao: String(movimentacao.descricao ?? "Movimentação"),
+            valor: Number(movimentacao.valor ?? 0),
+            criadoEm: String(movimentacao.criadoEm ?? formatDateTime()),
+            criadoEmIso: String(movimentacao.criadoEmIso ?? new Date().toISOString()),
+            usuarioId: String(movimentacao.usuarioId ?? ""),
+            usuarioNome: String(movimentacao.usuarioNome ?? "Operador"),
+          }))
+        : [],
+      fechamentos: Array.isArray((parsed as Partial<RestaurantStore>).fechamentos)
+        ? (parsed as Partial<RestaurantStore>).fechamentos!.map((fechamento) => ({
+            id: String(fechamento.id ?? `fech-${Date.now()}`),
+            mesaId: String(fechamento.mesaId ?? ""),
+            mesaNumero: Number(fechamento.mesaNumero ?? 0),
+            total: Number(fechamento.total ?? 0),
+            criadoEm: String(fechamento.criadoEm ?? formatDateTime()),
+            criadoEmIso: String(fechamento.criadoEmIso ?? new Date().toISOString()),
+            caixaId: String(fechamento.caixaId ?? ""),
+            caixaNome: String(fechamento.caixaNome ?? "Caixa"),
+          }))
+        : [],
+    };
+  } catch {
+    return {
+      mesas: criarMesasIniciais(),
+      eventos: [],
+      movimentacoesCaixa: [],
+      fechamentos: [],
+    };
+  }
+};
+
+const resetMesa = (mesa: Mesa): Mesa => ({
+  ...mesa,
+  carrinho: [],
+  pedidos: [],
+  total: 0,
+  chamarGarcom: false,
+  chamadoEm: null,
+  status: "livre",
+});
+
 export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [mesas, setMesas] = useState<Mesa[]>(criarMesasIniciais);
+  const [store, setStore] = useState<RestaurantStore>(readStore);
+
+  useEffect(() => {
+    window.localStorage.setItem(RESTAURANT_STORAGE_KEY, JSON.stringify(store));
+  }, [store]);
 
   const getMesa = useCallback(
-    (id: string) => mesas.find((m) => m.id === id),
-    [mesas]
+    (id: string) => store.mesas.find((mesa) => mesa.id === id),
+    [store.mesas],
   );
 
   const updateMesa = useCallback((id: string, updates: Partial<Mesa>) => {
-    setMesas((prev) =>
-      prev.map((m) => {
-        if (m.id !== id) return m;
-        const updated = { ...m, ...updates };
+    setStore((prev) => ({
+      ...prev,
+      mesas: prev.mesas.map((mesa) => {
+        if (mesa.id !== id) return mesa;
+        const updated = { ...mesa, ...updates };
         updated.status = derivarStatus(updated);
         return updated;
-      })
-    );
+      }),
+    }));
   }, []);
 
   const addToCart = useCallback((mesaId: string, item: ItemCarrinho) => {
-    setMesas((prev) =>
-      prev.map((m) => {
-        if (m.id !== mesaId) return m;
-        const updated = { ...m, carrinho: [...m.carrinho, item] };
+    setStore((prev) => ({
+      ...prev,
+      mesas: prev.mesas.map((mesa) => {
+        if (mesa.id !== mesaId) return mesa;
+        const updated = { ...mesa, carrinho: [...mesa.carrinho, cloneItem(item)] };
         updated.status = derivarStatus(updated);
         return updated;
-      })
-    );
+      }),
+    }));
   }, []);
 
-  const updateCartItemQty = useCallback((mesaId: string, uid: string, delta: number) => {
-    setMesas((prev) =>
-      prev.map((m) => {
-        if (m.id !== mesaId) return m;
-        const newQty = (m.carrinho.find((i) => i.uid === uid)?.quantidade ?? 1) + delta;
-        if (newQty < 1) {
-          const updated = { ...m, carrinho: m.carrinho.filter((i) => i.uid !== uid) };
-          updated.status = derivarStatus(updated);
-          return updated;
+  const updateCartItemQty = useCallback((mesaId: string, uid: string, delta: number, usuario?: OperationalUser) => {
+    setStore((prev) => {
+      let eventInput: Omit<EventoOperacional, "id" | "criadoEm" | "criadoEmIso"> | null = null;
+
+      const mesas = prev.mesas.map((mesa) => {
+        if (mesa.id !== mesaId) return mesa;
+
+        const currentItem = mesa.carrinho.find((item) => item.uid === uid);
+        if (!currentItem) return mesa;
+
+        const newQty = currentItem.quantidade + delta;
+        const carrinho = newQty < 1
+          ? mesa.carrinho.filter((item) => item.uid !== uid)
+          : mesa.carrinho.map((item) => (item.uid === uid ? { ...item, quantidade: newQty } : item));
+
+        if (usuario) {
+          eventInput = {
+            tipo: "caixa",
+            descricao:
+              newQty < 1
+                ? `Caixa ${usuario.nome} cancelou item ${currentItem.nome} pendente da ${formatMesaNumero(mesa.numero)}`
+                : `Caixa ${usuario.nome} editou item ${currentItem.nome} pendente da ${formatMesaNumero(mesa.numero)}`,
+            mesaId,
+            usuarioId: usuario.id,
+            usuarioNome: usuario.nome,
+            acao: newQty < 1 ? "cancelar_item" : "editar_pedido",
+          };
         }
-        const carrinho = m.carrinho.map((item) =>
-          item.uid === uid ? { ...item, quantidade: newQty } : item
-        );
-        const updated = { ...m, carrinho };
+
+        const updated = { ...mesa, carrinho };
         updated.status = derivarStatus(updated);
         return updated;
-      })
-    );
+      });
+
+      return {
+        ...prev,
+        mesas,
+        eventos: eventInput ? appendEvent(prev.eventos, eventInput) : prev.eventos,
+      };
+    });
   }, []);
 
-  const removeFromCart = useCallback((mesaId: string, uid: string) => {
-    setMesas((prev) =>
-      prev.map((m) => {
-        if (m.id !== mesaId) return m;
-        const updated = { ...m, carrinho: m.carrinho.filter((item) => item.uid !== uid) };
+  const removeFromCart = useCallback((mesaId: string, uid: string, usuario?: OperationalUser) => {
+    setStore((prev) => {
+      let eventInput: Omit<EventoOperacional, "id" | "criadoEm" | "criadoEmIso"> | null = null;
+
+      const mesas = prev.mesas.map((mesa) => {
+        if (mesa.id !== mesaId) return mesa;
+
+        const currentItem = mesa.carrinho.find((item) => item.uid === uid);
+        if (!currentItem) return mesa;
+
+        if (usuario) {
+          eventInput = {
+            tipo: "caixa",
+            descricao: `Caixa ${usuario.nome} cancelou item ${currentItem.nome} pendente da ${formatMesaNumero(mesa.numero)}`,
+            mesaId,
+            usuarioId: usuario.id,
+            usuarioNome: usuario.nome,
+            acao: "cancelar_item",
+          };
+        }
+
+        const updated = { ...mesa, carrinho: mesa.carrinho.filter((item) => item.uid !== uid) };
         updated.status = derivarStatus(updated);
         return updated;
-      })
-    );
+      });
+
+      return {
+        ...prev,
+        mesas,
+        eventos: eventInput ? appendEvent(prev.eventos, eventInput) : prev.eventos,
+      };
+    });
   }, []);
 
-  const confirmarPedido = useCallback((mesaId: string) => {
-    setMesas((prev) =>
-      prev.map((m) => {
-        if (m.id !== mesaId || m.carrinho.length === 0) return m;
+  const confirmarPedido = useCallback((mesaId: string, meta?: PedidoMeta) => {
+    setStore((prev) => {
+      let eventInput: Omit<EventoOperacional, "id" | "criadoEm" | "criadoEmIso"> | null = null;
 
-        const totalPedido = m.carrinho.reduce(
-          (acc, item) => acc + item.precoUnitario * item.quantidade,
-          0
-        );
+      const mesas = prev.mesas.map((mesa) => {
+        if (mesa.id !== mesaId || mesa.carrinho.length === 0) return mesa;
 
-        const snapshot: ItemCarrinho[] = m.carrinho.map((item) => ({
-          ...item,
-          removidos: [...item.removidos],
-          adicionais: item.adicionais.map((a) => ({ ...a })),
-        }));
-
+        const totalPedido = calcularTotalItens(mesa.carrinho);
+        const snapshot = mesa.carrinho.map(cloneItem);
+        const now = new Date();
         const novoPedido: PedidoRealizado = {
-          id: `pedido-${Date.now()}`,
-          numeroPedido: m.pedidos.length + 1,
+          id: `pedido-${now.getTime()}-${Math.random().toString(36).slice(2, 7)}`,
+          numeroPedido: mesa.pedidos.length + 1,
           itens: snapshot,
           total: totalPedido,
-          criadoEm: new Date().toLocaleTimeString("pt-BR", {
-            hour: "2-digit",
-            minute: "2-digit",
-          }),
+          criadoEm: formatClock(now),
+          criadoEmIso: now.toISOString(),
+          origem: meta?.modo === "garcom" ? "garcom" : "cliente",
+          mesaId,
+          garcomId: meta?.modo === "garcom" ? meta.operador?.id : undefined,
+          garcomNome: meta?.modo === "garcom" ? meta.operador?.nome : undefined,
         };
 
+        eventInput = meta?.modo === "garcom"
+          ? {
+              tipo: "pedido",
+              descricao: `Garçom ${meta.operador?.nome ?? "identificado"} lançou pedido na ${formatMesaNumero(mesa.numero)}`,
+              mesaId,
+              usuarioId: meta.operador?.id,
+              usuarioNome: meta.operador?.nome,
+              acao: "lancar_pedido",
+            }
+          : {
+              tipo: "pedido",
+              descricao: `Cliente da ${formatMesaNumero(mesa.numero)} enviou pedido`,
+              mesaId,
+              acao: "pedido_cliente",
+            };
+
         return {
-          ...m,
+          ...mesa,
           carrinho: [],
-          pedidos: [...m.pedidos, novoPedido],
-          total: m.total + totalPedido,
-          status: "consumo" as const,
+          pedidos: [...mesa.pedidos, novoPedido],
+          total: mesa.total + totalPedido,
+          status: "consumo",
         };
-      })
-    );
+      });
+
+      return {
+        ...prev,
+        mesas,
+        eventos: eventInput ? appendEvent(prev.eventos, eventInput) : prev.eventos,
+      };
+    });
   }, []);
 
   const chamarGarcomFn = useCallback((mesaId: string) => {
     const chamadoEm = Date.now();
 
-    setMesas((prev) =>
-      prev.map((m) => (m.id === mesaId ? { ...m, chamarGarcom: true, chamadoEm } : m))
-    );
+    setStore((prev) => {
+      let eventInput: Omit<EventoOperacional, "id" | "criadoEm" | "criadoEmIso"> | null = null;
+
+      const mesas = prev.mesas.map((mesa) => {
+        if (mesa.id !== mesaId) return mesa;
+
+        eventInput = {
+          tipo: "chamado",
+          descricao: `Cliente da ${formatMesaNumero(mesa.numero)} chamou garçom`,
+          mesaId,
+          acao: "chamar_garcom",
+        };
+
+        return { ...mesa, chamarGarcom: true, chamadoEm };
+      });
+
+      return {
+        ...prev,
+        mesas,
+        eventos: eventInput ? appendEvent(prev.eventos, eventInput) : prev.eventos,
+      };
+    });
   }, []);
 
   const dismissChamarGarcom = useCallback((mesaId: string) => {
-    setMesas((prev) =>
-      prev.map((m) =>
-        m.id === mesaId ? { ...m, chamarGarcom: false, chamadoEm: null } : m
-      )
-    );
+    setStore((prev) => ({
+      ...prev,
+      mesas: prev.mesas.map((mesa) =>
+        mesa.id === mesaId ? { ...mesa, chamarGarcom: false, chamadoEm: null } : mesa,
+      ),
+    }));
   }, []);
 
-  const fecharConta = useCallback((mesaId: string) => {
-    setMesas((prev) =>
-      prev.map((m) => {
-        if (m.id !== mesaId) return m;
-        return {
-          ...m,
-          carrinho: [],
-          pedidos: [],
-          total: 0,
-          chamarGarcom: false,
-          chamadoEm: null,
-          status: "livre" as const,
-        };
-      })
-    );
+  const fecharConta = useCallback((mesaId: string, usuario?: OperationalUser) => {
+    setStore((prev) => {
+      let fechamento: FechamentoConta | null = null;
+      let eventInput: Omit<EventoOperacional, "id" | "criadoEm" | "criadoEmIso"> | null = null;
+
+      const mesas = prev.mesas.map((mesa) => {
+        if (mesa.id !== mesaId) return mesa;
+
+        const hasContent = mesa.total > 0 || mesa.pedidos.length > 0 || mesa.carrinho.length > 0;
+        if (!hasContent) return mesa;
+
+        const now = new Date();
+        if (usuario) {
+          fechamento = {
+            id: `fechamento-${now.getTime()}-${mesa.id}`,
+            mesaId,
+            mesaNumero: mesa.numero,
+            total: mesa.total,
+            criadoEm: formatDateTime(now),
+            criadoEmIso: now.toISOString(),
+            caixaId: usuario.id,
+            caixaNome: usuario.nome,
+          };
+
+          eventInput = {
+            tipo: "caixa",
+            descricao: `Caixa ${usuario.nome} fechou conta da ${formatMesaNumero(mesa.numero)}`,
+            mesaId,
+            usuarioId: usuario.id,
+            usuarioNome: usuario.nome,
+            acao: "fechar_conta",
+            valor: mesa.total,
+          };
+        }
+
+        return resetMesa(mesa);
+      });
+
+      return {
+        ...prev,
+        mesas,
+        fechamentos: fechamento ? [fechamento, ...prev.fechamentos] : prev.fechamentos,
+        eventos: eventInput ? appendEvent(prev.eventos, eventInput) : prev.eventos,
+      };
+    });
+  }, []);
+
+  const zerarMesa = useCallback((mesaId: string, usuario?: OperationalUser) => {
+    setStore((prev) => {
+      let eventInput: Omit<EventoOperacional, "id" | "criadoEm" | "criadoEmIso"> | null = null;
+
+      const mesas = prev.mesas.map((mesa) => {
+        if (mesa.id !== mesaId) return mesa;
+
+        if (usuario) {
+          eventInput = {
+            tipo: "caixa",
+            descricao: `Caixa ${usuario.nome} zerou a ${formatMesaNumero(mesa.numero)}`,
+            mesaId,
+            usuarioId: usuario.id,
+            usuarioNome: usuario.nome,
+            acao: "zerar_mesa",
+          };
+        }
+
+        return resetMesa(mesa);
+      });
+
+      return {
+        ...prev,
+        mesas,
+        eventos: eventInput ? appendEvent(prev.eventos, eventInput) : prev.eventos,
+      };
+    });
+  }, []);
+
+  const ajustarItemPedido = useCallback((mesaId: string, pedidoId: string, itemUid: string, delta: number, usuario: OperationalUser) => {
+    setStore((prev) => {
+      let eventInput: Omit<EventoOperacional, "id" | "criadoEm" | "criadoEmIso"> | null = null;
+
+      const mesas = prev.mesas.map((mesa) => {
+        if (mesa.id !== mesaId) return mesa;
+
+        const pedidos = mesa.pedidos
+          .map((pedido) => {
+            if (pedido.id !== pedidoId) return pedido;
+
+            const targetItem = pedido.itens.find((item) => item.uid === itemUid);
+            if (!targetItem) return pedido;
+
+            const newQty = targetItem.quantidade + delta;
+            const itens = newQty < 1
+              ? pedido.itens.filter((item) => item.uid !== itemUid)
+              : pedido.itens.map((item) => (item.uid === itemUid ? { ...item, quantidade: newQty } : item));
+
+            eventInput = {
+              tipo: "caixa",
+              descricao:
+                newQty < 1
+                  ? `Caixa ${usuario.nome} cancelou item ${targetItem.nome} do Pedido #${pedido.numeroPedido} da ${formatMesaNumero(mesa.numero)}`
+                  : `Caixa ${usuario.nome} editou item ${targetItem.nome} do Pedido #${pedido.numeroPedido} da ${formatMesaNumero(mesa.numero)}`,
+              mesaId,
+              usuarioId: usuario.id,
+              usuarioNome: usuario.nome,
+              acao: newQty < 1 ? "cancelar_item" : "editar_pedido",
+            };
+
+            return {
+              ...pedido,
+              itens,
+              total: calcularTotalItens(itens),
+            };
+          })
+          .filter((pedido) => pedido.itens.length > 0);
+
+        if (!eventInput) return mesa;
+
+        const total = pedidos.reduce((acc, pedido) => acc + pedido.total, 0);
+        const updated = { ...mesa, pedidos, total };
+        updated.status = derivarStatus(updated);
+        return updated;
+      });
+
+      return {
+        ...prev,
+        mesas,
+        eventos: eventInput ? appendEvent(prev.eventos, eventInput) : prev.eventos,
+      };
+    });
+  }, []);
+
+  const registrarMovimentacaoCaixa = useCallback((input: MovimentacaoInput) => {
+    setStore((prev) => {
+      const now = new Date();
+      const movimentacao: MovimentacaoCaixa = {
+        id: `mov-${now.getTime()}-${Math.random().toString(36).slice(2, 7)}`,
+        tipo: input.tipo,
+        descricao: input.descricao.trim(),
+        valor: input.valor,
+        criadoEm: formatDateTime(now),
+        criadoEmIso: now.toISOString(),
+        usuarioId: input.usuario.id,
+        usuarioNome: input.usuario.nome,
+      };
+
+      return {
+        ...prev,
+        movimentacoesCaixa: [movimentacao, ...prev.movimentacoesCaixa],
+        eventos: appendEvent(prev.eventos, {
+          tipo: "movimentacao",
+          descricao: `Caixa ${input.usuario.nome} registrou ${input.tipo} de R$ ${input.valor.toFixed(2).replace(".", ",")}`,
+          usuarioId: input.usuario.id,
+          usuarioNome: input.usuario.nome,
+          acao: input.tipo === "entrada" ? "entrada_manual" : "saida_manual",
+          valor: input.valor,
+        }),
+      };
+    });
   }, []);
 
   return (
     <RestaurantContext.Provider
       value={{
-        mesas,
+        mesas: store.mesas,
+        eventos: store.eventos,
+        movimentacoesCaixa: store.movimentacoesCaixa,
+        fechamentos: store.fechamentos,
         getMesa,
         updateMesa,
         addToCart,
@@ -212,6 +701,9 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         chamarGarcom: chamarGarcomFn,
         dismissChamarGarcom,
         fecharConta,
+        zerarMesa,
+        ajustarItemPedido,
+        registrarMovimentacaoCaixa,
       }}
     >
       {children}
