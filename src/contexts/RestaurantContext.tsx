@@ -1,5 +1,5 @@
 import React, { createContext, useCallback, useContext, useEffect, useState } from "react";
-import type { CashMovementType, OperationalUser, PaymentMethod } from "@/types/operations";
+import type { CashMovementType, OperationalUser, PaymentMethod, SplitPayment } from "@/types/operations";
 
 export interface ItemCarrinho {
   uid: string;
@@ -62,6 +62,7 @@ export interface FechamentoConta {
   mesaNumero: number;
   total: number;
   formaPagamento: PaymentMethod;
+  pagamentos: SplitPayment[];
   criadoEm: string;
   criadoEmIso: string;
   caixaId: string;
@@ -98,7 +99,7 @@ interface ActionAuditInput {
 
 interface FecharContaInput {
   usuario: OperationalUser;
-  formaPagamento: PaymentMethod;
+  pagamentos: SplitPayment[];
 }
 
 interface RestaurantStore {
