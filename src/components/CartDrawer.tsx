@@ -189,15 +189,13 @@ const CartDrawer = ({
       </Sheet>
 
       <Dialog open={isSubmitting}>
-        <DialogContent className="max-w-sm border-border bg-card p-8 text-center [&>button]:hidden">
-          <div className="flex flex-col items-center gap-4">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-secondary text-primary">
-              <LoaderCircle className="h-8 w-8 animate-spin" />
-            </div>
-            <div className="space-y-2">
-              <h3 className="text-xl font-black text-foreground">Enviando pedido...</h3>
-              <p className="text-sm text-muted-foreground">Aguarde enquanto confirmamos os itens da mesa.</p>
-            </div>
+        <DialogContent
+          overlayClassName="bg-foreground/75 backdrop-blur-sm"
+          className="w-auto max-w-none border-0 bg-transparent p-0 shadow-none [&>button]:hidden"
+        >
+          <div className="flex flex-col items-center gap-4 text-center">
+            <LoaderCircle className="h-12 w-12 animate-spin text-primary-foreground" />
+            <h3 className="text-2xl font-black text-primary-foreground">Enviando pedido...</h3>
           </div>
         </DialogContent>
       </Dialog>
