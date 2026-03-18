@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { HandPlatter, KeyRound, Wallet } from "lucide-react";
+import { BriefcaseBusiness, HandPlatter, KeyRound, Wallet } from "lucide-react";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,6 +28,12 @@ const roleCopy = {
     description: "Identifique o operador para registrar fechamentos, ajustes e movimentações.",
     submit: "Entrar no caixa",
     icon: Wallet,
+  },
+  gerente: {
+    title: "Validação do Gerente",
+    description: "Use este acesso para autorizar relatórios completos e ações críticas.",
+    submit: "Validar gerente",
+    icon: BriefcaseBusiness,
   },
 } satisfies Record<UserRole, { title: string; description: string; submit: string; icon: typeof HandPlatter }>;
 
@@ -65,7 +71,7 @@ const OperationalAccessCard = ({ role }: OperationalAccessCardProps) => {
     setPin("");
     toast.success(`${result.user?.nome ?? "Usuário"} identificado com sucesso`, {
       duration: 1200,
-      icon: role === "garcom" ? "🍽️" : "💰",
+      icon: role === "garcom" ? "🍽️" : role === "gerente" ? "🛡️" : "💰",
     });
     setIsSubmitting(false);
   };
