@@ -529,7 +529,7 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
           ))}
         </div>
 
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 flex flex-col items-center gap-3 px-4 pb-4 md:items-start md:px-8 md:pb-6">
+        <div className="pointer-events-none absolute bottom-3 left-1/2 z-20 -translate-x-1/2 transform">
           <div className="flex items-center gap-2 rounded-full bg-background/35 px-3 py-2 backdrop-blur-md">
             {homeHeroSlides.map((slide, index) => (
               <span
