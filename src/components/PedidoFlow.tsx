@@ -625,19 +625,11 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
       onClick={() => setIsClientIdle(false)}
       aria-hidden={!isClientIdle}
       tabIndex={isClientIdle ? 0 : -1}
-      className={`fixed inset-0 z-[70] flex items-center justify-center bg-background/80 px-6 backdrop-blur-sm transition-all duration-500 ${
+      className={`fixed inset-0 z-[70] transition-opacity duration-500 ${
         isClientIdle ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0"
       }`}
-    >
-      <div className="rounded-[2rem] border border-border bg-card/85 px-8 py-7 text-center shadow-lg animate-enter">
-        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border border-border bg-secondary text-foreground">
-          <MoonStar className="h-6 w-6" />
-        </div>
-        <p className="mt-4 text-sm font-semibold uppercase tracking-[0.22em] text-muted-foreground">Modo inativo</p>
-        <h2 className="mt-2 text-2xl font-black text-foreground">Toque para continuar</h2>
-        <p className="mt-2 max-w-sm text-sm text-muted-foreground">A interface foi suavizada para operação contínua no tablet, mantendo o sistema ativo ao fundo.</p>
-      </div>
-    </button>
+      style={{ backgroundColor: "hsl(var(--background) / 0.7)" }}
+    />
   ) : null;
 
   const mobileContent = (
