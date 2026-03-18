@@ -1,22 +1,39 @@
 import { useEffect, useState } from "react";
 import PedidoFlow from "@/components/PedidoFlow";
-
-const CLIENT_DEVICE_MESA_STORAGE_KEY = "obsidian-cliente-mesa-fixa";
-const DEFAULT_CLIENT_MESA_ID = "mesa-1";
-
-const getFixedMesaId = () => {
-  if (typeof window === "undefined") return DEFAULT_CLIENT_MESA_ID;
-
-  const storedMesaId = window.localStorage.getItem(CLIENT_DEVICE_MESA_STORAGE_KEY)?.trim();
-  return storedMesaId || DEFAULT_CLIENT_MESA_ID;
-};
+import { TABLET_BINDING_CHANGED_EVENT, getBoundTabletMesaId, setBoundTabletMesaId } from "@/lib/tabletBinding";
 
 const ClientePage = () => {
-  const [mesaId] = useState(getFixedMesaId);
+  const [mesaId, setMesaId] = useState<string | null>(() => getBoundTabletMesaId());
 
   useEffect(() => {
-    window.localStorage.setItem(CLIENT_DEVICE_MESA_STORAGE_KEY, mesaId);
+    if (!mesaId) return;
+    setBoundTabletMesaId(mesaId);
   }, [mesaId]);
+
+  useEffect(() => {
+    const syncTabletBinding = () => {
+      setMesaId(getBoundTabletMesaId());
+    };
+
+    window.addEventListener("storage", syncTabletBinding);
+    window.addEventListener(TABLET_BINDING_CHANGED_EVENT, syncTabletBinding);
+
+    return () => {
+      window.removeEventListener("storage", syncTabletBinding);
+      window.removeEventListener(TABLET_BINDING_CHANGED_EVENT, syncTabletBinding);
+    };
+  }, []);
+
+  if (!mesaId) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background px-6">
+        <div className="surface-card w-full max-w-md space-y-3 p-6 text-center">
+          <h1 className="text-xl font-black text-foreground">Tablet sem mesa vinculada</h1>
+          <p className="text-sm text-muted-foreground">Solicite ao gerente no caixa a vinculação deste terminal antes de iniciar novos pedidos.</p>
+        </div>
+      </div>
+    );
+  }
 
   return <PedidoFlow modo="cliente" mesaId={mesaId} />;
 };
