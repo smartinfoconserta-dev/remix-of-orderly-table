@@ -2,7 +2,7 @@ import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { Check, ChevronRight, Minus, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
@@ -518,6 +518,9 @@ const ProductModal = ({ produto, onClose, onAdd }: Props) => {
         contentAnimationClassName="data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0 data-[state=open]:zoom-in-95 data-[state=closed]:zoom-out-95 data-[state=open]:duration-220 data-[state=closed]:duration-220 data-[state=open]:ease-out data-[state=closed]:ease-out"
         className="max-h-[94vh] max-w-6xl overflow-hidden rounded-[2rem] border-border bg-card p-0"
       >
+        <DialogDescription className="sr-only">
+          Personalize o item, adicione ao carrinho e volte ao fluxo de pedido sem perder o contexto da mesa.
+        </DialogDescription>
         {produto && (
           <div className="flex max-h-[94vh] flex-col overflow-hidden">
             <div className="relative border-b border-border bg-card px-5 py-5 md:px-6">

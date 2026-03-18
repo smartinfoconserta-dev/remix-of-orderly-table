@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import AppLayout from "@/components/AppLayout";
+import PedidoFlow from "@/components/PedidoFlow";
 import MesaCard from "@/components/MesaCard";
 import OperationalAccessCard from "@/components/OperationalAccessCard";
 import StatusBadge from "@/components/StatusBadge";
@@ -152,6 +153,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
   } = useRestaurant();
   const { currentCaixa, currentGerente, logout, verifyManagerAccess } = useAuth();
   const [mesaSelecionada, setMesaSelecionada] = useState<string | null>(null);
+  const [comandaOpen, setComandaOpen] = useState(false);
   const [confirmFechar, setConfirmFechar] = useState(false);
   const [closingPayments, setClosingPayments] = useState<SplitPayment[]>([]);
   const [closingPaymentMethod, setClosingPaymentMethod] = useState<PaymentMethod>("dinheiro");
@@ -228,6 +230,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
   }, []);
 
   const handleVoltar = useCallback(() => {
+    setComandaOpen(false);
     setMesaSelecionada(null);
     resetCloseAccountState();
   }, [resetCloseAccountState]);
@@ -235,6 +238,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
   const handleSelecionarMesa = useCallback(
     (mesaId: string) => {
       dismissChamarGarcom(mesaId);
+      setComandaOpen(false);
       setMesaSelecionada(mesaId);
       resetCloseAccountState();
     },
@@ -256,6 +260,10 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
         <OperationalAccessCard role={accessMode} />
       </AppLayout>
     );
+  }
+
+  if (mesa && comandaOpen) {
+    return <PedidoFlow modo="caixa" mesaId={mesa.id} garcomNome={currentOperator.nome} onBack={() => setComandaOpen(false)} />;
   }
 
   const hasSomethingToClose = Boolean(mesa && (mesa.total > 0 || mesa.pedidos.length > 0 || mesa.carrinho.length > 0));
@@ -670,9 +678,12 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                 </div>
                 <p className="mt-2 text-sm text-muted-foreground">Operador atual: {currentOperator.nome}</p>
               </div>
-              <div className="flex flex-col gap-2 sm:flex-row">
+              <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-end">
                 <Button variant="outline" onClick={handleVoltar} className="rounded-xl font-bold">
                   Mesas
+                </Button>
+                <Button variant="outline" onClick={() => setComandaOpen(true)} className="rounded-xl font-bold">
+                  Abrir comanda
                 </Button>
                 <Button
                   variant="outline"
@@ -887,7 +898,9 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                           <p className="mt-1 text-xs text-muted-foreground">
                             {pedido.origem === "garcom"
                               ? `Lançado por ${pedido.garcomNome ?? "garçom identificado"}`
-                              : "Lançado pelo cliente"}
+                              : pedido.origem === "caixa"
+                                ? `Lançado pelo caixa ${pedido.caixaNome ?? "identificado"}`
+                                : "Lançado pelo cliente"}
                             {` • Enviado às ${pedido.criadoEm}`}
                           </p>
                         </div>

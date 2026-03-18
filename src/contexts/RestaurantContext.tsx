@@ -23,10 +23,12 @@ export interface PedidoRealizado {
   total: number;
   criadoEm: string;
   criadoEmIso: string;
-  origem: "cliente" | "garcom";
+  origem: "cliente" | "garcom" | "caixa";
   mesaId: string;
   garcomId?: string;
   garcomNome?: string;
+  caixaId?: string;
+  caixaNome?: string;
 }
 
 export interface EventoOperacional {
@@ -81,7 +83,7 @@ export interface Mesa {
 }
 
 interface PedidoMeta {
-  modo: "cliente" | "garcom";
+  modo: "cliente" | "garcom" | "caixa";
   operador?: OperationalUser | null;
 }
 
@@ -216,6 +218,7 @@ const normalizeItem = (item: Partial<ItemCarrinho>, index = 0): ItemCarrinho => 
 
 const normalizePedido = (pedido: Partial<PedidoRealizado>, mesaId: string, index = 0): PedidoRealizado => {
   const itens = Array.isArray(pedido.itens) ? pedido.itens.map((item, itemIndex) => normalizeItem(item, itemIndex)) : [];
+  const origem = pedido.origem === "garcom" || pedido.origem === "caixa" ? pedido.origem : "cliente";
 
   return {
     id: String(pedido.id ?? `pedido-${Date.now()}-${index}`),
@@ -224,10 +227,12 @@ const normalizePedido = (pedido: Partial<PedidoRealizado>, mesaId: string, index
     total: Number(pedido.total ?? calcularTotalItens(itens)),
     criadoEm: typeof pedido.criadoEm === "string" ? pedido.criadoEm : formatClock(),
     criadoEmIso: typeof pedido.criadoEmIso === "string" ? pedido.criadoEmIso : new Date().toISOString(),
-    origem: pedido.origem === "garcom" ? "garcom" : "cliente",
+    origem,
     mesaId,
     garcomId: pedido.garcomId,
     garcomNome: pedido.garcomNome,
+    caixaId: pedido.caixaId,
+    caixaNome: pedido.caixaNome,
   };
 };
 
@@ -495,6 +500,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         const totalPedido = calcularTotalItens(mesa.carrinho);
         const snapshot = mesa.carrinho.map(cloneItem);
         const now = new Date();
+        const origem = meta?.modo === "garcom" || meta?.modo === "caixa" ? meta.modo : "cliente";
         const novoPedido: PedidoRealizado = {
           id: `pedido-${now.getTime()}-${Math.random().toString(36).slice(2, 7)}`,
           numeroPedido: mesa.pedidos.length + 1,
@@ -502,27 +508,38 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           total: totalPedido,
           criadoEm: formatClock(now),
           criadoEmIso: now.toISOString(),
-          origem: meta?.modo === "garcom" ? "garcom" : "cliente",
+          origem,
           mesaId,
-          garcomId: meta?.modo === "garcom" ? meta.operador?.id : undefined,
-          garcomNome: meta?.modo === "garcom" ? meta.operador?.nome : undefined,
+          garcomId: origem === "garcom" ? meta?.operador?.id : undefined,
+          garcomNome: origem === "garcom" ? meta?.operador?.nome : undefined,
+          caixaId: origem === "caixa" ? meta?.operador?.id : undefined,
+          caixaNome: origem === "caixa" ? meta?.operador?.nome : undefined,
         };
 
-        eventInput = meta?.modo === "garcom"
+        eventInput = origem === "garcom"
           ? {
               tipo: "pedido",
-              descricao: `Garçom ${meta.operador?.nome ?? "identificado"} lançou pedido na ${formatMesaNumero(mesa.numero)}`,
+              descricao: `Garçom ${meta?.operador?.nome ?? "identificado"} lançou pedido na ${formatMesaNumero(mesa.numero)}`,
               mesaId,
-              usuarioId: meta.operador?.id,
-              usuarioNome: meta.operador?.nome,
+              usuarioId: meta?.operador?.id,
+              usuarioNome: meta?.operador?.nome,
               acao: "lancar_pedido",
             }
-          : {
-              tipo: "pedido",
-              descricao: `Cliente da ${formatMesaNumero(mesa.numero)} enviou pedido`,
-              mesaId,
-              acao: "pedido_cliente",
-            };
+          : origem === "caixa"
+            ? {
+                tipo: "caixa",
+                descricao: `Caixa ${meta?.operador?.nome ?? "identificado"} lançou pedido na ${formatMesaNumero(mesa.numero)}`,
+                mesaId,
+                usuarioId: meta?.operador?.id,
+                usuarioNome: meta?.operador?.nome,
+                acao: "lancar_pedido",
+              }
+            : {
+                tipo: "pedido",
+                descricao: `Cliente da ${formatMesaNumero(mesa.numero)} enviou pedido`,
+                mesaId,
+                acao: "pedido_cliente",
+              };
 
         return {
           ...mesa,

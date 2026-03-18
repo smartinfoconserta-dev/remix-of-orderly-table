@@ -27,9 +27,10 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "sonner";
 
 interface PedidoFlowProps {
-  modo: "cliente" | "garcom";
+  modo: "cliente" | "garcom" | "caixa";
   mesaId: string;
   garcomNome?: string;
+  onBack?: () => void;
 }
 
 type CategoryTransitionState = "idle" | "exit" | "pre-enter";
@@ -61,10 +62,10 @@ const formatMesaLabel = (mesaId: string) => {
   return `Mesa ${numeroMesa.padStart(2, "0")}`;
 };
 
-const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
+const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
-  const { currentGarcom } = useAuth();
+  const { currentGarcom, currentCaixa } = useAuth();
   const {
     getMesa,
     addToCart,
@@ -101,7 +102,7 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
   const carrinho = mesa?.carrinho ?? [];
 
   const mesaLabel = formatMesaLabel(mesaId);
-  const nomeAtendimento = garcomNome?.trim() || currentGarcom?.nome || "Equipe de salão";
+  const nomeAtendimento = garcomNome?.trim() || currentGarcom?.nome || currentCaixa?.nome || "Equipe operacional";
   const isHomeActive = categoriaExibida === HOME_TAB_ID;
   const isTabletViewport = !isMobile && typeof window !== "undefined" && window.innerWidth >= TABLET_MIN_WIDTH && window.innerWidth <= TABLET_MAX_WIDTH;
   const shouldEnableClientIdle = modo === "cliente" && isTabletViewport;
@@ -286,16 +287,25 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
     [categoriaAtiva, categoriaExibida, isMobile],
   );
 
+  const navigateBack = useCallback(() => {
+    if (onBack) {
+      onBack();
+      return;
+    }
+
+    navigate(modo === "garcom" ? "/garcom" : "/caixa");
+  }, [modo, navigate, onBack]);
+
   const handleBack = useCallback(() => {
     if (modo === "cliente") return;
 
-    if (modo === "garcom" && carrinho.length > 0) {
+    if (carrinho.length > 0) {
       setShowExitAlert(true);
       return;
     }
 
-    navigate("/garcom");
-  }, [carrinho.length, modo, navigate]);
+    navigateBack();
+  }, [carrinho.length, modo, navigateBack]);
 
   const handleAddToCart = useCallback(
     (item: ItemCarrinho) => {
@@ -338,10 +348,12 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
       window.clearTimeout(orderSubmissionCooldownRef.current);
     }
 
+    const operador = modo === "garcom" ? currentGarcom : modo === "caixa" ? currentCaixa : undefined;
+
     try {
       confirmarPedido(mesaId, {
         modo,
-        operador: modo === "garcom" ? currentGarcom : undefined,
+        operador,
       });
       return true;
     } finally {
@@ -350,7 +362,7 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
         orderSubmissionCooldownRef.current = null;
       }, ORDER_SUBMIT_LOCK_MS);
     }
-  }, [carrinho.length, confirmarPedido, currentGarcom, mesaId, modo, validatePendingCart]);
+  }, [carrinho.length, confirmarPedido, currentCaixa, currentGarcom, mesaId, modo, validatePendingCart]);
 
   const handleSuccessAcknowledge = useCallback(() => {
     if (categorySwitchTimerRef.current) {
@@ -405,7 +417,7 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
           <h1 className="text-xl font-bold text-foreground">Mesa não encontrada</h1>
           <p className="text-muted-foreground">Não foi possível localizar a mesa informada.</p>
           {modo !== "cliente" ? (
-            <Button onClick={() => navigate("/garcom")} className="rounded-xl">
+            <Button onClick={navigateBack} className="rounded-xl">
               Ir para mesas
             </Button>
           ) : null}
@@ -431,8 +443,8 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
   const header = (
     <header className="sticky top-0 z-50 flex items-center justify-between gap-3 border-b border-border bg-background/95 px-4 py-3 backdrop-blur-md md:px-6">
       <div className="flex min-w-0 flex-1 items-center gap-3">
-        {modo === "garcom" && (
-          <button onClick={handleBack} className="shrink-0 text-muted-foreground transition-transform active:scale-95">
+        {modo !== "cliente" && (
+          <button type="button" onClick={handleBack} className="shrink-0 text-muted-foreground transition-transform active:scale-95">
             <div className="flex items-center gap-2">
               <ArrowLeft className="h-5 w-5" />
               <span className="hidden text-sm font-medium xl:inline">Mesas</span>
@@ -442,7 +454,7 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
         {restaurantIdentity}
       </div>
       <div className="flex shrink-0 items-center gap-2">
-        {modo === "garcom" && (
+        {modo !== "cliente" && (
           <div className="hidden items-center rounded-xl border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground md:flex">
             {nomeAtendimento}
           </div>
@@ -707,7 +719,7 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
           <AlertDialogFooter className="gap-2 sm:gap-2">
             <AlertDialogCancel className="rounded-xl font-bold">Continuar no pedido</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => navigate("/garcom")}
+              onClick={navigateBack}
               className="rounded-xl bg-secondary font-bold text-foreground hover:bg-secondary/80"
             >
               Ir para mesas
