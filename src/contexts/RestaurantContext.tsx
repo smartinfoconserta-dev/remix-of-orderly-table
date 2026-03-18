@@ -218,6 +218,7 @@ const normalizeItem = (item: Partial<ItemCarrinho>, index = 0): ItemCarrinho => 
 
 const normalizePedido = (pedido: Partial<PedidoRealizado>, mesaId: string, index = 0): PedidoRealizado => {
   const itens = Array.isArray(pedido.itens) ? pedido.itens.map((item, itemIndex) => normalizeItem(item, itemIndex)) : [];
+  const origem = pedido.origem === "garcom" || pedido.origem === "caixa" ? pedido.origem : "cliente";
 
   return {
     id: String(pedido.id ?? `pedido-${Date.now()}-${index}`),
@@ -226,10 +227,12 @@ const normalizePedido = (pedido: Partial<PedidoRealizado>, mesaId: string, index
     total: Number(pedido.total ?? calcularTotalItens(itens)),
     criadoEm: typeof pedido.criadoEm === "string" ? pedido.criadoEm : formatClock(),
     criadoEmIso: typeof pedido.criadoEmIso === "string" ? pedido.criadoEmIso : new Date().toISOString(),
-    origem: pedido.origem === "garcom" ? "garcom" : "cliente",
+    origem,
     mesaId,
     garcomId: pedido.garcomId,
     garcomNome: pedido.garcomNome,
+    caixaId: pedido.caixaId,
+    caixaNome: pedido.caixaNome,
   };
 };
 
