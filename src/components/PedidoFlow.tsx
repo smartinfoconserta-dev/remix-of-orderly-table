@@ -41,6 +41,8 @@ const CATEGORY_SWITCH_DELAY_MS = 150;
 const CATEGORY_EXIT_DURATION_MS = 150;
 const CATEGORY_ENTER_DURATION_MS = 130;
 const CATEGORY_SKELETON_DURATION_MS = 100;
+const CARD_STAGGER_STEP_MS = 50;
+const CARD_ANIMATION_DURATION_MS = 200;
 
 const formatPrice = (v: number) => `R$ ${v.toFixed(2).replace(".", ",")}`;
 
@@ -65,6 +67,7 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
   const [categoriaExibida, setCategoriaExibida] = useState(categorias[0].id);
   const [categoryTransitionState, setCategoryTransitionState] = useState<CategoryTransitionState>("idle");
   const [showCategorySkeleton, setShowCategorySkeleton] = useState(false);
+  const [cardsAnimatedIn, setCardsAnimatedIn] = useState(false);
   const [bannerIndex, setBannerIndex] = useState(0);
   const [produtoSelecionado, setProdutoSelecionado] = useState<Produto | null>(null);
   const [cartOpen, setCartOpen] = useState(false);
@@ -73,6 +76,7 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
   const categorySwitchTimerRef = useRef<number | null>(null);
   const categoryEnterTimerRef = useRef<number | null>(null);
   const categorySkeletonTimerRef = useRef<number | null>(null);
+  const cardsAnimationTimerRef = useRef<number | null>(null);
   const mobileListTopRef = useRef<HTMLDivElement>(null);
   const desktopMainRef = useRef<HTMLElement>(null);
 
@@ -107,8 +111,28 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
       if (categorySkeletonTimerRef.current) {
         window.clearTimeout(categorySkeletonTimerRef.current);
       }
+      if (cardsAnimationTimerRef.current) {
+        window.clearTimeout(cardsAnimationTimerRef.current);
+      }
     };
   }, []);
+
+  useEffect(() => {
+    if (showCategorySkeleton) {
+      setCardsAnimatedIn(false);
+      return;
+    }
+
+    setCardsAnimatedIn(false);
+
+    if (cardsAnimationTimerRef.current) {
+      window.clearTimeout(cardsAnimationTimerRef.current);
+    }
+
+    cardsAnimationTimerRef.current = window.setTimeout(() => {
+      setCardsAnimatedIn(true);
+    }, 16);
+  }, [categoriaExibida, showCategorySkeleton]);
 
   const handleSelectCategoria = useCallback(
     (categoriaId: string) => {
@@ -161,7 +185,11 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
 
   const handleAddToCart = useCallback(
     (item: ItemCarrinho) => {
-      addToCart(mesaId, { ...item, removidos: [...item.removidos], adicionais: item.adicionais.map((adicional) => ({ ...adicional })) });
+      addToCart(mesaId, {
+        ...item,
+        removidos: [...item.removidos],
+        adicionais: item.adicionais.map((adicional) => ({ ...adicional })),
+      });
       setProdutoSelecionado(null);
       setCartOpen(true);
       toast.success("Item configurado e adicionado ao carrinho", { duration: 1200, icon: "🛒" });
@@ -199,6 +227,7 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
     setCategoriaExibida(categorias[0].id);
     setCategoryTransitionState("idle");
     setShowCategorySkeleton(false);
+    setCardsAnimatedIn(false);
     setProdutoSelecionado(null);
     window.scrollTo({ top: 0, behavior: isMobile ? "auto" : "smooth" });
   }, [isMobile]);
@@ -225,12 +254,8 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
         </AvatarFallback>
       </Avatar>
       <div className="min-w-0">
-        <p className="truncate text-base font-extrabold tracking-tight text-foreground md:text-lg">
-          {RESTAURANTE.nome}
-        </p>
-        <p className="truncate text-xs font-medium text-muted-foreground md:text-sm">
-          {mesaLabel}
-        </p>
+        <p className="truncate text-base font-extrabold tracking-tight text-foreground md:text-lg">{RESTAURANTE.nome}</p>
+        <p className="truncate text-xs font-medium text-muted-foreground md:text-sm">{mesaLabel}</p>
       </div>
     </div>
   );
@@ -238,10 +263,7 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
   const header = (
     <header className="sticky top-0 z-50 flex items-center justify-between gap-3 border-b border-border bg-background/95 px-4 py-3 backdrop-blur-md md:px-6">
       <div className="flex min-w-0 flex-1 items-center gap-3">
-        <button
-          onClick={handleBack}
-          className="shrink-0 text-muted-foreground transition-transform active:scale-95"
-        >
+        <button onClick={handleBack} className="shrink-0 text-muted-foreground transition-transform active:scale-95">
           <div className="flex items-center gap-2">
             <ArrowLeft className="h-5 w-5" />
             <span className="hidden text-sm font-medium xl:inline">Voltar</span>
@@ -351,30 +373,27 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
         transitionDuration: `${categoryTransitionState === "exit" ? CATEGORY_EXIT_DURATION_MS : CATEGORY_ENTER_DURATION_MS}ms`,
       }}
     >
-      {produtosFiltrados.map((produto) => (
+      {produtosFiltrados.map((produto, index) => (
         <button
           key={produto.id}
           onClick={() => setProdutoSelecionado(produto)}
-          className="surface-card flex flex-col overflow-hidden text-left transition-transform active:scale-[0.97]"
+          className="surface-card flex flex-col overflow-hidden text-left will-change-transform active:scale-[0.97]"
+          style={{
+            opacity: cardsAnimatedIn ? 1 : 0,
+            transform: cardsAnimatedIn ? "translateY(0)" : "translateY(20px)",
+            transitionProperty: "opacity, transform",
+            transitionDuration: `${CARD_ANIMATION_DURATION_MS}ms`,
+            transitionTimingFunction: "ease-out",
+            transitionDelay: `${Math.min(index, 3) * CARD_STAGGER_STEP_MS}ms`,
+          }}
         >
           <div className="aspect-[4/3] overflow-hidden">
-            <img
-              src={produto.imagem}
-              alt={produto.nome}
-              className="h-full w-full object-cover"
-              loading="lazy"
-            />
+            <img src={produto.imagem} alt={produto.nome} className="h-full w-full object-cover" loading="lazy" />
           </div>
           <div className="flex flex-1 flex-col gap-1 p-3 md:p-4">
-            <h2 className="line-clamp-1 text-sm font-bold text-foreground md:text-base">
-              {produto.nome}
-            </h2>
-            <p className="line-clamp-2 flex-1 text-xs text-muted-foreground md:text-sm">
-              {produto.descricao}
-            </p>
-            <p className="mt-1 text-lg font-black text-foreground md:text-xl">
-              {formatPrice(produto.preco)}
-            </p>
+            <h2 className="line-clamp-1 text-sm font-bold text-foreground md:text-base">{produto.nome}</h2>
+            <p className="line-clamp-2 flex-1 text-xs text-muted-foreground md:text-sm">{produto.descricao}</p>
+            <p className="mt-1 text-lg font-black text-foreground md:text-xl">{formatPrice(produto.preco)}</p>
           </div>
         </button>
       ))}
@@ -451,17 +470,8 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
       <div className="flex min-h-screen flex-col bg-background">
         {header}
         {isMobile ? mobileContent : desktopContent}
-        <ProductModal
-          produto={produtoSelecionado}
-          onClose={() => setProdutoSelecionado(null)}
-          onAdd={handleAddToCart}
-        />
-        <MinhaContaDrawer
-          pedidos={mesa.pedidos}
-          total={mesa.total}
-          open={contaOpen}
-          onOpenChange={setContaOpen}
-        />
+        <ProductModal produto={produtoSelecionado} onClose={() => setProdutoSelecionado(null)} onAdd={handleAddToCart} />
+        <MinhaContaDrawer pedidos={mesa.pedidos} total={mesa.total} open={contaOpen} onOpenChange={setContaOpen} />
       </div>
 
       <AlertDialog open={showExitAlert} onOpenChange={setShowExitAlert}>
