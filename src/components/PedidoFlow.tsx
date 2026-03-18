@@ -19,7 +19,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { banners, categorias, homeSectionContent, produtos, type Categoria, type Produto } from "@/data/menuData";
+import { categorias, produtos, type Categoria, type Produto } from "@/data/menuData";
+import { HOME_CAROUSEL_INTERVAL_MS, homeHeroSlides, homeShowcaseConfig } from "@/data/homeShowcaseData";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRestaurant, type ItemCarrinho } from "@/contexts/RestaurantContext";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -112,8 +113,8 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
 
   useEffect(() => {
     const timer = window.setInterval(() => {
-      setBannerIndex((prev) => (prev + 1) % banners.length);
-    }, 3000);
+      setBannerIndex((prev) => (prev + 1) % homeHeroSlides.length);
+    }, HOME_CAROUSEL_INTERVAL_MS);
     return () => window.clearInterval(timer);
   }, []);
 
@@ -451,32 +452,41 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
     </header>
   );
 
-  const bannerSection = (
-    <div className="px-4 pt-4 md:px-6">
-      <div className="relative h-32 overflow-hidden rounded-2xl border border-border bg-card md:h-40">
-        {banners.map((banner, i) => (
-          <div
-            key={banner.id}
-            className={`absolute inset-0 rounded-2xl bg-gradient-to-r ${banner.cor} flex flex-col justify-center px-6 transition-all duration-700 ease-in-out md:px-10 ${
-              i === bannerIndex ? "translate-x-0 opacity-100" : "translate-x-full opacity-0"
-            }`}
-          >
-            <p className="text-lg font-bold text-foreground md:text-xl">{banner.titulo}</p>
-            <p className="mt-1 text-sm text-muted-foreground md:text-base">{banner.subtitulo}</p>
-            <p className="mt-1 text-2xl font-black text-primary md:text-3xl">{banner.destaque}</p>
-          </div>
-        ))}
-        <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-2">
-          {banners.map((_, i) => (
-            <button
-              key={i}
-              onClick={() => setBannerIndex(i)}
-              className={`h-2 rounded-full transition-all ${i === bannerIndex ? "w-6 bg-foreground" : "w-2 bg-foreground/40"}`}
-            />
+  const heroBanner = (
+    <section className="px-4 pt-4 md:px-6">
+      <div className="relative overflow-hidden rounded-[1.9rem] border border-border bg-card shadow-[0_30px_70px_-45px_hsl(var(--foreground)/0.9)]">
+        <div className="relative aspect-[16/7] min-h-[220px] w-full md:min-h-[320px]">
+          {homeHeroSlides.map((slide, index) => (
+            <div
+              key={slide.id}
+              className={`absolute inset-0 transition-all duration-700 ease-out ${
+                index === bannerIndex ? "opacity-100 scale-100" : "pointer-events-none opacity-0 scale-[1.02]"
+              }`}
+            >
+              <img src={slide.image} alt={slide.alt} className="h-full w-full object-cover" loading={index === 0 ? "eager" : "lazy"} />
+              <div className="absolute inset-0 bg-gradient-to-t from-background/60 via-background/10 to-transparent" />
+            </div>
           ))}
         </div>
+
+        <div className="absolute bottom-4 left-4 right-4 flex items-end justify-between gap-4 md:bottom-5 md:left-5 md:right-5">
+          <div className="rounded-full border border-border bg-background/65 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.22em] text-foreground backdrop-blur-md">
+            {homeHeroSlides[bannerIndex]?.label}
+          </div>
+          <div className="flex items-center gap-2 rounded-full border border-border bg-background/50 px-3 py-2 backdrop-blur-md">
+            {homeHeroSlides.map((slide, index) => (
+              <button
+                key={slide.id}
+                type="button"
+                aria-label={`Ir para banner ${index + 1}`}
+                onClick={() => setBannerIndex(index)}
+                className={`h-2 rounded-full transition-all duration-300 ${index === bannerIndex ? "w-7 bg-primary" : "w-2 bg-foreground/35 hover:bg-foreground/55"}`}
+              />
+            ))}
+          </div>
+        </div>
       </div>
-    </div>
+    </section>
   );
 
   const categoryGridClasses =
@@ -528,17 +538,15 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
 
   const homeContent = (
     <div
-      className={`transition-all ease-in-out ${categoryGridClasses}`}
+      className={`space-y-5 transition-all ease-in-out ${categoryGridClasses}`}
       style={{
         transitionDuration: `${categoryTransitionState === "exit" ? CATEGORY_EXIT_DURATION_MS : CATEGORY_ENTER_DURATION_MS}ms`,
       }}
     >
-      <RestaurantHomeSection
-        content={homeSectionContent}
-        featuredProducts={featuredProducts}
-        onOpenProduct={handleOpenProductModal}
-        onOpenCategory={handleSelectCategoria}
-      />
+      {heroBanner}
+      <div className="px-4 md:px-6">
+        <RestaurantHomeSection config={homeShowcaseConfig} featuredProducts={featuredProducts} onOpenProduct={handleOpenProductModal} />
+      </div>
     </div>
   );
 
@@ -581,7 +589,6 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
 
   const mobileContent = (
     <>
-      {bannerSection}
       <div className="mt-4">
         <CategoryTabs
           categorias={navigationItems}
@@ -591,51 +598,44 @@ const PedidoFlow = ({ modo, mesaId, garcomNome }: PedidoFlowProps) => {
         />
       </div>
       <div ref={mobileListTopRef} />
-      <main className={`flex-1 px-4 pb-6 pt-4 transition-all duration-500 ${isClientIdle ? "brightness-[0.55] saturate-50" : "brightness-100 saturate-100"}`}>
-        {showCategorySkeleton ? skeletonGrid : isHomeActive ? homeContent : productGrid}
+      <main className={`flex-1 pb-6 pt-2 transition-all duration-500 ${isClientIdle ? "brightness-[0.55] saturate-50" : "brightness-100 saturate-100"}`}>
+        <div className="px-4">{showCategorySkeleton ? skeletonGrid : isHomeActive ? homeContent : productGrid}</div>
       </main>
     </>
   );
 
   const desktopContent = (
     <div className={`flex flex-1 overflow-hidden transition-all duration-500 ${isClientIdle ? "brightness-[0.55] saturate-50" : "brightness-100 saturate-100"}`}>
-      <aside className="w-64 shrink-0 overflow-y-auto border-r border-border bg-card lg:w-72">
-        <div className="sticky top-0 z-10 border-b border-border bg-card/95 px-4 py-4 backdrop-blur-md lg:px-5">
-          <p className="text-base font-bold text-foreground">Categorias</p>
-          <p className="text-sm text-muted-foreground">Fluxo profissional de autoatendimento</p>
+      <aside className="w-[19rem] shrink-0 overflow-y-auto border-r border-border bg-card/95 px-3 py-3 lg:w-[21rem]">
+        <div className="sticky top-0 z-10 rounded-[1.5rem] border border-border bg-background/85 px-5 py-5 backdrop-blur-md">
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">Navegação</p>
+          <p className="mt-2 text-lg font-black text-foreground">Cardápio</p>
         </div>
-        <nav className="flex flex-col gap-0 py-2">
-          <button
-            onClick={() => handleSelectCategoria(HOME_TAB_ID)}
-            className={`relative flex items-center gap-3 border-l-2 px-4 py-3.5 text-left text-sm font-medium transition-all duration-300 ease-in-out ${
-              categoriaAtiva === HOME_TAB_ID
-                ? "border-l-primary bg-secondary/50 text-foreground shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.25),0_0_16px_hsl(var(--primary)/0.12)]"
-                : "border-l-transparent text-muted-foreground hover:bg-secondary/30 hover:text-foreground"
-            }`}
-          >
-            <CategoryIcon name={HOME_TAB.icone} className="h-3.5 w-3.5" />
-            <span>{HOME_TAB.nome}</span>
-          </button>
-          <div className="px-4 pb-2 pt-4 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Cardápio</div>
-          {categorias.map((cat) => (
-            <button
-              key={cat.id}
-              onClick={() => handleSelectCategoria(cat.id)}
-              className={`relative flex items-center gap-3 border-l-2 px-4 py-3.5 text-left text-sm font-medium transition-all duration-300 ease-in-out ${
-                categoriaAtiva === cat.id
-                  ? "border-l-primary bg-secondary/50 text-foreground shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.25),0_0_16px_hsl(var(--primary)/0.12)]"
-                  : "border-l-transparent text-muted-foreground hover:bg-secondary/30 hover:text-foreground"
-              }`}
-            >
-              <CategoryIcon name={cat.icone} className="h-3.5 w-3.5" />
-              <span>{cat.nome}</span>
-            </button>
-          ))}
+        <nav className="mt-4 flex flex-col gap-2">
+          {[HOME_TAB, ...categorias].map((cat) => {
+            const selected = categoriaAtiva === cat.id;
+
+            return (
+              <button
+                key={cat.id}
+                onClick={() => handleSelectCategoria(cat.id)}
+                className={`flex items-center gap-3 rounded-[1.15rem] border px-4 py-4 text-left text-sm font-semibold transition-all duration-300 ease-out ${
+                  selected
+                    ? "border-primary/35 bg-secondary text-foreground shadow-[0_18px_40px_-28px_hsl(var(--primary)/0.9),inset_0_0_0_1px_hsl(var(--primary)/0.28)]"
+                    : "border-transparent bg-transparent text-muted-foreground hover:border-border hover:bg-secondary/45 hover:text-foreground"
+                }`}
+              >
+                <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border ${selected ? "border-primary/35 bg-primary/10 text-primary" : "border-border bg-secondary/55 text-foreground"}`}>
+                  <CategoryIcon name={cat.icone} className="h-4.5 w-4.5" />
+                </div>
+                <span className="truncate">{cat.nome}</span>
+              </button>
+            );
+          })}
         </nav>
       </aside>
-      <main ref={desktopMainRef} className="flex-1 overflow-y-auto pb-6">
-        {bannerSection}
-        <div className="px-6 pt-4">{showCategorySkeleton ? skeletonGrid : isHomeActive ? homeContent : productGrid}</div>
+      <main ref={desktopMainRef} className="flex-1 overflow-y-auto pb-8 pt-4">
+        {showCategorySkeleton ? <div className="px-6">{skeletonGrid}</div> : isHomeActive ? homeContent : <div className="px-6">{productGrid}</div>}
       </main>
     </div>
   );
