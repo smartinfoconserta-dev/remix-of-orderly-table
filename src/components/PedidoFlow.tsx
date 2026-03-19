@@ -62,6 +62,7 @@ const CLIENT_IDLE_TIMEOUT_MS = 30000;
 const ORDER_SUBMIT_LOCK_MS = 2000;
 const TABLET_MIN_WIDTH = 768;
 const TABLET_MAX_WIDTH = 1279;
+const LONG_PRESS_DURATION_MS = 5000;
 
 const formatPrice = (v: number) => `R$ ${v.toFixed(2).replace(".", ",")}`;
 
