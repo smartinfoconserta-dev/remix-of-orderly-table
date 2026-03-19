@@ -54,6 +54,7 @@ import {
   type MesasConfig,
   type SistemaConfig,
   type LicencaConfig,
+  type BannerConfig,
 } from "@/lib/adminStorage";
 import { toast } from "sonner";
 
