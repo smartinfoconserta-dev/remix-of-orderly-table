@@ -6,6 +6,7 @@ import {
   Calendar,
   ClipboardList,
   CreditCard,
+  Download,
   Filter,
   LockKeyhole,
   LogOut,
