@@ -98,8 +98,6 @@ const actionLabels: Record<string, string> = {
   chamar_garcom: "Chamada de garçom",
   lancar_pedido: "Lançamento de pedido",
   pedido_cliente: "Pedido do cliente",
-  desvincular_tablet: "Desvínculo do tablet",
-  vincular_tablet: "Vínculo do tablet",
 };
 
 /* ── types ── */
