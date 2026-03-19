@@ -94,18 +94,19 @@ const CozinhaPage = () => {
 
       {/* Order grid — auto-fill responsive */}
       <div className="grid gap-4" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))" }}>
-        {activePedidos.map((pedido) => {
+        {activePedidos.map((pedido, i) => {
           const mins = minutesAgo(pedido.criadoEmIso);
           const isLate = mins >= 15 && mins <= MAX_ELAPSED_MINUTES;
 
           return (
             <div
               key={pedido.id}
-              className={`flex flex-col rounded-2xl border bg-card transition-all ${
+              className={`slide-up flex flex-col rounded-2xl border bg-card transition-all ${
                 isLate
                   ? "border-destructive/60 animate-pulse shadow-[0_0_20px_hsl(var(--destructive)/0.2)]"
                   : "border-border"
               }`}
+              style={{ animationDelay: `${Math.min(i * 30, 300)}ms`, animationFillMode: 'both' }}
             >
               {/* Card header */}
               <div className="flex items-center justify-between border-b border-border px-4 py-3">

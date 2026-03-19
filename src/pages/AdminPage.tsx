@@ -385,7 +385,7 @@ const AdminPage = () => {
                     filteredProducts.map((p) => {
                       const cat = categorias.find((c) => c.id === p.categoria);
                       return (
-                        <tr key={p.id} className={`border-b border-border/50 last:border-0 ${!p.ativo ? "opacity-40" : ""}`}>
+                        <tr key={p.id} className={`slide-up border-b border-border/50 last:border-0 ${!p.ativo ? "opacity-40" : ""}`} style={{ animationDelay: `${Math.min(idx * 30, 300)}ms`, animationFillMode: 'both' }}>
                           <td className="px-4 py-2">
                             {(p.imagemBase64 || p.imagem) ? (
                               <img src={p.imagemBase64 || p.imagem} alt={p.nome} className="h-10 w-10 rounded-lg object-cover" />
