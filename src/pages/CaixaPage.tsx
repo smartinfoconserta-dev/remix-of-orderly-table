@@ -72,15 +72,23 @@ const paymentMethodOptions: Array<{
   value: PaymentMethod;
   label: string;
   icon: typeof Landmark;
+  color: string;
+  bgColor: string;
+  borderColor: string;
 }> = [
-  { value: "dinheiro", label: "Dinheiro", icon: Banknote },
-  { value: "credito", label: "Crédito", icon: CreditCard },
-  { value: "debito", label: "Débito", icon: CreditCard },
-  { value: "pix", label: "PIX", icon: Smartphone },
+  { value: "dinheiro", label: "Dinheiro", icon: Banknote, color: "text-emerald-400", bgColor: "bg-emerald-500/15", borderColor: "border-emerald-500/30" },
+  { value: "credito", label: "Crédito", icon: CreditCard, color: "text-blue-400", bgColor: "bg-blue-500/15", borderColor: "border-blue-500/30" },
+  { value: "debito", label: "Débito", icon: Wallet, color: "text-amber-400", bgColor: "bg-amber-500/15", borderColor: "border-amber-500/30" },
+  { value: "pix", label: "PIX", icon: Smartphone, color: "text-purple-400", bgColor: "bg-purple-500/15", borderColor: "border-purple-500/30" },
 ];
 
 const getPaymentMethodLabel = (method: PaymentMethod) =>
   paymentMethodOptions.find((option) => option.value === method)?.label ?? method;
+
+const getPaymentMethodStyle = (method: PaymentMethod) =>
+  paymentMethodOptions.find((option) => option.value === method) ?? paymentMethodOptions[0];
+
+const QUICK_VALUES = [10, 20, 50, 100];
 
 const actionLabels: Record<string, string> = {
   cancelar_item: "Exclusão de item",
@@ -790,39 +798,88 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                   </div>
 
                   {/* Progress bar */}
-                  <div className="rounded-full bg-secondary h-2 overflow-hidden">
+                  <div className="relative rounded-full bg-secondary h-3 overflow-hidden">
                     <div
-                      className={`h-full rounded-full transition-all duration-500 ease-out ${fechamentoPronto ? "bg-status-consumo" : paymentProgress > 0 ? "bg-status-pendente" : "bg-muted"}`}
+                      className={`h-full rounded-full transition-all duration-700 ease-out ${
+                        fechamentoPronto
+                          ? "bg-status-consumo shadow-[0_0_12px_hsl(var(--status-consumo)/0.5)]"
+                          : paymentProgress > 0
+                            ? "bg-gradient-to-r from-status-pendente to-status-pendente/80 animate-pulse"
+                            : "bg-destructive/40"
+                      }`}
                       style={{ width: `${paymentProgress * 100}%` }}
                     />
+                    {fechamentoPronto && (
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <Check className="h-2.5 w-2.5 text-white" />
+                      </div>
+                    )}
                   </div>
+
+                  {/* Payment method quick buttons */}
+                  {!fechamentoPronto && totalConta > 0 && (
+                    <div className="grid grid-cols-4 gap-2">
+                      {paymentMethodOptions.map((opt) => {
+                        const Icon = opt.icon;
+                        const isSelected = closingPaymentMethod === opt.value;
+                        return (
+                          <button
+                            key={opt.value}
+                            type="button"
+                            onClick={() => setClosingPaymentMethod(opt.value)}
+                            className={`flex flex-col items-center gap-2 rounded-2xl border-2 p-4 transition-all ${
+                              isSelected
+                                ? `${opt.borderColor} ${opt.bgColor} scale-[1.02]`
+                                : "border-border bg-card hover:border-muted-foreground/30"
+                            }`}
+                          >
+                            <Icon className={`h-6 w-6 ${isSelected ? opt.color : "text-muted-foreground"}`} />
+                            <span className={`text-sm font-bold ${isSelected ? "text-foreground" : "text-muted-foreground"}`}>{opt.label}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
 
                   {/* Add payment form */}
                   {!fechamentoPronto && totalConta > 0 && (
-                    <div className="rounded-2xl border border-border bg-card p-4">
-                      <p className="mb-3 text-sm font-black text-foreground">Adicionar pagamento</p>
-                      <div className="grid gap-3 grid-cols-[1fr_1fr_auto] items-end">
-                        <div className="space-y-1">
-                          <label className="text-xs font-semibold text-muted-foreground">Forma</label>
-                          <Select value={closingPaymentMethod} onValueChange={(v) => setClosingPaymentMethod(v as PaymentMethod)}>
-                            <SelectTrigger className="rounded-xl h-10">
-                              <SelectValue placeholder="Selecione" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {paymentMethodOptions.map((opt) => (
-                                <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div className="space-y-1">
+                    <div className="rounded-2xl border border-border bg-card p-4 space-y-3">
+                      <div className="flex items-end gap-3">
+                        <div className="flex-1 space-y-1">
                           <label className="text-xs font-semibold text-muted-foreground">Valor</label>
                           <Input value={closingPaymentValue} onChange={(e) => setClosingPaymentValue(e.target.value)} placeholder="Ex.: 25,00" inputMode="decimal" autoComplete="off" className="h-10 rounded-xl" />
                         </div>
-                        <Button onClick={handleAddPayment} className="rounded-xl font-black h-10 px-4">
+                        <Button onClick={handleAddPayment} className="rounded-xl font-black h-10 px-5">
                           <Plus className="h-4 w-4" />
                           Adicionar
                         </Button>
+                      </div>
+                      {/* Quick value buttons */}
+                      <div className="flex items-center gap-2">
+                        {QUICK_VALUES.map((qv) => (
+                          <Button
+                            key={qv}
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="rounded-xl font-bold tabular-nums flex-1"
+                            disabled={qv > valorRestante}
+                            onClick={() => setClosingPaymentValue(qv.toFixed(2).replace(".", ","))}
+                          >
+                            +R$ {qv}
+                          </Button>
+                        ))}
+                        {valorRestante > 0 && !QUICK_VALUES.includes(Math.round(valorRestante * 100) / 100) && (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="rounded-xl font-bold tabular-nums flex-1 border-primary/30 text-primary hover:bg-primary/10"
+                            onClick={() => setClosingPaymentValue(valorRestante.toFixed(2).replace(".", ","))}
+                          >
+                            Restante
+                          </Button>
+                        )}
                       </div>
                     </div>
                   )}
@@ -835,16 +892,17 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                     ) : (
                       <div className="space-y-2">
                         {closingPayments.map((payment) => {
-                          const Icon = paymentMethodOptions.find((o) => o.value === payment.formaPagamento)?.icon ?? Landmark;
+                          const style = getPaymentMethodStyle(payment.formaPagamento);
+                          const Icon = style.icon;
                           return (
-                            <div key={payment.id} className="flex items-center gap-3 rounded-2xl border border-status-consumo/20 bg-status-consumo/5 px-4 py-3">
-                              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-status-consumo/15 text-status-consumo">
+                            <div key={payment.id} className={`flex items-center gap-3 rounded-2xl border ${style.borderColor} ${style.bgColor} px-4 py-3`}>
+                              <div className={`flex h-9 w-9 items-center justify-center rounded-xl ${style.bgColor} ${style.color}`}>
                                 <Icon className="h-4 w-4" />
                               </div>
                               <div className="flex-1 min-w-0">
                                 <p className="text-sm font-bold text-foreground">{getPaymentMethodLabel(payment.formaPagamento)}</p>
                               </div>
-                              <span className="text-sm font-black tabular-nums text-foreground">{formatPrice(payment.valor)}</span>
+                              <span className={`text-base font-black tabular-nums ${style.color}`}>{formatPrice(payment.valor)}</span>
                               <Button size="icon" variant="outline" className="h-7 w-7 rounded-lg text-destructive border-destructive/20 hover:bg-destructive/10" onClick={() => handleRemovePayment(payment.id)}>
                                 <Trash2 className="h-3 w-3" />
                               </Button>
@@ -859,13 +917,13 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                   <Button
                     onClick={handleFechar}
                     disabled={!fechamentoPronto || closingPayments.length === 0}
-                    className={`w-full h-12 rounded-xl text-base font-black transition-colors ${
+                    className={`w-full h-14 rounded-2xl text-base font-black transition-all ${
                       fechamentoPronto
-                        ? "bg-status-consumo text-white hover:bg-status-consumo/90"
+                        ? "bg-status-consumo text-white hover:bg-status-consumo/90 shadow-[0_0_20px_hsl(var(--status-consumo)/0.3)] scale-[1.01]"
                         : ""
                     }`}
                   >
-                    <Check className="h-5 w-5" />
+                    {fechamentoPronto ? <ShieldCheck className="h-5 w-5" /> : <Check className="h-5 w-5" />}
                     Confirmar fechamento
                   </Button>
 
