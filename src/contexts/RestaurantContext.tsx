@@ -136,6 +136,7 @@ interface RestaurantContextType {
   marcarPedidoPronto: (mesaId: string, pedidoId: string) => void;
   registrarMovimentacaoCaixa: (input: MovimentacaoInput) => void;
   abrirCaixa: (fundoTroco: number, usuario: OperationalUser) => void;
+  fecharCaixaDoDia: (usuario: OperationalUser) => void;
 }
 
 const RestaurantContext = createContext<RestaurantContextType | null>(null);
