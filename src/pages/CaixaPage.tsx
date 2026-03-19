@@ -564,12 +564,15 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                         </div>
                       ) : (
                         recentEvents.map((evento) => (
-                          <div key={evento.id} className="rounded-xl border border-border bg-card p-3">
-                            <p className="text-xs font-semibold text-foreground leading-snug">{evento.descricao}</p>
-                            <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] text-muted-foreground">
-                              <span className="font-semibold">{evento.usuarioNome ?? "Sistema"}</span>
-                              <span>{actionLabels[evento.acao ?? ""] ?? evento.tipo}</span>
-                              <span className="tabular-nums">{evento.criadoEm}</span>
+                          <div key={evento.id} className="flex items-start gap-2.5 rounded-xl border border-border bg-card p-3">
+                            <span className={`mt-1 h-2 w-2 shrink-0 rounded-full ${getEventDotColor(evento)}`} />
+                            <div className="min-w-0 flex-1">
+                              <p className="text-xs font-semibold text-foreground leading-snug">{evento.descricao}</p>
+                              <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] text-muted-foreground">
+                                <span className="font-semibold">{evento.usuarioNome ?? "Sistema"}</span>
+                                <span>{actionLabels[evento.acao ?? ""] ?? evento.tipo}</span>
+                                <span className="tabular-nums">{evento.criadoEm}</span>
+                              </div>
                             </div>
                           </div>
                         ))
