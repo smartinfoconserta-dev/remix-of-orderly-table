@@ -395,6 +395,7 @@ const ProductModal = ({ produto, onClose, onAdd }: Props) => {
           <div className="space-y-3">
             {produto.adicionais?.map((adicional) =>
               renderCheckboxCard({
+                itemKey: adicional.id,
                 checked: pedidoAtual.adicionais.includes(adicional.id),
                 onCheckedChange: () => toggleAdicional(adicional.id),
                 title: adicional.nome,
@@ -427,6 +428,7 @@ const ProductModal = ({ produto, onClose, onAdd }: Props) => {
           <div className="space-y-3">
             {produto.ingredientesRemoviveis?.map((ingrediente) =>
               renderCheckboxCard({
+                itemKey: ingrediente,
                 checked: pedidoAtual.removidos.includes(ingrediente),
                 onCheckedChange: () => toggleRemover(ingrediente),
                 title: ingrediente,
@@ -523,6 +525,7 @@ const ProductModal = ({ produto, onClose, onAdd }: Props) => {
         contentAnimationClassName="data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0 data-[state=open]:zoom-in-95 data-[state=closed]:zoom-out-95 data-[state=open]:duration-220 data-[state=closed]:duration-220 data-[state=open]:ease-out data-[state=closed]:ease-out"
         className="max-h-[94vh] max-w-6xl overflow-hidden rounded-[2rem] border-border bg-card p-0"
       >
+        <DialogTitle className="sr-only">Personalizar item do pedido</DialogTitle>
         <DialogDescription className="sr-only">
           Personalize o item, adicione ao carrinho e volte ao fluxo de pedido sem perder o contexto da mesa.
         </DialogDescription>

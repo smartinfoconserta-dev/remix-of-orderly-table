@@ -528,10 +528,10 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
           onUpdateQty={(uid, delta) => updateCartItemQty(mesaId, uid, delta)}
           onRemove={(uid) => removeFromCart(mesaId, uid)}
           onConfirmar={handleConfirmar}
-          onContinueOrdering={() => setCartOpen(false)}
+          onContinueOrdering={() => handleCartOpenChange(false)}
           onSuccessAcknowledge={handleSuccessAcknowledge}
           open={cartOpen}
-          onOpenChange={setCartOpen}
+          onOpenChange={handleCartOpenChange}
           hideTrigger={isGarcomMobile}
         />
         {modo === "cliente" && (
