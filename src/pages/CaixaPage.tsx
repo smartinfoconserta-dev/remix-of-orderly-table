@@ -105,9 +105,7 @@ type CriticalAction =
   | { type: "zerar_mesa"; mesaId: string; mesaNumero: number }
   | { type: "remover_item_carrinho"; mesaId: string; mesaNumero: number; itemUid: string; itemNome: string }
   | { type: "remover_item_pedido"; mesaId: string; mesaNumero: number; pedidoId: string; pedidoNumero: number; itemUid: string; itemNome: string; quantidade: number }
-  | { type: "cancelar_pedido"; mesaId: string; mesaNumero: number; pedidoId: string; pedidoNumero: number }
-  | { type: "desvincular_tablet"; mesaId: string; mesaNumero: number }
-  | { type: "vincular_tablet"; mesaId: string | null; mesaNumero: number | null; proximaMesaId: string; proximaMesaNumero: number };
+  | { type: "cancelar_pedido"; mesaId: string; mesaNumero: number; pedidoId: string; pedidoNumero: number };
 
 interface CaixaPageProps {
   accessMode?: Extract<UserRole, "caixa" | "gerente">;
