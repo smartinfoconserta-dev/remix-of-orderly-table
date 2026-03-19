@@ -342,20 +342,6 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
         ajustarItemPedido(criticalAction.mesaId, criticalAction.pedidoId, criticalAction.itemUid, -criticalAction.quantidade, { usuario: currentOperator, motivo });
         toast.success("Item removido com autorização do gerente", { duration: 1200, icon: "🗑️" });
         break;
-      case "desvincular_tablet":
-        clearBoundTabletMesaId();
-        clearTabletLoginUser();
-        setTabletMesaId(null);
-        setTabletTargetMesaNumber("");
-        toast.success("Tablet desvinculado e retorno ao login liberado", { duration: 1200, icon: "📱" });
-        break;
-      case "vincular_tablet": {
-        const mesaVinculada = setBoundTabletMesaId(criticalAction.proximaMesaId);
-        setTabletMesaId(mesaVinculada);
-        setTabletTargetMesaNumber("");
-        toast.success(`Tablet vinculado à Mesa ${String(criticalAction.proximaMesaNumero).padStart(2, "0")}`, { duration: 1200, icon: "🔐" });
-        break;
-      }
     }
     resetCriticalDialog();
   };
