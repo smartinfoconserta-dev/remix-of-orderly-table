@@ -1,7 +1,8 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import {
   ClipboardList,
   Grid3X3,
+  ImagePlus,
   Settings,
   Shield,
   Pencil,
@@ -83,7 +84,8 @@ const AdminPage = () => {
   const [overrides, setOverrides] = useState<Record<string, ProdutoOverride>>(getCardapioOverrides);
   const [editProduct, setEditProduct] = useState<ProdutoOverride | null>(null);
   const [isNewProduct, setIsNewProduct] = useState(false);
-  const [editForm, setEditForm] = useState({ nome: "", descricao: "", preco: "", categoria: "", imagem: "" });
+  const [editForm, setEditForm] = useState({ nome: "", descricao: "", preco: "", categoria: "", imagem: "", imagemBase64: "" });
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [catFilter, setCatFilter] = useState<string>("todas");
   const [removeTarget, setRemoveTarget] = useState<ProdutoOverride | null>(null);
 
@@ -125,6 +127,7 @@ const AdminPage = () => {
       preco: String(product.preco),
       categoria: product.categoria,
       imagem: product.imagem,
+      imagemBase64: product.imagemBase64 || "",
     });
   }, []);
 
@@ -141,7 +144,7 @@ const AdminPage = () => {
     };
     setEditProduct(newProduct);
     setIsNewProduct(true);
-    setEditForm({ nome: "", descricao: "", preco: "", categoria: newProduct.categoria, imagem: "" });
+    setEditForm({ nome: "", descricao: "", preco: "", categoria: newProduct.categoria, imagem: "", imagemBase64: "" });
   }, []);
 
   const saveEdit = useCallback(() => {
@@ -158,7 +161,7 @@ const AdminPage = () => {
     setOverrides((prev) => {
       const base = baseProdutos.find((p) => p.id === editProduct.id) || editProduct;
       const existing = prev[editProduct.id] || { ...base, ativo: true };
-      const next = {
+      const updated: Record<string, ProdutoOverride> = {
         ...prev,
         [editProduct.id]: {
           ...existing,
@@ -168,15 +171,32 @@ const AdminPage = () => {
           preco,
           categoria: editForm.categoria,
           imagem: editForm.imagem.trim(),
+          imagemBase64: editForm.imagemBase64 || undefined,
           ativo: existing.ativo ?? true,
         },
       };
-      saveCardapioOverrides(next);
-      return next;
+      saveCardapioOverrides(updated);
+      return updated;
     });
     setEditProduct(null);
     toast.success(isNewProduct ? "Produto criado" : "Produto atualizado");
   }, [editProduct, editForm, isNewProduct]);
+
+  const handleFileUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("Imagem muito grande (máx 2MB)");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      const base64 = reader.result as string;
+      setEditForm((f) => ({ ...f, imagemBase64: base64 }));
+    };
+    reader.readAsDataURL(file);
+    e.target.value = "";
+  }, []);
 
   const confirmRemove = useCallback(() => {
     if (!removeTarget) return;
@@ -367,8 +387,8 @@ const AdminPage = () => {
                       return (
                         <tr key={p.id} className={`border-b border-border/50 last:border-0 ${!p.ativo ? "opacity-40" : ""}`}>
                           <td className="px-4 py-2">
-                            {p.imagem ? (
-                              <img src={p.imagem} alt={p.nome} className="h-10 w-10 rounded-lg object-cover" />
+                            {(p.imagemBase64 || p.imagem) ? (
+                              <img src={p.imagemBase64 || p.imagem} alt={p.nome} className="h-10 w-10 rounded-lg object-cover" />
                             ) : (
                               <div className="h-10 w-10 rounded-lg bg-secondary flex items-center justify-center text-muted-foreground text-[10px]">?</div>
                             )}
@@ -428,10 +448,41 @@ const AdminPage = () => {
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-muted-foreground">URL da foto</label>
+                  {/* Photo upload + URL */}
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-muted-foreground">Foto do produto</label>
+                    {/* Preview */}
+                    {(editForm.imagemBase64 || editForm.imagem) && (
+                      <div className="flex items-center gap-3">
+                        <img
+                          src={editForm.imagemBase64 || editForm.imagem}
+                          alt="Preview"
+                          className="h-16 w-16 rounded-xl border border-border object-cover"
+                        />
+                        {editForm.imagemBase64 && (
+                          <button
+                            type="button"
+                            onClick={() => setEditForm((f) => ({ ...f, imagemBase64: "" }))}
+                            className="text-xs text-destructive hover:underline"
+                          >
+                            Remover foto enviada
+                          </button>
+                        )}
+                      </div>
+                    )}
+                    {/* File upload */}
+                    <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileUpload} />
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border bg-secondary/30 px-4 py-4 text-sm font-bold text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground"
+                    >
+                      <ImagePlus className="h-5 w-5" />
+                      Clique para selecionar foto
+                    </button>
+                    {/* URL alternative */}
+                    <p className="text-[10px] font-bold text-muted-foreground pt-1">Ou cole uma URL</p>
                     <Input value={editForm.imagem} onChange={(e) => setEditForm((f) => ({ ...f, imagem: e.target.value }))} placeholder="https://..." />
-                    <p className="text-[10px] text-muted-foreground">Dica: use o site <span className="font-bold">imgbb.com</span> para fazer upload gratuito da foto e cole o link aqui.</p>
                   </div>
                   <div className="flex gap-3 pt-2">
                     <Button variant="outline" className="flex-1" onClick={() => setEditProduct(null)}>

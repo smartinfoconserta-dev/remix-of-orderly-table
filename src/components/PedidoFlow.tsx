@@ -60,7 +60,7 @@ const cardapioOverrides = getCardapioOverrides();
 const customProducts = Object.values(cardapioOverrides).filter(
   (ov) => !baseProdutos.some((bp) => bp.id === ov.id) && ov.ativo !== false && !ov.removido,
 );
-const produtos = [
+const produtosComOverrides = [
   ...baseProdutos.filter((p) => {
     const ov = cardapioOverrides[p.id];
     if (ov && (ov.ativo === false || ov.removido)) return false;
@@ -71,6 +71,12 @@ const produtos = [
   }),
   ...customProducts,
 ];
+// Resolve image: prefer base64, then URL
+const produtos = produtosComOverrides.map((p) => {
+  const ov = cardapioOverrides[p.id];
+  const resolvedImagem = ov?.imagemBase64 || p.imagem;
+  return { ...p, imagem: resolvedImagem };
+});
 
 const HOME_TAB_ID = "inicio";
 const HOME_TAB: Categoria = { id: HOME_TAB_ID, nome: "Início", icone: "house" };
