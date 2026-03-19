@@ -147,8 +147,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
   const [criticalReason, setCriticalReason] = useState("");
   const [criticalError, setCriticalError] = useState<string | null>(null);
   const [isAuthorizingCriticalAction, setIsAuthorizingCriticalAction] = useState(false);
-  const [tabletMesaId, setTabletMesaId] = useState<string | null>(() => getBoundTabletMesaId());
-  const [tabletTargetMesaNumber, setTabletTargetMesaNumber] = useState("");
+  const [tabletMesaId] = useState<string | null>(() => getBoundTabletMesaId());
 
   const mesa = mesaSelecionada ? mesas.find((item) => item.id === mesaSelecionada) ?? null : null;
   const tabletMesa = useMemo(() => (tabletMesaId ? mesas.find((item) => item.id === tabletMesaId) ?? null : null), [mesas, tabletMesaId]);
