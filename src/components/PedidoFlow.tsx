@@ -620,10 +620,8 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
 
   const homeContent = (
     <div
-      className={`space-y-5 transition-all ease-in-out ${categoryGridClasses}`}
-      style={{
-        transitionDuration: `${categoryTransitionState === "exit" ? CATEGORY_EXIT_DURATION_MS : CATEGORY_ENTER_DURATION_MS}ms`,
-      }}
+      key={`home-${categoryFadeKey}`}
+      className={`space-y-5 ${categoryFadeClass}`}
     >
       {heroBanner}
       <div className="px-4 md:px-6">
