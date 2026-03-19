@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { BriefcaseBusiness, HandPlatter, User, Wallet } from "lucide-react";
+import { BriefcaseBusiness, ChefHat, HandPlatter, User, Wallet } from "lucide-react";
 
 interface ModeCardProps {
   title: string;
@@ -49,6 +49,12 @@ const Index = () => {
           description="Mesas e lançamento de pedidos"
           icon={<HandPlatter size={28} />}
           onClick={() => navigate("/garcom")}
+        />
+        <ModeCard
+          title="Cozinha"
+          description="Painel de pedidos em tempo real"
+          icon={<ChefHat size={28} />}
+          onClick={() => navigate("/cozinha")}
         />
         <ModeCard
           title="Caixa"
