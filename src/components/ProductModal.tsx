@@ -324,14 +324,19 @@ const ProductModal = ({ produto, onClose, onAdd }: Props) => {
     title,
     subtitle,
     price,
+    itemKey,
   }: {
     checked: boolean;
     onCheckedChange: () => void;
     title: string;
     subtitle: string;
     price?: string;
+    itemKey: string;
   }) => (
-    <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-border bg-card p-4 transition-all hover:border-primary/40 hover:bg-secondary/30">
+    <label
+      key={itemKey}
+      className="flex cursor-pointer items-start gap-3 rounded-2xl border border-border bg-card p-4 transition-all hover:border-primary/40 hover:bg-secondary/30"
+    >
       <Checkbox checked={checked} onCheckedChange={onCheckedChange} className="mt-0.5" />
       <div className="flex-1 space-y-1">
         <div className="flex items-center justify-between gap-3">
