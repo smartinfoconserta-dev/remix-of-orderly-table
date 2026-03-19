@@ -125,18 +125,6 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
 
   useEffect(() => {
     return () => {
-      if (categorySwitchTimerRef.current) {
-        window.clearTimeout(categorySwitchTimerRef.current);
-      }
-      if (categoryEnterTimerRef.current) {
-        window.clearTimeout(categoryEnterTimerRef.current);
-      }
-      if (categorySkeletonTimerRef.current) {
-        window.clearTimeout(categorySkeletonTimerRef.current);
-      }
-      if (cardsAnimationTimerRef.current) {
-        window.clearTimeout(cardsAnimationTimerRef.current);
-      }
       if (openProductTimerRef.current) {
         window.clearTimeout(openProductTimerRef.current);
       }
@@ -148,23 +136,6 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
       }
     };
   }, []);
-
-  useEffect(() => {
-    if (showCategorySkeleton) {
-      setCardsAnimatedIn(false);
-      return;
-    }
-
-    setCardsAnimatedIn(false);
-
-    if (cardsAnimationTimerRef.current) {
-      window.clearTimeout(cardsAnimationTimerRef.current);
-    }
-
-    cardsAnimationTimerRef.current = window.setTimeout(() => {
-      setCardsAnimatedIn(true);
-    }, 16);
-  }, [categoriaExibida, showCategorySkeleton]);
 
   useEffect(() => {
     if (!shouldEnableClientIdle) {
