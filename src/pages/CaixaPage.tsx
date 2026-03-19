@@ -444,11 +444,6 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                   ))}
                 </div>
 
-                {accessMode === "gerente" && tabletMesa && (
-                  <div className="rounded-2xl border border-border bg-card p-4 text-sm text-muted-foreground">
-                    Tablet atualmente vinculado à Mesa <span className="font-black text-foreground">{String(tabletMesa.numero).padStart(2, "0")}</span>.
-                  </div>
-                )}
               </div>
 
               {/* Coluna direita: tabs de relatórios/logs — fixada no desktop */}
