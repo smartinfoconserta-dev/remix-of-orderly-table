@@ -249,43 +249,48 @@ const AdminPage = () => {
               <h2 className="text-2xl font-black text-foreground">Cardápio</h2>
               <p className="text-sm text-muted-foreground">Gerencie os produtos do cardápio</p>
             </div>
-            <div className="overflow-hidden rounded-2xl border border-border bg-card">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-border bg-secondary/50">
-                    <th className="px-4 py-3 text-left font-bold text-muted-foreground w-14">Foto</th>
-                    <th className="px-4 py-3 text-left font-bold text-muted-foreground">Produto</th>
-                    <th className="px-4 py-3 text-left font-bold text-muted-foreground">Categoria</th>
-                    <th className="px-4 py-3 text-right font-bold text-muted-foreground">Preço</th>
-                    <th className="px-4 py-3 text-center font-bold text-muted-foreground">Ativo</th>
-                    <th className="px-4 py-3 text-center font-bold text-muted-foreground">Ações</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {allProducts.map((p) => {
-                    const cat = categorias.find((c) => c.id === p.categoria);
-                    return (
-                      <tr key={p.id} className={`border-b border-border/50 last:border-0 ${!p.ativo ? "opacity-40" : ""}`}>
-                        <td className="px-4 py-2">
-                          <img src={p.imagem} alt={p.nome} className="h-10 w-10 rounded-lg object-cover" />
-                        </td>
-                        <td className="px-4 py-3 font-semibold text-foreground">{p.nome}</td>
-                        <td className="px-4 py-3 text-muted-foreground">{cat?.nome ?? p.categoria}</td>
-                        <td className="px-4 py-3 text-right font-bold text-foreground">{formatPrice(p.preco)}</td>
-                        <td className="px-4 py-3 text-center">
-                          <Switch checked={p.ativo} onCheckedChange={() => toggleAtivo(p.id)} />
-                        </td>
-                        <td className="px-4 py-3 text-center">
-                          <Button variant="ghost" size="icon" onClick={() => openEdit(p)}>
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+
+            {categorias.map((cat) => {
+              const catProducts = allProducts.filter((p) => p.categoria === cat.id);
+              if (catProducts.length === 0) return null;
+              return (
+                <div key={cat.id} className="space-y-2">
+                  <h3 className="text-lg font-black text-foreground">{cat.nome}</h3>
+                  <div className="overflow-hidden rounded-2xl border border-border bg-card">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-border bg-secondary/50">
+                          <th className="px-4 py-3 text-left font-bold text-muted-foreground w-14">Foto</th>
+                          <th className="px-4 py-3 text-left font-bold text-muted-foreground">Produto</th>
+                          <th className="px-4 py-3 text-right font-bold text-muted-foreground">Preço</th>
+                          <th className="px-4 py-3 text-center font-bold text-muted-foreground">Ativo</th>
+                          <th className="px-4 py-3 text-center font-bold text-muted-foreground">Ações</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {catProducts.map((p) => (
+                          <tr key={p.id} className={`border-b border-border/50 last:border-0 ${!p.ativo ? "opacity-40" : ""}`}>
+                            <td className="px-4 py-2">
+                              <img src={p.imagem} alt={p.nome} className="h-10 w-10 rounded-lg object-cover" />
+                            </td>
+                            <td className="px-4 py-3 font-semibold text-foreground">{p.nome}</td>
+                            <td className="px-4 py-3 text-right font-bold text-foreground">{formatPrice(p.preco)}</td>
+                            <td className="px-4 py-3 text-center">
+                              <Switch checked={p.ativo} onCheckedChange={() => toggleAtivo(p.id)} />
+                            </td>
+                            <td className="px-4 py-3 text-center">
+                              <Button variant="ghost" size="icon" onClick={() => openEdit(p)}>
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              );
+            })}
 
             {/* Edit modal */}
             <Dialog open={!!editProduct} onOpenChange={(open) => !open && setEditProduct(null)}>
