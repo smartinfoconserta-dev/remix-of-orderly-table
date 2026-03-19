@@ -110,6 +110,8 @@ interface RestaurantStore {
   eventos: EventoOperacional[];
   movimentacoesCaixa: MovimentacaoCaixa[];
   fechamentos: FechamentoConta[];
+  caixaAberto: boolean;
+  fundoTroco: number;
 }
 
 interface RestaurantContextType {
