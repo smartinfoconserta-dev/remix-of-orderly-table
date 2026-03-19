@@ -364,6 +364,8 @@ const readStore = (): RestaurantStore => {
             };
           })
         : [],
+      caixaAberto: Boolean((parsed as Partial<RestaurantStore>).caixaAberto),
+      fundoTroco: Number((parsed as Partial<RestaurantStore>).fundoTroco ?? 0),
     };
   } catch {
     return {
