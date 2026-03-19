@@ -71,9 +71,7 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
   } = useRestaurant();
   const [categoriaAtiva, setCategoriaAtiva] = useState(HOME_TAB_ID);
   const [categoriaExibida, setCategoriaExibida] = useState(HOME_TAB_ID);
-  const [categoryTransitionState, setCategoryTransitionState] = useState<CategoryTransitionState>("idle");
-  const [showCategorySkeleton, setShowCategorySkeleton] = useState(false);
-  const [cardsAnimatedIn, setCardsAnimatedIn] = useState(false);
+  const [categoryFadeKey, setCategoryFadeKey] = useState(0);
   const [selectedProductCardId, setSelectedProductCardId] = useState<string | null>(null);
   const [bannerIndex, setBannerIndex] = useState(0);
   const [produtoSelecionado, setProdutoSelecionado] = useState<Produto | null>(null);
