@@ -143,7 +143,9 @@ interface RestaurantContextType {
   fecharCaixaDoDia: (usuario: OperationalUser) => void;
 }
 
-const RestaurantContext = createContext<RestaurantContextType | null>(null);
+const _global = globalThis as unknown as { __restaurantCtx?: React.Context<RestaurantContextType | null> };
+if (!_global.__restaurantCtx) _global.__restaurantCtx = createContext<RestaurantContextType | null>(null);
+const RestaurantContext = _global.__restaurantCtx;
 
 const RESTAURANT_STORAGE_KEY = "obsidian-restaurant-v2";
 const FECHAMENTOS_HIST_KEY = "orderly-fechamentos-v1";
