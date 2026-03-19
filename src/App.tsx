@@ -4,6 +4,7 @@ import ClientePage from "./pages/ClientePage";
 import GarcomPage from "./pages/GarcomPage";
 import MesaPage from "./pages/MesaPage";
 import CaixaPage from "./pages/CaixaPage";
+import CozinhaPage from "./pages/CozinhaPage";
 import NotFound from "./pages/NotFound";
 
 const App = () => (
@@ -14,6 +15,7 @@ const App = () => (
     <Route path="/mesa/:id" element={<MesaPage />} />
     <Route path="/caixa" element={<CaixaPage accessMode="caixa" />} />
     <Route path="/gerente" element={<CaixaPage accessMode="gerente" />} />
+    <Route path="/cozinha" element={<CozinhaPage />} />
     <Route path="*" element={<NotFound />} />
   </Routes>
 );
