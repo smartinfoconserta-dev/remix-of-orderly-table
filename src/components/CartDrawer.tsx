@@ -60,6 +60,7 @@ const CartDrawer = ({
       setIsLocked(false);
       setShowSuccessFeedback(false);
       setShowSubmittingOverlay(false);
+      setIsClosing(false);
       return;
     }
 
