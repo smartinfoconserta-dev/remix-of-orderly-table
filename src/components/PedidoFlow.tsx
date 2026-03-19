@@ -622,7 +622,7 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
         transitionDuration: `${categoryTransitionState === "exit" ? CATEGORY_EXIT_DURATION_MS : CATEGORY_ENTER_DURATION_MS}ms`,
       }}
     >
-      {produtosFiltrados.map((produto, index) => {
+      {(isGarcomMobile && categoriaExibida === HOME_TAB_ID ? produtos : produtosFiltrados).map((produto, index) => {
         const isCardSelected = selectedProductCardId === produto.id;
 
         return (
@@ -675,66 +675,6 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
     </div>
   );
 
-  const garcomMobileHomeContent = (
-    <div className="space-y-4">
-      <section className="surface-card space-y-4 rounded-[1.5rem] p-4">
-        <div className="space-y-1">
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">Lançamento rápido</p>
-          <h1 className="text-2xl font-black tracking-tight text-foreground">{mesaLabel}</h1>
-          <p className="text-sm text-muted-foreground">Escolha uma categoria acima para lançar itens na comanda desta mesa sem sair do fluxo.</p>
-        </div>
-
-        <div className="grid grid-cols-2 gap-2">
-          {categorias.map((cat) => (
-            <Button
-              key={cat.id}
-              type="button"
-              variant={categoriaAtiva === cat.id ? "default" : "secondary"}
-              className="h-12 justify-start rounded-xl px-4 font-bold"
-              onClick={() => handleSelectCategoria(cat.id)}
-            >
-              <CategoryIcon name={cat.icone} className="h-4 w-4" />
-              <span className="truncate">{cat.nome}</span>
-            </Button>
-          ))}
-        </div>
-      </section>
-
-      <section className="space-y-3">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">Sugestões da casa</p>
-          <h2 className="mt-1 text-xl font-black tracking-tight text-foreground">Mais pedidos</h2>
-        </div>
-
-        <div className="grid grid-cols-1 gap-3">
-          {featuredProducts.map((produto) => (
-            <button
-              key={produto.id}
-              type="button"
-              onClick={() => handleOpenProductModal(produto)}
-              className="surface-card overflow-hidden rounded-[1.5rem] text-left active:scale-[0.98]"
-            >
-              <div className="aspect-[16/10] overflow-hidden">
-                <img src={produto.imagem} alt={produto.nome} className="h-full w-full object-cover" loading="lazy" />
-              </div>
-              <div className="space-y-2 p-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <h2 className="line-clamp-1 text-base font-black text-foreground">{produto.nome}</h2>
-                    <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{produto.descricao}</p>
-                  </div>
-                  <span className="shrink-0 rounded-full border border-border bg-secondary px-3 py-1 text-sm font-black text-foreground">
-                    {formatPrice(produto.preco)}
-                  </span>
-                </div>
-              </div>
-            </button>
-          ))}
-        </div>
-      </section>
-    </div>
-  );
-
   const skeletonGrid = (
     <div className={`${isGarcomMobile ? "grid grid-cols-1 gap-4" : "grid grid-cols-2 gap-3 md:grid-cols-2 md:gap-4 lg:grid-cols-3"}`}>
       {Array.from({ length: 6 }).map((_, index) => (
@@ -776,7 +716,7 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
       </div>
       <div ref={mobileListTopRef} />
       <main className={`flex-1 pt-2 transition-all duration-500 ${isGarcomMobile ? "pb-28" : "pb-6"} ${isClientIdle ? "brightness-[0.2] saturate-50" : "brightness-100 saturate-100"}`}>
-        <div className="px-4">{showCategorySkeleton ? skeletonGrid : isHomeActive ? (isGarcomMobile ? garcomMobileHomeContent : homeContent) : productGrid}</div>
+        <div className="px-4">{showCategorySkeleton ? skeletonGrid : isGarcomMobile ? productGrid : isHomeActive ? homeContent : productGrid}</div>
       </main>
       {isGarcomMobile ? <StickyOrderButton total={cartTotal} onOpenCart={() => handleCartOpenChange(true)} label="Ver carrinho" /> : null}
     </>
