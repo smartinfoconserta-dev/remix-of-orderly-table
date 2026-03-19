@@ -46,16 +46,17 @@ const GarcomPage = () => {
       </div>
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-        {mesas.map((mesa) => (
-          <MesaCard
-            key={mesa.id}
-            mesa={mesa}
-            showIndicators
-            onClick={() => {
-              dismissChamarGarcom(mesa.id);
-              setSearchParams({ mesa: mesa.id });
-            }}
-          />
+        {mesas.map((mesa, i) => (
+          <div key={mesa.id} className="slide-up" style={{ animationDelay: `${Math.min(i * 30, 300)}ms`, animationFillMode: 'both' }}>
+            <MesaCard
+              mesa={mesa}
+              showIndicators
+              onClick={() => {
+                dismissChamarGarcom(mesa.id);
+                setSearchParams({ mesa: mesa.id });
+              }}
+            />
+          </div>
         ))}
       </div>
       <LicenseBanner blockMode />

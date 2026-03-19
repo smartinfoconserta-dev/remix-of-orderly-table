@@ -321,10 +321,10 @@ const AdminPage = () => {
       </aside>
 
       {/* Content */}
-      <main className="flex-1 overflow-y-auto p-6 md:p-8">
+      <main className="flex-1 overflow-y-auto p-6 md:p-8" key={tab}>
         {/* ═══ CARDÁPIO ═══ */}
         {tab === "cardapio" && (
-          <div className="space-y-5">
+          <div className="space-y-5 fade-in">
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-2xl font-black text-foreground">Cardápio</h2>
@@ -382,10 +382,10 @@ const AdminPage = () => {
                   {filteredProducts.length === 0 ? (
                     <tr><td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">Nenhum produto encontrado.</td></tr>
                   ) : (
-                    filteredProducts.map((p) => {
+                    filteredProducts.map((p, idx) => {
                       const cat = categorias.find((c) => c.id === p.categoria);
                       return (
-                        <tr key={p.id} className={`border-b border-border/50 last:border-0 ${!p.ativo ? "opacity-40" : ""}`}>
+                        <tr key={p.id} className={`slide-up border-b border-border/50 last:border-0 ${!p.ativo ? "opacity-40" : ""}`} style={{ animationDelay: `${Math.min(idx * 30, 300)}ms`, animationFillMode: 'both' }}>
                           <td className="px-4 py-2">
                             {(p.imagemBase64 || p.imagem) ? (
                               <img src={p.imagemBase64 || p.imagem} alt={p.nome} className="h-10 w-10 rounded-lg object-cover" />
