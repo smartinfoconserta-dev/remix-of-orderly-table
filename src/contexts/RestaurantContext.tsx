@@ -805,6 +805,28 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     });
   }, []);
 
+  const marcarPedidoPronto = useCallback((mesaId: string, pedidoId: string) => {
+    setStore((prev) => {
+      const mesas = prev.mesas.map((m) => {
+        if (m.id !== mesaId) return m;
+        const pedidos = m.pedidos.map((p) =>
+          p.id === pedidoId ? { ...p, pronto: true as const } : p,
+        );
+        return { ...m, pedidos };
+      });
+      return {
+        ...prev,
+        mesas,
+        eventos: appendEvent(prev.eventos, {
+          tipo: "pedido",
+          descricao: `Pedido marcado como pronto`,
+          mesaId,
+          acao: "pedido_pronto",
+        }),
+      };
+    });
+  }, []);
+
   return (
     <RestaurantContext.Provider
       value={{
@@ -824,6 +846,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         zerarMesa,
         ajustarItemPedido,
         cancelarPedido,
+        marcarPedidoPronto,
         registrarMovimentacaoCaixa,
       }}
     >
