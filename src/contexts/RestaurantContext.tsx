@@ -29,6 +29,7 @@ export interface PedidoRealizado {
   garcomNome?: string;
   caixaId?: string;
   caixaNome?: string;
+  pronto?: boolean;
 }
 
 export interface EventoOperacional {
@@ -128,6 +129,7 @@ interface RestaurantContextType {
   zerarMesa: (mesaId: string, audit?: ActionAuditInput) => void;
   ajustarItemPedido: (mesaId: string, pedidoId: string, itemUid: string, delta: number, audit: ActionAuditInput) => void;
   cancelarPedido: (mesaId: string, pedidoId: string, audit: ActionAuditInput) => void;
+  marcarPedidoPronto: (mesaId: string, pedidoId: string) => void;
   registrarMovimentacaoCaixa: (input: MovimentacaoInput) => void;
 }
 
@@ -804,6 +806,28 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     });
   }, []);
 
+  const marcarPedidoPronto = useCallback((mesaId: string, pedidoId: string) => {
+    setStore((prev) => {
+      const mesas = prev.mesas.map((m) => {
+        if (m.id !== mesaId) return m;
+        const pedidos = m.pedidos.map((p) =>
+          p.id === pedidoId ? { ...p, pronto: true as const } : p,
+        );
+        return { ...m, pedidos };
+      });
+      return {
+        ...prev,
+        mesas,
+        eventos: appendEvent(prev.eventos, {
+          tipo: "pedido",
+          descricao: `Pedido marcado como pronto`,
+          mesaId,
+          acao: "pedido_pronto",
+        }),
+      };
+    });
+  }, []);
+
   return (
     <RestaurantContext.Provider
       value={{
@@ -823,6 +847,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         zerarMesa,
         ajustarItemPedido,
         cancelarPedido,
+        marcarPedidoPronto,
         registrarMovimentacaoCaixa,
       }}
     >
