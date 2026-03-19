@@ -20,9 +20,7 @@ const TABLET_USERNAME = "tablet";
 const TABLET_PASSWORD = "obsidian";
 
 const ClientePage = () => {
-  const { mesas } = useRestaurant();
   const [searchParams] = useSearchParams();
-  const qrMesa = searchParams.get("mesa");
 
   const [mesaId, setMesaId] = useState<string | null>(() => getBoundTabletMesaId());
   const [tabletUser, setTabletUser] = useState<string | null>(() => getTabletLoginUser());
@@ -32,14 +30,12 @@ const ClientePage = () => {
 
   // QR Code: se veio ?mesa=ID, vincula automaticamente e pula login/seleção
   useEffect(() => {
-    if (qrMesa && !mesaId) {
-      const mesa = mesas.find((m) => m.id === qrMesa || String(m.numero) === qrMesa);
-      if (mesa) {
-        const boundId = setBoundTabletMesaId(mesa.id);
-        setMesaId(boundId);
-      }
+    const mesaFromUrl = searchParams.get("mesa");
+    if (mesaFromUrl && !mesaId) {
+      setBoundTabletMesaId(mesaFromUrl);
+      setMesaId(mesaFromUrl);
     }
-  }, [qrMesa, mesas]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [searchParams]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useRouteLock("/cliente");
 
