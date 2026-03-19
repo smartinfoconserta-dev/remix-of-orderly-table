@@ -1,7 +1,8 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import {
   ClipboardList,
   Grid3X3,
+  ImagePlus,
   Settings,
   Shield,
   Pencil,
