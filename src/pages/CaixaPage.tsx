@@ -72,15 +72,23 @@ const paymentMethodOptions: Array<{
   value: PaymentMethod;
   label: string;
   icon: typeof Landmark;
+  color: string;
+  bgColor: string;
+  borderColor: string;
 }> = [
-  { value: "dinheiro", label: "Dinheiro", icon: Banknote },
-  { value: "credito", label: "Crédito", icon: CreditCard },
-  { value: "debito", label: "Débito", icon: CreditCard },
-  { value: "pix", label: "PIX", icon: Smartphone },
+  { value: "dinheiro", label: "Dinheiro", icon: Banknote, color: "text-emerald-400", bgColor: "bg-emerald-500/15", borderColor: "border-emerald-500/30" },
+  { value: "credito", label: "Crédito", icon: CreditCard, color: "text-blue-400", bgColor: "bg-blue-500/15", borderColor: "border-blue-500/30" },
+  { value: "debito", label: "Débito", icon: Wallet, color: "text-amber-400", bgColor: "bg-amber-500/15", borderColor: "border-amber-500/30" },
+  { value: "pix", label: "PIX", icon: Smartphone, color: "text-purple-400", bgColor: "bg-purple-500/15", borderColor: "border-purple-500/30" },
 ];
 
 const getPaymentMethodLabel = (method: PaymentMethod) =>
   paymentMethodOptions.find((option) => option.value === method)?.label ?? method;
+
+const getPaymentMethodStyle = (method: PaymentMethod) =>
+  paymentMethodOptions.find((option) => option.value === method) ?? paymentMethodOptions[0];
+
+const QUICK_VALUES = [10, 20, 50, 100];
 
 const actionLabels: Record<string, string> = {
   cancelar_item: "Exclusão de item",
