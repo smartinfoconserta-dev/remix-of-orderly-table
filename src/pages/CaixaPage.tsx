@@ -802,7 +802,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                             className={`flex items-center justify-center gap-3 rounded-2xl border-2 py-5 px-4 transition-all ${
                               isSelected
                                 ? `${opt.borderColor} ${opt.bgColor} scale-[1.02]`
-                                : `border-border ${opt.bgColor.replace("/15", "/6")} hover:border-muted-foreground/30`
+                                : `${opt.idleBorder} ${opt.idleBg} hover:brightness-125`
                             }`}
                           >
                             <Icon className={`h-7 w-7 ${isSelected ? opt.color : "text-muted-foreground"}`} />

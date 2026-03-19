@@ -29,6 +29,7 @@ export interface PedidoRealizado {
   garcomNome?: string;
   caixaId?: string;
   caixaNome?: string;
+  pronto?: boolean;
 }
 
 export interface EventoOperacional {
