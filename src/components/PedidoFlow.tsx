@@ -74,9 +74,10 @@ const formatMesaLabel = (mesaId: string) => {
 const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
-  const { currentGarcom, currentCaixa } = useAuth();
+  const { currentGarcom, currentCaixa, verifyEmployeeAccess } = useAuth();
   const {
     getMesa,
+    mesas,
     addToCart,
     updateCartItemQty,
     removeFromCart,
@@ -94,6 +95,17 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
   const [contaOpen, setContaOpen] = useState(false);
   const [showExitAlert, setShowExitAlert] = useState(false);
   const [isClientIdle, setIsClientIdle] = useState(false);
+
+  // Hidden admin modal state
+  const [adminModalOpen, setAdminModalOpen] = useState(false);
+  const [adminAuthenticated, setAdminAuthenticated] = useState(false);
+  const [adminNome, setAdminNome] = useState("");
+  const [adminPin, setAdminPin] = useState("");
+  const [adminError, setAdminError] = useState<string | null>(null);
+  const [isAdminLoggingIn, setIsAdminLoggingIn] = useState(false);
+  const [showMesaSelector, setShowMesaSelector] = useState(false);
+
+  const longPressTimerRef = useRef<number | null>(null);
   const openProductTimerRef = useRef<number | null>(null);
   const idleTimeoutRef = useRef<number | null>(null);
   const orderSubmissionCooldownRef = useRef<number | null>(null);
