@@ -9,7 +9,7 @@ const minutesAgo = (isoDate: string) => {
   return Math.max(0, Math.floor(diff / 60_000));
 };
 
-const MAX_ELAPSED_MINUTES = 600;
+const MAX_ELAPSED_MINUTES = 120;
 
 const formatElapsed = (mins: number) => {
   if (mins > MAX_ELAPSED_MINUTES) return "tempo indisponível";
