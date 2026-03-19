@@ -35,7 +35,6 @@ const CartDrawer = ({
   const totalItens = carrinho.reduce((acc, item) => acc + item.quantidade, 0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLocked, setIsLocked] = useState(false);
-  const [showConfirmPrompt, setShowConfirmPrompt] = useState(false);
   const [showSuccessFeedback, setShowSuccessFeedback] = useState(false);
   const [showSubmittingOverlay, setShowSubmittingOverlay] = useState(false);
   const lockTimerRef = useRef<number | null>(null);
@@ -58,7 +57,6 @@ const CartDrawer = ({
       clearTimers();
       setIsSubmitting(false);
       setIsLocked(false);
-      setShowConfirmPrompt(false);
       setShowSuccessFeedback(false);
       setShowSubmittingOverlay(false);
       return;
@@ -71,12 +69,6 @@ const CartDrawer = ({
       document.body.style.overflow = previousOverflow;
     };
   }, [open]);
-
-  useEffect(() => {
-    if (carrinho.length === 0 && !showSuccessFeedback && !showSubmittingOverlay) {
-      setShowConfirmPrompt(false);
-    }
-  }, [carrinho.length, showSuccessFeedback, showSubmittingOverlay]);
 
   useEffect(() => {
     if (!open || showSuccessFeedback || showSubmittingOverlay) return;
@@ -95,15 +87,9 @@ const CartDrawer = ({
     onOpenChange?.(true);
   };
 
-  const handleRequestConfirm = () => {
-    if (carrinho.length === 0 || isSubmitting || isLocked || showSuccessFeedback || showSubmittingOverlay) return;
-    setShowConfirmPrompt(true);
-  };
-
   const handleConfirmar = async () => {
     if (carrinho.length === 0 || isSubmitting || isLocked || showSuccessFeedback || showSubmittingOverlay) return;
 
-    setShowConfirmPrompt(false);
     setIsSubmitting(true);
     setIsLocked(true);
     setShowSubmittingOverlay(true);
@@ -133,7 +119,6 @@ const CartDrawer = ({
       return;
     }
 
-    // Troca overlay por success em batch — React 18 faz isso em um único flush
     setShowSubmittingOverlay(false);
     setShowSuccessFeedback(true);
   };
@@ -283,34 +268,12 @@ const CartDrawer = ({
                       <span className="text-xl font-black text-foreground">{formatPrice(subtotal)}</span>
                     </div>
 
-                    {showConfirmPrompt ? (
-                      <div className="rounded-2xl border border-border bg-secondary/70 p-3 animate-enter">
-                        <p className="text-sm font-semibold text-foreground">Deseja enviar o pedido para a cozinha?</p>
-                        <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                          <Button type="button" variant="outline" onClick={() => setShowConfirmPrompt(false)} className="h-11 rounded-2xl font-bold">
-                            Revisar pedido
-                          </Button>
-                          <Button type="button" onClick={handleConfirmar} disabled={isSubmitting || isLocked || showSubmittingOverlay} className="h-11 rounded-2xl font-black">
-                            {isSubmitting ? (
-                              <span className="inline-flex items-center gap-2">
-                                <LoaderCircle className="h-4 w-4 animate-spin" />
-                                Enviando...
-                              </span>
-                            ) : (
-                              "Confirmar envio"
-                            )}
-                          </Button>
-                        </div>
-                      </div>
-                    ) : null}
-
                     <div className="grid gap-3 sm:grid-cols-2">
                       <Button
                         type="button"
                         variant="outline"
                         disabled={isSubmitting || showSubmittingOverlay}
                         onClick={() => {
-                          setShowConfirmPrompt(false);
                           onContinueOrdering?.();
                           onOpenChange?.(false);
                         }}
@@ -320,9 +283,9 @@ const CartDrawer = ({
                       </Button>
                       <Button
                         type="button"
-                        onClick={handleRequestConfirm}
-                        disabled={isSubmitting || isLocked || showConfirmPrompt || showSubmittingOverlay}
-                        className="h-12 rounded-2xl font-black transition-transform duration-100 ease-in-out active:scale-[0.97]"
+                        onClick={handleConfirmar}
+                        disabled={isSubmitting || isLocked || showSubmittingOverlay}
+                        className="h-12 rounded-2xl font-black"
                       >
                         {isSubmitting || showSubmittingOverlay ? (
                           <span className="inline-flex items-center gap-2">
@@ -331,8 +294,6 @@ const CartDrawer = ({
                           </span>
                         ) : isLocked ? (
                           "Aguarde 2s"
-                        ) : showConfirmPrompt ? (
-                          "Confirme abaixo"
                         ) : (
                           "Enviar pedido"
                         )}
