@@ -432,22 +432,19 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                   </Button>
                 </div>
 
-                {/* KPI cards */}
-                <div className="grid grid-cols-3 gap-3 mb-5">
-                  {/* Em consumo — green */}
-                  <div className="rounded-2xl border border-status-consumo/30 bg-status-consumo/10 p-4">
-                    <p className="text-3xl font-black tabular-nums text-status-consumo">{mesasConsumo}</p>
-                    <p className="text-xs font-bold uppercase tracking-widest text-status-consumo/80 mt-1">Em consumo</p>
+                {/* KPI bar — compact */}
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="flex items-center gap-2 rounded-xl border border-status-consumo/30 bg-status-consumo/8 px-3 py-1.5">
+                    <span className="text-lg font-black tabular-nums text-status-consumo leading-none">{mesasConsumo}</span>
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-status-consumo/80">Consumo</span>
                   </div>
-                  {/* Pendentes — orange */}
-                  <div className="rounded-2xl border border-primary/30 bg-primary/10 p-4">
-                    <p className="text-3xl font-black tabular-nums text-primary">{mesasPendente}</p>
-                    <p className="text-xs font-bold uppercase tracking-widest text-primary/80 mt-1">Pendentes</p>
+                  <div className="flex items-center gap-2 rounded-xl border border-primary/30 bg-primary/8 px-3 py-1.5">
+                    <span className="text-lg font-black tabular-nums text-primary leading-none">{mesasPendente}</span>
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-primary/80">Pendentes</span>
                   </div>
-                  {/* Livres — gray */}
-                  <div className="rounded-2xl border border-border bg-secondary/60 p-4">
-                    <p className="text-3xl font-black tabular-nums text-muted-foreground">{mesasLivre}</p>
-                    <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground/80 mt-1">Livres</p>
+                  <div className="flex items-center gap-2 rounded-xl border border-border bg-secondary/60 px-3 py-1.5">
+                    <span className="text-lg font-black tabular-nums text-muted-foreground leading-none">{mesasLivre}</span>
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80">Livres</span>
                   </div>
                 </div>
 
