@@ -595,7 +595,7 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
 
   const productGrid = (
     <div
-      className={`grid grid-cols-2 gap-3 transition-all ease-in-out md:grid-cols-2 md:gap-4 lg:grid-cols-3 ${categoryGridClasses}`}
+      className={`${isGarcomMobile ? "grid grid-cols-1 gap-4" : "grid grid-cols-2 gap-3 md:grid-cols-2 md:gap-4 lg:grid-cols-3"} transition-all ease-in-out ${categoryGridClasses}`}
       style={{
         transitionDuration: `${categoryTransitionState === "exit" ? CATEGORY_EXIT_DURATION_MS : CATEGORY_ENTER_DURATION_MS}ms`,
       }}
@@ -608,8 +608,8 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
             key={produto.id}
             onClick={() => handleOpenProductModal(produto)}
             className={`surface-card flex flex-col overflow-hidden text-left will-change-transform active:scale-[0.97] ${
-              isCardSelected ? "shadow-[0_16px_36px_-14px_hsl(var(--foreground)/0.34)]" : ""
-            }`}
+              isGarcomMobile ? "rounded-[1.5rem]" : ""
+            } ${isCardSelected ? "shadow-[0_16px_36px_-14px_hsl(var(--foreground)/0.34)]" : ""}`}
             style={{
               opacity: cardsAnimatedIn ? 1 : 0,
               transform: `translateY(${cardsAnimatedIn ? 0 : 20}px) scale(${isCardSelected ? 1.03 : 1})`,
@@ -619,13 +619,19 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
               transitionDelay: `${Math.min(index, 3) * CARD_STAGGER_STEP_MS}ms`,
             }}
           >
-            <div className="aspect-[4/3] overflow-hidden">
+            <div className={`${isGarcomMobile ? "aspect-[16/10]" : "aspect-[4/3]"} overflow-hidden`}>
               <img src={produto.imagem} alt={produto.nome} className="h-full w-full object-cover" loading="lazy" />
             </div>
-            <div className="flex flex-1 flex-col gap-1 p-3 md:p-4">
-              <h2 className="line-clamp-1 text-sm font-bold text-foreground md:text-base">{produto.nome}</h2>
-              <p className="line-clamp-2 flex-1 text-xs text-muted-foreground md:text-sm">{produto.descricao}</p>
-              <p className="mt-1 text-lg font-black text-foreground md:text-xl">{formatPrice(produto.preco)}</p>
+            <div className={`flex flex-1 flex-col ${isGarcomMobile ? "gap-2 p-4" : "gap-1 p-3 md:p-4"}`}>
+              <h2 className={`${isGarcomMobile ? "text-base" : "text-sm md:text-base"} line-clamp-1 font-bold text-foreground`}>
+                {produto.nome}
+              </h2>
+              <p className={`${isGarcomMobile ? "text-sm" : "text-xs md:text-sm"} line-clamp-2 flex-1 text-muted-foreground`}>
+                {produto.descricao}
+              </p>
+              <p className={`${isGarcomMobile ? "text-xl" : "text-lg md:text-xl"} mt-1 font-black text-foreground`}>
+                {formatPrice(produto.preco)}
+              </p>
             </div>
           </button>
         );
@@ -647,12 +653,72 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
     </div>
   );
 
+  const garcomMobileHomeContent = (
+    <div className="space-y-4">
+      <section className="surface-card space-y-4 rounded-[1.5rem] p-4">
+        <div className="space-y-1">
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">Lançamento rápido</p>
+          <h1 className="text-2xl font-black tracking-tight text-foreground">{mesaLabel}</h1>
+          <p className="text-sm text-muted-foreground">Escolha uma categoria acima para lançar itens na comanda desta mesa sem sair do fluxo.</p>
+        </div>
+
+        <div className="grid grid-cols-2 gap-2">
+          {categorias.map((cat) => (
+            <Button
+              key={cat.id}
+              type="button"
+              variant={categoriaAtiva === cat.id ? "default" : "secondary"}
+              className="h-12 justify-start rounded-xl px-4 font-bold"
+              onClick={() => handleSelectCategoria(cat.id)}
+            >
+              <CategoryIcon name={cat.icone} className="h-4 w-4" />
+              <span className="truncate">{cat.nome}</span>
+            </Button>
+          ))}
+        </div>
+      </section>
+
+      <section className="space-y-3">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">Sugestões da casa</p>
+          <h2 className="mt-1 text-xl font-black tracking-tight text-foreground">Mais pedidos</h2>
+        </div>
+
+        <div className="grid grid-cols-1 gap-3">
+          {featuredProducts.map((produto) => (
+            <button
+              key={produto.id}
+              type="button"
+              onClick={() => handleOpenProductModal(produto)}
+              className="surface-card overflow-hidden rounded-[1.5rem] text-left active:scale-[0.98]"
+            >
+              <div className="aspect-[16/10] overflow-hidden">
+                <img src={produto.imagem} alt={produto.nome} className="h-full w-full object-cover" loading="lazy" />
+              </div>
+              <div className="space-y-2 p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <h2 className="line-clamp-1 text-base font-black text-foreground">{produto.nome}</h2>
+                    <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{produto.descricao}</p>
+                  </div>
+                  <span className="shrink-0 rounded-full border border-border bg-secondary px-3 py-1 text-sm font-black text-foreground">
+                    {formatPrice(produto.preco)}
+                  </span>
+                </div>
+              </div>
+            </button>
+          ))}
+        </div>
+      </section>
+    </div>
+  );
+
   const skeletonGrid = (
-    <div className="grid grid-cols-2 gap-3 md:grid-cols-2 md:gap-4 lg:grid-cols-3">
+    <div className={`${isGarcomMobile ? "grid grid-cols-1 gap-4" : "grid grid-cols-2 gap-3 md:grid-cols-2 md:gap-4 lg:grid-cols-3"}`}>
       {Array.from({ length: 6 }).map((_, index) => (
-        <div key={`skeleton-${index}`} className="surface-card overflow-hidden">
-          <div className="aspect-[4/3] animate-pulse bg-muted/70" />
-          <div className="space-y-2 p-3 md:p-4">
+        <div key={`skeleton-${index}`} className="surface-card overflow-hidden rounded-[1.5rem]">
+          <div className={`${isGarcomMobile ? "aspect-[16/10]" : "aspect-[4/3]"} animate-pulse bg-muted/70`} />
+          <div className="space-y-2 p-4">
             <div className="h-4 w-3/4 animate-pulse rounded-md bg-muted" />
             <div className="h-3 w-full animate-pulse rounded-md bg-muted/80" />
             <div className="h-3 w-2/3 animate-pulse rounded-md bg-muted/80" />
@@ -678,18 +744,19 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
 
   const mobileContent = (
     <>
-      <div className="mt-4">
+      <div className={`${isGarcomMobile ? "sticky top-[73px] z-40 border-b border-border bg-background/95 pt-2 backdrop-blur-md" : "mt-4"}`}>
         <CategoryTabs
           categorias={navigationItems}
           categoriaAtiva={categoriaAtiva}
           onSelect={handleSelectCategoria}
-          paddingClassName="px-4 pb-2"
+          paddingClassName={isGarcomMobile ? "px-4 pb-3" : "px-4 pb-2"}
         />
       </div>
       <div ref={mobileListTopRef} />
-      <main className={`flex-1 pb-6 pt-2 transition-all duration-500 ${isClientIdle ? "brightness-[0.2] saturate-50" : "brightness-100 saturate-100"}`}>
-        <div className="px-4">{showCategorySkeleton ? skeletonGrid : isHomeActive ? homeContent : productGrid}</div>
+      <main className={`flex-1 pt-2 transition-all duration-500 ${isGarcomMobile ? "pb-28" : "pb-6"} ${isClientIdle ? "brightness-[0.2] saturate-50" : "brightness-100 saturate-100"}`}>
+        <div className="px-4">{showCategorySkeleton ? skeletonGrid : isHomeActive ? (isGarcomMobile ? garcomMobileHomeContent : homeContent) : productGrid}</div>
       </main>
+      {isGarcomMobile ? <StickyOrderButton total={cartTotal} onOpenCart={() => setCartOpen(true)} label="Ver carrinho" /> : null}
     </>
   );
 

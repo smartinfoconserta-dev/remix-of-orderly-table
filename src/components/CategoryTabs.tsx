@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { Categoria } from "@/data/menuData";
 import CategoryIcon from "@/components/CategoryIcon";
 
@@ -31,7 +31,13 @@ const CategoryTabs = ({
     }, 0);
   }, []);
 
+  useEffect(() => {
+    buttonRefs.current[categoriaAtiva]?.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+  }, [categoriaAtiva]);
+
   const handlePointerDown = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
+    if (event.pointerType !== "mouse") return;
+
     const container = scrollRef.current;
     if (!container) return;
 
@@ -78,11 +84,13 @@ const CategoryTabs = ({
   }, [finishDrag]);
 
   return (
-    <div className="relative overflow-visible w-full">
-      <div className="absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-background to-transparent z-10 pointer-events-none" />
+    <div className="relative w-full overflow-visible">
+      <div className="pointer-events-none absolute bottom-0 right-0 top-0 z-10 w-12 bg-gradient-to-l from-background to-transparent" />
       <div
         ref={scrollRef}
-        className={`flex flex-row flex-nowrap items-center gap-3 overflow-x-auto overflow-y-hidden whitespace-nowrap w-full scrollbar-hide scroll-smooth select-none ${paddingClassName} ${isDragging ? "cursor-grabbing" : "cursor-grab"}`}
+        className={`scrollbar-hide flex w-full touch-pan-x flex-row flex-nowrap items-center gap-3 overflow-x-auto overflow-y-hidden whitespace-nowrap scroll-smooth select-none ${paddingClassName} ${
+          isDragging ? "cursor-grabbing" : "cursor-default md:cursor-grab"
+        }`}
         style={{ scrollbarWidth: "none", msOverflowStyle: "none", WebkitOverflowScrolling: "touch" }}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
@@ -100,16 +108,19 @@ const CategoryTabs = ({
                 event.preventDefault();
                 return;
               }
+
               onSelect(cat.id);
-              buttonRefs.current[cat.id]?.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
             }}
-            className={`flex-shrink-0 inline-flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-semibold transition-all duration-300 ease-in-out active:scale-95 border will-change-transform ${
+            className={`inline-flex shrink-0 items-center gap-2 rounded-xl border px-5 py-3 text-sm font-semibold transition-all duration-300 ease-in-out active:scale-95 will-change-transform ${
               categoriaAtiva === cat.id
-                ? "bg-primary/15 text-foreground border-primary/40 shadow-[0_0_0_1px_hsl(var(--primary)/0.35),0_0_18px_hsl(var(--primary)/0.20)]"
-                : "bg-secondary/60 text-muted-foreground border-transparent hover:bg-secondary hover:text-foreground"
+                ? "border-primary/40 bg-primary/15 text-foreground shadow-[0_0_0_1px_hsl(var(--primary)/0.35),0_0_18px_hsl(var(--primary)/0.20)]"
+                : "border-transparent bg-secondary/60 text-muted-foreground hover:bg-secondary hover:text-foreground"
             }`}
           >
-            <CategoryIcon name={cat.icone} className={`w-4 h-4 transition-opacity duration-300 ${categoriaAtiva === cat.id ? "opacity-100" : "opacity-70"}`} />
+            <CategoryIcon
+              name={cat.icone}
+              className={`h-4 w-4 transition-opacity duration-300 ${categoriaAtiva === cat.id ? "opacity-100" : "opacity-70"}`}
+            />
             <span>{cat.nome}</span>
           </button>
         ))}

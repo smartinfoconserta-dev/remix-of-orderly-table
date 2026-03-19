@@ -13,6 +13,7 @@ interface Props {
   onSuccessAcknowledge?: () => void;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
+  hideTrigger?: boolean;
 }
 
 const formatPrice = (v: number) => `R$ ${v.toFixed(2).replace(".", ",")}`;
@@ -27,6 +28,7 @@ const CartDrawer = ({
   onSuccessAcknowledge,
   open,
   onOpenChange,
+  hideTrigger = false,
 }: Props) => {
   const subtotal = carrinho.reduce((acc, item) => acc + item.precoUnitario * item.quantidade, 0);
   const totalItens = carrinho.reduce((acc, item) => acc + item.quantidade, 0);
@@ -116,19 +118,21 @@ const CartDrawer = ({
 
   return (
     <>
-      <button
-        type="button"
-        onClick={handleOpenDrawer}
-        className="relative flex items-center gap-2 rounded-xl bg-primary px-5 py-3 text-base font-bold text-primary-foreground transition-transform active:scale-95"
-      >
-        <ShoppingCart className="h-5 w-5" />
-        <span>Ver carrinho</span>
-        {totalItens > 0 && (
-          <span className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-destructive text-xs font-black text-destructive-foreground">
-            {totalItens}
-          </span>
-        )}
-      </button>
+      {!hideTrigger ? (
+        <button
+          type="button"
+          onClick={handleOpenDrawer}
+          className="relative flex items-center gap-2 rounded-xl bg-primary px-5 py-3 text-base font-bold text-primary-foreground transition-transform active:scale-95"
+        >
+          <ShoppingCart className="h-5 w-5" />
+          <span>Ver carrinho</span>
+          {totalItens > 0 && (
+            <span className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-destructive text-xs font-black text-destructive-foreground">
+              {totalItens}
+            </span>
+          )}
+        </button>
+      ) : null}
 
       <Sheet open={open} onOpenChange={handleSheetOpenChange}>
         <SheetContent
