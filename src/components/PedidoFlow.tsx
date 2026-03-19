@@ -33,8 +33,6 @@ interface PedidoFlowProps {
   onBack?: () => void;
 }
 
-type CategoryTransitionState = "idle" | "exit" | "pre-enter";
-
 const RESTAURANTE = {
   nome: "Obsidian",
   logoFallback: "OB",
@@ -43,10 +41,6 @@ const RESTAURANTE = {
 const HOME_TAB_ID = "inicio";
 const HOME_TAB: Categoria = { id: HOME_TAB_ID, nome: "Início", icone: "house" };
 const navigationItems = [HOME_TAB, ...categorias];
-const CATEGORY_SWITCH_DELAY_MS = 150;
-const CATEGORY_EXIT_DURATION_MS = 150;
-const CATEGORY_ENTER_DURATION_MS = 130;
-const CATEGORY_SKELETON_DURATION_MS = 100;
 const CARD_STAGGER_STEP_MS = 50;
 const CARD_ANIMATION_DURATION_MS = 200;
 const PRODUCT_MODAL_OPEN_DELAY_MS = 120;
@@ -77,9 +71,7 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
   } = useRestaurant();
   const [categoriaAtiva, setCategoriaAtiva] = useState(HOME_TAB_ID);
   const [categoriaExibida, setCategoriaExibida] = useState(HOME_TAB_ID);
-  const [categoryTransitionState, setCategoryTransitionState] = useState<CategoryTransitionState>("idle");
-  const [showCategorySkeleton, setShowCategorySkeleton] = useState(false);
-  const [cardsAnimatedIn, setCardsAnimatedIn] = useState(false);
+  const [categoryFadeKey, setCategoryFadeKey] = useState(0);
   const [selectedProductCardId, setSelectedProductCardId] = useState<string | null>(null);
   const [bannerIndex, setBannerIndex] = useState(0);
   const [produtoSelecionado, setProdutoSelecionado] = useState<Produto | null>(null);
@@ -87,10 +79,6 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
   const [contaOpen, setContaOpen] = useState(false);
   const [showExitAlert, setShowExitAlert] = useState(false);
   const [isClientIdle, setIsClientIdle] = useState(false);
-  const categorySwitchTimerRef = useRef<number | null>(null);
-  const categoryEnterTimerRef = useRef<number | null>(null);
-  const categorySkeletonTimerRef = useRef<number | null>(null);
-  const cardsAnimationTimerRef = useRef<number | null>(null);
   const openProductTimerRef = useRef<number | null>(null);
   const idleTimeoutRef = useRef<number | null>(null);
   const orderSubmissionCooldownRef = useRef<number | null>(null);
@@ -136,18 +124,6 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
 
   useEffect(() => {
     return () => {
-      if (categorySwitchTimerRef.current) {
-        window.clearTimeout(categorySwitchTimerRef.current);
-      }
-      if (categoryEnterTimerRef.current) {
-        window.clearTimeout(categoryEnterTimerRef.current);
-      }
-      if (categorySkeletonTimerRef.current) {
-        window.clearTimeout(categorySkeletonTimerRef.current);
-      }
-      if (cardsAnimationTimerRef.current) {
-        window.clearTimeout(cardsAnimationTimerRef.current);
-      }
       if (openProductTimerRef.current) {
         window.clearTimeout(openProductTimerRef.current);
       }
@@ -159,23 +135,6 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
       }
     };
   }, []);
-
-  useEffect(() => {
-    if (showCategorySkeleton) {
-      setCardsAnimatedIn(false);
-      return;
-    }
-
-    setCardsAnimatedIn(false);
-
-    if (cardsAnimationTimerRef.current) {
-      window.clearTimeout(cardsAnimationTimerRef.current);
-    }
-
-    cardsAnimationTimerRef.current = window.setTimeout(() => {
-      setCardsAnimatedIn(true);
-    }, 16);
-  }, [categoriaExibida, showCategorySkeleton]);
 
   useEffect(() => {
     if (!shouldEnableClientIdle) {
@@ -278,9 +237,11 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
 
   const handleSelectCategoria = useCallback(
     (categoriaId: string) => {
-      if (categoriaId === categoriaAtiva && categoriaId === categoriaExibida) return;
+      if (categoriaId === categoriaAtiva) return;
 
       setCategoriaAtiva(categoriaId);
+      setCategoriaExibida(categoriaId);
+      setCategoryFadeKey((k) => k + 1);
       setSelectedProductCardId(null);
       setIsClientIdle(false);
 
@@ -289,52 +250,13 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
         openProductTimerRef.current = null;
       }
 
-      if (categorySwitchTimerRef.current) {
-        window.clearTimeout(categorySwitchTimerRef.current);
-        categorySwitchTimerRef.current = null;
-      }
-      if (categoryEnterTimerRef.current) {
-        window.clearTimeout(categoryEnterTimerRef.current);
-        categoryEnterTimerRef.current = null;
-      }
-      if (categorySkeletonTimerRef.current) {
-        window.clearTimeout(categorySkeletonTimerRef.current);
-        categorySkeletonTimerRef.current = null;
-      }
-
       if (isMobile) {
         mobileListTopRef.current?.scrollIntoView({ behavior: isGarcomMobile ? "auto" : "smooth", block: "start" });
       } else {
         desktopMainRef.current?.scrollTo({ top: 0, behavior: "smooth" });
       }
-
-      if (isGarcomMobile) {
-        setCategoriaExibida(categoriaId);
-        setCategoryTransitionState("idle");
-        setShowCategorySkeleton(false);
-        setCardsAnimatedIn(true);
-        return;
-      }
-
-      setCategoryTransitionState("exit");
-      setShowCategorySkeleton(categoriaId !== HOME_TAB_ID);
-
-      if (categoriaId !== HOME_TAB_ID) {
-        categorySkeletonTimerRef.current = window.setTimeout(() => {
-          setShowCategorySkeleton(false);
-        }, CATEGORY_SKELETON_DURATION_MS);
-      }
-
-      categorySwitchTimerRef.current = window.setTimeout(() => {
-        setCategoriaExibida(categoriaId);
-        setCategoryTransitionState("pre-enter");
-
-        categoryEnterTimerRef.current = window.setTimeout(() => {
-          setCategoryTransitionState("idle");
-        }, 16);
-      }, CATEGORY_SWITCH_DELAY_MS);
     },
-    [categoriaAtiva, categoriaExibida, isGarcomMobile, isMobile],
+    [categoriaAtiva, isGarcomMobile, isMobile],
   );
 
   const navigateBack = useCallback(() => {
@@ -415,26 +337,6 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
   }, [carrinho.length, confirmarPedido, currentCaixa, currentGarcom, mesaId, modo, validatePendingCart]);
 
   const handleSuccessAcknowledge = useCallback(() => {
-    if (categorySwitchTimerRef.current) {
-      window.clearTimeout(categorySwitchTimerRef.current);
-      categorySwitchTimerRef.current = null;
-    }
-
-    if (categoryEnterTimerRef.current) {
-      window.clearTimeout(categoryEnterTimerRef.current);
-      categoryEnterTimerRef.current = null;
-    }
-
-    if (categorySkeletonTimerRef.current) {
-      window.clearTimeout(categorySkeletonTimerRef.current);
-      categorySkeletonTimerRef.current = null;
-    }
-
-    if (cardsAnimationTimerRef.current) {
-      window.clearTimeout(cardsAnimationTimerRef.current);
-      cardsAnimationTimerRef.current = null;
-    }
-
     if (openProductTimerRef.current) {
       window.clearTimeout(openProductTimerRef.current);
       openProductTimerRef.current = null;
@@ -447,9 +349,7 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
     setProdutoSelecionado(null);
     setCategoriaAtiva(HOME_TAB_ID);
     setCategoriaExibida(HOME_TAB_ID);
-    setCategoryTransitionState("idle");
-    setShowCategorySkeleton(false);
-    setCardsAnimatedIn(true);
+    setCategoryFadeKey((k) => k + 1);
     setBannerIndex(0);
     setIsClientIdle(false);
 
@@ -639,21 +539,14 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
     </section>
   );
 
-  const categoryGridClasses =
-    categoryTransitionState === "exit"
-      ? "opacity-0 -translate-x-[10px]"
-      : categoryTransitionState === "pre-enter"
-        ? "opacity-0 translate-x-[10px]"
-        : "opacity-100 translate-x-0";
+  const categoryFadeClass = "animate-in fade-in duration-200";
 
   const visibleProducts = isGarcomMobile && categoriaExibida === HOME_TAB_ID ? produtos : produtosFiltrados;
 
   const productGrid = (
     <div
-      className={`${isGarcomMobile ? "grid grid-cols-2 gap-3" : "grid grid-cols-2 gap-3 md:grid-cols-2 md:gap-4 lg:grid-cols-3"} transition-all ease-in-out ${categoryGridClasses}`}
-      style={{
-        transitionDuration: `${categoryTransitionState === "exit" ? CATEGORY_EXIT_DURATION_MS : CATEGORY_ENTER_DURATION_MS}ms`,
-      }}
+      key={categoryFadeKey}
+      className={`${isGarcomMobile ? "grid grid-cols-2 gap-3" : "grid grid-cols-2 gap-3 md:grid-cols-2 md:gap-4 lg:grid-cols-3"} ${categoryFadeClass}`}
     >
       {visibleProducts.map((produto, index) => {
         const isCardSelected = selectedProductCardId === produto.id;
@@ -666,12 +559,9 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
                 isCardSelected ? "scale-[1.01] shadow-[0_20px_44px_-24px_hsl(var(--foreground)/0.92)]" : ""
               }`}
               style={{
-                opacity: cardsAnimatedIn ? 1 : 0,
-                transform: `translateY(${cardsAnimatedIn ? 0 : 16}px) scale(${isCardSelected ? 1.01 : 1})`,
-                transitionProperty: "opacity, transform, box-shadow",
+                transitionProperty: "transform, box-shadow",
                 transitionDuration: `${CARD_ANIMATION_DURATION_MS}ms`,
                 transitionTimingFunction: "ease-out",
-                transitionDelay: `${Math.min(index, 3) * CARD_STAGGER_STEP_MS}ms`,
               }}
             >
               <button type="button" onClick={() => handleOpenProductModal(produto)} className="flex w-full flex-col text-left">
@@ -709,12 +599,9 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
               isCardSelected ? "shadow-[0_16px_36px_-14px_hsl(var(--foreground)/0.34)]" : ""
             }`}
             style={{
-              opacity: cardsAnimatedIn ? 1 : 0,
-              transform: `translateY(${cardsAnimatedIn ? 0 : 20}px) scale(${isCardSelected ? 1.03 : 1})`,
-              transitionProperty: "opacity, transform, box-shadow",
+              transitionProperty: "transform, box-shadow",
               transitionDuration: `${CARD_ANIMATION_DURATION_MS}ms`,
               transitionTimingFunction: "ease-out",
-              transitionDelay: `${Math.min(index, 3) * CARD_STAGGER_STEP_MS}ms`,
             }}
           >
             <div className="aspect-[4/3] overflow-hidden">
@@ -733,10 +620,8 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
 
   const homeContent = (
     <div
-      className={`space-y-5 transition-all ease-in-out ${categoryGridClasses}`}
-      style={{
-        transitionDuration: `${categoryTransitionState === "exit" ? CATEGORY_EXIT_DURATION_MS : CATEGORY_ENTER_DURATION_MS}ms`,
-      }}
+      key={`home-${categoryFadeKey}`}
+      className={`space-y-5 ${categoryFadeClass}`}
     >
       {heroBanner}
       <div className="px-4 md:px-6">
@@ -786,7 +671,7 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
       </div>
       <div ref={mobileListTopRef} />
       <main className={`flex-1 pt-3 transition-all duration-500 ${isGarcomMobile ? "pb-6" : "pb-6"} ${isClientIdle ? "brightness-[0.2] saturate-50" : "brightness-100 saturate-100"}`}>
-        <div className="px-4">{showCategorySkeleton ? skeletonGrid : isGarcomMobile ? productGrid : isHomeActive ? homeContent : productGrid}</div>
+        <div className="px-4">{isGarcomMobile ? productGrid : isHomeActive ? homeContent : productGrid}</div>
       </main>
     </>
   );
@@ -822,7 +707,7 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
         </nav>
       </aside>
       <main ref={desktopMainRef} className="flex-1 overflow-y-auto pb-8 pt-4">
-        {showCategorySkeleton ? <div className="px-6">{skeletonGrid}</div> : isHomeActive ? homeContent : <div className="px-6">{productGrid}</div>}
+        {isHomeActive ? homeContent : <div className="px-6">{productGrid}</div>}
       </main>
     </div>
   );
