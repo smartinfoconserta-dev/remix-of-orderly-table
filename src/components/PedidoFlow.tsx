@@ -778,7 +778,7 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
       <main className={`flex-1 pt-2 transition-all duration-500 ${isGarcomMobile ? "pb-28" : "pb-6"} ${isClientIdle ? "brightness-[0.2] saturate-50" : "brightness-100 saturate-100"}`}>
         <div className="px-4">{showCategorySkeleton ? skeletonGrid : isHomeActive ? (isGarcomMobile ? garcomMobileHomeContent : homeContent) : productGrid}</div>
       </main>
-      {isGarcomMobile ? <StickyOrderButton total={cartTotal} onOpenCart={() => setCartOpen(true)} label="Ver carrinho" /> : null}
+      {isGarcomMobile ? <StickyOrderButton total={cartTotal} onOpenCart={() => handleCartOpenChange(true)} label="Ver carrinho" /> : null}
     </>
   );
 
