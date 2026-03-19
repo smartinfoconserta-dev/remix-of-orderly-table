@@ -459,35 +459,119 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                 </div>
               </div>
 
-              {/* ═══ RIGHT COLUMN (30%) — Activity feed ═══ */}
+              {/* ═══ RIGHT COLUMN (30%) ═══ */}
               <div className="flex flex-[3] flex-col border-l border-border bg-card/50 overflow-hidden">
-                <div className="flex items-center gap-2.5 px-5 py-4 border-b border-border shrink-0">
-                  <ScrollText className="h-4 w-4 text-foreground" />
-                  <h2 className="text-sm font-black text-foreground flex-1">Atividade recente</h2>
-                  <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-status-consumo">
-                    <span className="h-1.5 w-1.5 rounded-full bg-status-consumo animate-pulse" />
-                    Ao vivo
-                  </span>
-                </div>
-                <div className="flex-1 overflow-y-auto p-4 space-y-2 scrollbar-hide">
-                  {recentEvents.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center gap-3 py-16 text-muted-foreground">
-                      <ScrollText className="h-10 w-10 opacity-20" />
-                      <p className="text-sm">Nenhuma atividade ainda.</p>
+                {accessMode === "gerente" ? (
+                  /* Gerente: Tabs with Fechamento + Atividade */
+                  <Tabs defaultValue="fechamento" className="flex flex-col h-full">
+                    <div className="px-4 pt-4 shrink-0">
+                      <TabsList className="grid h-auto w-full rounded-2xl bg-secondary p-1 grid-cols-2">
+                        <TabsTrigger value="fechamento" className="rounded-xl py-2.5 font-bold">Fechamento</TabsTrigger>
+                        <TabsTrigger value="atividade" className="rounded-xl py-2.5 font-bold">Atividade</TabsTrigger>
+                      </TabsList>
                     </div>
-                  ) : (
-                    recentEvents.map((evento) => (
-                      <div key={evento.id} className="rounded-xl border border-border bg-card p-3">
-                        <p className="text-xs font-semibold text-foreground leading-snug">{evento.descricao}</p>
-                        <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] text-muted-foreground">
-                          <span className="font-semibold">{evento.usuarioNome ?? "Sistema"}</span>
-                          <span>{actionLabels[evento.acao ?? ""] ?? evento.tipo}</span>
-                          <span className="tabular-nums">{evento.criadoEm}</span>
+
+                    <TabsContent value="fechamento" className="flex-1 overflow-y-auto p-4 scrollbar-hide mt-0">
+                      {!financeUnlocked ? (
+                        <div className="surface-card flex flex-col gap-4 p-5">
+                          <div className="flex items-start gap-3">
+                            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-secondary text-foreground">
+                              <LockKeyhole className="h-5 w-5" />
+                            </div>
+                            <div>
+                              <h2 className="text-base font-black text-foreground">Relatórios protegidos</h2>
+                              <p className="mt-1 text-xs text-muted-foreground">Valide o gerente para visualizar o fechamento.</p>
+                            </div>
+                          </div>
+                          <div className="space-y-2">
+                            <label className="text-sm font-semibold text-foreground">Nome do gerente</label>
+                            <Input value={financeManagerName} onChange={(e) => setFinanceManagerName(e.target.value)} placeholder="Ex.: Mariana" maxLength={40} />
+                          </div>
+                          <div className="space-y-2">
+                            <label className="text-sm font-semibold text-foreground">PIN do gerente</label>
+                            <Input value={financeManagerPin} onChange={(e) => setFinanceManagerPin(e.target.value.replace(/\D/g, "").slice(0, 6))} placeholder="4 a 6 dígitos" inputMode="numeric" autoComplete="one-time-code" />
+                          </div>
+                          {financeError && <p className="rounded-xl border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive">{financeError}</p>}
+                          <Button onClick={handleUnlockFinance} className="h-11 rounded-xl text-sm font-black" disabled={isUnlockingFinance}>
+                            <ShieldCheck className="h-4 w-4" />
+                            Liberar fechamento
+                          </Button>
                         </div>
-                      </div>
-                    ))
-                  )}
-                </div>
+                      ) : (
+                        <div className="grid gap-3 grid-cols-2">
+                          {[
+                            { label: "Total do dia", value: resumoFinanceiro.totalDia },
+                            { label: "Dinheiro", value: resumoFinanceiro.dinheiro },
+                            { label: "Crédito", value: resumoFinanceiro.credito },
+                            { label: "Débito", value: resumoFinanceiro.debito },
+                            { label: "PIX", value: resumoFinanceiro.pix },
+                            { label: "Entradas extras", value: resumoFinanceiro.entradasExtras },
+                          ].map((card) => (
+                            <div key={card.label} className="surface-card p-3">
+                              <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground">{card.label}</p>
+                              <p className="mt-1 text-lg font-black text-foreground">{formatPrice(card.value)}</p>
+                            </div>
+                          ))}
+                          <div className="surface-card p-3 col-span-2">
+                            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground">Saídas</p>
+                            <p className="mt-1 text-lg font-black text-foreground">{formatPrice(resumoFinanceiro.saidas)}</p>
+                          </div>
+                        </div>
+                      )}
+                    </TabsContent>
+
+                    <TabsContent value="atividade" className="flex-1 overflow-y-auto p-4 space-y-2 scrollbar-hide mt-0">
+                      {recentEvents.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center gap-3 py-16 text-muted-foreground">
+                          <ScrollText className="h-10 w-10 opacity-20" />
+                          <p className="text-sm">Nenhuma atividade ainda.</p>
+                        </div>
+                      ) : (
+                        recentEvents.map((evento) => (
+                          <div key={evento.id} className="rounded-xl border border-border bg-card p-3">
+                            <p className="text-xs font-semibold text-foreground leading-snug">{evento.descricao}</p>
+                            <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] text-muted-foreground">
+                              <span className="font-semibold">{evento.usuarioNome ?? "Sistema"}</span>
+                              <span>{actionLabels[evento.acao ?? ""] ?? evento.tipo}</span>
+                              <span className="tabular-nums">{evento.criadoEm}</span>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </TabsContent>
+                  </Tabs>
+                ) : (
+                  /* Caixa: Activity feed only — no financial data */
+                  <>
+                    <div className="flex items-center gap-2.5 px-5 py-4 border-b border-border shrink-0">
+                      <ScrollText className="h-4 w-4 text-foreground" />
+                      <h2 className="text-sm font-black text-foreground flex-1">Atividade recente</h2>
+                      <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-status-consumo">
+                        <span className="h-1.5 w-1.5 rounded-full bg-status-consumo animate-pulse" />
+                        Ao vivo
+                      </span>
+                    </div>
+                    <div className="flex-1 overflow-y-auto p-4 space-y-2 scrollbar-hide">
+                      {recentEvents.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center gap-3 py-16 text-muted-foreground">
+                          <ScrollText className="h-10 w-10 opacity-20" />
+                          <p className="text-sm">Nenhuma atividade ainda.</p>
+                        </div>
+                      ) : (
+                        recentEvents.map((evento) => (
+                          <div key={evento.id} className="rounded-xl border border-border bg-card p-3">
+                            <p className="text-xs font-semibold text-foreground leading-snug">{evento.descricao}</p>
+                            <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] text-muted-foreground">
+                              <span className="font-semibold">{evento.usuarioNome ?? "Sistema"}</span>
+                              <span>{actionLabels[evento.acao ?? ""] ?? evento.tipo}</span>
+                              <span className="tabular-nums">{evento.criadoEm}</span>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           ) : (
