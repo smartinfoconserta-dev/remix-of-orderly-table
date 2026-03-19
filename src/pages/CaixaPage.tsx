@@ -127,6 +127,8 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
     eventos,
     fechamentos,
     movimentacoesCaixa,
+    caixaAberto,
+    abrirCaixa,
     fecharConta,
     zerarMesa,
     dismissChamarGarcom,
