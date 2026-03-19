@@ -9,6 +9,7 @@ import ProductModal from "@/components/ProductModal";
 import CartDrawer from "@/components/CartDrawer";
 import MinhaContaDrawer from "@/components/MinhaContaDrawer";
 import RestaurantHomeSection from "@/components/RestaurantHomeSection";
+import StickyOrderButton from "@/components/StickyOrderButton";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -103,9 +104,14 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
 
   const mesaLabel = formatMesaLabel(mesaId);
   const nomeAtendimento = garcomNome?.trim() || currentGarcom?.nome || currentCaixa?.nome || "Equipe operacional";
+  const isGarcomMobile = modo === "garcom" && isMobile;
   const isHomeActive = categoriaExibida === HOME_TAB_ID;
   const isTabletViewport = !isMobile && typeof window !== "undefined" && window.innerWidth >= TABLET_MIN_WIDTH && window.innerWidth <= TABLET_MAX_WIDTH;
   const shouldEnableClientIdle = modo === "cliente" && isTabletViewport;
+  const cartTotal = useMemo(
+    () => carrinho.reduce((acc, item) => acc + item.precoUnitario * item.quantidade, 0),
+    [carrinho],
+  );
   const produtosFiltrados = useMemo(
     () => produtos.filter((p) => p.categoria === categoriaExibida),
     [categoriaExibida],
@@ -127,6 +133,17 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
       dismissChamarGarcom(mesaId);
     }
   }, [dismissChamarGarcom, mesa?.chamarGarcom, mesaId, modo]);
+
+  useEffect(() => {
+    if (!isGarcomMobile) return;
+    if (categoriaAtiva !== HOME_TAB_ID || categoriaExibida !== HOME_TAB_ID) return;
+
+    const initialCategoryId = categorias[0]?.id;
+    if (!initialCategoryId) return;
+
+    setCategoriaAtiva(initialCategoryId);
+    setCategoriaExibida(initialCategoryId);
+  }, [categoriaAtiva, categoriaExibida, isGarcomMobile]);
 
   useEffect(() => {
     return () => {
@@ -243,8 +260,6 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
       if (categoriaId === categoriaAtiva && categoriaId === categoriaExibida) return;
 
       setCategoriaAtiva(categoriaId);
-      setCategoryTransitionState("exit");
-      setShowCategorySkeleton(categoriaId !== HOME_TAB_ID);
       setSelectedProductCardId(null);
       setIsClientIdle(false);
 
@@ -253,21 +268,35 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
         openProductTimerRef.current = null;
       }
 
+      if (categorySwitchTimerRef.current) {
+        window.clearTimeout(categorySwitchTimerRef.current);
+        categorySwitchTimerRef.current = null;
+      }
+      if (categoryEnterTimerRef.current) {
+        window.clearTimeout(categoryEnterTimerRef.current);
+        categoryEnterTimerRef.current = null;
+      }
+      if (categorySkeletonTimerRef.current) {
+        window.clearTimeout(categorySkeletonTimerRef.current);
+        categorySkeletonTimerRef.current = null;
+      }
+
       if (isMobile) {
-        mobileListTopRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+        mobileListTopRef.current?.scrollIntoView({ behavior: isGarcomMobile ? "auto" : "smooth", block: "start" });
       } else {
         desktopMainRef.current?.scrollTo({ top: 0, behavior: "smooth" });
       }
 
-      if (categorySwitchTimerRef.current) {
-        window.clearTimeout(categorySwitchTimerRef.current);
+      if (isGarcomMobile) {
+        setCategoriaExibida(categoriaId);
+        setCategoryTransitionState("idle");
+        setShowCategorySkeleton(false);
+        setCardsAnimatedIn(true);
+        return;
       }
-      if (categoryEnterTimerRef.current) {
-        window.clearTimeout(categoryEnterTimerRef.current);
-      }
-      if (categorySkeletonTimerRef.current) {
-        window.clearTimeout(categorySkeletonTimerRef.current);
-      }
+
+      setCategoryTransitionState("exit");
+      setShowCategorySkeleton(categoriaId !== HOME_TAB_ID);
 
       if (categoriaId !== HOME_TAB_ID) {
         categorySkeletonTimerRef.current = window.setTimeout(() => {
@@ -284,7 +313,7 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
         }, 16);
       }, CATEGORY_SWITCH_DELAY_MS);
     },
-    [categoriaAtiva, categoriaExibida, isMobile],
+    [categoriaAtiva, categoriaExibida, isGarcomMobile, isMobile],
   );
 
   const navigateBack = useCallback(() => {
@@ -435,13 +464,15 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
       </Avatar>
       <div className="min-w-0">
         <p className="truncate text-base font-extrabold tracking-tight text-foreground md:text-lg">{RESTAURANTE.nome}</p>
-        <p className="truncate text-xs font-medium text-muted-foreground md:text-sm">{mesaLabel}</p>
+        <p className="truncate text-xs font-medium text-muted-foreground md:text-sm">
+          {isGarcomMobile ? `${mesaLabel} • ${nomeAtendimento}` : mesaLabel}
+        </p>
       </div>
     </div>
   );
 
   const header = (
-    <header className="sticky top-0 z-50 flex items-center justify-between gap-3 border-b border-border bg-background/95 px-4 py-3 backdrop-blur-md md:px-6">
+    <header className={`sticky top-0 z-50 flex items-center justify-between gap-3 border-b border-border bg-background/95 py-3 backdrop-blur-md ${isGarcomMobile ? "px-3" : "px-4 md:px-6"}`}>
       <div className="flex min-w-0 flex-1 items-center gap-3">
         {modo !== "cliente" && (
           <button type="button" onClick={handleBack} className="shrink-0 text-muted-foreground transition-transform active:scale-95">
@@ -454,19 +485,21 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
         {restaurantIdentity}
       </div>
       <div className="flex shrink-0 items-center gap-2">
-        {modo !== "cliente" && (
+        {modo !== "cliente" && !isGarcomMobile ? (
           <div className="hidden items-center rounded-xl border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground md:flex">
             {nomeAtendimento}
           </div>
-        )}
+        ) : null}
         <Button
           type="button"
           variant="outline"
+          size={isGarcomMobile ? "icon" : "default"}
           onClick={() => setContaOpen(true)}
-          className="h-auto gap-2 rounded-xl px-4 py-2.5 text-sm font-bold md:text-base"
+          className={isGarcomMobile ? "h-11 w-11 rounded-xl" : "h-auto gap-2 rounded-xl px-4 py-2.5 text-sm font-bold md:text-base"}
+          aria-label="Abrir minha conta"
         >
           <Wallet className="h-4 w-4 md:h-5 md:w-5" />
-          <span>Minha Conta</span>
+          {isGarcomMobile ? null : <span>Minha Conta</span>}
         </Button>
         <CartDrawer
           carrinho={carrinho}
@@ -477,6 +510,7 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
           onSuccessAcknowledge={handleSuccessAcknowledge}
           open={cartOpen}
           onOpenChange={setCartOpen}
+          hideTrigger={isGarcomMobile}
         />
         {modo === "cliente" && (
           <Button
@@ -561,7 +595,7 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
 
   const productGrid = (
     <div
-      className={`grid grid-cols-2 gap-3 transition-all ease-in-out md:grid-cols-2 md:gap-4 lg:grid-cols-3 ${categoryGridClasses}`}
+      className={`${isGarcomMobile ? "grid grid-cols-1 gap-4" : "grid grid-cols-2 gap-3 md:grid-cols-2 md:gap-4 lg:grid-cols-3"} transition-all ease-in-out ${categoryGridClasses}`}
       style={{
         transitionDuration: `${categoryTransitionState === "exit" ? CATEGORY_EXIT_DURATION_MS : CATEGORY_ENTER_DURATION_MS}ms`,
       }}
@@ -574,8 +608,8 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
             key={produto.id}
             onClick={() => handleOpenProductModal(produto)}
             className={`surface-card flex flex-col overflow-hidden text-left will-change-transform active:scale-[0.97] ${
-              isCardSelected ? "shadow-[0_16px_36px_-14px_hsl(var(--foreground)/0.34)]" : ""
-            }`}
+              isGarcomMobile ? "rounded-[1.5rem]" : ""
+            } ${isCardSelected ? "shadow-[0_16px_36px_-14px_hsl(var(--foreground)/0.34)]" : ""}`}
             style={{
               opacity: cardsAnimatedIn ? 1 : 0,
               transform: `translateY(${cardsAnimatedIn ? 0 : 20}px) scale(${isCardSelected ? 1.03 : 1})`,
@@ -585,13 +619,19 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
               transitionDelay: `${Math.min(index, 3) * CARD_STAGGER_STEP_MS}ms`,
             }}
           >
-            <div className="aspect-[4/3] overflow-hidden">
+            <div className={`${isGarcomMobile ? "aspect-[16/10]" : "aspect-[4/3]"} overflow-hidden`}>
               <img src={produto.imagem} alt={produto.nome} className="h-full w-full object-cover" loading="lazy" />
             </div>
-            <div className="flex flex-1 flex-col gap-1 p-3 md:p-4">
-              <h2 className="line-clamp-1 text-sm font-bold text-foreground md:text-base">{produto.nome}</h2>
-              <p className="line-clamp-2 flex-1 text-xs text-muted-foreground md:text-sm">{produto.descricao}</p>
-              <p className="mt-1 text-lg font-black text-foreground md:text-xl">{formatPrice(produto.preco)}</p>
+            <div className={`flex flex-1 flex-col ${isGarcomMobile ? "gap-2 p-4" : "gap-1 p-3 md:p-4"}`}>
+              <h2 className={`${isGarcomMobile ? "text-base" : "text-sm md:text-base"} line-clamp-1 font-bold text-foreground`}>
+                {produto.nome}
+              </h2>
+              <p className={`${isGarcomMobile ? "text-sm" : "text-xs md:text-sm"} line-clamp-2 flex-1 text-muted-foreground`}>
+                {produto.descricao}
+              </p>
+              <p className={`${isGarcomMobile ? "text-xl" : "text-lg md:text-xl"} mt-1 font-black text-foreground`}>
+                {formatPrice(produto.preco)}
+              </p>
             </div>
           </button>
         );
@@ -613,12 +653,72 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
     </div>
   );
 
+  const garcomMobileHomeContent = (
+    <div className="space-y-4">
+      <section className="surface-card space-y-4 rounded-[1.5rem] p-4">
+        <div className="space-y-1">
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">Lançamento rápido</p>
+          <h1 className="text-2xl font-black tracking-tight text-foreground">{mesaLabel}</h1>
+          <p className="text-sm text-muted-foreground">Escolha uma categoria acima para lançar itens na comanda desta mesa sem sair do fluxo.</p>
+        </div>
+
+        <div className="grid grid-cols-2 gap-2">
+          {categorias.map((cat) => (
+            <Button
+              key={cat.id}
+              type="button"
+              variant={categoriaAtiva === cat.id ? "default" : "secondary"}
+              className="h-12 justify-start rounded-xl px-4 font-bold"
+              onClick={() => handleSelectCategoria(cat.id)}
+            >
+              <CategoryIcon name={cat.icone} className="h-4 w-4" />
+              <span className="truncate">{cat.nome}</span>
+            </Button>
+          ))}
+        </div>
+      </section>
+
+      <section className="space-y-3">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">Sugestões da casa</p>
+          <h2 className="mt-1 text-xl font-black tracking-tight text-foreground">Mais pedidos</h2>
+        </div>
+
+        <div className="grid grid-cols-1 gap-3">
+          {featuredProducts.map((produto) => (
+            <button
+              key={produto.id}
+              type="button"
+              onClick={() => handleOpenProductModal(produto)}
+              className="surface-card overflow-hidden rounded-[1.5rem] text-left active:scale-[0.98]"
+            >
+              <div className="aspect-[16/10] overflow-hidden">
+                <img src={produto.imagem} alt={produto.nome} className="h-full w-full object-cover" loading="lazy" />
+              </div>
+              <div className="space-y-2 p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <h2 className="line-clamp-1 text-base font-black text-foreground">{produto.nome}</h2>
+                    <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{produto.descricao}</p>
+                  </div>
+                  <span className="shrink-0 rounded-full border border-border bg-secondary px-3 py-1 text-sm font-black text-foreground">
+                    {formatPrice(produto.preco)}
+                  </span>
+                </div>
+              </div>
+            </button>
+          ))}
+        </div>
+      </section>
+    </div>
+  );
+
   const skeletonGrid = (
-    <div className="grid grid-cols-2 gap-3 md:grid-cols-2 md:gap-4 lg:grid-cols-3">
+    <div className={`${isGarcomMobile ? "grid grid-cols-1 gap-4" : "grid grid-cols-2 gap-3 md:grid-cols-2 md:gap-4 lg:grid-cols-3"}`}>
       {Array.from({ length: 6 }).map((_, index) => (
-        <div key={`skeleton-${index}`} className="surface-card overflow-hidden">
-          <div className="aspect-[4/3] animate-pulse bg-muted/70" />
-          <div className="space-y-2 p-3 md:p-4">
+        <div key={`skeleton-${index}`} className="surface-card overflow-hidden rounded-[1.5rem]">
+          <div className={`${isGarcomMobile ? "aspect-[16/10]" : "aspect-[4/3]"} animate-pulse bg-muted/70`} />
+          <div className="space-y-2 p-4">
             <div className="h-4 w-3/4 animate-pulse rounded-md bg-muted" />
             <div className="h-3 w-full animate-pulse rounded-md bg-muted/80" />
             <div className="h-3 w-2/3 animate-pulse rounded-md bg-muted/80" />
@@ -644,18 +744,19 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
 
   const mobileContent = (
     <>
-      <div className="mt-4">
+      <div className={`${isGarcomMobile ? "sticky top-[73px] z-40 border-b border-border bg-background/95 pt-2 backdrop-blur-md" : "mt-4"}`}>
         <CategoryTabs
           categorias={navigationItems}
           categoriaAtiva={categoriaAtiva}
           onSelect={handleSelectCategoria}
-          paddingClassName="px-4 pb-2"
+          paddingClassName={isGarcomMobile ? "px-4 pb-3" : "px-4 pb-2"}
         />
       </div>
       <div ref={mobileListTopRef} />
-      <main className={`flex-1 pb-6 pt-2 transition-all duration-500 ${isClientIdle ? "brightness-[0.2] saturate-50" : "brightness-100 saturate-100"}`}>
-        <div className="px-4">{showCategorySkeleton ? skeletonGrid : isHomeActive ? homeContent : productGrid}</div>
+      <main className={`flex-1 pt-2 transition-all duration-500 ${isGarcomMobile ? "pb-28" : "pb-6"} ${isClientIdle ? "brightness-[0.2] saturate-50" : "brightness-100 saturate-100"}`}>
+        <div className="px-4">{showCategorySkeleton ? skeletonGrid : isHomeActive ? (isGarcomMobile ? garcomMobileHomeContent : homeContent) : productGrid}</div>
       </main>
+      {isGarcomMobile ? <StickyOrderButton total={cartTotal} onOpenCart={() => setCartOpen(true)} label="Ver carrinho" /> : null}
     </>
   );
 
