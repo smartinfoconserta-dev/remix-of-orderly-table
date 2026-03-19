@@ -545,10 +545,8 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
 
   const productGrid = (
     <div
-      className={`${isGarcomMobile ? "grid grid-cols-2 gap-3" : "grid grid-cols-2 gap-3 md:grid-cols-2 md:gap-4 lg:grid-cols-3"} transition-all ease-in-out ${categoryGridClasses}`}
-      style={{
-        transitionDuration: `${categoryTransitionState === "exit" ? CATEGORY_EXIT_DURATION_MS : CATEGORY_ENTER_DURATION_MS}ms`,
-      }}
+      key={categoryFadeKey}
+      className={`${isGarcomMobile ? "grid grid-cols-2 gap-3" : "grid grid-cols-2 gap-3 md:grid-cols-2 md:gap-4 lg:grid-cols-3"} ${categoryFadeClass}`}
     >
       {visibleProducts.map((produto, index) => {
         const isCardSelected = selectedProductCardId === produto.id;
