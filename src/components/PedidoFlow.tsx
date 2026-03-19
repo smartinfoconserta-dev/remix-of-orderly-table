@@ -160,6 +160,9 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
       if (orderSubmissionCooldownRef.current) {
         window.clearTimeout(orderSubmissionCooldownRef.current);
       }
+      if (longPressTimerRef.current) {
+        window.clearTimeout(longPressTimerRef.current);
+      }
     };
   }, []);
 
