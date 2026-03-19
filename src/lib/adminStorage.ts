@@ -7,6 +7,7 @@ const LICENCA_KEY = "orderly-licenca-v1";
 
 export interface ProdutoOverride extends Produto {
   ativo: boolean;
+  removido?: boolean;
 }
 
 export interface MesasConfig {
