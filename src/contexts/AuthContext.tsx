@@ -29,6 +29,7 @@ interface AuthContextType {
   getProfilesByRole: (role: UserRole) => OperationalUser[];
   loginWithPin: (role: UserRole, nome: string, pin: string) => Promise<LoginResult>;
   verifyManagerAccess: (nome: string, pin: string) => Promise<LoginResult>;
+  verifyEmployeeAccess: (nome: string, pin: string) => Promise<LoginResult>;
   logout: (role: UserRole) => void;
 }
 
