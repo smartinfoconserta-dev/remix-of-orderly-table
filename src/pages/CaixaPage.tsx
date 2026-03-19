@@ -344,115 +344,134 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
   /* ══════════════════════════════════════ */
   /*              RENDER                    */
   /* ══════════════════════════════════════ */
+  /* ── KPI counts ── */
+  const mesasConsumo = mesas.filter(m => m.status === "consumo").length;
+  const mesasPendente = mesas.filter(m => m.status === "pendente").length;
+  const mesasLivre = mesas.filter(m => m.status === "livre").length;
+
+  /* ── recent activity (last 10 events) ── */
+  const recentEvents = eventos.slice(-10).reverse();
+
   return (
     <>
-      <div className="min-h-svh flex flex-col bg-background">
-        {/* ── HEADER ── */}
-        <header className="flex items-center gap-3 border-b border-border bg-card px-4 py-3 shrink-0 md:px-6">
-          {mesa ? (
-            <button onClick={handleVoltar} className="flex h-9 w-9 items-center justify-center rounded-xl border border-border bg-secondary text-foreground transition-colors hover:bg-secondary/80">
-              <ArrowLeft className="h-4 w-4" />
-            </button>
-          ) : null}
-          <h1 className="text-lg font-black tracking-tight text-foreground truncate flex-1">
-            {mesa ? `Mesa ${String(mesa.numero).padStart(2, "0")}` : accessMode === "gerente" ? "Gerente" : "Caixa"}
-          </h1>
-          <Button variant="outline" onClick={() => logout(accessMode)} className="gap-2 rounded-xl font-bold h-9 px-3 text-sm">
-            <LogOut className="h-4 w-4" />
-            <span className="hidden sm:inline">Sair</span>
-          </Button>
-        </header>
-
-        {/* ── MESA DETAIL: fixed top bar ── */}
+      <div className="h-svh flex flex-col bg-background overflow-hidden">
+        {/* ── MESA DETAIL keeps original header ── */}
         {mesa && (
-          <div className="border-b border-border bg-card/80 backdrop-blur-sm px-4 py-3 md:px-6">
-            <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-x-5 gap-y-2">
-              <div className="flex items-center gap-3">
-                <span className="text-2xl font-black tabular-nums text-foreground">{formatPrice(mesa.total)}</span>
-                <StatusBadge status={mesa.status} />
-              </div>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <User className="h-3.5 w-3.5" />
-                <span>{currentOperator.nome}</span>
-              </div>
-              <div className="ml-auto flex flex-wrap items-center gap-2">
-                <Button variant="outline" size="sm" onClick={() => setComandaOpen(true)} className="rounded-xl font-bold gap-1.5">
-                  <ShoppingCart className="h-3.5 w-3.5" />
-                  Abrir comanda
-                </Button>
-                <Button variant="outline" size="sm" onClick={() => openCriticalAction({ type: "zerar_mesa", mesaId: mesa.id, mesaNumero: mesa.numero })} className="rounded-xl font-bold gap-1.5">
-                  <RotateCcw className="h-3.5 w-3.5" />
-                  Zerar mesa
-                </Button>
-                <Button
-                  size="sm"
-                  disabled={!hasSomethingToClose}
-                  onClick={() => setMesaTab("pagamento")}
-                  className="rounded-xl font-black gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90"
-                >
-                  <Wallet className="h-3.5 w-3.5" />
-                  Fechar conta
-                </Button>
+          <>
+            <header className="flex items-center gap-3 border-b border-border bg-card px-4 py-3 shrink-0 md:px-6">
+              <button onClick={handleVoltar} className="flex h-9 w-9 items-center justify-center rounded-xl border border-border bg-secondary text-foreground transition-colors hover:bg-secondary/80">
+                <ArrowLeft className="h-4 w-4" />
+              </button>
+              <h1 className="text-lg font-black tracking-tight text-foreground truncate flex-1">
+                Mesa {String(mesa.numero).padStart(2, "0")}
+              </h1>
+              <Button variant="outline" onClick={() => logout(accessMode)} className="gap-2 rounded-xl font-bold h-9 px-3 text-sm">
+                <LogOut className="h-4 w-4" />
+                <span className="hidden sm:inline">Sair</span>
+              </Button>
+            </header>
+
+            {/* Mesa detail top bar */}
+            <div className="border-b border-border bg-card/80 backdrop-blur-sm px-4 py-3 md:px-6">
+              <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-x-5 gap-y-2">
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl font-black tabular-nums text-foreground">{formatPrice(mesa.total)}</span>
+                  <StatusBadge status={mesa.status} />
+                </div>
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <User className="h-3.5 w-3.5" />
+                  <span>{currentOperator.nome}</span>
+                </div>
+                <div className="ml-auto flex flex-wrap items-center gap-2">
+                  <Button variant="outline" size="sm" onClick={() => setComandaOpen(true)} className="rounded-xl font-bold gap-1.5">
+                    <ShoppingCart className="h-3.5 w-3.5" />
+                    Abrir comanda
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => openCriticalAction({ type: "zerar_mesa", mesaId: mesa.id, mesaNumero: mesa.numero })} className="rounded-xl font-bold gap-1.5">
+                    <RotateCcw className="h-3.5 w-3.5" />
+                    Zerar mesa
+                  </Button>
+                  <Button
+                    size="sm"
+                    disabled={!hasSomethingToClose}
+                    onClick={() => setMesaTab("pagamento")}
+                    className="rounded-xl font-black gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90"
+                  >
+                    <Wallet className="h-3.5 w-3.5" />
+                    Fechar conta
+                  </Button>
+                </div>
               </div>
             </div>
-          </div>
+          </>
         )}
 
         {/* ── MAIN CONTENT ── */}
-        <main className="flex-1 overflow-y-auto p-4 md:p-6">
+        <main className="flex-1 overflow-hidden">
           {!mesa ? (
-            /* ─────────────── MAIN VIEW (no mesa) — DESKTOP 2-COL ─────────────── */
-            <div className="mx-auto flex max-w-7xl flex-col gap-5 lg:flex-row lg:items-start">
+            /* ─────────────── MAIN VIEW — FULL HEIGHT 2-COL ─────────────── */
+            <div className="flex h-full">
 
-              {/* Coluna esquerda: info do operador + grade de mesas */}
-              <div className="flex flex-1 flex-col gap-4 min-w-0">
-                <div className="rounded-2xl border border-border bg-card p-4 md:p-5">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-secondary text-foreground font-black text-sm">
-                      {currentOperator.nome.charAt(0).toUpperCase()}
-                    </div>
-                    <div>
-                      <p className="text-sm font-bold text-foreground">{currentOperator.nome}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {accessMode === "gerente" ? "Acesso completo" : "Operador de caixa"}
-                      </p>
-                    </div>
-                    <div className="ml-auto flex gap-2">
-                      <div className="rounded-xl bg-secondary px-3 py-1.5 text-center">
-                        <p className="text-xs text-muted-foreground">Em consumo</p>
-                        <p className="text-base font-black text-foreground tabular-nums">
-                          {mesas.filter(m => m.status === "consumo").length}
-                        </p>
-                      </div>
-                      <div className="rounded-xl bg-secondary px-3 py-1.5 text-center">
-                        <p className="text-xs text-muted-foreground">Pendente</p>
-                        <p className="text-base font-black text-foreground tabular-nums">
-                          {mesas.filter(m => m.status === "pendente").length}
-                        </p>
-                      </div>
-                    </div>
+              {/* ═══ LEFT COLUMN (70%) ═══ */}
+              <div className="flex flex-[7] flex-col min-w-0 overflow-y-auto p-5 lg:p-6 scrollbar-hide">
+
+                {/* Topbar: avatar + name + logout */}
+                <div className="flex items-center gap-3 mb-5">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-secondary text-foreground font-black text-base">
+                    {currentOperator.nome.charAt(0).toUpperCase()}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-base font-black text-foreground truncate">{currentOperator.nome}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {accessMode === "gerente" ? "Acesso completo" : "Operador de caixa"}
+                    </p>
+                  </div>
+                  <Button variant="outline" onClick={() => logout(accessMode)} className="gap-2 rounded-xl font-bold h-9 px-3 text-sm">
+                    <LogOut className="h-4 w-4" />
+                    <span className="hidden sm:inline">Sair</span>
+                  </Button>
+                </div>
+
+                {/* KPI cards */}
+                <div className="grid grid-cols-3 gap-3 mb-5">
+                  {/* Em consumo — green */}
+                  <div className="rounded-2xl border border-status-consumo/30 bg-status-consumo/10 p-4">
+                    <p className="text-3xl font-black tabular-nums text-status-consumo">{mesasConsumo}</p>
+                    <p className="text-xs font-bold uppercase tracking-widest text-status-consumo/80 mt-1">Em consumo</p>
+                  </div>
+                  {/* Pendentes — orange */}
+                  <div className="rounded-2xl border border-primary/30 bg-primary/10 p-4">
+                    <p className="text-3xl font-black tabular-nums text-primary">{mesasPendente}</p>
+                    <p className="text-xs font-bold uppercase tracking-widest text-primary/80 mt-1">Pendentes</p>
+                  </div>
+                  {/* Livres — gray */}
+                  <div className="rounded-2xl border border-border bg-secondary/60 p-4">
+                    <p className="text-3xl font-black tabular-nums text-muted-foreground">{mesasLivre}</p>
+                    <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground/80 mt-1">Livres</p>
                   </div>
                 </div>
 
-                {/* Grade de mesas */}
-                <div className="grid grid-cols-3 gap-3 md:grid-cols-5 lg:grid-cols-4 xl:grid-cols-6">
+                {/* Mesa grid — 5 columns */}
+                <div className="grid gap-3" style={{ gridTemplateColumns: "repeat(5, 1fr)" }}>
                   {mesas.map((item) => (
                     <MesaCard key={item.id} mesa={item} onClick={() => handleSelecionarMesa(item.id)} showTotal />
                   ))}
                 </div>
-
               </div>
 
-              {/* Coluna direita: tabs de relatórios/logs — fixada no desktop */}
-              <div className="lg:w-[360px] lg:sticky lg:top-0 shrink-0">
-                <Tabs defaultValue={accessMode === "gerente" ? "fechamento" : "logs"} className="w-full">
-                  <TabsList className={`grid h-auto w-full rounded-2xl bg-secondary p-1 ${accessMode === "gerente" ? "grid-cols-2" : "grid-cols-1"}`}>
-                    {accessMode === "gerente" && <TabsTrigger value="fechamento" className="rounded-xl py-2.5 font-bold">Fechamento</TabsTrigger>}
-                    <TabsTrigger value="logs" className="rounded-xl py-2.5 font-bold">Logs</TabsTrigger>
-                  </TabsList>
+              {/* ═══ RIGHT COLUMN (30%) ═══ */}
+              <div className="flex flex-[3] flex-col border-l border-border bg-card/50 overflow-hidden">
+                {accessMode === "gerente" ? (
+                  /* Gerente: Tabs with Fechamento + Atividade */
+                  <Tabs defaultValue="fechamento" className="flex flex-col h-full">
+                    <div className="px-4 pt-4 shrink-0">
+                      <TabsList className="grid h-auto w-full rounded-2xl bg-secondary p-1 grid-cols-2">
+                        <TabsTrigger value="fechamento" className="rounded-xl py-2.5 font-bold">Fechamento</TabsTrigger>
+                        <TabsTrigger value="atividade" className="rounded-xl py-2.5 font-bold">Atividade</TabsTrigger>
+                      </TabsList>
+                    </div>
 
-                  {accessMode === "gerente" && (
-                    <TabsContent value="fechamento" className="mt-4">
+                    <TabsContent value="fechamento" className="flex-1 overflow-y-auto p-4 scrollbar-hide mt-0">
                       {!financeUnlocked ? (
                         <div className="surface-card flex flex-col gap-4 p-5">
                           <div className="flex items-start gap-3">
@@ -500,38 +519,64 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                         </div>
                       )}
                     </TabsContent>
-                  )}
 
-                  <TabsContent value="logs" className="mt-4">
-                    <div className="surface-card p-4">
-                      <div className="mb-3 flex items-center gap-2">
-                        <ScrollText className="h-4 w-4 text-foreground" />
-                        <h2 className="text-sm font-black text-foreground">Log de ações</h2>
-                      </div>
-                      <div className="space-y-2 max-h-[60vh] overflow-y-auto scrollbar-hide">
-                        {eventos.length === 0 ? (
-                          <div className="rounded-xl bg-secondary p-4 text-sm text-muted-foreground">Ainda não há eventos registrados.</div>
-                        ) : (
-                          eventos.map((evento) => (
-                            <div key={evento.id} className="rounded-xl border border-border bg-card p-3">
-                              <p className="text-xs font-semibold text-foreground">{evento.descricao}</p>
-                              <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] text-muted-foreground">
-                                <span>{evento.usuarioNome ?? "Sistema"}</span>
-                                <span>{actionLabels[evento.acao ?? ""] ?? evento.tipo}</span>
-                                <span>{evento.criadoEm}</span>
-                              </div>
+                    <TabsContent value="atividade" className="flex-1 overflow-y-auto p-4 space-y-2 scrollbar-hide mt-0">
+                      {recentEvents.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center gap-3 py-16 text-muted-foreground">
+                          <ScrollText className="h-10 w-10 opacity-20" />
+                          <p className="text-sm">Nenhuma atividade ainda.</p>
+                        </div>
+                      ) : (
+                        recentEvents.map((evento) => (
+                          <div key={evento.id} className="rounded-xl border border-border bg-card p-3">
+                            <p className="text-xs font-semibold text-foreground leading-snug">{evento.descricao}</p>
+                            <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] text-muted-foreground">
+                              <span className="font-semibold">{evento.usuarioNome ?? "Sistema"}</span>
+                              <span>{actionLabels[evento.acao ?? ""] ?? evento.tipo}</span>
+                              <span className="tabular-nums">{evento.criadoEm}</span>
                             </div>
-                          ))
-                        )}
-                      </div>
+                          </div>
+                        ))
+                      )}
+                    </TabsContent>
+                  </Tabs>
+                ) : (
+                  /* Caixa: Activity feed only — no financial data */
+                  <>
+                    <div className="flex items-center gap-2.5 px-5 py-4 border-b border-border shrink-0">
+                      <ScrollText className="h-4 w-4 text-foreground" />
+                      <h2 className="text-sm font-black text-foreground flex-1">Atividade recente</h2>
+                      <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-status-consumo">
+                        <span className="h-1.5 w-1.5 rounded-full bg-status-consumo animate-pulse" />
+                        Ao vivo
+                      </span>
                     </div>
-                  </TabsContent>
-                </Tabs>
+                    <div className="flex-1 overflow-y-auto p-4 space-y-2 scrollbar-hide">
+                      {recentEvents.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center gap-3 py-16 text-muted-foreground">
+                          <ScrollText className="h-10 w-10 opacity-20" />
+                          <p className="text-sm">Nenhuma atividade ainda.</p>
+                        </div>
+                      ) : (
+                        recentEvents.map((evento) => (
+                          <div key={evento.id} className="rounded-xl border border-border bg-card p-3">
+                            <p className="text-xs font-semibold text-foreground leading-snug">{evento.descricao}</p>
+                            <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] text-muted-foreground">
+                              <span className="font-semibold">{evento.usuarioNome ?? "Sistema"}</span>
+                              <span>{actionLabels[evento.acao ?? ""] ?? evento.tipo}</span>
+                              <span className="tabular-nums">{evento.criadoEm}</span>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           ) : (
             /* ─────────────── MESA DETAIL VIEW — DESKTOP 2-COL ─────────────── */
-            <div className="mx-auto grid h-[calc(100svh-7.5rem)] max-w-[1600px] grid-cols-[2fr_3fr] gap-5">
+            <div className="mx-auto grid h-full max-w-[1600px] grid-cols-[2fr_3fr] gap-5 p-4 md:p-6">
 
               {/* ═══ LEFT: COMANDA (read-only feel) ═══ */}
               <div className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card">
@@ -543,7 +588,6 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                 </div>
 
                 <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-hide">
-                  {/* Confirmed orders as table-like rows */}
                   {mesa.pedidos.length === 0 && mesa.carrinho.length === 0 ? (
                     <div className="flex flex-col items-center justify-center gap-3 py-16 text-muted-foreground">
                       <ReceiptText className="h-10 w-10 opacity-30" />
@@ -665,7 +709,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                   )}
                 </div>
 
-                {/* Comanda footer: subtotal / total */}
+                {/* Comanda footer */}
                 <div className="border-t border-border px-5 py-4 space-y-2 bg-card">
                   <div className="flex items-center justify-between text-sm text-muted-foreground">
                     <span>Subtotal</span>
