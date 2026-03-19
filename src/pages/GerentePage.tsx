@@ -134,11 +134,48 @@ const GerentePage = () => {
 
   const uniqueActions = [...new Set(eventos.map((e) => e.acao).filter(Boolean))] as string[];
 
+  const handleVerificarPin = useCallback(async () => {
+    if (!currentGerente) return;
+    setPinError("");
+    const result = await verifyManagerAccess(currentGerente.nome, pinInput);
+    if (result.ok) {
+      setPinVerificado(true);
+      setPinInput("");
+    } else {
+      setPinError(result.error ?? "PIN inválido");
+    }
+  }, [currentGerente, pinInput, verifyManagerAccess]);
+
   const handleFecharDia = () => {
     fecharCaixaDoDia(currentGerente);
     toast.success("Caixa do dia fechado com sucesso. Estado resetado.", { duration: 2000, icon: "🔒" });
   };
 
+  const pinGateUI = (
+    <div className="flex-1 flex items-center justify-center p-6">
+      <div className="w-full max-w-xs space-y-4 text-center">
+        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/15 text-primary">
+          <LockKeyhole className="h-7 w-7" />
+        </div>
+        <h2 className="text-lg font-black text-foreground">Verificação de segurança</h2>
+        <p className="text-sm text-muted-foreground">Digite seu PIN para acessar os dados financeiros.</p>
+        <input
+          type="password"
+          inputMode="numeric"
+          maxLength={6}
+          value={pinInput}
+          onChange={(e) => { setPinInput(e.target.value.replace(/\D/g, "")); setPinError(""); }}
+          onKeyDown={(e) => e.key === "Enter" && handleVerificarPin()}
+          placeholder="PIN"
+          className="w-full rounded-xl border border-border bg-card px-4 py-3 text-center text-2xl font-black tracking-[0.5em] text-foreground placeholder:text-muted-foreground/50 placeholder:tracking-normal placeholder:text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+        />
+        {pinError && <p className="text-sm font-bold text-destructive">{pinError}</p>}
+        <Button onClick={handleVerificarPin} disabled={pinInput.length < 4} className="w-full rounded-xl font-black h-11">
+          Verificar PIN
+        </Button>
+      </div>
+    </div>
+  );
   return (
     <div className="h-svh flex flex-col bg-background overflow-hidden">
       {/* Header */}
