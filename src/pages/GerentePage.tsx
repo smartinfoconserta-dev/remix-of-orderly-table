@@ -93,6 +93,18 @@ const GerentePage = () => {
 
   useRouteLock("/gerente");
 
+  const handleVerificarPin = useCallback(async () => {
+    if (!currentGerente) return;
+    setPinError("");
+    const result = await verifyManagerAccess(currentGerente.nome, pinInput);
+    if (result.ok) {
+      setPinVerificado(true);
+      setPinInput("");
+    } else {
+      setPinError(result.error ?? "PIN inválido");
+    }
+  }, [currentGerente, pinInput, verifyManagerAccess]);
+
   /* ── auth guard ── */
   if (!currentGerente) {
     return (
