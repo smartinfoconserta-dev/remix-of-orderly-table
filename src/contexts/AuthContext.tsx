@@ -29,6 +29,7 @@ interface AuthContextType {
   getProfilesByRole: (role: UserRole) => OperationalUser[];
   loginWithPin: (role: UserRole, nome: string, pin: string) => Promise<LoginResult>;
   verifyManagerAccess: (nome: string, pin: string) => Promise<LoginResult>;
+  verifyEmployeeAccess: (nome: string, pin: string) => Promise<LoginResult>;
   logout: (role: UserRole) => void;
 }
 
@@ -176,6 +177,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return { ok: true, user: toPublicUser(gerente) };
   }, [state.users]);
 
+  const verifyEmployeeAccess = useCallback(async (nome: string, pin: string): Promise<LoginResult> => {
+    const parsed = loginSchema.safeParse({ nome, pin });
+    if (!parsed.success) {
+      return { ok: false, error: parsed.error.issues[0]?.message ?? "Revise os dados informados" };
+    }
+
+    const nomeNormalizado = parsed.data.nome.trim();
+    const pinHashed = hashPin(parsed.data.pin);
+    const employee = state.users.find(
+      (user) => user.nome.toLocaleLowerCase("pt-BR") === nomeNormalizado.toLocaleLowerCase("pt-BR"),
+    );
+
+    if (!employee) {
+      return { ok: false, error: "Funcionário não encontrado" };
+    }
+
+    if (employee.pinHash !== pinHashed) {
+      return { ok: false, error: "PIN inválido" };
+    }
+
+    return { ok: true, user: toPublicUser(employee) };
+  }, [state.users]);
+
   const logout = useCallback((role: UserRole) => {
     setState((prev) => {
       const sessions = { ...prev.sessions };
@@ -193,6 +217,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         getProfilesByRole,
         loginWithPin,
         verifyManagerAccess,
+        verifyEmployeeAccess,
         logout,
       }}
     >

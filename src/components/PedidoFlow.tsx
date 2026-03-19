@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { AlertTriangle, ArrowLeft, Bell, Plus, ShoppingCart, Wallet } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Bell, LockKeyhole, Plus, RefreshCw, ShoppingCart, Unlink, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import CategoryTabs from "@/components/CategoryTabs";
@@ -25,6 +25,20 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useRestaurant, type ItemCarrinho } from "@/contexts/RestaurantContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "sonner";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import {
+  clearBoundTabletMesaId,
+  clearTabletLoginUser,
+  getBoundTabletMesaId,
+  setBoundTabletMesaId,
+} from "@/lib/tabletBinding";
 
 interface PedidoFlowProps {
   modo: "cliente" | "garcom" | "caixa";
@@ -48,6 +62,7 @@ const CLIENT_IDLE_TIMEOUT_MS = 30000;
 const ORDER_SUBMIT_LOCK_MS = 2000;
 const TABLET_MIN_WIDTH = 768;
 const TABLET_MAX_WIDTH = 1279;
+const LONG_PRESS_DURATION_MS = 5000;
 
 const formatPrice = (v: number) => `R$ ${v.toFixed(2).replace(".", ",")}`;
 
@@ -59,9 +74,10 @@ const formatMesaLabel = (mesaId: string) => {
 const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
-  const { currentGarcom, currentCaixa } = useAuth();
+  const { currentGarcom, currentCaixa, verifyEmployeeAccess } = useAuth();
   const {
     getMesa,
+    mesas,
     addToCart,
     updateCartItemQty,
     removeFromCart,
@@ -79,6 +95,17 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
   const [contaOpen, setContaOpen] = useState(false);
   const [showExitAlert, setShowExitAlert] = useState(false);
   const [isClientIdle, setIsClientIdle] = useState(false);
+
+  // Hidden admin modal state
+  const [adminModalOpen, setAdminModalOpen] = useState(false);
+  const [adminAuthenticated, setAdminAuthenticated] = useState(false);
+  const [adminNome, setAdminNome] = useState("");
+  const [adminPin, setAdminPin] = useState("");
+  const [adminError, setAdminError] = useState<string | null>(null);
+  const [isAdminLoggingIn, setIsAdminLoggingIn] = useState(false);
+  const [showMesaSelector, setShowMesaSelector] = useState(false);
+
+  const longPressTimerRef = useRef<number | null>(null);
   const openProductTimerRef = useRef<number | null>(null);
   const idleTimeoutRef = useRef<number | null>(null);
   const orderSubmissionCooldownRef = useRef<number | null>(null);
@@ -132,6 +159,9 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
       }
       if (orderSubmissionCooldownRef.current) {
         window.clearTimeout(orderSubmissionCooldownRef.current);
+      }
+      if (longPressTimerRef.current) {
+        window.clearTimeout(longPressTimerRef.current);
       }
     };
   }, []);
@@ -300,6 +330,65 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
     setIsClientIdle(false);
   }, [chamarGarcom, mesaId]);
 
+  // ── Long-press admin gesture ──
+  const handleLogoPointerDown = useCallback(() => {
+    if (modo !== "cliente") return;
+    if (longPressTimerRef.current) window.clearTimeout(longPressTimerRef.current);
+    longPressTimerRef.current = window.setTimeout(() => {
+      longPressTimerRef.current = null;
+      setAdminModalOpen(true);
+      setAdminAuthenticated(false);
+      setAdminNome("");
+      setAdminPin("");
+      setAdminError(null);
+      setShowMesaSelector(false);
+    }, LONG_PRESS_DURATION_MS);
+  }, [modo]);
+
+  const handleLogoPointerUp = useCallback(() => {
+    if (longPressTimerRef.current) {
+      window.clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+  }, []);
+
+  const handleAdminLogin = useCallback(async () => {
+    if (isAdminLoggingIn) return;
+    setIsAdminLoggingIn(true);
+    setAdminError(null);
+    const result = await verifyEmployeeAccess(adminNome.trim(), adminPin);
+    if (!result.ok) {
+      setAdminError(result.error ?? "Credenciais inválidas");
+      setIsAdminLoggingIn(false);
+      return;
+    }
+    setAdminAuthenticated(true);
+    setAdminPin("");
+    setAdminError(null);
+    setIsAdminLoggingIn(false);
+  }, [adminNome, adminPin, isAdminLoggingIn, verifyEmployeeAccess]);
+
+  const handleAdminTrocarMesa = useCallback(() => {
+    setShowMesaSelector(true);
+  }, []);
+
+  const handleAdminSelectNewMesa = useCallback((newMesaId: string) => {
+    setBoundTabletMesaId(newMesaId);
+    setAdminModalOpen(false);
+    toast.success("Mesa trocada com sucesso", { duration: 1200, icon: "🔄" });
+    // Force reload to pick up new mesa
+    window.location.reload();
+  }, []);
+
+  const handleAdminDesvincular = useCallback(() => {
+    clearBoundTabletMesaId();
+    clearTabletLoginUser();
+    setAdminModalOpen(false);
+    toast.success("Tablet desvinculado", { duration: 1200, icon: "📱" });
+  }, []);
+
+  const mesasOrdenadas = useMemo(() => [...mesas].sort((a, b) => a.numero - b.numero), [mesas]);
+
   const validatePendingCart = useCallback(() => {
     const possuiItemInvalido = carrinho.some((item) => item.quantidade <= 0);
 
@@ -383,7 +472,13 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
     </div>
   ) : (
     <div className="flex min-w-0 items-center gap-3">
-      <Avatar className="h-10 w-10 rounded-xl border border-border bg-secondary shadow-sm">
+      <Avatar
+        className="h-10 w-10 rounded-xl border border-border bg-secondary shadow-sm select-none touch-none"
+        onPointerDown={handleLogoPointerDown}
+        onPointerUp={handleLogoPointerUp}
+        onPointerLeave={handleLogoPointerUp}
+        onContextMenu={(e) => modo === "cliente" && e.preventDefault()}
+      >
         <AvatarFallback className="rounded-xl bg-secondary text-xs font-extrabold tracking-[0.18em] text-foreground">
           {RESTAURANTE.logoFallback}
         </AvatarFallback>
@@ -744,6 +839,106 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Hidden admin modal — only for client mode */}
+      {modo === "cliente" && (
+        <Dialog open={adminModalOpen} onOpenChange={(open) => {
+          if (!open) {
+            setAdminModalOpen(false);
+            setAdminAuthenticated(false);
+            setAdminNome("");
+            setAdminPin("");
+            setAdminError(null);
+            setShowMesaSelector(false);
+          }
+        }}>
+          <DialogContent className="rounded-2xl border-border bg-background sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <LockKeyhole className="h-5 w-5" />
+                {adminAuthenticated ? "Gerenciar tablet" : "Acesso de funcionário"}
+              </DialogTitle>
+              <DialogDescription className="text-muted-foreground">
+                {adminAuthenticated
+                  ? "Escolha a ação desejada para este terminal."
+                  : "Faça login com suas credenciais de funcionário para continuar."}
+              </DialogDescription>
+            </DialogHeader>
+
+            {!adminAuthenticated ? (
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-foreground">Nome</label>
+                  <Input
+                    value={adminNome}
+                    onChange={(e) => setAdminNome(e.target.value.slice(0, 40))}
+                    placeholder="Seu nome de funcionário"
+                    autoComplete="username"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-foreground">PIN</label>
+                  <Input
+                    type="password"
+                    value={adminPin}
+                    onChange={(e) => setAdminPin(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                    placeholder="4 a 6 dígitos"
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handleAdminLogin();
+                      }
+                    }}
+                  />
+                </div>
+                {adminError && <p className="rounded-xl border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive">{adminError}</p>}
+                <Button onClick={handleAdminLogin} disabled={isAdminLoggingIn} className="h-11 w-full rounded-xl font-black">
+                  <LockKeyhole className="h-4 w-4" />
+                  Autenticar
+                </Button>
+              </div>
+            ) : showMesaSelector ? (
+              <div className="space-y-4">
+                <p className="text-sm text-muted-foreground">Selecione a nova mesa para este tablet:</p>
+                <div className="grid grid-cols-3 gap-2 max-h-[40vh] overflow-y-auto">
+                  {mesasOrdenadas.map((m) => (
+                    <Button
+                      key={m.id}
+                      type="button"
+                      variant={m.id === mesaId ? "secondary" : "outline"}
+                      disabled={m.id === mesaId}
+                      onClick={() => handleAdminSelectNewMesa(m.id)}
+                      className="flex h-auto flex-col gap-1 rounded-xl py-3"
+                    >
+                      <span className="text-lg font-black">{String(m.numero).padStart(2, "0")}</span>
+                      <span className="text-[10px] text-muted-foreground">{m.status}</span>
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-3">
+                <Button onClick={handleAdminTrocarMesa} variant="outline" className="h-14 justify-start gap-4 rounded-2xl px-5 font-bold">
+                  <RefreshCw className="h-5 w-5 text-primary" />
+                  <div className="text-left">
+                    <p className="text-sm font-black text-foreground">Trocar mesa</p>
+                    <p className="text-xs font-normal text-muted-foreground">Vincular este tablet a outra mesa</p>
+                  </div>
+                </Button>
+                <Button onClick={handleAdminDesvincular} variant="outline" className="h-14 justify-start gap-4 rounded-2xl px-5 font-bold">
+                  <Unlink className="h-5 w-5 text-destructive" />
+                  <div className="text-left">
+                    <p className="text-sm font-black text-foreground">Desvincular tablet</p>
+                    <p className="text-xs font-normal text-muted-foreground">Voltar à tela de login do funcionário</p>
+                  </div>
+                </Button>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+      )}
     </>
   );
 };

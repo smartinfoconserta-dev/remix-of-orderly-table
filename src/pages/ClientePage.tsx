@@ -4,30 +4,30 @@ import { LockKeyhole, TabletSmartphone } from "lucide-react";
 import PedidoFlow from "@/components/PedidoFlow";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useAuth } from "@/contexts/AuthContext";
 import { useRestaurant } from "@/contexts/RestaurantContext";
 import { useRouteLock } from "@/hooks/use-route-lock";
 import {
   TABLET_BINDING_CHANGED_EVENT,
   TABLET_LOGIN_CHANGED_EVENT,
-  clearTabletLoginUser,
   getBoundTabletMesaId,
   getTabletLoginUser,
   setBoundTabletMesaId,
   setTabletLoginUser,
+  clearTabletLoginUser,
 } from "@/lib/tabletBinding";
-
-const TABLET_USERNAME = "tablet";
-const TABLET_PASSWORD = "obsidian";
 
 const ClientePage = () => {
   const { mesas } = useRestaurant();
+  const { verifyEmployeeAccess } = useAuth();
   const [searchParams] = useSearchParams();
 
   const [mesaId, setMesaId] = useState<string | null>(() => getBoundTabletMesaId());
   const [tabletUser, setTabletUser] = useState<string | null>(() => getTabletLoginUser());
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
+  const [nome, setNome] = useState("");
+  const [pin, setPin] = useState("");
   const [loginError, setLoginError] = useState<string | null>(null);
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
 
   // QR Code: se veio ?mesa=ID, vincula automaticamente e pula login/seleção
   useEffect(() => {
@@ -54,8 +54,8 @@ const ClientePage = () => {
       setTabletUser(nextTabletUser);
 
       if (!nextMesaId && !nextTabletUser) {
-        setUsername("");
-        setPassword("");
+        setNome("");
+        setPin("");
         setLoginError(null);
       }
     };
@@ -73,19 +73,24 @@ const ClientePage = () => {
 
   const mesasOrdenadas = useMemo(() => [...mesas].sort((a, b) => a.numero - b.numero), [mesas]);
 
-  const handleLogin = () => {
-    const normalizedUsername = username.trim().toLocaleLowerCase("pt-BR");
-    const normalizedPassword = password.trim();
+  const handleLogin = async () => {
+    if (isLoggingIn) return;
+    setIsLoggingIn(true);
+    setLoginError(null);
 
-    if (normalizedUsername !== TABLET_USERNAME || normalizedPassword !== TABLET_PASSWORD) {
-      setLoginError("Usuário ou senha inválidos para o tablet");
+    const result = await verifyEmployeeAccess(nome.trim(), pin);
+
+    if (!result.ok) {
+      setLoginError(result.error ?? "Credenciais inválidas");
+      setIsLoggingIn(false);
       return;
     }
 
-    const authenticatedUser = setTabletLoginUser(TABLET_USERNAME);
+    const authenticatedUser = setTabletLoginUser(result.user!.nome);
     setTabletUser(authenticatedUser);
-    setPassword("");
+    setPin("");
     setLoginError(null);
+    setIsLoggingIn(false);
   };
 
   const handleSelectMesa = (selectedMesaId: string) => {
@@ -106,28 +111,29 @@ const ClientePage = () => {
               <TabletSmartphone className="h-6 w-6" />
             </div>
             <h1 className="text-2xl font-black text-foreground">Acesso do tablet</h1>
-            <p className="text-sm text-muted-foreground">Faça login para liberar o tablet e selecionar a mesa de atendimento.</p>
+            <p className="text-sm text-muted-foreground">Faça login com suas credenciais de funcionário para liberar o tablet.</p>
           </div>
 
           <div className="space-y-4">
             <div className="space-y-2">
-              <label className="text-sm font-semibold text-foreground">Usuário</label>
+              <label className="text-sm font-semibold text-foreground">Nome</label>
               <Input
-                value={username}
-                onChange={(event) => setUsername(event.target.value.slice(0, 24))}
-                placeholder="Usuário do tablet"
+                value={nome}
+                onChange={(event) => setNome(event.target.value.slice(0, 40))}
+                placeholder="Seu nome de funcionário"
                 autoComplete="username"
               />
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-semibold text-foreground">Senha</label>
+              <label className="text-sm font-semibold text-foreground">PIN</label>
               <Input
                 type="password"
-                value={password}
-                onChange={(event) => setPassword(event.target.value.slice(0, 24))}
-                placeholder="Senha do tablet"
-                autoComplete="current-password"
+                value={pin}
+                onChange={(event) => setPin(event.target.value.replace(/\D/g, "").slice(0, 6))}
+                placeholder="4 a 6 dígitos"
+                inputMode="numeric"
+                autoComplete="one-time-code"
                 onKeyDown={(event) => {
                   if (event.key === "Enter") {
                     event.preventDefault();
@@ -139,7 +145,7 @@ const ClientePage = () => {
 
             {loginError && <p className="rounded-xl border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive">{loginError}</p>}
 
-            <Button onClick={handleLogin} className="h-12 w-full rounded-xl text-base font-black">
+            <Button onClick={handleLogin} disabled={isLoggingIn} className="h-12 w-full rounded-xl text-base font-black">
               <LockKeyhole className="h-4 w-4" />
               Entrar no tablet
             </Button>
@@ -154,7 +160,7 @@ const ClientePage = () => {
       <div className="mx-auto flex max-w-5xl flex-col gap-6">
         <div className="surface-card flex flex-col gap-3 p-5 md:flex-row md:items-center md:justify-between">
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground">Tablet liberado</p>
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground">Tablet liberado por <span className="text-foreground">{tabletUser}</span></p>
             <h1 className="mt-2 text-2xl font-black text-foreground">Selecionar mesa</h1>
             <p className="mt-1 text-sm text-muted-foreground">Escolha a mesa para vincular este tablet e iniciar o atendimento do cliente.</p>
           </div>
