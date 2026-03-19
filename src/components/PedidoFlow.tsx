@@ -707,7 +707,7 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
         </nav>
       </aside>
       <main ref={desktopMainRef} className="flex-1 overflow-y-auto pb-8 pt-4">
-        {showCategorySkeleton ? <div className="px-6">{skeletonGrid}</div> : isHomeActive ? homeContent : <div className="px-6">{productGrid}</div>}
+        {isHomeActive ? homeContent : <div className="px-6">{productGrid}</div>}
       </main>
     </div>
   );
