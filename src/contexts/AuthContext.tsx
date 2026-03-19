@@ -30,6 +30,7 @@ interface AuthContextType {
   loginWithPin: (role: UserRole, nome: string, pin: string) => Promise<LoginResult>;
   verifyManagerAccess: (nome: string, pin: string) => Promise<LoginResult>;
   verifyEmployeeAccess: (nome: string, pin: string) => Promise<LoginResult>;
+  resetPin: (role: UserRole, nome: string) => { ok: boolean; error?: string };
   logout: (role: UserRole) => void;
 }
 
