@@ -862,11 +862,6 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
             <DialogDescription>{getCriticalActionCopy()?.description}</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
-            {criticalAction?.type === "vincular_tablet" && (
-              <div className="rounded-2xl border border-border bg-secondary/60 p-4 text-sm text-foreground">
-                <p className="font-semibold">Destino do tablet: Mesa {String(criticalAction.proximaMesaNumero).padStart(2, "0")}</p>
-              </div>
-            )}
             <div className="space-y-2">
               <label className="text-sm font-semibold text-foreground">Nome do gerente</label>
               <Input value={criticalManagerName} onChange={(e) => setCriticalManagerName(e.target.value)} placeholder="Ex.: Mariana" maxLength={40} />
