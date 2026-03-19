@@ -25,6 +25,7 @@ import { toast } from "sonner";
 import PedidoFlow from "@/components/PedidoFlow";
 import MesaCard from "@/components/MesaCard";
 import OperationalAccessCard from "@/components/OperationalAccessCard";
+import LicenseBanner from "@/components/LicenseBanner";
 import StatusBadge from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";
 import {
@@ -1038,6 +1039,8 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <LicenseBanner blockMode={accessMode === "caixa"} />
     </>
   );
 };
