@@ -997,6 +997,45 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* ── TURNO CLOSE MODAL ── */}
+      <Dialog open={turnoModalOpen} onOpenChange={(open) => { if (!open) { setTurnoModalOpen(false); setTurnoError(null); } }}>
+        <DialogContent className="rounded-2xl border-border bg-background sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <LockKeyhole className="h-5 w-5 text-destructive" />
+              Fechar turno
+            </DialogTitle>
+            <DialogDescription>
+              Esta ação vai resetar todas as mesas, movimentações e fechamentos do turno atual. Autorização de gerente necessária.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-sm font-semibold text-foreground">Nome do gerente</label>
+              <Input value={turnoManagerName} onChange={(e) => setTurnoManagerName(e.target.value)} placeholder="Ex.: Mariana" maxLength={40} />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-semibold text-foreground">PIN do gerente</label>
+              <Input
+                value={turnoManagerPin}
+                onChange={(e) => setTurnoManagerPin(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                placeholder="4 a 6 dígitos"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                onKeyDown={(e) => e.key === "Enter" && handleCloseTurno()}
+              />
+            </div>
+            {turnoError && <p className="rounded-xl border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive">{turnoError}</p>}
+          </div>
+          <DialogFooter className="gap-3 sm:gap-0">
+            <Button variant="outline" onClick={() => setTurnoModalOpen(false)} className="rounded-xl font-bold">Cancelar</Button>
+            <Button variant="destructive" onClick={handleCloseTurno} className="rounded-xl font-black" disabled={isClosingTurno}>
+              Confirmar fechamento
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 };
