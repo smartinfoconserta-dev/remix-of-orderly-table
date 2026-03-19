@@ -634,7 +634,7 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
     </section>
   );
 
-  const categoryFadeClass = "animate-in fade-in duration-200";
+  const categoryFadeClass = "";
 
   const visibleProducts = isGarcomMobile && categoriaExibida === HOME_TAB_ID ? produtos : produtosFiltrados;
 
