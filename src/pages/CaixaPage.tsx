@@ -298,21 +298,6 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
     setCriticalError(null);
   };
 
-  const handlePrepareTabletBinding = () => {
-    const mesaNumero = Number(tabletTargetMesaNumber);
-    if (!Number.isInteger(mesaNumero) || mesaNumero < 1) { toast.error("Informe um número de mesa válido", { duration: 1400 }); return; }
-    const proximaMesa = mesas.find((item) => item.numero === mesaNumero);
-    if (!proximaMesa) { toast.error("Mesa não encontrada para este tablet", { duration: 1400 }); return; }
-    if (tabletMesaId === proximaMesa.id) { toast.error("O tablet já está vinculado a esta mesa", { duration: 1400 }); return; }
-    openCriticalAction({
-      type: "vincular_tablet",
-      mesaId: tabletMesa?.id ?? null,
-      mesaNumero: tabletMesa?.numero ?? null,
-      proximaMesaId: proximaMesa.id,
-      proximaMesaNumero: proximaMesa.numero,
-    });
-  };
-
   const getCriticalActionCopy = () => {
     if (!criticalAction) return null;
     switch (criticalAction.type) {
