@@ -324,7 +324,7 @@ const AdminPage = () => {
       <main className="flex-1 overflow-y-auto p-6 md:p-8" key={tab}>
         {/* ═══ CARDÁPIO ═══ */}
         {tab === "cardapio" && (
-          <div className="space-y-5">
+          <div className="space-y-5 fade-in">
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-2xl font-black text-foreground">Cardápio</h2>
