@@ -110,6 +110,8 @@ interface RestaurantStore {
   eventos: EventoOperacional[];
   movimentacoesCaixa: MovimentacaoCaixa[];
   fechamentos: FechamentoConta[];
+  caixaAberto: boolean;
+  fundoTroco: number;
 }
 
 interface RestaurantContextType {
@@ -117,6 +119,8 @@ interface RestaurantContextType {
   eventos: EventoOperacional[];
   movimentacoesCaixa: MovimentacaoCaixa[];
   fechamentos: FechamentoConta[];
+  caixaAberto: boolean;
+  fundoTroco: number;
   getMesa: (id: string) => Mesa | undefined;
   updateMesa: (id: string, updates: Partial<Mesa>) => void;
   addToCart: (mesaId: string, item: ItemCarrinho) => void;
@@ -131,6 +135,7 @@ interface RestaurantContextType {
   cancelarPedido: (mesaId: string, pedidoId: string, audit: ActionAuditInput) => void;
   marcarPedidoPronto: (mesaId: string, pedidoId: string) => void;
   registrarMovimentacaoCaixa: (input: MovimentacaoInput) => void;
+  abrirCaixa: (fundoTroco: number, usuario: OperationalUser) => void;
 }
 
 const RestaurantContext = createContext<RestaurantContextType | null>(null);
@@ -275,6 +280,8 @@ const readStore = (): RestaurantStore => {
       eventos: [],
       movimentacoesCaixa: [],
       fechamentos: [],
+      caixaAberto: false,
+      fundoTroco: 0,
     };
   }
 
@@ -286,6 +293,8 @@ const readStore = (): RestaurantStore => {
         eventos: [],
         movimentacoesCaixa: [],
         fechamentos: [],
+        caixaAberto: false,
+        fundoTroco: 0,
       };
     }
 
@@ -355,6 +364,8 @@ const readStore = (): RestaurantStore => {
             };
           })
         : [],
+      caixaAberto: Boolean((parsed as Partial<RestaurantStore>).caixaAberto),
+      fundoTroco: Number((parsed as Partial<RestaurantStore>).fundoTroco ?? 0),
     };
   } catch {
     return {
@@ -362,6 +373,8 @@ const readStore = (): RestaurantStore => {
       eventos: [],
       movimentacoesCaixa: [],
       fechamentos: [],
+      caixaAberto: false,
+      fundoTroco: 0,
     };
   }
 };
@@ -828,6 +841,22 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     });
   }, []);
 
+  const abrirCaixa = useCallback((fundoTroco: number, usuario: OperationalUser) => {
+    setStore((prev) => ({
+      ...prev,
+      caixaAberto: true,
+      fundoTroco,
+      eventos: appendEvent(prev.eventos, {
+        tipo: "caixa",
+        descricao: `Caixa ${usuario.nome} abriu o caixa com fundo de troco R$ ${fundoTroco.toFixed(2).replace(".", ",")}`,
+        usuarioId: usuario.id,
+        usuarioNome: usuario.nome,
+        acao: "abertura_caixa",
+        valor: fundoTroco,
+      }),
+    }));
+  }, []);
+
   return (
     <RestaurantContext.Provider
       value={{
@@ -835,6 +864,8 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         eventos: store.eventos,
         movimentacoesCaixa: store.movimentacoesCaixa,
         fechamentos: store.fechamentos,
+        caixaAberto: store.caixaAberto,
+        fundoTroco: store.fundoTroco,
         getMesa,
         updateMesa,
         addToCart,
@@ -849,6 +880,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         cancelarPedido,
         marcarPedidoPronto,
         registrarMovimentacaoCaixa,
+        abrirCaixa,
       }}
     >
       {children}

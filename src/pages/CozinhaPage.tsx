@@ -9,8 +9,14 @@ const minutesAgo = (isoDate: string) => {
   return Math.max(0, Math.floor(diff / 60_000));
 };
 
-const formatElapsed = (mins: number) =>
-  mins < 1 ? "agora" : mins === 1 ? "há 1 min" : `há ${mins} min`;
+const MAX_ELAPSED_MINUTES = 600;
+
+const formatElapsed = (mins: number) => {
+  if (mins > MAX_ELAPSED_MINUTES) return "tempo indisponível";
+  if (mins < 1) return "agora";
+  if (mins === 1) return "há 1 min";
+  return `há ${mins} min`;
+};
 
 const formatTime = (d: Date) =>
   d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
@@ -90,7 +96,7 @@ const CozinhaPage = () => {
       <div className="grid gap-4" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))" }}>
         {activePedidos.map((pedido) => {
           const mins = minutesAgo(pedido.criadoEmIso);
-          const isLate = mins >= 15;
+          const isLate = mins >= 15 && mins <= MAX_ELAPSED_MINUTES;
 
           return (
             <div
