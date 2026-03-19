@@ -18,6 +18,7 @@ interface Props {
 
 const formatPrice = (v: number) => `R$ ${v.toFixed(2).replace(".", ",")}`;
 const SUBMIT_LOCK_MS = 2000;
+const SUBMIT_LOADING_MS = 1500;
 
 const CartDrawer = ({
   carrinho,
@@ -36,6 +37,7 @@ const CartDrawer = ({
   const [isLocked, setIsLocked] = useState(false);
   const [showConfirmPrompt, setShowConfirmPrompt] = useState(false);
   const [showSuccessFeedback, setShowSuccessFeedback] = useState(false);
+  const [showSubmittingOverlay, setShowSubmittingOverlay] = useState(false);
   const lockTimerRef = useRef<number | null>(null);
 
   const clearTimers = () => {
@@ -58,6 +60,7 @@ const CartDrawer = ({
       setIsLocked(false);
       setShowConfirmPrompt(false);
       setShowSuccessFeedback(false);
+      setShowSubmittingOverlay(false);
       return;
     }
 
@@ -67,16 +70,16 @@ const CartDrawer = ({
     return () => {
       document.body.style.overflow = previousOverflow;
     };
-  }, [open, setIsLocked, setIsSubmitting, setShowConfirmPrompt, setShowSuccessFeedback]);
+  }, [open]);
 
   useEffect(() => {
-    if (carrinho.length === 0 && !showSuccessFeedback) {
+    if (carrinho.length === 0 && !showSuccessFeedback && !showSubmittingOverlay) {
       setShowConfirmPrompt(false);
     }
-  }, [carrinho.length, setShowConfirmPrompt, showSuccessFeedback]);
+  }, [carrinho.length, showSuccessFeedback, showSubmittingOverlay]);
 
   useEffect(() => {
-    if (!open || showSuccessFeedback) return;
+    if (!open || showSuccessFeedback || showSubmittingOverlay) return;
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
@@ -86,23 +89,24 @@ const CartDrawer = ({
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [open, onOpenChange, showSuccessFeedback]);
+  }, [open, onOpenChange, showSuccessFeedback, showSubmittingOverlay]);
 
   const handleOpenDrawer = () => {
     onOpenChange?.(true);
   };
 
   const handleRequestConfirm = () => {
-    if (carrinho.length === 0 || isSubmitting || isLocked || showSuccessFeedback) return;
+    if (carrinho.length === 0 || isSubmitting || isLocked || showSuccessFeedback || showSubmittingOverlay) return;
     setShowConfirmPrompt(true);
   };
 
   const handleConfirmar = async () => {
-    if (carrinho.length === 0 || isSubmitting || isLocked || showSuccessFeedback) return;
+    if (carrinho.length === 0 || isSubmitting || isLocked || showSuccessFeedback || showSubmittingOverlay) return;
 
     setShowConfirmPrompt(false);
     setIsSubmitting(true);
     setIsLocked(true);
+    setShowSubmittingOverlay(true);
 
     clearTimers();
     lockTimerRef.current = window.setTimeout(() => {
@@ -113,13 +117,17 @@ const CartDrawer = ({
     let shouldShowSuccess = false;
 
     try {
-      const result = await onConfirmar();
+      const [result] = await Promise.all([
+        Promise.resolve(onConfirmar()),
+        new Promise((resolve) => window.setTimeout(resolve, SUBMIT_LOADING_MS)),
+      ]);
       shouldShowSuccess = result !== false;
     } catch {
       shouldShowSuccess = false;
     }
 
     setIsSubmitting(false);
+    setShowSubmittingOverlay(false);
 
     if (!shouldShowSuccess) return;
 
@@ -133,18 +141,18 @@ const CartDrawer = ({
   };
 
   const drawerMarkup = open ? (
-    <div className="fixed inset-0 z-[80]">
+    <div className="fixed inset-0 z-[80] animate-fade-in">
       <button
         type="button"
         aria-label="Fechar carrinho"
         onClick={() => {
-          if (!showSuccessFeedback) onOpenChange?.(false);
+          if (!showSuccessFeedback && !showSubmittingOverlay) onOpenChange?.(false);
         }}
-        className="absolute inset-0 bg-foreground/35 backdrop-blur-[1px]"
+        className="absolute inset-0 bg-foreground/45 backdrop-blur-[2px]"
       />
 
-      <aside className="absolute inset-y-0 right-0 flex h-full w-full max-w-md flex-col border-l border-border bg-card shadow-2xl">
-        {!showSuccessFeedback ? (
+      <aside className="absolute inset-y-0 right-0 flex h-full w-full max-w-md flex-col border-l border-border bg-card shadow-2xl animate-slide-in-right">
+        {!showSuccessFeedback && !showSubmittingOverlay ? (
           <button
             type="button"
             onClick={() => onOpenChange?.(false)}
@@ -155,14 +163,25 @@ const CartDrawer = ({
           </button>
         ) : null}
 
-        {showSuccessFeedback ? (
-          <div className="flex flex-1 flex-col items-center justify-center gap-5 p-6 text-center">
-            <div className="flex h-18 w-18 items-center justify-center rounded-full bg-primary/10 text-primary">
-              <CheckCircle2 className="h-9 w-9" />
+        {showSubmittingOverlay ? (
+          <div className="flex flex-1 flex-col items-center justify-center gap-6 bg-card/95 p-6 text-center animate-enter">
+            <div className="relative flex h-24 w-24 items-center justify-center rounded-full border border-primary/20 bg-primary/10 text-primary shadow-[0_0_40px_hsl(var(--primary)/0.2)]">
+              <span className="absolute inset-0 rounded-full border border-primary/25 pulse" />
+              <LoaderCircle className="relative z-10 h-11 w-11 animate-spin" />
+            </div>
+            <div className="space-y-2">
+              <h3 className="text-2xl font-black text-foreground">Enviando pedido...</h3>
+              <p className="text-sm text-muted-foreground">Estamos confirmando os itens e registrando o pedido com segurança.</p>
+            </div>
+          </div>
+        ) : showSuccessFeedback ? (
+          <div className="flex flex-1 flex-col items-center justify-center gap-5 p-6 text-center animate-enter">
+            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-primary/10 text-primary shadow-[0_0_36px_hsl(var(--primary)/0.18)]">
+              <CheckCircle2 className="h-10 w-10" />
             </div>
             <div className="space-y-2">
               <h3 className="text-2xl font-black text-foreground">Pedido enviado com sucesso</h3>
-              <p className="text-sm text-muted-foreground">O pedido foi confirmado e o sistema já voltou para um estado seguro de operação.</p>
+              <p className="text-sm text-muted-foreground">Seu pedido foi recebido e o sistema voltou para um estado seguro de operação.</p>
             </div>
             <Button type="button" onClick={handleSuccessOk} className="h-12 w-full rounded-2xl font-black">
               OK
@@ -170,7 +189,7 @@ const CartDrawer = ({
           </div>
         ) : (
           <>
-            <div className="border-b border-border p-5 pb-4 pr-16 text-left">
+            <div className="border-b border-border p-5 pb-4 pr-16 text-left animate-fade-in">
               <h2 className="text-xl font-black text-foreground">Carrinho do pedido</h2>
               <p className="text-sm text-muted-foreground">
                 {carrinho.length > 0
@@ -180,14 +199,14 @@ const CartDrawer = ({
             </div>
 
             {carrinho.length === 0 ? (
-              <div className="flex flex-1 flex-col items-center justify-center gap-3 p-6 text-center">
+              <div className="flex flex-1 flex-col items-center justify-center gap-3 p-6 text-center animate-fade-in">
                 <ShoppingCart className="h-16 w-16 text-muted-foreground/30" />
                 <p className="text-base font-medium text-muted-foreground">Carrinho vazio</p>
                 <p className="text-sm text-muted-foreground">Abra um produto, personalize e adicione ao pedido para continuar.</p>
               </div>
             ) : (
               <>
-                <div className="border-b border-border px-4 pb-4 pt-4">
+                <div className="border-b border-border px-4 pb-4 pt-4 animate-fade-in">
                   <div className="rounded-2xl border border-primary/20 bg-primary/10 px-4 py-3">
                     <p className="text-[11px] font-black uppercase tracking-[0.22em] text-primary">Itens pendentes</p>
                     <p className="mt-1 text-sm text-foreground">Revise os itens com calma antes de enviar o pedido para a cozinha.</p>
@@ -195,8 +214,12 @@ const CartDrawer = ({
                 </div>
 
                 <div className="flex-1 space-y-3 overflow-y-auto p-4 pb-40">
-                  {carrinho.map((item) => (
-                    <div key={item.uid} className="space-y-3 rounded-2xl border border-primary/20 bg-secondary p-4 shadow-sm transition-colors">
+                  {carrinho.map((item, index) => (
+                    <div
+                      key={item.uid}
+                      className="space-y-3 rounded-2xl border border-primary/20 bg-secondary p-4 shadow-sm transition-colors animate-fade-in"
+                      style={{ animationDelay: `${Math.min(index, 4) * 60}ms` }}
+                    >
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex-1">
                           <span className="inline-flex rounded-full border border-primary/25 bg-primary/10 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-primary">
@@ -249,7 +272,7 @@ const CartDrawer = ({
                   ))}
                 </div>
 
-                <div className="absolute inset-x-0 bottom-0 border-t border-border bg-card p-4">
+                <div className="absolute inset-x-0 bottom-0 border-t border-border bg-card p-4 animate-fade-in">
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
                       <span className="text-base font-medium text-muted-foreground">Subtotal</span>
@@ -257,13 +280,13 @@ const CartDrawer = ({
                     </div>
 
                     {showConfirmPrompt ? (
-                      <div className="animate-in fade-in-0 slide-in-from-bottom-2 rounded-2xl border border-border bg-secondary/70 p-3 duration-200">
+                      <div className="rounded-2xl border border-border bg-secondary/70 p-3 animate-enter">
                         <p className="text-sm font-semibold text-foreground">Deseja enviar o pedido para a cozinha?</p>
                         <div className="mt-3 grid gap-2 sm:grid-cols-2">
                           <Button type="button" variant="outline" onClick={() => setShowConfirmPrompt(false)} className="h-11 rounded-2xl font-bold">
                             Revisar pedido
                           </Button>
-                          <Button type="button" onClick={handleConfirmar} disabled={isSubmitting || isLocked} className="h-11 rounded-2xl font-black">
+                          <Button type="button" onClick={handleConfirmar} disabled={isSubmitting || isLocked || showSubmittingOverlay} className="h-11 rounded-2xl font-black">
                             {isSubmitting ? (
                               <span className="inline-flex items-center gap-2">
                                 <LoaderCircle className="h-4 w-4 animate-spin" />
@@ -281,7 +304,7 @@ const CartDrawer = ({
                       <Button
                         type="button"
                         variant="outline"
-                        disabled={isSubmitting}
+                        disabled={isSubmitting || showSubmittingOverlay}
                         onClick={() => {
                           setShowConfirmPrompt(false);
                           onContinueOrdering?.();
@@ -294,10 +317,10 @@ const CartDrawer = ({
                       <Button
                         type="button"
                         onClick={handleRequestConfirm}
-                        disabled={isSubmitting || isLocked || showConfirmPrompt}
+                        disabled={isSubmitting || isLocked || showConfirmPrompt || showSubmittingOverlay}
                         className="h-12 rounded-2xl font-black transition-transform duration-100 ease-in-out active:scale-[0.97]"
                       >
-                        {isSubmitting ? (
+                        {isSubmitting || showSubmittingOverlay ? (
                           <span className="inline-flex items-center gap-2">
                             <LoaderCircle className="h-4 w-4 animate-spin" />
                             Enviando...
