@@ -1,5 +1,8 @@
 import { useCallback, useMemo, useState } from "react";
 import {
+  ArrowLeft,
+  Banknote,
+  Check,
   CreditCard,
   Landmark,
   LockKeyhole,
@@ -10,11 +13,14 @@ import {
   RotateCcw,
   ScrollText,
   ShieldCheck,
+  ShoppingCart,
   Smartphone,
   Trash2,
+  User,
+  Wallet,
+  XCircle,
 } from "lucide-react";
 import { toast } from "sonner";
-import AppLayout from "@/components/AppLayout";
 import PedidoFlow from "@/components/PedidoFlow";
 import MesaCard from "@/components/MesaCard";
 import OperationalAccessCard from "@/components/OperationalAccessCard";
@@ -49,6 +55,7 @@ import {
 } from "@/lib/tabletBinding";
 import type { PaymentMethod, SplitPayment, UserRole } from "@/types/operations";
 
+/* ── helpers ── */
 const formatPrice = (v: number) => `R$ ${v.toFixed(2).replace(".", ",")}`;
 const toCents = (value: number) => Math.round(value * 100);
 
@@ -66,7 +73,7 @@ const paymentMethodOptions: Array<{
   label: string;
   icon: typeof Landmark;
 }> = [
-  { value: "dinheiro", label: "Dinheiro", icon: Landmark },
+  { value: "dinheiro", label: "Dinheiro", icon: Banknote },
   { value: "credito", label: "Crédito", icon: CreditCard },
   { value: "debito", label: "Débito", icon: CreditCard },
   { value: "pix", label: "PIX", icon: Smartphone },
@@ -90,53 +97,22 @@ const actionLabels: Record<string, string> = {
   vincular_tablet: "Vínculo do tablet",
 };
 
+/* ── types ── */
 type CriticalAction =
-  | {
-      type: "zerar_mesa";
-      mesaId: string;
-      mesaNumero: number;
-    }
-  | {
-      type: "remover_item_carrinho";
-      mesaId: string;
-      mesaNumero: number;
-      itemUid: string;
-      itemNome: string;
-    }
-  | {
-      type: "remover_item_pedido";
-      mesaId: string;
-      mesaNumero: number;
-      pedidoId: string;
-      pedidoNumero: number;
-      itemUid: string;
-      itemNome: string;
-      quantidade: number;
-    }
-  | {
-      type: "cancelar_pedido";
-      mesaId: string;
-      mesaNumero: number;
-      pedidoId: string;
-      pedidoNumero: number;
-    }
-  | {
-      type: "desvincular_tablet";
-      mesaId: string;
-      mesaNumero: number;
-    }
-  | {
-      type: "vincular_tablet";
-      mesaId: string | null;
-      mesaNumero: number | null;
-      proximaMesaId: string;
-      proximaMesaNumero: number;
-    };
+  | { type: "zerar_mesa"; mesaId: string; mesaNumero: number }
+  | { type: "remover_item_carrinho"; mesaId: string; mesaNumero: number; itemUid: string; itemNome: string }
+  | { type: "remover_item_pedido"; mesaId: string; mesaNumero: number; pedidoId: string; pedidoNumero: number; itemUid: string; itemNome: string; quantidade: number }
+  | { type: "cancelar_pedido"; mesaId: string; mesaNumero: number; pedidoId: string; pedidoNumero: number }
+  | { type: "desvincular_tablet"; mesaId: string; mesaNumero: number }
+  | { type: "vincular_tablet"; mesaId: string | null; mesaNumero: number | null; proximaMesaId: string; proximaMesaNumero: number };
 
 interface CaixaPageProps {
   accessMode?: Extract<UserRole, "caixa" | "gerente">;
 }
 
+/* ══════════════════════════════════════ */
+/*            CAIXA PAGE                  */
+/* ══════════════════════════════════════ */
 const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
   const {
     mesas,
@@ -152,9 +128,10 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
     cancelarPedido,
   } = useRestaurant();
   const { currentCaixa, currentGerente, logout, verifyManagerAccess } = useAuth();
+
   const [mesaSelecionada, setMesaSelecionada] = useState<string | null>(null);
   const [comandaOpen, setComandaOpen] = useState(false);
-  const [confirmFechar, setConfirmFechar] = useState(false);
+  const [mesaTab, setMesaTab] = useState("comanda");
   const [closingPayments, setClosingPayments] = useState<SplitPayment[]>([]);
   const [closingPaymentMethod, setClosingPaymentMethod] = useState<PaymentMethod>("dinheiro");
   const [closingPaymentValue, setClosingPaymentValue] = useState("");
@@ -175,55 +152,35 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
   const mesa = mesaSelecionada ? mesas.find((item) => item.id === mesaSelecionada) ?? null : null;
   const tabletMesa = useMemo(() => (tabletMesaId ? mesas.find((item) => item.id === tabletMesaId) ?? null : null), [mesas, tabletMesaId]);
   const currentOperator = accessMode === "gerente" ? currentGerente : currentCaixa;
-  const screenTitle = mesa
-    ? `Mesa ${String(mesa.numero).padStart(2, "0")}`
-    : accessMode === "gerente"
-      ? "Gerente"
-      : "Caixa";
 
   useRouteLock(accessMode === "gerente" ? "/gerente" : "/caixa");
 
+  /* ── financial summary ── */
   const resumoFinanceiro = useMemo(() => {
-    const totalDia = fechamentos.reduce((acc, fechamento) => acc + fechamento.total, 0);
-    const entradasExtras = movimentacoesCaixa
-      .filter((movimentacao) => movimentacao.tipo === "entrada")
-      .reduce((acc, movimentacao) => acc + movimentacao.valor, 0);
-    const saidas = movimentacoesCaixa
-      .filter((movimentacao) => movimentacao.tipo === "saida")
-      .reduce((acc, movimentacao) => acc + movimentacao.valor, 0);
+    const totalDia = fechamentos.reduce((acc, f) => acc + f.total, 0);
+    const entradasExtras = movimentacoesCaixa.filter((m) => m.tipo === "entrada").reduce((acc, m) => acc + m.valor, 0);
+    const saidas = movimentacoesCaixa.filter((m) => m.tipo === "saida").reduce((acc, m) => acc + m.valor, 0);
     const sumByMethod = (method: PaymentMethod) =>
-      fechamentos.reduce((acc, fechamento) => {
-        const pagamentos = fechamento.pagamentos?.length
-          ? fechamento.pagamentos
-          : [{ id: fechamento.id, formaPagamento: fechamento.formaPagamento, valor: fechamento.total }];
-        return acc + pagamentos.filter((pagamento) => pagamento.formaPagamento === method).reduce((subtotal, pagamento) => subtotal + pagamento.valor, 0);
+      fechamentos.reduce((acc, f) => {
+        const pags = f.pagamentos?.length ? f.pagamentos : [{ id: f.id, formaPagamento: f.formaPagamento, valor: f.total }];
+        return acc + pags.filter((p) => p.formaPagamento === method).reduce((s, p) => s + p.valor, 0);
       }, 0);
-
-    return {
-      totalDia,
-      dinheiro: sumByMethod("dinheiro"),
-      credito: sumByMethod("credito"),
-      debito: sumByMethod("debito"),
-      pix: sumByMethod("pix"),
-      entradasExtras,
-      saidas,
-    };
+    return { totalDia, dinheiro: sumByMethod("dinheiro"), credito: sumByMethod("credito"), debito: sumByMethod("debito"), pix: sumByMethod("pix"), entradasExtras, saidas };
   }, [fechamentos, movimentacoesCaixa]);
 
-  const mesaLogs = useMemo(
-    () => (mesa ? eventos.filter((evento) => evento.mesaId === mesa.id) : []),
-    [eventos, mesa],
-  );
+  const mesaLogs = useMemo(() => (mesa ? eventos.filter((e) => e.mesaId === mesa.id) : []), [eventos, mesa]);
 
+  /* ── payment math ── */
   const totalConta = mesa?.total ?? 0;
   const totalContaCents = toCents(totalConta);
-  const totalPago = useMemo(() => closingPayments.reduce((acc, pagamento) => acc + pagamento.valor, 0), [closingPayments]);
+  const totalPago = useMemo(() => closingPayments.reduce((acc, p) => acc + p.valor, 0), [closingPayments]);
   const totalPagoCents = toCents(totalPago);
   const valorRestante = Math.max((totalContaCents - totalPagoCents) / 100, 0);
   const fechamentoPronto = totalContaCents > 0 && totalPagoCents === totalContaCents;
+  const paymentProgress = totalContaCents > 0 ? Math.min(totalPagoCents / totalContaCents, 1) : 0;
 
+  /* ── callbacks ── */
   const resetCloseAccountState = useCallback(() => {
-    setConfirmFechar(false);
     setClosingPayments([]);
     setClosingPaymentMethod("dinheiro");
     setClosingPaymentValue("");
@@ -232,6 +189,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
   const handleVoltar = useCallback(() => {
     setComandaOpen(false);
     setMesaSelecionada(null);
+    setMesaTab("comanda");
     resetCloseAccountState();
   }, [resetCloseAccountState]);
 
@@ -240,6 +198,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
       dismissChamarGarcom(mesaId);
       setComandaOpen(false);
       setMesaSelecionada(mesaId);
+      setMesaTab("comanda");
       resetCloseAccountState();
     },
     [dismissChamarGarcom, resetCloseAccountState],
@@ -254,47 +213,50 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
     setIsAuthorizingCriticalAction(false);
   }, []);
 
+  /* ── auth guard ── */
   if (!currentOperator) {
     return (
-      <AppLayout title={accessMode === "gerente" ? "Gerente" : "Caixa"}>
-        <OperationalAccessCard role={accessMode} />
-      </AppLayout>
+      <div className="min-h-svh flex flex-col bg-background">
+        <header className="flex items-center gap-3 border-b border-border bg-card px-4 py-4 shrink-0 md:px-6">
+          <h1 className="text-lg font-bold tracking-tight text-foreground truncate flex-1 md:text-xl">
+            {accessMode === "gerente" ? "Gerente" : "Caixa"}
+          </h1>
+        </header>
+        <main className="flex-1 overflow-y-auto p-4 md:p-6">
+          <OperationalAccessCard role={accessMode} />
+        </main>
+      </div>
     );
   }
 
+  /* ── comanda (PedidoFlow) ── */
   if (mesa && comandaOpen) {
     return <PedidoFlow modo="caixa" mesaId={mesa.id} garcomNome={currentOperator.nome} onBack={() => setComandaOpen(false)} />;
   }
 
   const hasSomethingToClose = Boolean(mesa && (mesa.total > 0 || mesa.pedidos.length > 0 || mesa.carrinho.length > 0));
 
+  /* ── payment handlers ── */
   const handleAddPayment = () => {
     if (!mesa) return;
-
     const valor = parseCurrencyInput(closingPaymentValue);
     if (!Number.isFinite(valor) || valor <= 0) {
       toast.error("Informe um valor válido para adicionar o pagamento", { duration: 1400 });
       return;
     }
-
     if (toCents(valor) > toCents(valorRestante)) {
       toast.error("O valor informado ultrapassa o restante da conta", { duration: 1400 });
       return;
     }
-
     setClosingPayments((prev) => [
       ...prev,
-      {
-        id: `pag-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-        formaPagamento: closingPaymentMethod,
-        valor: Number(valor.toFixed(2)),
-      },
+      { id: `pag-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, formaPagamento: closingPaymentMethod, valor: Number(valor.toFixed(2)) },
     ]);
     setClosingPaymentValue("");
   };
 
   const handleRemovePayment = (paymentId: string) => {
-    setClosingPayments((prev) => prev.filter((payment) => payment.id !== paymentId));
+    setClosingPayments((prev) => prev.filter((p) => p.id !== paymentId));
   };
 
   const handleFechar = () => {
@@ -303,7 +265,6 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
       toast.error("O fechamento só pode ser confirmado quando o total pago for igual ao total da conta", { duration: 1600 });
       return;
     }
-
     fecharConta(mesaSelecionada, { usuario: currentOperator, pagamentos: closingPayments });
     toast.success(
       closingPayments.length > 1
@@ -312,30 +273,17 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
       { duration: 1400, icon: "✅" },
     );
     setMesaSelecionada(null);
+    setMesaTab("comanda");
     resetCloseAccountState();
   };
 
   const handleUnlockFinance = async () => {
-    if (!financeManagerName.trim()) {
-      setFinanceError("Informe o nome do gerente");
-      return;
-    }
-
-    if (!/^\d{4,6}$/.test(financeManagerPin)) {
-      setFinanceError("Informe o PIN do gerente");
-      return;
-    }
-
+    if (!financeManagerName.trim()) { setFinanceError("Informe o nome do gerente"); return; }
+    if (!/^\d{4,6}$/.test(financeManagerPin)) { setFinanceError("Informe o PIN do gerente"); return; }
     setIsUnlockingFinance(true);
     setFinanceError(null);
     const result = await verifyManagerAccess(financeManagerName, financeManagerPin);
-
-    if (!result.ok) {
-      setFinanceError(result.error ?? "Não foi possível validar o gerente");
-      setIsUnlockingFinance(false);
-      return;
-    }
-
+    if (!result.ok) { setFinanceError(result.error ?? "Não foi possível validar o gerente"); setIsUnlockingFinance(false); return; }
     setFinanceUnlocked(true);
     setFinanceManagerPin("");
     setIsUnlockingFinance(false);
@@ -352,23 +300,10 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
 
   const handlePrepareTabletBinding = () => {
     const mesaNumero = Number(tabletTargetMesaNumber);
-
-    if (!Number.isInteger(mesaNumero) || mesaNumero < 1) {
-      toast.error("Informe um número de mesa válido", { duration: 1400 });
-      return;
-    }
-
+    if (!Number.isInteger(mesaNumero) || mesaNumero < 1) { toast.error("Informe um número de mesa válido", { duration: 1400 }); return; }
     const proximaMesa = mesas.find((item) => item.numero === mesaNumero);
-    if (!proximaMesa) {
-      toast.error("Mesa não encontrada para este tablet", { duration: 1400 });
-      return;
-    }
-
-    if (tabletMesaId === proximaMesa.id) {
-      toast.error("O tablet já está vinculado a esta mesa", { duration: 1400 });
-      return;
-    }
-
+    if (!proximaMesa) { toast.error("Mesa não encontrada para este tablet", { duration: 1400 }); return; }
+    if (tabletMesaId === proximaMesa.id) { toast.error("O tablet já está vinculado a esta mesa", { duration: 1400 }); return; }
     openCriticalAction({
       type: "vincular_tablet",
       mesaId: tabletMesa?.id ?? null,
@@ -380,38 +315,17 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
 
   const getCriticalActionCopy = () => {
     if (!criticalAction) return null;
-
     switch (criticalAction.type) {
       case "zerar_mesa":
-        return {
-          title: "Autorizar zeragem da mesa",
-          description: `Mesa ${String(criticalAction.mesaNumero).padStart(2, "0")} será limpa por completo.`,
-          buttonLabel: "Autorizar zeragem",
-        };
+        return { title: "Autorizar zeragem da mesa", description: `Mesa ${String(criticalAction.mesaNumero).padStart(2, "0")} será limpa por completo.`, buttonLabel: "Autorizar zeragem" };
       case "cancelar_pedido":
-        return {
-          title: "Autorizar cancelamento do pedido",
-          description: `Pedido #${criticalAction.pedidoNumero} da Mesa ${String(criticalAction.mesaNumero).padStart(2, "0")}.`,
-          buttonLabel: "Autorizar cancelamento",
-        };
+        return { title: "Autorizar cancelamento do pedido", description: `Pedido #${criticalAction.pedidoNumero} da Mesa ${String(criticalAction.mesaNumero).padStart(2, "0")}.`, buttonLabel: "Autorizar cancelamento" };
       case "remover_item_carrinho":
-        return {
-          title: "Autorizar exclusão de item pendente",
-          description: `${criticalAction.itemNome} será removido da Mesa ${String(criticalAction.mesaNumero).padStart(2, "0")}.`,
-          buttonLabel: "Autorizar exclusão",
-        };
+        return { title: "Autorizar exclusão de item pendente", description: `${criticalAction.itemNome} será removido da Mesa ${String(criticalAction.mesaNumero).padStart(2, "0")}.`, buttonLabel: "Autorizar exclusão" };
       case "remover_item_pedido":
-        return {
-          title: "Autorizar exclusão de item do pedido",
-          description: `${criticalAction.itemNome} será removido do Pedido #${criticalAction.pedidoNumero}.`,
-          buttonLabel: "Autorizar exclusão",
-        };
+        return { title: "Autorizar exclusão de item do pedido", description: `${criticalAction.itemNome} será removido do Pedido #${criticalAction.pedidoNumero}.`, buttonLabel: "Autorizar exclusão" };
       case "desvincular_tablet":
-        return {
-          title: "Autorizar desvínculo do tablet",
-          description: `O terminal será liberado da Mesa ${String(criticalAction.mesaNumero).padStart(2, "0")}.`,
-          buttonLabel: "Desvincular tablet",
-        };
+        return { title: "Autorizar desvínculo do tablet", description: `O terminal será liberado da Mesa ${String(criticalAction.mesaNumero).padStart(2, "0")}.`, buttonLabel: "Desvincular tablet" };
       case "vincular_tablet":
         return {
           title: criticalAction.mesaNumero ? "Autorizar troca de mesa do tablet" : "Autorizar vínculo do tablet",
@@ -427,39 +341,18 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
 
   const handleConfirmCriticalAction = async () => {
     if (!criticalAction) return;
-
-    if (!criticalManagerName.trim()) {
-      setCriticalError("Informe o nome do gerente");
-      return;
-    }
-
-    if (!/^\d{4,6}$/.test(criticalManagerPin)) {
-      setCriticalError("Informe o PIN do gerente");
-      return;
-    }
-
-    if (criticalReason.trim().length < 4) {
-      setCriticalError("Informe um motivo com pelo menos 4 caracteres");
-      return;
-    }
-
+    if (!criticalManagerName.trim()) { setCriticalError("Informe o nome do gerente"); return; }
+    if (!/^\d{4,6}$/.test(criticalManagerPin)) { setCriticalError("Informe o PIN do gerente"); return; }
+    if (criticalReason.trim().length < 4) { setCriticalError("Informe um motivo com pelo menos 4 caracteres"); return; }
     setIsAuthorizingCriticalAction(true);
     setCriticalError(null);
     const result = await verifyManagerAccess(criticalManagerName, criticalManagerPin);
-
-    if (!result.ok) {
-      setCriticalError(result.error ?? "Não foi possível validar o gerente");
-      setIsAuthorizingCriticalAction(false);
-      return;
-    }
-
+    if (!result.ok) { setCriticalError(result.error ?? "Não foi possível validar o gerente"); setIsAuthorizingCriticalAction(false); return; }
     const motivo = criticalReason.trim();
-
-      switch (criticalAction.type) {
+    switch (criticalAction.type) {
       case "zerar_mesa":
         zerarMesa(criticalAction.mesaId, { usuario: currentOperator, motivo });
         setMesaSelecionada(null);
-        setConfirmFechar(false);
         toast.success("Mesa zerada com autorização do gerente", { duration: 1200, icon: "🧹" });
         break;
       case "cancelar_pedido":
@@ -471,10 +364,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
         toast.success("Item removido com autorização do gerente", { duration: 1200, icon: "🗑️" });
         break;
       case "remover_item_pedido":
-        ajustarItemPedido(criticalAction.mesaId, criticalAction.pedidoId, criticalAction.itemUid, -criticalAction.quantidade, {
-          usuario: currentOperator,
-          motivo,
-        });
+        ajustarItemPedido(criticalAction.mesaId, criticalAction.pedidoId, criticalAction.itemUid, -criticalAction.quantidade, { usuario: currentOperator, motivo });
         toast.success("Item removido com autorização do gerente", { duration: 1200, icon: "🗑️" });
         break;
       case "desvincular_tablet":
@@ -492,654 +382,553 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
         break;
       }
     }
-
     resetCriticalDialog();
   };
 
+  /* ══════════════════════════════════════ */
+  /*              RENDER                    */
+  /* ══════════════════════════════════════ */
   return (
     <>
-      <AppLayout
-        title={screenTitle}
-        headerRight={
-          <Button variant="outline" onClick={() => logout(accessMode)} className="gap-2 rounded-xl font-bold">
+      <div className="min-h-svh flex flex-col bg-background">
+        {/* ── HEADER ── */}
+        <header className="flex items-center gap-3 border-b border-border bg-card px-4 py-3 shrink-0 md:px-6">
+          {mesa ? (
+            <button onClick={handleVoltar} className="flex h-9 w-9 items-center justify-center rounded-xl border border-border bg-secondary text-foreground transition-colors hover:bg-secondary/80">
+              <ArrowLeft className="h-4 w-4" />
+            </button>
+          ) : null}
+          <h1 className="text-lg font-black tracking-tight text-foreground truncate flex-1">
+            {mesa ? `Mesa ${String(mesa.numero).padStart(2, "0")}` : accessMode === "gerente" ? "Gerente" : "Caixa"}
+          </h1>
+          <Button variant="outline" onClick={() => logout(accessMode)} className="gap-2 rounded-xl font-bold h-9 px-3 text-sm">
             <LogOut className="h-4 w-4" />
             <span className="hidden sm:inline">Sair</span>
           </Button>
-        }
-      >
-        {!mesa ? (
-          <div className="flex flex-col gap-6">
-            <div className="rounded-2xl border border-border bg-card p-4 md:p-5">
-              <p className="text-sm font-bold text-foreground">
-                {accessMode === "gerente" ? "Gerente logado" : "Caixa logado"}: {currentOperator.nome}
-              </p>
-              <p className="mt-1 text-sm text-muted-foreground">
-                {accessMode === "gerente"
-                  ? "Acesso completo para relatórios financeiros, fechamento e auditoria operacional."
-                  : "A operação diária mostra apenas mesas, pedidos, pagamentos e fechamento por mesa, sem faturamento total."}
-              </p>
+        </header>
+
+        {/* ── MESA DETAIL: fixed top bar ── */}
+        {mesa && (
+          <div className="border-b border-border bg-card/80 backdrop-blur-sm px-4 py-3 md:px-6">
+            <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-x-5 gap-y-2">
+              <div className="flex items-center gap-3">
+                <span className="text-2xl font-black tabular-nums text-foreground">{formatPrice(mesa.total)}</span>
+                <StatusBadge status={mesa.status} />
+              </div>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <User className="h-3.5 w-3.5" />
+                <span>{currentOperator.nome}</span>
+              </div>
+              <div className="ml-auto flex flex-wrap items-center gap-2">
+                <Button variant="outline" size="sm" onClick={() => setComandaOpen(true)} className="rounded-xl font-bold gap-1.5">
+                  <ShoppingCart className="h-3.5 w-3.5" />
+                  Abrir comanda
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => openCriticalAction({ type: "zerar_mesa", mesaId: mesa.id, mesaNumero: mesa.numero })} className="rounded-xl font-bold gap-1.5">
+                  <RotateCcw className="h-3.5 w-3.5" />
+                  Zerar mesa
+                </Button>
+                <Button
+                  size="sm"
+                  disabled={!hasSomethingToClose}
+                  onClick={() => setMesaTab("pagamento")}
+                  className="rounded-xl font-black gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90"
+                >
+                  <Wallet className="h-3.5 w-3.5" />
+                  Fechar conta
+                </Button>
+              </div>
             </div>
+          </div>
+        )}
 
-            <Tabs defaultValue="mesas" className="w-full">
-              <TabsList className={`grid h-auto w-full rounded-2xl bg-secondary p-1 ${accessMode === "gerente" ? "grid-cols-3" : "grid-cols-2"}`}>
-                <TabsTrigger value="mesas" className="rounded-xl py-2.5 font-bold">Mesas</TabsTrigger>
+        {/* ── MAIN CONTENT ── */}
+        <main className="flex-1 overflow-y-auto p-4 md:p-6">
+          {!mesa ? (
+            /* ─────────────── MAIN VIEW (no mesa) ─────────────── */
+            <div className="mx-auto flex max-w-6xl flex-col gap-6">
+              <div className="rounded-2xl border border-border bg-card p-4 md:p-5">
+                <p className="text-sm font-bold text-foreground">
+                  {accessMode === "gerente" ? "Gerente logado" : "Caixa logado"}: {currentOperator.nome}
+                </p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {accessMode === "gerente"
+                    ? "Acesso completo para relatórios financeiros, fechamento e auditoria operacional."
+                    : "A operação diária mostra apenas mesas, pedidos, pagamentos e fechamento por mesa, sem faturamento total."}
+                </p>
+              </div>
+
+              <Tabs defaultValue="mesas" className="w-full">
+                <TabsList className={`grid h-auto w-full rounded-2xl bg-secondary p-1 ${accessMode === "gerente" ? "grid-cols-3" : "grid-cols-2"}`}>
+                  <TabsTrigger value="mesas" className="rounded-xl py-2.5 font-bold">Mesas</TabsTrigger>
+                  {accessMode === "gerente" && <TabsTrigger value="fechamento" className="rounded-xl py-2.5 font-bold">Fechamento do Caixa</TabsTrigger>}
+                  <TabsTrigger value="logs" className="rounded-xl py-2.5 font-bold">Logs</TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="mesas" className="mt-4">
+                  <div className="flex flex-col gap-4">
+                    <h2 className="px-1 text-base font-bold text-foreground">Lista de mesas</h2>
+                    <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4 lg:grid-cols-5">
+                      {mesas.map((item) => (
+                        <MesaCard key={item.id} mesa={item} onClick={() => handleSelecionarMesa(item.id)} showTotal />
+                      ))}
+                    </div>
+                    {accessMode === "gerente" && tabletMesa && (
+                      <div className="rounded-2xl border border-border bg-card p-4 text-sm text-muted-foreground">
+                        Tablet atualmente vinculado à Mesa <span className="font-black text-foreground">{String(tabletMesa.numero).padStart(2, "0")}</span>.
+                      </div>
+                    )}
+                  </div>
+                </TabsContent>
+
                 {accessMode === "gerente" && (
-                  <TabsTrigger value="fechamento" className="rounded-xl py-2.5 font-bold">Fechamento do Caixa</TabsTrigger>
+                  <TabsContent value="fechamento" className="mt-4">
+                    {!financeUnlocked ? (
+                      <div className="surface-card mx-auto flex max-w-lg flex-col gap-4 p-5">
+                        <div className="flex items-start gap-3">
+                          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-secondary text-foreground">
+                            <LockKeyhole className="h-5 w-5" />
+                          </div>
+                          <div>
+                            <h2 className="text-lg font-black text-foreground">Relatórios protegidos</h2>
+                            <p className="mt-1 text-sm text-muted-foreground">Para visualizar o fechamento completo do caixa, valide o gerente já cadastrado neste dispositivo.</p>
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-sm font-semibold text-foreground">Nome do gerente</label>
+                          <Input value={financeManagerName} onChange={(e) => setFinanceManagerName(e.target.value)} placeholder="Ex.: Mariana" maxLength={40} />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-sm font-semibold text-foreground">PIN do gerente</label>
+                          <Input value={financeManagerPin} onChange={(e) => setFinanceManagerPin(e.target.value.replace(/\D/g, "").slice(0, 6))} placeholder="4 a 6 dígitos" inputMode="numeric" autoComplete="one-time-code" />
+                        </div>
+                        {financeError && <p className="rounded-xl border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive">{financeError}</p>}
+                        <Button onClick={handleUnlockFinance} className="h-12 rounded-xl text-base font-black" disabled={isUnlockingFinance}>
+                          <ShieldCheck className="h-4 w-4" />
+                          Liberar fechamento completo
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                        {[
+                          { label: "Total do dia", value: resumoFinanceiro.totalDia },
+                          { label: "Dinheiro", value: resumoFinanceiro.dinheiro },
+                          { label: "Crédito", value: resumoFinanceiro.credito },
+                          { label: "Débito", value: resumoFinanceiro.debito },
+                          { label: "PIX", value: resumoFinanceiro.pix },
+                          { label: "Entradas extras", value: resumoFinanceiro.entradasExtras },
+                        ].map((card) => (
+                          <div key={card.label} className="surface-card p-4">
+                            <p className="text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">{card.label}</p>
+                            <p className="mt-2 text-2xl font-black text-foreground">{formatPrice(card.value)}</p>
+                          </div>
+                        ))}
+                        <div className="surface-card p-4 md:col-span-2 xl:col-span-3">
+                          <p className="text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">Saídas</p>
+                          <p className="mt-2 text-2xl font-black text-foreground">{formatPrice(resumoFinanceiro.saidas)}</p>
+                        </div>
+                      </div>
+                    )}
+                  </TabsContent>
                 )}
-                <TabsTrigger value="logs" className="rounded-xl py-2.5 font-bold">Logs</TabsTrigger>
-              </TabsList>
 
-              <TabsContent value="mesas" className="mt-4">
-                <div className="flex flex-col gap-4">
-                  <h2 className="px-1 text-base font-bold text-foreground">Lista de mesas</h2>
-                  <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4 lg:grid-cols-5">
-                    {mesas.map((item) => (
-                      <MesaCard
-                        key={item.id}
-                        mesa={item}
-                        onClick={() => handleSelecionarMesa(item.id)}
-                        showTotal
-                      />
-                    ))}
+                <TabsContent value="logs" className="mt-4">
+                  <div className="surface-card p-5">
+                    <div className="mb-4 flex items-center gap-2">
+                      <ScrollText className="h-5 w-5 text-foreground" />
+                      <h2 className="text-lg font-black text-foreground">Log de ações</h2>
+                    </div>
+                    <div className="space-y-3">
+                      {eventos.length === 0 ? (
+                        <div className="rounded-2xl bg-secondary p-5 text-sm text-muted-foreground">Ainda não há eventos registrados.</div>
+                      ) : (
+                        eventos.map((evento) => (
+                          <div key={evento.id} className="rounded-2xl border border-border bg-card p-4">
+                            <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                              <div className="space-y-1">
+                                <p className="text-sm font-semibold text-foreground">{evento.descricao}</p>
+                                <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                                  <span>Quem: {evento.usuarioNome ?? "Sistema"}</span>
+                                  <span>Ação: {actionLabels[evento.acao ?? ""] ?? evento.tipo}</span>
+                                  <span>Mesa: {evento.mesaId ? evento.mesaId.replace("mesa-", "") : "—"}</span>
+                                  <span>Item: {evento.itemNome ?? "—"}</span>
+                                  <span>Motivo: {evento.motivo ?? "—"}</span>
+                                  <span>Horário: {evento.criadoEm}</span>
+                                </div>
+                              </div>
+                              <span className="rounded-full bg-secondary px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-foreground">
+                                {actionLabels[evento.acao ?? ""] ?? evento.tipo}
+                              </span>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                </TabsContent>
+              </Tabs>
+            </div>
+          ) : (
+            /* ─────────────── MESA DETAIL VIEW ─────────────── */
+            <div className="mx-auto max-w-5xl">
+              <Tabs value={mesaTab} onValueChange={setMesaTab} className="w-full">
+                <TabsList className="grid h-auto w-full grid-cols-3 rounded-2xl bg-secondary p-1">
+                  <TabsTrigger value="comanda" className="rounded-xl py-2.5 font-bold gap-1.5">
+                    <ReceiptText className="h-4 w-4" />
+                    Comanda
+                  </TabsTrigger>
+                  <TabsTrigger value="pagamento" className="rounded-xl py-2.5 font-bold gap-1.5">
+                    <Wallet className="h-4 w-4" />
+                    Pagamento
+                  </TabsTrigger>
+                  <TabsTrigger value="logs" className="rounded-xl py-2.5 font-bold gap-1.5">
+                    <ScrollText className="h-4 w-4" />
+                    Logs
+                  </TabsTrigger>
+                </TabsList>
+
+                {/* ─── TAB: COMANDA ─── */}
+                <TabsContent value="comanda" className="mt-4 space-y-5">
+                  {/* Confirmed orders */}
+                  <div>
+                    <h3 className="mb-3 text-base font-black text-foreground">Pedidos confirmados</h3>
+                    {mesa.pedidos.length === 0 ? (
+                      <div className="rounded-2xl bg-secondary p-5 text-sm text-muted-foreground">Nenhum pedido confirmado nesta mesa.</div>
+                    ) : (
+                      <div className="space-y-4">
+                        {mesa.pedidos.map((pedido) => (
+                          <div key={pedido.id} className="rounded-2xl border border-border bg-card overflow-hidden">
+                            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-4 py-3">
+                              <div>
+                                <p className="text-sm font-black text-foreground">Pedido #{pedido.numeroPedido}</p>
+                                <p className="text-xs text-muted-foreground">
+                                  {pedido.origem === "garcom" ? `Garçom ${pedido.garcomNome ?? ""}` : pedido.origem === "caixa" ? `Caixa ${pedido.caixaNome ?? ""}` : "Cliente"} • {pedido.criadoEm}
+                                </p>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className="text-base font-black text-primary tabular-nums">{formatPrice(pedido.total)}</span>
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  className="rounded-xl font-bold gap-1 text-destructive border-destructive/20 hover:bg-destructive/10"
+                                  onClick={() => openCriticalAction({ type: "cancelar_pedido", mesaId: mesa.id, mesaNumero: mesa.numero, pedidoId: pedido.id, pedidoNumero: pedido.numeroPedido })}
+                                >
+                                  <XCircle className="h-3.5 w-3.5" />
+                                  Cancelar
+                                </Button>
+                              </div>
+                            </div>
+                            <div className="divide-y divide-border">
+                              {pedido.itens.map((item) => (
+                                <div key={item.uid} className="flex items-center gap-3 px-4 py-3">
+                                  <div className="min-w-0 flex-1">
+                                    <p className="text-sm font-semibold text-foreground">
+                                      <span className="tabular-nums text-muted-foreground">{item.quantidade}×</span> {item.nome}
+                                    </p>
+                                    {item.adicionais.length > 0 && <p className="text-xs text-primary">+ {item.adicionais.map((a) => a.nome).join(", ")}</p>}
+                                    {item.removidos.length > 0 && <p className="text-xs text-destructive">Sem {item.removidos.join(", ")}</p>}
+                                  </div>
+                                  <span className="text-sm font-bold tabular-nums text-foreground">{formatPrice(item.precoUnitario * item.quantidade)}</span>
+                                  <div className="flex items-center gap-1">
+                                    <Button
+                                      size="icon"
+                                      variant="outline"
+                                      className="h-7 w-7 rounded-lg"
+                                      onClick={() =>
+                                        item.quantidade === 1
+                                          ? openCriticalAction({ type: "remover_item_pedido", mesaId: mesa.id, mesaNumero: mesa.numero, pedidoId: pedido.id, pedidoNumero: pedido.numeroPedido, itemUid: item.uid, itemNome: item.nome, quantidade: item.quantidade })
+                                          : ajustarItemPedido(mesa.id, pedido.id, item.uid, -1, { usuario: currentOperator })
+                                      }
+                                    >
+                                      <Minus className="h-3 w-3" />
+                                    </Button>
+                                    <Button
+                                      size="icon"
+                                      variant="outline"
+                                      className="h-7 w-7 rounded-lg"
+                                      onClick={() => ajustarItemPedido(mesa.id, pedido.id, item.uid, 1, { usuario: currentOperator })}
+                                    >
+                                      <Plus className="h-3 w-3" />
+                                    </Button>
+                                    <Button
+                                      size="icon"
+                                      variant="outline"
+                                      className="h-7 w-7 rounded-lg text-destructive border-destructive/20 hover:bg-destructive/10"
+                                      onClick={() => openCriticalAction({ type: "remover_item_pedido", mesaId: mesa.id, mesaNumero: mesa.numero, pedidoId: pedido.id, pedidoNumero: pedido.numeroPedido, itemUid: item.uid, itemNome: item.nome, quantidade: item.quantidade })}
+                                    >
+                                      <Trash2 className="h-3 w-3" />
+                                    </Button>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
 
-                  {accessMode === "gerente" && tabletMesa && (
-                    <div className="rounded-2xl border border-border bg-card p-4 text-sm text-muted-foreground">
-                      Tablet atualmente vinculado à Mesa <span className="font-black text-foreground">{String(tabletMesa.numero).padStart(2, "0")}</span>.
-                      Clique na mesa para desvincular ou trocar o terminal com autenticação do gerente.
-                    </div>
-                  )}
-                </div>
-              </TabsContent>
+                  {/* Pending cart items */}
+                  <div>
+                    <h3 className="mb-3 text-base font-black text-foreground flex items-center gap-2">
+                      <ShoppingCart className="h-4 w-4 text-status-pendente" />
+                      Itens pendentes
+                      {mesa.carrinho.length > 0 && (
+                        <span className="rounded-full bg-status-pendente/15 px-2 py-0.5 text-xs font-bold text-status-pendente">{mesa.carrinho.length}</span>
+                      )}
+                    </h3>
+                    {mesa.carrinho.length === 0 ? (
+                      <div className="rounded-2xl bg-secondary p-5 text-sm text-muted-foreground">Nenhum item pendente no carrinho desta mesa.</div>
+                    ) : (
+                      <div className="space-y-2">
+                        {mesa.carrinho.map((item) => (
+                          <div key={item.uid} className="flex items-center gap-3 rounded-2xl border border-status-pendente/20 bg-status-pendente/5 px-4 py-3">
+                            <div className="min-w-0 flex-1">
+                              <p className="text-sm font-semibold text-foreground">
+                                <span className="tabular-nums text-muted-foreground">{item.quantidade}×</span> {item.nome}
+                              </p>
+                              <p className="text-xs text-muted-foreground">{formatPrice(item.precoUnitario * item.quantidade)}</p>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Button
+                                size="icon"
+                                variant="outline"
+                                className="h-7 w-7 rounded-lg"
+                                onClick={() =>
+                                  item.quantidade === 1
+                                    ? openCriticalAction({ type: "remover_item_carrinho", mesaId: mesa.id, mesaNumero: mesa.numero, itemUid: item.uid, itemNome: item.nome })
+                                    : updateCartItemQty(mesa.id, item.uid, -1, { usuario: currentOperator })
+                                }
+                              >
+                                <Minus className="h-3 w-3" />
+                              </Button>
+                              <Button size="icon" variant="outline" className="h-7 w-7 rounded-lg" onClick={() => updateCartItemQty(mesa.id, item.uid, 1, { usuario: currentOperator })}>
+                                <Plus className="h-3 w-3" />
+                              </Button>
+                              <Button
+                                size="icon"
+                                variant="outline"
+                                className="h-7 w-7 rounded-lg text-destructive border-destructive/20 hover:bg-destructive/10"
+                                onClick={() => openCriticalAction({ type: "remover_item_carrinho", mesaId: mesa.id, mesaNumero: mesa.numero, itemUid: item.uid, itemNome: item.nome })}
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
 
-              {accessMode === "gerente" && (
-                <TabsContent value="fechamento" className="mt-4">
-                  {!financeUnlocked ? (
-                    <div className="surface-card mx-auto flex max-w-lg flex-col gap-4 p-5">
+                  {/* Gerente tablet section */}
+                  {accessMode === "gerente" && (
+                    <div className="rounded-2xl border border-border bg-card p-4">
                       <div className="flex items-start gap-3">
-                        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-secondary text-foreground">
-                          <LockKeyhole className="h-5 w-5" />
+                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-secondary text-foreground">
+                          <Smartphone className="h-5 w-5" />
                         </div>
-                        <div>
-                          <h2 className="text-lg font-black text-foreground">Relatórios protegidos</h2>
-                          <p className="mt-1 text-sm text-muted-foreground">
-                            Para visualizar o fechamento completo do caixa, valide o gerente já cadastrado neste dispositivo.
+                        <div className="flex-1">
+                          <h3 className="text-sm font-black text-foreground">Operação do tablet</h3>
+                          <p className="mt-1 text-xs text-muted-foreground">
+                            {tabletMesaId === mesa.id
+                              ? "Tablet vinculado a esta mesa."
+                              : tabletMesa
+                                ? `Tablet vinculado à Mesa ${String(tabletMesa.numero).padStart(2, "0")}.`
+                                : "Nenhum tablet vinculado."}
                           </p>
                         </div>
                       </div>
-
-                      <div className="space-y-2">
-                        <label className="text-sm font-semibold text-foreground">Nome do gerente</label>
-                        <Input value={financeManagerName} onChange={(event) => setFinanceManagerName(event.target.value)} placeholder="Ex.: Mariana" maxLength={40} />
-                      </div>
-
-                      <div className="space-y-2">
-                        <label className="text-sm font-semibold text-foreground">PIN do gerente</label>
-                        <Input
-                          value={financeManagerPin}
-                          onChange={(event) => setFinanceManagerPin(event.target.value.replace(/\D/g, "").slice(0, 6))}
-                          placeholder="4 a 6 dígitos"
-                          inputMode="numeric"
-                          autoComplete="one-time-code"
-                        />
-                      </div>
-
-                      {financeError && <p className="rounded-xl border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive">{financeError}</p>}
-
-                      <Button onClick={handleUnlockFinance} className="h-12 rounded-xl text-base font-black" disabled={isUnlockingFinance}>
-                        <ShieldCheck className="h-4 w-4" />
-                        Liberar fechamento completo
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                      <div className="surface-card p-4">
-                        <p className="text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">Total do dia</p>
-                        <p className="mt-2 text-2xl font-black text-foreground">{formatPrice(resumoFinanceiro.totalDia)}</p>
-                      </div>
-                      <div className="surface-card p-4">
-                        <p className="text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">Dinheiro</p>
-                        <p className="mt-2 text-2xl font-black text-foreground">{formatPrice(resumoFinanceiro.dinheiro)}</p>
-                      </div>
-                      <div className="surface-card p-4">
-                        <p className="text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">Crédito</p>
-                        <p className="mt-2 text-2xl font-black text-foreground">{formatPrice(resumoFinanceiro.credito)}</p>
-                      </div>
-                      <div className="surface-card p-4">
-                        <p className="text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">Débito</p>
-                        <p className="mt-2 text-2xl font-black text-foreground">{formatPrice(resumoFinanceiro.debito)}</p>
-                      </div>
-                      <div className="surface-card p-4">
-                        <p className="text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">PIX</p>
-                        <p className="mt-2 text-2xl font-black text-foreground">{formatPrice(resumoFinanceiro.pix)}</p>
-                      </div>
-                      <div className="surface-card p-4">
-                        <p className="text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">Entradas extras</p>
-                        <p className="mt-2 text-2xl font-black text-foreground">{formatPrice(resumoFinanceiro.entradasExtras)}</p>
-                      </div>
-                      <div className="surface-card p-4 md:col-span-2 xl:col-span-3">
-                        <p className="text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">Saídas</p>
-                        <p className="mt-2 text-2xl font-black text-foreground">{formatPrice(resumoFinanceiro.saidas)}</p>
-                      </div>
+                      {tabletMesaId === mesa.id ? (
+                        <div className="mt-3 flex flex-col gap-3">
+                          <div className="flex gap-2 items-end">
+                            <div className="flex-1 space-y-1">
+                              <label className="text-xs font-semibold text-foreground">Trocar para mesa</label>
+                              <Input value={tabletTargetMesaNumber} onChange={(e) => setTabletTargetMesaNumber(e.target.value.replace(/\D/g, "").slice(0, 2))} placeholder="Nº" inputMode="numeric" autoComplete="off" className="h-9" />
+                            </div>
+                            <Button size="sm" onClick={handlePrepareTabletBinding} className="rounded-xl font-bold">Trocar</Button>
+                          </div>
+                          <Button size="sm" variant="outline" onClick={() => openCriticalAction({ type: "desvincular_tablet", mesaId: mesa.id, mesaNumero: mesa.numero })} className="rounded-xl font-bold self-start">
+                            Desvincular tablet
+                          </Button>
+                        </div>
+                      ) : tabletMesa ? (
+                        <p className="mt-3 text-xs text-muted-foreground">Para trocar, abra a Mesa {String(tabletMesa.numero).padStart(2, "0")}.</p>
+                      ) : (
+                        <p className="mt-3 text-xs text-muted-foreground">O tablet será vinculado pelo fluxo do cliente.</p>
+                      )}
                     </div>
                   )}
                 </TabsContent>
-              )}
 
-              <TabsContent value="logs" className="mt-4">
-                <div className="surface-card p-5">
-                  <div className="mb-4 flex items-center gap-2">
-                    <ScrollText className="h-5 w-5 text-foreground" />
-                    <h2 className="text-lg font-black text-foreground">Log de ações</h2>
+                {/* ─── TAB: PAGAMENTO ─── */}
+                <TabsContent value="pagamento" className="mt-4 space-y-5">
+                  {/* Summary cards */}
+                  <div className="grid gap-3 grid-cols-3">
+                    <div className="rounded-2xl border border-border bg-card p-4 text-center">
+                      <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground">Total da conta</p>
+                      <p className="mt-2 text-xl font-black text-foreground tabular-nums">{formatPrice(totalConta)}</p>
+                    </div>
+                    <div className="rounded-2xl border border-border bg-card p-4 text-center">
+                      <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground">Total pago</p>
+                      <p className={`mt-2 text-xl font-black tabular-nums ${fechamentoPronto ? "text-status-consumo" : totalPago > 0 ? "text-status-pendente" : "text-foreground"}`}>
+                        {formatPrice(totalPago)}
+                      </p>
+                    </div>
+                    <div className={`rounded-2xl border p-4 text-center ${fechamentoPronto ? "border-status-consumo/30 bg-status-consumo/10" : valorRestante > 0 ? "border-destructive/30 bg-destructive/5" : "border-border bg-card"}`}>
+                      <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground">Restante</p>
+                      <p className={`mt-2 text-xl font-black tabular-nums ${fechamentoPronto ? "text-status-consumo" : "text-destructive"}`}>
+                        {fechamentoPronto ? (
+                          <span className="flex items-center justify-center gap-1">
+                            <Check className="h-5 w-5" /> Quitado
+                          </span>
+                        ) : (
+                          formatPrice(valorRestante)
+                        )}
+                      </p>
+                    </div>
                   </div>
 
-                  <div className="space-y-3">
-                    {eventos.length === 0 ? (
-                      <div className="rounded-2xl bg-secondary p-5 text-sm text-muted-foreground">
-                        Ainda não há eventos registrados.
+                  {/* Progress bar */}
+                  <div className="rounded-full bg-secondary h-2 overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all duration-500 ease-out ${fechamentoPronto ? "bg-status-consumo" : paymentProgress > 0 ? "bg-status-pendente" : "bg-muted"}`}
+                      style={{ width: `${paymentProgress * 100}%` }}
+                    />
+                  </div>
+
+                  {/* Add payment form */}
+                  {!fechamentoPronto && totalConta > 0 && (
+                    <div className="rounded-2xl border border-border bg-card p-4">
+                      <p className="mb-3 text-sm font-black text-foreground">Adicionar pagamento</p>
+                      <div className="grid gap-3 grid-cols-[1fr_1fr_auto] items-end">
+                        <div className="space-y-1">
+                          <label className="text-xs font-semibold text-muted-foreground">Forma</label>
+                          <Select value={closingPaymentMethod} onValueChange={(v) => setClosingPaymentMethod(v as PaymentMethod)}>
+                            <SelectTrigger className="rounded-xl h-10">
+                              <SelectValue placeholder="Selecione" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {paymentMethodOptions.map((opt) => (
+                                <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-xs font-semibold text-muted-foreground">Valor</label>
+                          <Input value={closingPaymentValue} onChange={(e) => setClosingPaymentValue(e.target.value)} placeholder="Ex.: 25,00" inputMode="decimal" autoComplete="off" className="h-10 rounded-xl" />
+                        </div>
+                        <Button onClick={handleAddPayment} className="rounded-xl font-black h-10 px-4">
+                          <Plus className="h-4 w-4" />
+                          Adicionar
+                        </Button>
                       </div>
+                    </div>
+                  )}
+
+                  {/* Payment list */}
+                  <div>
+                    <p className="mb-2 text-sm font-black text-foreground">Pagamentos adicionados</p>
+                    {closingPayments.length === 0 ? (
+                      <div className="rounded-2xl bg-secondary p-4 text-sm text-muted-foreground">Nenhum pagamento adicionado ainda.</div>
                     ) : (
-                      eventos.map((evento) => (
-                        <div key={evento.id} className="rounded-2xl border border-border bg-card p-4">
-                          <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-                            <div className="space-y-1">
-                              <p className="text-sm font-semibold text-foreground">{evento.descricao}</p>
-                              <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
-                                <span>Quem: {evento.usuarioNome ?? "Sistema"}</span>
-                                <span>Ação: {actionLabels[evento.acao ?? ""] ?? evento.tipo}</span>
-                                <span>Mesa: {evento.mesaId ? evento.mesaId.replace("mesa-", "") : "—"}</span>
-                                <span>Item: {evento.itemNome ?? "—"}</span>
-                                <span>Motivo: {evento.motivo ?? "—"}</span>
-                                <span>Horário: {evento.criadoEm}</span>
+                      <div className="space-y-2">
+                        {closingPayments.map((payment) => {
+                          const Icon = paymentMethodOptions.find((o) => o.value === payment.formaPagamento)?.icon ?? Landmark;
+                          return (
+                            <div key={payment.id} className="flex items-center gap-3 rounded-2xl border border-status-consumo/20 bg-status-consumo/5 px-4 py-3">
+                              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-status-consumo/15 text-status-consumo">
+                                <Icon className="h-4 w-4" />
                               </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-bold text-foreground">{getPaymentMethodLabel(payment.formaPagamento)}</p>
+                              </div>
+                              <span className="text-sm font-black tabular-nums text-foreground">{formatPrice(payment.valor)}</span>
+                              <Button size="icon" variant="outline" className="h-7 w-7 rounded-lg text-destructive border-destructive/20 hover:bg-destructive/10" onClick={() => handleRemovePayment(payment.id)}>
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
                             </div>
-                            <span className="rounded-full bg-secondary px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-foreground">
-                              {actionLabels[evento.acao ?? ""] ?? evento.tipo}
-                            </span>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Confirm button */}
+                  <Button
+                    onClick={handleFechar}
+                    disabled={!fechamentoPronto || closingPayments.length === 0}
+                    className={`w-full h-12 rounded-xl text-base font-black transition-colors ${
+                      fechamentoPronto
+                        ? "bg-status-consumo text-white hover:bg-status-consumo/90"
+                        : ""
+                    }`}
+                  >
+                    <Check className="h-5 w-5" />
+                    Confirmar fechamento
+                  </Button>
+
+                  {!fechamentoPronto && totalConta > 0 && (
+                    <p className="text-center text-xs text-muted-foreground">O fechamento só será liberado quando o total pago for exatamente igual ao total da conta.</p>
+                  )}
+                </TabsContent>
+
+                {/* ─── TAB: LOGS ─── */}
+                <TabsContent value="logs" className="mt-4">
+                  <div className="space-y-3">
+                    {mesaLogs.length === 0 ? (
+                      <div className="rounded-2xl bg-secondary p-5 text-sm text-muted-foreground">Ainda não há ações registradas para esta mesa.</div>
+                    ) : (
+                      mesaLogs.map((evento) => (
+                        <div key={evento.id} className="rounded-2xl border border-border bg-card p-4">
+                          <p className="text-sm font-semibold text-foreground">{evento.descricao}</p>
+                          <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                            <span>Quem: {evento.usuarioNome ?? "Sistema"}</span>
+                            <span>Item: {evento.itemNome ?? "—"}</span>
+                            <span>Motivo: {evento.motivo ?? "—"}</span>
+                            <span>Horário: {evento.criadoEm}</span>
                           </div>
                         </div>
                       ))
                     )}
                   </div>
-                </div>
-              </TabsContent>
-            </Tabs>
-          </div>
-        ) : (
-          <div className="mx-auto flex max-w-4xl flex-col gap-6">
-            <div className="surface-card grid gap-4 p-5 md:grid-cols-[1fr_auto] md:items-center">
-              <div>
-                <span className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground">
-                  Mesa {String(mesa.numero).padStart(2, "0")}
-                </span>
-                <div className="mt-3 flex flex-wrap items-center gap-3">
-                  <StatusBadge status={mesa.status} />
-                  <span className="text-3xl font-black text-foreground">{formatPrice(mesa.total)}</span>
-                </div>
-                <p className="mt-2 text-sm text-muted-foreground">Operador atual: {currentOperator.nome}</p>
-              </div>
-              <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-end">
-                <Button variant="outline" onClick={handleVoltar} className="rounded-xl font-bold">
-                  Mesas
-                </Button>
-                <Button variant="outline" onClick={() => setComandaOpen(true)} className="rounded-xl font-bold">
-                  Abrir comanda
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => openCriticalAction({ type: "zerar_mesa", mesaId: mesa.id, mesaNumero: mesa.numero })}
-                  className="rounded-xl font-bold"
-                >
-                  <RotateCcw className="h-4 w-4" />
-                  Zerar mesa
-                </Button>
-                <Button
-                  variant="destructive"
-                  onClick={() => {
-                    if (confirmFechar) {
-                      resetCloseAccountState();
-                      return;
-                    }
-                    setConfirmFechar(true);
-                  }}
-                  disabled={!hasSomethingToClose}
-                  className="rounded-xl font-black"
-                >
-                  Fechar conta
-                </Button>
-              </div>
+                </TabsContent>
+              </Tabs>
             </div>
+          )}
+        </main>
+      </div>
 
-            {accessMode === "gerente" && (
-              <div className="surface-card flex flex-col gap-4 p-5">
-                <div className="flex items-start gap-3">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-secondary text-foreground">
-                    <Smartphone className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <h2 className="text-lg font-black text-foreground">Operação do tablet</h2>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      {tabletMesaId === mesa.id
-                        ? "Este tablet está vinculado à mesa atual. Você pode desvincular ou trocar para outra mesa com autenticação do gerente."
-                        : tabletMesa
-                          ? `O tablet está vinculado à Mesa ${String(tabletMesa.numero).padStart(2, "0")}.`
-                          : "Nenhum tablet está vinculado neste momento."}
-                    </p>
-                  </div>
-                </div>
-
-                {tabletMesaId === mesa.id ? (
-                  <>
-                    <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
-                      <div className="space-y-2">
-                        <label className="text-sm font-semibold text-foreground">Trocar para outra mesa</label>
-                        <Input
-                          value={tabletTargetMesaNumber}
-                          onChange={(event) => setTabletTargetMesaNumber(event.target.value.replace(/\D/g, "").slice(0, 2))}
-                          placeholder="Ex.: 12"
-                          inputMode="numeric"
-                          autoComplete="off"
-                        />
-                      </div>
-                      <Button type="button" onClick={handlePrepareTabletBinding} className="rounded-xl font-black">
-                        Trocar para outra mesa
-                      </Button>
-                    </div>
-
-                    <div className="flex flex-wrap gap-3">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => openCriticalAction({ type: "desvincular_tablet", mesaId: mesa.id, mesaNumero: mesa.numero })}
-                        className="rounded-xl font-bold"
-                      >
-                        Desvincular tablet
-                      </Button>
-                    </div>
-                  </>
-                ) : tabletMesa ? (
-                  <div className="rounded-2xl border border-border bg-secondary/60 p-4 text-sm text-foreground">
-                    Para trocar o tablet para esta mesa, abra a Mesa {String(tabletMesa.numero).padStart(2, "0")} e use a opção de troca.
-                  </div>
-                ) : (
-                  <div className="rounded-2xl border border-border bg-secondary/60 p-4 text-sm text-foreground">
-                    O tablet será vinculado inicialmente pelo próprio fluxo do cliente no primeiro acesso.
-                  </div>
-                )}
-              </div>
-            )}
-
-            {confirmFechar && (
-              <div className="surface-card flex flex-col gap-5 p-5">
-                <div>
-                  <p className="text-base font-black text-foreground">Fechamento com múltiplos pagamentos</p>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    Mesa {String(mesa.numero).padStart(2, "0")} • Operador {currentOperator.nome}
-                  </p>
-                </div>
-
-                <div className="grid gap-3 md:grid-cols-3">
-                  <div className="rounded-2xl border border-border bg-secondary/60 p-4">
-                    <p className="text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">Total da conta</p>
-                    <p className="mt-2 text-xl font-black text-foreground">{formatPrice(totalConta)}</p>
-                  </div>
-                  <div className="rounded-2xl border border-border bg-secondary/60 p-4">
-                    <p className="text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">Total pago</p>
-                    <p className="mt-2 text-xl font-black text-foreground">{formatPrice(totalPago)}</p>
-                  </div>
-                  <div className="rounded-2xl border border-border bg-secondary/60 p-4">
-                    <p className="text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">Valor restante</p>
-                    <p className="mt-2 text-xl font-black text-foreground">{formatPrice(valorRestante)}</p>
-                  </div>
-                </div>
-
-                <div className="grid gap-3 rounded-2xl border border-border bg-card p-4 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] md:items-end">
-                  <div className="space-y-2">
-                    <label className="text-sm font-semibold text-foreground">Forma</label>
-                    <Select value={closingPaymentMethod} onValueChange={(value) => setClosingPaymentMethod(value as PaymentMethod)}>
-                      <SelectTrigger className="rounded-xl">
-                        <SelectValue placeholder="Selecione a forma" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {paymentMethodOptions.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="text-sm font-semibold text-foreground">Valor</label>
-                    <Input
-                      value={closingPaymentValue}
-                      onChange={(event) => setClosingPaymentValue(event.target.value)}
-                      placeholder="Ex.: 25,00"
-                      inputMode="decimal"
-                      autoComplete="off"
-                    />
-                  </div>
-
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={handleAddPayment}
-                    disabled={valorRestante === 0}
-                    className="rounded-xl font-black"
-                  >
-                    + Adicionar pagamento
-                  </Button>
-                </div>
-
-                <div className="space-y-3">
-                  <p className="text-sm font-semibold text-foreground">Pagamentos adicionados</p>
-                  {closingPayments.length === 0 ? (
-                    <div className="rounded-2xl bg-secondary p-4 text-sm text-muted-foreground">
-                      Nenhum pagamento adicionado ainda.
-                    </div>
-                  ) : (
-                    closingPayments.map((payment) => (
-                      <div key={payment.id} className="flex items-center justify-between gap-3 rounded-2xl border border-border bg-card p-4">
-                        <div>
-                          <p className="text-sm font-bold text-foreground">{getPaymentMethodLabel(payment.formaPagamento)}</p>
-                          <p className="mt-1 text-sm text-muted-foreground">{formatPrice(payment.valor)}</p>
-                        </div>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={() => handleRemovePayment(payment.id)}
-                          className="rounded-xl font-bold"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                          Remover
-                        </Button>
-                      </div>
-                    ))
-                  )}
-                </div>
-
-                <p className="text-sm text-muted-foreground">
-                  O fechamento só será liberado quando o total pago for exatamente igual ao total da conta.
-                </p>
-
-                <div className="flex gap-3">
-                  <Button variant="outline" onClick={resetCloseAccountState} className="flex-1 rounded-xl font-bold">
-                    Cancelar
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    onClick={handleFechar}
-                    disabled={!fechamentoPronto || closingPayments.length === 0}
-                    className="flex-1 rounded-xl font-black"
-                  >
-                    Confirmar fechamento
-                  </Button>
-                </div>
-              </div>
-            )}
-
-            <div className="surface-card p-5">
-              <div className="mb-4 flex items-center justify-between gap-3">
-                <h2 className="text-lg font-black text-foreground">Histórico de pedidos da mesa</h2>
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Somente pedidos e total da mesa</p>
-              </div>
-              <div className="space-y-4">
-                {mesa.pedidos.length === 0 ? (
-                  <div className="rounded-2xl bg-secondary p-5 text-sm text-muted-foreground">
-                    Nenhum pedido confirmado nesta mesa.
-                  </div>
-                ) : (
-                  mesa.pedidos.map((pedido) => (
-                    <div key={pedido.id} className="rounded-2xl border border-border bg-card p-4">
-                      <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                        <div>
-                          <p className="text-sm font-bold text-foreground">Pedido #{pedido.numeroPedido}</p>
-                          <p className="mt-1 text-xs text-muted-foreground">
-                            {pedido.origem === "garcom"
-                              ? `Lançado por ${pedido.garcomNome ?? "garçom identificado"}`
-                              : pedido.origem === "caixa"
-                                ? `Lançado pelo caixa ${pedido.caixaNome ?? "identificado"}`
-                                : "Lançado pelo cliente"}
-                            {` • Enviado às ${pedido.criadoEm}`}
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-base font-black text-foreground">{formatPrice(pedido.total)}</span>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            className="rounded-xl font-bold"
-                            onClick={() =>
-                              openCriticalAction({
-                                type: "cancelar_pedido",
-                                mesaId: mesa.id,
-                                mesaNumero: mesa.numero,
-                                pedidoId: pedido.id,
-                                pedidoNumero: pedido.numeroPedido,
-                              })
-                            }
-                          >
-                            <Trash2 className="h-4 w-4" />
-                            Cancelar pedido
-                          </Button>
-                        </div>
-                      </div>
-
-                      <div className="space-y-3">
-                        {pedido.itens.map((item) => (
-                          <div key={item.uid} className="flex items-start justify-between gap-3 rounded-xl bg-secondary p-3">
-                            <div className="min-w-0 flex-1">
-                              <p className="text-sm font-semibold text-foreground">{item.quantidade}x {item.nome}</p>
-                              {item.adicionais.length > 0 && (
-                                <p className="mt-1 text-xs text-primary">+ {item.adicionais.map((adicional) => adicional.nome).join(", ")}</p>
-                              )}
-                              {item.removidos.length > 0 && (
-                                <p className="text-xs text-destructive">Sem {item.removidos.join(", ")}</p>
-                              )}
-                            </div>
-
-                            <div className="flex items-center gap-2">
-                              <Button
-                                size="icon"
-                                variant="outline"
-                                className="rounded-xl"
-                                onClick={() =>
-                                  item.quantidade === 1
-                                    ? openCriticalAction({
-                                        type: "remover_item_pedido",
-                                        mesaId: mesa.id,
-                                        mesaNumero: mesa.numero,
-                                        pedidoId: pedido.id,
-                                        pedidoNumero: pedido.numeroPedido,
-                                        itemUid: item.uid,
-                                        itemNome: item.nome,
-                                        quantidade: item.quantidade,
-                                      })
-                                    : ajustarItemPedido(mesa.id, pedido.id, item.uid, -1, { usuario: currentOperator })
-                                }
-                              >
-                                <Minus className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                size="icon"
-                                variant="outline"
-                                className="rounded-xl"
-                                onClick={() => ajustarItemPedido(mesa.id, pedido.id, item.uid, 1, { usuario: currentOperator })}
-                              >
-                                <Plus className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                size="icon"
-                                variant="destructive"
-                                className="rounded-xl"
-                                onClick={() =>
-                                  openCriticalAction({
-                                    type: "remover_item_pedido",
-                                    mesaId: mesa.id,
-                                    mesaNumero: mesa.numero,
-                                    pedidoId: pedido.id,
-                                    pedidoNumero: pedido.numeroPedido,
-                                    itemUid: item.uid,
-                                    itemNome: item.nome,
-                                    quantidade: item.quantidade,
-                                  })
-                                }
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
-
-            <div className="surface-card p-5">
-              <h2 className="mb-4 text-lg font-black text-foreground">Itens pendentes no carrinho</h2>
-              <div className="space-y-3">
-                {mesa.carrinho.length === 0 ? (
-                  <div className="rounded-2xl bg-secondary p-5 text-sm text-muted-foreground">
-                    Nenhum item pendente no carrinho desta mesa.
-                  </div>
-                ) : (
-                  mesa.carrinho.map((item) => (
-                    <div key={item.uid} className="flex items-start justify-between gap-3 rounded-2xl border border-border bg-card p-4">
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-semibold text-foreground">{item.quantidade}x {item.nome}</p>
-                        <p className="mt-1 text-xs text-muted-foreground">Subtotal pendente: {formatPrice(item.precoUnitario * item.quantidade)}</p>
-                      </div>
-
-                      <div className="flex items-center gap-2">
-                        <Button
-                          size="icon"
-                          variant="outline"
-                          className="rounded-xl"
-                          onClick={() =>
-                            item.quantidade === 1
-                              ? openCriticalAction({
-                                  type: "remover_item_carrinho",
-                                  mesaId: mesa.id,
-                                  mesaNumero: mesa.numero,
-                                  itemUid: item.uid,
-                                  itemNome: item.nome,
-                                })
-                              : updateCartItemQty(mesa.id, item.uid, -1, { usuario: currentOperator })
-                          }
-                        >
-                          <Minus className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          size="icon"
-                          variant="outline"
-                          className="rounded-xl"
-                          onClick={() => updateCartItemQty(mesa.id, item.uid, 1, { usuario: currentOperator })}
-                        >
-                          <Plus className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          size="icon"
-                          variant="destructive"
-                          className="rounded-xl"
-                          onClick={() =>
-                            openCriticalAction({
-                              type: "remover_item_carrinho",
-                              mesaId: mesa.id,
-                              mesaNumero: mesa.numero,
-                              itemUid: item.uid,
-                              itemNome: item.nome,
-                            })
-                          }
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
-
-            <div className="surface-card p-5">
-              <div className="mb-4 flex items-center gap-2">
-                <ReceiptText className="h-5 w-5 text-foreground" />
-                <h2 className="text-lg font-black text-foreground">Log visível da mesa</h2>
-              </div>
-              <div className="space-y-3">
-                {mesaLogs.length === 0 ? (
-                  <div className="rounded-2xl bg-secondary p-5 text-sm text-muted-foreground">
-                    Ainda não há ações registradas para esta mesa.
-                  </div>
-                ) : (
-                  mesaLogs.map((evento) => (
-                    <div key={evento.id} className="rounded-2xl border border-border bg-card p-4">
-                      <p className="text-sm font-semibold text-foreground">{evento.descricao}</p>
-                      <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
-                        <span>Quem: {evento.usuarioNome ?? "Sistema"}</span>
-                        <span>Item: {evento.itemNome ?? "—"}</span>
-                        <span>Motivo: {evento.motivo ?? "—"}</span>
-                        <span>Horário: {evento.criadoEm}</span>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-      </AppLayout>
-
+      {/* ── CRITICAL ACTION DIALOG ── */}
       <Dialog open={Boolean(criticalAction)} onOpenChange={(open) => !open && resetCriticalDialog()}>
         <DialogContent className="rounded-2xl border-border bg-background sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>{getCriticalActionCopy()?.title}</DialogTitle>
             <DialogDescription>{getCriticalActionCopy()?.description}</DialogDescription>
           </DialogHeader>
-
           <div className="space-y-4">
             {criticalAction?.type === "vincular_tablet" && (
               <div className="rounded-2xl border border-border bg-secondary/60 p-4 text-sm text-foreground">
                 <p className="font-semibold">Destino do tablet: Mesa {String(criticalAction.proximaMesaNumero).padStart(2, "0")}</p>
               </div>
             )}
-
             <div className="space-y-2">
               <label className="text-sm font-semibold text-foreground">Nome do gerente</label>
-              <Input value={criticalManagerName} onChange={(event) => setCriticalManagerName(event.target.value)} placeholder="Ex.: Mariana" maxLength={40} />
+              <Input value={criticalManagerName} onChange={(e) => setCriticalManagerName(e.target.value)} placeholder="Ex.: Mariana" maxLength={40} />
             </div>
-
             <div className="space-y-2">
               <label className="text-sm font-semibold text-foreground">PIN do gerente</label>
-              <Input
-                value={criticalManagerPin}
-                onChange={(event) => setCriticalManagerPin(event.target.value.replace(/\D/g, "").slice(0, 6))}
-                placeholder="4 a 6 dígitos"
-                inputMode="numeric"
-                autoComplete="one-time-code"
-              />
+              <Input value={criticalManagerPin} onChange={(e) => setCriticalManagerPin(e.target.value.replace(/\D/g, "").slice(0, 6))} placeholder="4 a 6 dígitos" inputMode="numeric" autoComplete="one-time-code" />
             </div>
-
             <div className="space-y-2">
               <label className="text-sm font-semibold text-foreground">Motivo da ação</label>
-              <Textarea
-                value={criticalReason}
-                onChange={(event) => setCriticalReason(event.target.value)}
-                placeholder="Descreva o motivo obrigatório desta ação"
-                maxLength={180}
-                className="min-h-[110px] rounded-xl"
-              />
+              <Textarea value={criticalReason} onChange={(e) => setCriticalReason(e.target.value)} placeholder="Descreva o motivo obrigatório desta ação" maxLength={180} className="min-h-[110px] rounded-xl" />
             </div>
-
             {criticalError && <p className="rounded-xl border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive">{criticalError}</p>}
           </div>
-
           <DialogFooter className="gap-3 sm:gap-0">
-            <Button variant="outline" onClick={resetCriticalDialog} className="rounded-xl font-bold">
-              Voltar
-            </Button>
+            <Button variant="outline" onClick={resetCriticalDialog} className="rounded-xl font-bold">Voltar</Button>
             <Button variant="destructive" onClick={handleConfirmCriticalAction} className="rounded-xl font-black" disabled={isAuthorizingCriticalAction}>
               {getCriticalActionCopy()?.buttonLabel ?? "Autorizar"}
             </Button>
