@@ -35,10 +35,11 @@ const ClientePage = () => {
     if (qrMesa && !mesaId) {
       const mesa = mesas.find((m) => m.id === qrMesa || String(m.numero) === qrMesa);
       if (mesa) {
-        handleSelectMesa(mesa.id);
+        const boundId = setBoundTabletMesaId(mesa.id);
+        setMesaId(boundId);
       }
     }
-  }, [qrMesa, mesas]);
+  }, [qrMesa, mesas]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useRouteLock("/cliente");
 
