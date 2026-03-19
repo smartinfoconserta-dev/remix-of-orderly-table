@@ -490,7 +490,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
         <main className="flex-1 overflow-hidden">
           {!mesa ? (
             /* ─────────────── MAIN VIEW — FULL HEIGHT 2-COL ─────────────── */
-            <div className="flex h-full">
+            <div className="flex h-full view-fade-in">
 
               {/* ═══ LEFT COLUMN (70%) ═══ */}
               <div className="flex flex-[7] flex-col min-w-0 overflow-y-auto p-5 lg:p-6 scrollbar-hide">
