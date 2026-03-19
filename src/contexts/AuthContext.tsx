@@ -217,6 +217,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         getProfilesByRole,
         loginWithPin,
         verifyManagerAccess,
+        verifyEmployeeAccess,
         logout,
       }}
     >
