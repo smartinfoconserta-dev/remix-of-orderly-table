@@ -79,10 +79,7 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
   const [contaOpen, setContaOpen] = useState(false);
   const [showExitAlert, setShowExitAlert] = useState(false);
   const [isClientIdle, setIsClientIdle] = useState(false);
-  const categorySwitchTimerRef = useRef<number | null>(null);
-  const categoryEnterTimerRef = useRef<number | null>(null);
-  const categorySkeletonTimerRef = useRef<number | null>(null);
-  const cardsAnimationTimerRef = useRef<number | null>(null);
+  const openProductTimerRef = useRef<number | null>(null);
   const openProductTimerRef = useRef<number | null>(null);
   const idleTimeoutRef = useRef<number | null>(null);
   const orderSubmissionCooldownRef = useRef<number | null>(null);
