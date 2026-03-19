@@ -48,10 +48,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useRestaurant } from "@/contexts/RestaurantContext";
 import { useRouteLock } from "@/hooks/use-route-lock";
 import {
-  clearBoundTabletMesaId,
-  clearTabletLoginUser,
   getBoundTabletMesaId,
-  setBoundTabletMesaId,
 } from "@/lib/tabletBinding";
 import type { PaymentMethod, SplitPayment, UserRole } from "@/types/operations";
 
