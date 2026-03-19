@@ -448,10 +448,41 @@ const AdminPage = () => {
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-muted-foreground">URL da foto</label>
+                  {/* Photo upload + URL */}
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-muted-foreground">Foto do produto</label>
+                    {/* Preview */}
+                    {(editForm.imagemBase64 || editForm.imagem) && (
+                      <div className="flex items-center gap-3">
+                        <img
+                          src={editForm.imagemBase64 || editForm.imagem}
+                          alt="Preview"
+                          className="h-16 w-16 rounded-xl border border-border object-cover"
+                        />
+                        {editForm.imagemBase64 && (
+                          <button
+                            type="button"
+                            onClick={() => setEditForm((f) => ({ ...f, imagemBase64: "" }))}
+                            className="text-xs text-destructive hover:underline"
+                          >
+                            Remover foto enviada
+                          </button>
+                        )}
+                      </div>
+                    )}
+                    {/* File upload */}
+                    <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileUpload} />
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border bg-secondary/30 px-4 py-4 text-sm font-bold text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground"
+                    >
+                      <ImagePlus className="h-5 w-5" />
+                      Clique para selecionar foto
+                    </button>
+                    {/* URL alternative */}
+                    <p className="text-[10px] font-bold text-muted-foreground pt-1">Ou cole uma URL</p>
                     <Input value={editForm.imagem} onChange={(e) => setEditForm((f) => ({ ...f, imagem: e.target.value }))} placeholder="https://..." />
-                    <p className="text-[10px] text-muted-foreground">Dica: use o site <span className="font-bold">imgbb.com</span> para fazer upload gratuito da foto e cole o link aqui.</p>
                   </div>
                   <div className="flex gap-3 pt-2">
                     <Button variant="outline" className="flex-1" onClick={() => setEditProduct(null)}>
