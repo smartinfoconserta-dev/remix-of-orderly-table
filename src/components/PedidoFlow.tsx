@@ -650,10 +650,11 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
           return (
             <article
               key={produto.id}
-              className={`surface-card overflow-hidden rounded-[1.65rem] border border-border/80 bg-card shadow-[0_18px_40px_-30px_hsl(var(--foreground)/0.95)] transition-transform duration-200 ${
+              className={`surface-card overflow-hidden rounded-[1.65rem] border border-border/80 bg-card shadow-[0_18px_40px_-30px_hsl(var(--foreground)/0.95)] card-fade-up ${
                 isCardSelected ? "scale-[1.01] shadow-[0_20px_44px_-24px_hsl(var(--foreground)/0.92)]" : ""
               }`}
               style={{
+                animationDelay: `${index * 30}ms`,
                 transitionProperty: "transform, box-shadow",
                 transitionDuration: `${CARD_ANIMATION_DURATION_MS}ms`,
                 transitionTimingFunction: "ease-out",
