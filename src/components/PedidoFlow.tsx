@@ -330,6 +330,65 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
     setIsClientIdle(false);
   }, [chamarGarcom, mesaId]);
 
+  // ── Long-press admin gesture ──
+  const handleLogoPointerDown = useCallback(() => {
+    if (modo !== "cliente") return;
+    if (longPressTimerRef.current) window.clearTimeout(longPressTimerRef.current);
+    longPressTimerRef.current = window.setTimeout(() => {
+      longPressTimerRef.current = null;
+      setAdminModalOpen(true);
+      setAdminAuthenticated(false);
+      setAdminNome("");
+      setAdminPin("");
+      setAdminError(null);
+      setShowMesaSelector(false);
+    }, LONG_PRESS_DURATION_MS);
+  }, [modo]);
+
+  const handleLogoPointerUp = useCallback(() => {
+    if (longPressTimerRef.current) {
+      window.clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+  }, []);
+
+  const handleAdminLogin = useCallback(async () => {
+    if (isAdminLoggingIn) return;
+    setIsAdminLoggingIn(true);
+    setAdminError(null);
+    const result = await verifyEmployeeAccess(adminNome.trim(), adminPin);
+    if (!result.ok) {
+      setAdminError(result.error ?? "Credenciais inválidas");
+      setIsAdminLoggingIn(false);
+      return;
+    }
+    setAdminAuthenticated(true);
+    setAdminPin("");
+    setAdminError(null);
+    setIsAdminLoggingIn(false);
+  }, [adminNome, adminPin, isAdminLoggingIn, verifyEmployeeAccess]);
+
+  const handleAdminTrocarMesa = useCallback(() => {
+    setShowMesaSelector(true);
+  }, []);
+
+  const handleAdminSelectNewMesa = useCallback((newMesaId: string) => {
+    setBoundTabletMesaId(newMesaId);
+    setAdminModalOpen(false);
+    toast.success("Mesa trocada com sucesso", { duration: 1200, icon: "🔄" });
+    // Force reload to pick up new mesa
+    window.location.reload();
+  }, []);
+
+  const handleAdminDesvincular = useCallback(() => {
+    clearBoundTabletMesaId();
+    clearTabletLoginUser();
+    setAdminModalOpen(false);
+    toast.success("Tablet desvinculado", { duration: 1200, icon: "📱" });
+  }, []);
+
+  const mesasOrdenadas = useMemo(() => [...mesas].sort((a, b) => a.numero - b.numero), [mesas]);
+
   const validatePendingCart = useCallback(() => {
     const possuiItemInvalido = carrinho.some((item) => item.quantidade <= 0);
 
