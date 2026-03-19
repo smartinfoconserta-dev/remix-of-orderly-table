@@ -13,6 +13,7 @@ interface Props {
   produto: Produto | null;
   onClose: () => void;
   onAdd: (item: ItemCarrinho) => void;
+  isGarcomMobile?: boolean;
 }
 
 type StepId = ProductStep;
@@ -85,7 +86,7 @@ const resolveSteps = (produto: Produto | null): StepId[] => {
   return standardFlowOrder.filter((step) => isStepAvailable(produto, step));
 };
 
-const ProductModal = ({ produto, onClose, onAdd }: Props) => {
+const ProductModal = ({ produto, onClose, onAdd, isGarcomMobile = false }: Props) => {
   const [pedidoAtual, setPedidoAtual] = useState<PedidoAtual>(() => createPedidoAtual());
   const [isAddLocked, setIsAddLocked] = useState(false);
   const [displayStep, setDisplayStep] = useState<StepId>("quantidade");
@@ -168,7 +169,7 @@ const ProductModal = ({ produto, onClose, onAdd }: Props) => {
     const prefersReducedMotion =
       typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-    if (prefersReducedMotion) {
+    if (prefersReducedMotion || isGarcomMobile) {
       clearStepTransition();
       setPreviousStep(null);
       setDisplayStep(activeStep);
@@ -196,7 +197,7 @@ const ProductModal = ({ produto, onClose, onAdd }: Props) => {
       setTransitionPhase("idle");
       stepTransitionTimeoutRef.current = null;
     }, STEP_TRANSITION_MS);
-  }, [activeStep, clearStepTransition, displayStep, flowSteps, produto]);
+  }, [activeStep, clearStepTransition, displayStep, flowSteps, produto, isGarcomMobile]);
 
   const updatePedidoAtual = useCallback(<K extends keyof PedidoAtual>(field: K, value: PedidoAtual[K]) => {
     setPedidoAtual((prev) => ({ ...prev, [field]: value }));
@@ -251,6 +252,10 @@ const ProductModal = ({ produto, onClose, onAdd }: Props) => {
     },
     [pedidoAtual.quantidade, pedidoAtual.tipo, pedidoAtual.viagem],
   );
+
+  const canSkipCurrentStep = Boolean(activeDefinition?.optional && !isLastStep);
+  const canAdvanceCurrentStep = validarEtapa(activeStep);
+  const canSubmitItem = flowSteps.every((step) => validarEtapa(step));
 
   const goToStep = (stepId: StepId) => {
     const targetIndex = flowSteps.findIndex((step) => step === stepId);
@@ -522,146 +527,278 @@ const ProductModal = ({ produto, onClose, onAdd }: Props) => {
         hideCloseButton
         useDefaultAnimation={false}
         overlayClassName="bg-foreground/70 backdrop-blur-sm data-[state=open]:duration-250 data-[state=closed]:duration-250 data-[state=open]:ease-out data-[state=closed]:ease-out"
-        contentAnimationClassName="data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0 data-[state=open]:zoom-in-95 data-[state=closed]:zoom-out-95 data-[state=open]:duration-220 data-[state=closed]:duration-220 data-[state=open]:ease-out data-[state=closed]:ease-out"
-        className="max-h-[94vh] max-w-6xl overflow-hidden rounded-[2rem] border-border bg-card p-0"
+        contentAnimationClassName={
+          isGarcomMobile
+            ? "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0 data-[state=open]:slide-in-from-bottom-10 data-[state=closed]:slide-out-to-bottom-10 data-[state=open]:duration-220 data-[state=closed]:duration-200 data-[state=open]:ease-out data-[state=closed]:ease-in"
+            : "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0 data-[state=open]:zoom-in-95 data-[state=closed]:zoom-out-95 data-[state=open]:duration-220 data-[state=closed]:duration-220 data-[state=open]:ease-out data-[state=closed]:ease-out"
+        }
+        className={
+          isGarcomMobile
+            ? "left-0 right-0 top-auto z-[70] w-full max-h-[90dvh] max-w-none translate-x-0 translate-y-0 gap-0 overflow-hidden rounded-t-[2rem] rounded-b-none border-border bg-card p-0"
+            : "max-h-[94vh] max-w-6xl overflow-hidden rounded-[2rem] border-border bg-card p-0"
+        }
       >
         <DialogTitle className="sr-only">Personalizar item do pedido</DialogTitle>
         <DialogDescription className="sr-only">
           Personalize o item, adicione ao carrinho e volte ao fluxo de pedido sem perder o contexto da mesa.
         </DialogDescription>
         {produto && (
-          <div className="flex max-h-[94vh] flex-col overflow-hidden">
-            <div className="relative border-b border-border bg-card px-5 py-5 md:px-6">
-              <div className="pr-12">
-                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">Autoatendimento guiado</p>
-                <h2 className="mt-2 text-2xl font-black text-foreground md:text-3xl">{produto.nome}</h2>
-                <p className="mt-2 max-w-2xl text-sm text-muted-foreground md:text-base">{produto.descricao}</p>
-              </div>
-              <button
-                type="button"
-                onClick={() => handleOpenChange(false)}
-                className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full border border-border bg-background text-foreground"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-
-            <div className="grid min-h-0 flex-1 md:grid-cols-[300px_1fr]">
-              <aside className="border-b border-border bg-secondary/20 p-4 md:border-b-0 md:border-r md:p-5">
-                <div className="space-y-2">
-                  {flowSteps.map((step, index) => {
-                    const selected = activeStep === step;
-                    const completed = index < activeStepIndex;
-
-                    return (
-                      <button
-                        key={step}
-                        type="button"
-                        onClick={() => goToStep(step)}
-                        disabled={index > activeStepIndex}
-                        className={`flex w-full items-center justify-between rounded-2xl border px-4 py-3 text-left transition-all disabled:cursor-not-allowed disabled:opacity-70 ${
-                          selected
-                            ? "border-primary bg-card text-foreground shadow-sm"
-                            : "border-transparent bg-transparent text-muted-foreground hover:border-border hover:bg-card/70 hover:text-foreground"
-                        }`}
-                      >
-                        <div className="flex min-w-0 items-start gap-3">
-                          <div className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-black ${selected ? "bg-primary text-primary-foreground" : completed ? "bg-secondary text-foreground" : "border border-border text-muted-foreground"}`}>
-                            {completed ? <Check className="h-4 w-4" /> : index + 1}
-                          </div>
-                          <div className="min-w-0">
-                            <p className="text-sm font-bold">{stepMeta[step].label}</p>
-                            <p className="mt-1 text-xs text-muted-foreground">{summaryByStep[step]}</p>
-                          </div>
-                        </div>
-                        <ChevronRight className={`h-4 w-4 shrink-0 ${selected ? "text-primary" : "text-muted-foreground"}`} />
-                      </button>
-                    );
-                  })}
+          <div className={`flex flex-col overflow-hidden ${isGarcomMobile ? "max-h-[90dvh]" : "max-h-[94vh]"}`}>
+            {isGarcomMobile ? (
+              <>
+                <div className="sticky top-0 z-20 border-b border-border bg-card/95 px-4 pb-3 pt-4 backdrop-blur-md">
+                  <div className="pr-12">
+                    <p className="text-[0.7rem] font-semibold uppercase tracking-[0.24em] text-muted-foreground">
+                      Etapa {activeStepIndex + 1} de {flowSteps.length}
+                    </p>
+                    <h2 className="mt-1 text-xl font-black leading-tight text-foreground">{produto.nome}</h2>
+                    <p className="mt-1 text-sm text-muted-foreground">{stepMeta[displayStep].label}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleOpenChange(false)}
+                    className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full border border-border bg-background text-foreground"
+                    aria-label="Fechar modal do produto"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
                 </div>
-              </aside>
 
-              <section className="min-h-0 overflow-y-auto p-5 md:p-6">
-                <div className="relative min-h-full overflow-hidden">
-                  {previousStep ? (
+                <section className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-4 pt-3">
+                  <div className="mb-4 flex gap-2 overflow-x-auto pb-1">
+                    {flowSteps.map((step, index) => {
+                      const selected = activeStep === step;
+                      const completed = index < activeStepIndex;
+
+                      return (
+                        <button
+                          key={step}
+                          type="button"
+                          onClick={() => goToStep(step)}
+                          disabled={index > activeStepIndex}
+                          className={`flex shrink-0 items-center gap-2 rounded-full border px-3 py-2 text-xs font-bold transition-all disabled:cursor-not-allowed disabled:opacity-60 ${
+                            selected
+                              ? "border-primary bg-secondary text-foreground"
+                              : completed
+                                ? "border-border bg-card text-foreground"
+                                : "border-border bg-background text-muted-foreground"
+                          }`}
+                        >
+                          <span
+                            className={`flex h-5 w-5 items-center justify-center rounded-full text-[0.65rem] font-black ${
+                              selected ? "bg-primary text-primary-foreground" : completed ? "bg-secondary text-foreground" : "bg-muted text-muted-foreground"
+                            }`}
+                          >
+                            {completed ? <Check className="h-3.5 w-3.5" /> : index + 1}
+                          </span>
+                          <span>{stepMeta[step].label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <div className="relative overflow-hidden">
+                    {previousStep ? (
+                      <div
+                        className={`absolute inset-0 transition-all ease-in-out ${
+                          transitionDirection === 1
+                            ? transitionPhase === "running"
+                              ? "-translate-x-full opacity-0"
+                              : "translate-x-0 opacity-100"
+                            : transitionPhase === "running"
+                              ? "translate-x-full opacity-0"
+                              : "translate-x-0 opacity-100"
+                        }`}
+                        style={{ transitionDuration: `${STEP_TRANSITION_MS}ms` }}
+                      >
+                        {renderStepContent(previousStep)}
+                      </div>
+                    ) : null}
+
                     <div
-                      className={`absolute inset-0 transition-all ease-in-out ${
-                        transitionDirection === 1
-                          ? transitionPhase === "running"
-                            ? "-translate-x-full opacity-0"
-                            : "translate-x-0 opacity-100"
-                          : transitionPhase === "running"
-                            ? "translate-x-full opacity-0"
-                            : "translate-x-0 opacity-100"
+                      className={`relative transition-all ease-in-out ${
+                        previousStep
+                          ? transitionDirection === 1
+                            ? transitionPhase === "preparing"
+                              ? "translate-x-full opacity-0"
+                              : "translate-x-0 opacity-100"
+                            : transitionPhase === "preparing"
+                              ? "-translate-x-full opacity-0"
+                              : "translate-x-0 opacity-100"
+                          : "translate-x-0 opacity-100"
                       }`}
                       style={{ transitionDuration: `${STEP_TRANSITION_MS}ms` }}
                     >
-                      {renderStepContent(previousStep)}
+                      {renderStepContent(displayStep)}
                     </div>
-                  ) : null}
-
-                  <div
-                    className={`relative transition-all ease-in-out ${
-                      previousStep
-                        ? transitionDirection === 1
-                          ? transitionPhase === "preparing"
-                            ? "translate-x-full opacity-0"
-                            : "translate-x-0 opacity-100"
-                          : transitionPhase === "preparing"
-                            ? "-translate-x-full opacity-0"
-                            : "translate-x-0 opacity-100"
-                        : "translate-x-0 opacity-100"
-                    }`}
-                    style={{ transitionDuration: `${STEP_TRANSITION_MS}ms` }}
-                  >
-                    {renderStepContent(displayStep)}
                   </div>
-                </div>
-                <div className="h-6" />
-              </section>
-            </div>
+                </section>
 
-            <div className="border-t border-border bg-card px-4 py-4 md:px-6">
-              <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Subtotal do item</p>
-                  <p className="text-xl font-black text-foreground md:text-2xl">{formatPrice(precoTotal)}</p>
-                </div>
+                <div className="sticky bottom-0 z-20 border-t border-border bg-card/95 px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-3 backdrop-blur-md">
+                  <div className="mb-3 flex items-end justify-between gap-3">
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Subtotal</p>
+                      <p className="text-2xl font-black text-foreground">{formatPrice(precoTotal)}</p>
+                    </div>
+                    <p className="pb-1 text-sm text-muted-foreground">{pedidoAtual.quantidade} item(ns)</p>
+                  </div>
 
-                <div className="flex flex-col gap-3 sm:flex-row">
-                  {activeStepIndex > 0 ? (
-                    <Button type="button" variant="outline" onClick={voltarEtapa} className="h-12 rounded-2xl px-5 font-bold">
-                      Voltar
-                    </Button>
-                  ) : null}
-
-                  {!isLastStep && activeDefinition?.optional ? (
-                    <Button type="button" variant="outline" onClick={handleSkip} className="h-12 rounded-2xl px-5 font-bold">
+                  <div className="grid grid-cols-2 gap-3">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleSkip}
+                      disabled={!canSkipCurrentStep}
+                      className="h-12 rounded-2xl px-4 font-bold disabled:pointer-events-none disabled:opacity-50"
+                    >
                       Pular
                     </Button>
-                  ) : null}
-
-                  {!isLastStep ? (
                     <Button
                       type="button"
-                      onClick={proximaEtapa}
-                      className="h-12 rounded-2xl px-6 font-black transition-transform duration-100 ease-in-out active:scale-[0.97]"
+                      onClick={isLastStep ? handleAdd : proximaEtapa}
+                      disabled={isLastStep ? isAddLocked || !canSubmitItem : !canAdvanceCurrentStep}
+                      className="h-12 rounded-2xl px-4 font-black transition-transform duration-100 ease-in-out active:scale-[0.97] disabled:pointer-events-none disabled:opacity-70"
                     >
-                      Avançar
+                      {isLastStep ? "Adicionar" : "Avançar"}
                     </Button>
-                  ) : (
-                    <Button
-                      type="button"
-                      onClick={handleAdd}
-                      disabled={isAddLocked}
-                      className="h-12 rounded-2xl px-6 font-black transition-transform duration-100 ease-in-out active:scale-[0.97] md:min-w-[240px] disabled:pointer-events-none disabled:opacity-70"
-                    >
-                      Adicionar ao carrinho
-                    </Button>
-                  )}
+                  </div>
                 </div>
-              </div>
-            </div>
+              </>
+            ) : (
+              <>
+                <div className="relative border-b border-border bg-card px-5 py-5 md:px-6">
+                  <div className="pr-12">
+                    <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">Autoatendimento guiado</p>
+                    <h2 className="mt-2 text-2xl font-black text-foreground md:text-3xl">{produto.nome}</h2>
+                    <p className="mt-2 max-w-2xl text-sm text-muted-foreground md:text-base">{produto.descricao}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleOpenChange(false)}
+                    className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full border border-border bg-background text-foreground"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+                </div>
+
+                <div className="grid min-h-0 flex-1 md:grid-cols-[300px_1fr]">
+                  <aside className="border-b border-border bg-secondary/20 p-4 md:border-b-0 md:border-r md:p-5">
+                    <div className="space-y-2">
+                      {flowSteps.map((step, index) => {
+                        const selected = activeStep === step;
+                        const completed = index < activeStepIndex;
+
+                        return (
+                          <button
+                            key={step}
+                            type="button"
+                            onClick={() => goToStep(step)}
+                            disabled={index > activeStepIndex}
+                            className={`flex w-full items-center justify-between rounded-2xl border px-4 py-3 text-left transition-all disabled:cursor-not-allowed disabled:opacity-70 ${
+                              selected
+                                ? "border-primary bg-card text-foreground shadow-sm"
+                                : "border-transparent bg-transparent text-muted-foreground hover:border-border hover:bg-card/70 hover:text-foreground"
+                            }`}
+                          >
+                            <div className="flex min-w-0 items-start gap-3">
+                              <div className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-black ${selected ? "bg-primary text-primary-foreground" : completed ? "bg-secondary text-foreground" : "border border-border text-muted-foreground"}`}>
+                                {completed ? <Check className="h-4 w-4" /> : index + 1}
+                              </div>
+                              <div className="min-w-0">
+                                <p className="text-sm font-bold">{stepMeta[step].label}</p>
+                                <p className="mt-1 text-xs text-muted-foreground">{summaryByStep[step]}</p>
+                              </div>
+                            </div>
+                            <ChevronRight className={`h-4 w-4 shrink-0 ${selected ? "text-primary" : "text-muted-foreground"}`} />
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </aside>
+
+                  <section className="min-h-0 overflow-y-auto p-5 md:p-6">
+                    <div className="relative min-h-full overflow-hidden">
+                      {previousStep ? (
+                        <div
+                          className={`absolute inset-0 transition-all ease-in-out ${
+                            transitionDirection === 1
+                              ? transitionPhase === "running"
+                                ? "-translate-x-full opacity-0"
+                                : "translate-x-0 opacity-100"
+                              : transitionPhase === "running"
+                                ? "translate-x-full opacity-0"
+                                : "translate-x-0 opacity-100"
+                          }`}
+                          style={{ transitionDuration: `${STEP_TRANSITION_MS}ms` }}
+                        >
+                          {renderStepContent(previousStep)}
+                        </div>
+                      ) : null}
+
+                      <div
+                        className={`relative transition-all ease-in-out ${
+                          previousStep
+                            ? transitionDirection === 1
+                              ? transitionPhase === "preparing"
+                                ? "translate-x-full opacity-0"
+                                : "translate-x-0 opacity-100"
+                              : transitionPhase === "preparing"
+                                ? "-translate-x-full opacity-0"
+                                : "translate-x-0 opacity-100"
+                            : "translate-x-0 opacity-100"
+                        }`}
+                        style={{ transitionDuration: `${STEP_TRANSITION_MS}ms` }}
+                      >
+                        {renderStepContent(displayStep)}
+                      </div>
+                    </div>
+                    <div className="h-6" />
+                  </section>
+                </div>
+
+                <div className="border-t border-border bg-card px-4 py-4 md:px-6">
+                  <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Subtotal do item</p>
+                      <p className="text-xl font-black text-foreground md:text-2xl">{formatPrice(precoTotal)}</p>
+                    </div>
+
+                    <div className="flex flex-col gap-3 sm:flex-row">
+                      {activeStepIndex > 0 ? (
+                        <Button type="button" variant="outline" onClick={voltarEtapa} className="h-12 rounded-2xl px-5 font-bold">
+                          Voltar
+                        </Button>
+                      ) : null}
+
+                      {!isLastStep && activeDefinition?.optional ? (
+                        <Button type="button" variant="outline" onClick={handleSkip} className="h-12 rounded-2xl px-5 font-bold">
+                          Pular
+                        </Button>
+                      ) : null}
+
+                      {!isLastStep ? (
+                        <Button
+                          type="button"
+                          onClick={proximaEtapa}
+                          className="h-12 rounded-2xl px-6 font-black transition-transform duration-100 ease-in-out active:scale-[0.97]"
+                        >
+                          Avançar
+                        </Button>
+                      ) : (
+                        <Button
+                          type="button"
+                          onClick={handleAdd}
+                          disabled={isAddLocked}
+                          className="h-12 rounded-2xl px-6 font-black transition-transform duration-100 ease-in-out active:scale-[0.97] md:min-w-[240px] disabled:pointer-events-none disabled:opacity-70"
+                        >
+                          Adicionar ao carrinho
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         )}
       </DialogContent>
