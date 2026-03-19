@@ -9,7 +9,6 @@ import ProductModal from "@/components/ProductModal";
 import CartDrawer from "@/components/CartDrawer";
 import MinhaContaDrawer from "@/components/MinhaContaDrawer";
 import RestaurantHomeSection from "@/components/RestaurantHomeSection";
-import StickyOrderButton from "@/components/StickyOrderButton";
 import {
   AlertDialog,
   AlertDialogAction,
