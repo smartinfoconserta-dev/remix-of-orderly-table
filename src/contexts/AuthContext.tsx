@@ -209,6 +209,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
   }, []);
 
+  const resetPin = useCallback((role: UserRole, nome: string): { ok: boolean; error?: string } => {
+    const nomeNorm = nome.trim().toLocaleLowerCase("pt-BR");
+    if (nomeNorm.length < 2) return { ok: false, error: "Informe um nome válido" };
+
+    let found = false;
+    setState((prev) => {
+      const idx = prev.users.findIndex(
+        (u) => u.role === role && u.nome.toLocaleLowerCase("pt-BR") === nomeNorm,
+      );
+      if (idx === -1) return prev;
+      found = true;
+      const users = [...prev.users];
+      users[idx] = { ...users[idx], pinHash: hashPin("1234") };
+      return { ...prev, users };
+    });
+
+    if (!found) return { ok: false, error: "Usuário não encontrado neste perfil" };
+    return { ok: true };
+  }, []);
+
   return (
     <AuthContext.Provider
       value={{
@@ -219,6 +239,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         loginWithPin,
         verifyManagerAccess,
         verifyEmployeeAccess,
+        resetPin,
         logout,
       }}
     >
