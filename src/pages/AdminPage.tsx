@@ -54,6 +54,7 @@ import {
   type MesasConfig,
   type SistemaConfig,
   type LicencaConfig,
+  type BannerConfig,
 } from "@/lib/adminStorage";
 import { toast } from "sonner";
 
@@ -545,7 +546,8 @@ const AdminPage = () => {
 
         {/* ═══ CONFIGURAÇÕES ═══ */}
         {tab === "configuracoes" && (
-          <div className="space-y-6">
+          <div className="space-y-8 fade-in">
+            {/* Identity */}
             <div>
               <h2 className="text-2xl font-black text-foreground">Configurações</h2>
               <p className="text-sm text-muted-foreground">Personalize o visual do restaurante</p>
@@ -585,10 +587,133 @@ const AdminPage = () => {
                   <span className="text-sm text-muted-foreground font-mono">{sistemaConfig.corPrimaria || "#f97316"}</span>
                 </div>
               </div>
-              <Button onClick={saveSistema} className="w-full">
-                <Save className="mr-1 h-4 w-4" /> Salvar configurações
-              </Button>
             </div>
+
+            {/* Instagram & Wi-Fi */}
+            <div>
+              <h3 className="text-lg font-black text-foreground">QR Codes</h3>
+              <p className="text-xs text-muted-foreground">Instagram e Wi-Fi exibidos na tela inicial do cliente</p>
+            </div>
+            <div className="surface-card max-w-lg space-y-5 rounded-2xl p-6">
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-muted-foreground">URL do Instagram</label>
+                <Input
+                  value={sistemaConfig.instagramUrl || ""}
+                  onChange={(e) => setSistemaConfig((c) => ({ ...c, instagramUrl: e.target.value }))}
+                  placeholder="https://instagram.com/seurestaurante"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-muted-foreground">Senha do Wi-Fi</label>
+                <Input
+                  value={sistemaConfig.senhaWifi || ""}
+                  onChange={(e) => setSistemaConfig((c) => ({ ...c, senhaWifi: e.target.value }))}
+                  placeholder="Ex.: MinhaSenha123"
+                />
+              </div>
+              {(sistemaConfig.instagramUrl || sistemaConfig.senhaWifi) && (
+                <div className="flex gap-4">
+                  {sistemaConfig.instagramUrl && (
+                    <div className="text-center space-y-1">
+                      <p className="text-[10px] font-bold text-muted-foreground">Instagram</p>
+                      <img
+                        src={`https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(sistemaConfig.instagramUrl)}`}
+                        alt="QR Instagram"
+                        className="h-16 w-16 rounded-lg border border-border"
+                      />
+                    </div>
+                  )}
+                  {sistemaConfig.senhaWifi && (
+                    <div className="text-center space-y-1">
+                      <p className="text-[10px] font-bold text-muted-foreground">Wi-Fi</p>
+                      <img
+                        src={`https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(`WIFI:T:WPA;S:${sistemaConfig.nomeRestaurante};P:${sistemaConfig.senhaWifi};;`)}`}
+                        alt="QR Wi-Fi"
+                        className="h-16 w-16 rounded-lg border border-border"
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Banners */}
+            <div>
+              <h3 className="text-lg font-black text-foreground">Banners do carrossel</h3>
+              <p className="text-xs text-muted-foreground">Até 5 banners exibidos na tela inicial do cliente</p>
+            </div>
+            <div className="space-y-3 max-w-lg">
+              {(sistemaConfig.banners ?? []).map((banner, idx) => (
+                <div key={banner.id} className="surface-card rounded-2xl p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-black text-muted-foreground">Banner {idx + 1}</span>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="text-destructive hover:bg-destructive/10"
+                      onClick={() => setSistemaConfig((c) => ({ ...c, banners: (c.banners ?? []).filter((b) => b.id !== banner.id) }))}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <Input
+                    value={banner.titulo}
+                    onChange={(e) => setSistemaConfig((c) => ({
+                      ...c,
+                      banners: (c.banners ?? []).map((b) => b.id === banner.id ? { ...b, titulo: e.target.value } : b),
+                    }))}
+                    placeholder="Título"
+                  />
+                  <Input
+                    value={banner.subtitulo}
+                    onChange={(e) => setSistemaConfig((c) => ({
+                      ...c,
+                      banners: (c.banners ?? []).map((b) => b.id === banner.id ? { ...b, subtitulo: e.target.value } : b),
+                    }))}
+                    placeholder="Subtítulo"
+                  />
+                  <div className="flex gap-2">
+                    <Input
+                      value={banner.preco}
+                      onChange={(e) => setSistemaConfig((c) => ({
+                        ...c,
+                        banners: (c.banners ?? []).map((b) => b.id === banner.id ? { ...b, preco: e.target.value } : b),
+                      }))}
+                      placeholder="Preço (opcional)"
+                      className="w-1/2"
+                    />
+                    <Input
+                      value={banner.imagemUrl}
+                      onChange={(e) => setSistemaConfig((c) => ({
+                        ...c,
+                        banners: (c.banners ?? []).map((b) => b.id === banner.id ? { ...b, imagemUrl: e.target.value } : b),
+                      }))}
+                      placeholder="URL da imagem"
+                      className="flex-1"
+                    />
+                  </div>
+                  {banner.imagemUrl && (
+                    <img src={banner.imagemUrl} alt="Preview" className="h-20 w-full rounded-xl border border-border object-cover" />
+                  )}
+                </div>
+              ))}
+              {(sistemaConfig.banners ?? []).length < 5 && (
+                <Button
+                  variant="outline"
+                  className="w-full rounded-xl"
+                  onClick={() => setSistemaConfig((c) => ({
+                    ...c,
+                    banners: [...(c.banners ?? []), { id: `banner-${Date.now()}`, titulo: "", subtitulo: "", preco: "", imagemUrl: "" }],
+                  }))}
+                >
+                  <Plus className="h-4 w-4 mr-1" /> Adicionar banner
+                </Button>
+              )}
+            </div>
+
+            <Button onClick={saveSistema} className="w-full max-w-lg">
+              <Save className="mr-1 h-4 w-4" /> Salvar configurações
+            </Button>
           </div>
         )}
 

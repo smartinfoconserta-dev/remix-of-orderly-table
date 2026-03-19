@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { AlertTriangle, ArrowLeft, Bell, LockKeyhole, Plus, RefreshCw, ShoppingCart, Unlink, Wallet } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Bell, Instagram, LockKeyhole, Plus, RefreshCw, ShoppingCart, Unlink, Wallet, Wifi } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import CategoryTabs from "@/components/CategoryTabs";
@@ -8,7 +8,6 @@ import CategoryIcon from "@/components/CategoryIcon";
 import ProductModal from "@/components/ProductModal";
 import CartDrawer from "@/components/CartDrawer";
 import MinhaContaDrawer from "@/components/MinhaContaDrawer";
-import RestaurantHomeSection from "@/components/RestaurantHomeSection";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -77,6 +76,20 @@ const produtos = produtosComOverrides.map((p) => {
   const resolvedImagem = ov?.imagemBase64 || p.imagem;
   return { ...p, imagem: resolvedImagem };
 });
+
+// Configurable banners from admin or fallback to defaults
+const configBanners = sysConfig.banners?.filter((b) => b.titulo && b.imagemUrl) ?? [];
+const activeBannerSlides = configBanners.length > 0
+  ? configBanners.map((b, i) => ({
+      id: b.id || `cb-${i}`,
+      image: b.imagemUrl,
+      label: "",
+      title: b.titulo,
+      description: b.subtitulo,
+      price: b.preco,
+      alt: b.titulo,
+    }))
+  : homeHeroSlides;
 
 const HOME_TAB_ID = "inicio";
 const HOME_TAB: Categoria = { id: HOME_TAB_ID, nome: "Início", icone: "house" };
@@ -162,9 +175,15 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
     [],
   );
 
+  // Combo products for home section
+  const comboProducts = useMemo(
+    () => produtos.filter((p) => p.categoria === "combos"),
+    [],
+  );
+
   useEffect(() => {
     const timer = window.setInterval(() => {
-      setBannerIndex((prev) => (prev + 1) % homeHeroSlides.length);
+      setBannerIndex((prev) => (prev + 1) % activeBannerSlides.length);
     }, HOME_CAROUSEL_INTERVAL_MS);
     return () => window.clearInterval(timer);
   }, []);
@@ -402,7 +421,6 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
     setBoundTabletMesaId(newMesaId);
     setAdminModalOpen(false);
     toast.success("Mesa trocada com sucesso", { duration: 1200, icon: "🔄" });
-    // Force reload to pick up new mesa
     window.location.reload();
   }, []);
 
@@ -607,7 +625,7 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
     <section className="px-4 pt-4 md:px-6">
       <div className="relative overflow-hidden rounded-[1.9rem] border border-border bg-card shadow-[0_30px_70px_-45px_hsl(var(--foreground)/0.9)]">
         <div className="relative min-h-[260px] w-full md:min-h-[340px]">
-          {homeHeroSlides.map((slide, index) => (
+          {activeBannerSlides.map((slide, index) => (
             <article
               key={slide.id}
               aria-hidden={index !== bannerIndex}
@@ -632,18 +650,24 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
 
               <div className="relative z-10 flex min-h-[260px] items-end p-6 md:min-h-[340px] md:p-8">
                 <div className="max-w-xl space-y-3 md:space-y-4">
-                  <span className="inline-flex rounded-full border border-border bg-background/45 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.24em] text-foreground/80 backdrop-blur-md md:text-xs">
-                    {slide.label}
-                  </span>
+                  {slide.label && (
+                    <span className="inline-flex rounded-full border border-border bg-background/45 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.24em] text-foreground/80 backdrop-blur-md md:text-xs">
+                      {slide.label}
+                    </span>
+                  )}
                   <div className="space-y-2">
                     <h2 className="max-w-lg text-3xl font-black tracking-tight text-foreground md:text-5xl md:leading-[0.95]">
                       {slide.title}
                     </h2>
-                    <p className="max-w-md text-sm text-muted-foreground md:text-base">{slide.description}</p>
+                    {slide.description && (
+                      <p className="max-w-md text-sm text-muted-foreground md:text-base">{slide.description}</p>
+                    )}
                   </div>
-                  <p className="text-3xl font-black tracking-tight text-primary drop-shadow-[0_10px_22px_hsl(var(--primary)/0.28)] md:text-5xl">
-                    {slide.price}
-                  </p>
+                  {slide.price && (
+                    <p className="text-3xl font-black tracking-tight text-primary drop-shadow-[0_10px_22px_hsl(var(--primary)/0.28)] md:text-5xl">
+                      {slide.price}
+                    </p>
+                  )}
                 </div>
               </div>
             </article>
@@ -652,7 +676,7 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
 
         <div className="pointer-events-none absolute bottom-3 left-1/2 z-20 -translate-x-1/2 transform">
           <div className="flex items-center gap-2 rounded-full bg-background/35 px-3 py-2 backdrop-blur-md">
-            {homeHeroSlides.map((slide, index) => (
+            {activeBannerSlides.map((slide, index) => (
               <span
                 key={slide.id}
                 className={`h-1.5 rounded-full transition-all duration-500 ${index === bannerIndex ? "w-8 bg-primary" : "w-1.5 bg-background/70"}`}
@@ -663,6 +687,57 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
       </div>
     </section>
   );
+
+  // Dynamic QR code info cards
+  const qrInfoCards = useMemo(() => {
+    const cards: Array<{
+      id: string;
+      title: string;
+      subtitle: string;
+      icon: typeof Instagram;
+      badge: string;
+      qrUrl: string;
+      articleClassName: string;
+      iconWrapClassName: string;
+      badgeClassName: string;
+      ambientGlowClassName: string;
+      qrGlowClassName: string;
+    }> = [];
+
+    if (sysConfig.instagramUrl) {
+      cards.push({
+        id: "instagram",
+        title: "Visite nosso Instagram",
+        subtitle: "Aponte a câmera para acessar nosso perfil",
+        icon: Instagram,
+        badge: "Instagram",
+        qrUrl: `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(sysConfig.instagramUrl)}`,
+        articleClassName: "bg-[linear-gradient(90deg,hsl(var(--primary)/0.18)_0%,hsl(var(--card))_26%,hsl(var(--card))_72%,hsl(var(--secondary))_100%)] shadow-[0_24px_60px_-34px_hsl(var(--primary)/0.38)]",
+        iconWrapClassName: "border border-primary/30 bg-[linear-gradient(180deg,hsl(var(--primary)/0.16)_0%,hsl(var(--primary)/0.08)_100%)] text-primary shadow-[0_20px_38px_-22px_hsl(var(--primary)/0.8)]",
+        badgeClassName: "border-primary/20 bg-[hsl(var(--background)/0.45)] text-primary",
+        ambientGlowClassName: "bg-primary/18",
+        qrGlowClassName: "bg-foreground/20",
+      });
+    }
+
+    if (sysConfig.senhaWifi) {
+      cards.push({
+        id: "wifi",
+        title: "Conecte-se ao Wi‑Fi grátis",
+        subtitle: "Escaneie para acessar a rede da casa",
+        icon: Wifi,
+        badge: "Wi‑Fi",
+        qrUrl: `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(`WIFI:T:WPA;S:${RESTAURANTE.nome};P:${sysConfig.senhaWifi};;`)}`,
+        articleClassName: "bg-[linear-gradient(90deg,hsl(var(--card))_0%,hsl(var(--card))_58%,hsl(var(--secondary))_100%)] shadow-[0_24px_60px_-34px_hsl(var(--foreground)/0.28)]",
+        iconWrapClassName: "border border-border bg-[linear-gradient(180deg,hsl(var(--secondary-foreground)/0.08)_0%,hsl(var(--secondary))_100%)] text-foreground shadow-[0_18px_34px_-22px_hsl(var(--foreground)/0.55)]",
+        badgeClassName: "border-border bg-[hsl(var(--background)/0.45)] text-foreground/82",
+        ambientGlowClassName: "bg-foreground/6",
+        qrGlowClassName: "bg-foreground/18",
+      });
+    }
+
+    return cards;
+  }, []);
 
   const categoryFadeClass = "";
 
@@ -751,8 +826,134 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
       className={`space-y-5 ${categoryFadeClass}`}
     >
       {heroBanner}
-      <div className="px-4 md:px-6">
-        <RestaurantHomeSection config={homeShowcaseConfig} featuredProducts={featuredProducts} onOpenProduct={handleOpenProductModal} />
+      <div className="px-4 md:px-6 space-y-6">
+        {/* Dynamic QR info cards */}
+        {qrInfoCards.length > 0 && (
+          <div className="grid gap-4 md:grid-cols-2">
+            {qrInfoCards.map((card) => {
+              const Icon = card.icon;
+              return (
+                <article
+                  key={card.id}
+                  className={`relative overflow-hidden rounded-[2rem] border border-border p-5 md:p-6 ${card.articleClassName}`}
+                >
+                  <div className="absolute inset-0 bg-[linear-gradient(180deg,hsl(var(--background)/0.06)_0%,hsl(var(--background)/0.18)_100%)]" />
+                  <div className={`absolute -left-10 top-1/2 h-40 w-40 -translate-y-1/2 rounded-full blur-3xl ${card.ambientGlowClassName}`} />
+                  <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-foreground/12 to-transparent" />
+
+                  <div className="relative flex items-center justify-between gap-5">
+                    <div className="min-w-0 flex-1 space-y-5">
+                      <span className={`inline-flex rounded-full border px-4 py-1.5 text-[11px] font-bold uppercase tracking-[0.26em] ${card.badgeClassName}`}>
+                        {card.badge}
+                      </span>
+                      <div className="flex items-start gap-4">
+                        <div className={`flex h-[4.1rem] w-[4.1rem] shrink-0 items-center justify-center rounded-[1.35rem] ${card.iconWrapClassName}`}>
+                          <Icon className="h-7 w-7" />
+                        </div>
+                        <div className="min-w-0 max-w-[15rem] space-y-1.5 pt-1">
+                          <h2 className="text-[1.05rem] font-black leading-[1.05] tracking-tight text-foreground md:text-[1.25rem]">
+                            {card.title}
+                          </h2>
+                          <p className="text-sm leading-relaxed text-muted-foreground md:text-[0.98rem]">{card.subtitle}</p>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="relative shrink-0">
+                      <div className={`absolute inset-x-5 bottom-1 h-10 rounded-full blur-2xl ${card.qrGlowClassName}`} />
+                      <div className="rounded-[1.9rem] border border-border bg-[linear-gradient(180deg,hsl(var(--background))_0%,hsl(var(--secondary))_100%)] p-3 shadow-[inset_0_1px_0_hsl(var(--foreground)/0.05),0_24px_50px_-28px_hsl(var(--foreground)/0.85)]">
+                        <div className="rounded-[1.45rem] bg-[hsl(var(--background)/0.9)] p-3 shadow-[inset_0_1px_0_hsl(var(--foreground)/0.05)]">
+                          <div className="rounded-[1.1rem] bg-white p-2.5">
+                            <img
+                              src={card.qrUrl}
+                              alt={`QR Code ${card.badge}`}
+                              className="h-[7.25rem] w-[7.25rem] rounded-[0.95rem] object-cover md:h-[7.75rem] md:w-[7.75rem]"
+                              loading="lazy"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Combos section */}
+        {comboProducts.length > 0 && (
+          <div className="space-y-3">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">Combos</p>
+              <h2 className="mt-1 text-2xl font-black tracking-tight text-foreground">Combos especiais</h2>
+            </div>
+            <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
+              {comboProducts.map((produto) => (
+                <button
+                  key={produto.id}
+                  type="button"
+                  onClick={() => handleOpenProductModal(produto)}
+                  className="group w-[252px] shrink-0 overflow-hidden rounded-[1.75rem] border border-border bg-card text-left shadow-[0_20px_45px_-30px_hsl(var(--foreground)/0.8)] transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/30"
+                >
+                  <div className="aspect-[4/3] overflow-hidden">
+                    <img
+                      src={produto.imagem}
+                      alt={produto.nome}
+                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                      loading="lazy"
+                    />
+                  </div>
+                  <div className="space-y-2 p-4">
+                    <h3 className="line-clamp-1 text-base font-black text-foreground">{produto.nome}</h3>
+                    <p className="line-clamp-2 text-sm text-muted-foreground">{produto.descricao}</p>
+                    <p className="text-lg font-black text-primary">{formatPrice(produto.preco)}</p>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Featured products */}
+        <div className="flex items-end justify-between gap-3 pt-1">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">{homeShowcaseConfig.featuredLabel}</p>
+            <h2 className="mt-1 text-2xl font-black tracking-tight text-foreground md:text-[2rem]">{homeShowcaseConfig.featuredTitle}</h2>
+          </div>
+        </div>
+        <div className="relative pt-1">
+          <div className="pointer-events-none absolute inset-y-0 right-0 z-10 hidden w-16 bg-gradient-to-l from-background to-transparent md:block" />
+          <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
+            {featuredProducts.map((produto) => (
+              <button
+                key={produto.id}
+                type="button"
+                onClick={() => handleOpenProductModal(produto)}
+                className="group w-[252px] shrink-0 overflow-hidden rounded-[1.75rem] border border-border bg-card text-left shadow-[0_20px_45px_-30px_hsl(var(--foreground)/0.8)] transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/30"
+              >
+                <div className="aspect-[4/3] overflow-hidden">
+                  <img
+                    src={produto.imagem}
+                    alt={produto.nome}
+                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                    loading="lazy"
+                  />
+                </div>
+                <div className="space-y-3 p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <h2 className="line-clamp-1 text-base font-black text-foreground">{produto.nome}</h2>
+                      <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{produto.descricao}</p>
+                    </div>
+                    <span className="shrink-0 rounded-full border border-border bg-secondary px-3 py-1 text-sm font-black text-foreground">
+                      {formatPrice(produto.preco)}
+                    </span>
+                  </div>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -807,7 +1008,7 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
     <div className={`flex flex-1 overflow-hidden transition-all duration-500 ${isClientIdle ? "brightness-[0.2] saturate-50" : "brightness-100 saturate-100"}`}>
       <aside className="w-[19rem] shrink-0 overflow-y-auto border-r border-border bg-card/95 px-3 py-3 lg:w-[21rem]">
         <div className="sticky top-0 z-10 rounded-[1.5rem] border border-border bg-background/85 px-5 py-5 backdrop-blur-md">
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">Navegação</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">{RESTAURANTE.nome}</p>
           <p className="mt-2 text-lg font-black text-foreground">Cardápio</p>
         </div>
         <nav className="mt-4 flex flex-col gap-2">
