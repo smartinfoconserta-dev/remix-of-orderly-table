@@ -131,18 +131,25 @@ const CartDrawer = ({
     onSuccessAcknowledge?.();
   };
 
+  const handleClose = () => {
+    if (showSuccessFeedback || showSubmittingOverlay || isClosing) return;
+    setIsClosing(true);
+    setTimeout(() => {
+      setIsClosing(false);
+      onOpenChange?.(false);
+    }, 200);
+  };
+
   const drawerMarkup = open ? (
-    <div className="fixed inset-0 z-[80] animate-fade-in">
+    <div className={`fixed inset-0 z-[80] ${isClosing ? "backdrop-fade-out" : "animate-fade-in"}`}>
       <button
         type="button"
         aria-label="Fechar carrinho"
-        onClick={() => {
-          if (!showSuccessFeedback && !showSubmittingOverlay) onOpenChange?.(false);
-        }}
+        onClick={handleClose}
         className="absolute inset-0 bg-foreground/45 backdrop-blur-[2px]"
       />
 
-      <aside className="absolute inset-y-0 right-0 flex h-full w-full max-w-md flex-col border-l border-border bg-card shadow-2xl animate-slide-in-right">
+      <aside className={`absolute inset-y-0 right-0 flex h-full w-full max-w-md flex-col border-l border-border bg-card shadow-2xl ${isClosing ? "drawer-slide-out" : "animate-slide-in-right"}`}>
         {!showSuccessFeedback && !showSubmittingOverlay ? (
           <button
             type="button"
