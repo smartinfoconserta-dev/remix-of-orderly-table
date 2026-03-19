@@ -2,7 +2,7 @@ import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { Check, ChevronRight, Minus, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Dialog, DialogContent, DialogDescription } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
@@ -324,14 +324,19 @@ const ProductModal = ({ produto, onClose, onAdd }: Props) => {
     title,
     subtitle,
     price,
+    itemKey,
   }: {
     checked: boolean;
     onCheckedChange: () => void;
     title: string;
     subtitle: string;
     price?: string;
+    itemKey: string;
   }) => (
-    <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-border bg-card p-4 transition-all hover:border-primary/40 hover:bg-secondary/30">
+    <label
+      key={itemKey}
+      className="flex cursor-pointer items-start gap-3 rounded-2xl border border-border bg-card p-4 transition-all hover:border-primary/40 hover:bg-secondary/30"
+    >
       <Checkbox checked={checked} onCheckedChange={onCheckedChange} className="mt-0.5" />
       <div className="flex-1 space-y-1">
         <div className="flex items-center justify-between gap-3">
@@ -390,6 +395,7 @@ const ProductModal = ({ produto, onClose, onAdd }: Props) => {
           <div className="space-y-3">
             {produto.adicionais?.map((adicional) =>
               renderCheckboxCard({
+                itemKey: adicional.id,
                 checked: pedidoAtual.adicionais.includes(adicional.id),
                 onCheckedChange: () => toggleAdicional(adicional.id),
                 title: adicional.nome,
@@ -422,6 +428,7 @@ const ProductModal = ({ produto, onClose, onAdd }: Props) => {
           <div className="space-y-3">
             {produto.ingredientesRemoviveis?.map((ingrediente) =>
               renderCheckboxCard({
+                itemKey: ingrediente,
                 checked: pedidoAtual.removidos.includes(ingrediente),
                 onCheckedChange: () => toggleRemover(ingrediente),
                 title: ingrediente,
@@ -518,6 +525,7 @@ const ProductModal = ({ produto, onClose, onAdd }: Props) => {
         contentAnimationClassName="data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0 data-[state=open]:zoom-in-95 data-[state=closed]:zoom-out-95 data-[state=open]:duration-220 data-[state=closed]:duration-220 data-[state=open]:ease-out data-[state=closed]:ease-out"
         className="max-h-[94vh] max-w-6xl overflow-hidden rounded-[2rem] border-border bg-card p-0"
       >
+        <DialogTitle className="sr-only">Personalizar item do pedido</DialogTitle>
         <DialogDescription className="sr-only">
           Personalize o item, adicione ao carrinho e volte ao fluxo de pedido sem perder o contexto da mesa.
         </DialogDescription>

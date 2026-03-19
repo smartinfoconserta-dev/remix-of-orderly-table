@@ -135,17 +135,6 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
   }, [dismissChamarGarcom, mesa?.chamarGarcom, mesaId, modo]);
 
   useEffect(() => {
-    if (!isGarcomMobile) return;
-    if (categoriaAtiva !== HOME_TAB_ID || categoriaExibida !== HOME_TAB_ID) return;
-
-    const initialCategoryId = categorias[0]?.id;
-    if (!initialCategoryId) return;
-
-    setCategoriaAtiva(initialCategoryId);
-    setCategoriaExibida(initialCategoryId);
-  }, [categoriaAtiva, categoriaExibida, isGarcomMobile]);
-
-  useEffect(() => {
     return () => {
       if (categorySwitchTimerRef.current) {
         window.clearTimeout(categorySwitchTimerRef.current);
@@ -241,6 +230,7 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
     }
 
     openProductTimerRef.current = window.setTimeout(() => {
+      openProductTimerRef.current = null;
       setProdutoSelecionado(produto);
     }, PRODUCT_MODAL_OPEN_DELAY_MS);
   }, []);
@@ -254,6 +244,38 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
     setProdutoSelecionado(null);
     setSelectedProductCardId(null);
   }, []);
+
+  const handleCartOpenChange = useCallback(
+    (nextOpen: boolean) => {
+      if (!nextOpen) {
+        setCartOpen(false);
+        return;
+      }
+
+      if (openProductTimerRef.current) {
+        window.clearTimeout(openProductTimerRef.current);
+        openProductTimerRef.current = null;
+      }
+
+      setContaOpen(false);
+
+      if (produtoSelecionado) {
+        setProdutoSelecionado(null);
+        setSelectedProductCardId(null);
+
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            setCartOpen(true);
+          });
+        });
+
+        return;
+      }
+
+      setCartOpen(true);
+    },
+    [produtoSelecionado],
+  );
 
   const handleSelectCategoria = useCallback(
     (categoriaId: string) => {
@@ -343,12 +365,12 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
         removidos: [...item.removidos],
         adicionais: item.adicionais.map((adicional) => ({ ...adicional })),
       });
-      setProdutoSelecionado(null);
       setSelectedProductCardId(null);
-      setCartOpen(true);
+      setProdutoSelecionado(null);
       setIsClientIdle(false);
+      handleCartOpenChange(true);
     },
-    [addToCart, mesaId],
+    [addToCart, handleCartOpenChange, mesaId],
   );
 
   const handleChamarGarcom = useCallback(() => {
@@ -506,10 +528,10 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
           onUpdateQty={(uid, delta) => updateCartItemQty(mesaId, uid, delta)}
           onRemove={(uid) => removeFromCart(mesaId, uid)}
           onConfirmar={handleConfirmar}
-          onContinueOrdering={() => setCartOpen(false)}
+          onContinueOrdering={() => handleCartOpenChange(false)}
           onSuccessAcknowledge={handleSuccessAcknowledge}
           open={cartOpen}
-          onOpenChange={setCartOpen}
+          onOpenChange={handleCartOpenChange}
           hideTrigger={isGarcomMobile}
         />
         {modo === "cliente" && (
@@ -756,7 +778,7 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
       <main className={`flex-1 pt-2 transition-all duration-500 ${isGarcomMobile ? "pb-28" : "pb-6"} ${isClientIdle ? "brightness-[0.2] saturate-50" : "brightness-100 saturate-100"}`}>
         <div className="px-4">{showCategorySkeleton ? skeletonGrid : isHomeActive ? (isGarcomMobile ? garcomMobileHomeContent : homeContent) : productGrid}</div>
       </main>
-      {isGarcomMobile ? <StickyOrderButton total={cartTotal} onOpenCart={() => setCartOpen(true)} label="Ver carrinho" /> : null}
+      {isGarcomMobile ? <StickyOrderButton total={cartTotal} onOpenCart={() => handleCartOpenChange(true)} label="Ver carrinho" /> : null}
     </>
   );
 
