@@ -128,6 +128,7 @@ interface RestaurantContextType {
   zerarMesa: (mesaId: string, audit?: ActionAuditInput) => void;
   ajustarItemPedido: (mesaId: string, pedidoId: string, itemUid: string, delta: number, audit: ActionAuditInput) => void;
   cancelarPedido: (mesaId: string, pedidoId: string, audit: ActionAuditInput) => void;
+  marcarPedidoPronto: (mesaId: string, pedidoId: string) => void;
   registrarMovimentacaoCaixa: (input: MovimentacaoInput) => void;
 }
 
