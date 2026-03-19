@@ -193,8 +193,18 @@ const appendEvent = (
 const calcularTotalItens = (itens: ItemCarrinho[]) =>
   itens.reduce((acc, item) => acc + item.precoUnitario * item.quantidade, 0);
 
-const criarMesasIniciais = (): Mesa[] =>
-  Array.from({ length: 20 }, (_, i) => ({
+const criarMesasIniciais = (): Mesa[] => {
+  let total = 20;
+  try {
+    const raw = window.localStorage.getItem("orderly-mesas-config-v1");
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (typeof parsed.totalMesas === "number" && parsed.totalMesas >= 1) {
+        total = Math.min(parsed.totalMesas, 100);
+      }
+    }
+  } catch { /* ignore */ }
+  return Array.from({ length: total }, (_, i) => ({
     id: `mesa-${i + 1}`,
     numero: i + 1,
     status: "livre" as const,
@@ -204,6 +214,7 @@ const criarMesasIniciais = (): Mesa[] =>
     chamarGarcom: false,
     chamadoEm: null,
   }));
+};
 
 const cloneItem = (item: ItemCarrinho): ItemCarrinho => ({
   ...item,

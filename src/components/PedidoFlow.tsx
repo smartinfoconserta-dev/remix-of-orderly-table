@@ -48,10 +48,23 @@ interface PedidoFlowProps {
   onBack?: () => void;
 }
 
+const sysConfig = getSistemaConfig();
 const RESTAURANTE = {
-  nome: "Obsidian",
-  logoFallback: "OB",
+  nome: sysConfig.nomeRestaurante || "Obsidian",
+  logoUrl: sysConfig.logoUrl || "",
+  logoFallback: (sysConfig.nomeRestaurante || "Obsidian").slice(0, 2).toUpperCase(),
 };
+
+// Filter out inactive products
+const cardapioOverrides = getCardapioOverrides();
+const produtos = baseProdutos.filter((p) => {
+  const ov = cardapioOverrides[p.id];
+  if (ov && ov.ativo === false) return false;
+  return true;
+}).map((p) => {
+  const ov = cardapioOverrides[p.id];
+  return ov ? { ...p, ...ov } : p;
+});
 
 const HOME_TAB_ID = "inicio";
 const HOME_TAB: Categoria = { id: HOME_TAB_ID, nome: "Início", icone: "house" };
