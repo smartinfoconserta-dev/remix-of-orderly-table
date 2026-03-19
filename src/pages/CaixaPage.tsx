@@ -437,7 +437,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
       <div className="h-svh flex flex-col bg-background overflow-hidden">
         {/* ── MESA DETAIL keeps original header ── */}
         {mesa && (
-          <>
+          <div className="view-fade-in contents">
             <header className="flex items-center gap-3 border-b border-border bg-card px-4 py-3 shrink-0 md:px-6">
               <button onClick={handleVoltar} className="flex h-9 w-9 items-center justify-center rounded-xl border border-border bg-secondary text-foreground transition-colors hover:bg-secondary/80">
                 <ArrowLeft className="h-4 w-4" />
