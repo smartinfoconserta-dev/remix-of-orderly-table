@@ -235,6 +235,12 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
     setIsAuthorizingCriticalAction(false);
   }, []);
 
+  /* ── caixa open time (must be before early returns) ── */
+  const caixaOpenTime = useMemo(() => {
+    const evt = [...eventos].reverse().find(e => e.acao === "abertura_caixa");
+    return evt ? evt.criadoEm : null;
+  }, [eventos]);
+
   /* ── auth guard ── */
   if (!currentOperator) {
     return (
