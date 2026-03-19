@@ -337,26 +337,6 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
   }, [carrinho.length, confirmarPedido, currentCaixa, currentGarcom, mesaId, modo, validatePendingCart]);
 
   const handleSuccessAcknowledge = useCallback(() => {
-    if (categorySwitchTimerRef.current) {
-      window.clearTimeout(categorySwitchTimerRef.current);
-      categorySwitchTimerRef.current = null;
-    }
-
-    if (categoryEnterTimerRef.current) {
-      window.clearTimeout(categoryEnterTimerRef.current);
-      categoryEnterTimerRef.current = null;
-    }
-
-    if (categorySkeletonTimerRef.current) {
-      window.clearTimeout(categorySkeletonTimerRef.current);
-      categorySkeletonTimerRef.current = null;
-    }
-
-    if (cardsAnimationTimerRef.current) {
-      window.clearTimeout(cardsAnimationTimerRef.current);
-      cardsAnimationTimerRef.current = null;
-    }
-
     if (openProductTimerRef.current) {
       window.clearTimeout(openProductTimerRef.current);
       openProductTimerRef.current = null;
