@@ -40,18 +40,16 @@ const GarcomPage = () => {
       }
     >
       <div className="mb-4 rounded-xl border border-border bg-card px-4 py-3">
-        <p className="text-sm font-bold text-foreground">Garçom logado: {currentGarcom.nome}</p>
-        <p className="text-sm text-muted-foreground">
-          Selecione uma mesa para iniciar o mesmo fluxo de pedido do cliente, agora com rastreio do operador.
-        </p>
+        <p className="text-base font-bold text-foreground">{currentGarcom.nome}</p>
+        <p className="text-sm text-muted-foreground">Selecione uma mesa para lançar pedidos.</p>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4 lg:grid-cols-5">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
         {mesas.map((mesa) => (
           <MesaCard
             key={mesa.id}
             mesa={mesa}
-            showIndicators={false}
+            showIndicators
             onClick={() => {
               dismissChamarGarcom(mesa.id);
               setSearchParams({ mesa: mesa.id });
