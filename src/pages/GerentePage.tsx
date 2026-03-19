@@ -351,6 +351,7 @@ const GerentePage = () => {
               )}
             </div>
           </div>
+          )}
         </TabsContent>
 
         {/* ═══ TAB 3: Logs de Auditoria ═══ */}
