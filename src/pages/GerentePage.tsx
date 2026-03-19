@@ -85,8 +85,11 @@ const GerentePage = () => {
     caixaAberto,
     fecharCaixaDoDia,
   } = useRestaurant();
-  const { currentGerente, logout } = useAuth();
+  const { currentGerente, logout, verifyManagerAccess } = useAuth();
   const [logFilter, setLogFilter] = useState("all");
+  const [pinVerificado, setPinVerificado] = useState(false);
+  const [pinInput, setPinInput] = useState("");
+  const [pinError, setPinError] = useState("");
 
   useRouteLock("/gerente");
 
