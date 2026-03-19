@@ -849,33 +849,6 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                 </div>
               </div>
 
-              {/* Gerente tablet section — only show as a floating card if gerente */}
-              {accessMode === "gerente" && (
-                <div className="col-span-2 rounded-2xl border border-border bg-card p-4">
-                  <div className="flex items-center gap-3">
-                    <Smartphone className="h-5 w-5 text-muted-foreground" />
-                    <div className="flex-1">
-                      <span className="text-sm font-black text-foreground">Tablet:</span>{" "}
-                      <span className="text-sm text-muted-foreground">
-                        {tabletMesaId === mesa.id
-                          ? "Vinculado a esta mesa."
-                          : tabletMesa
-                            ? `Vinculado à Mesa ${String(tabletMesa.numero).padStart(2, "0")}.`
-                            : "Nenhum vínculo."}
-                      </span>
-                    </div>
-                    {tabletMesaId === mesa.id && (
-                      <div className="flex items-center gap-2">
-                        <Input value={tabletTargetMesaNumber} onChange={(e) => setTabletTargetMesaNumber(e.target.value.replace(/\D/g, "").slice(0, 2))} placeholder="Nº mesa" inputMode="numeric" autoComplete="off" className="h-9 w-20 rounded-xl" />
-                        <Button size="sm" onClick={handlePrepareTabletBinding} className="rounded-xl font-bold">Trocar</Button>
-                        <Button size="sm" variant="outline" onClick={() => openCriticalAction({ type: "desvincular_tablet", mesaId: mesa.id, mesaNumero: mesa.numero })} className="rounded-xl font-bold">
-                          Desvincular
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
             </div>
           )}
         </main>
