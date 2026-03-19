@@ -80,7 +80,6 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
   const [showExitAlert, setShowExitAlert] = useState(false);
   const [isClientIdle, setIsClientIdle] = useState(false);
   const openProductTimerRef = useRef<number | null>(null);
-  const openProductTimerRef = useRef<number | null>(null);
   const idleTimeoutRef = useRef<number | null>(null);
   const orderSubmissionCooldownRef = useRef<number | null>(null);
   const orderSubmissionLockRef = useRef(false);
