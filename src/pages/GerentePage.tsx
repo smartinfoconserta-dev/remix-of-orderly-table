@@ -3,6 +3,7 @@ import {
   AlertTriangle,
   Banknote,
   BarChart3,
+  Calendar,
   ClipboardList,
   CreditCard,
   Filter,
@@ -11,6 +12,7 @@ import {
   ScrollText,
   ShieldCheck,
   Smartphone,
+  TrendingUp,
   Wallet,
   XCircle,
 } from "lucide-react";
@@ -38,6 +40,7 @@ import {
 } from "@/components/ui/select";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRestaurant } from "@/contexts/RestaurantContext";
+import type { FechamentoConta } from "@/contexts/RestaurantContext";
 import { useRouteLock } from "@/hooks/use-route-lock";
 import type { PaymentMethod } from "@/types/operations";
 
@@ -75,6 +78,36 @@ const getEventDotColor = (acao?: string) => {
   return "bg-amber-500";
 };
 
+type PeriodoFiltro = "hoje" | "semana" | "mes" | "custom";
+
+const getDateRange = (periodo: PeriodoFiltro, customInicio: string, customFim: string) => {
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+  switch (periodo) {
+    case "hoje":
+      return { start: today, end: now };
+    case "semana": {
+      const weekStart = new Date(today);
+      weekStart.setDate(today.getDate() - today.getDay());
+      return { start: weekStart, end: now };
+    }
+    case "mes":
+      return { start: new Date(today.getFullYear(), today.getMonth(), 1), end: now };
+    case "custom":
+      return {
+        start: customInicio ? new Date(customInicio) : today,
+        end: customFim ? new Date(customFim + "T23:59:59.999") : now,
+      };
+  }
+};
+
+const filterByDateRange = (items: FechamentoConta[], start: Date, end: Date) =>
+  items.filter((f) => {
+    const d = new Date(f.criadoEmIso);
+    return d >= start && d <= end;
+  });
+
 const GerentePage = () => {
   const {
     eventos,
@@ -84,12 +117,20 @@ const GerentePage = () => {
     fundoTroco,
     caixaAberto,
     fecharCaixaDoDia,
+    allFechamentos,
+    allEventos,
+    allMovimentacoesCaixa,
   } = useRestaurant();
   const { currentGerente, logout, verifyManagerAccess } = useAuth();
   const [logFilter, setLogFilter] = useState("all");
   const [pinVerificado, setPinVerificado] = useState(false);
   const [pinInput, setPinInput] = useState("");
   const [pinError, setPinError] = useState("");
+
+  // Relatório state
+  const [periodo, setPeriodo] = useState<PeriodoFiltro>("hoje");
+  const [customInicio, setCustomInicio] = useState("");
+  const [customFim, setCustomFim] = useState("");
 
   useRouteLock("/gerente");
 
@@ -133,12 +174,6 @@ const GerentePage = () => {
   const saidas = movimentacoesCaixa.filter((m) => m.tipo === "saida").reduce((acc, m) => acc + m.valor, 0);
   const totalLiquido = fundoTroco + totalVendas + entradasExtras - saidas;
 
-  /* ── daily report data ── */
-  const totalPedidos = mesas.reduce((acc, m) => acc + m.pedidos.length, 0) + fechamentos.length;
-  const comandasFechadas = fechamentos.length;
-  const ticketMedio = comandasFechadas > 0 ? totalVendas / comandasFechadas : 0;
-  const mesasAtivas = mesas.filter((m) => m.status !== "livre").length;
-
   /* ── audit logs ── */
   const filteredEvents = logFilter === "all"
     ? eventos
@@ -146,8 +181,65 @@ const GerentePage = () => {
 
   const uniqueActions = [...new Set(eventos.map((e) => e.acao).filter(Boolean))] as string[];
 
+  /* ── relatório data ── */
+  const dateRange = getDateRange(periodo, customInicio, customFim);
+  const fechFiltrados = filterByDateRange(allFechamentos, dateRange.start, dateRange.end);
 
+  const relTotalFaturado = fechFiltrados.reduce((a, f) => a + f.total, 0);
+  const relComandasFechadas = fechFiltrados.length;
+  const relTicketMedio = relComandasFechadas > 0 ? relTotalFaturado / relComandasFechadas : 0;
 
+  const relPedidosRealizados = allEventos.filter((e) => {
+    const d = new Date(e.criadoEmIso);
+    return d >= dateRange.start && d <= dateRange.end && (e.acao === "pedido_cliente" || e.acao === "lancar_pedido");
+  }).length;
+
+  // Top products
+  const topProducts = useMemo(() => {
+    const map = new Map<string, { nome: string; qty: number; total: number }>();
+    fechFiltrados.forEach((f) => {
+      (f.itens || []).forEach((item) => {
+        const existing = map.get(item.nome) || { nome: item.nome, qty: 0, total: 0 };
+        existing.qty += item.quantidade;
+        existing.total += item.precoUnitario * item.quantidade;
+        map.set(item.nome, existing);
+      });
+    });
+    return [...map.values()].sort((a, b) => b.qty - a.qty);
+  }, [fechFiltrados]);
+
+  // Bar chart data
+  const chartData = useMemo(() => {
+    const map = new Map<string, number>();
+    fechFiltrados.forEach((f) => {
+      const day = f.criadoEmIso.slice(0, 10);
+      map.set(day, (map.get(day) || 0) + f.total);
+    });
+    const entries = [...map.entries()].sort();
+    const max = Math.max(...entries.map(([, v]) => v), 1);
+    return entries.map(([day, value]) => ({
+      day: day.slice(5).replace("-", "/"),
+      value,
+      height: Math.max((value / max) * 100, 4),
+    }));
+  }, [fechFiltrados]);
+
+  // Payment breakdown
+  const paymentBreakdown = useMemo(() => {
+    const totals: Record<PaymentMethod, number> = { dinheiro: 0, credito: 0, debito: 0, pix: 0 };
+    fechFiltrados.forEach((f) => {
+      const pags = f.pagamentos?.length ? f.pagamentos : [{ id: f.id, formaPagamento: f.formaPagamento, valor: f.total }];
+      pags.forEach((p) => {
+        totals[p.formaPagamento] += p.valor;
+      });
+    });
+    const grandTotal = Object.values(totals).reduce((a, b) => a + b, 0);
+    return paymentMethods.map((pm) => ({
+      ...pm,
+      total: totals[pm.value],
+      pct: grandTotal > 0 ? ((totals[pm.value] / grandTotal) * 100).toFixed(1) : "0.0",
+    }));
+  }, [fechFiltrados]);
 
   const handleFecharDia = () => {
     fecharCaixaDoDia(currentGerente);
@@ -179,6 +271,7 @@ const GerentePage = () => {
       </div>
     </div>
   );
+
   return (
     <div className="h-svh flex flex-col bg-background overflow-hidden">
       {/* Header */}
@@ -299,17 +392,62 @@ const GerentePage = () => {
           )}
         </TabsContent>
 
-        {/* ═══ TAB 2: Relatório do Dia ═══ */}
-        <TabsContent value="relatorio" className="flex-1 overflow-y-auto p-4 md:p-6 mt-0">
+        {/* ═══ TAB 2: Relatórios ═══ */}
+        <TabsContent value="relatorio" className="flex-1 overflow-y-auto mt-0">
           {!pinVerificado ? pinGateUI : (
-          <div className="mx-auto max-w-2xl space-y-6">
-            {/* KPIs */}
+          <div className="mx-auto max-w-2xl space-y-6 p-4 md:p-6">
+
+            {/* ── Period Filter ── */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 text-sm font-black uppercase tracking-widest text-muted-foreground">
+                <Calendar className="h-4 w-4" />
+                Período
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {([
+                  { key: "hoje", label: "Hoje" },
+                  { key: "semana", label: "Esta semana" },
+                  { key: "mes", label: "Este mês" },
+                  { key: "custom", label: "Personalizado" },
+                ] as const).map((opt) => (
+                  <button
+                    key={opt.key}
+                    onClick={() => setPeriodo(opt.key)}
+                    className={`rounded-xl px-4 py-2 text-xs font-bold transition-colors ${
+                      periodo === opt.key
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-secondary text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+              {periodo === "custom" && (
+                <div className="flex gap-3">
+                  <input
+                    type="date"
+                    value={customInicio}
+                    onChange={(e) => setCustomInicio(e.target.value)}
+                    className="flex-1 rounded-xl border border-border bg-card px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                  />
+                  <input
+                    type="date"
+                    value={customFim}
+                    onChange={(e) => setCustomFim(e.target.value)}
+                    className="flex-1 rounded-xl border border-border bg-card px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* ── KPI Cards ── */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {[
-                { label: "Pedidos realizados", value: String(totalPedidos), icon: ClipboardList, color: "text-primary" },
-                { label: "Comandas fechadas", value: String(comandasFechadas), icon: ClipboardList, color: "text-emerald-400" },
-                { label: "Ticket médio", value: formatPrice(ticketMedio), icon: BarChart3, color: "text-amber-400" },
-                { label: "Mesas ativas", value: String(mesasAtivas), icon: ClipboardList, color: "text-purple-400" },
+                { label: "Total faturado", value: formatPrice(relTotalFaturado), icon: TrendingUp, color: "text-primary" },
+                { label: "Ticket médio", value: formatPrice(relTicketMedio), icon: BarChart3, color: "text-amber-400" },
+                { label: "Comandas fechadas", value: String(relComandasFechadas), icon: ClipboardList, color: "text-emerald-400" },
+                { label: "Pedidos realizados", value: String(relPedidosRealizados), icon: ClipboardList, color: "text-purple-400" },
               ].map((kpi) => {
                 const Icon = kpi.icon;
                 return (
@@ -324,14 +462,82 @@ const GerentePage = () => {
               })}
             </div>
 
-            {/* Closed bills table */}
+            {/* ── Bar Chart: Faturamento por dia ── */}
+            {chartData.length > 0 && (
+              <div className="space-y-3">
+                <h2 className="text-sm font-black uppercase tracking-widest text-muted-foreground">Faturamento por dia</h2>
+                <div className="rounded-2xl border border-border bg-card p-4">
+                  <div className="flex items-end gap-2 h-44 overflow-x-auto">
+                    {chartData.map((bar) => (
+                      <div key={bar.day} className="flex-1 min-w-[40px] flex flex-col items-center justify-end h-full gap-1">
+                        <span className="text-[10px] font-bold tabular-nums text-primary whitespace-nowrap">
+                          {formatPrice(bar.value)}
+                        </span>
+                        <div
+                          className="w-full rounded-t-lg bg-primary/80 transition-all duration-300"
+                          style={{ height: `${bar.height}%`, minHeight: 4 }}
+                        />
+                        <span className="text-[10px] font-bold text-muted-foreground whitespace-nowrap">{bar.day}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* ── Top Products ── */}
             <div className="space-y-3">
-              <h2 className="text-sm font-black uppercase tracking-widest text-muted-foreground">Comandas fechadas</h2>
-              {fechamentos.length === 0 ? (
-                <p className="text-sm text-muted-foreground py-8 text-center">Nenhuma comanda fechada ainda.</p>
+              <h2 className="text-sm font-black uppercase tracking-widest text-muted-foreground">Produtos mais vendidos</h2>
+              {topProducts.length === 0 ? (
+                <p className="text-sm text-muted-foreground py-6 text-center">Nenhum dado de produtos no período.</p>
+              ) : (
+                <div className="rounded-2xl border border-border bg-card overflow-hidden">
+                  <div className="grid grid-cols-[1fr_auto_auto] gap-x-4 px-4 py-2.5 border-b border-border bg-secondary/50">
+                    <span className="text-xs font-black uppercase tracking-wider text-muted-foreground">Produto</span>
+                    <span className="text-xs font-black uppercase tracking-wider text-muted-foreground text-right">Qtd</span>
+                    <span className="text-xs font-black uppercase tracking-wider text-muted-foreground text-right">Total</span>
+                  </div>
+                  {topProducts.slice(0, 15).map((prod, i) => (
+                    <div key={prod.nome} className={`grid grid-cols-[1fr_auto_auto] gap-x-4 px-4 py-3 ${i > 0 ? "border-t border-border/50" : ""}`}>
+                      <span className="text-sm font-bold text-foreground truncate">{prod.nome}</span>
+                      <span className="text-sm font-black tabular-nums text-muted-foreground text-right">{prod.qty}</span>
+                      <span className="text-sm font-black tabular-nums text-foreground text-right">{formatPrice(prod.total)}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* ── Payment Breakdown ── */}
+            <div className="space-y-3">
+              <h2 className="text-sm font-black uppercase tracking-widest text-muted-foreground">Formas de pagamento</h2>
+              <div className="grid grid-cols-2 gap-3">
+                {paymentBreakdown.map((pm) => {
+                  const Icon = pm.icon;
+                  return (
+                    <div key={pm.value} className="flex items-center gap-3 rounded-2xl border border-border bg-card p-4">
+                      <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${pm.bg} ${pm.color}`}>
+                        <Icon className="h-5 w-5" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-xs font-bold text-muted-foreground">{pm.label}</p>
+                        <p className={`text-lg font-black tabular-nums ${pm.color}`}>{formatPrice(pm.total)}</p>
+                        <p className="text-xs font-bold text-muted-foreground">{pm.pct}%</p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* ── Closed Bills List ── */}
+            <div className="space-y-3">
+              <h2 className="text-sm font-black uppercase tracking-widest text-muted-foreground">Comandas fechadas no período</h2>
+              {fechFiltrados.length === 0 ? (
+                <p className="text-sm text-muted-foreground py-6 text-center">Nenhuma comanda fechada neste período.</p>
               ) : (
                 <div className="space-y-2">
-                  {fechamentos.map((f) => (
+                  {fechFiltrados.map((f) => (
                     <div key={f.id} className="flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3">
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-bold text-foreground">Mesa {String(f.mesaNumero).padStart(2, "0")}</p>

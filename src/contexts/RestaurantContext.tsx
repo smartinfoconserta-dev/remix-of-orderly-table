@@ -66,6 +66,7 @@ export interface FechamentoConta {
   total: number;
   formaPagamento: PaymentMethod;
   pagamentos: SplitPayment[];
+  itens?: ItemCarrinho[];
   criadoEm: string;
   criadoEmIso: string;
   caixaId: string;
@@ -121,6 +122,9 @@ interface RestaurantContextType {
   fechamentos: FechamentoConta[];
   caixaAberto: boolean;
   fundoTroco: number;
+  allFechamentos: FechamentoConta[];
+  allEventos: EventoOperacional[];
+  allMovimentacoesCaixa: MovimentacaoCaixa[];
   getMesa: (id: string) => Mesa | undefined;
   updateMesa: (id: string, updates: Partial<Mesa>) => void;
   addToCart: (mesaId: string, item: ItemCarrinho) => void;
@@ -142,6 +146,9 @@ interface RestaurantContextType {
 const RestaurantContext = createContext<RestaurantContextType | null>(null);
 
 const RESTAURANT_STORAGE_KEY = "obsidian-restaurant-v2";
+const FECHAMENTOS_HIST_KEY = "orderly-fechamentos-v1";
+const EVENTOS_HIST_KEY = "orderly-eventos-v1";
+const MOVIMENTACOES_HIST_KEY = "orderly-movimentacoes-v1";
 
 function derivarStatus(m: Pick<Mesa, "carrinho" | "pedidos">): Mesa["status"] {
   if (m.pedidos.length > 0) return "consumo";
@@ -351,6 +358,8 @@ const readStore = (): RestaurantStore => {
                   ),
                 ];
 
+            const rawItens = (fechamento as Partial<FechamentoConta>).itens;
+
             return {
               id: String(fechamento.id ?? `fech-${Date.now()}`),
               mesaId: String(fechamento.mesaId ?? ""),
@@ -358,6 +367,7 @@ const readStore = (): RestaurantStore => {
               total: Number(fechamento.total ?? 0),
               formaPagamento: pagamentos[0]?.formaPagamento ?? normalizePaymentMethod((fechamento as Partial<FechamentoConta>).formaPagamento),
               pagamentos,
+              itens: Array.isArray(rawItens) ? rawItens.map((item, idx) => normalizeItem(item, idx)) : undefined,
               criadoEm: String(fechamento.criadoEm ?? formatDateTime()),
               criadoEmIso: String(fechamento.criadoEmIso ?? new Date().toISOString()),
               caixaId: String(fechamento.caixaId ?? ""),
@@ -390,12 +400,55 @@ const resetMesa = (mesa: Mesa): Mesa => ({
   status: "livre" as const,
 });
 
+const readHistoricalArray = <T extends { id: string }>(key: string): T[] => {
+  try {
+    const raw = window.localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+};
+
+const mergeById = <T extends { id: string }>(existing: T[], incoming: T[]): T[] => {
+  const ids = new Set(existing.map((i) => i.id));
+  const newItems = incoming.filter((i) => !ids.has(i.id));
+  return newItems.length > 0 ? [...existing, ...newItems] : existing;
+};
+
 export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [store, setStore] = useState<RestaurantStore>(readStore);
+  const [allFechamentos, setAllFechamentos] = useState<FechamentoConta[]>(() => readHistoricalArray<FechamentoConta>(FECHAMENTOS_HIST_KEY));
+  const [allEventos, setAllEventos] = useState<EventoOperacional[]>(() => readHistoricalArray<EventoOperacional>(EVENTOS_HIST_KEY));
+  const [allMovimentacoesCaixa, setAllMovimentacoesCaixa] = useState<MovimentacaoCaixa[]>(() => readHistoricalArray<MovimentacaoCaixa>(MOVIMENTACOES_HIST_KEY));
 
   useEffect(() => {
     window.localStorage.setItem(RESTAURANT_STORAGE_KEY, JSON.stringify(store));
   }, [store]);
+
+  // Merge current store arrays into historical (append-only, survives day close)
+  useEffect(() => {
+    setAllFechamentos((prev) => {
+      const merged = mergeById(prev, store.fechamentos);
+      if (merged !== prev) window.localStorage.setItem(FECHAMENTOS_HIST_KEY, JSON.stringify(merged));
+      return merged;
+    });
+  }, [store.fechamentos]);
+
+  useEffect(() => {
+    setAllEventos((prev) => {
+      const merged = mergeById(prev, store.eventos);
+      if (merged !== prev) window.localStorage.setItem(EVENTOS_HIST_KEY, JSON.stringify(merged));
+      return merged;
+    });
+  }, [store.eventos]);
+
+  useEffect(() => {
+    setAllMovimentacoesCaixa((prev) => {
+      const merged = mergeById(prev, store.movimentacoesCaixa);
+      if (merged !== prev) window.localStorage.setItem(MOVIMENTACOES_HIST_KEY, JSON.stringify(merged));
+      return merged;
+    });
+  }, [store.movimentacoesCaixa]);
 
   const getMesa = useCallback(
     (id: string) => store.mesas.find((mesa) => mesa.id === id),
@@ -635,6 +688,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
             total: mesa.total,
             formaPagamento: pagamentos[0].formaPagamento,
             pagamentos,
+            itens: mesa.pedidos.flatMap((p) => p.itens.map(cloneItem)),
             criadoEm: formatDateTime(now),
             criadoEmIso: now.toISOString(),
             caixaId: input.usuario.id,
@@ -884,6 +938,9 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         fechamentos: store.fechamentos,
         caixaAberto: store.caixaAberto,
         fundoTroco: store.fundoTroco,
+        allFechamentos,
+        allEventos,
+        allMovimentacoesCaixa,
         getMesa,
         updateMesa,
         addToCart,
