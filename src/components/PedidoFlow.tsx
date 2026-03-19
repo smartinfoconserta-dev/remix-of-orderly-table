@@ -559,12 +559,9 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
                 isCardSelected ? "scale-[1.01] shadow-[0_20px_44px_-24px_hsl(var(--foreground)/0.92)]" : ""
               }`}
               style={{
-                opacity: cardsAnimatedIn ? 1 : 0,
-                transform: `translateY(${cardsAnimatedIn ? 0 : 16}px) scale(${isCardSelected ? 1.01 : 1})`,
-                transitionProperty: "opacity, transform, box-shadow",
+                transitionProperty: "transform, box-shadow",
                 transitionDuration: `${CARD_ANIMATION_DURATION_MS}ms`,
                 transitionTimingFunction: "ease-out",
-                transitionDelay: `${Math.min(index, 3) * CARD_STAGGER_STEP_MS}ms`,
               }}
             >
               <button type="button" onClick={() => handleOpenProductModal(produto)} className="flex w-full flex-col text-left">
