@@ -15,10 +15,21 @@ export interface MesasConfig {
   totalMesas: number;
 }
 
+export interface BannerConfig {
+  id: string;
+  titulo: string;
+  subtitulo: string;
+  preco: string;
+  imagemUrl: string;
+}
+
 export interface SistemaConfig {
   nomeRestaurante: string;
   logoUrl: string;
   corPrimaria: string;
+  banners?: BannerConfig[];
+  instagramUrl?: string;
+  senhaWifi?: string;
 }
 
 export interface LicencaConfig {
@@ -30,7 +41,6 @@ export interface LicencaConfig {
 // --- Cardápio ---
 export function getCardapioOverrides(): Record<string, ProdutoOverride> {
   try {
-    // Try new key first, fall back to old key for migration
     const raw = localStorage.getItem(CARDAPIO_KEY) || localStorage.getItem("orderly-cardapio-v1");
     return raw ? JSON.parse(raw) : {};
   } catch {
@@ -57,12 +67,22 @@ export function saveMesasConfig(config: MesasConfig) {
 }
 
 // --- Sistema ---
+const defaultSistemaConfig: SistemaConfig = {
+  nomeRestaurante: "Obsidian",
+  logoUrl: "",
+  corPrimaria: "",
+  banners: [],
+  instagramUrl: "",
+  senhaWifi: "",
+};
+
 export function getSistemaConfig(): SistemaConfig {
   try {
     const raw = localStorage.getItem(SISTEMA_CONFIG_KEY);
-    return raw ? JSON.parse(raw) : { nomeRestaurante: "Obsidian", logoUrl: "", corPrimaria: "" };
+    if (!raw) return { ...defaultSistemaConfig };
+    return { ...defaultSistemaConfig, ...JSON.parse(raw) };
   } catch {
-    return { nomeRestaurante: "Obsidian", logoUrl: "", corPrimaria: "" };
+    return { ...defaultSistemaConfig };
   }
 }
 
@@ -107,7 +127,6 @@ export function isSystemBlocked(): boolean {
 export function applyCustomPrimaryColor() {
   const cfg = getSistemaConfig();
   if (!cfg.corPrimaria) return;
-  // Convert hex to HSL for the CSS variable
   const hex = cfg.corPrimaria;
   const r = parseInt(hex.slice(1, 3), 16) / 255;
   const g = parseInt(hex.slice(3, 5), 16) / 255;
@@ -126,7 +145,6 @@ export function applyCustomPrimaryColor() {
   const sPct = Math.round(s * 100);
   const lPct = Math.round(l * 100);
   document.documentElement.style.setProperty("--primary", `${hDeg} ${sPct}% ${lPct}%`);
-  // Also set foreground for contrast
   const fgL = lPct > 55 ? 10 : 98;
   document.documentElement.style.setProperty("--primary-foreground", `${hDeg} ${Math.round(sPct * 0.3)}% ${fgL}%`);
 }
