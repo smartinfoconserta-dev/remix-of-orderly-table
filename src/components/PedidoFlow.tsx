@@ -493,9 +493,13 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
         onPointerLeave={handleLogoPointerUp}
         onContextMenu={(e) => modo === "cliente" && e.preventDefault()}
       >
-        <AvatarFallback className="rounded-xl bg-secondary text-xs font-extrabold tracking-[0.18em] text-foreground">
-          {RESTAURANTE.logoFallback}
-        </AvatarFallback>
+        {RESTAURANTE.logoUrl ? (
+          <img src={RESTAURANTE.logoUrl} alt={RESTAURANTE.nome} className="h-full w-full rounded-xl object-cover" />
+        ) : (
+          <AvatarFallback className="rounded-xl bg-secondary text-xs font-extrabold tracking-[0.18em] text-foreground">
+            {RESTAURANTE.logoFallback}
+          </AvatarFallback>
+        )}
       </Avatar>
       <div className="min-w-0">
         <p className="truncate text-base font-extrabold tracking-tight text-foreground md:text-lg">{RESTAURANTE.nome}</p>
