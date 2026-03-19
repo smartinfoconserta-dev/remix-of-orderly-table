@@ -835,17 +835,19 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                     </div>
                   </div>
 
-                  {/* Progress bar */}
+                  {/* Progress bar — red → green */}
                   <div className="relative rounded-full bg-secondary h-3 overflow-hidden">
                     <div
-                      className={`h-full rounded-full transition-all duration-700 ease-out ${
-                        fechamentoPronto
-                          ? "bg-status-consumo shadow-[0_0_12px_hsl(var(--status-consumo)/0.5)]"
+                      className="h-full rounded-full transition-all duration-700 ease-out"
+                      style={{
+                        width: `${paymentProgress * 100}%`,
+                        backgroundColor: fechamentoPronto
+                          ? "hsl(var(--status-consumo))"
                           : paymentProgress > 0
-                            ? "bg-gradient-to-r from-status-pendente to-status-pendente/80 animate-pulse"
-                            : "bg-destructive/40"
-                      }`}
-                      style={{ width: `${paymentProgress * 100}%` }}
+                            ? `hsl(${Math.round(paymentProgress * 120)}, 70%, 45%)`
+                            : "hsl(var(--destructive) / 0.4)",
+                        boxShadow: fechamentoPronto ? "0 0 12px hsl(var(--status-consumo) / 0.5)" : "none",
+                      }}
                     />
                     {fechamentoPronto && (
                       <div className="absolute inset-0 flex items-center justify-center">

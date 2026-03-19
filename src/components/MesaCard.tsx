@@ -18,9 +18,9 @@ const MesaCard = ({ mesa, onClick, showTotal = true, showIndicators = true, time
   const toneClass = chamarGarcom
     ? "border-destructive/45 bg-destructive/5"
     : status === "pendente"
-      ? "border-[#dc2626]/40 bg-[#1f0a0a]"
+      ? "border-[#dc2626]/50 bg-[#1f0a0a] animate-[pulse_2s_ease-in-out_infinite]"
       : status === "consumo"
-        ? "border-[#16a34a]/40 bg-[#0d2218]"
+        ? "border-[#16a34a]/50 bg-[#0d2218]"
         : subtle
           ? "border-border/30 bg-secondary/15 opacity-60"
           : "border-border/50 bg-secondary/30";
