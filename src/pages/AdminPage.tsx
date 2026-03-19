@@ -387,8 +387,8 @@ const AdminPage = () => {
                       return (
                         <tr key={p.id} className={`border-b border-border/50 last:border-0 ${!p.ativo ? "opacity-40" : ""}`}>
                           <td className="px-4 py-2">
-                            {p.imagem ? (
-                              <img src={p.imagem} alt={p.nome} className="h-10 w-10 rounded-lg object-cover" />
+                            {(p.imagemBase64 || p.imagem) ? (
+                              <img src={p.imagemBase64 || p.imagem} alt={p.nome} className="h-10 w-10 rounded-lg object-cover" />
                             ) : (
                               <div className="h-10 w-10 rounded-lg bg-secondary flex items-center justify-center text-muted-foreground text-[10px]">?</div>
                             )}
