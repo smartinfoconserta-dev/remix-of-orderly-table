@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { LockKeyhole, TabletSmartphone } from "lucide-react";
 import PedidoFlow from "@/components/PedidoFlow";
 import { Button } from "@/components/ui/button";
