@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { LockKeyhole, TabletSmartphone } from "lucide-react";
 import PedidoFlow from "@/components/PedidoFlow";
 import { Button } from "@/components/ui/button";
@@ -20,11 +21,25 @@ const TABLET_PASSWORD = "obsidian";
 
 const ClientePage = () => {
   const { mesas } = useRestaurant();
+  const [searchParams] = useSearchParams();
+  const qrMesa = searchParams.get("mesa");
+
   const [mesaId, setMesaId] = useState<string | null>(() => getBoundTabletMesaId());
   const [tabletUser, setTabletUser] = useState<string | null>(() => getTabletLoginUser());
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [loginError, setLoginError] = useState<string | null>(null);
+
+  // QR Code: se veio ?mesa=ID, vincula automaticamente e pula login/seleção
+  useEffect(() => {
+    if (qrMesa && !mesaId) {
+      const mesa = mesas.find((m) => m.id === qrMesa || String(m.numero) === qrMesa);
+      if (mesa) {
+        const boundId = setBoundTabletMesaId(mesa.id);
+        setMesaId(boundId);
+      }
+    }
+  }, [qrMesa, mesas]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useRouteLock("/cliente");
 
