@@ -498,7 +498,7 @@ const GerentePage = () => {
                     <span className="text-xs font-black uppercase tracking-wider text-muted-foreground text-right">Qtd</span>
                     <span className="text-xs font-black uppercase tracking-wider text-muted-foreground text-right">Total</span>
                   </div>
-                  {topProducts.slice(0, 15).map((prod, i) => (
+                  {topProducts.slice(0, 10).map((prod, i) => (
                     <div key={prod.nome} className={`grid grid-cols-[1fr_auto_auto] gap-x-4 px-4 py-3 ${i > 0 ? "border-t border-border/50" : ""}`}>
                       <span className="text-sm font-bold text-foreground truncate">{prod.nome}</span>
                       <span className="text-sm font-black tabular-nums text-muted-foreground text-right">{prod.qty}</span>
