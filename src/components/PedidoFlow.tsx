@@ -25,6 +25,20 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useRestaurant, type ItemCarrinho } from "@/contexts/RestaurantContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "sonner";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import {
+  clearBoundTabletMesaId,
+  clearTabletLoginUser,
+  getBoundTabletMesaId,
+  setBoundTabletMesaId,
+} from "@/lib/tabletBinding";
 
 interface PedidoFlowProps {
   modo: "cliente" | "garcom" | "caixa";
