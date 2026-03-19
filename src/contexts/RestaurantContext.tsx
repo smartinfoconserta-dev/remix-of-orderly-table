@@ -841,6 +841,22 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     });
   }, []);
 
+  const abrirCaixa = useCallback((fundoTroco: number, usuario: OperationalUser) => {
+    setStore((prev) => ({
+      ...prev,
+      caixaAberto: true,
+      fundoTroco,
+      eventos: appendEvent(prev.eventos, {
+        tipo: "caixa",
+        descricao: `Caixa ${usuario.nome} abriu o caixa com fundo de troco R$ ${fundoTroco.toFixed(2).replace(".", ",")}`,
+        usuarioId: usuario.id,
+        usuarioNome: usuario.nome,
+        acao: "abertura_caixa",
+        valor: fundoTroco,
+      }),
+    }));
+  }, []);
+
   return (
     <RestaurantContext.Provider
       value={{
@@ -848,6 +864,8 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         eventos: store.eventos,
         movimentacoesCaixa: store.movimentacoesCaixa,
         fechamentos: store.fechamentos,
+        caixaAberto: store.caixaAberto,
+        fundoTroco: store.fundoTroco,
         getMesa,
         updateMesa,
         addToCart,
@@ -862,6 +880,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         cancelarPedido,
         marcarPedidoPronto,
         registrarMovimentacaoCaixa,
+        abrirCaixa,
       }}
     >
       {children}
