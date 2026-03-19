@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { BriefcaseBusiness, ChefHat, HandPlatter, User, Wallet } from "lucide-react";
+import { BriefcaseBusiness, ChefHat, HandPlatter, Settings, User, Wallet } from "lucide-react";
 
 interface ModeCardProps {
   title: string;
@@ -67,6 +67,12 @@ const Index = () => {
           description="Acesso completo e relatórios"
           icon={<BriefcaseBusiness size={28} />}
           onClick={() => navigate("/gerente")}
+        />
+        <ModeCard
+          title="Admin"
+          description="Configurações do sistema"
+          icon={<Settings size={28} />}
+          onClick={() => navigate("/admin")}
         />
       </div>
     </div>

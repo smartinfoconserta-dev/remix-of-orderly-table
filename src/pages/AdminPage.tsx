@@ -1,13 +1,10 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
   ClipboardList,
   Grid3X3,
   Settings,
+  Shield,
   Pencil,
-  Power,
-  PowerOff,
-  Plus,
-  Minus,
   Save,
   X,
 } from "lucide-react";
@@ -29,7 +26,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useAuth } from "@/contexts/AuthContext";
-import OperationalAccessCard from "@/components/OperationalAccessCard";
 import { produtos as baseProdutos, categorias } from "@/data/menuData";
 import {
   getCardapioOverrides,
@@ -38,24 +34,37 @@ import {
   saveMesasConfig,
   getSistemaConfig,
   saveSistemaConfig,
+  getLicencaConfig,
+  saveLicencaConfig,
+  applyCustomPrimaryColor,
   type ProdutoOverride,
   type MesasConfig,
   type SistemaConfig,
+  type LicencaConfig,
 } from "@/lib/adminStorage";
 import { toast } from "sonner";
 
-type AdminTab = "cardapio" | "mesas" | "sistema";
+type AdminTab = "cardapio" | "mesas" | "configuracoes" | "licenca";
 
 const sidebarSections = [
   { id: "cardapio" as const, label: "Cardápio", icon: ClipboardList },
   { id: "mesas" as const, label: "Mesas", icon: Grid3X3 },
-  { id: "sistema" as const, label: "Sistema", icon: Settings },
+  { id: "configuracoes" as const, label: "Configurações", icon: Settings },
+  { id: "licenca" as const, label: "Licença", icon: Shield },
 ];
 
 const formatPrice = (v: number) => `R$ ${v.toFixed(2).replace(".", ",")}`;
 
 const AdminPage = () => {
-  const { currentGerente } = useAuth();
+  const { verifyManagerAccess } = useAuth();
+
+  // Auth gate state
+  const [authenticated, setAuthenticated] = useState(false);
+  const [authName, setAuthName] = useState("");
+  const [authPin, setAuthPin] = useState("");
+  const [authError, setAuthError] = useState<string | null>(null);
+  const [authLoading, setAuthLoading] = useState(false);
+
   const [tab, setTab] = useState<AdminTab>("cardapio");
 
   // --- Cardápio state ---
@@ -123,28 +132,79 @@ const AdminPage = () => {
 
   // --- Mesas state ---
   const [mesasConfig, setMesasConfig] = useState<MesasConfig>(getMesasConfig);
+  const [mesasInput, setMesasInput] = useState(String(mesasConfig.totalMesas));
 
-  const handleMesasChange = useCallback((delta: number) => {
-    setMesasConfig((prev) => {
-      const total = Math.max(1, Math.min(100, prev.totalMesas + delta));
-      const next = { totalMesas: total };
-      saveMesasConfig(next);
-      return next;
-    });
-  }, []);
+  const handleMesasApply = useCallback(() => {
+    const val = Math.max(1, Math.min(50, parseInt(mesasInput) || 1));
+    const next = { totalMesas: val };
+    saveMesasConfig(next);
+    setMesasConfig(next);
+    setMesasInput(String(val));
+    toast.success(`Configurado para ${val} mesas. Aplica ao reabrir o caixa.`);
+  }, [mesasInput]);
 
-  // --- Sistema state ---
+  // --- Configurações state ---
   const [sistemaConfig, setSistemaConfig] = useState<SistemaConfig>(getSistemaConfig);
 
   const saveSistema = useCallback(() => {
     saveSistemaConfig(sistemaConfig);
+    applyCustomPrimaryColor();
     toast.success("Configurações salvas");
   }, [sistemaConfig]);
 
-  if (!currentGerente) {
+  // --- Licença state ---
+  const [licencaConfig, setLicencaConfig] = useState<LicencaConfig>(getLicencaConfig);
+
+  const saveLicenca = useCallback(() => {
+    saveLicencaConfig(licencaConfig);
+    toast.success("Licença salva");
+  }, [licencaConfig]);
+
+  // --- Auth gate ---
+  const handleAuth = async () => {
+    if (!authName.trim()) { setAuthError("Informe o nome do gerente"); return; }
+    if (!/^\d{4,6}$/.test(authPin)) { setAuthError("PIN inválido (4-6 dígitos)"); return; }
+    setAuthLoading(true);
+    setAuthError(null);
+    const result = await verifyManagerAccess(authName, authPin);
+    if (!result.ok) { setAuthError(result.error ?? "Não autorizado"); setAuthLoading(false); return; }
+    setAuthenticated(true);
+    setAuthLoading(false);
+  };
+
+  if (!authenticated) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-background p-6">
-        <OperationalAccessCard role="gerente" />
+      <div className="min-h-svh flex items-center justify-center bg-background p-6">
+        <div className="w-full max-w-sm space-y-6">
+          <div className="text-center space-y-2">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/15 text-primary">
+              <Shield className="h-8 w-8" />
+            </div>
+            <h2 className="text-2xl font-black text-foreground">Painel Admin</h2>
+            <p className="text-sm text-muted-foreground">Autentique com PIN de gerente para acessar.</p>
+          </div>
+          <div className="space-y-3">
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-muted-foreground">Nome do gerente</label>
+              <Input value={authName} onChange={(e) => setAuthName(e.target.value)} placeholder="Ex.: Mariana" maxLength={40} />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-muted-foreground">PIN</label>
+              <Input
+                value={authPin}
+                onChange={(e) => setAuthPin(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                placeholder="4 a 6 dígitos"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                onKeyDown={(e) => e.key === "Enter" && handleAuth()}
+              />
+            </div>
+            {authError && <p className="rounded-xl border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive">{authError}</p>}
+          </div>
+          <Button onClick={handleAuth} disabled={authLoading} className="w-full h-12 rounded-xl text-base font-black">
+            Entrar
+          </Button>
+        </div>
       </div>
     );
   }
@@ -152,7 +212,7 @@ const AdminPage = () => {
   return (
     <div className="flex min-h-screen bg-background">
       {/* Sidebar */}
-      <aside className="flex w-56 shrink-0 flex-col border-r border-border bg-sidebar-background">
+      <aside className="flex w-[220px] shrink-0 flex-col border-r border-border bg-card">
         <div className="border-b border-border px-5 py-5">
           <h1 className="text-lg font-black text-foreground">Admin</h1>
           <p className="text-xs text-muted-foreground">Painel de controle</p>
@@ -182,6 +242,7 @@ const AdminPage = () => {
 
       {/* Content */}
       <main className="flex-1 overflow-y-auto p-6 md:p-8">
+        {/* ═══ CARDÁPIO ═══ */}
         {tab === "cardapio" && (
           <div className="space-y-6">
             <div>
@@ -192,6 +253,7 @@ const AdminPage = () => {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-border bg-secondary/50">
+                    <th className="px-4 py-3 text-left font-bold text-muted-foreground w-14">Foto</th>
                     <th className="px-4 py-3 text-left font-bold text-muted-foreground">Produto</th>
                     <th className="px-4 py-3 text-left font-bold text-muted-foreground">Categoria</th>
                     <th className="px-4 py-3 text-right font-bold text-muted-foreground">Preço</th>
@@ -203,7 +265,10 @@ const AdminPage = () => {
                   {allProducts.map((p) => {
                     const cat = categorias.find((c) => c.id === p.categoria);
                     return (
-                      <tr key={p.id} className="border-b border-border/50 last:border-0">
+                      <tr key={p.id} className={`border-b border-border/50 last:border-0 ${!p.ativo ? "opacity-40" : ""}`}>
+                        <td className="px-4 py-2">
+                          <img src={p.imagem} alt={p.nome} className="h-10 w-10 rounded-lg object-cover" />
+                        </td>
                         <td className="px-4 py-3 font-semibold text-foreground">{p.nome}</td>
                         <td className="px-4 py-3 text-muted-foreground">{cat?.nome ?? p.categoria}</td>
                         <td className="px-4 py-3 text-right font-bold text-foreground">{formatPrice(p.preco)}</td>
@@ -271,35 +336,39 @@ const AdminPage = () => {
           </div>
         )}
 
+        {/* ═══ MESAS ═══ */}
         {tab === "mesas" && (
           <div className="space-y-6">
             <div>
               <h2 className="text-2xl font-black text-foreground">Mesas</h2>
-              <p className="text-sm text-muted-foreground">Configure a quantidade de mesas do restaurante</p>
+              <p className="text-sm text-muted-foreground">Configure a quantidade de mesas do restaurante (1-50)</p>
             </div>
             <div className="surface-card inline-flex items-center gap-6 rounded-2xl p-6">
-              <span className="text-sm font-bold text-muted-foreground">Total de mesas</span>
-              <div className="flex items-center gap-3">
-                <Button variant="outline" size="icon" onClick={() => handleMesasChange(-1)} disabled={mesasConfig.totalMesas <= 1}>
-                  <Minus className="h-4 w-4" />
-                </Button>
-                <span className="min-w-[3rem] text-center text-3xl font-black text-foreground">{mesasConfig.totalMesas}</span>
-                <Button variant="outline" size="icon" onClick={() => handleMesasChange(1)} disabled={mesasConfig.totalMesas >= 100}>
-                  <Plus className="h-4 w-4" />
-                </Button>
-              </div>
+              <span className="text-sm font-bold text-muted-foreground">Número de mesas</span>
+              <Input
+                type="number"
+                min={1}
+                max={50}
+                value={mesasInput}
+                onChange={(e) => setMesasInput(e.target.value)}
+                className="w-24 text-center text-xl font-black"
+              />
+              <Button onClick={handleMesasApply} className="rounded-xl font-bold">
+                Aplicar
+              </Button>
             </div>
             <p className="text-xs text-muted-foreground">
-              As alterações serão aplicadas ao reabrir o caixa do dia. Mínimo 1, máximo 100.
+              As alterações serão aplicadas ao reabrir o caixa do dia. Mínimo 1, máximo 50.
             </p>
           </div>
         )}
 
-        {tab === "sistema" && (
+        {/* ═══ CONFIGURAÇÕES ═══ */}
+        {tab === "configuracoes" && (
           <div className="space-y-6">
             <div>
-              <h2 className="text-2xl font-black text-foreground">Sistema</h2>
-              <p className="text-sm text-muted-foreground">Configurações gerais do restaurante</p>
+              <h2 className="text-2xl font-black text-foreground">Configurações</h2>
+              <p className="text-sm text-muted-foreground">Personalize o visual do restaurante</p>
             </div>
             <div className="surface-card max-w-lg space-y-5 rounded-2xl p-6">
               <div className="space-y-1.5">
@@ -324,8 +393,60 @@ const AdminPage = () => {
                   <img src={sistemaConfig.logoUrl} alt="Logo" className="h-12 w-12 rounded-xl border border-border object-cover" />
                 </div>
               )}
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-muted-foreground">Cor primária</label>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="color"
+                    value={sistemaConfig.corPrimaria || "#f97316"}
+                    onChange={(e) => setSistemaConfig((c) => ({ ...c, corPrimaria: e.target.value }))}
+                    className="h-10 w-14 cursor-pointer rounded-lg border border-border bg-transparent"
+                  />
+                  <span className="text-sm text-muted-foreground font-mono">{sistemaConfig.corPrimaria || "#f97316"}</span>
+                </div>
+              </div>
               <Button onClick={saveSistema} className="w-full">
                 <Save className="mr-1 h-4 w-4" /> Salvar configurações
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* ═══ LICENÇA ═══ */}
+        {tab === "licenca" && (
+          <div className="space-y-6">
+            <div>
+              <h2 className="text-2xl font-black text-foreground">Licença</h2>
+              <p className="text-sm text-muted-foreground">Gerencie a licença de uso do sistema</p>
+            </div>
+            <div className="surface-card max-w-lg space-y-5 rounded-2xl p-6">
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-muted-foreground">Nome do cliente (restaurante)</label>
+                <Input
+                  value={licencaConfig.nomeCliente}
+                  onChange={(e) => setLicencaConfig((c) => ({ ...c, nomeCliente: e.target.value }))}
+                  placeholder="Nome do restaurante"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-muted-foreground">Data de vencimento</label>
+                <Input
+                  type="date"
+                  value={licencaConfig.dataVencimento}
+                  onChange={(e) => setLicencaConfig((c) => ({ ...c, dataVencimento: e.target.value }))}
+                />
+              </div>
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-bold text-foreground">Status da licença</label>
+                <div className="flex items-center gap-2">
+                  <span className={`text-xs font-bold ${licencaConfig.ativo ? "text-emerald-400" : "text-destructive"}`}>
+                    {licencaConfig.ativo ? "Ativo" : "Bloqueado"}
+                  </span>
+                  <Switch checked={licencaConfig.ativo} onCheckedChange={(v) => setLicencaConfig((c) => ({ ...c, ativo: v }))} />
+                </div>
+              </div>
+              <Button onClick={saveLicenca} className="w-full">
+                <Save className="mr-1 h-4 w-4" /> Salvar licença
               </Button>
             </div>
           </div>
