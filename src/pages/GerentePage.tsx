@@ -296,10 +296,12 @@ const GerentePage = () => {
               </AlertDialogContent>
             </AlertDialog>
           </div>
+          )}
         </TabsContent>
 
         {/* ═══ TAB 2: Relatório do Dia ═══ */}
         <TabsContent value="relatorio" className="flex-1 overflow-y-auto p-4 md:p-6 mt-0">
+          {!pinVerificado ? pinGateUI : (
           <div className="mx-auto max-w-2xl space-y-6">
             {/* KPIs */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
