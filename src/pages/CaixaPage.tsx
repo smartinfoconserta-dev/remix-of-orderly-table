@@ -605,16 +605,17 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
 
                 {/* ═══ LEFT: Mesa Grid (70%) ═══ */}
                 <div className="flex-[7] overflow-y-auto p-5 lg:p-6 scrollbar-hide">
-                  <div className="grid gap-3" style={{ gridTemplateColumns: "repeat(5, 1fr)" }}>
-                    {mesas.map((item) => (
-                      <MesaCard
-                        key={item.id}
-                        mesa={item}
-                        onClick={() => handleSelecionarMesa(item.id)}
-                        showTotal
-                        timeLabel={getMesaTimeLabel(item)}
-                        subtle={item.status === "livre"}
-                      />
+                  <div className="grid gap-3 fade-in" style={{ gridTemplateColumns: "repeat(5, 1fr)" }}>
+                    {mesas.map((item, i) => (
+                      <div key={item.id} className="slide-up" style={{ animationDelay: `${Math.min(i * 30, 300)}ms`, animationFillMode: 'both' }}>
+                        <MesaCard
+                          mesa={item}
+                          onClick={() => handleSelecionarMesa(item.id)}
+                          showTotal
+                          timeLabel={getMesaTimeLabel(item)}
+                          subtle={item.status === "livre"}
+                        />
+                      </div>
                     ))}
                   </div>
                 </div>
