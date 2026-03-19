@@ -293,6 +293,8 @@ const readStore = (): RestaurantStore => {
         eventos: [],
         movimentacoesCaixa: [],
         fechamentos: [],
+        caixaAberto: false,
+        fundoTroco: 0,
       };
     }
 
