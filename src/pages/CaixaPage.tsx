@@ -97,6 +97,14 @@ const actionLabels: Record<string, string> = {
   pedido_cliente: "Pedido do cliente",
 };
 
+/* Event dot color: green=client, yellow=garcom, blue=fechamento */
+const getEventDotColor = (evento: { acao?: string; tipo?: string }) => {
+  const a = evento.acao ?? evento.tipo ?? "";
+  if (a === "pedido_cliente" || a === "chamar_garcom_cliente") return "bg-emerald-500";
+  if (a === "fechar_conta" || a === "zerar_mesa") return "bg-blue-500";
+  return "bg-amber-500";
+};
+
 /* ── types ── */
 type CriticalAction =
   | { type: "zerar_mesa"; mesaId: string; mesaNumero: number }
