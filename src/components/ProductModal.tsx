@@ -253,6 +253,10 @@ const ProductModal = ({ produto, onClose, onAdd, isGarcomMobile = false }: Props
     [pedidoAtual.quantidade, pedidoAtual.tipo, pedidoAtual.viagem],
   );
 
+  const canSkipCurrentStep = Boolean(activeDefinition?.optional && !isLastStep);
+  const canAdvanceCurrentStep = validarEtapa(activeStep);
+  const canSubmitItem = flowSteps.every((step) => validarEtapa(step));
+
   const goToStep = (stepId: StepId) => {
     const targetIndex = flowSteps.findIndex((step) => step === stepId);
     if (targetIndex === -1 || targetIndex > activeStepIndex) return;
