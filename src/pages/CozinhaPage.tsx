@@ -96,7 +96,7 @@ const CozinhaPage = () => {
       <div className="grid gap-4" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))" }}>
         {activePedidos.map((pedido) => {
           const mins = minutesAgo(pedido.criadoEmIso);
-          const isLate = mins >= 15;
+          const isLate = mins >= 15 && mins <= MAX_ELAPSED_MINUTES;
 
           return (
             <div

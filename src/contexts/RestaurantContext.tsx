@@ -119,6 +119,8 @@ interface RestaurantContextType {
   eventos: EventoOperacional[];
   movimentacoesCaixa: MovimentacaoCaixa[];
   fechamentos: FechamentoConta[];
+  caixaAberto: boolean;
+  fundoTroco: number;
   getMesa: (id: string) => Mesa | undefined;
   updateMesa: (id: string, updates: Partial<Mesa>) => void;
   addToCart: (mesaId: string, item: ItemCarrinho) => void;
@@ -133,6 +135,7 @@ interface RestaurantContextType {
   cancelarPedido: (mesaId: string, pedidoId: string, audit: ActionAuditInput) => void;
   marcarPedidoPronto: (mesaId: string, pedidoId: string) => void;
   registrarMovimentacaoCaixa: (input: MovimentacaoInput) => void;
+  abrirCaixa: (fundoTroco: number, usuario: OperationalUser) => void;
 }
 
 const RestaurantContext = createContext<RestaurantContextType | null>(null);
