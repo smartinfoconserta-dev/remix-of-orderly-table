@@ -156,6 +156,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
   const [criticalReason, setCriticalReason] = useState("");
   const [criticalError, setCriticalError] = useState<string | null>(null);
   const [isAuthorizingCriticalAction, setIsAuthorizingCriticalAction] = useState(false);
+  const [fundoTrocoInput, setFundoTrocoInput] = useState("");
 
   const mesa = mesaSelecionada ? mesas.find((item) => item.id === mesaSelecionada) ?? null : null;
   const currentOperator = accessMode === "gerente" ? currentGerente : currentCaixa;
