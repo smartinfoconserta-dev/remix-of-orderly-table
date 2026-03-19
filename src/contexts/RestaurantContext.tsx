@@ -858,6 +858,23 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }));
   }, []);
 
+  const fecharCaixaDoDia = useCallback((usuario: OperationalUser) => {
+    setStore((prev) => ({
+      mesas: criarMesasIniciais(),
+      eventos: appendEvent(prev.eventos, {
+        tipo: "caixa",
+        descricao: `Gerente ${usuario.nome} fechou o caixa do dia`,
+        usuarioId: usuario.id,
+        usuarioNome: usuario.nome,
+        acao: "fechamento_dia",
+      }),
+      movimentacoesCaixa: [],
+      fechamentos: [],
+      caixaAberto: false,
+      fundoTroco: 0,
+    }));
+  }, []);
+
   return (
     <RestaurantContext.Provider
       value={{
@@ -882,6 +899,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         marcarPedidoPronto,
         registrarMovimentacaoCaixa,
         abrirCaixa,
+        fecharCaixaDoDia,
       }}
     >
       {children}
