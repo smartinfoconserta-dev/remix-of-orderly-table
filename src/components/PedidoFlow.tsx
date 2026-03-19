@@ -33,8 +33,6 @@ interface PedidoFlowProps {
   onBack?: () => void;
 }
 
-type CategoryTransitionState = "idle" | "exit" | "pre-enter";
-
 const RESTAURANTE = {
   nome: "Obsidian",
   logoFallback: "OB",
@@ -43,10 +41,6 @@ const RESTAURANTE = {
 const HOME_TAB_ID = "inicio";
 const HOME_TAB: Categoria = { id: HOME_TAB_ID, nome: "Início", icone: "house" };
 const navigationItems = [HOME_TAB, ...categorias];
-const CATEGORY_SWITCH_DELAY_MS = 150;
-const CATEGORY_EXIT_DURATION_MS = 150;
-const CATEGORY_ENTER_DURATION_MS = 130;
-const CATEGORY_SKELETON_DURATION_MS = 100;
 const CARD_STAGGER_STEP_MS = 50;
 const CARD_ANIMATION_DURATION_MS = 200;
 const PRODUCT_MODAL_OPEN_DELAY_MS = 120;
