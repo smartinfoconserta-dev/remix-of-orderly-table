@@ -442,9 +442,46 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
   const mesasConsumo = mesas.filter(m => m.status === "consumo").length;
   const mesasPendente = mesas.filter(m => m.status === "pendente").length;
   const mesasLivre = mesas.filter(m => m.status === "livre").length;
+  const valorTotalAberto = mesas.reduce((acc, m) => acc + m.total, 0);
 
-  /* ── recent activity (last 10 events) ── */
-  const recentEvents = eventos.slice(-10).reverse();
+  /* ── recent activity (last 15 events) ── */
+  const recentEvents = eventos.slice(0, 15);
+
+  /* ── caixa open time ── */
+  const caixaOpenTime = useMemo(() => {
+    const evt = [...eventos].reverse().find(e => e.acao === "abertura_caixa");
+    return evt ? evt.criadoEm : null;
+  }, [eventos]);
+
+  /* ── mesa time open helper ── */
+  const getMesaTimeLabel = (m: typeof mesas[0]): string | undefined => {
+    if (m.status !== "consumo" || m.pedidos.length === 0) return undefined;
+    const earliest = m.pedidos.reduce((min, p) => {
+      const t = new Date(p.criadoEmIso).getTime();
+      return t < min ? t : min;
+    }, Infinity);
+    const mins = Math.floor((currentTime.getTime() - earliest) / 60000);
+    if (mins < 1) return "< 1 min";
+    return `${mins} min`;
+  };
+
+  /* ── turno close handler ── */
+  const handleCloseTurno = async () => {
+    if (!turnoManagerName.trim()) { setTurnoError("Informe o nome do gerente"); return; }
+    if (!/^\d{4,6}$/.test(turnoManagerPin)) { setTurnoError("PIN inválido"); return; }
+    setIsClosingTurno(true);
+    setTurnoError(null);
+    const result = await verifyManagerAccess(turnoManagerName, turnoManagerPin);
+    if (!result.ok) { setTurnoError(result.error ?? "Não autorizado"); setIsClosingTurno(false); return; }
+    fecharCaixaDoDia(currentOperator);
+    setTurnoModalOpen(false);
+    setIsClosingTurno(false);
+    setTurnoManagerName("");
+    setTurnoManagerPin("");
+    toast.success("Turno fechado com sucesso!", { duration: 1400, icon: "🔒" });
+  };
+
+  const clockStr = currentTime.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
 
   return (
     <>
@@ -503,172 +540,117 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
         {/* ── MAIN CONTENT ── */}
         <main className="flex-1 overflow-hidden">
           {!mesa ? (
-            /* ─────────────── MAIN VIEW — FULL HEIGHT 2-COL ─────────────── */
-            <div className="flex h-full view-fade-in">
+            /* ─────────────── MAIN VIEW — PROFESSIONAL DESKTOP ─────────────── */
+            <div className="flex flex-col h-full view-fade-in">
 
-              {/* ═══ LEFT COLUMN (70%) ═══ */}
-              <div className="flex flex-[7] flex-col min-w-0 overflow-y-auto p-5 lg:p-6 scrollbar-hide">
-
-                {/* Topbar: avatar + name + logout */}
-                <div className="flex items-center gap-3 mb-5">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-secondary text-foreground font-black text-base">
-                    {currentOperator.nome.charAt(0).toUpperCase()}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-base font-black text-foreground truncate">{currentOperator.nome}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {accessMode === "gerente" ? "Acesso completo" : "Operador de caixa"}
-                    </p>
-                  </div>
-                  <Button variant="outline" onClick={() => logout(accessMode)} className="gap-2 rounded-xl font-bold h-9 px-3 text-sm">
-                    <LogOut className="h-4 w-4" />
-                    <span className="hidden sm:inline">Sair</span>
-                  </Button>
+              {/* ── Professional Header ── */}
+              <div className="flex items-center gap-4 border-b border-border bg-card px-5 py-3 shrink-0">
+                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary/15 text-primary font-black text-sm">
+                  {currentOperator.nome.charAt(0).toUpperCase()}
                 </div>
-
-                {/* KPI bar — compact */}
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="flex items-center gap-2 rounded-xl border border-status-consumo/30 bg-status-consumo/8 px-3 py-1.5">
-                    <span className="text-lg font-black tabular-nums text-status-consumo leading-none">{mesasConsumo}</span>
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-status-consumo/80">Consumo</span>
-                  </div>
-                  <div className="flex items-center gap-2 rounded-xl border border-primary/30 bg-primary/8 px-3 py-1.5">
-                    <span className="text-lg font-black tabular-nums text-primary leading-none">{mesasPendente}</span>
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-primary/80">Pendentes</span>
-                  </div>
-                  <div className="flex items-center gap-2 rounded-xl border border-border bg-secondary/60 px-3 py-1.5">
-                    <span className="text-lg font-black tabular-nums text-muted-foreground leading-none">{mesasLivre}</span>
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80">Livres</span>
-                  </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-black text-foreground truncate">{currentOperator.nome}</p>
+                  <p className="text-[10px] text-muted-foreground">
+                    {accessMode === "gerente" ? "Acesso completo" : "Operador de caixa"}
+                  </p>
                 </div>
+                <div className="flex items-center gap-2 ml-2">
+                  <Clock className="h-3.5 w-3.5 text-muted-foreground" />
+                  <span className="text-sm font-black tabular-nums text-foreground">{clockStr}</span>
+                </div>
+                {caixaOpenTime && (
+                  <span className="rounded-lg bg-status-consumo/10 border border-status-consumo/20 px-2.5 py-1 text-[10px] font-bold text-status-consumo">
+                    Aberto desde {caixaOpenTime}
+                  </span>
+                )}
+                <div className="flex-1" />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => { setTurnoModalOpen(true); setTurnoManagerName(accessMode === "gerente" ? currentOperator.nome : ""); setTurnoManagerPin(""); setTurnoError(null); }}
+                  className="rounded-xl font-bold gap-1.5 text-xs border-destructive/30 text-destructive hover:bg-destructive/10"
+                >
+                  <LockKeyhole className="h-3.5 w-3.5" />
+                  Fechar turno
+                </Button>
+                <Button variant="outline" onClick={() => logout(accessMode)} className="gap-2 rounded-xl font-bold h-9 px-3 text-sm">
+                  <LogOut className="h-4 w-4" />
+                  <span className="hidden sm:inline">Sair</span>
+                </Button>
+              </div>
 
-                {/* Mesa grid — 5 columns */}
-                <div className="grid gap-3" style={{ gridTemplateColumns: "repeat(5, 1fr)" }}>
-                  {mesas.map((item) => (
-                    <MesaCard key={item.id} mesa={item} onClick={() => handleSelecionarMesa(item.id)} showTotal />
-                  ))}
+              {/* ── KPI Bar ── */}
+              <div className="flex items-center gap-3 border-b border-border bg-card/60 px-5 py-2.5 shrink-0">
+                <div className="flex items-center gap-2 rounded-xl border border-status-consumo/30 bg-status-consumo/8 px-3 py-1.5">
+                  <span className="text-lg font-black tabular-nums text-status-consumo leading-none">{mesasConsumo}</span>
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-status-consumo/80">Consumo</span>
+                </div>
+                <div className="flex items-center gap-2 rounded-xl border border-amber-500/30 bg-amber-500/8 px-3 py-1.5">
+                  <span className="text-lg font-black tabular-nums text-amber-400 leading-none">{mesasPendente}</span>
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-amber-400/80">Pendentes</span>
+                </div>
+                <div className="flex items-center gap-2 rounded-xl border border-border bg-secondary/60 px-3 py-1.5">
+                  <span className="text-lg font-black tabular-nums text-muted-foreground leading-none">{mesasLivre}</span>
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80">Livres</span>
+                </div>
+                <div className="ml-auto flex items-center gap-2 rounded-xl border border-primary/30 bg-primary/8 px-4 py-1.5">
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-primary/80">Em aberto</span>
+                  <span className="text-lg font-black tabular-nums text-primary leading-none">{formatPrice(valorTotalAberto)}</span>
                 </div>
               </div>
 
-              {/* ═══ RIGHT COLUMN (30%) ═══ */}
-              <div className="flex flex-[3] flex-col border-l border-border bg-card/50 overflow-hidden">
-                {accessMode === "gerente" ? (
-                  /* Gerente: Tabs with Fechamento + Atividade */
-                  <Tabs defaultValue="fechamento" className="flex flex-col h-full">
-                    <div className="px-4 pt-4 shrink-0">
-                      <TabsList className="grid h-auto w-full rounded-2xl bg-secondary p-1 grid-cols-2">
-                        <TabsTrigger value="fechamento" className="rounded-xl py-2.5 font-bold">Fechamento</TabsTrigger>
-                        <TabsTrigger value="atividade" className="rounded-xl py-2.5 font-bold">Atividade</TabsTrigger>
-                      </TabsList>
-                    </div>
+              {/* ── 2-Column Content ── */}
+              <div className="flex flex-1 overflow-hidden">
 
-                    <TabsContent value="fechamento" className="flex-1 overflow-y-auto p-4 scrollbar-hide mt-0">
-                      {!financeUnlocked ? (
-                        <div className="surface-card flex flex-col gap-4 p-5">
-                          <div className="flex items-start gap-3">
-                            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-secondary text-foreground">
-                              <LockKeyhole className="h-5 w-5" />
-                            </div>
-                            <div>
-                              <h2 className="text-base font-black text-foreground">Relatórios protegidos</h2>
-                              <p className="mt-1 text-xs text-muted-foreground">Valide o gerente para visualizar o fechamento.</p>
-                            </div>
-                          </div>
-                          <div className="space-y-2">
-                            <label className="text-sm font-semibold text-foreground">Nome do gerente</label>
-                            <Input value={financeManagerName} onChange={(e) => setFinanceManagerName(e.target.value)} placeholder="Ex.: Mariana" maxLength={40} />
-                          </div>
-                          <div className="space-y-2">
-                            <label className="text-sm font-semibold text-foreground">PIN do gerente</label>
-                            <Input value={financeManagerPin} onChange={(e) => setFinanceManagerPin(e.target.value.replace(/\D/g, "").slice(0, 6))} placeholder="4 a 6 dígitos" inputMode="numeric" autoComplete="one-time-code" />
-                          </div>
-                          {financeError && <p className="rounded-xl border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive">{financeError}</p>}
-                          <Button onClick={handleUnlockFinance} className="h-11 rounded-xl text-sm font-black" disabled={isUnlockingFinance}>
-                            <ShieldCheck className="h-4 w-4" />
-                            Liberar fechamento
-                          </Button>
-                        </div>
-                      ) : (
-                        <div className="grid gap-3 grid-cols-2">
-                          {[
-                            { label: "Total do dia", value: resumoFinanceiro.totalDia },
-                            { label: "Dinheiro", value: resumoFinanceiro.dinheiro },
-                            { label: "Crédito", value: resumoFinanceiro.credito },
-                            { label: "Débito", value: resumoFinanceiro.debito },
-                            { label: "PIX", value: resumoFinanceiro.pix },
-                            { label: "Entradas extras", value: resumoFinanceiro.entradasExtras },
-                          ].map((card) => (
-                            <div key={card.label} className="surface-card p-3">
-                              <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground">{card.label}</p>
-                              <p className="mt-1 text-lg font-black text-foreground">{formatPrice(card.value)}</p>
-                            </div>
-                          ))}
-                          <div className="surface-card p-3 col-span-2">
-                            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground">Saídas</p>
-                            <p className="mt-1 text-lg font-black text-foreground">{formatPrice(resumoFinanceiro.saidas)}</p>
-                          </div>
-                        </div>
-                      )}
-                    </TabsContent>
+                {/* ═══ LEFT: Mesa Grid (70%) ═══ */}
+                <div className="flex-[7] overflow-y-auto p-5 lg:p-6 scrollbar-hide">
+                  <div className="grid gap-3" style={{ gridTemplateColumns: "repeat(5, 1fr)" }}>
+                    {mesas.map((item) => (
+                      <MesaCard
+                        key={item.id}
+                        mesa={item}
+                        onClick={() => handleSelecionarMesa(item.id)}
+                        showTotal
+                        timeLabel={getMesaTimeLabel(item)}
+                        subtle={item.status === "livre"}
+                      />
+                    ))}
+                  </div>
+                </div>
 
-                    <TabsContent value="atividade" className="flex-1 overflow-y-auto p-4 space-y-2 scrollbar-hide mt-0">
-                      {recentEvents.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center gap-3 py-16 text-muted-foreground">
-                          <ScrollText className="h-10 w-10 opacity-20" />
-                          <p className="text-sm">Nenhuma atividade ainda.</p>
-                        </div>
-                      ) : (
-                        recentEvents.map((evento) => (
-                          <div key={evento.id} className="flex items-start gap-2.5 rounded-xl border border-border bg-card p-3">
-                            <span className={`mt-1 h-2 w-2 shrink-0 rounded-full ${getEventDotColor(evento)}`} />
-                            <div className="min-w-0 flex-1">
-                              <p className="text-xs font-semibold text-foreground leading-snug">{evento.descricao}</p>
-                              <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] text-muted-foreground">
-                                <span className="font-semibold">{evento.usuarioNome ?? "Sistema"}</span>
-                                <span>{actionLabels[evento.acao ?? ""] ?? evento.tipo}</span>
-                                <span className="tabular-nums">{evento.criadoEm}</span>
-                              </div>
+                {/* ═══ RIGHT: Activity Feed (30%) ═══ */}
+                <div className="flex flex-[3] flex-col border-l border-border bg-card/50 overflow-hidden">
+                  <div className="flex items-center gap-2.5 px-5 py-4 border-b border-border shrink-0">
+                    <ScrollText className="h-4 w-4 text-foreground" />
+                    <h2 className="text-sm font-black text-foreground flex-1">Atividade recente</h2>
+                    <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-status-consumo">
+                      <span className="h-1.5 w-1.5 rounded-full bg-status-consumo animate-pulse" />
+                      Ao vivo
+                    </span>
+                  </div>
+                  <div className="flex-1 overflow-y-auto p-4 space-y-2 scrollbar-hide">
+                    {recentEvents.length === 0 ? (
+                      <div className="flex flex-col items-center justify-center gap-3 py-16 text-muted-foreground">
+                        <ScrollText className="h-10 w-10 opacity-20" />
+                        <p className="text-sm">Nenhuma atividade ainda.</p>
+                      </div>
+                    ) : (
+                      recentEvents.map((evento) => (
+                        <div key={evento.id} className="flex items-start gap-2.5 rounded-xl border border-border bg-card p-3">
+                          <span className={`mt-1 h-2 w-2 shrink-0 rounded-full ${getEventDotColor(evento)}`} />
+                          <div className="min-w-0 flex-1">
+                            <p className="text-xs font-semibold text-foreground leading-snug">{evento.descricao}</p>
+                            <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] text-muted-foreground">
+                              <span className="font-semibold">{evento.usuarioNome ?? "Sistema"}</span>
+                              <span>{actionLabels[evento.acao ?? ""] ?? evento.tipo}</span>
+                              <span className="tabular-nums">{evento.criadoEm}</span>
                             </div>
                           </div>
-                        ))
-                      )}
-                    </TabsContent>
-                  </Tabs>
-                ) : (
-                  /* Caixa: Activity feed only — no financial data */
-                  <>
-                    <div className="flex items-center gap-2.5 px-5 py-4 border-b border-border shrink-0">
-                      <ScrollText className="h-4 w-4 text-foreground" />
-                      <h2 className="text-sm font-black text-foreground flex-1">Atividade recente</h2>
-                      <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-status-consumo">
-                        <span className="h-1.5 w-1.5 rounded-full bg-status-consumo animate-pulse" />
-                        Ao vivo
-                      </span>
-                    </div>
-                    <div className="flex-1 overflow-y-auto p-4 space-y-2 scrollbar-hide">
-                      {recentEvents.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center gap-3 py-16 text-muted-foreground">
-                          <ScrollText className="h-10 w-10 opacity-20" />
-                          <p className="text-sm">Nenhuma atividade ainda.</p>
                         </div>
-                      ) : (
-                        recentEvents.map((evento) => (
-                          <div key={evento.id} className="flex items-start gap-2.5 rounded-xl border border-border bg-card p-3">
-                            <span className={`mt-1 h-2 w-2 shrink-0 rounded-full ${getEventDotColor(evento)}`} />
-                            <div className="min-w-0 flex-1">
-                              <p className="text-xs font-semibold text-foreground leading-snug">{evento.descricao}</p>
-                              <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] text-muted-foreground">
-                                <span className="font-semibold">{evento.usuarioNome ?? "Sistema"}</span>
-                                <span>{actionLabels[evento.acao ?? ""] ?? evento.tipo}</span>
-                                <span className="tabular-nums">{evento.criadoEm}</span>
-                              </div>
-                            </div>
-                          </div>
-                        ))
-                      )}
-                    </div>
-                  </>
-                )}
+                      ))
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
           ) : (
