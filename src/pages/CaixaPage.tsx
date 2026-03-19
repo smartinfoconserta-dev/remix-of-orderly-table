@@ -97,6 +97,14 @@ const actionLabels: Record<string, string> = {
   pedido_cliente: "Pedido do cliente",
 };
 
+/* Event dot color: green=client, yellow=garcom, blue=fechamento */
+const getEventDotColor = (evento: { acao?: string; tipo?: string }) => {
+  const a = evento.acao ?? evento.tipo ?? "";
+  if (a === "pedido_cliente" || a === "chamar_garcom_cliente") return "bg-emerald-500";
+  if (a === "fechar_conta" || a === "zerar_mesa") return "bg-blue-500";
+  return "bg-amber-500";
+};
+
 /* ── types ── */
 type CriticalAction =
   | { type: "zerar_mesa"; mesaId: string; mesaNumero: number }
@@ -432,22 +440,19 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                   </Button>
                 </div>
 
-                {/* KPI cards */}
-                <div className="grid grid-cols-3 gap-3 mb-5">
-                  {/* Em consumo — green */}
-                  <div className="rounded-2xl border border-status-consumo/30 bg-status-consumo/10 p-4">
-                    <p className="text-3xl font-black tabular-nums text-status-consumo">{mesasConsumo}</p>
-                    <p className="text-xs font-bold uppercase tracking-widest text-status-consumo/80 mt-1">Em consumo</p>
+                {/* KPI bar — compact */}
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="flex items-center gap-2 rounded-xl border border-status-consumo/30 bg-status-consumo/8 px-3 py-1.5">
+                    <span className="text-lg font-black tabular-nums text-status-consumo leading-none">{mesasConsumo}</span>
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-status-consumo/80">Consumo</span>
                   </div>
-                  {/* Pendentes — orange */}
-                  <div className="rounded-2xl border border-primary/30 bg-primary/10 p-4">
-                    <p className="text-3xl font-black tabular-nums text-primary">{mesasPendente}</p>
-                    <p className="text-xs font-bold uppercase tracking-widest text-primary/80 mt-1">Pendentes</p>
+                  <div className="flex items-center gap-2 rounded-xl border border-primary/30 bg-primary/8 px-3 py-1.5">
+                    <span className="text-lg font-black tabular-nums text-primary leading-none">{mesasPendente}</span>
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-primary/80">Pendentes</span>
                   </div>
-                  {/* Livres — gray */}
-                  <div className="rounded-2xl border border-border bg-secondary/60 p-4">
-                    <p className="text-3xl font-black tabular-nums text-muted-foreground">{mesasLivre}</p>
-                    <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground/80 mt-1">Livres</p>
+                  <div className="flex items-center gap-2 rounded-xl border border-border bg-secondary/60 px-3 py-1.5">
+                    <span className="text-lg font-black tabular-nums text-muted-foreground leading-none">{mesasLivre}</span>
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80">Livres</span>
                   </div>
                 </div>
 
@@ -528,12 +533,15 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                         </div>
                       ) : (
                         recentEvents.map((evento) => (
-                          <div key={evento.id} className="rounded-xl border border-border bg-card p-3">
-                            <p className="text-xs font-semibold text-foreground leading-snug">{evento.descricao}</p>
-                            <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] text-muted-foreground">
-                              <span className="font-semibold">{evento.usuarioNome ?? "Sistema"}</span>
-                              <span>{actionLabels[evento.acao ?? ""] ?? evento.tipo}</span>
-                              <span className="tabular-nums">{evento.criadoEm}</span>
+                          <div key={evento.id} className="flex items-start gap-2.5 rounded-xl border border-border bg-card p-3">
+                            <span className={`mt-1 h-2 w-2 shrink-0 rounded-full ${getEventDotColor(evento)}`} />
+                            <div className="min-w-0 flex-1">
+                              <p className="text-xs font-semibold text-foreground leading-snug">{evento.descricao}</p>
+                              <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] text-muted-foreground">
+                                <span className="font-semibold">{evento.usuarioNome ?? "Sistema"}</span>
+                                <span>{actionLabels[evento.acao ?? ""] ?? evento.tipo}</span>
+                                <span className="tabular-nums">{evento.criadoEm}</span>
+                              </div>
                             </div>
                           </div>
                         ))
@@ -559,12 +567,15 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                         </div>
                       ) : (
                         recentEvents.map((evento) => (
-                          <div key={evento.id} className="rounded-xl border border-border bg-card p-3">
-                            <p className="text-xs font-semibold text-foreground leading-snug">{evento.descricao}</p>
-                            <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] text-muted-foreground">
-                              <span className="font-semibold">{evento.usuarioNome ?? "Sistema"}</span>
-                              <span>{actionLabels[evento.acao ?? ""] ?? evento.tipo}</span>
-                              <span className="tabular-nums">{evento.criadoEm}</span>
+                          <div key={evento.id} className="flex items-start gap-2.5 rounded-xl border border-border bg-card p-3">
+                            <span className={`mt-1 h-2 w-2 shrink-0 rounded-full ${getEventDotColor(evento)}`} />
+                            <div className="min-w-0 flex-1">
+                              <p className="text-xs font-semibold text-foreground leading-snug">{evento.descricao}</p>
+                              <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] text-muted-foreground">
+                                <span className="font-semibold">{evento.usuarioNome ?? "Sistema"}</span>
+                                <span>{actionLabels[evento.acao ?? ""] ?? evento.tipo}</span>
+                                <span className="tabular-nums">{evento.criadoEm}</span>
+                              </div>
                             </div>
                           </div>
                         ))
@@ -789,7 +800,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                             className={`flex items-center justify-center gap-3 rounded-2xl border-2 py-5 px-4 transition-all ${
                               isSelected
                                 ? `${opt.borderColor} ${opt.bgColor} scale-[1.02]`
-                                : "border-border bg-secondary/40 hover:border-muted-foreground/30"
+                                : `border-border ${opt.bgColor.replace("/15", "/6")} hover:border-muted-foreground/30`
                             }`}
                           >
                             <Icon className={`h-7 w-7 ${isSelected ? opt.color : "text-muted-foreground"}`} />
