@@ -127,10 +127,14 @@ const CartDrawer = ({
     }
 
     setIsSubmitting(false);
+
+    if (!shouldShowSuccess) {
+      setShowSubmittingOverlay(false);
+      return;
+    }
+
+    // Troca overlay por success em batch — React 18 faz isso em um único flush
     setShowSubmittingOverlay(false);
-
-    if (!shouldShowSuccess) return;
-
     setShowSuccessFeedback(true);
   };
 
