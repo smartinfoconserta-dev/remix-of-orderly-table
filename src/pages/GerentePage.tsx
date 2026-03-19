@@ -1,0 +1,367 @@
+import { useMemo, useState } from "react";
+import {
+  AlertTriangle,
+  Banknote,
+  BarChart3,
+  ClipboardList,
+  CreditCard,
+  Filter,
+  LockKeyhole,
+  LogOut,
+  ScrollText,
+  ShieldCheck,
+  Smartphone,
+  Wallet,
+  XCircle,
+} from "lucide-react";
+import { toast } from "sonner";
+import OperationalAccessCard from "@/components/OperationalAccessCard";
+import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useAuth } from "@/contexts/AuthContext";
+import { useRestaurant } from "@/contexts/RestaurantContext";
+import { useRouteLock } from "@/hooks/use-route-lock";
+import type { PaymentMethod } from "@/types/operations";
+
+/* ── helpers ── */
+const formatPrice = (v: number) => `R$ ${v.toFixed(2).replace(".", ",")}`;
+
+const paymentMethods: { value: PaymentMethod; label: string; icon: typeof Banknote; color: string; bg: string }[] = [
+  { value: "dinheiro", label: "Dinheiro", icon: Banknote, color: "text-emerald-400", bg: "bg-emerald-500/15" },
+  { value: "credito", label: "Crédito", icon: CreditCard, color: "text-blue-400", bg: "bg-blue-500/15" },
+  { value: "debito", label: "Débito", icon: Wallet, color: "text-amber-400", bg: "bg-amber-500/15" },
+  { value: "pix", label: "PIX", icon: Smartphone, color: "text-purple-400", bg: "bg-purple-500/15" },
+];
+
+const actionLabels: Record<string, string> = {
+  cancelar_item: "Exclusão de item",
+  cancelar_pedido: "Cancelamento de pedido",
+  editar_pedido: "Ajuste de pedido",
+  fechar_conta: "Fechamento de conta",
+  zerar_mesa: "Zeragem de mesa",
+  entrada_manual: "Entrada manual",
+  saida_manual: "Saída manual",
+  chamar_garcom: "Chamada de garçom",
+  lancar_pedido: "Lançamento de pedido",
+  pedido_cliente: "Pedido do cliente",
+  pedido_pronto: "Pedido pronto",
+  abertura_caixa: "Abertura de caixa",
+  fechamento_dia: "Fechamento do dia",
+};
+
+const getEventDotColor = (acao?: string) => {
+  if (!acao) return "bg-muted-foreground";
+  if (acao === "pedido_cliente" || acao === "chamar_garcom") return "bg-emerald-500";
+  if (acao === "fechar_conta" || acao === "zerar_mesa" || acao === "fechamento_dia") return "bg-blue-500";
+  if (acao === "cancelar_item" || acao === "cancelar_pedido") return "bg-destructive";
+  return "bg-amber-500";
+};
+
+const GerentePage = () => {
+  const {
+    eventos,
+    fechamentos,
+    movimentacoesCaixa,
+    mesas,
+    fundoTroco,
+    caixaAberto,
+    fecharCaixaDoDia,
+  } = useRestaurant();
+  const { currentGerente, logout } = useAuth();
+  const [logFilter, setLogFilter] = useState("all");
+
+  useRouteLock("/gerente");
+
+  /* ── auth guard ── */
+  if (!currentGerente) {
+    return (
+      <div className="min-h-svh flex flex-col bg-background">
+        <header className="flex items-center gap-3 border-b border-border bg-card px-4 py-4 shrink-0 md:px-6">
+          <h1 className="text-lg font-bold tracking-tight text-foreground truncate flex-1 md:text-xl">
+            Gerente
+          </h1>
+        </header>
+        <main className="flex-1 overflow-y-auto p-4 md:p-6">
+          <OperationalAccessCard role="gerente" />
+        </main>
+      </div>
+    );
+  }
+
+  /* ── shift closing data ── */
+  const sumByMethod = (method: PaymentMethod) =>
+    fechamentos.reduce((acc, f) => {
+      const pags = f.pagamentos?.length ? f.pagamentos : [{ id: f.id, formaPagamento: f.formaPagamento, valor: f.total }];
+      return acc + pags.filter((p) => p.formaPagamento === method).reduce((s, p) => s + p.valor, 0);
+    }, 0);
+
+  const totalVendas = fechamentos.reduce((acc, f) => acc + f.total, 0);
+  const entradasExtras = movimentacoesCaixa.filter((m) => m.tipo === "entrada").reduce((acc, m) => acc + m.valor, 0);
+  const saidas = movimentacoesCaixa.filter((m) => m.tipo === "saida").reduce((acc, m) => acc + m.valor, 0);
+  const totalLiquido = fundoTroco + totalVendas + entradasExtras - saidas;
+
+  /* ── daily report data ── */
+  const totalPedidos = mesas.reduce((acc, m) => acc + m.pedidos.length, 0) + fechamentos.length;
+  const comandasFechadas = fechamentos.length;
+  const ticketMedio = comandasFechadas > 0 ? totalVendas / comandasFechadas : 0;
+  const mesasAtivas = mesas.filter((m) => m.status !== "livre").length;
+
+  /* ── audit logs ── */
+  const filteredEvents = logFilter === "all"
+    ? eventos
+    : eventos.filter((e) => e.acao === logFilter);
+
+  const uniqueActions = [...new Set(eventos.map((e) => e.acao).filter(Boolean))] as string[];
+
+  const handleFecharDia = () => {
+    fecharCaixaDoDia(currentGerente);
+    toast.success("Caixa do dia fechado com sucesso. Estado resetado.", { duration: 2000, icon: "🔒" });
+  };
+
+  return (
+    <div className="h-svh flex flex-col bg-background overflow-hidden">
+      {/* Header */}
+      <header className="flex items-center gap-3 border-b border-border bg-card px-4 py-3 shrink-0 md:px-6">
+        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/15 text-primary">
+          <ShieldCheck className="h-4 w-4" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <h1 className="text-lg font-black tracking-tight text-foreground truncate">Painel do Gerente</h1>
+          <p className="text-xs text-muted-foreground truncate">Operador: {currentGerente.nome}</p>
+        </div>
+        <Button variant="outline" onClick={() => logout("gerente")} className="gap-2 rounded-xl font-bold h-9 px-3 text-sm">
+          <LogOut className="h-4 w-4" />
+          <span className="hidden sm:inline">Sair</span>
+        </Button>
+      </header>
+
+      {/* Tabs */}
+      <Tabs defaultValue="fechamento" className="flex-1 flex flex-col overflow-hidden">
+        <div className="border-b border-border bg-card/80 px-4 md:px-6">
+          <TabsList className="bg-transparent h-auto p-0 gap-1">
+            <TabsTrigger value="fechamento" className="rounded-xl data-[state=active]:bg-primary/15 data-[state=active]:text-primary font-bold text-xs px-3 py-2 gap-1.5">
+              <LockKeyhole className="h-3.5 w-3.5" />
+              Fechamento
+            </TabsTrigger>
+            <TabsTrigger value="relatorio" className="rounded-xl data-[state=active]:bg-primary/15 data-[state=active]:text-primary font-bold text-xs px-3 py-2 gap-1.5">
+              <BarChart3 className="h-3.5 w-3.5" />
+              Relatório
+            </TabsTrigger>
+            <TabsTrigger value="logs" className="rounded-xl data-[state=active]:bg-primary/15 data-[state=active]:text-primary font-bold text-xs px-3 py-2 gap-1.5">
+              <ScrollText className="h-3.5 w-3.5" />
+              Logs
+            </TabsTrigger>
+          </TabsList>
+        </div>
+
+        {/* ═══ TAB 1: Fechamento do Turno ═══ */}
+        <TabsContent value="fechamento" className="flex-1 overflow-y-auto p-4 md:p-6 mt-0">
+          <div className="mx-auto max-w-2xl space-y-6">
+            {/* Payment breakdown */}
+            <div className="space-y-3">
+              <h2 className="text-sm font-black uppercase tracking-widest text-muted-foreground">Vendas por forma de pagamento</h2>
+              <div className="grid grid-cols-2 gap-3">
+                {paymentMethods.map((pm) => {
+                  const Icon = pm.icon;
+                  const total = sumByMethod(pm.value);
+                  return (
+                    <div key={pm.value} className="flex items-center gap-3 rounded-2xl border border-border bg-card p-4">
+                      <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${pm.bg} ${pm.color}`}>
+                        <Icon className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold text-muted-foreground">{pm.label}</p>
+                        <p className={`text-lg font-black tabular-nums ${pm.color}`}>{formatPrice(total)}</p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Summary */}
+            <div className="space-y-2 rounded-2xl border border-border bg-card p-5">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Fundo de troco</span>
+                <span className="font-bold tabular-nums text-foreground">{formatPrice(fundoTroco)}</span>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Total vendas</span>
+                <span className="font-bold tabular-nums text-foreground">{formatPrice(totalVendas)}</span>
+              </div>
+              {entradasExtras > 0 && (
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">Entradas extras</span>
+                  <span className="font-bold tabular-nums text-emerald-400">+ {formatPrice(entradasExtras)}</span>
+                </div>
+              )}
+              {saidas > 0 && (
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">Saídas</span>
+                  <span className="font-bold tabular-nums text-destructive">- {formatPrice(saidas)}</span>
+                </div>
+              )}
+              <div className="border-t border-border pt-3 mt-3 flex items-center justify-between">
+                <span className="text-base font-black text-foreground">Total líquido</span>
+                <span className="text-2xl font-black tabular-nums text-primary">{formatPrice(totalLiquido)}</span>
+              </div>
+            </div>
+
+            {/* Close day button */}
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive" className="w-full h-12 rounded-xl text-base font-black gap-2">
+                  <XCircle className="h-5 w-5" />
+                  Fechar caixa do dia
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent className="rounded-2xl">
+                <AlertDialogHeader>
+                  <AlertDialogTitle className="flex items-center gap-2">
+                    <AlertTriangle className="h-5 w-5 text-destructive" />
+                    Confirmar fechamento do dia
+                  </AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Esta ação irá zerar todas as mesas, limpar movimentações e fechamentos do turno. Os logs de auditoria serão preservados. Deseja continuar?
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel className="rounded-xl font-bold">Cancelar</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleFecharDia} className="rounded-xl font-black bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                    Confirmar fechamento
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
+        </TabsContent>
+
+        {/* ═══ TAB 2: Relatório do Dia ═══ */}
+        <TabsContent value="relatorio" className="flex-1 overflow-y-auto p-4 md:p-6 mt-0">
+          <div className="mx-auto max-w-2xl space-y-6">
+            {/* KPIs */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {[
+                { label: "Pedidos realizados", value: String(totalPedidos), icon: ClipboardList, color: "text-primary" },
+                { label: "Comandas fechadas", value: String(comandasFechadas), icon: ClipboardList, color: "text-emerald-400" },
+                { label: "Ticket médio", value: formatPrice(ticketMedio), icon: BarChart3, color: "text-amber-400" },
+                { label: "Mesas ativas", value: String(mesasAtivas), icon: ClipboardList, color: "text-purple-400" },
+              ].map((kpi) => {
+                const Icon = kpi.icon;
+                return (
+                  <div key={kpi.label} className="rounded-2xl border border-border bg-card p-4 space-y-2">
+                    <div className={`flex h-8 w-8 items-center justify-center rounded-lg bg-secondary ${kpi.color}`}>
+                      <Icon className="h-4 w-4" />
+                    </div>
+                    <p className="text-xs font-bold text-muted-foreground">{kpi.label}</p>
+                    <p className={`text-xl font-black tabular-nums ${kpi.color}`}>{kpi.value}</p>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Closed bills table */}
+            <div className="space-y-3">
+              <h2 className="text-sm font-black uppercase tracking-widest text-muted-foreground">Comandas fechadas</h2>
+              {fechamentos.length === 0 ? (
+                <p className="text-sm text-muted-foreground py-8 text-center">Nenhuma comanda fechada ainda.</p>
+              ) : (
+                <div className="space-y-2">
+                  {fechamentos.map((f) => (
+                    <div key={f.id} className="flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-bold text-foreground">Mesa {String(f.mesaNumero).padStart(2, "0")}</p>
+                        <p className="text-xs text-muted-foreground">{f.criadoEm} · {f.caixaNome}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-black tabular-nums text-foreground">{formatPrice(f.total)}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {f.pagamentos.length > 1
+                            ? `${f.pagamentos.length} formas`
+                            : paymentMethods.find((pm) => pm.value === f.formaPagamento)?.label ?? f.formaPagamento}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </TabsContent>
+
+        {/* ═══ TAB 3: Logs de Auditoria ═══ */}
+        <TabsContent value="logs" className="flex-1 flex flex-col overflow-hidden mt-0">
+          {/* Filter bar */}
+          <div className="border-b border-border bg-card/50 px-4 py-3 md:px-6 flex items-center gap-3">
+            <Filter className="h-4 w-4 text-muted-foreground shrink-0" />
+            <Select value={logFilter} onValueChange={setLogFilter}>
+              <SelectTrigger className="w-[200px] h-8 rounded-lg text-xs font-bold">
+                <SelectValue placeholder="Filtrar por tipo" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os eventos</SelectItem>
+                {uniqueActions.map((action) => (
+                  <SelectItem key={action} value={action}>
+                    {actionLabels[action] ?? action}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <span className="text-xs text-muted-foreground ml-auto">
+              {filteredEvents.length} evento{filteredEvents.length !== 1 ? "s" : ""}
+            </span>
+          </div>
+
+          {/* Event list */}
+          <div className="flex-1 overflow-y-auto p-4 md:px-6">
+            {filteredEvents.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-8 text-center">Nenhum evento registrado.</p>
+            ) : (
+              <div className="mx-auto max-w-2xl space-y-1.5">
+                {filteredEvents.map((evento) => (
+                  <div key={evento.id} className="flex items-start gap-3 rounded-xl border border-border bg-card px-4 py-3">
+                    <span className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${getEventDotColor(evento.acao)}`} />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-bold text-foreground leading-snug">{evento.descricao}</p>
+                      <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1">
+                        <span className="text-xs text-muted-foreground">{evento.criadoEm}</span>
+                        {evento.acao && (
+                          <span className="text-xs font-bold text-muted-foreground">
+                            {actionLabels[evento.acao] ?? evento.acao}
+                          </span>
+                        )}
+                        {evento.motivo && (
+                          <span className="text-xs text-destructive italic">Motivo: {evento.motivo}</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+};
+
+export default GerentePage;
