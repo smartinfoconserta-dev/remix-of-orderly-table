@@ -453,34 +453,6 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
     return evt ? evt.criadoEm : null;
   }, [eventos]);
 
-  /* ── mesa time open helper ── */
-  const getMesaTimeLabel = (m: typeof mesas[0]): string | undefined => {
-    if (m.status !== "consumo" || m.pedidos.length === 0) return undefined;
-    const earliest = m.pedidos.reduce((min, p) => {
-      const t = new Date(p.criadoEmIso).getTime();
-      return t < min ? t : min;
-    }, Infinity);
-    const mins = Math.floor((currentTime.getTime() - earliest) / 60000);
-    if (mins < 1) return "< 1 min";
-    return `${mins} min`;
-  };
-
-  /* ── turno close handler ── */
-  const handleCloseTurno = async () => {
-    if (!turnoManagerName.trim()) { setTurnoError("Informe o nome do gerente"); return; }
-    if (!/^\d{4,6}$/.test(turnoManagerPin)) { setTurnoError("PIN inválido"); return; }
-    setIsClosingTurno(true);
-    setTurnoError(null);
-    const result = await verifyManagerAccess(turnoManagerName, turnoManagerPin);
-    if (!result.ok) { setTurnoError(result.error ?? "Não autorizado"); setIsClosingTurno(false); return; }
-    fecharCaixaDoDia(currentOperator);
-    setTurnoModalOpen(false);
-    setIsClosingTurno(false);
-    setTurnoManagerName("");
-    setTurnoManagerPin("");
-    toast.success("Turno fechado com sucesso!", { duration: 1400, icon: "🔒" });
-  };
-
   const clockStr = currentTime.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
 
   return (
