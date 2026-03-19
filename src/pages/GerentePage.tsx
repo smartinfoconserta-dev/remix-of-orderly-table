@@ -469,8 +469,8 @@ const GerentePage = () => {
                 <h2 className="text-sm font-black uppercase tracking-widest text-muted-foreground">Faturamento por dia</h2>
                 <div className="rounded-2xl border border-border bg-card p-4">
                   <div className="flex items-end gap-2 h-44 overflow-x-auto">
-                    {chartData.map((bar) => (
-                      <div key={bar.day} className="flex-1 min-w-[40px] flex flex-col items-center justify-end h-full gap-1">
+                    {chartData.slice(0, 30).map((bar) => (
+                      <div key={bar.day} className="flex flex-col items-center justify-end h-full gap-1" style={{ minWidth: 44 }}>
                         <span className="text-[10px] font-bold tabular-nums text-primary whitespace-nowrap">
                           {formatPrice(bar.value)}
                         </span>
