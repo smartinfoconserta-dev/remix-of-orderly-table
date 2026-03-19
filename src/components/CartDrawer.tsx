@@ -37,6 +37,7 @@ const CartDrawer = ({
   const [isLocked, setIsLocked] = useState(false);
   const [showSuccessFeedback, setShowSuccessFeedback] = useState(false);
   const [showSubmittingOverlay, setShowSubmittingOverlay] = useState(false);
+  const [isClosing, setIsClosing] = useState(false);
   const lockTimerRef = useRef<number | null>(null);
 
   const clearTimers = () => {
