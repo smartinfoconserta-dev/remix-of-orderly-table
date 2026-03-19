@@ -599,12 +599,9 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
               isCardSelected ? "shadow-[0_16px_36px_-14px_hsl(var(--foreground)/0.34)]" : ""
             }`}
             style={{
-              opacity: cardsAnimatedIn ? 1 : 0,
-              transform: `translateY(${cardsAnimatedIn ? 0 : 20}px) scale(${isCardSelected ? 1.03 : 1})`,
-              transitionProperty: "opacity, transform, box-shadow",
+              transitionProperty: "transform, box-shadow",
               transitionDuration: `${CARD_ANIMATION_DURATION_MS}ms`,
               transitionTimingFunction: "ease-out",
-              transitionDelay: `${Math.min(index, 3) * CARD_STAGGER_STEP_MS}ms`,
             }}
           >
             <div className="aspect-[4/3] overflow-hidden">
