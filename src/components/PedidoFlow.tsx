@@ -230,6 +230,7 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
     }
 
     openProductTimerRef.current = window.setTimeout(() => {
+      openProductTimerRef.current = null;
       setProdutoSelecionado(produto);
     }, PRODUCT_MODAL_OPEN_DELAY_MS);
   }, []);
@@ -243,6 +244,38 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
     setProdutoSelecionado(null);
     setSelectedProductCardId(null);
   }, []);
+
+  const handleCartOpenChange = useCallback(
+    (nextOpen: boolean) => {
+      if (!nextOpen) {
+        setCartOpen(false);
+        return;
+      }
+
+      if (openProductTimerRef.current) {
+        window.clearTimeout(openProductTimerRef.current);
+        openProductTimerRef.current = null;
+      }
+
+      setContaOpen(false);
+
+      if (produtoSelecionado) {
+        setProdutoSelecionado(null);
+        setSelectedProductCardId(null);
+
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            setCartOpen(true);
+          });
+        });
+
+        return;
+      }
+
+      setCartOpen(true);
+    },
+    [produtoSelecionado],
+  );
 
   const handleSelectCategoria = useCallback(
     (categoriaId: string) => {
