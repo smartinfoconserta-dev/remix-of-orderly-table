@@ -161,7 +161,7 @@ const AdminPage = () => {
     setOverrides((prev) => {
       const base = baseProdutos.find((p) => p.id === editProduct.id) || editProduct;
       const existing = prev[editProduct.id] || { ...base, ativo: true };
-      const next = {
+      const updated: Record<string, ProdutoOverride> = {
         ...prev,
         [editProduct.id]: {
           ...existing,
@@ -171,11 +171,12 @@ const AdminPage = () => {
           preco,
           categoria: editForm.categoria,
           imagem: editForm.imagem.trim(),
+          imagemBase64: editForm.imagemBase64 || undefined,
           ativo: existing.ativo ?? true,
         },
       };
-      saveCardapioOverrides(next);
-      return next;
+      saveCardapioOverrides(updated);
+      return updated;
     });
     setEditProduct(null);
     toast.success(isNewProduct ? "Produto criado" : "Produto atualizado");
