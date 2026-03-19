@@ -159,11 +159,23 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
   const [criticalError, setCriticalError] = useState<string | null>(null);
   const [isAuthorizingCriticalAction, setIsAuthorizingCriticalAction] = useState(false);
   const [fundoTrocoInput, setFundoTrocoInput] = useState("");
+  const [turnoModalOpen, setTurnoModalOpen] = useState(false);
+  const [turnoManagerName, setTurnoManagerName] = useState("");
+  const [turnoManagerPin, setTurnoManagerPin] = useState("");
+  const [turnoError, setTurnoError] = useState<string | null>(null);
+  const [isClosingTurno, setIsClosingTurno] = useState(false);
+  const [currentTime, setCurrentTime] = useState(new Date());
 
   const mesa = mesaSelecionada ? mesas.find((item) => item.id === mesaSelecionada) ?? null : null;
   const currentOperator = accessMode === "gerente" ? currentGerente : currentCaixa;
 
   useRouteLock(accessMode === "gerente" ? "/gerente" : "/caixa");
+
+  // Live clock
+  useEffect(() => {
+    const id = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(id);
+  }, []);
 
   /* ── financial summary ── */
   const resumoFinanceiro = useMemo(() => {
