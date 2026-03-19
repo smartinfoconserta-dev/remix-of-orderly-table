@@ -448,7 +448,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
   const mesasConsumo = mesas.filter(m => m.status === "consumo").length;
   const mesasPendente = mesas.filter(m => m.status === "pendente").length;
   const mesasLivre = mesas.filter(m => m.status === "livre").length;
-  const valorTotalAberto = mesas.reduce((acc, m) => acc + m.total, 0);
+  const valorTotalAberto = mesas.filter(m => m.status !== "livre").reduce((acc, m) => acc + m.total, 0);
 
   /* ── recent activity (last 15 events) ── */
   const recentEvents = eventos.slice(0, 15);
