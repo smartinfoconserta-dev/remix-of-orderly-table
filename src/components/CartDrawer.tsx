@@ -32,16 +32,11 @@ const CartDrawer = ({
 }: Props) => {
   const subtotal = carrinho.reduce((acc, item) => acc + item.precoUnitario * item.quantidade, 0);
   const totalItens = carrinho.reduce((acc, item) => acc + item.quantidade, 0);
-  const [isSubmitting, setIsSubmitting] = useRefState(false);
-  const [isLocked, setIsLocked] = useRefState(false);
-  const [showConfirmPrompt, setShowConfirmPrompt] = useRefState(false);
-  const [showSuccessFeedback, setShowSuccessFeedback] = useRefState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLocked, setIsLocked] = useState(false);
+  const [showConfirmPrompt, setShowConfirmPrompt] = useState(false);
+  const [showSuccessFeedback, setShowSuccessFeedback] = useState(false);
   const lockTimerRef = useRef<number | null>(null);
-
-  function useRefState<T>(initialValue: T) {
-    const state = React.useState(initialValue);
-    return state;
-  }
 
   const clearTimers = () => {
     if (lockTimerRef.current) {
