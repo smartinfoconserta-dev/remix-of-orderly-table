@@ -20,6 +20,7 @@ const TABLET_USERNAME = "tablet";
 const TABLET_PASSWORD = "obsidian";
 
 const ClientePage = () => {
+  const { mesas } = useRestaurant();
   const [searchParams] = useSearchParams();
 
   const [mesaId, setMesaId] = useState<string | null>(() => getBoundTabletMesaId());
