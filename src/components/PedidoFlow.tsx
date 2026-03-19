@@ -365,12 +365,12 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
         removidos: [...item.removidos],
         adicionais: item.adicionais.map((adicional) => ({ ...adicional })),
       });
-      setProdutoSelecionado(null);
       setSelectedProductCardId(null);
-      setCartOpen(true);
+      setProdutoSelecionado(null);
       setIsClientIdle(false);
+      handleCartOpenChange(true);
     },
-    [addToCart, mesaId],
+    [addToCart, handleCartOpenChange, mesaId],
   );
 
   const handleChamarGarcom = useCallback(() => {
