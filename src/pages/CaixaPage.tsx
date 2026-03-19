@@ -3,6 +3,7 @@ import {
   ArrowLeft,
   Banknote,
   Check,
+  Clock,
   CreditCard,
   Landmark,
   LockKeyhole,
