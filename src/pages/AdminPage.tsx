@@ -182,6 +182,22 @@ const AdminPage = () => {
     toast.success(isNewProduct ? "Produto criado" : "Produto atualizado");
   }, [editProduct, editForm, isNewProduct]);
 
+  const handleFileUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("Imagem muito grande (máx 2MB)");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      const base64 = reader.result as string;
+      setEditForm((f) => ({ ...f, imagemBase64: base64 }));
+    };
+    reader.readAsDataURL(file);
+    e.target.value = "";
+  }, []);
+
   const confirmRemove = useCallback(() => {
     if (!removeTarget) return;
     setOverrides((prev) => {
