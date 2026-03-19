@@ -161,9 +161,6 @@ const ProductModal = ({ produto, onClose, onAdd, isGarcomMobile = false }: Props
   const activeStep = flowSteps[activeStepIndex] ?? "quantidade";
   const isLastStep = activeStepIndex === flowSteps.length - 1;
   const activeDefinition = stepMeta[activeStep];
-  const canSkipCurrentStep = Boolean(activeDefinition?.optional && !isLastStep);
-  const canAdvanceCurrentStep = validarEtapa(activeStep);
-  const canSubmitItem = flowSteps.every((step) => validarEtapa(step));
 
   useEffect(() => {
     if (!produto) return;
