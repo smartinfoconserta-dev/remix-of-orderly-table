@@ -238,9 +238,11 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
 
   const handleSelectCategoria = useCallback(
     (categoriaId: string) => {
-      if (categoriaId === categoriaAtiva && categoriaId === categoriaExibida) return;
+      if (categoriaId === categoriaAtiva) return;
 
       setCategoriaAtiva(categoriaId);
+      setCategoriaExibida(categoriaId);
+      setCategoryFadeKey((k) => k + 1);
       setSelectedProductCardId(null);
       setIsClientIdle(false);
 
@@ -249,52 +251,13 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
         openProductTimerRef.current = null;
       }
 
-      if (categorySwitchTimerRef.current) {
-        window.clearTimeout(categorySwitchTimerRef.current);
-        categorySwitchTimerRef.current = null;
-      }
-      if (categoryEnterTimerRef.current) {
-        window.clearTimeout(categoryEnterTimerRef.current);
-        categoryEnterTimerRef.current = null;
-      }
-      if (categorySkeletonTimerRef.current) {
-        window.clearTimeout(categorySkeletonTimerRef.current);
-        categorySkeletonTimerRef.current = null;
-      }
-
       if (isMobile) {
         mobileListTopRef.current?.scrollIntoView({ behavior: isGarcomMobile ? "auto" : "smooth", block: "start" });
       } else {
         desktopMainRef.current?.scrollTo({ top: 0, behavior: "smooth" });
       }
-
-      if (isGarcomMobile) {
-        setCategoriaExibida(categoriaId);
-        setCategoryTransitionState("idle");
-        setShowCategorySkeleton(false);
-        setCardsAnimatedIn(true);
-        return;
-      }
-
-      setCategoryTransitionState("exit");
-      setShowCategorySkeleton(categoriaId !== HOME_TAB_ID);
-
-      if (categoriaId !== HOME_TAB_ID) {
-        categorySkeletonTimerRef.current = window.setTimeout(() => {
-          setShowCategorySkeleton(false);
-        }, CATEGORY_SKELETON_DURATION_MS);
-      }
-
-      categorySwitchTimerRef.current = window.setTimeout(() => {
-        setCategoriaExibida(categoriaId);
-        setCategoryTransitionState("pre-enter");
-
-        categoryEnterTimerRef.current = window.setTimeout(() => {
-          setCategoryTransitionState("idle");
-        }, 16);
-      }, CATEGORY_SWITCH_DELAY_MS);
     },
-    [categoriaAtiva, categoriaExibida, isGarcomMobile, isMobile],
+    [categoriaAtiva, isGarcomMobile, isMobile],
   );
 
   const navigateBack = useCallback(() => {
