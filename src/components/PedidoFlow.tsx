@@ -104,9 +104,14 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
 
   const mesaLabel = formatMesaLabel(mesaId);
   const nomeAtendimento = garcomNome?.trim() || currentGarcom?.nome || currentCaixa?.nome || "Equipe operacional";
+  const isGarcomMobile = modo === "garcom" && isMobile;
   const isHomeActive = categoriaExibida === HOME_TAB_ID;
   const isTabletViewport = !isMobile && typeof window !== "undefined" && window.innerWidth >= TABLET_MIN_WIDTH && window.innerWidth <= TABLET_MAX_WIDTH;
   const shouldEnableClientIdle = modo === "cliente" && isTabletViewport;
+  const cartTotal = useMemo(
+    () => carrinho.reduce((acc, item) => acc + item.precoUnitario * item.quantidade, 0),
+    [carrinho],
+  );
   const produtosFiltrados = useMemo(
     () => produtos.filter((p) => p.categoria === categoriaExibida),
     [categoriaExibida],
@@ -128,6 +133,17 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
       dismissChamarGarcom(mesaId);
     }
   }, [dismissChamarGarcom, mesa?.chamarGarcom, mesaId, modo]);
+
+  useEffect(() => {
+    if (!isGarcomMobile) return;
+    if (categoriaAtiva !== HOME_TAB_ID || categoriaExibida !== HOME_TAB_ID) return;
+
+    const initialCategoryId = categorias[0]?.id;
+    if (!initialCategoryId) return;
+
+    setCategoriaAtiva(initialCategoryId);
+    setCategoriaExibida(initialCategoryId);
+  }, [categoriaAtiva, categoriaExibida, isGarcomMobile]);
 
   useEffect(() => {
     return () => {
