@@ -464,13 +464,15 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
       </Avatar>
       <div className="min-w-0">
         <p className="truncate text-base font-extrabold tracking-tight text-foreground md:text-lg">{RESTAURANTE.nome}</p>
-        <p className="truncate text-xs font-medium text-muted-foreground md:text-sm">{mesaLabel}</p>
+        <p className="truncate text-xs font-medium text-muted-foreground md:text-sm">
+          {isGarcomMobile ? `${mesaLabel} • ${nomeAtendimento}` : mesaLabel}
+        </p>
       </div>
     </div>
   );
 
   const header = (
-    <header className="sticky top-0 z-50 flex items-center justify-between gap-3 border-b border-border bg-background/95 px-4 py-3 backdrop-blur-md md:px-6">
+    <header className={`sticky top-0 z-50 flex items-center justify-between gap-3 border-b border-border bg-background/95 py-3 backdrop-blur-md ${isGarcomMobile ? "px-3" : "px-4 md:px-6"}`}>
       <div className="flex min-w-0 flex-1 items-center gap-3">
         {modo !== "cliente" && (
           <button type="button" onClick={handleBack} className="shrink-0 text-muted-foreground transition-transform active:scale-95">
@@ -483,19 +485,21 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
         {restaurantIdentity}
       </div>
       <div className="flex shrink-0 items-center gap-2">
-        {modo !== "cliente" && (
+        {modo !== "cliente" && !isGarcomMobile ? (
           <div className="hidden items-center rounded-xl border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground md:flex">
             {nomeAtendimento}
           </div>
-        )}
+        ) : null}
         <Button
           type="button"
           variant="outline"
+          size={isGarcomMobile ? "icon" : "default"}
           onClick={() => setContaOpen(true)}
-          className="h-auto gap-2 rounded-xl px-4 py-2.5 text-sm font-bold md:text-base"
+          className={isGarcomMobile ? "h-11 w-11 rounded-xl" : "h-auto gap-2 rounded-xl px-4 py-2.5 text-sm font-bold md:text-base"}
+          aria-label="Abrir minha conta"
         >
           <Wallet className="h-4 w-4 md:h-5 md:w-5" />
-          <span>Minha Conta</span>
+          {isGarcomMobile ? null : <span>Minha Conta</span>}
         </Button>
         <CartDrawer
           carrinho={carrinho}
@@ -506,6 +510,7 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
           onSuccessAcknowledge={handleSuccessAcknowledge}
           open={cartOpen}
           onOpenChange={setCartOpen}
+          hideTrigger={isGarcomMobile}
         />
         {modo === "cliente" && (
           <Button
