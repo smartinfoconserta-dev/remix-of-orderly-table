@@ -321,7 +321,7 @@ const AdminPage = () => {
       </aside>
 
       {/* Content */}
-      <main className="flex-1 overflow-y-auto p-6 md:p-8">
+      <main className="flex-1 overflow-y-auto p-6 md:p-8" key={tab}>
         {/* ═══ CARDÁPIO ═══ */}
         {tab === "cardapio" && (
           <div className="space-y-5">
