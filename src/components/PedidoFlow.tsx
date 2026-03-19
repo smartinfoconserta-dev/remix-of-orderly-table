@@ -370,9 +370,7 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
     setProdutoSelecionado(null);
     setCategoriaAtiva(HOME_TAB_ID);
     setCategoriaExibida(HOME_TAB_ID);
-    setCategoryTransitionState("idle");
-    setShowCategorySkeleton(false);
-    setCardsAnimatedIn(true);
+    setCategoryFadeKey((k) => k + 1);
     setBannerIndex(0);
     setIsClientIdle(false);
 
