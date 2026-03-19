@@ -6,6 +6,7 @@ import {
   Calendar,
   ClipboardList,
   CreditCard,
+  Download,
   Filter,
   LockKeyhole,
   LogOut,
@@ -468,8 +469,8 @@ const GerentePage = () => {
                 <h2 className="text-sm font-black uppercase tracking-widest text-muted-foreground">Faturamento por dia</h2>
                 <div className="rounded-2xl border border-border bg-card p-4">
                   <div className="flex items-end gap-2 h-44 overflow-x-auto">
-                    {chartData.map((bar) => (
-                      <div key={bar.day} className="flex-1 min-w-[40px] flex flex-col items-center justify-end h-full gap-1">
+                    {chartData.slice(0, 30).map((bar) => (
+                      <div key={bar.day} className="flex flex-col items-center justify-end h-full gap-1" style={{ minWidth: 44 }}>
                         <span className="text-[10px] font-bold tabular-nums text-primary whitespace-nowrap">
                           {formatPrice(bar.value)}
                         </span>
@@ -497,7 +498,7 @@ const GerentePage = () => {
                     <span className="text-xs font-black uppercase tracking-wider text-muted-foreground text-right">Qtd</span>
                     <span className="text-xs font-black uppercase tracking-wider text-muted-foreground text-right">Total</span>
                   </div>
-                  {topProducts.slice(0, 15).map((prod, i) => (
+                  {topProducts.slice(0, 10).map((prod, i) => (
                     <div key={prod.nome} className={`grid grid-cols-[1fr_auto_auto] gap-x-4 px-4 py-3 ${i > 0 ? "border-t border-border/50" : ""}`}>
                       <span className="text-sm font-bold text-foreground truncate">{prod.nome}</span>
                       <span className="text-sm font-black tabular-nums text-muted-foreground text-right">{prod.qty}</span>
@@ -532,25 +533,55 @@ const GerentePage = () => {
 
             {/* ── Closed Bills List ── */}
             <div className="space-y-3">
-              <h2 className="text-sm font-black uppercase tracking-widest text-muted-foreground">Comandas fechadas no período</h2>
+              <div className="flex items-center justify-between">
+                <h2 className="text-sm font-black uppercase tracking-widest text-muted-foreground">Comandas fechadas no período</h2>
+                {fechFiltrados.length > 0 && (
+                  <Button variant="outline" size="sm" className="gap-1.5 rounded-xl text-xs font-bold" onClick={() => {
+                    const header = "Mesa,Horário,Operador,Itens,Valor,Pagamento\n";
+                    const rows = fechFiltrados.map((f) => {
+                      const itensStr = (f.itens || []).map((i) => `${i.quantidade}x ${i.nome}`).join("; ");
+                      const pgto = f.pagamentos.length > 1
+                        ? f.pagamentos.map((p) => `${paymentMethods.find((pm) => pm.value === p.formaPagamento)?.label ?? p.formaPagamento}: R$${p.valor.toFixed(2)}`).join("; ")
+                        : paymentMethods.find((pm) => pm.value === f.formaPagamento)?.label ?? f.formaPagamento;
+                      return `"Mesa ${String(f.mesaNumero).padStart(2, "0")}","${f.criadoEm}","${f.caixaNome}","${itensStr}","R$ ${f.total.toFixed(2).replace(".", ",")}","${pgto}"`;
+                    }).join("\n");
+                    const blob = new Blob([header + rows], { type: "text/csv;charset=utf-8;" });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement("a");
+                    a.href = url;
+                    a.download = `comandas-${new Date().toISOString().slice(0, 10)}.csv`;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                  }}>
+                    <Download className="h-3.5 w-3.5" />
+                    Exportar CSV
+                  </Button>
+                )}
+              </div>
               {fechFiltrados.length === 0 ? (
                 <p className="text-sm text-muted-foreground py-6 text-center">Nenhuma comanda fechada neste período.</p>
               ) : (
-                <div className="space-y-2">
-                  {fechFiltrados.map((f) => (
-                    <div key={f.id} className="flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3">
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-bold text-foreground">Mesa {String(f.mesaNumero).padStart(2, "0")}</p>
-                        <p className="text-xs text-muted-foreground">{f.criadoEm} · {f.caixaNome}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-sm font-black tabular-nums text-foreground">{formatPrice(f.total)}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {f.pagamentos.length > 1
-                            ? `${f.pagamentos.length} formas`
-                            : paymentMethods.find((pm) => pm.value === f.formaPagamento)?.label ?? f.formaPagamento}
-                        </p>
-                      </div>
+                <div className="rounded-2xl border border-border bg-card overflow-hidden">
+                  <div className="grid grid-cols-[auto_1fr_auto_auto_auto_auto] gap-x-4 px-4 py-2.5 border-b border-border bg-secondary/50">
+                    <span className="text-xs font-black uppercase tracking-wider text-muted-foreground">Mesa</span>
+                    <span className="text-xs font-black uppercase tracking-wider text-muted-foreground">Horário</span>
+                    <span className="text-xs font-black uppercase tracking-wider text-muted-foreground">Operador</span>
+                    <span className="text-xs font-black uppercase tracking-wider text-muted-foreground">Itens</span>
+                    <span className="text-xs font-black uppercase tracking-wider text-muted-foreground text-right">Valor</span>
+                    <span className="text-xs font-black uppercase tracking-wider text-muted-foreground text-right">Pagamento</span>
+                  </div>
+                  {[...fechFiltrados].sort((a, b) => new Date(b.criadoEmIso).getTime() - new Date(a.criadoEmIso).getTime()).map((f, i) => (
+                    <div key={f.id} className={`grid grid-cols-[auto_1fr_auto_auto_auto_auto] gap-x-4 px-4 py-3 ${i > 0 ? "border-t border-border/50" : ""}`}>
+                      <span className="text-sm font-bold text-foreground whitespace-nowrap">Mesa {String(f.mesaNumero).padStart(2, "0")}</span>
+                      <span className="text-sm text-muted-foreground">{f.criadoEm}</span>
+                      <span className="text-sm text-muted-foreground">{f.caixaNome}</span>
+                      <span className="text-sm text-muted-foreground truncate max-w-[160px]">{(f.itens || []).length > 0 ? (f.itens || []).map((item) => `${item.quantidade}x ${item.nome}`).join(", ") : "—"}</span>
+                      <span className="text-sm font-black tabular-nums text-foreground text-right">{formatPrice(f.total)}</span>
+                      <span className="text-sm text-muted-foreground text-right">
+                        {f.pagamentos.length > 1
+                          ? `${f.pagamentos.length} formas`
+                          : paymentMethods.find((pm) => pm.value === f.formaPagamento)?.label ?? f.formaPagamento}
+                      </span>
                     </div>
                   ))}
                 </div>
