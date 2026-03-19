@@ -7,8 +7,12 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { RestaurantProvider } from "@/contexts/RestaurantContext";
+import { applyCustomPrimaryColor } from "@/lib/adminStorage";
 import App from "./App.tsx";
 import "./index.css";
+
+// Apply custom primary color on startup
+applyCustomPrimaryColor();
 
 const queryClient = new QueryClient();
 
