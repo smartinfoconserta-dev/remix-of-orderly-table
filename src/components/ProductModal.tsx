@@ -534,7 +534,7 @@ const ProductModal = ({ produto, onClose, onAdd, isGarcomMobile = false }: Props
         }
         className={
           isGarcomMobile
-            ? "left-0 right-0 top-auto z-[70] w-full max-h-[90dvh] max-w-none translate-x-0 translate-y-0 gap-0 overflow-hidden rounded-t-[2rem] rounded-b-none border-border bg-card p-0"
+            ? "fixed bottom-0 left-0 right-0 top-auto z-[70] w-full max-h-[90dvh] max-w-none translate-x-0 translate-y-0 gap-0 overflow-hidden rounded-t-[2rem] rounded-b-none border-border bg-card p-0"
             : "max-h-[94vh] max-w-6xl overflow-hidden rounded-[2rem] border-border bg-card p-0"
         }
       >
