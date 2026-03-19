@@ -135,17 +135,6 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
   }, [dismissChamarGarcom, mesa?.chamarGarcom, mesaId, modo]);
 
   useEffect(() => {
-    if (!isGarcomMobile) return;
-    if (categoriaAtiva !== HOME_TAB_ID || categoriaExibida !== HOME_TAB_ID) return;
-
-    const initialCategoryId = categorias[0]?.id;
-    if (!initialCategoryId) return;
-
-    setCategoriaAtiva(initialCategoryId);
-    setCategoriaExibida(initialCategoryId);
-  }, [categoriaAtiva, categoriaExibida, isGarcomMobile]);
-
-  useEffect(() => {
     return () => {
       if (categorySwitchTimerRef.current) {
         window.clearTimeout(categorySwitchTimerRef.current);
