@@ -869,14 +869,14 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                             key={opt.value}
                             type="button"
                             onClick={() => setClosingPaymentMethod(opt.value)}
-                            className={`flex items-center justify-center gap-3 rounded-2xl border-2 py-5 px-4 transition-all ${
+                            className={`flex items-center justify-center gap-3 rounded-2xl border-2 py-5 px-4 transition-colors ${
                               isSelected
-                                ? `${opt.borderColor} ${opt.bgColor} scale-[1.02]`
-                                : `${opt.idleBorder} ${opt.idleBg} hover:brightness-125`
+                                ? `border-white ${opt.bgColor}`
+                                : `${opt.idleBorder} ${opt.idleBg} opacity-40`
                             }`}
                           >
-                            <Icon className={`h-7 w-7 ${isSelected ? opt.color : "text-muted-foreground"}`} />
-                            <span className={`text-lg font-black ${isSelected ? "text-foreground" : "text-muted-foreground"}`}>{opt.label}</span>
+                            <Icon className={`h-7 w-7 ${isSelected ? "text-white" : "text-muted-foreground"}`} />
+                            <span className={`text-lg font-black ${isSelected ? "text-white" : "text-muted-foreground"}`}>{opt.label}</span>
                           </button>
                         );
                       })}
