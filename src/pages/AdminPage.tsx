@@ -382,7 +382,7 @@ const AdminPage = () => {
                   {filteredProducts.length === 0 ? (
                     <tr><td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">Nenhum produto encontrado.</td></tr>
                   ) : (
-                    filteredProducts.map((p) => {
+                    filteredProducts.map((p, idx) => {
                       const cat = categorias.find((c) => c.id === p.categoria);
                       return (
                         <tr key={p.id} className={`slide-up border-b border-border/50 last:border-0 ${!p.ativo ? "opacity-40" : ""}`} style={{ animationDelay: `${Math.min(idx * 30, 300)}ms`, animationFillMode: 'both' }}>
