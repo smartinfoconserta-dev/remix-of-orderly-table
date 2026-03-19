@@ -146,17 +146,8 @@ const GerentePage = () => {
 
   const uniqueActions = [...new Set(eventos.map((e) => e.acao).filter(Boolean))] as string[];
 
-  const handleVerificarPin = useCallback(async () => {
-    if (!currentGerente) return;
-    setPinError("");
-    const result = await verifyManagerAccess(currentGerente.nome, pinInput);
-    if (result.ok) {
-      setPinVerificado(true);
-      setPinInput("");
-    } else {
-      setPinError(result.error ?? "PIN inválido");
-    }
-  }, [currentGerente, pinInput, verifyManagerAccess]);
+
+
 
   const handleFecharDia = () => {
     fecharCaixaDoDia(currentGerente);
