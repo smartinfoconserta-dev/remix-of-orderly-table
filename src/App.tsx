@@ -22,6 +22,7 @@ const App = () => {
         <Route path="/caixa" element={<CaixaPage accessMode="caixa" />} />
         <Route path="/gerente" element={<GerentePage />} />
         <Route path="/cozinha" element={<CozinhaPage />} />
+        <Route path="/admin" element={<AdminPage />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </div>
