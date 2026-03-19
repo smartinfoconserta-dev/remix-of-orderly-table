@@ -309,16 +309,6 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
         return { title: "Autorizar exclusão de item pendente", description: `${criticalAction.itemNome} será removido da Mesa ${String(criticalAction.mesaNumero).padStart(2, "0")}.`, buttonLabel: "Autorizar exclusão" };
       case "remover_item_pedido":
         return { title: "Autorizar exclusão de item do pedido", description: `${criticalAction.itemNome} será removido do Pedido #${criticalAction.pedidoNumero}.`, buttonLabel: "Autorizar exclusão" };
-      case "desvincular_tablet":
-        return { title: "Autorizar desvínculo do tablet", description: `O terminal será liberado da Mesa ${String(criticalAction.mesaNumero).padStart(2, "0")}.`, buttonLabel: "Desvincular tablet" };
-      case "vincular_tablet":
-        return {
-          title: criticalAction.mesaNumero ? "Autorizar troca de mesa do tablet" : "Autorizar vínculo do tablet",
-          description: criticalAction.mesaNumero
-            ? `O terminal sairá da Mesa ${String(criticalAction.mesaNumero).padStart(2, "0")} e irá para a Mesa ${String(criticalAction.proximaMesaNumero).padStart(2, "0")}.`
-            : `O terminal será vinculado à Mesa ${String(criticalAction.proximaMesaNumero).padStart(2, "0")}.`,
-          buttonLabel: criticalAction.mesaNumero ? "Trocar mesa do tablet" : "Vincular tablet",
-        };
       default:
         return null;
     }
