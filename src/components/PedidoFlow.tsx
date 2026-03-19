@@ -785,12 +785,9 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
         />
       </div>
       <div ref={mobileListTopRef} />
-      <main className={`flex-1 pt-3 transition-all duration-500 ${isGarcomMobile ? "pb-32" : "pb-6"} ${isClientIdle ? "brightness-[0.2] saturate-50" : "brightness-100 saturate-100"}`}>
+      <main className={`flex-1 pt-3 transition-all duration-500 ${isGarcomMobile ? "pb-6" : "pb-6"} ${isClientIdle ? "brightness-[0.2] saturate-50" : "brightness-100 saturate-100"}`}>
         <div className="px-4">{showCategorySkeleton ? skeletonGrid : isGarcomMobile ? productGrid : isHomeActive ? homeContent : productGrid}</div>
       </main>
-      {isGarcomMobile ? (
-        <StickyOrderButton total={cartTotal} itemCount={cartItemCount} onOpenCart={() => handleCartOpenChange(true)} label="Ver carrinho" />
-      ) : null}
     </>
   );
 
