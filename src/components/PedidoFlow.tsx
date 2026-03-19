@@ -671,7 +671,7 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
       </div>
       <div ref={mobileListTopRef} />
       <main className={`flex-1 pt-3 transition-all duration-500 ${isGarcomMobile ? "pb-6" : "pb-6"} ${isClientIdle ? "brightness-[0.2] saturate-50" : "brightness-100 saturate-100"}`}>
-        <div className="px-4">{showCategorySkeleton ? skeletonGrid : isGarcomMobile ? productGrid : isHomeActive ? homeContent : productGrid}</div>
+        <div className="px-4">{isGarcomMobile ? productGrid : isHomeActive ? homeContent : productGrid}</div>
       </main>
     </>
   );
