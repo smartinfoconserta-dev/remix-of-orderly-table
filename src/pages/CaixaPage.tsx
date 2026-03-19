@@ -1039,6 +1039,8 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <LicenseBanner blockMode={accessMode === "caixa"} />
     </>
   );
 };
