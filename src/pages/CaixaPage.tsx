@@ -577,223 +577,185 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
               </Tabs>
             </div>
           ) : (
-            /* ─────────────── MESA DETAIL VIEW ─────────────── */
-            <div className="mx-auto max-w-5xl">
-              <Tabs value={mesaTab} onValueChange={setMesaTab} className="w-full">
-                <TabsList className="grid h-auto w-full grid-cols-3 rounded-2xl bg-secondary p-1">
-                  <TabsTrigger value="comanda" className="rounded-xl py-2.5 font-bold gap-1.5">
-                    <ReceiptText className="h-4 w-4" />
+            /* ─────────────── MESA DETAIL VIEW — DESKTOP 2-COL ─────────────── */
+            <div className="mx-auto grid h-[calc(100svh-7.5rem)] max-w-[1600px] grid-cols-[2fr_3fr] gap-5">
+
+              {/* ═══ LEFT: COMANDA (read-only feel) ═══ */}
+              <div className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card">
+                <div className="border-b border-border px-5 py-4">
+                  <h2 className="text-base font-black text-foreground flex items-center gap-2">
+                    <ReceiptText className="h-4.5 w-4.5 text-primary" />
                     Comanda
-                  </TabsTrigger>
-                  <TabsTrigger value="pagamento" className="rounded-xl py-2.5 font-bold gap-1.5">
-                    <Wallet className="h-4 w-4" />
-                    Pagamento
-                  </TabsTrigger>
-                  <TabsTrigger value="logs" className="rounded-xl py-2.5 font-bold gap-1.5">
-                    <ScrollText className="h-4 w-4" />
-                    Logs
-                  </TabsTrigger>
-                </TabsList>
+                  </h2>
+                </div>
 
-                {/* ─── TAB: COMANDA ─── */}
-                <TabsContent value="comanda" className="mt-4 space-y-5">
-                  {/* Confirmed orders */}
-                  <div>
-                    <h3 className="mb-3 text-base font-black text-foreground">Pedidos confirmados</h3>
-                    {mesa.pedidos.length === 0 ? (
-                      <div className="rounded-2xl bg-secondary p-5 text-sm text-muted-foreground">Nenhum pedido confirmado nesta mesa.</div>
-                    ) : (
-                      <div className="space-y-4">
-                        {mesa.pedidos.map((pedido) => (
-                          <div key={pedido.id} className="rounded-2xl border border-border bg-card overflow-hidden">
-                            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-4 py-3">
-                              <div>
-                                <p className="text-sm font-black text-foreground">Pedido #{pedido.numeroPedido}</p>
-                                <p className="text-xs text-muted-foreground">
-                                  {pedido.origem === "garcom" ? `Garçom ${pedido.garcomNome ?? ""}` : pedido.origem === "caixa" ? `Caixa ${pedido.caixaNome ?? ""}` : "Cliente"} • {pedido.criadoEm}
-                                </p>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <span className="text-base font-black text-primary tabular-nums">{formatPrice(pedido.total)}</span>
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  size="sm"
-                                  className="rounded-xl font-bold gap-1 text-destructive border-destructive/20 hover:bg-destructive/10"
-                                  onClick={() => openCriticalAction({ type: "cancelar_pedido", mesaId: mesa.id, mesaNumero: mesa.numero, pedidoId: pedido.id, pedidoNumero: pedido.numeroPedido })}
-                                >
-                                  <XCircle className="h-3.5 w-3.5" />
-                                  Cancelar
-                                </Button>
-                              </div>
-                            </div>
-                            <div className="divide-y divide-border">
-                              {pedido.itens.map((item) => (
-                                <div key={item.uid} className="flex items-center gap-3 px-4 py-3">
-                                  <div className="min-w-0 flex-1">
-                                    <p className="text-sm font-semibold text-foreground">
-                                      <span className="tabular-nums text-muted-foreground">{item.quantidade}×</span> {item.nome}
-                                    </p>
-                                    {item.adicionais.length > 0 && <p className="text-xs text-primary">+ {item.adicionais.map((a) => a.nome).join(", ")}</p>}
-                                    {item.removidos.length > 0 && <p className="text-xs text-destructive">Sem {item.removidos.join(", ")}</p>}
-                                  </div>
-                                  <span className="text-sm font-bold tabular-nums text-foreground">{formatPrice(item.precoUnitario * item.quantidade)}</span>
-                                  <div className="flex items-center gap-1">
-                                    <Button
-                                      size="icon"
-                                      variant="outline"
-                                      className="h-7 w-7 rounded-lg"
-                                      onClick={() =>
-                                        item.quantidade === 1
-                                          ? openCriticalAction({ type: "remover_item_pedido", mesaId: mesa.id, mesaNumero: mesa.numero, pedidoId: pedido.id, pedidoNumero: pedido.numeroPedido, itemUid: item.uid, itemNome: item.nome, quantidade: item.quantidade })
-                                          : ajustarItemPedido(mesa.id, pedido.id, item.uid, -1, { usuario: currentOperator })
-                                      }
-                                    >
-                                      <Minus className="h-3 w-3" />
-                                    </Button>
-                                    <Button
-                                      size="icon"
-                                      variant="outline"
-                                      className="h-7 w-7 rounded-lg"
-                                      onClick={() => ajustarItemPedido(mesa.id, pedido.id, item.uid, 1, { usuario: currentOperator })}
-                                    >
-                                      <Plus className="h-3 w-3" />
-                                    </Button>
-                                    <Button
-                                      size="icon"
-                                      variant="outline"
-                                      className="h-7 w-7 rounded-lg text-destructive border-destructive/20 hover:bg-destructive/10"
-                                      onClick={() => openCriticalAction({ type: "remover_item_pedido", mesaId: mesa.id, mesaNumero: mesa.numero, pedidoId: pedido.id, pedidoNumero: pedido.numeroPedido, itemUid: item.uid, itemNome: item.nome, quantidade: item.quantidade })}
-                                    >
-                                      <Trash2 className="h-3 w-3" />
-                                    </Button>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
+                <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-hide">
+                  {/* Confirmed orders as table-like rows */}
+                  {mesa.pedidos.length === 0 && mesa.carrinho.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center gap-3 py-16 text-muted-foreground">
+                      <ReceiptText className="h-10 w-10 opacity-30" />
+                      <p className="text-sm">Nenhum item na comanda.</p>
+                    </div>
+                  ) : (
+                    <>
+                      {mesa.pedidos.map((pedido) => (
+                        <div key={pedido.id} className="space-y-1">
+                          <div className="flex items-center justify-between px-1">
+                            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                              Pedido #{pedido.numeroPedido} • {pedido.origem === "garcom" ? `Garçom` : pedido.origem === "caixa" ? `Caixa` : "Cliente"}
+                            </p>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 rounded-lg text-xs font-bold text-destructive hover:bg-destructive/10 px-2"
+                              onClick={() => openCriticalAction({ type: "cancelar_pedido", mesaId: mesa.id, mesaNumero: mesa.numero, pedidoId: pedido.id, pedidoNumero: pedido.numeroPedido })}
+                            >
+                              <XCircle className="h-3 w-3 mr-1" />
+                              Cancelar
+                            </Button>
                           </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
+                          <div className="rounded-xl border border-border overflow-hidden">
+                            <table className="w-full text-sm">
+                              <thead>
+                                <tr className="border-b border-border bg-secondary/50">
+                                  <th className="py-2 px-3 text-left text-[10px] font-bold uppercase tracking-wider text-muted-foreground w-16">Qtd</th>
+                                  <th className="py-2 px-3 text-left text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Item</th>
+                                  <th className="py-2 px-3 text-right text-[10px] font-bold uppercase tracking-wider text-muted-foreground w-24">Preço</th>
+                                  <th className="py-2 px-3 text-right w-24"></th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-border">
+                                {pedido.itens.map((item) => (
+                                  <tr key={item.uid} className="hover:bg-secondary/30 transition-colors">
+                                    <td className="py-2.5 px-3 tabular-nums text-muted-foreground font-semibold">{item.quantidade}</td>
+                                    <td className="py-2.5 px-3">
+                                      <p className="font-semibold text-foreground">{item.nome}</p>
+                                      {item.adicionais.length > 0 && <p className="text-xs text-primary mt-0.5">+ {item.adicionais.map((a) => a.nome).join(", ")}</p>}
+                                      {item.removidos.length > 0 && <p className="text-xs text-destructive mt-0.5">Sem {item.removidos.join(", ")}</p>}
+                                    </td>
+                                    <td className="py-2.5 px-3 text-right tabular-nums font-bold text-foreground">{formatPrice(item.precoUnitario * item.quantidade)}</td>
+                                    <td className="py-2.5 px-3 text-right">
+                                      <div className="flex items-center justify-end gap-1">
+                                        <Button
+                                          size="icon" variant="ghost" className="h-6 w-6 rounded-md"
+                                          onClick={() =>
+                                            item.quantidade === 1
+                                              ? openCriticalAction({ type: "remover_item_pedido", mesaId: mesa.id, mesaNumero: mesa.numero, pedidoId: pedido.id, pedidoNumero: pedido.numeroPedido, itemUid: item.uid, itemNome: item.nome, quantidade: item.quantidade })
+                                              : ajustarItemPedido(mesa.id, pedido.id, item.uid, -1, { usuario: currentOperator })
+                                          }
+                                        >
+                                          <Minus className="h-3 w-3" />
+                                        </Button>
+                                        <Button size="icon" variant="ghost" className="h-6 w-6 rounded-md" onClick={() => ajustarItemPedido(mesa.id, pedido.id, item.uid, 1, { usuario: currentOperator })}>
+                                          <Plus className="h-3 w-3" />
+                                        </Button>
+                                        <Button
+                                          size="icon" variant="ghost" className="h-6 w-6 rounded-md text-destructive hover:bg-destructive/10"
+                                          onClick={() => openCriticalAction({ type: "remover_item_pedido", mesaId: mesa.id, mesaNumero: mesa.numero, pedidoId: pedido.id, pedidoNumero: pedido.numeroPedido, itemUid: item.uid, itemNome: item.nome, quantidade: item.quantidade })}
+                                        >
+                                          <Trash2 className="h-3 w-3" />
+                                        </Button>
+                                      </div>
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      ))}
 
-                  {/* Pending cart items */}
-                  <div>
-                    <h3 className="mb-3 text-base font-black text-foreground flex items-center gap-2">
-                      <ShoppingCart className="h-4 w-4 text-status-pendente" />
-                      Itens pendentes
+                      {/* Pending cart items */}
                       {mesa.carrinho.length > 0 && (
-                        <span className="rounded-full bg-status-pendente/15 px-2 py-0.5 text-xs font-bold text-status-pendente">{mesa.carrinho.length}</span>
-                      )}
-                    </h3>
-                    {mesa.carrinho.length === 0 ? (
-                      <div className="rounded-2xl bg-secondary p-5 text-sm text-muted-foreground">Nenhum item pendente no carrinho desta mesa.</div>
-                    ) : (
-                      <div className="space-y-2">
-                        {mesa.carrinho.map((item) => (
-                          <div key={item.uid} className="flex items-center gap-3 rounded-2xl border border-status-pendente/20 bg-status-pendente/5 px-4 py-3">
-                            <div className="min-w-0 flex-1">
-                              <p className="text-sm font-semibold text-foreground">
-                                <span className="tabular-nums text-muted-foreground">{item.quantidade}×</span> {item.nome}
-                              </p>
-                              <p className="text-xs text-muted-foreground">{formatPrice(item.precoUnitario * item.quantidade)}</p>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <Button
-                                size="icon"
-                                variant="outline"
-                                className="h-7 w-7 rounded-lg"
-                                onClick={() =>
-                                  item.quantidade === 1
-                                    ? openCriticalAction({ type: "remover_item_carrinho", mesaId: mesa.id, mesaNumero: mesa.numero, itemUid: item.uid, itemNome: item.nome })
-                                    : updateCartItemQty(mesa.id, item.uid, -1, { usuario: currentOperator })
-                                }
-                              >
-                                <Minus className="h-3 w-3" />
-                              </Button>
-                              <Button size="icon" variant="outline" className="h-7 w-7 rounded-lg" onClick={() => updateCartItemQty(mesa.id, item.uid, 1, { usuario: currentOperator })}>
-                                <Plus className="h-3 w-3" />
-                              </Button>
-                              <Button
-                                size="icon"
-                                variant="outline"
-                                className="h-7 w-7 rounded-lg text-destructive border-destructive/20 hover:bg-destructive/10"
-                                onClick={() => openCriticalAction({ type: "remover_item_carrinho", mesaId: mesa.id, mesaNumero: mesa.numero, itemUid: item.uid, itemNome: item.nome })}
-                              >
-                                <Trash2 className="h-3 w-3" />
-                              </Button>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Gerente tablet section */}
-                  {accessMode === "gerente" && (
-                    <div className="rounded-2xl border border-border bg-card p-4">
-                      <div className="flex items-start gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-secondary text-foreground">
-                          <Smartphone className="h-5 w-5" />
-                        </div>
-                        <div className="flex-1">
-                          <h3 className="text-sm font-black text-foreground">Operação do tablet</h3>
-                          <p className="mt-1 text-xs text-muted-foreground">
-                            {tabletMesaId === mesa.id
-                              ? "Tablet vinculado a esta mesa."
-                              : tabletMesa
-                                ? `Tablet vinculado à Mesa ${String(tabletMesa.numero).padStart(2, "0")}.`
-                                : "Nenhum tablet vinculado."}
+                        <div className="space-y-1">
+                          <p className="px-1 text-xs font-bold text-status-pendente uppercase tracking-wider flex items-center gap-1.5">
+                            <ShoppingCart className="h-3 w-3" />
+                            Itens pendentes ({mesa.carrinho.length})
                           </p>
-                        </div>
-                      </div>
-                      {tabletMesaId === mesa.id ? (
-                        <div className="mt-3 flex flex-col gap-3">
-                          <div className="flex gap-2 items-end">
-                            <div className="flex-1 space-y-1">
-                              <label className="text-xs font-semibold text-foreground">Trocar para mesa</label>
-                              <Input value={tabletTargetMesaNumber} onChange={(e) => setTabletTargetMesaNumber(e.target.value.replace(/\D/g, "").slice(0, 2))} placeholder="Nº" inputMode="numeric" autoComplete="off" className="h-9" />
-                            </div>
-                            <Button size="sm" onClick={handlePrepareTabletBinding} className="rounded-xl font-bold">Trocar</Button>
+                          <div className="rounded-xl border border-status-pendente/20 overflow-hidden">
+                            <table className="w-full text-sm">
+                              <tbody className="divide-y divide-border">
+                                {mesa.carrinho.map((item) => (
+                                  <tr key={item.uid} className="bg-status-pendente/5">
+                                    <td className="py-2.5 px-3 tabular-nums text-muted-foreground font-semibold w-16">{item.quantidade}</td>
+                                    <td className="py-2.5 px-3 font-semibold text-foreground">{item.nome}</td>
+                                    <td className="py-2.5 px-3 text-right tabular-nums font-bold text-foreground w-24">{formatPrice(item.precoUnitario * item.quantidade)}</td>
+                                    <td className="py-2.5 px-3 text-right w-24">
+                                      <div className="flex items-center justify-end gap-1">
+                                        <Button size="icon" variant="ghost" className="h-6 w-6 rounded-md"
+                                          onClick={() => item.quantidade === 1
+                                            ? openCriticalAction({ type: "remover_item_carrinho", mesaId: mesa.id, mesaNumero: mesa.numero, itemUid: item.uid, itemNome: item.nome })
+                                            : updateCartItemQty(mesa.id, item.uid, -1, { usuario: currentOperator })
+                                          }
+                                        >
+                                          <Minus className="h-3 w-3" />
+                                        </Button>
+                                        <Button size="icon" variant="ghost" className="h-6 w-6 rounded-md" onClick={() => updateCartItemQty(mesa.id, item.uid, 1, { usuario: currentOperator })}>
+                                          <Plus className="h-3 w-3" />
+                                        </Button>
+                                        <Button size="icon" variant="ghost" className="h-6 w-6 rounded-md text-destructive hover:bg-destructive/10"
+                                          onClick={() => openCriticalAction({ type: "remover_item_carrinho", mesaId: mesa.id, mesaNumero: mesa.numero, itemUid: item.uid, itemNome: item.nome })}
+                                        >
+                                          <Trash2 className="h-3 w-3" />
+                                        </Button>
+                                      </div>
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
                           </div>
-                          <Button size="sm" variant="outline" onClick={() => openCriticalAction({ type: "desvincular_tablet", mesaId: mesa.id, mesaNumero: mesa.numero })} className="rounded-xl font-bold self-start">
-                            Desvincular tablet
-                          </Button>
                         </div>
-                      ) : tabletMesa ? (
-                        <p className="mt-3 text-xs text-muted-foreground">Para trocar, abra a Mesa {String(tabletMesa.numero).padStart(2, "0")}.</p>
-                      ) : (
-                        <p className="mt-3 text-xs text-muted-foreground">O tablet será vinculado pelo fluxo do cliente.</p>
                       )}
-                    </div>
+                    </>
                   )}
-                </TabsContent>
+                </div>
 
-                {/* ─── TAB: PAGAMENTO ─── */}
-                <TabsContent value="pagamento" className="mt-4 space-y-5">
-                  {/* Summary cards */}
-                  <div className="grid gap-3 grid-cols-3">
-                    <div className="rounded-2xl border border-border bg-card p-4 text-center">
-                      <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground">Total da conta</p>
-                      <p className="mt-2 text-xl font-black text-foreground tabular-nums">{formatPrice(totalConta)}</p>
+                {/* Comanda footer: subtotal / total */}
+                <div className="border-t border-border px-5 py-4 space-y-2 bg-card">
+                  <div className="flex items-center justify-between text-sm text-muted-foreground">
+                    <span>Subtotal</span>
+                    <span className="tabular-nums font-semibold">{formatPrice(totalConta)}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-base font-black text-foreground">Total</span>
+                    <span className="text-xl font-black text-foreground tabular-nums">{formatPrice(totalConta)}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs pt-1 border-t border-border text-muted-foreground">
+                    <span className="uppercase tracking-wider font-bold">{mesa.status === "livre" ? "LIVRE" : mesa.status === "pendente" ? "PENDENTE" : "EM CONSUMO"}</span>
+                    <span className="tabular-nums font-bold text-foreground">{formatPrice(totalConta)}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* ═══ RIGHT: PAGAMENTO ═══ */}
+              <div className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card">
+                <div className="flex-1 overflow-y-auto p-5 space-y-5 scrollbar-hide">
+
+                  {/* Summary row */}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-bold text-muted-foreground">Total da conta</span>
+                      <span className="text-2xl font-black text-foreground tabular-nums">{formatPrice(totalConta)}</span>
                     </div>
-                    <div className="rounded-2xl border border-border bg-card p-4 text-center">
-                      <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground">Total pago</p>
-                      <p className={`mt-2 text-xl font-black tabular-nums ${fechamentoPronto ? "text-status-consumo" : totalPago > 0 ? "text-status-pendente" : "text-foreground"}`}>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-bold text-muted-foreground">Total pago</span>
+                      <span className={`text-2xl font-black tabular-nums ${fechamentoPronto ? "text-status-consumo" : totalPago > 0 ? "text-primary" : "text-foreground"}`}>
                         {formatPrice(totalPago)}
-                      </p>
+                      </span>
                     </div>
-                    <div className={`rounded-2xl border p-4 text-center ${fechamentoPronto ? "border-status-consumo/30 bg-status-consumo/10" : valorRestante > 0 ? "border-destructive/30 bg-destructive/5" : "border-border bg-card"}`}>
-                      <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground">Restante</p>
-                      <p className={`mt-2 text-xl font-black tabular-nums ${fechamentoPronto ? "text-status-consumo" : "text-destructive"}`}>
+                    <div className={`flex items-center justify-between rounded-2xl p-4 ${fechamentoPronto ? "bg-status-consumo/10" : "bg-destructive/5"}`}>
+                      <span className={`text-base font-black ${fechamentoPronto ? "text-status-consumo" : "text-destructive"}`}>Restante</span>
+                      <span className={`text-3xl font-black tabular-nums ${fechamentoPronto ? "text-status-consumo" : "text-destructive"}`}>
                         {fechamentoPronto ? (
-                          <span className="flex items-center justify-center gap-1">
-                            <Check className="h-5 w-5" /> Quitado
+                          <span className="flex items-center gap-2">
+                            <Check className="h-6 w-6" /> Quitado
                           </span>
                         ) : (
                           formatPrice(valorRestante)
                         )}
-                      </p>
+                      </span>
                     </div>
                   </div>
 
@@ -816,9 +778,9 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                     )}
                   </div>
 
-                  {/* Payment method quick buttons */}
+                  {/* Payment method large buttons */}
                   {!fechamentoPronto && totalConta > 0 && (
-                    <div className="grid grid-cols-4 gap-2">
+                    <div className="grid grid-cols-2 gap-3">
                       {paymentMethodOptions.map((opt) => {
                         const Icon = opt.icon;
                         const isSelected = closingPaymentMethod === opt.value;
@@ -827,42 +789,40 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                             key={opt.value}
                             type="button"
                             onClick={() => setClosingPaymentMethod(opt.value)}
-                            className={`flex flex-col items-center gap-2 rounded-2xl border-2 p-4 transition-all ${
+                            className={`flex items-center justify-center gap-3 rounded-2xl border-2 py-5 px-4 transition-all ${
                               isSelected
                                 ? `${opt.borderColor} ${opt.bgColor} scale-[1.02]`
-                                : "border-border bg-card hover:border-muted-foreground/30"
+                                : "border-border bg-secondary/40 hover:border-muted-foreground/30"
                             }`}
                           >
-                            <Icon className={`h-6 w-6 ${isSelected ? opt.color : "text-muted-foreground"}`} />
-                            <span className={`text-sm font-bold ${isSelected ? "text-foreground" : "text-muted-foreground"}`}>{opt.label}</span>
+                            <Icon className={`h-7 w-7 ${isSelected ? opt.color : "text-muted-foreground"}`} />
+                            <span className={`text-lg font-black ${isSelected ? "text-foreground" : "text-muted-foreground"}`}>{opt.label}</span>
                           </button>
                         );
                       })}
                     </div>
                   )}
 
-                  {/* Add payment form */}
+                  {/* Input + quick values */}
                   {!fechamentoPronto && totalConta > 0 && (
-                    <div className="rounded-2xl border border-border bg-card p-4 space-y-3">
+                    <div className="space-y-3">
                       <div className="flex items-end gap-3">
                         <div className="flex-1 space-y-1">
                           <label className="text-xs font-semibold text-muted-foreground">Valor</label>
-                          <Input value={closingPaymentValue} onChange={(e) => setClosingPaymentValue(e.target.value)} placeholder="Ex.: 25,00" inputMode="decimal" autoComplete="off" className="h-10 rounded-xl" />
+                          <Input value={closingPaymentValue} onChange={(e) => setClosingPaymentValue(e.target.value)} placeholder="Ex.: 25,00" inputMode="decimal" autoComplete="off" className="h-12 rounded-xl text-lg font-bold" />
                         </div>
-                        <Button onClick={handleAddPayment} className="rounded-xl font-black h-10 px-5">
-                          <Plus className="h-4 w-4" />
+                        <Button onClick={handleAddPayment} className="rounded-xl font-black h-12 px-6 text-base">
+                          <Plus className="h-5 w-5" />
                           Adicionar
                         </Button>
                       </div>
-                      {/* Quick value buttons */}
                       <div className="flex items-center gap-2">
                         {QUICK_VALUES.map((qv) => (
                           <Button
                             key={qv}
                             type="button"
                             variant="outline"
-                            size="sm"
-                            className="rounded-xl font-bold tabular-nums flex-1"
+                            className="rounded-xl font-bold tabular-nums flex-1 h-10"
                             disabled={qv > valorRestante}
                             onClick={() => setClosingPaymentValue(qv.toFixed(2).replace(".", ","))}
                           >
@@ -873,8 +833,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                           <Button
                             type="button"
                             variant="outline"
-                            size="sm"
-                            className="rounded-xl font-bold tabular-nums flex-1 border-primary/30 text-primary hover:bg-primary/10"
+                            className="rounded-xl font-bold tabular-nums flex-1 h-10 border-primary/30 text-primary hover:bg-primary/10"
                             onClick={() => setClosingPaymentValue(valorRestante.toFixed(2).replace(".", ","))}
                           >
                             Restante
@@ -885,74 +844,75 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                   )}
 
                   {/* Payment list */}
-                  <div>
-                    <p className="mb-2 text-sm font-black text-foreground">Pagamentos adicionados</p>
-                    {closingPayments.length === 0 ? (
-                      <div className="rounded-2xl bg-secondary p-4 text-sm text-muted-foreground">Nenhum pagamento adicionado ainda.</div>
-                    ) : (
-                      <div className="space-y-2">
-                        {closingPayments.map((payment) => {
-                          const style = getPaymentMethodStyle(payment.formaPagamento);
-                          const Icon = style.icon;
-                          return (
-                            <div key={payment.id} className={`flex items-center gap-3 rounded-2xl border ${style.borderColor} ${style.bgColor} px-4 py-3`}>
-                              <div className={`flex h-9 w-9 items-center justify-center rounded-xl ${style.bgColor} ${style.color}`}>
-                                <Icon className="h-4 w-4" />
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <p className="text-sm font-bold text-foreground">{getPaymentMethodLabel(payment.formaPagamento)}</p>
-                              </div>
-                              <span className={`text-base font-black tabular-nums ${style.color}`}>{formatPrice(payment.valor)}</span>
-                              <Button size="icon" variant="outline" className="h-7 w-7 rounded-lg text-destructive border-destructive/20 hover:bg-destructive/10" onClick={() => handleRemovePayment(payment.id)}>
-                                <Trash2 className="h-3 w-3" />
-                              </Button>
+                  {closingPayments.length > 0 && (
+                    <div className="space-y-2">
+                      {closingPayments.map((payment) => {
+                        const style = getPaymentMethodStyle(payment.formaPagamento);
+                        const Icon = style.icon;
+                        return (
+                          <div key={payment.id} className={`flex items-center gap-3 rounded-2xl border ${style.borderColor} ${style.bgColor} px-4 py-3`}>
+                            <div className={`flex h-9 w-9 items-center justify-center rounded-xl ${style.bgColor} ${style.color}`}>
+                              <Icon className="h-4 w-4" />
                             </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
+                            <p className="flex-1 text-sm font-bold text-foreground">{getPaymentMethodLabel(payment.formaPagamento)}</p>
+                            <span className={`text-base font-black tabular-nums ${style.color}`}>{formatPrice(payment.valor)}</span>
+                            <Button size="icon" variant="outline" className="h-7 w-7 rounded-lg text-destructive border-destructive/20 hover:bg-destructive/10" onClick={() => handleRemovePayment(payment.id)}>
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
 
-                  {/* Confirm button */}
+                {/* Sticky bottom: confirm */}
+                <div className="border-t border-border p-5 bg-card space-y-2">
                   <Button
                     onClick={handleFechar}
                     disabled={!fechamentoPronto || closingPayments.length === 0}
-                    className={`w-full h-14 rounded-2xl text-base font-black transition-all ${
+                    className={`w-full h-14 rounded-2xl text-lg font-black transition-all ${
                       fechamentoPronto
-                        ? "bg-status-consumo text-white hover:bg-status-consumo/90 shadow-[0_0_20px_hsl(var(--status-consumo)/0.3)] scale-[1.01]"
+                        ? "bg-status-consumo text-white hover:bg-status-consumo/90 shadow-[0_0_20px_hsl(var(--status-consumo)/0.3)]"
                         : ""
                     }`}
                   >
                     {fechamentoPronto ? <ShieldCheck className="h-5 w-5" /> : <Check className="h-5 w-5" />}
                     Confirmar fechamento
                   </Button>
-
                   {!fechamentoPronto && totalConta > 0 && (
                     <p className="text-center text-xs text-muted-foreground">O fechamento só será liberado quando o total pago for exatamente igual ao total da conta.</p>
                   )}
-                </TabsContent>
+                </div>
+              </div>
 
-                {/* ─── TAB: LOGS ─── */}
-                <TabsContent value="logs" className="mt-4">
-                  <div className="space-y-3">
-                    {mesaLogs.length === 0 ? (
-                      <div className="rounded-2xl bg-secondary p-5 text-sm text-muted-foreground">Ainda não há ações registradas para esta mesa.</div>
-                    ) : (
-                      mesaLogs.map((evento) => (
-                        <div key={evento.id} className="rounded-2xl border border-border bg-card p-4">
-                          <p className="text-sm font-semibold text-foreground">{evento.descricao}</p>
-                          <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
-                            <span>Quem: {evento.usuarioNome ?? "Sistema"}</span>
-                            <span>Item: {evento.itemNome ?? "—"}</span>
-                            <span>Motivo: {evento.motivo ?? "—"}</span>
-                            <span>Horário: {evento.criadoEm}</span>
-                          </div>
-                        </div>
-                      ))
+              {/* Gerente tablet section — only show as a floating card if gerente */}
+              {accessMode === "gerente" && (
+                <div className="col-span-2 rounded-2xl border border-border bg-card p-4">
+                  <div className="flex items-center gap-3">
+                    <Smartphone className="h-5 w-5 text-muted-foreground" />
+                    <div className="flex-1">
+                      <span className="text-sm font-black text-foreground">Tablet:</span>{" "}
+                      <span className="text-sm text-muted-foreground">
+                        {tabletMesaId === mesa.id
+                          ? "Vinculado a esta mesa."
+                          : tabletMesa
+                            ? `Vinculado à Mesa ${String(tabletMesa.numero).padStart(2, "0")}.`
+                            : "Nenhum vínculo."}
+                      </span>
+                    </div>
+                    {tabletMesaId === mesa.id && (
+                      <div className="flex items-center gap-2">
+                        <Input value={tabletTargetMesaNumber} onChange={(e) => setTabletTargetMesaNumber(e.target.value.replace(/\D/g, "").slice(0, 2))} placeholder="Nº mesa" inputMode="numeric" autoComplete="off" className="h-9 w-20 rounded-xl" />
+                        <Button size="sm" onClick={handlePrepareTabletBinding} className="rounded-xl font-bold">Trocar</Button>
+                        <Button size="sm" variant="outline" onClick={() => openCriticalAction({ type: "desvincular_tablet", mesaId: mesa.id, mesaNumero: mesa.numero })} className="rounded-xl font-bold">
+                          Desvincular
+                        </Button>
+                      </div>
                     )}
                   </div>
-                </TabsContent>
-              </Tabs>
+                </div>
+              )}
             </div>
           )}
         </main>
