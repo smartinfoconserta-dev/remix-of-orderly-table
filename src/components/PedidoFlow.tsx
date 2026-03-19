@@ -55,16 +55,22 @@ const RESTAURANTE = {
   logoFallback: (sysConfig.nomeRestaurante || "Obsidian").slice(0, 2).toUpperCase(),
 };
 
-// Filter out inactive products
+// Filter out inactive/removed products and merge custom products
 const cardapioOverrides = getCardapioOverrides();
-const produtos = baseProdutos.filter((p) => {
-  const ov = cardapioOverrides[p.id];
-  if (ov && ov.ativo === false) return false;
-  return true;
-}).map((p) => {
-  const ov = cardapioOverrides[p.id];
-  return ov ? { ...p, ...ov } : p;
-});
+const customProducts = Object.values(cardapioOverrides).filter(
+  (ov) => !baseProdutos.some((bp) => bp.id === ov.id) && ov.ativo !== false && !ov.removido,
+);
+const produtos = [
+  ...baseProdutos.filter((p) => {
+    const ov = cardapioOverrides[p.id];
+    if (ov && (ov.ativo === false || ov.removido)) return false;
+    return true;
+  }).map((p) => {
+    const ov = cardapioOverrides[p.id];
+    return ov ? { ...p, ...ov } : p;
+  }),
+  ...customProducts,
+];
 
 const HOME_TAB_ID = "inicio";
 const HOME_TAB: Categoria = { id: HOME_TAB_ID, nome: "Início", icone: "house" };

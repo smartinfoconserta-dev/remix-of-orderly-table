@@ -5,12 +5,24 @@ import {
   Settings,
   Shield,
   Pencil,
+  Plus,
   Save,
+  Trash2,
   X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
   Dialog,
   DialogContent,
@@ -70,19 +82,32 @@ const AdminPage = () => {
   // --- Cardápio state ---
   const [overrides, setOverrides] = useState<Record<string, ProdutoOverride>>(getCardapioOverrides);
   const [editProduct, setEditProduct] = useState<ProdutoOverride | null>(null);
+  const [isNewProduct, setIsNewProduct] = useState(false);
   const [editForm, setEditForm] = useState({ nome: "", descricao: "", preco: "", categoria: "", imagem: "" });
+  const [catFilter, setCatFilter] = useState<string>("todas");
+  const [removeTarget, setRemoveTarget] = useState<ProdutoOverride | null>(null);
 
   const allProducts: ProdutoOverride[] = useMemo(() => {
-    return baseProdutos.map((p) => {
+    // Base products with overrides
+    const base = baseProdutos.map((p) => {
       const ov = overrides[p.id];
       if (ov) return { ...p, ...ov };
       return { ...p, ativo: true };
     });
+    // Custom products (added via admin)
+    const customIds = Object.keys(overrides).filter((id) => !baseProdutos.some((p) => p.id === id));
+    const custom = customIds.map((id) => overrides[id]);
+    return [...base, ...custom].filter((p) => !p.removido);
   }, [overrides]);
+
+  const filteredProducts = useMemo(() => {
+    if (catFilter === "todas") return allProducts;
+    return allProducts.filter((p) => p.categoria === catFilter);
+  }, [allProducts, catFilter]);
 
   const toggleAtivo = useCallback((id: string) => {
     setOverrides((prev) => {
-      const product = baseProdutos.find((p) => p.id === id);
+      const product = baseProdutos.find((p) => p.id === id) || prev[id];
       if (!product) return prev;
       const existing = prev[id] || { ...product, ativo: true };
       const next = { ...prev, [id]: { ...existing, ativo: !existing.ativo } };
@@ -93,6 +118,7 @@ const AdminPage = () => {
 
   const openEdit = useCallback((product: ProdutoOverride) => {
     setEditProduct(product);
+    setIsNewProduct(false);
     setEditForm({
       nome: product.nome,
       descricao: product.descricao,
@@ -102,11 +128,31 @@ const AdminPage = () => {
     });
   }, []);
 
+  const openNewProduct = useCallback(() => {
+    const newId = `produto-${Date.now()}`;
+    const newProduct: ProdutoOverride = {
+      id: newId,
+      nome: "",
+      descricao: "",
+      preco: 0,
+      categoria: categorias[0]?.id ?? "lanches",
+      imagem: "",
+      ativo: true,
+    };
+    setEditProduct(newProduct);
+    setIsNewProduct(true);
+    setEditForm({ nome: "", descricao: "", preco: "", categoria: newProduct.categoria, imagem: "" });
+  }, []);
+
   const saveEdit = useCallback(() => {
     if (!editProduct) return;
     const preco = parseFloat(editForm.preco);
     if (isNaN(preco) || preco < 0) {
       toast.error("Preço inválido");
+      return;
+    }
+    if (!editForm.nome.trim()) {
+      toast.error("Nome é obrigatório");
       return;
     }
     setOverrides((prev) => {
@@ -116,19 +162,33 @@ const AdminPage = () => {
         ...prev,
         [editProduct.id]: {
           ...existing,
-          nome: editForm.nome.trim() || existing.nome,
+          id: editProduct.id,
+          nome: editForm.nome.trim(),
           descricao: editForm.descricao.trim(),
           preco,
           categoria: editForm.categoria,
           imagem: editForm.imagem.trim(),
+          ativo: existing.ativo ?? true,
         },
       };
       saveCardapioOverrides(next);
       return next;
     });
     setEditProduct(null);
-    toast.success("Produto atualizado");
-  }, [editProduct, editForm]);
+    toast.success(isNewProduct ? "Produto criado" : "Produto atualizado");
+  }, [editProduct, editForm, isNewProduct]);
+
+  const confirmRemove = useCallback(() => {
+    if (!removeTarget) return;
+    setOverrides((prev) => {
+      const existing = prev[removeTarget.id] || { ...removeTarget };
+      const next = { ...prev, [removeTarget.id]: { ...existing, removido: true } };
+      saveCardapioOverrides(next);
+      return next;
+    });
+    setRemoveTarget(null);
+    toast.success("Produto removido do cardápio");
+  }, [removeTarget]);
 
   // --- Mesas state ---
   const [mesasConfig, setMesasConfig] = useState<MesasConfig>(getMesasConfig);
@@ -244,60 +304,105 @@ const AdminPage = () => {
       <main className="flex-1 overflow-y-auto p-6 md:p-8">
         {/* ═══ CARDÁPIO ═══ */}
         {tab === "cardapio" && (
-          <div className="space-y-6">
-            <div>
-              <h2 className="text-2xl font-black text-foreground">Cardápio</h2>
-              <p className="text-sm text-muted-foreground">Gerencie os produtos do cardápio</p>
+          <div className="space-y-5">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-black text-foreground">Cardápio</h2>
+                <p className="text-sm text-muted-foreground">Gerencie os produtos do cardápio</p>
+              </div>
+              <Button onClick={openNewProduct} className="rounded-xl font-bold gap-1.5">
+                <Plus className="h-4 w-4" />
+                Novo produto
+              </Button>
             </div>
 
-            {categorias.map((cat) => {
-              const catProducts = allProducts.filter((p) => p.categoria === cat.id);
-              if (catProducts.length === 0) return null;
-              return (
-                <div key={cat.id} className="space-y-2">
-                  <h3 className="text-lg font-black text-foreground">{cat.nome}</h3>
-                  <div className="overflow-hidden rounded-2xl border border-border bg-card">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="border-b border-border bg-secondary/50">
-                          <th className="px-4 py-3 text-left font-bold text-muted-foreground w-14">Foto</th>
-                          <th className="px-4 py-3 text-left font-bold text-muted-foreground">Produto</th>
-                          <th className="px-4 py-3 text-right font-bold text-muted-foreground">Preço</th>
-                          <th className="px-4 py-3 text-center font-bold text-muted-foreground">Ativo</th>
-                          <th className="px-4 py-3 text-center font-bold text-muted-foreground">Ações</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {catProducts.map((p) => (
-                          <tr key={p.id} className={`border-b border-border/50 last:border-0 ${!p.ativo ? "opacity-40" : ""}`}>
-                            <td className="px-4 py-2">
+            {/* Category filter bar */}
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => setCatFilter("todas")}
+                className={`rounded-xl px-4 py-2 text-xs font-bold transition-colors ${
+                  catFilter === "todas"
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-secondary text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                Todas
+              </button>
+              {categorias.map((c) => (
+                <button
+                  key={c.id}
+                  type="button"
+                  onClick={() => setCatFilter(c.id)}
+                  className={`rounded-xl px-4 py-2 text-xs font-bold transition-colors ${
+                    catFilter === c.id
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-secondary text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {c.nome}
+                </button>
+              ))}
+            </div>
+
+            {/* Products table */}
+            <div className="overflow-hidden rounded-2xl border border-border bg-card">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border bg-secondary/50">
+                    <th className="px-4 py-3 text-left font-bold text-muted-foreground w-14">Foto</th>
+                    <th className="px-4 py-3 text-left font-bold text-muted-foreground">Produto</th>
+                    <th className="px-4 py-3 text-left font-bold text-muted-foreground">Categoria</th>
+                    <th className="px-4 py-3 text-right font-bold text-muted-foreground">Preço</th>
+                    <th className="px-4 py-3 text-center font-bold text-muted-foreground">Ativo</th>
+                    <th className="px-4 py-3 text-center font-bold text-muted-foreground">Ações</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredProducts.length === 0 ? (
+                    <tr><td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">Nenhum produto encontrado.</td></tr>
+                  ) : (
+                    filteredProducts.map((p) => {
+                      const cat = categorias.find((c) => c.id === p.categoria);
+                      return (
+                        <tr key={p.id} className={`border-b border-border/50 last:border-0 ${!p.ativo ? "opacity-40" : ""}`}>
+                          <td className="px-4 py-2">
+                            {p.imagem ? (
                               <img src={p.imagem} alt={p.nome} className="h-10 w-10 rounded-lg object-cover" />
-                            </td>
-                            <td className="px-4 py-3 font-semibold text-foreground">{p.nome}</td>
-                            <td className="px-4 py-3 text-right font-bold text-foreground">{formatPrice(p.preco)}</td>
-                            <td className="px-4 py-3 text-center">
-                              <Switch checked={p.ativo} onCheckedChange={() => toggleAtivo(p.id)} />
-                            </td>
-                            <td className="px-4 py-3 text-center">
+                            ) : (
+                              <div className="h-10 w-10 rounded-lg bg-secondary flex items-center justify-center text-muted-foreground text-[10px]">?</div>
+                            )}
+                          </td>
+                          <td className="px-4 py-3 font-semibold text-foreground">{p.nome}</td>
+                          <td className="px-4 py-3 text-muted-foreground">{cat?.nome ?? p.categoria}</td>
+                          <td className="px-4 py-3 text-right font-bold text-foreground">{formatPrice(p.preco)}</td>
+                          <td className="px-4 py-3 text-center">
+                            <Switch checked={p.ativo} onCheckedChange={() => toggleAtivo(p.id)} />
+                          </td>
+                          <td className="px-4 py-3 text-center">
+                            <div className="flex items-center justify-center gap-1">
                               <Button variant="ghost" size="icon" onClick={() => openEdit(p)}>
                                 <Pencil className="h-4 w-4" />
                               </Button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              );
-            })}
+                              <Button variant="ghost" size="icon" onClick={() => setRemoveTarget(p)} className="text-destructive hover:bg-destructive/10">
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
 
-            {/* Edit modal */}
+            {/* Edit / New modal */}
             <Dialog open={!!editProduct} onOpenChange={(open) => !open && setEditProduct(null)}>
               <DialogContent className="sm:max-w-md">
                 <DialogHeader>
-                  <DialogTitle>Editar produto</DialogTitle>
-                  <DialogDescription>Altere os campos desejados e salve.</DialogDescription>
+                  <DialogTitle>{isNewProduct ? "Novo produto" : "Editar produto"}</DialogTitle>
+                  <DialogDescription>{isNewProduct ? "Preencha os campos para adicionar um produto." : "Altere os campos desejados e salve."}</DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4 pt-2">
                   <div className="space-y-1.5">
@@ -325,7 +430,8 @@ const AdminPage = () => {
                   </div>
                   <div className="space-y-1.5">
                     <label className="text-xs font-bold text-muted-foreground">URL da foto</label>
-                    <Input value={editForm.imagem} onChange={(e) => setEditForm((f) => ({ ...f, imagem: e.target.value }))} />
+                    <Input value={editForm.imagem} onChange={(e) => setEditForm((f) => ({ ...f, imagem: e.target.value }))} placeholder="https://..." />
+                    <p className="text-[10px] text-muted-foreground">Dica: use o site <span className="font-bold">imgbb.com</span> para fazer upload gratuito da foto e cole o link aqui.</p>
                   </div>
                   <div className="flex gap-3 pt-2">
                     <Button variant="outline" className="flex-1" onClick={() => setEditProduct(null)}>
@@ -338,6 +444,24 @@ const AdminPage = () => {
                 </div>
               </DialogContent>
             </Dialog>
+
+            {/* Remove confirmation */}
+            <AlertDialog open={!!removeTarget} onOpenChange={(open) => !open && setRemoveTarget(null)}>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Remover produto</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Remover <span className="font-bold text-foreground">{removeTarget?.nome}</span> do cardápio? Esta ação pode ser revertida reenviando o produto pelo painel admin.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction onClick={confirmRemove} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                    Confirmar
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
         )}
 
