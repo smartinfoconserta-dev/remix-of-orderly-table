@@ -8,9 +8,11 @@ interface Props {
   onClick: () => void;
   showTotal?: boolean;
   showIndicators?: boolean;
+  timeLabel?: string;
+  subtle?: boolean;
 }
 
-const MesaCard = ({ mesa, onClick, showTotal = true, showIndicators = true }: Props) => {
+const MesaCard = ({ mesa, onClick, showTotal = true, showIndicators = true, timeLabel, subtle }: Props) => {
   const { status, chamarGarcom, carrinho, pedidos, total } = mesa;
 
   const toneClass = chamarGarcom
@@ -19,7 +21,9 @@ const MesaCard = ({ mesa, onClick, showTotal = true, showIndicators = true }: Pr
       ? "border-[#dc2626]/40 bg-[#1f0a0a]"
       : status === "consumo"
         ? "border-[#16a34a]/40 bg-[#0d2218]"
-        : "border-border/50 bg-secondary/30";
+        : subtle
+          ? "border-border/30 bg-secondary/15 opacity-60"
+          : "border-border/50 bg-secondary/30";
 
   return (
     <button
@@ -40,6 +44,12 @@ const MesaCard = ({ mesa, onClick, showTotal = true, showIndicators = true }: Pr
       </span>
 
       <StatusLabel status={status} chamarGarcom={chamarGarcom} />
+
+      {timeLabel && (
+        <span className="text-[10px] font-bold tabular-nums text-status-consumo">
+          {timeLabel}
+        </span>
+      )}
 
       {showIndicators && (
         <div className="mt-1 flex items-center gap-3">
