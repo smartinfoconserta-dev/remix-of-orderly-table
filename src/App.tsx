@@ -6,6 +6,7 @@ import MesaPage from "./pages/MesaPage";
 import CaixaPage from "./pages/CaixaPage";
 import GerentePage from "./pages/GerentePage";
 import CozinhaPage from "./pages/CozinhaPage";
+import AdminPage from "./pages/AdminPage";
 import NotFound from "./pages/NotFound";
 
 const App = () => {
@@ -21,6 +22,7 @@ const App = () => {
         <Route path="/caixa" element={<CaixaPage accessMode="caixa" />} />
         <Route path="/gerente" element={<GerentePage />} />
         <Route path="/cozinha" element={<CozinhaPage />} />
+        <Route path="/admin" element={<AdminPage />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </div>

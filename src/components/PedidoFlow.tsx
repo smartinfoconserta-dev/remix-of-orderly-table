@@ -19,7 +19,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { categorias, produtos, type Categoria, type Produto } from "@/data/menuData";
+import { categorias, produtos as baseProdutos, type Categoria, type Produto } from "@/data/menuData";
+import { getCardapioOverrides, getSistemaConfig } from "@/lib/adminStorage";
 import { HOME_CAROUSEL_INTERVAL_MS, homeHeroSlides, homeShowcaseConfig } from "@/data/homeShowcaseData";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRestaurant, type ItemCarrinho } from "@/contexts/RestaurantContext";
@@ -47,10 +48,23 @@ interface PedidoFlowProps {
   onBack?: () => void;
 }
 
+const sysConfig = getSistemaConfig();
 const RESTAURANTE = {
-  nome: "Obsidian",
-  logoFallback: "OB",
+  nome: sysConfig.nomeRestaurante || "Obsidian",
+  logoUrl: sysConfig.logoUrl || "",
+  logoFallback: (sysConfig.nomeRestaurante || "Obsidian").slice(0, 2).toUpperCase(),
 };
+
+// Filter out inactive products
+const cardapioOverrides = getCardapioOverrides();
+const produtos = baseProdutos.filter((p) => {
+  const ov = cardapioOverrides[p.id];
+  if (ov && ov.ativo === false) return false;
+  return true;
+}).map((p) => {
+  const ov = cardapioOverrides[p.id];
+  return ov ? { ...p, ...ov } : p;
+});
 
 const HOME_TAB_ID = "inicio";
 const HOME_TAB: Categoria = { id: HOME_TAB_ID, nome: "Início", icone: "house" };
@@ -479,9 +493,13 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
         onPointerLeave={handleLogoPointerUp}
         onContextMenu={(e) => modo === "cliente" && e.preventDefault()}
       >
-        <AvatarFallback className="rounded-xl bg-secondary text-xs font-extrabold tracking-[0.18em] text-foreground">
-          {RESTAURANTE.logoFallback}
-        </AvatarFallback>
+        {RESTAURANTE.logoUrl ? (
+          <img src={RESTAURANTE.logoUrl} alt={RESTAURANTE.nome} className="h-full w-full rounded-xl object-cover" />
+        ) : (
+          <AvatarFallback className="rounded-xl bg-secondary text-xs font-extrabold tracking-[0.18em] text-foreground">
+            {RESTAURANTE.logoFallback}
+          </AvatarFallback>
+        )}
       </Avatar>
       <div className="min-w-0">
         <p className="truncate text-base font-extrabold tracking-tight text-foreground md:text-lg">{RESTAURANTE.nome}</p>
