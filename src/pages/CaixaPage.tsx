@@ -131,6 +131,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
     caixaAberto,
     abrirCaixa,
     fecharConta,
+    fecharCaixaDoDia,
     zerarMesa,
     dismissChamarGarcom,
     updateCartItemQty,
