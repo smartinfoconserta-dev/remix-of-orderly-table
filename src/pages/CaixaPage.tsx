@@ -789,9 +789,13 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                   <span className={`rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-widest ${
                     balcaoPedido.statusBalcao === "pronto"
                       ? "border-status-consumo/25 bg-status-consumo/10 text-status-consumo animate-pulse"
+                      : balcaoPedido.statusBalcao === "saiu"
+                      ? "border-blue-500/25 bg-blue-500/10 text-blue-400"
+                      : balcaoPedido.statusBalcao === "entregue"
+                      ? "border-muted bg-muted/30 text-muted-foreground"
                       : "border-amber-500/25 bg-amber-500/10 text-amber-400"
                   }`}>
-                    {balcaoPedido.statusBalcao === "pronto" ? "Pronto" : "Aberto"}
+                    {balcaoPedido.statusBalcao === "pronto" ? "Pronto" : balcaoPedido.statusBalcao === "saiu" ? `Saiu — ${balcaoPedido.motoboyNome || ""}` : balcaoPedido.statusBalcao === "entregue" ? "Entregue" : "Aberto"}
                   </span>
                 </div>
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
