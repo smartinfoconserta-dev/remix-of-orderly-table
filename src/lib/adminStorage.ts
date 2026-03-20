@@ -1,14 +1,23 @@
-import type { Produto } from "@/data/menuData";
+import { type Produto, produtos as baseProdutos } from "@/data/menuData";
 
 const CARDAPIO_KEY = "orderly-cardapio-overrides-v1";
 const MESAS_CONFIG_KEY = "orderly-mesas-config-v1";
 const SISTEMA_CONFIG_KEY = "orderly-config-v1";
 const LICENCA_KEY = "orderly-licenca-v1";
+const CATEGORIAS_KEY = "orderly-categorias-v1";
+
+export interface CategoriaCustom {
+  id: string;
+  nome: string;
+  icone: string;
+  ordem: number;
+}
 
 export interface ProdutoOverride extends Produto {
   ativo: boolean;
   removido?: boolean;
   imagemBase64?: string;
+  disponivelDelivery?: boolean;
 }
 
 export interface MesasConfig {
