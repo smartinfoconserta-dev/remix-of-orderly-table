@@ -637,7 +637,7 @@ const ProductModal = ({ produto, onClose, onAdd, isGarcomMobile = false }: Props
                   </div>
                 </section>
 
-                <div className="sticky bottom-0 z-20 border-t border-border bg-card/95 px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-3 backdrop-blur-md">
+                <div className="sticky bottom-0 z-20 flex-shrink-0 border-t border-border bg-card/95 px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-3 backdrop-blur-md">
                   <div className="mb-3 flex items-end justify-between gap-3">
                     <div>
                       <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Subtotal</p>

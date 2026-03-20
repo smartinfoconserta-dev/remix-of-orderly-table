@@ -166,7 +166,7 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
     ? (modo === "delivery" ? `Delivery — ${clienteNome || ""}` : `Balcão — ${clienteNome || ""}`)
     : formatMesaLabel(mesaId);
   const nomeAtendimento = garcomNome?.trim() || currentGarcom?.nome || currentCaixa?.nome || "Equipe operacional";
-  const isGarcomMobile = modo === "garcom" && isMobile;
+  const isGarcomMobile = (modo === "garcom" || modo === "delivery") && isMobile;
   const isHomeActive = categoriaExibida === HOME_TAB_ID;
   const isTabletViewport = !isMobile && typeof window !== "undefined" && window.innerWidth >= TABLET_MIN_WIDTH && window.innerWidth <= TABLET_MAX_WIDTH;
   const shouldEnableClientIdle = modo === "cliente" && isTabletViewport;
