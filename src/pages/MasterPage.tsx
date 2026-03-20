@@ -561,7 +561,7 @@ const MasterPage = () => {
                       <Label>Método</Label>
                       <Select value={pagForm.metodo} onValueChange={(v) => setPagForm({ ...pagForm, metodo: v })}>
                         <SelectTrigger><SelectValue /></SelectTrigger>
-                        <SelectContent>{METODOS_PAGAMENTO.map((m) => <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>)}</SelectContent>
+                        <SelectContent container={document.body}>{METODOS_PAGAMENTO.map((m) => <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>)}</SelectContent>
                       </Select>
                     </div>
                     <div><Label>Data</Label><Input type="date" value={pagForm.data} onChange={(e) => setPagForm({ ...pagForm, data: e.target.value })} /></div>
