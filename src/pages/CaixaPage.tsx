@@ -54,7 +54,7 @@ import type { PaymentMethod, SplitPayment, UserRole } from "@/types/operations";
 import { getSistemaConfig, getCardapioOverrides, getProdutosDelivery } from "@/lib/adminStorage";
 import { produtos as menuProdutos, categorias as menuCategorias } from "@/data/menuData";
 import type { Produto } from "@/data/menuData";
-import type { ItemCarrinho } from "@/contexts/RestaurantContext";
+import type { ItemCarrinho, PedidoRealizado, FecharContaInput } from "@/contexts/RestaurantContext";
 import { findClienteDelivery, upsertClienteDelivery, type ClienteDelivery } from "@/lib/deliveryStorage";
 import ProductModal from "@/components/ProductModal";
 
