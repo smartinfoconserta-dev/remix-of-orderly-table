@@ -1,120 +1,110 @@
 
+## Problema identificado
 
-## Problema Real (por que nunca funcionou)
+O erro principal está no `ProtectedRoute` atual:
 
-Há **dois mapas de permissão** que precisam trabalhar juntos, e ambos estão errados:
+- ele decide acesso pela **sessão/slot** (`currentGarcom`, `currentCaixa`, `currentGerente`)
+- mas a hierarquia real deve decidir pelo **papel do usuário logado**
+- resultado: a navegação quebra em casos como:
+  - gerente logado no slot do caixa não consegue abrir `/gerente`
+  - redirecionamentos parecem “nada acontece”
+  - permissões ficam inconsistentes quando existe sessão válida em slot diferente
 
-### 1. `loginWithPin` — quem pode LOGAR em qual rota
+Também há um detalhe no `GerentePage`: `useRouteLock` foi importado, mas não está sendo chamado.
 
-Atual:
-```
-garcom: ["garcom"]           ← errado, caixa e gerente também deveriam entrar
-caixa: ["caixa", "gerente"]  ← OK
-gerente: ["gerente"]         ← OK
-```
+## O que vou corrigir
 
-Correto (conforme tabela):
-```
-garcom: ["garcom", "caixa", "gerente"]
-caixa: ["caixa", "gerente"]
-gerente: ["gerente"]
-```
+### 1. Revisar `ProtectedRoute.tsx`
+Trocar a lógica baseada em “qual slot está preenchido” por lógica baseada em “qual role está ativo nas sessões”.
 
-### 2. `ProtectedRoute` — quem pode NAVEGAR para qual rota (já logado)
+Novo comportamento:
+- sem nenhuma sessão ativa: mostra a página de login
+- com sessão ativa de role permitida: libera a rota
+- com sessão ativa de role não permitida: redireciona para `/`
 
-Hoje o ProtectedRoute só verifica se existe sessão no slot exato. Ex: caixa logado no slot "caixa" tenta ir para `/garcom` → não tem sessão no slot "garcom" → redireciona para `/`.
-
-Precisa verificar: "o usuário tem sessão em ALGUM slot que dá acesso a esta rota?"
-
-```
-// Quais slots de sessão dão acesso a cada rota
-garcom: ["garcom", "caixa", "gerente"]  ← quem está logado como caixa ou gerente pode acessar /garcom
-caixa: ["caixa", "gerente"]
-gerente: ["gerente"]
+Tabela aplicada:
+```text
+/garcom  -> garcom, caixa, gerente
+/caixa   -> caixa, gerente
+/gerente -> gerente
+admin    -> bypass total via seed-admin-001
 ```
 
-### 3. `SESSION_ALLOWED_ROLES` e `getCurrentUser` — mesma atualização
+### 2. Preservar o bypass do admin
+No guard, considerar o seed `id === "seed-admin-001"` como acesso total, igual ao restante do sistema.
 
-Para que `sanitizeSessions` não limpe sessões válidas de hierarquia.
+### 3. Ajustar a leitura das sessões ativas
+Usar os usuários atuais (`currentGarcom`, `currentCaixa`, `currentGerente`) como lista de usuários ativos e validar o `role` deles, não apenas o nome do slot.
 
-## Alterações
-
-### Arquivo 1: `src/contexts/AuthContext.tsx`
-
-Alterar o mapa `SESSION_ALLOWED_ROLES` (linha 82) e o mapa `allowedRoles` dentro de `loginWithPin` (linha 270):
-
-```typescript
-// Linha 82 — quem pode ter sessão em qual slot
-const SESSION_ALLOWED_ROLES: Record<UserRole, UserRole[]> = {
-  garcom: ["garcom", "caixa", "gerente"],
-  caixa: ["caixa", "gerente"],
-  gerente: ["gerente"],
-};
+Isso evita o bug clássico:
+```text
+gerente logado em /caixa -> currentCaixa.role === "gerente"
+-> deve poder abrir /gerente
 ```
 
-E dentro de `loginWithPin` (linha 270):
-```typescript
-const allowedRoles: Record<UserRole, UserRole[]> = {
-  garcom: ["garcom", "caixa", "gerente"],
-  caixa: ["caixa", "gerente"],
-  gerente: ["gerente"],
-};
+### 4. Corrigir `GerentePage.tsx`
+Verificar e restaurar o `useRouteLock("/gerente")`, porque hoje ele está importado mas aparentemente não está sendo executado.
+
+### 5. Validar sem mexer no restante da auth
+Não vou alterar:
+- auto-cadastro do garçom
+- seed admin
+- `loginWithPin`
+- regras de criação de usuários
+
+A ideia é corrigir a navegação/hierarquia sem quebrar o que já funciona no login.
+
+## Resultado esperado
+
+Depois da correção:
+
+- garçom logado:
+  - entra em `/garcom`
+  - entra em `/mesa/:id`
+  - não entra em `/caixa`
+  - não entra em `/gerente`
+
+- caixa logado:
+  - entra em `/caixa`
+  - entra em `/garcom`
+  - entra em `/mesa/:id`
+  - não entra em `/gerente`
+
+- gerente logado:
+  - entra em `/gerente`
+  - entra em `/caixa`
+  - entra em `/garcom`
+  - entra em `/mesa/:id`
+
+- admin:
+  - entra em tudo
+
+## Detalhes técnicos
+
+Arquivos a revisar:
+- `src/components/ProtectedRoute.tsx`
+- `src/pages/GerentePage.tsx`
+
+Possível ajuste central no guard:
+```text
+1. montar lista de usuários ativos
+2. se houver admin seed -> acesso liberado
+3. mapear roles permitidos por rota
+4. se algum usuário ativo tiver role permitido -> acesso liberado
+5. se não houver sessão -> renderiza login
+6. caso contrário -> Navigate("/")
 ```
 
-### Arquivo 2: `src/components/ProtectedRoute.tsx`
+## Verificação final
 
-Reescrever para verificar se o usuário tem sessão em **qualquer slot que dê acesso** à rota:
+Vou considerar a correção concluída apenas se passar nestes cenários:
 
-```typescript
-import { Navigate } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
-import type { UserRole } from "@/types/operations";
-
-// Quais slots de sessão concedem acesso a cada rota
-const ROUTE_GRANTED_BY: Record<UserRole, UserRole[]> = {
-  garcom: ["garcom", "caixa", "gerente"],
-  caixa: ["caixa", "gerente"],
-  gerente: ["gerente"],
-};
-
-interface ProtectedRouteProps {
-  children: React.ReactNode;
-  requiredSession: UserRole;
-}
-
-export const ProtectedRoute = ({ children, requiredSession }: ProtectedRouteProps) => {
-  const { currentGarcom, currentCaixa, currentGerente } = useAuth();
-
-  const sessionMap: Record<UserRole, unknown> = {
-    garcom: currentGarcom,
-    caixa: currentCaixa,
-    gerente: currentGerente,
-  };
-
-  const grantedBy = ROUTE_GRANTED_BY[requiredSession] ?? [requiredSession];
-
-  // Tem sessão em algum slot que dá acesso a esta rota → OK
-  if (grantedBy.some((slot) => !!sessionMap[slot])) return <>{children}</>;
-
-  // Sem nenhuma sessão → mostra formulário de login
-  const hasAnySession = !!(currentGarcom || currentCaixa || currentGerente);
-  if (!hasAnySession) return <>{children}</>;
-
-  // Tem sessão, mas em slot sem acesso a esta rota → bloqueia
-  return <Navigate to="/" replace />;
-};
-```
-
-## Resultado conforme a tabela
-
-| Perfil | /garcom | /mesa | /caixa | /gerente | /admin | /master |
-|--------|---------|-------|--------|----------|--------|---------|
-| Garçom | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ |
-| Caixa | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ |
-| Gerente | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ |
-| Admin | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ |
-
-- /admin e /master têm seus próprios sistemas de auth separados (não usam ProtectedRoute)
-- /pedido, /cozinha, /motoboy são públicos (sem login)
-- Seed admin (id="seed-admin-001") mantém bypass total em loginWithPin e getCurrentUser
-
+1. sem login, `/garcom`, `/caixa`, `/gerente` mostram formulário
+2. garçom logado tenta `/caixa` -> bloqueado
+3. caixa logado tenta `/gerente` -> bloqueado
+4. caixa logado tenta `/garcom` -> liberado
+5. gerente logado tenta `/caixa` -> liberado
+6. gerente logado tenta `/garcom` -> liberado
+7. gerente abre `/gerente` normalmente
+8. admin continua com acesso total
+9. TypeScript sem erros
