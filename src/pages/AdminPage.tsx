@@ -51,11 +51,14 @@ import {
   getLicencaConfig,
   saveLicencaConfig,
   applyCustomPrimaryColor,
+  getCategoriasCustom,
+  saveCategoriasCustom,
   type ProdutoOverride,
   type MesasConfig,
   type SistemaConfig,
   type LicencaConfig,
   type BannerConfig,
+  type CategoriaCustom,
 } from "@/lib/adminStorage";
 import { toast } from "sonner";
 
