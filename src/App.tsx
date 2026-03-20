@@ -7,6 +7,7 @@ import CaixaPage from "./pages/CaixaPage";
 import GerentePage from "./pages/GerentePage";
 import CozinhaPage from "./pages/CozinhaPage";
 import AdminPage from "./pages/AdminPage";
+import MasterPage from "./pages/MasterPage";
 import NotFound from "./pages/NotFound";
 
 const App = () => {
