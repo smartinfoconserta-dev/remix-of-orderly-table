@@ -205,6 +205,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
   const [balcaoPaymentMethod, setBalcaoPaymentMethod] = useState<PaymentMethod>("dinheiro");
   const [balcaoPaymentValue, setBalcaoPaymentValue] = useState("");
   const [balcaoFlowAtivo, setBalcaoFlowAtivo] = useState(false);
+  const [caixaView, setCaixaView] = useState<"mesas" | "delivery">("mesas");
 
   const sistemaConfig = useMemo(() => getSistemaConfig(), []);
 
