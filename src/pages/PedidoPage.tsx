@@ -7,7 +7,7 @@ import { Progress } from "@/components/ui/progress";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { getSistemaConfig } from "@/lib/adminStorage";
-import { findClienteDelivery, upsertClienteDelivery, type ClienteDelivery } from "@/lib/deliveryStorage";
+import { findClienteDelivery, upsertClienteDelivery, getBairros, type ClienteDelivery, type Bairro } from "@/lib/deliveryStorage";
 import { useRestaurant, type ItemCarrinho } from "@/contexts/RestaurantContext";
 import PedidoFlow from "@/components/PedidoFlow";
 import { toast } from "sonner";
@@ -121,6 +121,10 @@ export default function PedidoPage() {
   const [cepLoading, setCepLoading] = useState(false);
   const [cepErro, setCepErro] = useState("");
 
+  // Bairros
+  const [bairrosDisponiveis] = useState<Bairro[]>(() => getBairros().filter((b) => b.ativo));
+  const [bairroSelecionadoId, setBairroSelecionadoId] = useState("");
+
   // Order
   const [itens, setItens] = useState<ItemCarrinho[]>([]);
   const [paraViagem, setParaViagem] = useState(false);
@@ -201,7 +205,8 @@ export default function PedidoPage() {
     setEtapa("confirmacao");
   };
 
-  const taxaEntrega = sysConfig.taxaEntrega ?? 0;
+  const bairroSel = bairrosDisponiveis.find((b) => b.id === bairroSelecionadoId);
+  const taxaEntrega = bairroSel ? bairroSel.taxa : (sysConfig.taxaEntrega ?? 0);
   const totalPedido = itens.reduce((s, i) => s + i.precoUnitario * i.quantidade, 0) + taxaEntrega;
 
   const handleConfirmarPedido = () => {
@@ -251,6 +256,7 @@ export default function PedidoPage() {
     setCidade("");
     setComplemento("");
     setReferencia("");
+    setBairroSelecionadoId("");
     setItens([]);
     setParaViagem(false);
     setFormaPag("pix");
@@ -364,8 +370,30 @@ export default function PedidoPage() {
                 <Input placeholder="Endereço / Rua *" value={endereco} onChange={(e) => setEndereco(e.target.value)} />
                 <div className="grid grid-cols-2 gap-2">
                   <Input placeholder="Número *" value={numero} onChange={(e) => setNumero(e.target.value)} />
-                  <Input placeholder="Bairro" value={bairro} onChange={(e) => setBairro(e.target.value)} />
+                  {bairrosDisponiveis.length > 0 ? (
+                    <Select value={bairroSelecionadoId} onValueChange={(v) => {
+                      setBairroSelecionadoId(v);
+                      const sel = bairrosDisponiveis.find((b) => b.id === v);
+                      if (sel) setBairro(sel.nome);
+                    }}>
+                      <SelectTrigger><SelectValue placeholder="Selecione o bairro" /></SelectTrigger>
+                      <SelectContent container={document.body}>
+                        {bairrosDisponiveis.map((b) => (
+                          <SelectItem key={b.id} value={b.id}>
+                            {b.nome} — R$ {b.taxa.toFixed(2).replace(".", ",")}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <Input placeholder="Bairro" value={bairro} onChange={(e) => setBairro(e.target.value)} />
+                  )}
                 </div>
+                {bairroSelecionadoId && bairrosDisponiveis.length > 0 && (
+                  <p className="text-xs font-semibold text-primary">
+                    Taxa de entrega: R$ {(bairrosDisponiveis.find((b) => b.id === bairroSelecionadoId)?.taxa ?? 0).toFixed(2).replace(".", ",")}
+                  </p>
+                )}
                 {cidade && (
                   <Input placeholder="Cidade" value={cidade} readOnly className="bg-muted" />
                 )}

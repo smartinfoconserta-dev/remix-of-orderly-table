@@ -62,6 +62,7 @@ import {
   type BannerConfig,
   type CategoriaCustom,
 } from "@/lib/adminStorage";
+import { getBairros, saveBairros, type Bairro } from "@/lib/deliveryStorage";
 import { toast } from "sonner";
 
 type AdminTab = "cardapio" | "mesas" | "configuracoes" | "licenca" | "usuarios";
@@ -260,6 +261,11 @@ const AdminPage = () => {
 
   // --- Configurações state ---
   const [sistemaConfig, setSistemaConfig] = useState<SistemaConfig>(getSistemaConfig);
+
+  // --- Bairros state ---
+  const [bairros, setBairros] = useState<Bairro[]>(getBairros);
+  const [novoBairroNome, setNovoBairroNome] = useState("");
+  const [novoBairroTaxa, setNovoBairroTaxa] = useState("");
 
   const saveSistema = useCallback(() => {
     saveSistemaConfig(sistemaConfig);
@@ -885,7 +891,7 @@ const AdminPage = () => {
                 </div>
               </div>
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-muted-foreground">Taxa de entrega (R$)</label>
+                <label className="text-xs font-bold text-muted-foreground">Taxa de entrega padrão (R$)</label>
                 <Input
                   type="number"
                   min="0"
@@ -894,8 +900,75 @@ const AdminPage = () => {
                   onChange={(e) => setSistemaConfig((c) => ({ ...c, taxaEntrega: e.target.value ? parseFloat(e.target.value) : undefined }))}
                   placeholder="0.00"
                 />
-                <p className="text-xs text-muted-foreground">Valor adicionado automaticamente aos pedidos delivery</p>
+                <p className="text-xs text-muted-foreground">Usado quando nenhum bairro está cadastrado</p>
               </div>
+            </div>
+
+            {/* Taxa por bairro */}
+            <div>
+              <h3 className="text-lg font-black text-foreground">Taxa por bairro</h3>
+              <p className="text-xs text-muted-foreground">Defina taxas de entrega diferentes por bairro</p>
+            </div>
+            <div className="surface-card max-w-lg space-y-4 rounded-2xl p-6">
+              {/* Add new bairro */}
+              <div className="flex gap-2 items-end">
+                <div className="flex-1 space-y-1.5">
+                  <label className="text-xs font-bold text-muted-foreground">Nome do bairro</label>
+                  <Input value={novoBairroNome} onChange={(e) => setNovoBairroNome(e.target.value)} placeholder="Ex.: Centro" />
+                </div>
+                <div className="w-28 space-y-1.5">
+                  <label className="text-xs font-bold text-muted-foreground">Taxa (R$)</label>
+                  <Input type="number" min="0" step="0.5" value={novoBairroTaxa} onChange={(e) => setNovoBairroTaxa(e.target.value)} placeholder="5.00" />
+                </div>
+                <Button
+                  className="rounded-xl font-bold gap-1 shrink-0"
+                  disabled={!novoBairroNome.trim() || !novoBairroTaxa}
+                  onClick={() => {
+                    const taxa = parseFloat(novoBairroTaxa);
+                    if (isNaN(taxa) || taxa < 0) { toast.error("Taxa inválida"); return; }
+                    const novo: Bairro = { id: `bairro-${Date.now()}`, nome: novoBairroNome.trim(), taxa, ativo: true };
+                    const next = [...bairros, novo];
+                    saveBairros(next);
+                    setBairros(next);
+                    setNovoBairroNome("");
+                    setNovoBairroTaxa("");
+                    toast.success(`Bairro "${novo.nome}" adicionado`);
+                  }}
+                >
+                  <Plus className="h-4 w-4" /> Adicionar
+                </Button>
+              </div>
+
+              {/* List */}
+              {bairros.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-4">Nenhum bairro cadastrado. A taxa padrão será usada.</p>
+              ) : (
+                <div className="divide-y divide-border/50 rounded-xl border border-border overflow-hidden">
+                  {bairros.map((b) => (
+                    <div key={b.id} className="flex items-center justify-between px-4 py-3 bg-card">
+                      <div className="flex items-center gap-3">
+                        <Switch checked={b.ativo} onCheckedChange={(v) => {
+                          const next = bairros.map((x) => x.id === b.id ? { ...x, ativo: v } : x);
+                          saveBairros(next);
+                          setBairros(next);
+                        }} />
+                        <span className={`text-sm font-semibold ${b.ativo ? "text-foreground" : "text-muted-foreground line-through"}`}>{b.nome}</span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className="text-sm font-bold text-foreground">R$ {b.taxa.toFixed(2).replace(".", ",")}</span>
+                        <Button variant="ghost" size="icon" className="text-destructive hover:bg-destructive/10 h-8 w-8" onClick={() => {
+                          const next = bairros.filter((x) => x.id !== b.id);
+                          saveBairros(next);
+                          setBairros(next);
+                          toast.success(`Bairro "${b.nome}" removido`);
+                        }}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-muted-foreground">Telefone WhatsApp do restaurante</label>
                 <Input

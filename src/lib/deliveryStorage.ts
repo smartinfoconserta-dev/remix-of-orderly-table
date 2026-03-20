@@ -1,4 +1,25 @@
 const CLIENTES_KEY = "orderly-clientes-delivery-v1";
+const BAIRROS_KEY = "obsidian-bairros-v1";
+
+export interface Bairro {
+  id: string;
+  nome: string;
+  taxa: number;
+  ativo: boolean;
+}
+
+export const getBairros = (): Bairro[] => {
+  try {
+    const raw = localStorage.getItem(BAIRROS_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+};
+
+export const saveBairros = (bairros: Bairro[]): void => {
+  localStorage.setItem(BAIRROS_KEY, JSON.stringify(bairros));
+};
 
 export interface ClienteDelivery {
   id: string;
