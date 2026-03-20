@@ -753,6 +753,15 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                   <Button
                     variant="outline"
                     size="sm"
+                    onClick={() => setBalcaoOpen(true)}
+                    className="rounded-xl font-bold gap-1.5 text-xs"
+                  >
+                    <ShoppingBag className="h-3.5 w-3.5" />
+                    Novo pedido
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
                     onClick={() => setMovModalOpen(true)}
                     className="rounded-xl font-bold gap-1.5 text-xs"
                   >
