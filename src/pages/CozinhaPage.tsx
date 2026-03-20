@@ -110,7 +110,7 @@ const CozinhaPage = () => {
           return (
             <div
               key={pedido.id}
-              className={`slide-up flex flex-col rounded-2xl border bg-card transition-all ${
+              className={`slide-up flex flex-col rounded-2xl border bg-card transition-all ${fadingOut.has(pedido.id) ? "fade-out-remove" : ""} ${
                 isLate
                   ? "border-destructive/60 animate-pulse shadow-[0_0_20px_hsl(var(--destructive)/0.2)]"
                   : "border-border"
