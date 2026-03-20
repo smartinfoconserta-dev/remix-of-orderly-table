@@ -872,8 +872,8 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                 >
                   <Truck className="h-3.5 w-3.5" />
                   Delivery
-                  {pedidosDeliveryAtivos.length > 0 && (
-                    <span className="rounded-full bg-purple-500/20 text-purple-400 px-1.5 py-0.5 text-[10px] font-black tabular-nums leading-none">{pedidosDeliveryAtivos.length}</span>
+                  {(pedidosDeliveryAtivos.length + pedidosAguardandoConfirmacao.length) > 0 && (
+                    <span className="rounded-full bg-purple-500/20 text-purple-400 px-1.5 py-0.5 text-[10px] font-black tabular-nums leading-none">{pedidosDeliveryAtivos.length + pedidosAguardandoConfirmacao.length}</span>
                   )}
                 </button>
 
