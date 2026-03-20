@@ -312,7 +312,7 @@ const GerentePage = () => {
       const d = new Date(e.criadoEmIso);
       return d >= dateRange.start && d <= dateRange.end && e.acao === "lancar_pedido";
     }).forEach((e) => {
-      const nome = e.garcomNome || "Desconhecido";
+      const nome = e.usuarioNome || "Desconhecido";
       const existing = map.get(nome) || { nome, pedidos: 0, mesas: new Set<string>() };
       existing.pedidos += 1;
       if (e.mesaId) existing.mesas.add(e.mesaId);
