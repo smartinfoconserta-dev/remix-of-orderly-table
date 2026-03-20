@@ -2250,6 +2250,50 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
         </DialogContent>
       </Dialog>
 
+      {/* ── REJECT DELIVERY DIALOG ── */}
+      <Dialog open={rejectDialogOpen} onOpenChange={(open) => { if (!open) { setRejectDialogOpen(false); setRejectPedidoId(null); setRejectMotivo(""); } }}>
+        <DialogContent className="rounded-2xl border-border bg-background sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-destructive">
+              <XCircle className="h-5 w-5" />
+              Rejeitar pedido
+            </DialogTitle>
+            <DialogDescription>Informe o motivo da rejeição.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-foreground">Motivo *</label>
+              <Textarea
+                value={rejectMotivo}
+                onChange={(e) => setRejectMotivo(e.target.value)}
+                placeholder="Ex: Produto indisponível, endereço fora da área..."
+                maxLength={200}
+                className="min-h-[80px] rounded-xl"
+              />
+            </div>
+          </div>
+          <DialogFooter className="gap-3 sm:gap-0">
+            <Button variant="outline" onClick={() => { setRejectDialogOpen(false); setRejectPedidoId(null); }} className="rounded-xl font-bold">Cancelar</Button>
+            <Button
+              variant="destructive"
+              disabled={!rejectMotivo.trim() || !rejectPedidoId}
+              onClick={() => {
+                if (rejectPedidoId && rejectMotivo.trim()) {
+                  rejeitarPedidoBalcao(rejectPedidoId, rejectMotivo.trim());
+                  toast.success("Pedido rejeitado", { duration: 1400, icon: "❌" });
+                  setRejectDialogOpen(false);
+                  setRejectPedidoId(null);
+                  setRejectMotivo("");
+                }
+              }}
+              className="rounded-xl font-black"
+            >
+              Confirmar rejeição
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <LicenseBanner blockMode={accessMode === "caixa"} />
     </>
   );
