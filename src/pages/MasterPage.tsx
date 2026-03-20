@@ -9,7 +9,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { LogOut, Plus, Pencil, Trash2, Phone, Mail, MapPin, DollarSign, Users, TrendingUp, TrendingDown, Receipt } from "lucide-react";
+import { LogOut, Plus, Pencil, Trash2, Phone, Mail, MapPin, DollarSign, Users, TrendingUp, TrendingDown, Receipt, Eye } from "lucide-react";
+import type { Pagamento } from "@/lib/masterStorage";
 import { toast } from "sonner";
 import {
   type Cliente, type Despesa,
@@ -35,6 +36,12 @@ const CATEGORIAS_DESPESA = [
   { value: "outro", label: "Outro" },
 ];
 const CAT_LABEL: Record<string, string> = Object.fromEntries(CATEGORIAS_DESPESA.map((c) => [c.value, c.label]));
+
+const METODOS_PAGAMENTO = [
+  { value: "pix", label: "PIX" },
+  { value: "dinheiro", label: "Dinheiro" },
+  { value: "transferencia", label: "Transferência" },
+];
 
 const emptyForm = {
   nomeRestaurante: "", nomeContato: "", email: "", dataVencimento: "",
@@ -70,6 +77,9 @@ const MasterPage = () => {
   const [despesas, setDespesas] = useState<Despesa[]>([]);
   const [novaDespesa, setNovaDespesa] = useState({ descricao: "", valor: 0, categoria: "gasolina", data: todayStr() });
 
+  const [detailClient, setDetailClient] = useState<Cliente | null>(null);
+  const [pagForm, setPagForm] = useState({ valor: 0, metodo: "pix", data: todayStr(), observacao: "" });
+
   const refresh = () => { setClientes(getClientes()); setDespesas(getDespesas()); };
 
   const handleLogin = () => {
@@ -102,6 +112,24 @@ const MasterPage = () => {
   const toggleAtivo = (c: Cliente) => { updateCliente(c.id, { ativo: !c.ativo }); refresh(); };
   const isVencido = (d: string) => d && new Date(d) < new Date(todayStr());
   const ff = (key: string, value: any) => setForm((prev) => ({ ...prev, [key]: value }));
+
+  const openDetail = (c: Cliente) => {
+    setDetailClient(c);
+    setPagForm({ valor: c.valorMensalidade || 0, metodo: "pix", data: todayStr(), observacao: "" });
+  };
+
+  const handleRegistrarPagamento = () => {
+    if (!detailClient) return;
+    if (!pagForm.valor || pagForm.valor <= 0) { toast.error("Informe um valor válido."); return; }
+    const novoPag: Pagamento = { id: crypto.randomUUID(), data: pagForm.data, valor: pagForm.valor, metodo: pagForm.metodo, observacao: pagForm.observacao };
+    const hist = [...(detailClient.historicoPagamentos || []), novoPag];
+    updateCliente(detailClient.id, { historicoPagamentos: hist });
+    toast.success("Pagamento registrado.");
+    refresh();
+    const updated = getClientes().find((c) => c.id === detailClient.id);
+    if (updated) { setDetailClient(updated); }
+    setPagForm({ valor: detailClient.valorMensalidade || 0, metodo: "pix", data: todayStr(), observacao: "" });
+  };
 
   // Financeiro
   const mesAtual = todayStr().slice(0, 7);
@@ -157,7 +185,7 @@ const MasterPage = () => {
                 <div key={c.id} className="rounded-2xl border bg-card p-5 space-y-3">
                   <div className="flex flex-col md:flex-row md:items-center gap-2 justify-between">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <p className="font-black text-lg text-foreground">{c.nomeRestaurante}</p>
+                      <p className="font-black text-lg text-foreground cursor-pointer hover:underline" onClick={() => openDetail(c)}>{c.nomeRestaurante}</p>
                       {c.segmento && <Badge variant="secondary">{SEGMENTO_LABELS[c.segmento] || c.segmento}</Badge>}
                     </div>
                     <div className="flex items-center gap-2 flex-wrap">
@@ -295,6 +323,95 @@ const MasterPage = () => {
             </div>
           </div>
           <DialogFooter><Button onClick={handleSave}>Salvar</Button></DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Detail Dialog */}
+      <Dialog open={!!detailClient} onOpenChange={(o) => !o && setDetailClient(null)}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader><DialogTitle>{detailClient?.nomeRestaurante}</DialogTitle></DialogHeader>
+          {detailClient && (
+            <Tabs defaultValue="detalhes" className="w-full">
+              <TabsList className="w-full grid grid-cols-2">
+                <TabsTrigger value="detalhes"><Eye className="w-4 h-4 mr-1" />Detalhes</TabsTrigger>
+                <TabsTrigger value="pagamentos"><DollarSign className="w-4 h-4 mr-1" />Pagamentos</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="detalhes" className="space-y-4 mt-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                  <div><span className="text-muted-foreground">Segmento:</span> <span className="font-semibold text-foreground">{SEGMENTO_LABELS[detailClient.segmento] || detailClient.segmento || "—"}</span></div>
+                  <div><span className="text-muted-foreground">CNPJ:</span> <span className="font-semibold text-foreground">{detailClient.cnpj || "—"}</span></div>
+                  <div><span className="text-muted-foreground">Telefone:</span> <span className="font-semibold text-foreground">{detailClient.telefone || "—"}</span></div>
+                  <div><span className="text-muted-foreground">Email:</span> <span className="font-semibold text-foreground">{detailClient.email || "—"}</span></div>
+                  <div className="sm:col-span-2"><span className="text-muted-foreground">Endereço:</span> <span className="font-semibold text-foreground">{[detailClient.endereco, detailClient.cidade, detailClient.estado].filter(Boolean).join(", ") || "—"}</span></div>
+                  <div><span className="text-muted-foreground">Mensalidade:</span> <span className="font-semibold text-foreground">R$ {(detailClient.valorMensalidade || 0).toFixed(2)}</span></div>
+                  <div><span className="text-muted-foreground">Dia vencimento:</span> <span className="font-semibold text-foreground">{detailClient.diaVencimento || "—"}</span></div>
+                  <div><span className="text-muted-foreground">Licença:</span> <span className="font-semibold text-foreground">{detailClient.dataVencimento || "—"}</span></div>
+                  <div><span className="text-muted-foreground">Status:</span> <Badge className={detailClient.ativo ? "bg-emerald-600 hover:bg-emerald-600 text-white" : "bg-destructive hover:bg-destructive text-destructive-foreground"}>{detailClient.ativo ? "Ativo" : "Bloqueado"}</Badge></div>
+                </div>
+                {detailClient.observacoes && (
+                  <div className="text-sm"><span className="text-muted-foreground">Observações:</span><p className="mt-1 text-foreground bg-background rounded-xl p-3">{detailClient.observacoes}</p></div>
+                )}
+                <Button variant="outline" onClick={() => { const c = detailClient; setDetailClient(null); openEdit(c); }}><Pencil className="w-4 h-4 mr-1" />Editar</Button>
+              </TabsContent>
+
+              <TabsContent value="pagamentos" className="space-y-4 mt-4">
+                {(() => {
+                  const anoAtual = String(new Date().getFullYear());
+                  const pagsAno = (detailClient.historicoPagamentos || []).filter((p) => p.data.startsWith(anoAtual));
+                  const totalAno = pagsAno.reduce((s, p) => s + p.valor, 0);
+                  return (
+                    <div className="flex gap-4">
+                      <div className="rounded-xl border bg-background p-3 flex-1 text-center">
+                        <p className="text-xs text-muted-foreground">Total pago {anoAtual}</p>
+                        <p className="text-lg font-black text-emerald-500">R$ {totalAno.toFixed(2)}</p>
+                      </div>
+                      <div className="rounded-xl border bg-background p-3 flex-1 text-center">
+                        <p className="text-xs text-muted-foreground">Pagamentos</p>
+                        <p className="text-lg font-black text-foreground">{pagsAno.length}</p>
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                <div className="rounded-xl border bg-background p-4 space-y-3">
+                  <h4 className="text-sm font-bold text-foreground">Registrar pagamento</h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <Label>Valor</Label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">R$</span>
+                        <Input type="number" className="pl-10" value={pagForm.valor || ""} onChange={(e) => setPagForm({ ...pagForm, valor: parseFloat(e.target.value) || 0 })} />
+                      </div>
+                    </div>
+                    <div>
+                      <Label>Método</Label>
+                      <Select value={pagForm.metodo} onValueChange={(v) => setPagForm({ ...pagForm, metodo: v })}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>{METODOS_PAGAMENTO.map((m) => <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>)}</SelectContent>
+                      </Select>
+                    </div>
+                    <div><Label>Data</Label><Input type="date" value={pagForm.data} onChange={(e) => setPagForm({ ...pagForm, data: e.target.value })} /></div>
+                    <div><Label>Observação</Label><Input placeholder="Opcional" value={pagForm.observacao} onChange={(e) => setPagForm({ ...pagForm, observacao: e.target.value })} /></div>
+                  </div>
+                  <Button onClick={handleRegistrarPagamento} className="w-full">Registrar pagamento</Button>
+                </div>
+
+                <div className="space-y-2">
+                  {(detailClient.historicoPagamentos || []).length === 0 && <p className="text-sm text-muted-foreground text-center py-4">Nenhum pagamento registrado.</p>}
+                  {[...(detailClient.historicoPagamentos || [])].sort((a, b) => b.data.localeCompare(a.data)).map((p) => (
+                    <div key={p.id} className="flex items-center justify-between rounded-xl border bg-background p-3">
+                      <div className="space-y-0.5">
+                        <p className="text-sm font-semibold text-foreground">{p.data}</p>
+                        <p className="text-xs text-muted-foreground">{METODOS_PAGAMENTO.find((m) => m.value === p.metodo)?.label || p.metodo}{p.observacao ? ` · ${p.observacao}` : ""}</p>
+                      </div>
+                      <p className="text-sm font-black text-emerald-500">R$ {p.valor.toFixed(2)}</p>
+                    </div>
+                  ))}
+                </div>
+              </TabsContent>
+            </Tabs>
+          )}
         </DialogContent>
       </Dialog>
 
