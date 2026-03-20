@@ -112,7 +112,7 @@ interface ActionAuditInput {
   motivo?: string;
 }
 
-interface FecharContaInput {
+export interface FecharContaInput {
   usuario: OperationalUser;
   pagamentos: SplitPayment[];
 }
