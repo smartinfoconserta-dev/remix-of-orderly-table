@@ -224,8 +224,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     let error: string | undefined;
 
     setState((prev) => {
+      // Roles allowed per target route
+      const allowedRoles: Record<UserRole, UserRole[]> = {
+        garcom: ["garcom"],
+        caixa: ["caixa", "gerente"],
+        gerente: ["gerente"],
+      };
+      const allowed = allowedRoles[role] ?? [role];
+
+      // Find user by name matching any allowed role
       const existingUser = prev.users.find(
-        (user) => user.role === role && user.nome.toLocaleLowerCase("pt-BR") === nomeNormalizado.toLocaleLowerCase("pt-BR"),
+        (user) => allowed.includes(user.role) && user.nome.toLocaleLowerCase("pt-BR") === nomeNormalizado.toLocaleLowerCase("pt-BR"),
       );
 
       if (existingUser && existingUser.ativo === false) {
@@ -239,8 +248,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       if (!existingUser) {
+        // Check if user exists with a different (non-allowed) role
+        const wrongRoleUser = prev.users.find(
+          (user) => user.nome.toLocaleLowerCase("pt-BR") === nomeNormalizado.toLocaleLowerCase("pt-BR"),
+        );
+        if (wrongRoleUser) {
+          error = "Acesso negado. Seu perfil não tem permissão para esta área.";
+          return prev;
+        }
+
         if (role === "garcom") {
-          // Garçom pode se auto-cadastrar na primeira vez
           const storedUser: StoredUser = {
             id: `user-${role}-${Date.now()}`,
             nome: nomeNormalizado,
@@ -258,7 +275,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             },
           };
         }
-        // Caixa e gerente precisam ser cadastrados pelo admin/gerente
         error = role === "caixa"
           ? "Usuário não encontrado. Solicite cadastro ao gerente."
           : "Usuário não encontrado. Solicite cadastro ao admin.";
