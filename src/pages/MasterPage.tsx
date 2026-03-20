@@ -474,7 +474,7 @@ const MasterPage = () => {
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div className="sm:col-span-3"><Label>Endereço</Label><Input placeholder="Rua, número" value={form.endereco} onChange={(e) => ff("endereco", e.target.value)} /></div>
                 <div><Label>Cidade</Label><Input value={form.cidade} onChange={(e) => ff("cidade", e.target.value)} /></div>
-                <div><Label>Estado</Label><Select value={form.estado} onValueChange={(v) => ff("estado", v)}><SelectTrigger><SelectValue placeholder="UF" /></SelectTrigger><SelectContent>{ESTADOS.map((uf) => <SelectItem key={uf} value={uf}>{uf}</SelectItem>)}</SelectContent></Select></div>
+                <div><Label>Estado</Label><Select value={form.estado} onValueChange={(v) => ff("estado", v)}><SelectTrigger><SelectValue placeholder="UF" /></SelectTrigger><SelectContent container={document.body}>{ESTADOS.map((uf) => <SelectItem key={uf} value={uf}>{uf}</SelectItem>)}</SelectContent></Select></div>
               </div>
             </div>
             <div className="space-y-3">
