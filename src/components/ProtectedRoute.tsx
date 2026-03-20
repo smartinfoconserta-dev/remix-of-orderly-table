@@ -2,8 +2,8 @@ import { Navigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import type { UserRole } from "@/types/operations";
 
-// Quais slots de sessão concedem acesso a cada rota
-const ROUTE_GRANTED_BY: Record<UserRole, UserRole[]> = {
+// Quais ROLES concedem acesso a cada rota
+const ROUTE_ALLOWED_ROLES: Record<UserRole, UserRole[]> = {
   garcom: ["garcom", "caixa", "gerente"],
   caixa: ["caixa", "gerente"],
   gerente: ["gerente"],
@@ -17,21 +17,22 @@ interface ProtectedRouteProps {
 export const ProtectedRoute = ({ children, requiredSession }: ProtectedRouteProps) => {
   const { currentGarcom, currentCaixa, currentGerente } = useAuth();
 
-  const sessionMap: Record<UserRole, unknown> = {
-    garcom: currentGarcom,
-    caixa: currentCaixa,
-    gerente: currentGerente,
-  };
+  // Collect all active users across all session slots
+  const activeUsers = [currentGarcom, currentCaixa, currentGerente].filter(Boolean);
 
-  const grantedBy = ROUTE_GRANTED_BY[requiredSession] ?? [requiredSession];
+  // No active session anywhere → show login form
+  if (activeUsers.length === 0) return <>{children}</>;
 
-  // Tem sessão em algum slot que dá acesso a esta rota → OK
-  if (grantedBy.some((slot) => !!sessionMap[slot])) return <>{children}</>;
+  const allowedRoles = ROUTE_ALLOWED_ROLES[requiredSession] ?? [requiredSession];
 
-  // Sem nenhuma sessão → mostra formulário de login
-  const hasAnySession = !!(currentGarcom || currentCaixa || currentGerente);
-  if (!hasAnySession) return <>{children}</>;
+  // Check if ANY active user has a role that grants access to this route
+  // Seed admin (id="seed-admin-001") bypasses everything
+  const hasAccess = activeUsers.some(
+    (user) => user!.id === "seed-admin-001" || allowedRoles.includes(user!.role as UserRole),
+  );
 
-  // Tem sessão, mas em slot sem acesso a esta rota → bloqueia
+  if (hasAccess) return <>{children}</>;
+
+  // Has session but wrong role → block
   return <Navigate to="/" replace />;
 };
