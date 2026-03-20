@@ -84,13 +84,24 @@ const readAuthState = (): AuthState => {
 
   try {
     const raw = window.localStorage.getItem(AUTH_STORAGE_KEY);
-    if (!raw) return emptyState;
+    if (!raw) {
+      // First visit — persist seed immediately
+      const initial = { users: [seedAdmin], sessions: {} };
+      window.localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(initial));
+      return initial;
+    }
 
     const parsed = JSON.parse(raw) as Partial<AuthState>;
-    const users = ensureAtivoField(Array.isArray(parsed.users) ? parsed.users : []);
-    // If no users exist in storage, inject the seed admin
-    if (users.length === 0) {
-      return { users: [seedAdmin], sessions: parsed.sessions ?? {} };
+    let users = ensureAtivoField(Array.isArray(parsed.users) ? parsed.users : []);
+    // Ensure seed admin always exists
+    const hasSeedAdmin = users.some(
+      (u) => u.role === "gerente" && u.nome.toLocaleLowerCase("pt-BR") === "admin",
+    );
+    if (!hasSeedAdmin) {
+      users = [seedAdmin, ...users];
+      const patched = { users, sessions: parsed.sessions ?? {} };
+      window.localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(patched));
+      return patched;
     }
     return { users, sessions: parsed.sessions ?? {} };
   } catch {
