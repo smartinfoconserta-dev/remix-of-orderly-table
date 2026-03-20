@@ -185,7 +185,7 @@ const MasterPage = () => {
                 <div key={c.id} className="rounded-2xl border bg-card p-5 space-y-3">
                   <div className="flex flex-col md:flex-row md:items-center gap-2 justify-between">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <p className="font-black text-lg text-foreground">{c.nomeRestaurante}</p>
+                      <p className="font-black text-lg text-foreground cursor-pointer hover:underline" onClick={() => openDetail(c)}>{c.nomeRestaurante}</p>
                       {c.segmento && <Badge variant="secondary">{SEGMENTO_LABELS[c.segmento] || c.segmento}</Badge>}
                     </div>
                     <div className="flex items-center gap-2 flex-wrap">
