@@ -151,6 +151,7 @@ const GerentePage = () => {
     allFechamentos,
     allEventos,
     allMovimentacoesCaixa,
+    pedidosBalcao,
   } = useRestaurant();
   const { currentGerente, logout, verifyManagerAccess, getActiveProfilesByRole, createUser, deactivateUser } = useAuth();
   const [logFilter, setLogFilter] = useState("all");
