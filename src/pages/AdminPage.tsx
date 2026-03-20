@@ -76,7 +76,7 @@ const sidebarSections = [
 const formatPrice = (v: number) => `R$ ${v.toFixed(2).replace(".", ",")}`;
 
 const AdminPage = () => {
-  const { verifyManagerAccess, getProfilesByRole, createUser, removeUser } = useAuth();
+  const { verifyManagerAccess, verifyEmployeeAccess, getProfilesByRole, createUser, removeUser } = useAuth();
 
   // Auth gate state
   const [authenticated, setAuthenticated] = useState(false);
