@@ -528,9 +528,18 @@ const GerentePage = () => {
                 const nomeRestaurante = getSistemaConfig().nomeRestaurante || "Relatório";
                 const periodoLabel = periodo === "hoje" ? "Hoje" : periodo === "semana" ? "Esta semana" : periodo === "mes" ? "Este mês" : `${customInicio || "—"} a ${customFim || "—"}`;
                 const geradoEm = new Date().toLocaleString("pt-BR");
+                const operador = currentGerente?.nome || "—";
 
-                const prodRows = topProducts.map(p => `<tr><td>${p.nome}</td><td style="text-align:center">${p.qty}</td><td style="text-align:right">${formatPrice(p.total)}</td></tr>`).join("");
+                const prodRows = topProducts.map(p => {
+                  const pct = relTotalFaturado > 0 ? ((p.total / relTotalFaturado) * 100).toFixed(1) : "0.0";
+                  return `<tr><td>${p.nome}</td><td style="text-align:center">${p.qty}</td><td style="text-align:right">${formatPrice(p.total)}</td><td style="text-align:right">${pct}%</td></tr>`;
+                }).join("");
+                const bottomProducts = [...topProducts].reverse().slice(0, 5).map(p => {
+                  const pct = relTotalFaturado > 0 ? ((p.total / relTotalFaturado) * 100).toFixed(1) : "0.0";
+                  return `<tr><td>${p.nome}</td><td style="text-align:center">${p.qty}</td><td style="text-align:right">${formatPrice(p.total)}</td><td style="text-align:right">${pct}%</td></tr>`;
+                }).join("");
                 const pgtoRows = paymentBreakdown.map(p => `<tr><td>${p.label}</td><td style="text-align:right">${formatPrice(p.total)}</td><td style="text-align:right">${p.pct}%</td></tr>`).join("");
+                const garcomRows = pedidosPorGarcom.map(g => `<tr><td>${g.nome}</td><td style="text-align:center">${g.pedidos}</td><td style="text-align:center">${g.mesas.size}</td></tr>`).join("");
                 const comandaRows = [...fechFiltrados].sort((a, b) => new Date(b.criadoEmIso).getTime() - new Date(a.criadoEmIso).getTime()).map(f => {
                   const itensStr = (f.itens || []).map(i => `${i.quantidade}x ${i.nome}`).join(", ") || "—";
                   const pgto = f.pagamentos.length > 1
@@ -539,32 +548,46 @@ const GerentePage = () => {
                   return `<tr><td>Mesa ${String(f.mesaNumero).padStart(2,"0")}</td><td>${f.criadoEm}</td><td>${f.caixaNome}</td><td>${itensStr}</td><td style="text-align:right">${formatPrice(f.total)}</td><td>${pgto}</td></tr>`;
                 }).join("");
 
-                const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Relatório</title><style>
+                const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Relatório de Vendas</title><style>
                   body{font-family:Arial,sans-serif;color:#111;background:#fff;padding:24px;max-width:900px;margin:0 auto}
-                  h1{font-size:20px;margin:0}h2{font-size:15px;margin:24px 0 8px;border-bottom:1px solid #ccc;padding-bottom:4px}
+                  h1{font-size:22px;margin:0}h2{font-size:15px;margin:24px 0 8px;border-bottom:2px solid #333;padding-bottom:4px;page-break-before:auto}
                   .center{text-align:center}.meta{color:#666;font-size:12px}
-                  table{width:100%;border-collapse:collapse;font-size:13px;margin-top:6px}
-                  th,td{border:1px solid #ddd;padding:6px 8px;text-align:left}
+                  table{width:100%;border-collapse:collapse;font-size:12px;margin-top:6px}
+                  th,td{border:1px solid #ccc;padding:6px 8px;text-align:left}
                   th{background:#f5f5f5;font-weight:700}
-                  .summary{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:8px}
-                  .summary-item{border:1px solid #ddd;border-radius:8px;padding:12px}
-                  .summary-item .label{font-size:11px;color:#666;text-transform:uppercase}.summary-item .value{font-size:20px;font-weight:900}
-                  @media print{body{padding:0}@page{margin:12mm}}
+                  .summary{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:8px}
+                  .summary-item{border:1px solid #ccc;border-radius:6px;padding:10px}
+                  .summary-item .label{font-size:10px;color:#666;text-transform:uppercase}.summary-item .value{font-size:18px;font-weight:900}
+                  .footer{margin-top:40px;border-top:1px solid #ccc;padding-top:16px;font-size:11px;color:#666}
+                  .signature{margin-top:40px;border-top:1px solid #333;width:250px;text-align:center;padding-top:4px;font-size:11px}
+                  @media print{body{padding:0}@page{margin:12mm}h2{page-break-before:auto}}
                 </style></head><body>
-                  <div class="center"><h1>${nomeRestaurante}</h1><p style="font-size:16px;font-weight:700;margin:4px 0">Relatório de Vendas</p><p class="meta">Período: ${periodoLabel} — Gerado em ${geradoEm}</p></div>
-                  <h2>Resumo</h2>
+                  <div class="center">
+                    <h1>${nomeRestaurante}</h1>
+                    <p style="font-size:16px;font-weight:700;margin:4px 0">Relatório de Vendas</p>
+                    <p class="meta">Período: ${periodoLabel} — Gerado em ${geradoEm}</p>
+                    <p class="meta">Operador: ${operador}</p>
+                  </div>
+                  <h2>Resumo Executivo</h2>
                   <div class="summary">
                     <div class="summary-item"><div class="label">Total faturado</div><div class="value">${formatPrice(relTotalFaturado)}</div></div>
                     <div class="summary-item"><div class="label">Ticket médio</div><div class="value">${formatPrice(relTicketMedio)}</div></div>
                     <div class="summary-item"><div class="label">Comandas fechadas</div><div class="value">${relComandasFechadas}</div></div>
                     <div class="summary-item"><div class="label">Pedidos realizados</div><div class="value">${relPedidosRealizados}</div></div>
+                    <div class="summary-item"><div class="label">Hora de pico</div><div class="value">${horaDePico}</div></div>
+                    <div class="summary-item"><div class="label">Cancelamentos</div><div class="value" style="${cancelamentos > 0 ? "color:red" : ""}">${cancelamentos}</div></div>
+                    <div class="summary-item"><div class="label">Tempo médio/mesa</div><div class="value">${tempoMedioMesa > 0 ? tempoMedioMesa + " min" : "—"}</div></div>
                   </div>
-                  <h2>Produtos mais vendidos</h2>
-                  <table><thead><tr><th>Produto</th><th style="text-align:center">Qtd</th><th style="text-align:right">Total R$</th></tr></thead><tbody>${prodRows || "<tr><td colspan=3 style='text-align:center;color:#999'>Sem dados</td></tr>"}</tbody></table>
-                  <h2>Formas de pagamento</h2>
+                  <h2>Produtos Mais Vendidos</h2>
+                  <table><thead><tr><th>Produto</th><th style="text-align:center">Qtd</th><th style="text-align:right">Total R$</th><th style="text-align:right">% Faturamento</th></tr></thead><tbody>${prodRows || "<tr><td colspan=4 style='text-align:center;color:#999'>Sem dados</td></tr>"}</tbody></table>
+                  ${topProducts.length > 5 ? `<h2>Produtos Menos Vendidos</h2><table><thead><tr><th>Produto</th><th style="text-align:center">Qtd</th><th style="text-align:right">Total R$</th><th style="text-align:right">% Faturamento</th></tr></thead><tbody>${bottomProducts}</tbody></table>` : ""}
+                  <h2>Formas de Pagamento</h2>
                   <table><thead><tr><th>Forma</th><th style="text-align:right">Total R$</th><th style="text-align:right">%</th></tr></thead><tbody>${pgtoRows}</tbody></table>
-                  <h2>Comandas fechadas</h2>
+                  ${pedidosPorGarcom.length > 0 ? `<h2>Desempenho da Equipe</h2><table><thead><tr><th>Garçom</th><th style="text-align:center">Pedidos</th><th style="text-align:center">Mesas atendidas</th></tr></thead><tbody>${garcomRows}</tbody></table>` : ""}
+                  <h2>Comandas Fechadas</h2>
                   <table><thead><tr><th>Mesa</th><th>Horário</th><th>Operador</th><th>Itens</th><th style="text-align:right">Valor</th><th>Pagamento</th></tr></thead><tbody>${comandaRows || "<tr><td colspan=6 style='text-align:center;color:#999'>Sem comandas</td></tr>"}</tbody></table>
+                  <div class="footer">Relatório gerado em ${geradoEm} por ${operador}</div>
+                  <div class="signature">${operador}<br>Gerente responsável</div>
                 </body></html>`;
 
                 const w = window.open("", "_blank");
