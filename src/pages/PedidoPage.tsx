@@ -370,8 +370,30 @@ export default function PedidoPage() {
                 <Input placeholder="Endereço / Rua *" value={endereco} onChange={(e) => setEndereco(e.target.value)} />
                 <div className="grid grid-cols-2 gap-2">
                   <Input placeholder="Número *" value={numero} onChange={(e) => setNumero(e.target.value)} />
-                  <Input placeholder="Bairro" value={bairro} onChange={(e) => setBairro(e.target.value)} />
+                  {bairrosDisponiveis.length > 0 ? (
+                    <Select value={bairroSelecionadoId} onValueChange={(v) => {
+                      setBairroSelecionadoId(v);
+                      const sel = bairrosDisponiveis.find((b) => b.id === v);
+                      if (sel) setBairro(sel.nome);
+                    }}>
+                      <SelectTrigger><SelectValue placeholder="Selecione o bairro" /></SelectTrigger>
+                      <SelectContent container={document.body}>
+                        {bairrosDisponiveis.map((b) => (
+                          <SelectItem key={b.id} value={b.id}>
+                            {b.nome} — R$ {b.taxa.toFixed(2).replace(".", ",")}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <Input placeholder="Bairro" value={bairro} onChange={(e) => setBairro(e.target.value)} />
+                  )}
                 </div>
+                {bairroSelecionadoId && bairrosDisponiveis.length > 0 && (
+                  <p className="text-xs font-semibold text-primary">
+                    Taxa de entrega: R$ {(bairrosDisponiveis.find((b) => b.id === bairroSelecionadoId)?.taxa ?? 0).toFixed(2).replace(".", ",")}
+                  </p>
+                )}
                 {cidade && (
                   <Input placeholder="Cidade" value={cidade} readOnly className="bg-muted" />
                 )}
