@@ -1624,55 +1624,73 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                   </button>
                 ))}
               </div>
-              {/* Product cards */}
-              <div className="max-h-[300px] overflow-y-auto pr-1">
-                <div className="grid grid-cols-2 gap-2">
-                  {produtosAtivos
+              {/* Product cards — click to open ProductModal */}
+              <div className="max-h-[250px] overflow-y-auto pr-1">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                  {(balcaoTipo === "delivery" ? getProdutosDelivery() : produtosAtivos)
                     .filter((p) => p.categoria === (balcaoCatAtiva || categoriasAtivas[0]?.id))
                     .map((prod) => {
-                      const qty = balcaoItens[prod.id] || 0;
+                      const qtyInCart = balcaoItens.filter((i) => i.produtoId === prod.id).reduce((s, i) => s + i.quantidade, 0);
                       return (
-                        <div key={prod.id} className="rounded-xl border border-border bg-card overflow-hidden">
-                          <div className="h-24 overflow-hidden">
-                            <img src={prod.imagem} alt={prod.nome} className="w-full h-full object-cover" loading="lazy" />
+                        <button
+                          key={prod.id}
+                          type="button"
+                          onClick={() => setBalcaoModalProduto(prod)}
+                          className="rounded-xl border border-border bg-card overflow-hidden text-left transition-colors hover:border-primary/40 relative"
+                        >
+                          <div className="h-20 overflow-hidden">
+                            <img src={(prod as any).imagemBase64 || prod.imagem} alt={prod.nome} className="w-full h-full object-cover" loading="lazy" />
                           </div>
-                          <div className="p-2.5 space-y-1.5">
+                          <div className="p-2 space-y-0.5">
                             <p className="text-xs font-bold text-foreground truncate">{prod.nome}</p>
                             <p className="text-xs font-black text-primary">{formatPrice(prod.preco)}</p>
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-1.5">
-                                <Button
-                                  size="icon"
-                                  variant="outline"
-                                  className="h-6 w-6 rounded-md"
-                                  disabled={qty === 0}
-                                  onClick={() => setBalcaoItens((prev) => {
-                                    const n = (prev[prod.id] || 0) - 1;
-                                    if (n <= 0) { const { [prod.id]: _, ...rest } = prev; return rest; }
-                                    return { ...prev, [prod.id]: n };
-                                  })}
-                                >
-                                  <Minus className="h-3 w-3" />
-                                </Button>
-                                <span className="w-5 text-center text-xs font-black tabular-nums text-foreground">{qty}</span>
-                                <Button
-                                  size="icon"
-                                  variant="outline"
-                                  className="h-6 w-6 rounded-md"
-                                  onClick={() => setBalcaoItens((prev) => ({ ...prev, [prod.id]: (prev[prod.id] || 0) + 1 }))}
-                                >
-                                  <Plus className="h-3 w-3" />
-                                </Button>
-                              </div>
-                              {qty > 0 && (
-                                <span className="text-xs font-bold tabular-nums text-foreground">{formatPrice(prod.preco * qty)}</span>
-                              )}
-                            </div>
                           </div>
-                        </div>
+                          {qtyInCart > 0 && (
+                            <span className="absolute top-1.5 right-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-primary text-[10px] font-black text-primary-foreground px-1">
+                              {qtyInCart}
+                            </span>
+                          )}
+                        </button>
                       );
                     })}
                 </div>
+              </div>
+            </div>
+
+            {/* Cart summary */}
+            <div className="space-y-2">
+              <h3 className="text-sm font-black text-foreground">Carrinho ({balcaoItens.length} itens)</h3>
+              {balcaoItens.length === 0 ? (
+                <p className="text-xs text-muted-foreground text-center py-3">Nenhum item adicionado</p>
+              ) : (
+                <div className="max-h-[160px] overflow-y-auto space-y-1.5">
+                  {balcaoItens.map((item, idx) => (
+                    <div key={item.uid} className="flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-bold text-foreground truncate">{item.nome} x{item.quantidade}</p>
+                        {(item.adicionais.length > 0 || item.removidos.length > 0) && (
+                          <p className="text-[10px] text-muted-foreground truncate">
+                            {item.adicionais.map((a) => `+${a.nome}`).join(", ")}
+                            {item.removidos.length > 0 ? ` Sem ${item.removidos.join(", ")}` : ""}
+                          </p>
+                        )}
+                      </div>
+                      <span className="text-xs font-black tabular-nums text-foreground">{formatPrice(item.precoUnitario * item.quantidade)}</span>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-6 w-6 text-destructive hover:bg-destructive/10"
+                        onClick={() => setBalcaoItens((prev) => prev.filter((_, i) => i !== idx))}
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <div className="flex justify-between text-sm font-black text-foreground pt-1 border-t border-border">
+                <span>Subtotal</span>
+                <span className="text-primary tabular-nums">{formatPrice(balcaoSubtotal)}</span>
               </div>
             </div>
 
@@ -1686,11 +1704,21 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
             <Button variant="outline" onClick={() => setBalcaoOpen(false)} className="rounded-xl font-bold">Cancelar</Button>
             <Button onClick={handleEnviarBalcao} className="rounded-xl font-black gap-1.5">
               <Check className="h-4 w-4" />
-              Enviar para cozinha
+              Enviar para cozinha ({balcaoItens.length})
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* ProductModal for Balcão/Delivery */}
+      <ProductModal
+        produto={balcaoModalProduto}
+        onClose={() => setBalcaoModalProduto(null)}
+        onAdd={(item) => {
+          setBalcaoItens((prev) => [...prev, item]);
+          setBalcaoModalProduto(null);
+        }}
+      />
 
       <LicenseBanner blockMode={accessMode === "caixa"} />
     </>
