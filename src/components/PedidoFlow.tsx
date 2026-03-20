@@ -470,7 +470,7 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
 
   const handleConfirmar = useCallback(async () => {
     if (carrinho.length === 0 || orderSubmissionLockRef.current) return false;
-    if (!validatePendingCart()) return false;
+    if (!isExternalOrder && !validatePendingCart()) return false;
 
     orderSubmissionLockRef.current = true;
 
@@ -478,11 +478,16 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
       window.clearTimeout(orderSubmissionCooldownRef.current);
     }
 
-    const operador = modo === "garcom" ? currentGarcom : modo === "caixa" ? currentCaixa : undefined;
-
     try {
+      if (isExternalOrder && onPedidoConfirmado) {
+        onPedidoConfirmado([...carrinho], paraViagem);
+        setLocalCarrinho([]);
+        return true;
+      }
+
+      const operador = modo === "garcom" ? currentGarcom : modo === "caixa" ? currentCaixa : undefined;
       confirmarPedido(mesaId, {
-        modo,
+        modo: modo as "cliente" | "garcom" | "caixa",
         operador,
         paraViagem,
       });
@@ -493,7 +498,7 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
         orderSubmissionCooldownRef.current = null;
       }, ORDER_SUBMIT_LOCK_MS);
     }
-  }, [carrinho.length, confirmarPedido, currentCaixa, currentGarcom, mesaId, modo, paraViagem, validatePendingCart]);
+  }, [carrinho, confirmarPedido, currentCaixa, currentGarcom, isExternalOrder, mesaId, modo, onPedidoConfirmado, paraViagem, validatePendingCart]);
 
   const handleSuccessAcknowledge = useCallback(() => {
     if (openProductTimerRef.current) {
