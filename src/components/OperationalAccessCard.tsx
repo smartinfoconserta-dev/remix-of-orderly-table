@@ -9,7 +9,6 @@ import { toast } from "sonner";
 
 interface OperationalAccessCardProps {
   role: UserRole;
-  targetRoute?: string;
 }
 
 const accessSchema = z.object({
@@ -44,7 +43,7 @@ const roleCopy: Record<UserRole, { title: string; description: string; submit: s
   },
 };
 
-const OperationalAccessCard = ({ role, targetRoute }: OperationalAccessCardProps) => {
+const OperationalAccessCard = ({ role }: OperationalAccessCardProps) => {
   const { loginWithPin } = useAuth();
   const [nome, setNome] = useState("");
   const [pin, setPin] = useState("");
@@ -66,7 +65,7 @@ const OperationalAccessCard = ({ role, targetRoute }: OperationalAccessCardProps
     setIsSubmitting(true);
     setError(null);
 
-    const result = await loginWithPin(role, parsed.data.nome, parsed.data.pin, targetRoute);
+    const result = await loginWithPin(role, parsed.data.nome, parsed.data.pin);
 
     if (!result.ok) {
       setError(result.error ?? "Não foi possível entrar agora");

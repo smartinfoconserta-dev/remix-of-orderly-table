@@ -21,7 +21,7 @@ const GarcomPage = () => {
   if (!currentGarcom) {
     return (
       <AppLayout title="Garçom">
-        <OperationalAccessCard role="garcom" targetRoute="/garcom" />
+        <OperationalAccessCard role="garcom" />
       </AppLayout>
     );
   }
