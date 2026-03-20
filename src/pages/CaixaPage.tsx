@@ -1118,6 +1118,57 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
         </DialogContent>
       </Dialog>
 
+      {/* ── TURNO REPORT DIALOG ── */}
+      <Dialog open={turnoReportOpen} onOpenChange={setTurnoReportOpen}>
+        <DialogContent className="rounded-2xl border-border bg-background sm:max-w-lg max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ReceiptText className="h-5 w-5 text-primary" />
+              Relatório do turno
+            </DialogTitle>
+            <DialogDescription>Confira o resumo antes de fechar o turno.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              {paymentMethodOptions.map((pm) => {
+                const val = resumoFinanceiro[pm.value as keyof typeof resumoFinanceiro] as number;
+                return (
+                  <div key={pm.value} className="rounded-xl border border-border bg-card p-3 flex items-center gap-3">
+                    <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${pm.bgColor} ${pm.color}`}>
+                      {(() => { const Icon = pm.icon; return <Icon className="h-4 w-4" />; })()}
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-bold text-muted-foreground">{pm.label}</p>
+                      <p className={`text-sm font-black tabular-nums ${pm.color}`}>{formatPrice(val)}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <div className="rounded-xl border border-border bg-card p-4 space-y-2 text-sm">
+              <div className="flex justify-between"><span className="text-muted-foreground">Sangrias (saídas)</span><span className="font-black tabular-nums text-destructive">{formatPrice(resumoFinanceiro.saidas)}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">Suprimentos (entradas)</span><span className="font-black tabular-nums text-emerald-400">{formatPrice(resumoFinanceiro.entradasExtras)}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">Fundo de troco inicial</span><span className="font-black tabular-nums text-foreground">{formatPrice(fundoTroco)}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">Comandas fechadas</span><span className="font-black tabular-nums text-foreground">{fechamentos.length}</span></div>
+              <div className="border-t border-border pt-2 flex justify-between">
+                <span className="font-black text-foreground">Total líquido em caixa</span>
+                <span className="font-black tabular-nums text-primary text-lg">{formatPrice(fundoTroco + resumoFinanceiro.totalDia + resumoFinanceiro.entradasExtras - resumoFinanceiro.saidas)}</span>
+              </div>
+            </div>
+            <div className="flex justify-between text-xs text-muted-foreground">
+              <span>Aberto: {caixaOpenTime || "—"}</span>
+              <span>Agora: {clockStr}</span>
+            </div>
+          </div>
+          <DialogFooter className="gap-3 sm:gap-0">
+            <Button variant="outline" onClick={() => setTurnoReportOpen(false)} className="rounded-xl font-bold">Cancelar</Button>
+            <Button variant="destructive" onClick={() => { setTurnoReportOpen(false); setTurnoModalOpen(true); setTurnoManagerName(accessMode === "gerente" ? currentOperator.nome : ""); setTurnoManagerPin(""); setTurnoError(null); }} className="rounded-xl font-black">
+              Prosseguir com fechamento
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* ── TURNO CLOSE MODAL ── */}
       <Dialog open={turnoModalOpen} onOpenChange={(open) => { if (!open) { setTurnoModalOpen(false); setTurnoError(null); } }}>
         <DialogContent className="rounded-2xl border-border bg-background sm:max-w-md">
@@ -1127,7 +1178,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
               Fechar turno
             </DialogTitle>
             <DialogDescription>
-              Esta ação vai resetar todas as mesas, movimentações e fechamentos do turno atual. Autorização de gerente necessária.
+              Autorização de gerente necessária para confirmar o fechamento.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
