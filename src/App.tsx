@@ -7,6 +7,7 @@ import CaixaPage from "./pages/CaixaPage";
 import GerentePage from "./pages/GerentePage";
 import CozinhaPage from "./pages/CozinhaPage";
 import AdminPage from "./pages/AdminPage";
+import MasterPage from "./pages/MasterPage";
 import NotFound from "./pages/NotFound";
 
 const App = () => {
@@ -23,6 +24,7 @@ const App = () => {
         <Route path="/gerente" element={<GerentePage />} />
         <Route path="/cozinha" element={<CozinhaPage />} />
         <Route path="/admin" element={<AdminPage />} />
+        <Route path="/master" element={<MasterPage />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </div>
