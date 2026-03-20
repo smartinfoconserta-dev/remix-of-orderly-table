@@ -23,13 +23,21 @@ export interface PedidoRealizado {
   total: number;
   criadoEm: string;
   criadoEmIso: string;
-  origem: "cliente" | "garcom" | "caixa";
+  origem: "cliente" | "garcom" | "caixa" | "balcao" | "delivery";
   mesaId: string;
   garcomId?: string;
   garcomNome?: string;
   caixaId?: string;
   caixaNome?: string;
   pronto?: boolean;
+  clienteNome?: string;
+  clienteTelefone?: string;
+  enderecoCompleto?: string;
+  bairro?: string;
+  referencia?: string;
+  formaPagamentoDelivery?: string;
+  trocoParaQuanto?: number;
+  observacaoGeral?: string;
 }
 
 export interface EventoOperacional {
