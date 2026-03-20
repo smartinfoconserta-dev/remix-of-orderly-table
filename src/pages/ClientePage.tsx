@@ -31,7 +31,16 @@ const ClientePage = () => {
   const { verifyEmployeeAccess, resetPin } = useAuth();
   const [searchParams] = useSearchParams();
 
-  const [mesaId, setMesaId] = useState<string | null>(() => getBoundTabletMesaId());
+  const [mesaId, setMesaId] = useState<string | null>(() => {
+    const savedMesa = getBoundTabletMesaId();
+    const savedUser = getTabletLoginUser();
+    // If there's a bound mesa but no logged-in user, clear binding and require fresh login
+    if (savedMesa && !savedUser) {
+      clearBoundTabletMesaId();
+      return null;
+    }
+    return savedMesa;
+  });
   const [tabletUser, setTabletUser] = useState<string | null>(() => getTabletLoginUser());
   const [nome, setNome] = useState("");
   const [pin, setPin] = useState("");
