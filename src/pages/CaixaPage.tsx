@@ -599,13 +599,13 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
     handleVoltar();
   };
 
-  const handleSelecionarBalcao = useCallback((pedidoId: string) => {
+  const handleSelecionarBalcao = (pedidoId: string) => {
     setMesaSelecionada(null);
     setBalcaoPedidoSelecionado(pedidoId);
     setBalcaoPayments([]);
     setBalcaoPaymentMethod("dinheiro");
     setBalcaoPaymentValue("");
-  }, []);
+  };
 
   const handleUnlockFinance = async () => {
     if (!financeManagerName.trim()) { setFinanceError("Informe o nome do gerente"); return; }
