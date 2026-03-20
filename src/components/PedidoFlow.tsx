@@ -373,17 +373,25 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
 
   const handleAddToCart = useCallback(
     (item: ItemCarrinho) => {
-      addToCart(mesaId, {
-        ...item,
-        removidos: [...item.removidos],
-        adicionais: item.adicionais.map((adicional) => ({ ...adicional })),
-      });
+      if (isExternalOrder) {
+        setLocalCarrinho(prev => [...prev, {
+          ...item,
+          removidos: [...item.removidos],
+          adicionais: item.adicionais.map((adicional) => ({ ...adicional })),
+        }]);
+      } else {
+        addToCart(mesaId, {
+          ...item,
+          removidos: [...item.removidos],
+          adicionais: item.adicionais.map((adicional) => ({ ...adicional })),
+        });
+      }
       setSelectedProductCardId(null);
       setProdutoSelecionado(null);
       setIsClientIdle(false);
       handleCartOpenChange(true);
     },
-    [addToCart, handleCartOpenChange, mesaId],
+    [addToCart, handleCartOpenChange, isExternalOrder, mesaId],
   );
 
   const handleChamarGarcom = useCallback(() => {
