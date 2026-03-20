@@ -910,6 +910,40 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                         />
                       </div>
                     ))}
+                    {/* ── Balcão / Delivery cards ── */}
+                    {pedidosBalcaoAtivos.map((pb) => {
+                      const isDelivery = pb.origem === "delivery";
+                      const isPronto = pb.statusBalcao === "pronto";
+                      return (
+                        <div key={pb.id} className="slide-up">
+                          <button
+                            onClick={() => handleSelecionarBalcao(pb.id)}
+                            className={`relative flex min-h-[136px] w-full flex-col items-center justify-center gap-2 rounded-xl border p-5 text-center mesa-card-interactive ${
+                              isPronto
+                                ? "border-status-consumo/50 bg-status-consumo/8 animate-pulse"
+                                : "border-amber-500/50 bg-amber-500/8"
+                            }`}
+                          >
+                            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
+                              {isDelivery ? "Delivery" : "Balcão"}
+                            </span>
+                            <span className="text-sm font-black text-foreground truncate max-w-full px-1">
+                              {pb.clienteNome || "—"}
+                            </span>
+                            <span className={`rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-widest ${
+                              isPronto
+                                ? "border-status-consumo/25 bg-status-consumo/10 text-status-consumo"
+                                : "border-amber-500/25 bg-amber-500/10 text-amber-400"
+                            }`}>
+                              {isPronto ? "Pronto" : "Aberto"}
+                            </span>
+                            <span className="mt-1 text-sm font-black tabular-nums text-foreground">
+                              {formatPrice(pb.total)}
+                            </span>
+                          </button>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
 
