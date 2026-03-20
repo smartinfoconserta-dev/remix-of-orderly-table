@@ -26,6 +26,9 @@ export interface Cliente {
   valorMensalidade: number;
   observacoes: string;
   historicoPagamentos: Pagamento[];
+  plano: string;
+  dataInicio: string;
+  dataTermino: string;
 }
 
 export interface Despesa {
