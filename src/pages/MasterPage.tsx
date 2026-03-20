@@ -106,6 +106,12 @@ const MasterPage = () => {
 
   const [detailClient, setDetailClient] = useState<Cliente | null>(null);
   const [pagForm, setPagForm] = useState({ valor: 0, metodo: "pix", data: todayStr(), observacao: "" });
+
+  // Filters
+  const [busca, setBusca] = useState("");
+  const [filtroStatus, setFiltroStatus] = useState<"todos" | "ativos" | "bloqueados" | "vencidos">("todos");
+  const [filtroPlano, setFiltroPlano] = useState("todos");
+  const [activeTab, setActiveTab] = useState("clientes");
   
 
   const refresh = () => { setClientes(getClientes()); setDespesas(getDespesas()); };
