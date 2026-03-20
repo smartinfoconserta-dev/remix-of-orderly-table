@@ -160,6 +160,26 @@ export default function MotoboyPage() {
                     <Clock className="w-3 h-3" />
                     <span>{p.criadoEm}</span>
                   </div>
+
+                  {/* Action buttons */}
+                  <div className="pt-2 border-t border-border flex gap-2">
+                    {p.statusBalcao === "pronto" && (
+                      <Button size="sm" className="flex-1 bg-blue-600 hover:bg-blue-700" onClick={() => marcarBalcaoSaiu(p.id, nome)}>
+                        Confirmar retirada
+                      </Button>
+                    )}
+                    {p.statusBalcao === "saiu" && (
+                      <Button size="sm" className="flex-1" onClick={() => marcarBalcaoEntregue(p.id)}>
+                        Marcar como entregue
+                      </Button>
+                    )}
+                    {p.statusBalcao === "aberto" && (
+                      <p className="text-xs text-muted-foreground italic">Aguardando preparo na cozinha…</p>
+                    )}
+                    {p.statusBalcao === "entregue" && (
+                      <p className="text-xs text-muted-foreground italic">Entrega concluída ✓</p>
+                    )}
+                  </div>
                 </CardContent>
               </Card>
             );

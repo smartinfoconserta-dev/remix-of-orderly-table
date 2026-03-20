@@ -1109,6 +1109,8 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         fecharCaixaDoDia,
         criarPedidoBalcao,
         marcarPedidoBalcaoPronto,
+        marcarBalcaoSaiu,
+        marcarBalcaoEntregue,
         fecharContaBalcao,
       }}
     >
