@@ -1114,13 +1114,14 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
           <div className="space-y-4">
             <div className="space-y-2">
               <label className="text-sm font-semibold text-foreground">Tipo</label>
-              <Select value={movTipo} onValueChange={(v) => setMovTipo(v as "entrada" | "saida")}>
-                <SelectTrigger className="rounded-xl"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="entrada">Suprimento (entrada)</SelectItem>
-                  <SelectItem value="saida">Sangria (saída)</SelectItem>
-                </SelectContent>
-              </Select>
+              <select
+                value={movTipo}
+                onChange={(e) => setMovTipo(e.target.value as "entrada" | "saida")}
+                className="w-full rounded-xl border border-border bg-secondary px-3 py-2 text-sm text-foreground"
+              >
+                <option value="entrada">Suprimento (entrada)</option>
+                <option value="saida">Sangria (saída)</option>
+              </select>
             </div>
             <div className="space-y-2">
               <label className="text-sm font-semibold text-foreground">Descrição</label>
