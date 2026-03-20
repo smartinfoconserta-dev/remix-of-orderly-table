@@ -29,7 +29,7 @@ interface AuthContextType {
   currentGerente: OperationalUser | null;
   getProfilesByRole: (role: UserRole) => OperationalUser[];
   getActiveProfilesByRole: (role: UserRole) => OperationalUser[];
-  loginWithPin: (role: UserRole, nome: string, pin: string) => Promise<LoginResult>;
+  loginWithPin: (role: UserRole, nome: string, pin: string, targetRoute?: string) => Promise<LoginResult>;
   createUser: (role: UserRole, nome: string, pin: string) => { ok: boolean; error?: string; user?: OperationalUser };
   removeUser: (id: string) => { ok: boolean; error?: string };
   deactivateUser: (id: string) => { ok: boolean; error?: string };
@@ -53,7 +53,7 @@ const loginSchema = z.object({
 
 const seedAdmin: StoredUser = {
   id: "seed-admin-001",
-  role: "gerente" as UserRole,
+  role: "admin" as UserRole,
   nome: "admin",
   pinHash: btoa("pin:1234").split("").reverse().join(""),
   ativo: true,
@@ -79,13 +79,27 @@ const toPublicUser = ({ pinHash: _pinHash, ativo: _ativo, ...user }: StoredUser)
 const ensureAtivoField = (users: StoredUser[]): StoredUser[] =>
   users.map((u) => ({ ...u, ativo: u.ativo !== false }));
 
+/* ── Route permission map ── */
+const ROUTE_PERMISSIONS: Record<string, UserRole[]> = {
+  "/garcom": ["garcom", "admin"],
+  "/caixa": ["caixa", "gerente", "admin"],
+  "/gerente": ["gerente", "admin"],
+  "/admin": ["admin"],
+};
+
+const isRoleAllowedForRoute = (userRole: UserRole, targetRoute?: string): boolean => {
+  if (!targetRoute) return true;
+  const allowed = ROUTE_PERMISSIONS[targetRoute];
+  if (!allowed) return true; // unknown route — allow
+  return allowed.includes(userRole);
+};
+
 const readAuthState = (): AuthState => {
   if (typeof window === "undefined") return emptyState;
 
   try {
     const raw = window.localStorage.getItem(AUTH_STORAGE_KEY);
     if (!raw) {
-      // First visit — persist seed immediately
       const initial = { users: [seedAdmin], sessions: {} };
       window.localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(initial));
       return initial;
@@ -95,10 +109,20 @@ const readAuthState = (): AuthState => {
     let users = ensureAtivoField(Array.isArray(parsed.users) ? parsed.users : []);
     // Ensure seed admin always exists
     const hasSeedAdmin = users.some(
-      (u) => u.role === "gerente" && u.nome.toLocaleLowerCase("pt-BR") === "admin",
+      (u) => (u.role === "admin" || u.role === "gerente") && u.nome.toLocaleLowerCase("pt-BR") === "admin",
     );
     if (!hasSeedAdmin) {
       users = [seedAdmin, ...users];
+      const patched = { users, sessions: parsed.sessions ?? {} };
+      window.localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(patched));
+      return patched;
+    }
+    // Migrate existing seed admin from gerente to admin role
+    const existingSeed = users.find(
+      (u) => u.id === "seed-admin-001" && u.role === "gerente"
+    );
+    if (existingSeed) {
+      existingSeed.role = "admin";
       const patched = { users, sessions: parsed.sessions ?? {} };
       window.localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(patched));
       return patched;
@@ -121,7 +145,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const session = state.sessions[role];
       if (!session) return null;
 
-      const user = state.users.find((item) => item.id === session.userId && item.role === role);
+      const user = state.users.find((item) => item.id === session.userId);
       return user ? toPublicUser(user) : null;
     },
     [state.sessions, state.users],
@@ -209,7 +233,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return { ok: true };
   }, [state.users]);
 
-  const loginWithPin = useCallback(async (role: UserRole, nome: string, pin: string): Promise<LoginResult> => {
+  const loginWithPin = useCallback(async (role: UserRole, nome: string, pin: string, targetRoute?: string): Promise<LoginResult> => {
     const parsed = loginSchema.safeParse({ nome, pin });
     if (!parsed.success) {
       return { ok: false, error: parsed.error.issues[0]?.message ?? "Revise os dados informados" };
@@ -221,8 +245,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     let error: string | undefined;
 
     setState((prev) => {
+      // Search by name across ALL roles (allows hierarchy — e.g. gerente logging into /caixa)
       const existingUser = prev.users.find(
-        (user) => user.role === role && user.nome.toLocaleLowerCase("pt-BR") === nomeNormalizado.toLocaleLowerCase("pt-BR"),
+        (user) => user.nome.toLocaleLowerCase("pt-BR") === nomeNormalizado.toLocaleLowerCase("pt-BR"),
       );
 
       if (existingUser && existingUser.ativo === false) {
@@ -235,25 +260,45 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return prev;
       }
 
-      const storedUser = existingUser ?? {
-        id: `user-${role}-${Date.now()}`,
-        nome: nomeNormalizado,
-        role,
-        criadoEm: new Date().toISOString(),
-        pinHash,
-        ativo: true,
-      };
+      if (!existingUser) {
+        // For routes with hierarchy, don't auto-create users
+        if (targetRoute) {
+          error = "Usuário não encontrado";
+          return prev;
+        }
+        // Legacy: auto-create if no targetRoute (backward compat)
+        const storedUser: StoredUser = {
+          id: `user-${role}-${Date.now()}`,
+          nome: nomeNormalizado,
+          role,
+          criadoEm: new Date().toISOString(),
+          pinHash,
+          ativo: true,
+        };
+        authenticatedUser = toPublicUser(storedUser);
+        return {
+          users: [storedUser, ...prev.users],
+          sessions: {
+            ...prev.sessions,
+            [role]: { userId: storedUser.id, loggedInAt: new Date().toISOString() },
+          },
+        };
+      }
 
-      authenticatedUser = toPublicUser(storedUser);
+      // Check route permission based on user's ACTUAL role
+      if (!isRoleAllowedForRoute(existingUser.role, targetRoute)) {
+        error = "Acesso não permitido para este perfil";
+        return prev;
+      }
 
+      authenticatedUser = toPublicUser(existingUser);
+
+      // Create session under the PAGE's role key (so getCurrentUser works for that page)
       return {
-        users: existingUser ? prev.users : [storedUser, ...prev.users],
+        users: prev.users,
         sessions: {
           ...prev.sessions,
-          [role]: {
-            userId: storedUser.id,
-            loggedInAt: new Date().toISOString(),
-          },
+          [role]: { userId: existingUser.id, loggedInAt: new Date().toISOString() },
         },
       };
     });
@@ -272,23 +317,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     const nomeNormalizado = parsed.data.nome.trim();
-    const gerente = state.users.find(
-      (user) => user.role === "gerente" && user.nome.toLocaleLowerCase("pt-BR") === nomeNormalizado.toLocaleLowerCase("pt-BR"),
+    const user = state.users.find(
+      (u) => (u.role === "gerente" || u.role === "admin") && u.nome.toLocaleLowerCase("pt-BR") === nomeNormalizado.toLocaleLowerCase("pt-BR"),
     );
 
-    if (!gerente) {
+    if (!user) {
       return { ok: false, error: "Gerente não encontrado" };
     }
 
-    if (gerente.ativo === false) {
+    if (user.ativo === false) {
       return { ok: false, error: "Este gerente está desativado" };
     }
 
-    if (gerente.pinHash !== hashPin(parsed.data.pin)) {
+    if (user.pinHash !== hashPin(parsed.data.pin)) {
       return { ok: false, error: "PIN do gerente inválido" };
     }
 
-    return { ok: true, user: toPublicUser(gerente) };
+    return { ok: true, user: toPublicUser(user) };
   }, [state.users]);
 
   const verifyEmployeeAccess = useCallback(async (nome: string, pin: string): Promise<LoginResult> => {
