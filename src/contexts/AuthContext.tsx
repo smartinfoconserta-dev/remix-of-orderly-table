@@ -268,7 +268,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setState((prev) => {
       // Roles allowed per target route
       const allowedRoles: Record<UserRole, UserRole[]> = {
-        garcom: ["garcom"],
+        garcom: ["garcom", "caixa", "gerente"],
         caixa: ["caixa", "gerente"],
         gerente: ["gerente"],
       };
