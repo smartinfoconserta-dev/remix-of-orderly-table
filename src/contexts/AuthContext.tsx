@@ -239,22 +239,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       if (!existingUser) {
-        const storedUser: StoredUser = {
-          id: `user-${role}-${Date.now()}`,
-          nome: nomeNormalizado,
-          role,
-          criadoEm: new Date().toISOString(),
-          pinHash,
-          ativo: true,
-        };
-        authenticatedUser = toPublicUser(storedUser);
-        return {
-          users: [storedUser, ...prev.users],
-          sessions: {
-            ...prev.sessions,
-            [role]: { userId: storedUser.id, loggedInAt: new Date().toISOString() },
-          },
-        };
+        if (role === "garcom") {
+          // Garçom pode se auto-cadastrar na primeira vez
+          const storedUser: StoredUser = {
+            id: `user-${role}-${Date.now()}`,
+            nome: nomeNormalizado,
+            role,
+            criadoEm: new Date().toISOString(),
+            pinHash,
+            ativo: true,
+          };
+          authenticatedUser = toPublicUser(storedUser);
+          return {
+            users: [storedUser, ...prev.users],
+            sessions: {
+              ...prev.sessions,
+              [role]: { userId: storedUser.id, loggedInAt: new Date().toISOString() },
+            },
+          };
+        }
+        // Caixa e gerente precisam ser cadastrados pelo admin/gerente
+        error = role === "caixa"
+          ? "Usuário não encontrado. Solicite cadastro ao gerente."
+          : "Usuário não encontrado. Solicite cadastro ao admin.";
+        return prev;
       }
 
       authenticatedUser = toPublicUser(existingUser);
