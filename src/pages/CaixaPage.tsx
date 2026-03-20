@@ -627,9 +627,12 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                   <span className="text-lg font-black tabular-nums text-status-consumo leading-none">{mesasConsumo}</span>
                   <span className="text-[10px] font-bold uppercase tracking-widest text-status-consumo/80">Consumo</span>
                 </div>
-                <div className="flex items-center gap-2 rounded-xl border border-amber-500/30 bg-amber-500/8 px-3 py-1.5">
-                  <span className="text-lg font-black tabular-nums text-amber-400 leading-none">{mesasPendente}</span>
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-amber-400/80">Pendentes</span>
+                <div className={`flex flex-col items-center gap-0.5 rounded-xl border border-amber-500/30 bg-amber-500/8 px-3 py-1.5 ${mesasPendente > 0 ? "animate-pulse" : ""}`}>
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg font-black tabular-nums text-amber-400 leading-none">{mesasPendente}</span>
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-amber-400/80">Pendentes</span>
+                  </div>
+                  {mesasPendente > 0 && <span className="text-[9px] text-amber-400/60">aguardando cozinha</span>}
                 </div>
                 <div className="flex items-center gap-2 rounded-xl border border-border bg-secondary/60 px-3 py-1.5">
                   <span className="text-lg font-black tabular-nums text-muted-foreground leading-none">{mesasLivre}</span>
