@@ -636,7 +636,26 @@ const GerentePage = () => {
               })}
             </div>
 
-            {/* ── Bar Chart: Faturamento por dia ── */}
+            {/* ── Extra KPI Cards ── */}
+            <div className="grid grid-cols-3 gap-3">
+              {[
+                { label: "Hora de pico", value: horaDePico, icon: Clock, color: "text-primary" },
+                { label: "Cancelamentos", value: String(cancelamentos), icon: XCircle, color: cancelamentos > 0 ? "text-destructive" : "text-muted-foreground" },
+                { label: "Tempo médio/mesa", value: tempoMedioMesa > 0 ? `${tempoMedioMesa} min` : "—", icon: Timer, color: "text-amber-400" },
+              ].map((kpi) => {
+                const Icon = kpi.icon;
+                return (
+                  <div key={kpi.label} className="rounded-2xl border border-border bg-card p-4 space-y-2">
+                    <div className={`flex h-8 w-8 items-center justify-center rounded-lg bg-secondary ${kpi.color}`}>
+                      <Icon className="h-4 w-4" />
+                    </div>
+                    <p className="text-xs font-bold text-muted-foreground">{kpi.label}</p>
+                    <p className={`text-xl font-black tabular-nums ${kpi.color}`}>{kpi.value}</p>
+                  </div>
+                );
+              })}
+            </div>
+
             {chartData.length > 0 && (
               <div className="space-y-3">
                 <h2 className="text-sm font-black uppercase tracking-widest text-muted-foreground">Faturamento por dia</h2>
