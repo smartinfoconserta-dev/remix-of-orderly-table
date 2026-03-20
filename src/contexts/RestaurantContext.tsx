@@ -30,6 +30,7 @@ export interface PedidoRealizado {
   caixaId?: string;
   caixaNome?: string;
   pronto?: boolean;
+  paraViagem?: boolean;
   clienteNome?: string;
   clienteTelefone?: string;
   enderecoCompleto?: string;
@@ -95,6 +96,7 @@ export interface Mesa {
 interface PedidoMeta {
   modo: "cliente" | "garcom" | "caixa";
   operador?: OperationalUser | null;
+  paraViagem?: boolean;
 }
 
 interface MovimentacaoInput {
@@ -627,6 +629,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           garcomNome: origem === "garcom" ? meta?.operador?.nome : undefined,
           caixaId: origem === "caixa" ? meta?.operador?.id : undefined,
           caixaNome: origem === "caixa" ? meta?.operador?.nome : undefined,
+          paraViagem: meta?.paraViagem || false,
         };
 
         eventInput = origem === "garcom"

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { AlertTriangle, ArrowLeft, Bell, Instagram, LockKeyhole, Plus, RefreshCw, ShoppingCart, Unlink, Wallet, Wifi } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Bell, Instagram, LockKeyhole, Plus, RefreshCw, ShoppingBag, ShoppingCart, Unlink, Wallet, Wifi } from "lucide-react";
 import qrInstagramFallback from "@/assets/qr-instagram-premium.svg";
 import qrWifiFallback from "@/assets/qr-wifi-premium.svg";
 import { Button } from "@/components/ui/button";
@@ -135,6 +135,7 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
   const [cartOpen, setCartOpen] = useState(false);
   const [contaOpen, setContaOpen] = useState(false);
   const [showExitAlert, setShowExitAlert] = useState(false);
+  const [paraViagem, setParaViagem] = useState(false);
   const [isClientIdle, setIsClientIdle] = useState(false);
 
   // Hidden admin modal state
@@ -461,6 +462,7 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
       confirmarPedido(mesaId, {
         modo,
         operador,
+        paraViagem,
       });
       return true;
     } finally {
@@ -469,7 +471,7 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
         orderSubmissionCooldownRef.current = null;
       }, ORDER_SUBMIT_LOCK_MS);
     }
-  }, [carrinho.length, confirmarPedido, currentCaixa, currentGarcom, mesaId, modo, validatePendingCart]);
+  }, [carrinho.length, confirmarPedido, currentCaixa, currentGarcom, mesaId, modo, paraViagem, validatePendingCart]);
 
   const handleSuccessAcknowledge = useCallback(() => {
     if (openProductTimerRef.current) {
@@ -609,6 +611,9 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
           open={cartOpen}
           onOpenChange={handleCartOpenChange}
           hideTrigger={isGarcomMobile}
+          showParaViagem
+          paraViagem={paraViagem}
+          onParaViagemChange={setParaViagem}
         />
         {modo === "cliente" && (
           <Button
