@@ -130,6 +130,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
     fechamentos,
     movimentacoesCaixa,
     caixaAberto,
+    fundoTroco,
     abrirCaixa,
     fecharConta,
     fecharCaixaDoDia,
