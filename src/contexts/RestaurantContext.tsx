@@ -39,6 +39,7 @@ export interface PedidoRealizado {
   formaPagamentoDelivery?: string;
   trocoParaQuanto?: number;
   observacaoGeral?: string;
+  statusBalcao?: "aberto" | "pronto" | "pago";
 }
 
 export interface EventoOperacional {
