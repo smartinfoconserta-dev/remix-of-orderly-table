@@ -611,6 +611,9 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
           open={cartOpen}
           onOpenChange={handleCartOpenChange}
           hideTrigger={isGarcomMobile}
+          showParaViagem
+          paraViagem={paraViagem}
+          onParaViagemChange={setParaViagem}
         />
         {modo === "cliente" && (
           <Button
