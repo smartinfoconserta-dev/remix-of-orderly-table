@@ -678,7 +678,29 @@ const GerentePage = () => {
               </div>
             )}
 
-            {/* ── Top Products ── */}
+            {/* ── Desempenho por garçom ── */}
+            <div className="space-y-3">
+              <h2 className="text-sm font-black uppercase tracking-widest text-muted-foreground">Desempenho por garçom</h2>
+              {pedidosPorGarcom.length === 0 ? (
+                <p className="text-sm text-muted-foreground py-6 text-center">Nenhum dado no período.</p>
+              ) : (
+                <div className="rounded-2xl border border-border bg-card overflow-hidden">
+                  <div className="grid grid-cols-[1fr_auto_auto] gap-x-4 px-4 py-2.5 border-b border-border bg-secondary/50">
+                    <span className="text-xs font-black uppercase tracking-wider text-muted-foreground">Garçom</span>
+                    <span className="text-xs font-black uppercase tracking-wider text-muted-foreground text-right">Pedidos</span>
+                    <span className="text-xs font-black uppercase tracking-wider text-muted-foreground text-right">Mesas</span>
+                  </div>
+                  {pedidosPorGarcom.map((g, i) => (
+                    <div key={g.nome} className={`grid grid-cols-[1fr_auto_auto] gap-x-4 px-4 py-3 ${i > 0 ? "border-t border-border/50" : ""}`}>
+                      <span className="text-sm font-bold text-foreground truncate">{g.nome}</span>
+                      <span className="text-sm font-black tabular-nums text-muted-foreground text-right">{g.pedidos}</span>
+                      <span className="text-sm font-black tabular-nums text-foreground text-right">{g.mesas.size}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
             <div className="space-y-3">
               <h2 className="text-sm font-black uppercase tracking-widest text-muted-foreground">Produtos mais vendidos</h2>
               {topProducts.length === 0 ? (
