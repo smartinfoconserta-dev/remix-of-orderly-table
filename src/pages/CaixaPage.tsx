@@ -993,13 +993,30 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                           const isPronto = pb.statusBalcao === "pronto";
                           const isSaiu = pb.statusBalcao === "saiu";
                           const isEntregue = pb.statusBalcao === "entregue";
+                          const isPago = pb.statusBalcao === "pago";
                           const borderClass = isPronto
                             ? "border-status-consumo/40 bg-status-consumo/5 animate-pulse"
                             : isSaiu
                             ? "border-blue-500/40 bg-blue-500/5"
                             : isEntregue
                             ? "border-muted bg-muted/20"
-                            : "border-purple-500/30 bg-purple-500/5";
+                            : isPago
+                            ? "border-purple-500/40 bg-purple-500/5"
+                            : "border-amber-500/30 bg-amber-500/5";
+                          const badgeClass = isPronto
+                            ? "border-status-consumo/25 bg-status-consumo/10 text-status-consumo"
+                            : isSaiu
+                            ? "border-blue-500/25 bg-blue-500/10 text-blue-400"
+                            : isEntregue
+                            ? "border-muted bg-muted/30 text-muted-foreground"
+                            : isPago
+                            ? "border-purple-500/25 bg-purple-500/10 text-purple-400"
+                            : "border-amber-500/25 bg-amber-500/10 text-amber-400";
+                          const badgeLabel = isPronto ? "Pronto p/ retirar"
+                            : isSaiu ? `Saiu — ${pb.motoboyNome || ""}`
+                            : isEntregue ? "Entregue"
+                            : isPago ? "Pago"
+                            : "Aguardando cozinha";
                           return (
                             <div
                               key={pb.id}
@@ -1017,17 +1034,12 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                                   {pb.clienteTelefone && (
                                     <p className="text-xs text-muted-foreground mt-0.5">{pb.clienteTelefone}</p>
                                   )}
+                                  {pb.motoboyNome && (
+                                    <p className="text-xs text-blue-400 mt-0.5 font-semibold">🏍️ {pb.motoboyNome}</p>
+                                  )}
                                 </div>
-                                <span className={`shrink-0 rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-widest ${
-                                  isPronto
-                                    ? "border-status-consumo/25 bg-status-consumo/10 text-status-consumo"
-                                    : isSaiu
-                                    ? "border-blue-500/25 bg-blue-500/10 text-blue-400"
-                                    : isEntregue
-                                    ? "border-muted bg-muted/30 text-muted-foreground"
-                                    : "border-amber-500/25 bg-amber-500/10 text-amber-400"
-                                }`}>
-                                  {isPronto ? "Pronto p/ entregar" : isSaiu ? `Saiu — ${pb.motoboyNome || ""}` : isEntregue ? "Entregue" : "Aberto"}
+                                <span className={`shrink-0 rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-widest ${badgeClass}`}>
+                                  {badgeLabel}
                                 </span>
                               </div>
                               <div className="text-xs text-muted-foreground space-y-0.5">
