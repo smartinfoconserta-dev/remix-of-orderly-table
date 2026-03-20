@@ -202,6 +202,11 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
   const [balcaoComplemento, setBalcaoComplemento] = useState("");
   const [deliveryBusca, setDeliveryBusca] = useState("");
   const [deliveryResultados, setDeliveryResultados] = useState<ClienteDelivery[]>([]);
+  const [deliveryStep, setDeliveryStep] = useState<"busca" | "form">("busca");
+  const [deliveryCep, setDeliveryCep] = useState("");
+  const [deliveryCepLoading, setDeliveryCepLoading] = useState(false);
+  const [deliveryCepErro, setDeliveryCepErro] = useState("");
+  const [deliveryCidade, setDeliveryCidade] = useState("");
   const [balcaoPedidoSelecionado, setBalcaoPedidoSelecionado] = useState<string | null>(null);
   const [balcaoPayments, setBalcaoPayments] = useState<SplitPayment[]>([]);
   const [balcaoPaymentMethod, setBalcaoPaymentMethod] = useState<PaymentMethod>("dinheiro");
