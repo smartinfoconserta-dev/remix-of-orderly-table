@@ -653,7 +653,7 @@ const GerentePage = () => {
         </TabsContent>
 
         {/* ═══ TAB 3: Logs de Auditoria ═══ */}
-        <TabsContent value="logs" className="flex-1 flex flex-col overflow-hidden mt-0">
+        <TabsContent value="logs" className="flex-1 overflow-y-auto p-4 md:p-6 mt-0">
           {/* Filter bar */}
           <div className="border-b border-border bg-card/50 px-4 py-3 md:px-6 flex items-center gap-3">
             <Filter className="h-4 w-4 text-muted-foreground shrink-0" />
