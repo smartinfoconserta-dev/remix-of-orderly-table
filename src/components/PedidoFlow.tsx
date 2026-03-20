@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { AlertTriangle, ArrowLeft, Bell, Instagram, LockKeyhole, Plus, RefreshCw, ShoppingCart, Unlink, Wallet, Wifi } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Bell, Instagram, LockKeyhole, Plus, RefreshCw, ShoppingBag, ShoppingCart, Unlink, Wallet, Wifi } from "lucide-react";
 import qrInstagramFallback from "@/assets/qr-instagram-premium.svg";
 import qrWifiFallback from "@/assets/qr-wifi-premium.svg";
 import { Button } from "@/components/ui/button";
