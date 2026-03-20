@@ -431,6 +431,52 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
     );
   }
 
+  if (balcaoFlowAtivo) {
+    const handleBalcaoConfirmado = (itens: ItemCarrinho[], paraViagem: boolean) => {
+      if (balcaoTipo === "delivery") {
+        upsertClienteDelivery({
+          nome: balcaoClienteNome.trim(),
+          cpf: balcaoCpf.trim(),
+          telefone: balcaoTelefone.trim(),
+          endereco: balcaoEndereco.trim(),
+          numero: balcaoNumero.trim(),
+          bairro: balcaoBairro.trim(),
+          complemento: balcaoComplemento.trim(),
+          referencia: balcaoReferencia.trim(),
+        });
+      }
+      criarPedidoBalcao({
+        itens,
+        origem: balcaoTipo,
+        operador: currentOperator,
+        clienteNome: balcaoClienteNome.trim() || undefined,
+        clienteTelefone: balcaoTelefone || undefined,
+        enderecoCompleto: balcaoEndereco ? `${balcaoEndereco}${balcaoNumero ? `, ${balcaoNumero}` : ""}` : undefined,
+        bairro: balcaoBairro || undefined,
+        referencia: balcaoReferencia || undefined,
+        formaPagamentoDelivery: balcaoTipo === "delivery" ? balcaoFormaPag : undefined,
+        trocoParaQuanto: balcaoTipo === "delivery" && balcaoFormaPag === "dinheiro" ? parseCurrencyInput(balcaoTroco) || undefined : undefined,
+        paraViagem,
+      });
+      toast.success(
+        balcaoTipo === "delivery"
+          ? `Pedido delivery enviado para ${balcaoClienteNome}`
+          : `Pedido balcão enviado — ${balcaoClienteNome}`,
+        { duration: 1600, icon: "🍽️" },
+      );
+      resetBalcaoStates();
+    };
+
+    return (
+      <PedidoFlow
+        modo={balcaoTipo}
+        clienteNome={balcaoClienteNome}
+        onPedidoConfirmado={handleBalcaoConfirmado}
+        onBack={() => setBalcaoFlowAtivo(false)}
+      />
+    );
+  }
+
   if (mesa && comandaOpen) {
     return <PedidoFlow modo="caixa" mesaId={mesa.id} garcomNome={currentOperator.nome} onBack={() => setComandaOpen(false)} />;
   }
