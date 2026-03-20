@@ -152,6 +152,8 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
     registrarMovimentacaoCaixa,
     criarPedidoBalcao,
     fecharContaBalcao,
+    confirmarPedidoBalcao,
+    rejeitarPedidoBalcao,
   } = useRestaurant();
   const { currentCaixa, currentGerente, logout, verifyManagerAccess } = useAuth();
 
