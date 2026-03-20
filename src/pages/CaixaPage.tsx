@@ -2125,9 +2125,15 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                   <span className="font-bold tabular-nums text-foreground">{formatPrice(it.precoUnitario * it.quantidade)}</span>
                 </div>
               ))}
+              {(sistemaConfig.taxaEntrega ?? 0) > 0 && (
+                <div className="flex justify-between text-sm text-muted-foreground">
+                  <span>Taxa de entrega</span>
+                  <span>{formatPrice(sistemaConfig.taxaEntrega!)}</span>
+                </div>
+              )}
               <div className="border-t border-border pt-2 flex justify-between">
                 <span className="text-sm font-black text-foreground">Total</span>
-                <span className="text-lg font-black tabular-nums text-primary">{formatPrice(deliveryPendingItens.reduce((s, it) => s + it.precoUnitario * it.quantidade, 0))}</span>
+                <span className="text-lg font-black tabular-nums text-primary">{formatPrice(deliveryPendingItens.reduce((s, it) => s + it.precoUnitario * it.quantidade, 0) + (sistemaConfig.taxaEntrega ?? 0))}</span>
               </div>
             </div>
 
