@@ -22,10 +22,10 @@ const formatTime = (d: Date) =>
   d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
 
 const origemLabel = (origem: string) =>
-  origem === "garcom" ? "Garçom" : origem === "caixa" ? "Caixa" : "Cliente";
+  origem === "garcom" ? "Garçom" : origem === "caixa" ? "Caixa" : origem === "balcao" ? "Balcão" : origem === "delivery" ? "Delivery" : "Cliente";
 
 const CozinhaPage = () => {
-  const { mesas, marcarPedidoPronto } = useRestaurant();
+  const { mesas, pedidosBalcao, marcarPedidoPronto, marcarPedidoBalcaoPronto } = useRestaurant();
   const [, setTick] = useState(0);
   const [clock, setClock] = useState(() => formatTime(new Date()));
   const [fadingOut, setFadingOut] = useState<Set<string>>(new Set());
@@ -39,9 +39,9 @@ const CozinhaPage = () => {
     return () => clearInterval(id);
   }, []);
 
-  /* collect all active (not pronto) orders from non-livre tables */
+  /* collect all active (not pronto) orders from non-livre tables + balcão */
   const activePedidos = useMemo(() => {
-    const all: (PedidoRealizado & { mesaNumero: number })[] = [];
+    const all: (PedidoRealizado & { mesaNumero: number; isBalcao?: boolean })[] = [];
     for (const mesa of mesas) {
       if (mesa.status === "livre") continue;
       for (const pedido of mesa.pedidos) {
@@ -50,16 +50,25 @@ const CozinhaPage = () => {
         }
       }
     }
+    for (const pedido of pedidosBalcao) {
+      if (!pedido.pronto) {
+        all.push({ ...pedido, mesaNumero: 0, isBalcao: true });
+      }
+    }
     /* oldest first */
     all.sort((a, b) => new Date(a.criadoEmIso).getTime() - new Date(b.criadoEmIso).getTime());
     return all;
-  }, [mesas]);
+  }, [mesas, pedidosBalcao]);
 
   const handlePronto = useCallback(
-    (mesaId: string, pedidoId: string) => {
+    (mesaId: string, pedidoId: string, isBalcao?: boolean) => {
       setFadingOut((prev) => new Set(prev).add(pedidoId));
       setTimeout(() => {
-        marcarPedidoPronto(mesaId, pedidoId);
+        if (isBalcao) {
+          marcarPedidoBalcaoPronto(pedidoId);
+        } else {
+          marcarPedidoPronto(mesaId, pedidoId);
+        }
         setFadingOut((prev) => {
           const next = new Set(prev);
           next.delete(pedidoId);
@@ -67,7 +76,7 @@ const CozinhaPage = () => {
         });
       }, 200);
     },
-    [marcarPedidoPronto],
+    [marcarPedidoPronto, marcarPedidoBalcaoPronto],
   );
 
   return (
@@ -106,6 +115,8 @@ const CozinhaPage = () => {
         {activePedidos.map((pedido, i) => {
           const mins = minutesAgo(pedido.criadoEmIso);
           const isLate = mins >= 15 && mins <= MAX_ELAPSED_MINUTES;
+          const isBalcaoOrder = pedido.origem === "balcao";
+          const isDeliveryOrder = pedido.origem === "delivery";
 
           return (
             <div
@@ -117,11 +128,29 @@ const CozinhaPage = () => {
               }`}
               style={{ animationDelay: `${Math.min(i * 30, 300)}ms`, animationFillMode: 'both' }}
             >
+              {/* Origin badge */}
+              {(isBalcaoOrder || isDeliveryOrder) && (
+                <div className="px-4 pt-3">
+                  {isBalcaoOrder && (
+                    <span className="inline-block rounded-lg bg-amber-500/15 border border-amber-500/30 px-2.5 py-1 text-xs font-black text-amber-400">
+                      BALCÃO
+                    </span>
+                  )}
+                  {isDeliveryOrder && (
+                    <span className="inline-block rounded-lg bg-purple-500/15 border border-purple-500/30 px-2.5 py-1 text-xs font-black text-purple-400">
+                      DELIVERY — {pedido.clienteNome || "Cliente"}
+                    </span>
+                  )}
+                </div>
+              )}
+
               {/* Card header */}
               <div className="flex items-center justify-between border-b border-border px-4 py-3">
                 <div>
                   <p className="text-2xl font-black text-foreground leading-none">
-                    Mesa {String(pedido.mesaNumero).padStart(2, "0")}
+                    {isBalcaoOrder || isDeliveryOrder
+                      ? (isBalcaoOrder ? "Balcão" : "Delivery")
+                      : `Mesa ${String(pedido.mesaNumero).padStart(2, "0")}`}
                   </p>
                   <div className="mt-1 flex items-center gap-2">
                     <span className="text-xs font-bold text-muted-foreground">
@@ -170,13 +199,18 @@ const CozinhaPage = () => {
                     </div>
                   </div>
                 ))}
+                {pedido.observacaoGeral && (
+                  <p className="text-xs text-muted-foreground italic border-t border-border pt-1.5 mt-2">
+                    Obs: {pedido.observacaoGeral}
+                  </p>
+                )}
               </div>
 
               {/* Pronto button */}
               <div className="p-3 pt-0">
                 <button
                   type="button"
-                  onClick={() => handlePronto(pedido.mesaId, pedido.id)}
+                  onClick={() => handlePronto(pedido.mesaId, pedido.id, (pedido as any).isBalcao)}
                   className="flex w-full items-center justify-center gap-2 rounded-xl bg-status-consumo py-3.5 text-sm font-black text-white transition-all hover:bg-status-consumo/90 active:scale-[0.98]"
                 >
                   <Check className="h-4 w-4" />

@@ -23,13 +23,21 @@ export interface PedidoRealizado {
   total: number;
   criadoEm: string;
   criadoEmIso: string;
-  origem: "cliente" | "garcom" | "caixa";
+  origem: "cliente" | "garcom" | "caixa" | "balcao" | "delivery";
   mesaId: string;
   garcomId?: string;
   garcomNome?: string;
   caixaId?: string;
   caixaNome?: string;
   pronto?: boolean;
+  clienteNome?: string;
+  clienteTelefone?: string;
+  enderecoCompleto?: string;
+  bairro?: string;
+  referencia?: string;
+  formaPagamentoDelivery?: string;
+  trocoParaQuanto?: number;
+  observacaoGeral?: string;
 }
 
 export interface EventoOperacional {
@@ -113,6 +121,21 @@ interface RestaurantStore {
   fechamentos: FechamentoConta[];
   caixaAberto: boolean;
   fundoTroco: number;
+  pedidosBalcao: PedidoRealizado[];
+}
+
+interface CriarPedidoBalcaoInput {
+  itens: ItemCarrinho[];
+  origem: "balcao" | "delivery";
+  operador: OperationalUser;
+  clienteNome?: string;
+  clienteTelefone?: string;
+  enderecoCompleto?: string;
+  bairro?: string;
+  referencia?: string;
+  formaPagamentoDelivery?: string;
+  trocoParaQuanto?: number;
+  observacaoGeral?: string;
 }
 
 interface RestaurantContextType {
@@ -120,6 +143,7 @@ interface RestaurantContextType {
   eventos: EventoOperacional[];
   movimentacoesCaixa: MovimentacaoCaixa[];
   fechamentos: FechamentoConta[];
+  pedidosBalcao: PedidoRealizado[];
   caixaAberto: boolean;
   fundoTroco: number;
   allFechamentos: FechamentoConta[];
@@ -141,6 +165,8 @@ interface RestaurantContextType {
   registrarMovimentacaoCaixa: (input: MovimentacaoInput) => void;
   abrirCaixa: (fundoTroco: number, usuario: OperationalUser) => void;
   fecharCaixaDoDia: (usuario: OperationalUser) => void;
+  criarPedidoBalcao: (input: CriarPedidoBalcaoInput) => void;
+  marcarPedidoBalcaoPronto: (pedidoId: string) => void;
 }
 
 const _global = globalThis as unknown as { __restaurantCtx?: React.Context<RestaurantContextType | null> };
@@ -246,7 +272,7 @@ const normalizeItem = (item: Partial<ItemCarrinho>, index = 0): ItemCarrinho => 
 
 const normalizePedido = (pedido: Partial<PedidoRealizado>, mesaId: string, index = 0): PedidoRealizado => {
   const itens = Array.isArray(pedido.itens) ? pedido.itens.map((item, itemIndex) => normalizeItem(item, itemIndex)) : [];
-  const origem = pedido.origem === "garcom" || pedido.origem === "caixa" ? pedido.origem : "cliente";
+  const origem = pedido.origem === "garcom" || pedido.origem === "caixa" || pedido.origem === "balcao" || pedido.origem === "delivery" ? pedido.origem : "cliente";
 
   return {
     id: String(pedido.id ?? `pedido-${Date.now()}-${index}`),
@@ -303,6 +329,7 @@ const readStore = (): RestaurantStore => {
       fechamentos: [],
       caixaAberto: false,
       fundoTroco: 0,
+      pedidosBalcao: [],
     };
   }
 
@@ -316,6 +343,7 @@ const readStore = (): RestaurantStore => {
         fechamentos: [],
         caixaAberto: false,
         fundoTroco: 0,
+        pedidosBalcao: [],
       };
     }
 
@@ -390,6 +418,8 @@ const readStore = (): RestaurantStore => {
         : [],
       caixaAberto: Boolean((parsed as Partial<RestaurantStore>).caixaAberto),
       fundoTroco: Number((parsed as Partial<RestaurantStore>).fundoTroco ?? 0),
+      pedidosBalcao: Array.isArray((parsed as Partial<RestaurantStore>).pedidosBalcao)
+        ? (parsed as Partial<RestaurantStore>).pedidosBalcao! : [],
     };
   } catch {
     return {
@@ -399,6 +429,7 @@ const readStore = (): RestaurantStore => {
       fechamentos: [],
       caixaAberto: false,
       fundoTroco: 0,
+      pedidosBalcao: [],
     };
   }
 };
@@ -939,6 +970,61 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       fechamentos: [],
       caixaAberto: false,
       fundoTroco: 0,
+      pedidosBalcao: [],
+    }));
+  }, []);
+
+  const criarPedidoBalcao = useCallback((input: CriarPedidoBalcaoInput) => {
+    setStore((prev) => {
+      const now = new Date();
+      const totalPedido = calcularTotalItens(input.itens);
+      const label = input.origem === "delivery" ? `DELIVERY — ${input.clienteNome ?? ""}` : "BALCÃO";
+      const novoPedido: PedidoRealizado = {
+        id: `pedido-balcao-${now.getTime()}-${Math.random().toString(36).slice(2, 7)}`,
+        numeroPedido: prev.pedidosBalcao.length + 1,
+        itens: input.itens.map(cloneItem),
+        total: totalPedido,
+        criadoEm: formatClock(now),
+        criadoEmIso: now.toISOString(),
+        origem: input.origem,
+        mesaId: `balcao-${now.getTime()}`,
+        caixaId: input.operador.id,
+        caixaNome: input.operador.nome,
+        clienteNome: input.clienteNome,
+        clienteTelefone: input.clienteTelefone,
+        enderecoCompleto: input.enderecoCompleto,
+        bairro: input.bairro,
+        referencia: input.referencia,
+        formaPagamentoDelivery: input.formaPagamentoDelivery,
+        trocoParaQuanto: input.trocoParaQuanto,
+        observacaoGeral: input.observacaoGeral,
+      };
+      return {
+        ...prev,
+        pedidosBalcao: [...prev.pedidosBalcao, novoPedido],
+        eventos: appendEvent(prev.eventos, {
+          tipo: "caixa",
+          descricao: `Caixa ${input.operador.nome} criou pedido ${label}`,
+          usuarioId: input.operador.id,
+          usuarioNome: input.operador.nome,
+          acao: "lancar_pedido",
+          valor: totalPedido,
+        }),
+      };
+    });
+  }, []);
+
+  const marcarPedidoBalcaoPronto = useCallback((pedidoId: string) => {
+    setStore((prev) => ({
+      ...prev,
+      pedidosBalcao: prev.pedidosBalcao.map((p) =>
+        p.id === pedidoId ? { ...p, pronto: true } : p,
+      ),
+      eventos: appendEvent(prev.eventos, {
+        tipo: "pedido",
+        descricao: `Pedido balcão/delivery marcado como pronto`,
+        acao: "pedido_pronto",
+      }),
     }));
   }, []);
 
@@ -949,6 +1035,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         eventos: store.eventos,
         movimentacoesCaixa: store.movimentacoesCaixa,
         fechamentos: store.fechamentos,
+        pedidosBalcao: store.pedidosBalcao,
         caixaAberto: store.caixaAberto,
         fundoTroco: store.fundoTroco,
         allFechamentos,
@@ -970,6 +1057,8 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         registrarMovimentacaoCaixa,
         abrirCaixa,
         fecharCaixaDoDia,
+        criarPedidoBalcao,
+        marcarPedidoBalcaoPronto,
       }}
     >
       {children}

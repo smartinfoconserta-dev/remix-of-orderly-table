@@ -14,6 +14,7 @@ import {
   RotateCcw,
   ScrollText,
   ShieldCheck,
+  ShoppingBag,
   ShoppingCart,
   Smartphone,
   Trash2,
@@ -50,7 +51,9 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useRestaurant } from "@/contexts/RestaurantContext";
 import { useRouteLock } from "@/hooks/use-route-lock";
 import type { PaymentMethod, SplitPayment, UserRole } from "@/types/operations";
-import { getSistemaConfig } from "@/lib/adminStorage";
+import { getSistemaConfig, getCardapioOverrides } from "@/lib/adminStorage";
+import { produtos as menuProdutos, categorias as menuCategorias } from "@/data/menuData";
+import type { ItemCarrinho } from "@/contexts/RestaurantContext";
 
 /* ── helpers ── */
 const formatPrice = (v: number) => `R$ ${v.toFixed(2).replace(".", ",")}`;
@@ -142,6 +145,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
     ajustarItemPedido,
     cancelarPedido,
     registrarMovimentacaoCaixa,
+    criarPedidoBalcao,
   } = useRestaurant();
   const { currentCaixa, currentGerente, logout, verifyManagerAccess } = useAuth();
 
@@ -175,8 +179,53 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
   const [movValor, setMovValor] = useState("");
   const [movConfirmStep, setMovConfirmStep] = useState(false);
   const [turnoReportOpen, setTurnoReportOpen] = useState(false);
+  const [dinheiroContado, setDinheiroContado] = useState("");
+
+  /* ── Balcão/Delivery state ── */
+  const [balcaoOpen, setBalcaoOpen] = useState(false);
+  const [balcaoTipo, setBalcaoTipo] = useState<"balcao" | "delivery">("balcao");
+  const [balcaoClienteNome, setBalcaoClienteNome] = useState("");
+  const [balcaoTelefone, setBalcaoTelefone] = useState("");
+  const [balcaoEndereco, setBalcaoEndereco] = useState("");
+  const [balcaoBairro, setBalcaoBairro] = useState("");
+  const [balcaoReferencia, setBalcaoReferencia] = useState("");
+  const [balcaoFormaPag, setBalcaoFormaPag] = useState<PaymentMethod>("dinheiro");
+  const [balcaoTroco, setBalcaoTroco] = useState("");
+  const [balcaoObs, setBalcaoObs] = useState("");
+  const [balcaoItens, setBalcaoItens] = useState<Record<string, number>>({});
 
   const sistemaConfig = useMemo(() => getSistemaConfig(), []);
+  const cardapioOverrides = useMemo(() => getCardapioOverrides(), []);
+
+  /* ── Active products for balcão/delivery ── */
+  const produtosAtivos = useMemo(() => {
+    return menuProdutos.filter((p) => {
+      const ov = cardapioOverrides[p.id];
+      if (ov && !ov.ativo) return false;
+      if (ov && ov.removido) return false;
+      return true;
+    }).map((p) => {
+      const ov = cardapioOverrides[p.id];
+      return {
+        ...p,
+        nome: ov?.nome ?? p.nome,
+        preco: ov?.preco ?? p.preco,
+      };
+    });
+  }, [cardapioOverrides]);
+
+  const categoriasAtivas = useMemo(() => {
+    const catIds = new Set(produtosAtivos.map((p) => p.categoria));
+    return menuCategorias.filter((c) => catIds.has(c.id));
+  }, [produtosAtivos]);
+
+  const balcaoSubtotal = useMemo(() => {
+    return Object.entries(balcaoItens).reduce((acc, [prodId, qty]) => {
+      if (qty <= 0) return acc;
+      const prod = produtosAtivos.find((p) => p.id === prodId);
+      return acc + (prod ? prod.preco * qty : 0);
+    }, 0);
+  }, [balcaoItens, produtosAtivos]);
 
   const mesa = mesaSelecionada ? mesas.find((item) => item.id === mesaSelecionada) ?? null : null;
   const currentOperator = accessMode === "gerente" ? currentGerente : currentCaixa;
@@ -282,6 +331,68 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
     setMovTipo("entrada");
     setMovConfirmStep(false);
   }, [currentOperator, movTipo, movDescricao, movValor, movConfirmStep, registrarMovimentacaoCaixa]);
+
+  /* ── Balcão/Delivery handler ── */
+  const handleEnviarBalcao = useCallback(() => {
+    if (!currentOperator) return;
+    const itensArr = Object.entries(balcaoItens).filter(([, qty]) => qty > 0);
+    if (itensArr.length === 0) {
+      toast.error("Adicione pelo menos 1 item ao pedido", { duration: 1400 });
+      return;
+    }
+    if (balcaoTipo === "delivery" && !balcaoClienteNome.trim()) {
+      toast.error("Informe o nome do cliente para delivery", { duration: 1400 });
+      return;
+    }
+    if (balcaoTipo === "delivery" && !balcaoEndereco.trim()) {
+      toast.error("Informe o endereço para delivery", { duration: 1400 });
+      return;
+    }
+    const cartItens: ItemCarrinho[] = itensArr.map(([prodId, qty]) => {
+      const prod = produtosAtivos.find((p) => p.id === prodId)!;
+      return {
+        uid: `balcao-${Date.now()}-${prodId}`,
+        produtoId: prodId,
+        nome: prod.nome,
+        precoBase: prod.preco,
+        quantidade: qty,
+        removidos: [],
+        adicionais: [],
+        observacoes: "",
+        precoUnitario: prod.preco,
+      };
+    });
+    criarPedidoBalcao({
+      itens: cartItens,
+      origem: balcaoTipo,
+      operador: currentOperator,
+      clienteNome: balcaoClienteNome || undefined,
+      clienteTelefone: balcaoTelefone || undefined,
+      enderecoCompleto: balcaoEndereco || undefined,
+      bairro: balcaoBairro || undefined,
+      referencia: balcaoReferencia || undefined,
+      formaPagamentoDelivery: balcaoTipo === "delivery" ? balcaoFormaPag : undefined,
+      trocoParaQuanto: balcaoTipo === "delivery" && balcaoFormaPag === "dinheiro" ? parseCurrencyInput(balcaoTroco) || undefined : undefined,
+      observacaoGeral: balcaoObs || undefined,
+    });
+    toast.success(
+      balcaoTipo === "delivery"
+        ? `Pedido delivery enviado para ${balcaoClienteNome}`
+        : "Pedido balcão enviado para a cozinha",
+      { duration: 1600, icon: "🍽️" },
+    );
+    setBalcaoOpen(false);
+    setBalcaoTipo("balcao");
+    setBalcaoClienteNome("");
+    setBalcaoTelefone("");
+    setBalcaoEndereco("");
+    setBalcaoBairro("");
+    setBalcaoReferencia("");
+    setBalcaoFormaPag("dinheiro");
+    setBalcaoTroco("");
+    setBalcaoObs("");
+    setBalcaoItens({});
+  }, [currentOperator, balcaoItens, balcaoTipo, balcaoClienteNome, balcaoTelefone, balcaoEndereco, balcaoBairro, balcaoReferencia, balcaoFormaPag, balcaoTroco, balcaoObs, produtosAtivos, criarPedidoBalcao]);
 
   /* ── auth guard ── */
   if (!currentOperator) {
@@ -639,6 +750,15 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                   <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80">Livres</span>
                 </div>
                 <div className="flex items-center gap-2 ml-auto">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setBalcaoOpen(true)}
+                    className="rounded-xl font-bold gap-1.5 text-xs"
+                  >
+                    <ShoppingBag className="h-3.5 w-3.5" />
+                    Novo pedido
+                  </Button>
                   <Button
                     variant="outline"
                     size="sm"
@@ -1155,6 +1275,42 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                 <span className="font-black tabular-nums text-primary text-lg">{formatPrice(fundoTroco + resumoFinanceiro.totalDia + resumoFinanceiro.entradasExtras - resumoFinanceiro.saidas)}</span>
               </div>
             </div>
+            {/* ── Cash reconciliation ── */}
+            <div className="rounded-xl border border-border bg-card p-4 space-y-3">
+              <h3 className="text-sm font-black text-foreground">Conferência de caixa</h3>
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-muted-foreground">Dinheiro contado em caixa (R$)</label>
+                <Input
+                  value={dinheiroContado}
+                  onChange={(e) => setDinheiroContado(e.target.value)}
+                  placeholder="0,00"
+                  inputMode="decimal"
+                  className="text-lg font-black h-12 rounded-xl"
+                />
+              </div>
+              {(() => {
+                const contado = parseCurrencyInput(dinheiroContado);
+                const esperado = fundoTroco + resumoFinanceiro.dinheiro + resumoFinanceiro.entradasExtras - resumoFinanceiro.saidas;
+                if (!Number.isFinite(contado)) return null;
+                const diff = contado - esperado;
+                return (
+                  <div className="space-y-1">
+                    <div className="flex justify-between text-xs text-muted-foreground">
+                      <span>Total esperado em dinheiro</span>
+                      <span className="font-black tabular-nums">{formatPrice(esperado)}</span>
+                    </div>
+                    <div className={`flex justify-between items-center rounded-lg p-2 ${diff === 0 ? "bg-emerald-500/10" : diff > 0 ? "bg-emerald-500/10" : "bg-destructive/10"}`}>
+                      <span className="text-sm font-black">
+                        {diff === 0 ? "Caixa conferido ✓" : diff > 0 ? "Sobra de caixa" : "Falta de caixa"}
+                      </span>
+                      <span className={`text-sm font-black tabular-nums ${diff === 0 ? "text-emerald-400" : diff > 0 ? "text-emerald-400" : "text-destructive"}`}>
+                        {diff === 0 ? "R$ 0,00" : diff > 0 ? `+${formatPrice(diff)}` : formatPrice(diff)}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
             <div className="flex justify-between text-xs text-muted-foreground">
               <span>Aberto: {caixaOpenTime || "—"}</span>
               <span>Agora: {clockStr}</span>
@@ -1283,6 +1439,156 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
               </DialogFooter>
             </>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* ── BALCÃO / DELIVERY DIALOG ── */}
+      <Dialog open={balcaoOpen} onOpenChange={(open) => { if (!open) setBalcaoOpen(false); }}>
+        <DialogContent className="rounded-2xl border-border bg-background sm:max-w-2xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ShoppingBag className="h-5 w-5 text-primary" />
+              Pedido Balcão / Delivery
+            </DialogTitle>
+            <DialogDescription>Crie um pedido sem mesa vinculada.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            {/* Tipo */}
+            <div className="flex gap-2">
+              <Button
+                variant={balcaoTipo === "balcao" ? "default" : "outline"}
+                onClick={() => setBalcaoTipo("balcao")}
+                className="flex-1 rounded-xl font-black"
+              >
+                Balcão
+              </Button>
+              <Button
+                variant={balcaoTipo === "delivery" ? "default" : "outline"}
+                onClick={() => setBalcaoTipo("delivery")}
+                className="flex-1 rounded-xl font-black"
+              >
+                Delivery
+              </Button>
+            </div>
+
+            {/* Delivery fields */}
+            {balcaoTipo === "delivery" && (
+              <div className="space-y-3 rounded-xl border border-border bg-card p-4">
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-foreground">Nome do cliente *</label>
+                  <Input value={balcaoClienteNome} onChange={(e) => setBalcaoClienteNome(e.target.value)} placeholder="Nome completo" />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-foreground">Telefone</label>
+                    <Input value={balcaoTelefone} onChange={(e) => setBalcaoTelefone(e.target.value)} placeholder="(00) 00000-0000" />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-foreground">Bairro</label>
+                    <Input value={balcaoBairro} onChange={(e) => setBalcaoBairro(e.target.value)} placeholder="Bairro" />
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-foreground">Endereço completo *</label>
+                  <Input value={balcaoEndereco} onChange={(e) => setBalcaoEndereco(e.target.value)} placeholder="Rua, número" />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-foreground">Referência / complemento</label>
+                  <Input value={balcaoReferencia} onChange={(e) => setBalcaoReferencia(e.target.value)} placeholder="Próximo a..." />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-foreground">Forma de pagamento</label>
+                    <select
+                      value={balcaoFormaPag}
+                      onChange={(e) => setBalcaoFormaPag(e.target.value as PaymentMethod)}
+                      className="w-full rounded-xl border border-border bg-secondary px-3 py-2 text-sm text-foreground"
+                    >
+                      <option value="dinheiro">Dinheiro</option>
+                      <option value="credito">Crédito</option>
+                      <option value="debito">Débito</option>
+                      <option value="pix">PIX</option>
+                    </select>
+                  </div>
+                  {balcaoFormaPag === "dinheiro" && (
+                    <div className="space-y-1">
+                      <label className="text-xs font-semibold text-foreground">Troco para quanto?</label>
+                      <Input value={balcaoTroco} onChange={(e) => setBalcaoTroco(e.target.value)} placeholder="0,00" inputMode="decimal" />
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Menu items */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-black text-foreground">Itens do pedido</h3>
+                <span className="text-sm font-black tabular-nums text-primary">{formatPrice(balcaoSubtotal)}</span>
+              </div>
+              <div className="max-h-[280px] overflow-y-auto space-y-4 pr-1">
+                {categoriasAtivas.map((cat) => {
+                  const prods = produtosAtivos.filter((p) => p.categoria === cat.id);
+                  if (prods.length === 0) return null;
+                  return (
+                    <div key={cat.id}>
+                      <p className="text-xs font-black uppercase tracking-widest text-muted-foreground mb-1.5">{cat.nome}</p>
+                      <div className="space-y-1">
+                        {prods.map((prod) => {
+                          const qty = balcaoItens[prod.id] || 0;
+                          return (
+                            <div key={prod.id} className="flex items-center gap-3 rounded-lg border border-border bg-card px-3 py-2">
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-bold text-foreground truncate">{prod.nome}</p>
+                                <p className="text-xs text-muted-foreground">{formatPrice(prod.preco)}</p>
+                              </div>
+                              <div className="flex items-center gap-1.5">
+                                <Button
+                                  size="icon"
+                                  variant="outline"
+                                  className="h-7 w-7 rounded-lg"
+                                  disabled={qty === 0}
+                                  onClick={() => setBalcaoItens((prev) => {
+                                    const n = (prev[prod.id] || 0) - 1;
+                                    if (n <= 0) { const { [prod.id]: _, ...rest } = prev; return rest; }
+                                    return { ...prev, [prod.id]: n };
+                                  })}
+                                >
+                                  <Minus className="h-3 w-3" />
+                                </Button>
+                                <span className="w-6 text-center text-sm font-black tabular-nums text-foreground">{qty}</span>
+                                <Button
+                                  size="icon"
+                                  variant="outline"
+                                  className="h-7 w-7 rounded-lg"
+                                  onClick={() => setBalcaoItens((prev) => ({ ...prev, [prod.id]: (prev[prod.id] || 0) + 1 }))}
+                                >
+                                  <Plus className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Obs */}
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-foreground">Observação geral</label>
+              <Textarea value={balcaoObs} onChange={(e) => setBalcaoObs(e.target.value)} placeholder="Ex.: Sem cebola em todos os lanches" maxLength={200} className="min-h-[60px] rounded-xl" />
+            </div>
+          </div>
+          <DialogFooter className="gap-3 sm:gap-0">
+            <Button variant="outline" onClick={() => setBalcaoOpen(false)} className="rounded-xl font-bold">Cancelar</Button>
+            <Button onClick={handleEnviarBalcao} className="rounded-xl font-black gap-1.5">
+              <Check className="h-4 w-4" />
+              Enviar para cozinha
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 
