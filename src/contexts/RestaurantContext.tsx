@@ -30,6 +30,7 @@ export interface PedidoRealizado {
   caixaId?: string;
   caixaNome?: string;
   pronto?: boolean;
+  paraViagem?: boolean;
   clienteNome?: string;
   clienteTelefone?: string;
   enderecoCompleto?: string;
