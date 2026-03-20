@@ -9,6 +9,13 @@ const ROUTE_ALLOWED_ROLES: Record<UserRole, UserRole[]> = {
   gerente: ["gerente"],
 };
 
+// Hierarquia: quais roles são INFERIORES (não podem acessar rotas acima)
+const ROLE_HIERARCHY: Record<UserRole, number> = {
+  garcom: 1,
+  caixa: 2,
+  gerente: 3,
+};
+
 interface ProtectedRouteProps {
   children: React.ReactNode;
   requiredSession: UserRole;
@@ -17,22 +24,30 @@ interface ProtectedRouteProps {
 export const ProtectedRoute = ({ children, requiredSession }: ProtectedRouteProps) => {
   const { currentGarcom, currentCaixa, currentGerente } = useAuth();
 
-  // Collect all active users across all session slots
   const activeUsers = [currentGarcom, currentCaixa, currentGerente].filter(Boolean);
 
-  // No active session anywhere → show login form
+  // Sem nenhuma sessão ativa → mostra formulário de login da página
   if (activeUsers.length === 0) return <>{children}</>;
 
   const allowedRoles = ROUTE_ALLOWED_ROLES[requiredSession] ?? [requiredSession];
 
-  // Check if ANY active user has a role that grants access to this route
-  // Seed admin (id="seed-admin-001") bypasses everything
-  const hasAccess = activeUsers.some(
-    (user) => user!.id === "seed-admin-001" || allowedRoles.includes(user!.role as UserRole),
-  );
+  // Seed admin bypass total
+  if (activeUsers.some((u) => u!.id === "seed-admin-001")) return <>{children}</>;
 
-  if (hasAccess) return <>{children}</>;
+  // Algum usuário ativo tem role permitido para esta rota → OK
+  if (activeUsers.some((u) => allowedRoles.includes(u!.role as UserRole))) return <>{children}</>;
 
-  // Has session but wrong role → block
-  return <Navigate to="/" replace />;
+  // Usuário ativo tem role INFERIOR → bloqueia (ex: garçom tentando /caixa)
+  // Usuário ativo tem role SUPERIOR mas rota não permite → mostra login
+  // Na prática: se o nível máximo das sessões é menor que o requerido → bloqueia
+  const maxActiveLevel = Math.max(...activeUsers.map((u) => ROLE_HIERARCHY[u!.role as UserRole] ?? 0));
+  const requiredLevel = ROLE_HIERARCHY[requiredSession] ?? 0;
+
+  if (maxActiveLevel < requiredLevel) {
+    // Sessão inferior tentando acessar rota superior → bloqueia
+    return <Navigate to="/" replace />;
+  }
+
+  // Caso edge: mostra a página (formulário de login)
+  return <>{children}</>;
 };
