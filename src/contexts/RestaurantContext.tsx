@@ -121,6 +121,21 @@ interface RestaurantStore {
   fechamentos: FechamentoConta[];
   caixaAberto: boolean;
   fundoTroco: number;
+  pedidosBalcao: PedidoRealizado[];
+}
+
+interface CriarPedidoBalcaoInput {
+  itens: ItemCarrinho[];
+  origem: "balcao" | "delivery";
+  operador: OperationalUser;
+  clienteNome?: string;
+  clienteTelefone?: string;
+  enderecoCompleto?: string;
+  bairro?: string;
+  referencia?: string;
+  formaPagamentoDelivery?: string;
+  trocoParaQuanto?: number;
+  observacaoGeral?: string;
 }
 
 interface RestaurantContextType {
