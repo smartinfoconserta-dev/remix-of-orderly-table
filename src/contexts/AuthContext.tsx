@@ -68,20 +68,31 @@ const seedUsers: StoredUser[] = [
 
 const toPublicUser = ({ pinHash: _pinHash, ...user }: StoredUser): OperationalUser => user;
 
+const mergeSeedUsers = (users: StoredUser[]): StoredUser[] => {
+  const merged = [...users];
+  for (const seed of seedUsers) {
+    const exists = merged.some(
+      (u) => u.role === seed.role && u.nome.toLocaleLowerCase("pt-BR") === seed.nome.toLocaleLowerCase("pt-BR"),
+    );
+    if (!exists) merged.push(seed);
+  }
+  return merged;
+};
+
 const readAuthState = (): AuthState => {
-  if (typeof window === "undefined") return emptyState;
+  if (typeof window === "undefined") return { ...emptyState, users: [...seedUsers] };
 
   try {
     const raw = window.localStorage.getItem(AUTH_STORAGE_KEY);
-    if (!raw) return emptyState;
+    if (!raw) return { users: [...seedUsers], sessions: {} };
 
     const parsed = JSON.parse(raw) as Partial<AuthState>;
     return {
-      users: Array.isArray(parsed.users) ? parsed.users : [],
+      users: mergeSeedUsers(Array.isArray(parsed.users) ? parsed.users : []),
       sessions: parsed.sessions ?? {},
     };
   } catch {
-    return emptyState;
+    return { users: [...seedUsers], sessions: {} };
   }
 };
 
