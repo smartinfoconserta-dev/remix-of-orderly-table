@@ -39,7 +39,8 @@ export interface PedidoRealizado {
   formaPagamentoDelivery?: string;
   trocoParaQuanto?: number;
   observacaoGeral?: string;
-  statusBalcao?: "aberto" | "pronto" | "pago";
+  statusBalcao?: "aberto" | "pronto" | "pago" | "saiu" | "entregue";
+  motoboyNome?: string;
 }
 
 export interface EventoOperacional {
@@ -170,6 +171,8 @@ interface RestaurantContextType {
   fecharCaixaDoDia: (usuario: OperationalUser) => void;
   criarPedidoBalcao: (input: CriarPedidoBalcaoInput) => void;
   marcarPedidoBalcaoPronto: (pedidoId: string) => void;
+  marcarBalcaoSaiu: (pedidoId: string, motoboyNome: string) => void;
+  marcarBalcaoEntregue: (pedidoId: string) => void;
   fecharContaBalcao: (pedidoId: string, input: FecharContaInput) => void;
 }
 
@@ -1034,6 +1037,34 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }));
   }, []);
 
+  const marcarBalcaoSaiu = useCallback((pedidoId: string, motoboyNome: string) => {
+    setStore((prev) => ({
+      ...prev,
+      pedidosBalcao: prev.pedidosBalcao.map((p) =>
+        p.id === pedidoId ? { ...p, statusBalcao: "saiu" as const, motoboyNome } : p,
+      ),
+      eventos: appendEvent(prev.eventos, {
+        tipo: "pedido",
+        descricao: `Motoboy ${motoboyNome} retirou pedido delivery`,
+        acao: "delivery_saiu",
+      }),
+    }));
+  }, []);
+
+  const marcarBalcaoEntregue = useCallback((pedidoId: string) => {
+    setStore((prev) => ({
+      ...prev,
+      pedidosBalcao: prev.pedidosBalcao.map((p) =>
+        p.id === pedidoId ? { ...p, statusBalcao: "entregue" as const } : p,
+      ),
+      eventos: appendEvent(prev.eventos, {
+        tipo: "pedido",
+        descricao: `Pedido delivery marcado como entregue`,
+        acao: "delivery_entregue",
+      }),
+    }));
+  }, []);
+
   const fecharContaBalcao = useCallback((pedidoId: string, input: FecharContaInput) => {
     setStore((prev) => {
       const pedido = prev.pedidosBalcao.find((p) => p.id === pedidoId);
@@ -1106,6 +1137,8 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         fecharCaixaDoDia,
         criarPedidoBalcao,
         marcarPedidoBalcaoPronto,
+        marcarBalcaoSaiu,
+        marcarBalcaoEntregue,
         fecharContaBalcao,
       }}
     >

@@ -14,7 +14,7 @@ const LOGO = sysConfig.logoUrl || "";
 const INITIALS = NOME_REST.slice(0, 2).toUpperCase();
 
 export default function MotoboyPage() {
-  const { pedidosBalcao } = useRestaurant();
+  const { pedidosBalcao, marcarBalcaoSaiu, marcarBalcaoEntregue } = useRestaurant();
   const [view, setView] = useState<"login" | "entregas">(
     () => localStorage.getItem(MOTOBOY_KEY) ? "entregas" : "login"
   );
@@ -43,6 +43,10 @@ export default function MotoboyPage() {
     switch (s) {
       case "pronto":
         return { label: "PRONTO PARA ENTREGA", className: "bg-green-600 text-white animate-pulse" };
+      case "saiu":
+        return { label: "SAIU PARA ENTREGA", className: "bg-blue-600 text-white" };
+      case "entregue":
+        return { label: "ENTREGUE", className: "bg-muted text-muted-foreground" };
       default:
         return { label: "AGUARDANDO COZINHA", className: "bg-yellow-600 text-white" };
     }
@@ -155,6 +159,26 @@ export default function MotoboyPage() {
                   <div className="flex items-center gap-1 text-xs text-muted-foreground">
                     <Clock className="w-3 h-3" />
                     <span>{p.criadoEm}</span>
+                  </div>
+
+                  {/* Action buttons */}
+                  <div className="pt-2 border-t border-border flex gap-2">
+                    {p.statusBalcao === "pronto" && (
+                      <Button size="sm" className="flex-1 bg-blue-600 hover:bg-blue-700" onClick={() => marcarBalcaoSaiu(p.id, nome)}>
+                        Confirmar retirada
+                      </Button>
+                    )}
+                    {p.statusBalcao === "saiu" && (
+                      <Button size="sm" className="flex-1" onClick={() => marcarBalcaoEntregue(p.id)}>
+                        Marcar como entregue
+                      </Button>
+                    )}
+                    {p.statusBalcao === "aberto" && (
+                      <p className="text-xs text-muted-foreground italic">Aguardando preparo na cozinha…</p>
+                    )}
+                    {p.statusBalcao === "entregue" && (
+                      <p className="text-xs text-muted-foreground italic">Entrega concluída ✓</p>
+                    )}
                   </div>
                 </CardContent>
               </Card>
