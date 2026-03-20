@@ -43,12 +43,37 @@ const METODOS_PAGAMENTO = [
   { value: "transferencia", label: "Transferência" },
 ];
 
+const PLANOS = [
+  { value: "teste", label: "Teste grátis (30 dias)" },
+  { value: "semestral", label: "Semestral (6 meses)" },
+  { value: "anual", label: "Anual (12 meses)" },
+  { value: "dezoito_meses", label: "18 meses" },
+];
+const PLANO_LABELS: Record<string, string> = { teste: "Teste", semestral: "Semestral", anual: "Anual", dezoito_meses: "18 meses" };
+const PLANO_BADGE_CLASS: Record<string, string> = {
+  teste: "bg-muted text-muted-foreground",
+  semestral: "bg-blue-600 hover:bg-blue-600 text-white",
+  anual: "bg-emerald-600 hover:bg-emerald-600 text-white",
+  dezoito_meses: "bg-purple-600 hover:bg-purple-600 text-white",
+};
+
+function calcDataTermino(plano: string, dataInicio: string): string {
+  if (!dataInicio) return "";
+  const d = new Date(dataInicio);
+  if (plano === "teste") { d.setDate(d.getDate() + 30); }
+  else if (plano === "semestral") { d.setMonth(d.getMonth() + 6); }
+  else if (plano === "anual") { d.setMonth(d.getMonth() + 12); }
+  else if (plano === "dezoito_meses") { d.setMonth(d.getMonth() + 18); }
+  return d.toISOString().slice(0, 10);
+}
+
 const emptyForm = {
   nomeRestaurante: "", nomeContato: "", email: "", dataVencimento: "",
   ativo: true, avisoAtivo: false, avisoTexto: "",
   telefone: "", cnpj: "", cidade: "", estado: "", endereco: "",
   segmento: "hamburgeria", diaVencimento: 10, valorMensalidade: 0,
   observacoes: "", historicoPagamentos: [] as any[],
+  plano: "anual", dataInicio: todayStr(), dataTermino: "",
 };
 
 const todayStr = () => new Date().toISOString().slice(0, 10);

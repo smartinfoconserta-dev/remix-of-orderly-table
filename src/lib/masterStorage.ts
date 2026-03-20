@@ -67,6 +67,9 @@ export function getClientes(): Cliente[] {
       valorMensalidade: 299.90,
       observacoes: "Cliente desde 2024. Plano premium com suporte prioritário.",
       historicoPagamentos: [],
+      plano: "anual",
+      dataInicio: "2025-01-01",
+      dataTermino: "2025-12-31",
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify([seed]));
     return [seed];
