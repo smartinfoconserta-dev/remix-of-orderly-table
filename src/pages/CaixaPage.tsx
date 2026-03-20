@@ -232,6 +232,9 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
   const mesa = mesaSelecionada ? mesas.find((item) => item.id === mesaSelecionada) ?? null : null;
   const balcaoPedido = balcaoPedidoSelecionado ? pedidosBalcao.find((p) => p.id === balcaoPedidoSelecionado) ?? null : null;
   const currentOperator = accessMode === "gerente" ? currentGerente : currentCaixa;
+  const hasCaixaAccess = accessMode === "gerente"
+    ? currentGerente?.role === "gerente" || currentGerente?.id === "seed-admin-001"
+    : currentCaixa?.role === "caixa" || currentCaixa?.role === "gerente" || currentCaixa?.id === "seed-admin-001";
 
   useRouteLock(accessMode === "gerente" ? "/gerente" : "/caixa");
 
