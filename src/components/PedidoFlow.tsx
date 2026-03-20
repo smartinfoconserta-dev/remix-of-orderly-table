@@ -21,7 +21,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { categorias, produtos as baseProdutos, type Categoria, type Produto } from "@/data/menuData";
-import { getCardapioOverrides, getSistemaConfig } from "@/lib/adminStorage";
+import { getCardapioOverrides, getSistemaConfig, getProdutosDelivery } from "@/lib/adminStorage";
 import { HOME_CAROUSEL_INTERVAL_MS, homeHeroSlides, homeShowcaseConfig } from "@/data/homeShowcaseData";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRestaurant, type ItemCarrinho } from "@/contexts/RestaurantContext";
