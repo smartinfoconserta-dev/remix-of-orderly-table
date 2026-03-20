@@ -537,7 +537,7 @@ const ProductModal = ({ produto, onClose, onAdd, isGarcomMobile = false }: Props
         }
         className={
           isGarcomMobile
-            ? "fixed bottom-0 left-0 right-0 top-auto z-[70] w-full max-h-[90dvh] max-w-none translate-x-0 translate-y-0 gap-0 overflow-hidden rounded-t-[2rem] rounded-b-none border-border bg-card p-0"
+            ? "fixed inset-0 z-[70] w-full h-[100dvh] max-w-none translate-x-0 translate-y-0 gap-0 overflow-hidden rounded-none border-border bg-card p-0"
             : "max-h-[94vh] max-w-6xl overflow-hidden rounded-[2rem] border-border bg-card p-0 max-md:fixed max-md:inset-0 max-md:max-h-[100dvh] max-md:max-w-none max-md:rounded-none max-md:translate-x-0 max-md:translate-y-0"
         }
       >
@@ -546,7 +546,7 @@ const ProductModal = ({ produto, onClose, onAdd, isGarcomMobile = false }: Props
           Personalize o item, adicione ao carrinho e volte ao fluxo de pedido sem perder o contexto da mesa.
         </DialogDescription>
         {produto && (
-          <div className={`flex flex-col overflow-hidden ${isGarcomMobile ? "max-h-[90dvh]" : "max-h-[94vh] max-md:max-h-[100dvh]"}`}>
+          <div className={`flex flex-col overflow-hidden ${isGarcomMobile ? "h-[100dvh]" : "max-h-[94vh] max-md:max-h-[100dvh]"}`}>
             {isGarcomMobile ? (
               <>
                 <div className="sticky top-0 z-20 border-b border-border bg-card/95 px-4 pb-3 pt-4 backdrop-blur-md">
@@ -568,7 +568,7 @@ const ProductModal = ({ produto, onClose, onAdd, isGarcomMobile = false }: Props
                 </div>
 
                 <section className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-4 pt-3">
-                  <div className="mb-4 flex gap-2 overflow-x-auto pb-1">
+                  <div className="mb-4 flex gap-2 overflow-x-auto pb-1 scrollbar-hide" style={{ WebkitOverflowScrolling: 'touch', msOverflowStyle: 'none', scrollbarWidth: 'none' }}>
                     {flowSteps.map((step, index) => {
                       const selected = activeStep === step;
                       const completed = index < activeStepIndex;
@@ -637,7 +637,7 @@ const ProductModal = ({ produto, onClose, onAdd, isGarcomMobile = false }: Props
                   </div>
                 </section>
 
-                <div className="sticky bottom-0 z-20 border-t border-border bg-card/95 px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-3 backdrop-blur-md">
+                <div className="sticky bottom-0 z-20 flex-shrink-0 border-t border-border bg-card/95 px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-3 backdrop-blur-md">
                   <div className="mb-3 flex items-end justify-between gap-3">
                     <div>
                       <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Subtotal</p>
