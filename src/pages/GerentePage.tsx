@@ -49,6 +49,7 @@ import { useRestaurant } from "@/contexts/RestaurantContext";
 import type { FechamentoConta } from "@/contexts/RestaurantContext";
 import { useRouteLock } from "@/hooks/use-route-lock";
 import type { PaymentMethod } from "@/types/operations";
+import { getSistemaConfig } from "@/lib/adminStorage";
 
 /* ── helpers ── */
 const formatPrice = (v: number) => `R$ ${v.toFixed(2).replace(".", ",")}`;
