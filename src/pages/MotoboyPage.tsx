@@ -43,6 +43,10 @@ export default function MotoboyPage() {
     switch (s) {
       case "pronto":
         return { label: "PRONTO PARA ENTREGA", className: "bg-green-600 text-white animate-pulse" };
+      case "saiu":
+        return { label: "SAIU PARA ENTREGA", className: "bg-blue-600 text-white" };
+      case "entregue":
+        return { label: "ENTREGUE", className: "bg-muted text-muted-foreground" };
       default:
         return { label: "AGUARDANDO COZINHA", className: "bg-yellow-600 text-white" };
     }
