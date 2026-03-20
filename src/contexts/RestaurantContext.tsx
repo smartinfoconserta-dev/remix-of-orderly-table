@@ -1109,6 +1109,33 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     });
   }, []);
 
+  const confirmarPedidoBalcao = useCallback((pedidoId: string) => {
+    setStore((prev) => ({
+      ...prev,
+      pedidosBalcao: prev.pedidosBalcao.map((p) =>
+        p.id === pedidoId ? { ...p, statusBalcao: "aberto" as const } : p,
+      ),
+      eventos: appendEvent(prev.eventos, {
+        tipo: "caixa",
+        descricao: `Pedido delivery confirmado pelo caixa`,
+        acao: "confirmar_delivery",
+      }),
+    }));
+  }, []);
+
+  const rejeitarPedidoBalcao = useCallback((pedidoId: string, motivo: string) => {
+    setStore((prev) => ({
+      ...prev,
+      pedidosBalcao: prev.pedidosBalcao.filter((p) => p.id !== pedidoId),
+      eventos: appendEvent(prev.eventos, {
+        tipo: "caixa",
+        descricao: `Pedido delivery rejeitado — ${motivo}`,
+        acao: "rejeitar_delivery",
+        motivo,
+      }),
+    }));
+  }, []);
+
   return (
     <RestaurantContext.Provider
       value={{
@@ -1143,6 +1170,8 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         marcarBalcaoSaiu,
         marcarBalcaoEntregue,
         fecharContaBalcao,
+        confirmarPedidoBalcao,
+        rejeitarPedidoBalcao,
       }}
     >
       {children}
