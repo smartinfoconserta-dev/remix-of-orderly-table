@@ -456,7 +456,6 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
         referencia: balcaoReferencia || undefined,
         formaPagamentoDelivery: balcaoTipo === "delivery" ? balcaoFormaPag : undefined,
         trocoParaQuanto: balcaoTipo === "delivery" && balcaoFormaPag === "dinheiro" ? parseCurrencyInput(balcaoTroco) || undefined : undefined,
-        paraViagem,
       });
       toast.success(
         balcaoTipo === "delivery"
