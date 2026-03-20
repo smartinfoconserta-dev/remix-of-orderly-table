@@ -128,8 +128,10 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
     chamarGarcom,
     dismissChamarGarcom,
   } = useRestaurant();
-  const [categoriaAtiva, setCategoriaAtiva] = useState(HOME_TAB_ID);
-  const [categoriaExibida, setCategoriaExibida] = useState(HOME_TAB_ID);
+  const isExternalOrder = modo === "balcao" || modo === "delivery";
+  const [localCarrinho, setLocalCarrinho] = useState<ItemCarrinho[]>([]);
+  const [categoriaAtiva, setCategoriaAtiva] = useState(isExternalOrder ? categorias[0]?.id ?? HOME_TAB_ID : HOME_TAB_ID);
+  const [categoriaExibida, setCategoriaExibida] = useState(isExternalOrder ? categorias[0]?.id ?? HOME_TAB_ID : HOME_TAB_ID);
   const [categoryFadeKey, setCategoryFadeKey] = useState(0);
   const [selectedProductCardId, setSelectedProductCardId] = useState<string | null>(null);
   const [bannerIndex, setBannerIndex] = useState(0);
@@ -158,22 +160,32 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
   const desktopMainRef = useRef<HTMLElement>(null);
 
   const mesa = getMesa(mesaId);
-  const carrinho = mesa?.carrinho ?? [];
+  const carrinho = isExternalOrder ? localCarrinho : (mesa?.carrinho ?? []);
 
-  const mesaLabel = formatMesaLabel(mesaId);
+  const mesaLabel = isExternalOrder
+    ? (modo === "delivery" ? `Delivery — ${clienteNome || ""}` : `Balcão — ${clienteNome || ""}`)
+    : formatMesaLabel(mesaId);
   const nomeAtendimento = garcomNome?.trim() || currentGarcom?.nome || currentCaixa?.nome || "Equipe operacional";
   const isGarcomMobile = modo === "garcom" && isMobile;
   const isHomeActive = categoriaExibida === HOME_TAB_ID;
   const isTabletViewport = !isMobile && typeof window !== "undefined" && window.innerWidth >= TABLET_MIN_WIDTH && window.innerWidth <= TABLET_MAX_WIDTH;
   const shouldEnableClientIdle = modo === "cliente" && isTabletViewport;
+
+  const produtosDisponiveis = useMemo(() => {
+    if (modo === "delivery") {
+      return getProdutosDelivery() as unknown as Produto[];
+    }
+    return produtos;
+  }, [modo]);
+
   const cartTotal = useMemo(
     () => carrinho.reduce((acc, item) => acc + item.precoUnitario * item.quantidade, 0),
     [carrinho],
   );
   const cartItemCount = useMemo(() => carrinho.reduce((acc, item) => acc + item.quantidade, 0), [carrinho]);
   const produtosFiltrados = useMemo(
-    () => produtos.filter((p) => p.categoria === categoriaExibida),
-    [categoriaExibida],
+    () => produtosDisponiveis.filter((p) => p.categoria === categoriaExibida),
+    [categoriaExibida, produtosDisponiveis],
   );
   const featuredProducts = useMemo(
     () => ["c1", "l2", "pr1"].map((id) => produtos.find((produto) => produto.id === id)).filter(Boolean) as Produto[],
