@@ -67,13 +67,15 @@ function calcDataTermino(plano: string, dataInicio: string): string {
   return d.toISOString().slice(0, 10);
 }
 
+const todayStr = () => new Date().toISOString().slice(0, 10);
+
 const emptyForm = {
   nomeRestaurante: "", nomeContato: "", email: "", dataVencimento: "",
   ativo: true, avisoAtivo: false, avisoTexto: "",
   telefone: "", cnpj: "", cidade: "", estado: "", endereco: "",
   segmento: "hamburgeria", diaVencimento: 10, valorMensalidade: 0,
   observacoes: "", historicoPagamentos: [] as any[],
-  plano: "anual", dataInicio: todayStr(), dataTermino: "",
+  plano: "anual", dataInicio: new Date().toISOString().slice(0, 10), dataTermino: "",
 };
 
 const todayStr = () => new Date().toISOString().slice(0, 10);
