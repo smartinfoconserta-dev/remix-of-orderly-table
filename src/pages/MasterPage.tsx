@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { LogOut, Plus, Pencil, Trash2, Phone, Mail, MapPin, DollarSign, Users, TrendingUp, TrendingDown, Receipt, Eye } from "lucide-react";
+import { LogOut, Plus, Pencil, Trash2, Phone, Mail, MapPin, DollarSign, Users, TrendingUp, TrendingDown, Receipt, Eye, AlertTriangle, ShieldOff, RefreshCw } from "lucide-react";
 import type { Pagamento } from "@/lib/masterStorage";
 import { toast } from "sonner";
 import {
@@ -170,9 +170,10 @@ const MasterPage = () => {
         </div>
 
         <Tabs defaultValue="clientes" className="w-full">
-          <TabsList className="w-full grid grid-cols-2">
+          <TabsList className="w-full grid grid-cols-3">
             <TabsTrigger value="clientes"><Users className="w-4 h-4 mr-1" />Clientes</TabsTrigger>
             <TabsTrigger value="financeiro"><DollarSign className="w-4 h-4 mr-1" />Financeiro</TabsTrigger>
+            <TabsTrigger value="cobrancas"><AlertTriangle className="w-4 h-4 mr-1" />Cobranças</TabsTrigger>
           </TabsList>
 
           {/* ========== ABA CLIENTES ========== */}
@@ -275,6 +276,132 @@ const MasterPage = () => {
                 ))}
               </div>
             </div>
+          </TabsContent>
+
+          {/* ========== ABA COBRANÇAS ========== */}
+          <TabsContent value="cobrancas" className="space-y-6 mt-4">
+            {(() => {
+              const hoje = todayStr();
+              const hojeDate = new Date(hoje);
+              const em7dias = new Date(hojeDate);
+              em7dias.setDate(em7dias.getDate() + 7);
+
+              type StatusVenc = "vencido" | "vence_hoje" | "vence_em_breve" | "em_dia";
+              const classify = (c: Cliente): StatusVenc => {
+                if (!c.dataVencimento) return "em_dia";
+                const d = new Date(c.dataVencimento);
+                if (d < hojeDate) return "vencido";
+                if (c.dataVencimento === hoje) return "vence_hoje";
+                if (d <= em7dias) return "vence_em_breve";
+                return "em_dia";
+              };
+
+              const classified = clientes.map((c) => ({ ...c, statusVenc: classify(c) }));
+              const vencidos = classified.filter((c) => c.statusVenc === "vencido");
+              const venceHoje = classified.filter((c) => c.statusVenc === "vence_hoje");
+              const vencemBreve = classified.filter((c) => c.statusVenc === "vence_em_breve");
+              const emDia = classified.filter((c) => c.statusVenc === "em_dia");
+              const atencao = [...vencidos, ...venceHoje, ...vencemBreve];
+              const todosOrdenados = [...classified].sort((a, b) => (a.dataVencimento || "9999").localeCompare(b.dataVencimento || "9999"));
+
+              const diffDays = (d: string) => {
+                const diff = Math.ceil((new Date(d).getTime() - hojeDate.getTime()) / (1000 * 60 * 60 * 24));
+                return diff;
+              };
+
+              const statusBadge = (s: StatusVenc, dataVenc: string) => {
+                if (s === "vencido") return <Badge className="bg-destructive hover:bg-destructive text-destructive-foreground">Vencido</Badge>;
+                if (s === "vence_hoje") return <Badge className="bg-yellow-600 hover:bg-yellow-600 text-white">Vence hoje</Badge>;
+                if (s === "vence_em_breve") return <Badge className="bg-yellow-600 hover:bg-yellow-600 text-white">Vence em {diffDays(dataVenc)} dias</Badge>;
+                return <Badge className="bg-emerald-600 hover:bg-emerald-600 text-white">Em dia</Badge>;
+              };
+
+              const handleBloquear = (c: Cliente) => {
+                updateCliente(c.id, { ativo: false });
+                toast.success(`${c.nomeRestaurante} bloqueado.`);
+                refresh();
+              };
+
+              return (
+                <>
+                  {/* Resumo */}
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="rounded-2xl border bg-card p-4 space-y-1">
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground"><AlertTriangle className="w-4 h-4" />Vencidos</div>
+                      <p className="text-xl font-black text-destructive">{vencidos.length}</p>
+                    </div>
+                    <div className="rounded-2xl border bg-card p-4 space-y-1">
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground"><AlertTriangle className="w-4 h-4" />Vencem em 7 dias</div>
+                      <p className="text-xl font-black text-yellow-500">{venceHoje.length + vencemBreve.length}</p>
+                    </div>
+                    <div className="rounded-2xl border bg-card p-4 space-y-1">
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground"><Users className="w-4 h-4" />Em dia</div>
+                      <p className="text-xl font-black text-emerald-500">{emDia.length}</p>
+                    </div>
+                  </div>
+
+                  {/* Atenção necessária */}
+                  <div className="rounded-2xl border bg-card p-5 space-y-4">
+                    <h2 className="text-lg font-black text-foreground flex items-center gap-2"><AlertTriangle className="w-5 h-5" />Atenção necessária</h2>
+                    {atencao.length === 0 && <p className="text-sm text-muted-foreground text-center py-4">Todos os clientes estão em dia ✓</p>}
+                    <div className="space-y-3">
+                      {atencao.map((c) => (
+                        <div key={c.id} className="rounded-xl border bg-background p-4 flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <p className="font-bold text-foreground">{c.nomeRestaurante}</p>
+                              {statusBadge(c.statusVenc, c.dataVencimento)}
+                            </div>
+                            <div className="flex items-center gap-3 text-xs text-muted-foreground flex-wrap">
+                              <span className="flex items-center gap-1"><Phone className="w-3 h-3" />{c.telefone || "—"}</span>
+                              <span className="flex items-center gap-1"><Mail className="w-3 h-3" />{c.email || "—"}</span>
+                              <span>Venc.: {c.dataVencimento}</span>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {c.ativo && (
+                              <Button variant="destructive" size="sm" onClick={() => handleBloquear(c)}>
+                                <ShieldOff className="w-3.5 h-3.5 mr-1" />Bloquear
+                              </Button>
+                            )}
+                            <Button variant="outline" size="sm" onClick={() => openEdit(c)}>
+                              <RefreshCw className="w-3.5 h-3.5 mr-1" />Renovar
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Todos os clientes - tabela */}
+                  <div className="rounded-2xl border bg-card p-5 space-y-4">
+                    <h2 className="text-lg font-black text-foreground">Todos os clientes</h2>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="border-b text-muted-foreground text-left">
+                            <th className="pb-2 font-semibold">Nome</th>
+                            <th className="pb-2 font-semibold">Vencimento</th>
+                            <th className="pb-2 font-semibold">Status</th>
+                            <th className="pb-2 font-semibold text-right">Mensalidade</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {todosOrdenados.map((c) => (
+                            <tr key={c.id} className="border-b border-border/50">
+                              <td className="py-2 font-semibold text-foreground">{c.nomeRestaurante}</td>
+                              <td className="py-2 text-muted-foreground">{c.dataVencimento || "—"}</td>
+                              <td className="py-2">{statusBadge(c.statusVenc, c.dataVencimento)}</td>
+                              <td className="py-2 text-right text-foreground">R$ {(c.valorMensalidade || 0).toFixed(2)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </>
+              );
+            })()}
           </TabsContent>
         </Tabs>
       </div>
