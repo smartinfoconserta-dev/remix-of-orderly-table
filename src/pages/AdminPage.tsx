@@ -309,8 +309,8 @@ const AdminPage = () => {
     setAuthError(null);
     const result = await verifyEmployeeAccess(authName, authPin);
     if (!result.ok) { setAuthError(result.error ?? "Não autorizado"); setAuthLoading(false); return; }
-    if (result.user?.role !== "admin") {
-      setAuthError("Acesso restrito ao administrador do sistema");
+    if (result.user?.role !== "gerente") {
+      setAuthError("Acesso restrito ao gerente/administrador do sistema");
       setAuthLoading(false);
       return;
     }
