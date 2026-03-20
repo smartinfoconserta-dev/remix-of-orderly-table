@@ -1209,46 +1209,80 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
       </Dialog>
 
       {/* ── Movimentação Modal ── */}
-      <Dialog open={movModalOpen} onOpenChange={setMovModalOpen}>
+      <Dialog open={movModalOpen} onOpenChange={(open) => { if (!open) { setMovModalOpen(false); setMovConfirmStep(false); } }}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Registrar movimentação</DialogTitle>
             <DialogDescription>Sangria (saída) ou suprimento (entrada) de valores no caixa.</DialogDescription>
           </DialogHeader>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-foreground">Tipo</label>
-              <select
-                value={movTipo}
-                onChange={(e) => setMovTipo(e.target.value as "entrada" | "saida")}
-                className="w-full rounded-xl border border-border bg-secondary px-3 py-2 text-sm text-foreground"
-              >
-                <option value="entrada">Suprimento (entrada)</option>
-                <option value="saida">Sangria (saída)</option>
-              </select>
+          {movConfirmStep ? (
+            <div className="space-y-4">
+              <div className="rounded-xl border border-amber-500/30 bg-amber-500/8 p-4 text-sm text-center space-y-1">
+                <p className="font-black text-foreground">Confirma {movTipo === "saida" ? "sangria" : "suprimento"} de {formatPrice(parseCurrencyInput(movValor) || 0)}?</p>
+                <p className="text-muted-foreground">Motivo: {movDescricao}</p>
+              </div>
+              <DialogFooter className="gap-3 sm:gap-0">
+                <Button variant="outline" onClick={() => setMovConfirmStep(false)} className="rounded-xl font-bold">Voltar</Button>
+                <Button onClick={handleRegistrarMovimentacao} className="rounded-xl font-black">
+                  Confirmar
+                </Button>
+              </DialogFooter>
             </div>
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-foreground">Descrição</label>
-              <Input value={movDescricao} onChange={(e) => setMovDescricao(e.target.value)} placeholder="Ex.: Troco para delivery" maxLength={100} />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-foreground">Valor (R$)</label>
-              <Input
-                value={movValor}
-                onChange={(e) => setMovValor(e.target.value)}
-                placeholder="0,00"
-                inputMode="decimal"
-                className="text-lg font-black"
-                onKeyDown={(e) => e.key === "Enter" && handleRegistrarMovimentacao()}
-              />
-            </div>
-          </div>
-          <DialogFooter className="gap-3 sm:gap-0">
-            <Button variant="outline" onClick={() => setMovModalOpen(false)} className="rounded-xl font-bold">Cancelar</Button>
-            <Button onClick={handleRegistrarMovimentacao} className="rounded-xl font-black">
-              Registrar
-            </Button>
-          </DialogFooter>
+          ) : (
+            <>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-foreground">Tipo</label>
+                  <select
+                    value={movTipo}
+                    onChange={(e) => setMovTipo(e.target.value as "entrada" | "saida")}
+                    className="w-full rounded-xl border border-border bg-secondary px-3 py-2 text-sm text-foreground"
+                  >
+                    <option value="entrada">Suprimento (entrada)</option>
+                    <option value="saida">Sangria (saída)</option>
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-foreground">Motivo / Descrição *</label>
+                  <Input value={movDescricao} onChange={(e) => setMovDescricao(e.target.value)} placeholder="Ex.: Troco para entrega, Reforço de caixa" maxLength={100} />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-foreground">Valor (R$) *</label>
+                  <Input
+                    value={movValor}
+                    onChange={(e) => setMovValor(e.target.value)}
+                    placeholder="0,00"
+                    inputMode="decimal"
+                    className="text-lg font-black"
+                    onKeyDown={(e) => e.key === "Enter" && handleRegistrarMovimentacao()}
+                  />
+                </div>
+                {movimentacoesCaixa.length > 0 && (
+                  <div className="space-y-2">
+                    <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">Últimas movimentações</p>
+                    <div className="space-y-1.5 max-h-[120px] overflow-y-auto">
+                      {movimentacoesCaixa.slice(0, 5).map((mov) => (
+                        <div key={mov.id} className="flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-xs">
+                          <span className={`font-black tabular-nums ${mov.tipo === "entrada" ? "text-emerald-400" : "text-destructive"}`}>
+                            {mov.tipo === "entrada" ? "Suprimento" : "Sangria"}
+                          </span>
+                          <span className="font-black tabular-nums text-foreground">{formatPrice(mov.valor)}</span>
+                          <span className="flex-1 truncate text-muted-foreground">{mov.descricao}</span>
+                          <span className="tabular-nums text-muted-foreground/60">{mov.criadoEm}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+              <DialogFooter className="gap-3 sm:gap-0">
+                <Button variant="outline" onClick={() => setMovModalOpen(false)} className="rounded-xl font-bold">Cancelar</Button>
+                <Button onClick={handleRegistrarMovimentacao} className="rounded-xl font-black">
+                  Registrar
+                </Button>
+              </DialogFooter>
+            </>
+          )}
         </DialogContent>
       </Dialog>
 
