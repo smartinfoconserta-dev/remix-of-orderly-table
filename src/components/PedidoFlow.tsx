@@ -692,41 +692,30 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
 
   // Dynamic QR code info cards
   const qrInfoCards = useMemo(() => {
-    const cards: Array<{
-      id: string;
-      title: string;
-      subtitle: string;
-      icon: typeof Instagram;
-      badge: string;
-      qrUrl: string;
-      bgImage?: string;
-    }> = [];
-
-    if (sysConfig.instagramUrl) {
-      cards.push({
+    return [
+      {
         id: "instagram",
         title: "Visite nosso Instagram",
         subtitle: "Aponte a câmera para acessar nosso perfil",
         icon: Instagram,
         badge: "Instagram",
-        qrUrl: `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(sysConfig.instagramUrl)}`,
+        qrUrl: sysConfig.instagramUrl
+          ? `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(sysConfig.instagramUrl)}`
+          : qrInstagramFallback,
         bgImage: sysConfig.instagramBg || undefined,
-      });
-    }
-
-    if (sysConfig.senhaWifi) {
-      cards.push({
+      },
+      {
         id: "wifi",
         title: "Conecte-se ao Wi‑Fi grátis",
         subtitle: "Escaneie para acessar a rede da casa",
         icon: Wifi,
         badge: "Wi‑Fi",
-        qrUrl: `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(`WIFI:T:WPA;S:${RESTAURANTE.nome};P:${sysConfig.senhaWifi};;`)}`,
+        qrUrl: sysConfig.senhaWifi
+          ? `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(`WIFI:T:WPA;S:${RESTAURANTE.nome};P:${sysConfig.senhaWifi};;`)}`
+          : qrWifiFallback,
         bgImage: sysConfig.wifiBg || undefined,
-      });
-    }
-
-    return cards;
+      },
+    ];
   }, []);
 
   const categoryFadeClass = "";
