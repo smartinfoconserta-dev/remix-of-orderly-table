@@ -303,12 +303,17 @@ const AdminPage = () => {
 
   // --- Auth gate ---
   const handleAuth = async () => {
-    if (!authName.trim()) { setAuthError("Informe o nome do gerente"); return; }
+    if (!authName.trim()) { setAuthError("Informe o nome do administrador"); return; }
     if (!/^\d{4,6}$/.test(authPin)) { setAuthError("PIN inválido (4-6 dígitos)"); return; }
     setAuthLoading(true);
     setAuthError(null);
-    const result = await verifyManagerAccess(authName, authPin);
+    const result = await verifyEmployeeAccess(authName, authPin);
     if (!result.ok) { setAuthError(result.error ?? "Não autorizado"); setAuthLoading(false); return; }
+    if (result.user?.role !== "admin") {
+      setAuthError("Acesso restrito ao administrador do sistema");
+      setAuthLoading(false);
+      return;
+    }
     setAuthenticated(true);
     setAuthLoading(false);
   };
