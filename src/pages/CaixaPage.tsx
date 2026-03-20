@@ -1059,35 +1059,76 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                               <div className="flex items-center justify-between pt-2 border-t border-amber-500/20">
                                 <span className="text-lg font-black tabular-nums text-foreground">{formatPrice(pb.total)}</span>
                               </div>
-                              <div className="flex gap-2">
-                                <Button
-                                  size="sm"
-                                  onClick={() => {
-                                    confirmarPedidoBalcao(pb.id);
-                                    toast.success(`Pedido #${pb.numeroPedido} confirmado!`, { duration: 1600, icon: "✅" });
-                                    // WhatsApp message
-                                    const tel = (pb.clienteTelefone || "").replace(/\D/g, "");
-                                    if (tel) {
-                                      const itensStr = pb.itens.map((it) => `${it.quantidade}x ${it.nome}`).join(", ");
-                                      const nomeRest = sistemaConfig.nomeRestaurante || "Restaurante";
-                                      const tempo = sistemaConfig.tempoEntrega || "40-60 min";
-                                      const msg = `✅ Pedido %23${pb.numeroPedido} confirmado! — ${nomeRest}\n\n${itensStr}\n\nTotal: ${formatPrice(pb.total)}\nPrevisão: ${tempo}\n\nObrigado! 🍔`;
-                                      window.open(`https://wa.me/55${tel}?text=${encodeURIComponent(msg)}`, "_blank");
-                                    }
-                                  }}
-                                  className="flex-1 rounded-xl font-black gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white"
-                                >
-                                  ✅ Confirmar e avisar cliente
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="destructive"
-                                  onClick={() => { setRejectPedidoId(pb.id); setRejectMotivo(""); setRejectDialogOpen(true); }}
-                                  className="rounded-xl font-black gap-1.5"
-                                >
-                                  ❌ Rejeitar
-                                </Button>
-                              </div>
+                              {confirmTempoId === pb.id ? (
+                                <div className="space-y-2 p-3 rounded-xl border border-emerald-500/30 bg-emerald-500/5">
+                                  <p className="text-xs font-black text-foreground">Tempo estimado de entrega</p>
+                                  <div className="flex flex-wrap gap-1.5">
+                                    {["20 min", "30 min", "45 min", "60 min"].map((t) => (
+                                      <Button
+                                        key={t}
+                                        size="sm"
+                                        variant={confirmTempo === t ? "default" : "outline"}
+                                        className="rounded-lg text-xs h-7 px-2.5"
+                                        onClick={() => { setConfirmTempo(t); setConfirmTempoCustom(""); }}
+                                      >
+                                        {t}
+                                      </Button>
+                                    ))}
+                                  </div>
+                                  <Input
+                                    placeholder="Ou digite manualmente (ex: 50 min)"
+                                    value={confirmTempoCustom}
+                                    onChange={(e) => { setConfirmTempoCustom(e.target.value); setConfirmTempo(""); }}
+                                    className="h-8 text-xs rounded-lg"
+                                  />
+                                  <div className="flex gap-2">
+                                    <Button
+                                      size="sm"
+                                      onClick={() => {
+                                        confirmarPedidoBalcao(pb.id);
+                                        toast.success(`Pedido #${pb.numeroPedido} confirmado!`, { duration: 1600, icon: "✅" });
+                                        const tel = (pb.clienteTelefone || "").replace(/\D/g, "");
+                                        if (tel) {
+                                          const itensStr = pb.itens.map((it) => `${it.quantidade}x ${it.nome}`).join(", ");
+                                          const nomeRest = sistemaConfig.nomeRestaurante || "Restaurante";
+                                          const tempoFinal = confirmTempoCustom.trim() || confirmTempo;
+                                          let msg = `✅ Pedido %23${pb.numeroPedido} confirmado! — ${nomeRest}\n\n${itensStr}\n\nTotal: ${formatPrice(pb.total)}`;
+                                          if (tempoFinal) msg += `\nPrevisão: ${tempoFinal}`;
+                                          msg += `\n\nObrigado! 🍔`;
+                                          window.open(`https://wa.me/55${tel}?text=${encodeURIComponent(msg)}`, "_blank");
+                                        }
+                                        setConfirmTempoId(null);
+                                        setConfirmTempo("");
+                                        setConfirmTempoCustom("");
+                                      }}
+                                      className="flex-1 rounded-xl font-black bg-emerald-600 hover:bg-emerald-700 text-white"
+                                    >
+                                      Confirmar com este tempo
+                                    </Button>
+                                    <Button size="sm" variant="ghost" onClick={() => setConfirmTempoId(null)} className="rounded-xl text-xs">
+                                      Cancelar
+                                    </Button>
+                                  </div>
+                                </div>
+                              ) : (
+                                <div className="flex gap-2">
+                                  <Button
+                                    size="sm"
+                                    onClick={() => { setConfirmTempoId(pb.id); setConfirmTempo(""); setConfirmTempoCustom(""); }}
+                                    className="flex-1 rounded-xl font-black gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white"
+                                  >
+                                    ✅ Confirmar e avisar cliente
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="destructive"
+                                    onClick={() => { setRejectPedidoId(pb.id); setRejectMotivo(""); setRejectDialogOpen(true); }}
+                                    className="rounded-xl font-black gap-1.5"
+                                  >
+                                    ❌ Rejeitar
+                                  </Button>
+                                </div>
+                              )}
                             </div>
                           ))}
                         </div>
