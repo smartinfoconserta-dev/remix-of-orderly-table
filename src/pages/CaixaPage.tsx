@@ -1038,8 +1038,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                                   }}
                                   className="flex-1 rounded-xl font-black gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white"
                                 >
-                                  <Check className="h-3.5 w-3.5" />
-                                  Confirmar pedido
+                                  ✅ Confirmar e avisar cliente
                                 </Button>
                                 <Button
                                   size="sm"
