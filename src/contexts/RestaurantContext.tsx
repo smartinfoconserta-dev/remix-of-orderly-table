@@ -171,6 +171,8 @@ interface RestaurantContextType {
   fecharCaixaDoDia: (usuario: OperationalUser) => void;
   criarPedidoBalcao: (input: CriarPedidoBalcaoInput) => void;
   marcarPedidoBalcaoPronto: (pedidoId: string) => void;
+  marcarBalcaoSaiu: (pedidoId: string, motoboyNome: string) => void;
+  marcarBalcaoEntregue: (pedidoId: string) => void;
   fecharContaBalcao: (pedidoId: string, input: FecharContaInput) => void;
 }
 
