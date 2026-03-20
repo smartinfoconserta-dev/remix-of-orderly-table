@@ -42,6 +42,9 @@ export interface SistemaConfig {
   instagramBg?: string;
   wifiBg?: string;
   taxaEntrega?: number;
+  telefoneRestaurante?: string;
+  tempoEntrega?: string;
+  mensagemBoasVindas?: string;
 }
 
 export interface LicencaConfig {
