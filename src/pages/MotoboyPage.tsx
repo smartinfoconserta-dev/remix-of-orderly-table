@@ -133,8 +133,27 @@ export default function MotoboyPage() {
             <Bike className="w-12 h-12 mx-auto mb-3 opacity-40" />
             <p>Nenhuma entrega no momento</p>
           </div>
-        ) : (
-          deliveriesAtivos.map((p) => {
+        ) : (() => {
+          // Group by bairro
+          const grupos: Record<string, typeof deliveriesAtivos> = {};
+          for (const p of deliveriesAtivos) {
+            const bairro = p.bairro?.trim() || "Sem bairro";
+            if (!grupos[bairro]) grupos[bairro] = [];
+            grupos[bairro].push(p);
+          }
+          const bairros = Object.keys(grupos);
+          const usarGrupos = deliveriesAtivos.length >= 2 && bairros.length > 0;
+
+          const handleVerRotaBairro = (pedidos: typeof deliveriesAtivos) => {
+            const ends = pedidos
+              .filter((p) => p.statusBalcao !== "entregue")
+              .map(buildEnderecoCompleto)
+              .filter(Boolean);
+            if (ends.length === 0) return;
+            window.open(`https://www.google.com/maps/dir/${ends.map(encodeURIComponent).join("/")}`, "_blank");
+          };
+
+          const renderCard = (p: typeof deliveriesAtivos[0]) => {
             const st = statusConfig(p.statusBalcao);
             const addr = buildEnderecoCompleto(p);
             return (
@@ -144,7 +163,12 @@ export default function MotoboyPage() {
               }>
                 <CardContent className="p-4 space-y-2">
                   <div className="flex items-start justify-between">
-                    <p className="font-bold">{p.clienteNome || "Cliente"}</p>
+                    <div>
+                      <p className="font-bold">{p.clienteNome || "Cliente"}</p>
+                      {p.bairro && (
+                        <Badge className="bg-orange-600 text-white text-[10px] mt-1">{p.bairro}</Badge>
+                      )}
+                    </div>
                     <Badge className={st.className}>{st.label}</Badge>
                   </div>
 
@@ -186,14 +210,12 @@ export default function MotoboyPage() {
                     <span>{p.criadoEm}</span>
                   </div>
 
-                  {/* Ver rota */}
                   {addr && p.statusBalcao !== "entregue" && (
                     <Button variant="outline" size="sm" className="w-full gap-2" onClick={() => handleVerRota(p)}>
                       <Map className="w-4 h-4" /> Ver rota no Maps
                     </Button>
                   )}
 
-                  {/* Action buttons */}
                   <div className="pt-2 border-t border-border flex gap-2">
                     {p.statusBalcao === "pronto" && (
                       <Button size="sm" className="flex-1 bg-blue-600 hover:bg-blue-700 text-white" onClick={() => marcarBalcaoSaiu(p.id, nome)}>
@@ -215,8 +237,29 @@ export default function MotoboyPage() {
                 </CardContent>
               </Card>
             );
-          })
-        )}
+          };
+
+          if (usarGrupos) {
+            return bairros.map((bairro) => (
+              <div key={bairro} className="space-y-2">
+                <div className="flex items-center justify-between pt-2">
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-bold text-sm uppercase tracking-wider">{bairro}</h3>
+                    <Badge variant="outline" className="text-[10px]">{grupos[bairro].length} entrega(s)</Badge>
+                  </div>
+                  {grupos[bairro].some((p) => p.statusBalcao !== "entregue") && (
+                    <Button variant="outline" size="sm" className="gap-1 text-xs" onClick={() => handleVerRotaBairro(grupos[bairro])}>
+                      <Navigation className="w-3 h-3" /> Rota do bairro
+                    </Button>
+                  )}
+                </div>
+                {grupos[bairro].map(renderCard)}
+              </div>
+            ));
+          }
+
+          return deliveriesAtivos.map(renderCard);
+        })()}
       </div>
 
       {/* Floating button */}
