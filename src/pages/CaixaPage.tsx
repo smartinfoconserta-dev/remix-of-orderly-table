@@ -50,6 +50,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useRestaurant } from "@/contexts/RestaurantContext";
 import { useRouteLock } from "@/hooks/use-route-lock";
 import type { PaymentMethod, SplitPayment, UserRole } from "@/types/operations";
+import { getSistemaConfig } from "@/lib/adminStorage";
 
 /* ── helpers ── */
 const formatPrice = (v: number) => `R$ ${v.toFixed(2).replace(".", ",")}`;
@@ -130,6 +131,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
     fechamentos,
     movimentacoesCaixa,
     caixaAberto,
+    fundoTroco,
     abrirCaixa,
     fecharConta,
     fecharCaixaDoDia,
@@ -171,6 +173,10 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
   const [movTipo, setMovTipo] = useState<"entrada" | "saida">("entrada");
   const [movDescricao, setMovDescricao] = useState("");
   const [movValor, setMovValor] = useState("");
+  const [movConfirmStep, setMovConfirmStep] = useState(false);
+  const [turnoReportOpen, setTurnoReportOpen] = useState(false);
+
+  const sistemaConfig = useMemo(() => getSistemaConfig(), []);
 
   const mesa = mesaSelecionada ? mesas.find((item) => item.id === mesaSelecionada) ?? null : null;
   const currentOperator = accessMode === "gerente" ? currentGerente : currentCaixa;
@@ -250,12 +256,16 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
   const handleRegistrarMovimentacao = useCallback(() => {
     if (!currentOperator) return;
     const valor = parseCurrencyInput(movValor);
-    if (!Number.isFinite(valor) || valor <= 0) {
-      toast.error("Informe um valor válido", { duration: 1400 });
+    if (!Number.isFinite(valor) || valor < 0.01) {
+      toast.error("Informe um valor mínimo de R$ 0,01", { duration: 1400 });
       return;
     }
     if (!movDescricao.trim()) {
-      toast.error("Informe uma descrição", { duration: 1400 });
+      toast.error("Informe o motivo da movimentação", { duration: 1400 });
+      return;
+    }
+    if (!movConfirmStep) {
+      setMovConfirmStep(true);
       return;
     }
     registrarMovimentacaoCaixa({
@@ -264,12 +274,14 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
       valor,
       usuario: currentOperator,
     });
-    toast.success(movTipo === "entrada" ? "Suprimento registrado" : "Sangria registrada", { duration: 1200, icon: movTipo === "entrada" ? "💰" : "💸" });
+    const tipoLabel = movTipo === "entrada" ? "Suprimento" : "Sangria";
+    toast.success(`${tipoLabel} de ${formatPrice(valor)} registrado — ${movDescricao.trim()}`, { duration: 2000, icon: movTipo === "entrada" ? "💰" : "💸" });
     setMovModalOpen(false);
     setMovDescricao("");
     setMovValor("");
     setMovTipo("entrada");
-  }, [currentOperator, movTipo, movDescricao, movValor, registrarMovimentacaoCaixa]);
+    setMovConfirmStep(false);
+  }, [currentOperator, movTipo, movDescricao, movValor, movConfirmStep, registrarMovimentacaoCaixa]);
 
   /* ── auth guard ── */
   if (!currentOperator) {
@@ -579,9 +591,9 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                   {currentOperator.nome.charAt(0).toUpperCase()}
                 </div>
                 <div className="min-w-0">
-                  <p className="text-sm font-black text-foreground truncate">{currentOperator.nome}</p>
+                  <p className="text-sm font-black text-foreground truncate">{sistemaConfig.nomeRestaurante || currentOperator.nome}</p>
                   <p className="text-[10px] text-muted-foreground">
-                    {accessMode === "gerente" ? "Acesso completo" : "Operador de caixa"}
+                    {currentOperator.nome} • {accessMode === "gerente" ? "Acesso completo" : "Operador de caixa"}
                   </p>
                 </div>
                 <div className="flex items-center gap-2 ml-2">
@@ -597,7 +609,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => { setTurnoModalOpen(true); setTurnoManagerName(accessMode === "gerente" ? currentOperator.nome : ""); setTurnoManagerPin(""); setTurnoError(null); }}
+                  onClick={() => setTurnoReportOpen(true)}
                   className="rounded-xl font-bold gap-1.5 text-xs border-destructive/30 text-destructive hover:bg-destructive/10"
                 >
                   <LockKeyhole className="h-3.5 w-3.5" />
@@ -615,9 +627,12 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                   <span className="text-lg font-black tabular-nums text-status-consumo leading-none">{mesasConsumo}</span>
                   <span className="text-[10px] font-bold uppercase tracking-widest text-status-consumo/80">Consumo</span>
                 </div>
-                <div className="flex items-center gap-2 rounded-xl border border-amber-500/30 bg-amber-500/8 px-3 py-1.5">
-                  <span className="text-lg font-black tabular-nums text-amber-400 leading-none">{mesasPendente}</span>
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-amber-400/80">Pendentes</span>
+                <div className={`flex flex-col items-center gap-0.5 rounded-xl border border-amber-500/30 bg-amber-500/8 px-3 py-1.5 ${mesasPendente > 0 ? "animate-pulse" : ""}`}>
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg font-black tabular-nums text-amber-400 leading-none">{mesasPendente}</span>
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-amber-400/80">Pendentes</span>
+                  </div>
+                  {mesasPendente > 0 && <span className="text-[9px] text-amber-400/60">aguardando cozinha</span>}
                 </div>
                 <div className="flex items-center gap-2 rounded-xl border border-border bg-secondary/60 px-3 py-1.5">
                   <span className="text-lg font-black tabular-nums text-muted-foreground leading-none">{mesasLivre}</span>
@@ -662,6 +677,44 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
 
                 {/* ═══ RIGHT: Activity + Movimentações (30%) ═══ */}
                 <div className="flex flex-[3] flex-col border-l border-border bg-card/50 overflow-hidden">
+                  {/* ── Turno Summary ── */}
+                  <div className="border-b border-border shrink-0 p-4 space-y-3">
+                    <h2 className="text-xs font-black uppercase tracking-widest text-muted-foreground">Resumo do turno</h2>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="rounded-lg border border-border bg-card p-2.5">
+                        <p className="text-[10px] font-bold text-muted-foreground">Total vendido</p>
+                        <p className="text-sm font-black tabular-nums text-foreground">{formatPrice(resumoFinanceiro.totalDia)}</p>
+                      </div>
+                      <div className="rounded-lg border border-border bg-card p-2.5">
+                        <p className="text-[10px] font-bold text-muted-foreground">Comandas fechadas</p>
+                        <p className="text-sm font-black tabular-nums text-foreground">{fechamentos.length}</p>
+                      </div>
+                      <div className="rounded-lg border border-border bg-card p-2.5">
+                        <p className="text-[10px] font-bold text-muted-foreground">Forma mais usada</p>
+                        <p className="text-sm font-black text-foreground">
+                          {(() => {
+                            const methods = [
+                              { label: "Dinheiro", val: resumoFinanceiro.dinheiro },
+                              { label: "Crédito", val: resumoFinanceiro.credito },
+                              { label: "Débito", val: resumoFinanceiro.debito },
+                              { label: "PIX", val: resumoFinanceiro.pix },
+                            ];
+                            const best = methods.sort((a, b) => b.val - a.val)[0];
+                            return best.val > 0 ? best.label : "—";
+                          })()}
+                        </p>
+                      </div>
+                      <div className="rounded-lg border border-border bg-card p-2.5">
+                        <p className="text-[10px] font-bold text-muted-foreground">Última comanda</p>
+                        <p className="text-sm font-black tabular-nums text-foreground">
+                          {fechamentos.length > 0
+                            ? `Mesa ${String(fechamentos[0].mesaNumero).padStart(2, "0")} • ${formatPrice(fechamentos[0].total)}`
+                            : "—"}
+                        </p>
+                      </div>
+                    </div>
+                    <p className="text-xs text-muted-foreground text-center">Selecione uma mesa para iniciar o atendimento</p>
+                  </div>
                   {/* Movimentações do turno */}
                   {movimentacoesCaixa.length > 0 && (
                     <div className="border-b border-border shrink-0">
@@ -1065,6 +1118,57 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
         </DialogContent>
       </Dialog>
 
+      {/* ── TURNO REPORT DIALOG ── */}
+      <Dialog open={turnoReportOpen} onOpenChange={setTurnoReportOpen}>
+        <DialogContent className="rounded-2xl border-border bg-background sm:max-w-lg max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ReceiptText className="h-5 w-5 text-primary" />
+              Relatório do turno
+            </DialogTitle>
+            <DialogDescription>Confira o resumo antes de fechar o turno.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              {paymentMethodOptions.map((pm) => {
+                const val = resumoFinanceiro[pm.value as keyof typeof resumoFinanceiro] as number;
+                return (
+                  <div key={pm.value} className="rounded-xl border border-border bg-card p-3 flex items-center gap-3">
+                    <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${pm.bgColor} ${pm.color}`}>
+                      {(() => { const Icon = pm.icon; return <Icon className="h-4 w-4" />; })()}
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-bold text-muted-foreground">{pm.label}</p>
+                      <p className={`text-sm font-black tabular-nums ${pm.color}`}>{formatPrice(val)}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <div className="rounded-xl border border-border bg-card p-4 space-y-2 text-sm">
+              <div className="flex justify-between"><span className="text-muted-foreground">Sangrias (saídas)</span><span className="font-black tabular-nums text-destructive">{formatPrice(resumoFinanceiro.saidas)}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">Suprimentos (entradas)</span><span className="font-black tabular-nums text-emerald-400">{formatPrice(resumoFinanceiro.entradasExtras)}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">Fundo de troco inicial</span><span className="font-black tabular-nums text-foreground">{formatPrice(fundoTroco)}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">Comandas fechadas</span><span className="font-black tabular-nums text-foreground">{fechamentos.length}</span></div>
+              <div className="border-t border-border pt-2 flex justify-between">
+                <span className="font-black text-foreground">Total líquido em caixa</span>
+                <span className="font-black tabular-nums text-primary text-lg">{formatPrice(fundoTroco + resumoFinanceiro.totalDia + resumoFinanceiro.entradasExtras - resumoFinanceiro.saidas)}</span>
+              </div>
+            </div>
+            <div className="flex justify-between text-xs text-muted-foreground">
+              <span>Aberto: {caixaOpenTime || "—"}</span>
+              <span>Agora: {clockStr}</span>
+            </div>
+          </div>
+          <DialogFooter className="gap-3 sm:gap-0">
+            <Button variant="outline" onClick={() => setTurnoReportOpen(false)} className="rounded-xl font-bold">Cancelar</Button>
+            <Button variant="destructive" onClick={() => { setTurnoReportOpen(false); setTurnoModalOpen(true); setTurnoManagerName(accessMode === "gerente" ? currentOperator.nome : ""); setTurnoManagerPin(""); setTurnoError(null); }} className="rounded-xl font-black">
+              Prosseguir com fechamento
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* ── TURNO CLOSE MODAL ── */}
       <Dialog open={turnoModalOpen} onOpenChange={(open) => { if (!open) { setTurnoModalOpen(false); setTurnoError(null); } }}>
         <DialogContent className="rounded-2xl border-border bg-background sm:max-w-md">
@@ -1074,7 +1178,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
               Fechar turno
             </DialogTitle>
             <DialogDescription>
-              Esta ação vai resetar todas as mesas, movimentações e fechamentos do turno atual. Autorização de gerente necessária.
+              Autorização de gerente necessária para confirmar o fechamento.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
@@ -1105,46 +1209,80 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
       </Dialog>
 
       {/* ── Movimentação Modal ── */}
-      <Dialog open={movModalOpen} onOpenChange={setMovModalOpen}>
+      <Dialog open={movModalOpen} onOpenChange={(open) => { if (!open) { setMovModalOpen(false); setMovConfirmStep(false); } }}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Registrar movimentação</DialogTitle>
             <DialogDescription>Sangria (saída) ou suprimento (entrada) de valores no caixa.</DialogDescription>
           </DialogHeader>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-foreground">Tipo</label>
-              <select
-                value={movTipo}
-                onChange={(e) => setMovTipo(e.target.value as "entrada" | "saida")}
-                className="w-full rounded-xl border border-border bg-secondary px-3 py-2 text-sm text-foreground"
-              >
-                <option value="entrada">Suprimento (entrada)</option>
-                <option value="saida">Sangria (saída)</option>
-              </select>
+          {movConfirmStep ? (
+            <div className="space-y-4">
+              <div className="rounded-xl border border-amber-500/30 bg-amber-500/8 p-4 text-sm text-center space-y-1">
+                <p className="font-black text-foreground">Confirma {movTipo === "saida" ? "sangria" : "suprimento"} de {formatPrice(parseCurrencyInput(movValor) || 0)}?</p>
+                <p className="text-muted-foreground">Motivo: {movDescricao}</p>
+              </div>
+              <DialogFooter className="gap-3 sm:gap-0">
+                <Button variant="outline" onClick={() => setMovConfirmStep(false)} className="rounded-xl font-bold">Voltar</Button>
+                <Button onClick={handleRegistrarMovimentacao} className="rounded-xl font-black">
+                  Confirmar
+                </Button>
+              </DialogFooter>
             </div>
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-foreground">Descrição</label>
-              <Input value={movDescricao} onChange={(e) => setMovDescricao(e.target.value)} placeholder="Ex.: Troco para delivery" maxLength={100} />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-foreground">Valor (R$)</label>
-              <Input
-                value={movValor}
-                onChange={(e) => setMovValor(e.target.value)}
-                placeholder="0,00"
-                inputMode="decimal"
-                className="text-lg font-black"
-                onKeyDown={(e) => e.key === "Enter" && handleRegistrarMovimentacao()}
-              />
-            </div>
-          </div>
-          <DialogFooter className="gap-3 sm:gap-0">
-            <Button variant="outline" onClick={() => setMovModalOpen(false)} className="rounded-xl font-bold">Cancelar</Button>
-            <Button onClick={handleRegistrarMovimentacao} className="rounded-xl font-black">
-              Registrar
-            </Button>
-          </DialogFooter>
+          ) : (
+            <>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-foreground">Tipo</label>
+                  <select
+                    value={movTipo}
+                    onChange={(e) => setMovTipo(e.target.value as "entrada" | "saida")}
+                    className="w-full rounded-xl border border-border bg-secondary px-3 py-2 text-sm text-foreground"
+                  >
+                    <option value="entrada">Suprimento (entrada)</option>
+                    <option value="saida">Sangria (saída)</option>
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-foreground">Motivo / Descrição *</label>
+                  <Input value={movDescricao} onChange={(e) => setMovDescricao(e.target.value)} placeholder="Ex.: Troco para entrega, Reforço de caixa" maxLength={100} />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-foreground">Valor (R$) *</label>
+                  <Input
+                    value={movValor}
+                    onChange={(e) => setMovValor(e.target.value)}
+                    placeholder="0,00"
+                    inputMode="decimal"
+                    className="text-lg font-black"
+                    onKeyDown={(e) => e.key === "Enter" && handleRegistrarMovimentacao()}
+                  />
+                </div>
+                {movimentacoesCaixa.length > 0 && (
+                  <div className="space-y-2">
+                    <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">Últimas movimentações</p>
+                    <div className="space-y-1.5 max-h-[120px] overflow-y-auto">
+                      {movimentacoesCaixa.slice(0, 5).map((mov) => (
+                        <div key={mov.id} className="flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-xs">
+                          <span className={`font-black tabular-nums ${mov.tipo === "entrada" ? "text-emerald-400" : "text-destructive"}`}>
+                            {mov.tipo === "entrada" ? "Suprimento" : "Sangria"}
+                          </span>
+                          <span className="font-black tabular-nums text-foreground">{formatPrice(mov.valor)}</span>
+                          <span className="flex-1 truncate text-muted-foreground">{mov.descricao}</span>
+                          <span className="tabular-nums text-muted-foreground/60">{mov.criadoEm}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+              <DialogFooter className="gap-3 sm:gap-0">
+                <Button variant="outline" onClick={() => setMovModalOpen(false)} className="rounded-xl font-bold">Cancelar</Button>
+                <Button onClick={handleRegistrarMovimentacao} className="rounded-xl font-black">
+                  Registrar
+                </Button>
+              </DialogFooter>
+            </>
+          )}
         </DialogContent>
       </Dialog>
 
