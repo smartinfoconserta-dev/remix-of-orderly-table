@@ -154,6 +154,7 @@ const GerentePage = () => {
     pedidosBalcao,
   } = useRestaurant();
   const { currentGerente, logout, verifyManagerAccess, getActiveProfilesByRole, createUser, deactivateUser } = useAuth();
+  useRouteLock("/gerente");
   const [logFilter, setLogFilter] = useState("all");
   const [pinVerificado, setPinVerificado] = useState(false);
   const [pinInput, setPinInput] = useState("");
