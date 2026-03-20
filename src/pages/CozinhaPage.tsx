@@ -61,6 +61,35 @@ const CozinhaPage = () => {
     return () => clearInterval(id);
   }, []);
 
+  // Sound notification when new orders arrive
+  const activePedidosCount = useMemo(() => {
+    let count = 0;
+    for (const mesa of mesas) {
+      if (mesa.status === "livre") continue;
+      for (const pedido of mesa.pedidos) {
+        if (!pedido.pronto) count++;
+      }
+    }
+    for (const pedido of pedidosBalcao) {
+      if (!pedido.pronto && pedido.statusBalcao !== "pago" && pedido.statusBalcao !== "aguardando_confirmacao") count++;
+    }
+    return count;
+  }, [mesas, pedidosBalcao]);
+
+  useEffect(() => {
+    if (prevCountRef.current !== null && activePedidosCount > prevCountRef.current) {
+      tocarSom("novo_pedido", audioCtxRef);
+      document.title = "🔴 NOVO PEDIDO — Cozinha";
+      const timer = setTimeout(() => { document.title = "Cozinha — Orderly Table"; }, 5000);
+      return () => clearTimeout(timer);
+    }
+    prevCountRef.current = activePedidosCount;
+  }, [activePedidosCount]);
+
+  useEffect(() => {
+    return () => { document.title = "Orderly Table"; };
+  }, []);
+
   const activePedidos = useMemo(() => {
     const all: (PedidoRealizado & { mesaNumero: number; isBalcao?: boolean })[] = [];
     for (const mesa of mesas) {

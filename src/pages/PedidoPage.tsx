@@ -342,6 +342,21 @@ export default function PedidoPage() {
             <h2 className="text-2xl font-bold">Pedido recebido! 🎉</h2>
             <p className="text-muted-foreground">Pedido #{numeroPedido}</p>
             <p className="text-sm text-muted-foreground">Aguarde, seu pedido está sendo preparado</p>
+            {sysConfig.telefoneRestaurante && (
+              <Button
+                variant="outline"
+                size="lg"
+                onClick={() => {
+                  const itensStr = itens.map((i) => `${i.quantidade}x ${i.nome}`).join(", ");
+                  const endStr = `${endereco}, ${numero}${complemento ? ` - ${complemento}` : ""} — ${bairro}`;
+                  const pagLabel = formaPag === "pix" ? "PIX" : formaPag === "dinheiro" ? "Dinheiro" : formaPag === "credito" ? "Crédito" : "Débito";
+                  const msg = `📋 Pedido #${numeroPedido}\n\n${itensStr}\n\nTotal: R$ ${totalPedido.toFixed(2)}\nEndereço: ${endStr}\nPagamento: ${pagLabel}${formaPag === "dinheiro" && troco ? ` (troco p/ R$ ${troco})` : ""}`;
+                  window.open(`https://wa.me/55${sysConfig.telefoneRestaurante}?text=${encodeURIComponent(msg)}`, "_blank");
+                }}
+              >
+                📲 Enviar pedido pelo WhatsApp
+              </Button>
+            )}
             <Button size="lg" onClick={handleNovoPedido}>Fazer novo pedido</Button>
           </div>
         )}
