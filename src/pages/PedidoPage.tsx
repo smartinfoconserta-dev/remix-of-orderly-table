@@ -256,6 +256,7 @@ export default function PedidoPage() {
     setCidade("");
     setComplemento("");
     setReferencia("");
+    setBairroSelecionadoId("");
     setItens([]);
     setParaViagem(false);
     setFormaPag("pix");
