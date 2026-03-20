@@ -1,55 +1,40 @@
 
 
-## Problema Identificado
+## Plano
 
-Há **dois bugs** trabalhando juntos:
+### Passo 1: Reverter via histórico
+O usuário está visualizando o commit correto (antes do ProtectedRoute quebrar). Basta clicar "Restore" nessa versão.
 
-1. **Sessão stale no localStorage**: Antes das correções de permissão, alguém logou como "caixa" na rota /gerente. Essa sessão ficou salva em `sessions.gerente = { userId: "id-do-caixa" }`.
+### Passo 2: Reimplementar ProtectedRoute (simplificado)
 
-2. **`getCurrentUser` não valida role**: A função `getCurrentUser("gerente")` apenas busca o userId salvo em `sessions.gerente` — **não verifica se o usuário encontrado realmente tem role "gerente"**. Então mesmo com um caixa salvo por engano nessa sessão, o sistema mostra "Operador: caixa" no Painel do Gerente.
+O guard atual é agressivo demais — redireciona quando existe qualquer sessão em outro slot. A segurança real já está em 3 camadas:
+- `loginWithPin` bloqueia login com role errado
+- `sanitizeSessions` limpa sessões stale
+- `getCurrentUser` valida role ao ler sessão
 
-O `loginWithPin` agora bloqueia corretamente novos logins indevidos, mas **sessões antigas persistem** e não são validadas ao carregar.
+O novo ProtectedRoute será passivo — **nunca redireciona antes do login**. Só atua se detectar sessão ativa no slot com role incompatível (caso edge de manipulação de localStorage).
 
-## Correção
-
-**Arquivo: `src/contexts/AuthContext.tsx`**
-
-Alterar `getCurrentUser` para validar que o usuário na sessão tem role permitido para aquela área:
-
+**`src/components/ProtectedRoute.tsx`** — reescrever:
 ```typescript
-const getCurrentUser = useCallback(
-  (role: UserRole): OperationalUser | null => {
-    const session = state.sessions[role];
-    if (!session) return null;
-
-    const user = state.users.find((item) => item.id === session.userId);
-    if (!user) return null;
-
-    // Seed admin pode estar em qualquer sessão
-    if (user.id === "seed-admin-001") return toPublicUser(user);
-
-    // Validar que o role do usuário é permitido para esta sessão
-    const allowedRoles: Record<UserRole, UserRole[]> = {
-      garcom: ["garcom"],
-      caixa: ["caixa", "gerente"],
-      gerente: ["gerente"],
-    };
-    const allowed = allowedRoles[role] ?? [role];
-    if (!allowed.includes(user.role)) return null; // Sessão inválida
-
-    return toPublicUser(user);
-  },
-  [state.sessions, state.users],
-);
+export const ProtectedRoute = ({ children, requiredSession }) => {
+  // Sempre renderiza children (página com formulário de login)
+  // A validação real acontece em loginWithPin + sanitizeSessions
+  return <>{children}</>;
+};
 ```
 
-Isso faz com que sessões stale de caixa em `sessions.gerente` retornem `null`, forçando o login novamente. Sem quebrar nada — admin continua com bypass, gerente continua podendo logar em /caixa.
+Na prática o componente vira um pass-through. Mantemos ele no App.tsx para documentação e caso futuro onde queiramos adicionar lógica (ex: redirect após logout forçado).
 
-## Resumo
+**`src/App.tsx`** — mantém as rotas envolvidas com ProtectedRoute como estão (não muda nada).
 
-| O que | Onde |
-|-------|------|
-| Validar role na leitura da sessão | `getCurrentUser` em AuthContext.tsx |
-| Seed admin mantém bypass | Checagem por `id === "seed-admin-001"` |
-| Resultado | Sessões stale com role errado são ignoradas |
+### Resultado
+
+| Cenário | Comportamento |
+|---------|--------------|
+| Acessa /gerente sem login | Vê formulário de login da página |
+| Caixa tenta logar em /gerente | `loginWithPin` retorna erro "Acesso negado" |
+| Sessão stale de caixa em slot gerente | `sanitizeSessions` limpa automaticamente |
+| Admin loga em qualquer lugar | Bypass funciona normalmente |
+
+### Passo 1 — Restaure a versão anterior primeiro:
 
