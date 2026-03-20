@@ -71,6 +71,27 @@ const actionLabels: Record<string, string> = {
   fechamento_dia: "Fechamento do dia",
 };
 
+const RELEVANT_LOG_ACTIONS = new Set([
+  "fechar_conta",
+  "abertura_caixa",
+  "fechamento_dia",
+  "cancelar_pedido",
+  "cancelar_item",
+  "zerar_mesa",
+]);
+
+const formatDateHeader = (dateStr: string): string => {
+  const date = new Date(dateStr + "T00:00:00");
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const yesterday = new Date(today);
+  yesterday.setDate(today.getDate() - 1);
+
+  if (date.getTime() === today.getTime()) return "Hoje";
+  if (date.getTime() === yesterday.getTime()) return "Ontem";
+  return date.toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long" });
+};
+
 const getEventDotColor = (acao?: string) => {
   if (!acao) return "bg-muted-foreground";
   if (acao === "pedido_cliente" || acao === "chamar_garcom") return "bg-emerald-500";
@@ -159,12 +180,37 @@ const GerentePage = () => {
   const saidas = movimentacoesCaixa.filter((m) => m.tipo === "saida").reduce((acc, m) => acc + m.valor, 0);
   const totalLiquido = fundoTroco + totalVendas + entradasExtras - saidas;
 
-  /* ── audit logs ── */
-  const filteredEvents = logFilter === "all"
-    ? eventos
-    : eventos.filter((e) => e.acao === logFilter);
+  /* ── audit logs — only relevant actions ── */
+  const relevantEvents = useMemo(
+    () => eventos.filter((e) => e.acao && RELEVANT_LOG_ACTIONS.has(e.acao)),
+    [eventos]
+  );
 
-  const uniqueActions = [...new Set(eventos.map((e) => e.acao).filter(Boolean))] as string[];
+  const filteredEvents = logFilter === "all"
+    ? relevantEvents
+    : relevantEvents.filter((e) => e.acao === logFilter);
+
+  const uniqueActions = [...new Set(relevantEvents.map((e) => e.acao).filter(Boolean))] as string[];
+
+  // Group events by date
+  const groupedEvents = useMemo(() => {
+    const groups: { date: string; label: string; events: typeof filteredEvents }[] = [];
+    const map = new Map<string, typeof filteredEvents>();
+
+    filteredEvents.forEach((e) => {
+      const dateKey = e.criadoEmIso.slice(0, 10);
+      if (!map.has(dateKey)) map.set(dateKey, []);
+      map.get(dateKey)!.push(e);
+    });
+
+    // Sort dates descending
+    const sortedDates = [...map.keys()].sort().reverse();
+    sortedDates.forEach((date) => {
+      groups.push({ date, label: formatDateHeader(date), events: map.get(date)! });
+    });
+
+    return groups;
+  }, [filteredEvents]);
 
   /* ── relatório data ── */
   const dateRange = getDateRange(periodo, customInicio, customFim);
@@ -616,27 +662,32 @@ const GerentePage = () => {
 
           {/* Event list */}
           <div className="flex-1 overflow-y-auto p-4 md:px-6">
-            {filteredEvents.length === 0 ? (
+            {groupedEvents.length === 0 ? (
               <p className="text-sm text-muted-foreground py-8 text-center">Nenhum evento registrado.</p>
             ) : (
-              <div className="mx-auto max-w-2xl space-y-1.5">
-                {filteredEvents.map((evento) => (
-                  <div key={evento.id} className="flex items-start gap-3 rounded-xl border border-border bg-card px-4 py-3">
-                    <span className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${getEventDotColor(evento.acao)}`} />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-bold text-foreground leading-snug">{evento.descricao}</p>
-                      <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1">
-                        <span className="text-xs text-muted-foreground">{evento.criadoEm}</span>
-                        {evento.acao && (
-                          <span className="text-xs font-bold text-muted-foreground">
-                            {actionLabels[evento.acao] ?? evento.acao}
-                          </span>
-                        )}
-                        {evento.motivo && (
-                          <span className="text-xs text-destructive italic">Motivo: {evento.motivo}</span>
-                        )}
+              <div className="mx-auto max-w-2xl space-y-5">
+                {groupedEvents.map((group) => (
+                  <div key={group.date} className="space-y-1.5">
+                    <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground pb-1">{group.label}</h3>
+                    {group.events.map((evento) => (
+                      <div key={evento.id} className="flex items-start gap-3 rounded-xl border border-border bg-card px-4 py-3">
+                        <span className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${getEventDotColor(evento.acao)}`} />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-bold text-foreground leading-snug">{evento.descricao}</p>
+                          <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1">
+                            <span className="text-xs text-muted-foreground">{evento.criadoEm}</span>
+                            {evento.acao && (
+                              <span className="text-xs font-bold text-muted-foreground">
+                                {actionLabels[evento.acao] ?? evento.acao}
+                              </span>
+                            )}
+                            {evento.motivo && (
+                              <span className="text-xs text-destructive italic">Motivo: {evento.motivo}</span>
+                            )}
+                          </div>
+                        </div>
                       </div>
-                    </div>
+                    ))}
                   </div>
                 ))}
               </div>

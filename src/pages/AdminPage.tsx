@@ -341,33 +341,42 @@ const AdminPage = () => {
             <div className="flex flex-wrap gap-2">
               <button
                 type="button"
-                onClick={() => setCatFilter("todas")}
+                onClick={() => {
+                  setCatFilter("todas");
+                  document.querySelector("[data-admin-product-table]")?.scrollTo({ top: 0, behavior: "smooth" });
+                }}
                 className={`rounded-xl px-4 py-2 text-xs font-bold transition-colors ${
                   catFilter === "todas"
                     ? "bg-primary text-primary-foreground"
                     : "bg-secondary text-muted-foreground hover:text-foreground"
                 }`}
               >
-                Todas
+                Todas ({allProducts.length})
               </button>
-              {categorias.map((c) => (
-                <button
-                  key={c.id}
-                  type="button"
-                  onClick={() => setCatFilter(c.id)}
-                  className={`rounded-xl px-4 py-2 text-xs font-bold transition-colors ${
-                    catFilter === c.id
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-secondary text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  {c.nome}
-                </button>
-              ))}
+              {categorias.map((c) => {
+                const count = allProducts.filter((p) => p.categoria === c.id).length;
+                return (
+                  <button
+                    key={c.id}
+                    type="button"
+                    onClick={() => {
+                      setCatFilter(c.id);
+                      document.querySelector("[data-admin-product-table]")?.scrollTo({ top: 0, behavior: "smooth" });
+                    }}
+                    className={`rounded-xl px-4 py-2 text-xs font-bold transition-colors ${
+                      catFilter === c.id
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-secondary text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    {c.nome} ({count})
+                  </button>
+                );
+              })}
             </div>
 
             {/* Products table */}
-            <div className="overflow-hidden rounded-2xl border border-border bg-card">
+            <div className="overflow-hidden rounded-2xl border border-border bg-card" data-admin-product-table>
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-border bg-secondary/50">
