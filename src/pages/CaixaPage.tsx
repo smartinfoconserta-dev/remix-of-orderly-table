@@ -256,12 +256,16 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
   const handleRegistrarMovimentacao = useCallback(() => {
     if (!currentOperator) return;
     const valor = parseCurrencyInput(movValor);
-    if (!Number.isFinite(valor) || valor <= 0) {
-      toast.error("Informe um valor válido", { duration: 1400 });
+    if (!Number.isFinite(valor) || valor < 0.01) {
+      toast.error("Informe um valor mínimo de R$ 0,01", { duration: 1400 });
       return;
     }
     if (!movDescricao.trim()) {
-      toast.error("Informe uma descrição", { duration: 1400 });
+      toast.error("Informe o motivo da movimentação", { duration: 1400 });
+      return;
+    }
+    if (!movConfirmStep) {
+      setMovConfirmStep(true);
       return;
     }
     registrarMovimentacaoCaixa({
@@ -270,12 +274,14 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
       valor,
       usuario: currentOperator,
     });
-    toast.success(movTipo === "entrada" ? "Suprimento registrado" : "Sangria registrada", { duration: 1200, icon: movTipo === "entrada" ? "💰" : "💸" });
+    const tipoLabel = movTipo === "entrada" ? "Suprimento" : "Sangria";
+    toast.success(`${tipoLabel} de ${formatPrice(valor)} registrado — ${movDescricao.trim()}`, { duration: 2000, icon: movTipo === "entrada" ? "💰" : "💸" });
     setMovModalOpen(false);
     setMovDescricao("");
     setMovValor("");
     setMovTipo("entrada");
-  }, [currentOperator, movTipo, movDescricao, movValor, registrarMovimentacaoCaixa]);
+    setMovConfirmStep(false);
+  }, [currentOperator, movTipo, movDescricao, movValor, movConfirmStep, registrarMovimentacaoCaixa]);
 
   /* ── auth guard ── */
   if (!currentOperator) {
