@@ -1061,7 +1061,11 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                         <p className="text-sm font-semibold">Nenhum delivery ativo no momento</p>
                       </div>
                     ) : pedidosDeliveryAtivos.length > 0 ? (
-                      <div className="grid gap-3 grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
+                      <div className="space-y-3">
+                        <h3 className="text-xs font-black uppercase tracking-widest text-foreground/70 flex items-center gap-2">
+                          Em andamento ({pedidosDeliveryAtivos.length})
+                        </h3>
+                        <div className="grid gap-3 grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
                         {pedidosDeliveryAtivos.map((pb) => {
                           const isPronto = pb.statusBalcao === "pronto";
                           const isSaiu = pb.statusBalcao === "saiu";
