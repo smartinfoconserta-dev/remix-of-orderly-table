@@ -205,7 +205,8 @@ export default function PedidoPage() {
     setEtapa("confirmacao");
   };
 
-  const taxaEntrega = sysConfig.taxaEntrega ?? 0;
+  const bairroSel = bairrosDisponiveis.find((b) => b.id === bairroSelecionadoId);
+  const taxaEntrega = bairroSel ? bairroSel.taxa : (sysConfig.taxaEntrega ?? 0);
   const totalPedido = itens.reduce((s, i) => s + i.precoUnitario * i.quantidade, 0) + taxaEntrega;
 
   const handleConfirmarPedido = () => {
