@@ -69,6 +69,12 @@ const Index = () => {
           onClick={() => navigate("/gerente")}
         />
         <ModeCard
+          title="Motoboy"
+          description="Entregas em andamento"
+          icon={<Bike size={28} />}
+          onClick={() => navigate("/motoboy")}
+        />
+        <ModeCard
           title="Admin"
           description="Configurações do sistema"
           icon={<Settings size={28} />}
