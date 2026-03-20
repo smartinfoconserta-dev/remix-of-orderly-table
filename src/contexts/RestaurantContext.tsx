@@ -1037,6 +1037,34 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }));
   }, []);
 
+  const marcarBalcaoSaiu = useCallback((pedidoId: string, motoboyNome: string) => {
+    setStore((prev) => ({
+      ...prev,
+      pedidosBalcao: prev.pedidosBalcao.map((p) =>
+        p.id === pedidoId ? { ...p, statusBalcao: "saiu" as const, motoboyNome } : p,
+      ),
+      eventos: appendEvent(prev.eventos, {
+        tipo: "pedido",
+        descricao: `Motoboy ${motoboyNome} retirou pedido delivery`,
+        acao: "delivery_saiu",
+      }),
+    }));
+  }, []);
+
+  const marcarBalcaoEntregue = useCallback((pedidoId: string) => {
+    setStore((prev) => ({
+      ...prev,
+      pedidosBalcao: prev.pedidosBalcao.map((p) =>
+        p.id === pedidoId ? { ...p, statusBalcao: "entregue" as const } : p,
+      ),
+      eventos: appendEvent(prev.eventos, {
+        tipo: "pedido",
+        descricao: `Pedido delivery marcado como entregue`,
+        acao: "delivery_entregue",
+      }),
+    }));
+  }, []);
+
   const fecharContaBalcao = useCallback((pedidoId: string, input: FecharContaInput) => {
     setStore((prev) => {
       const pedido = prev.pedidosBalcao.find((p) => p.id === pedidoId);
