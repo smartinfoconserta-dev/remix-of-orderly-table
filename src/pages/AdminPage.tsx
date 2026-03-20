@@ -64,7 +64,7 @@ type AdminTab = "cardapio" | "mesas" | "configuracoes" | "licenca" | "usuarios";
 const sidebarSections = [
   { id: "cardapio" as const, label: "Cardápio", icon: ClipboardList },
   { id: "mesas" as const, label: "Mesas", icon: Grid3X3 },
-  { id: "usuarios" as const, label: "Usuários", icon: Shield },
+  { id: "usuarios" as const, label: "Usuários", icon: Users },
   { id: "configuracoes" as const, label: "Configurações", icon: Settings },
   { id: "licenca" as const, label: "Licença", icon: Shield },
 ];
