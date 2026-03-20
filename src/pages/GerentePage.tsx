@@ -676,7 +676,7 @@ const GerentePage = () => {
           </div>
 
           {/* Event list */}
-          <div className="flex-1 overflow-y-auto p-4 md:px-6">
+          <div className="pt-4">
             {groupedEvents.length === 0 ? (
               <p className="text-sm text-muted-foreground py-8 text-center">Nenhum evento registrado.</p>
             ) : (
