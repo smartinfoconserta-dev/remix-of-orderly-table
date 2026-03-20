@@ -15,6 +15,9 @@ import {
   Smartphone,
   TrendingUp,
   Wallet,
+  Plus,
+  Trash2,
+  Users,
   XCircle,
 } from "lucide-react";
 import { toast } from "sonner";
