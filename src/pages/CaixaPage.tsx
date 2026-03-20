@@ -660,8 +660,31 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                   </div>
                 </div>
 
-                {/* ═══ RIGHT: Activity Feed (30%) ═══ */}
+                {/* ═══ RIGHT: Activity + Movimentações (30%) ═══ */}
                 <div className="flex flex-[3] flex-col border-l border-border bg-card/50 overflow-hidden">
+                  {/* Movimentações do turno */}
+                  {movimentacoesCaixa.length > 0 && (
+                    <div className="border-b border-border shrink-0">
+                      <div className="flex items-center gap-2.5 px-5 py-3">
+                        <Banknote className="h-4 w-4 text-foreground" />
+                        <h2 className="text-sm font-black text-foreground flex-1">Movimentações</h2>
+                        <span className="text-xs font-bold tabular-nums text-muted-foreground">{movimentacoesCaixa.length}</span>
+                      </div>
+                      <div className="max-h-[180px] overflow-y-auto px-4 pb-3 space-y-1.5 scrollbar-hide">
+                        {movimentacoesCaixa.map((mov) => (
+                          <div key={mov.id} className="flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 slide-up">
+                            <span className={`text-xs font-black tabular-nums ${mov.tipo === "entrada" ? "text-emerald-400" : "text-destructive"}`}>
+                              {mov.tipo === "entrada" ? "+" : "−"} {formatPrice(mov.valor)}
+                            </span>
+                            <span className="flex-1 truncate text-[10px] text-muted-foreground">{mov.descricao}</span>
+                            <span className="text-[10px] tabular-nums text-muted-foreground/60">{mov.criadoEm}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Activity Feed */}
                   <div className="flex items-center gap-2.5 px-5 py-4 border-b border-border shrink-0">
                     <ScrollText className="h-4 w-4 text-foreground" />
                     <h2 className="text-sm font-black text-foreground flex-1">Atividade recente</h2>
