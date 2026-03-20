@@ -658,6 +658,37 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
           paraViagem={paraViagem}
           onParaViagemChange={setParaViagem}
         />
+        {modo === "cliente" && (
+          <Button
+            onClick={handleChamarGarcom}
+            className="h-auto gap-2 rounded-xl bg-destructive px-5 py-2.5 text-base font-bold text-destructive-foreground hover:bg-destructive/90"
+          >
+            <Bell className="h-5 w-5" />
+            <span className="hidden sm:inline">Chamar Garçom</span>
+          </Button>
+        )}
+      </div>
+    </header>
+  );
+
+  const heroBanner = (
+    <section className="px-4 pt-4 md:px-6">
+      <div className="relative overflow-hidden rounded-[1.9rem] border border-border bg-card shadow-[0_30px_70px_-45px_hsl(var(--foreground)/0.9)]">
+        <div className="relative min-h-[260px] w-full md:min-h-[340px]">
+          {activeBannerSlides.map((slide, index) => (
+            <article
+              key={slide.id}
+              aria-hidden={index !== bannerIndex}
+              className={`absolute inset-0 overflow-hidden transition-all duration-700 ease-out ${index === bannerIndex ? "opacity-100" : "pointer-events-none opacity-0"}`}
+            >
+              <img
+                src={slide.image}
+                alt={slide.alt}
+                className="absolute inset-0 h-full w-full object-cover"
+                style={{ objectPosition: "80% center" }}
+                loading={index === 0 ? "eager" : "lazy"}
+              />
+
               <div
                 className="absolute inset-0"
                 style={{
