@@ -51,8 +51,16 @@ const loginSchema = z.object({
   pin: z.string().regex(/^\d{4,6}$/, "O PIN deve ter entre 4 e 6 números"),
 });
 
+const seedAdmin: StoredUser = {
+  id: "seed-admin-001",
+  role: "gerente" as UserRole,
+  nome: "admin",
+  pinHash: btoa("pin:1234").split("").reverse().join(""),
+  ativo: true,
+};
+
 const emptyState: AuthState = {
-  users: [],
+  users: [seedAdmin],
   sessions: {},
 };
 
