@@ -872,8 +872,8 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                 >
                   <Truck className="h-3.5 w-3.5" />
                   Delivery
-                  {pedidosDeliveryAtivos.length > 0 && (
-                    <span className="rounded-full bg-purple-500/20 text-purple-400 px-1.5 py-0.5 text-[10px] font-black tabular-nums leading-none">{pedidosDeliveryAtivos.length}</span>
+                  {(pedidosDeliveryAtivos.length + pedidosAguardandoConfirmacao.length) > 0 && (
+                    <span className="rounded-full bg-purple-500/20 text-purple-400 px-1.5 py-0.5 text-[10px] font-black tabular-nums leading-none">{pedidosDeliveryAtivos.length + pedidosAguardandoConfirmacao.length}</span>
                   )}
                 </button>
 
@@ -1038,8 +1038,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                                   }}
                                   className="flex-1 rounded-xl font-black gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white"
                                 >
-                                  <Check className="h-3.5 w-3.5" />
-                                  Confirmar pedido
+                                  ✅ Confirmar e avisar cliente
                                 </Button>
                                 <Button
                                   size="sm"
@@ -1047,8 +1046,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                                   onClick={() => { setRejectPedidoId(pb.id); setRejectMotivo(""); setRejectDialogOpen(true); }}
                                   className="rounded-xl font-black gap-1.5"
                                 >
-                                  <XCircle className="h-3.5 w-3.5" />
-                                  Rejeitar
+                                  ❌ Rejeitar
                                 </Button>
                               </div>
                             </div>
@@ -1063,7 +1061,11 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                         <p className="text-sm font-semibold">Nenhum delivery ativo no momento</p>
                       </div>
                     ) : pedidosDeliveryAtivos.length > 0 ? (
-                      <div className="grid gap-3 grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
+                      <div className="space-y-3">
+                        <h3 className="text-xs font-black uppercase tracking-widest text-foreground/70 flex items-center gap-2">
+                          Em andamento ({pedidosDeliveryAtivos.length})
+                        </h3>
+                        <div className="grid gap-3 grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
                         {pedidosDeliveryAtivos.map((pb) => {
                           const isPronto = pb.statusBalcao === "pronto";
                           const isSaiu = pb.statusBalcao === "saiu";
@@ -1138,6 +1140,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                             </div>
                           );
                         })}
+                       </div>
                       </div>
                     ) : null}
                   </div>
