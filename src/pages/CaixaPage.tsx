@@ -285,8 +285,12 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
   const handleVoltar = useCallback(() => {
     setComandaOpen(false);
     setMesaSelecionada(null);
+    setBalcaoPedidoSelecionado(null);
     setMesaTab("comanda");
     resetCloseAccountState();
+    setBalcaoPayments([]);
+    setBalcaoPaymentMethod("dinheiro");
+    setBalcaoPaymentValue("");
   }, [resetCloseAccountState]);
 
   const handleSelecionarMesa = useCallback(
