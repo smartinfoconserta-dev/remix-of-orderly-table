@@ -1442,6 +1442,156 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
         </DialogContent>
       </Dialog>
 
+      {/* ── BALCÃO / DELIVERY DIALOG ── */}
+      <Dialog open={balcaoOpen} onOpenChange={(open) => { if (!open) setBalcaoOpen(false); }}>
+        <DialogContent className="rounded-2xl border-border bg-background sm:max-w-2xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ShoppingBag className="h-5 w-5 text-primary" />
+              Pedido Balcão / Delivery
+            </DialogTitle>
+            <DialogDescription>Crie um pedido sem mesa vinculada.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            {/* Tipo */}
+            <div className="flex gap-2">
+              <Button
+                variant={balcaoTipo === "balcao" ? "default" : "outline"}
+                onClick={() => setBalcaoTipo("balcao")}
+                className="flex-1 rounded-xl font-black"
+              >
+                Balcão
+              </Button>
+              <Button
+                variant={balcaoTipo === "delivery" ? "default" : "outline"}
+                onClick={() => setBalcaoTipo("delivery")}
+                className="flex-1 rounded-xl font-black"
+              >
+                Delivery
+              </Button>
+            </div>
+
+            {/* Delivery fields */}
+            {balcaoTipo === "delivery" && (
+              <div className="space-y-3 rounded-xl border border-border bg-card p-4">
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-foreground">Nome do cliente *</label>
+                  <Input value={balcaoClienteNome} onChange={(e) => setBalcaoClienteNome(e.target.value)} placeholder="Nome completo" />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-foreground">Telefone</label>
+                    <Input value={balcaoTelefone} onChange={(e) => setBalcaoTelefone(e.target.value)} placeholder="(00) 00000-0000" />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-foreground">Bairro</label>
+                    <Input value={balcaoBairro} onChange={(e) => setBalcaoBairro(e.target.value)} placeholder="Bairro" />
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-foreground">Endereço completo *</label>
+                  <Input value={balcaoEndereco} onChange={(e) => setBalcaoEndereco(e.target.value)} placeholder="Rua, número" />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-foreground">Referência / complemento</label>
+                  <Input value={balcaoReferencia} onChange={(e) => setBalcaoReferencia(e.target.value)} placeholder="Próximo a..." />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-foreground">Forma de pagamento</label>
+                    <select
+                      value={balcaoFormaPag}
+                      onChange={(e) => setBalcaoFormaPag(e.target.value as PaymentMethod)}
+                      className="w-full rounded-xl border border-border bg-secondary px-3 py-2 text-sm text-foreground"
+                    >
+                      <option value="dinheiro">Dinheiro</option>
+                      <option value="credito">Crédito</option>
+                      <option value="debito">Débito</option>
+                      <option value="pix">PIX</option>
+                    </select>
+                  </div>
+                  {balcaoFormaPag === "dinheiro" && (
+                    <div className="space-y-1">
+                      <label className="text-xs font-semibold text-foreground">Troco para quanto?</label>
+                      <Input value={balcaoTroco} onChange={(e) => setBalcaoTroco(e.target.value)} placeholder="0,00" inputMode="decimal" />
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Menu items */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-black text-foreground">Itens do pedido</h3>
+                <span className="text-sm font-black tabular-nums text-primary">{formatPrice(balcaoSubtotal)}</span>
+              </div>
+              <div className="max-h-[280px] overflow-y-auto space-y-4 pr-1">
+                {categoriasAtivas.map((cat) => {
+                  const prods = produtosAtivos.filter((p) => p.categoria === cat.id);
+                  if (prods.length === 0) return null;
+                  return (
+                    <div key={cat.id}>
+                      <p className="text-xs font-black uppercase tracking-widest text-muted-foreground mb-1.5">{cat.nome}</p>
+                      <div className="space-y-1">
+                        {prods.map((prod) => {
+                          const qty = balcaoItens[prod.id] || 0;
+                          return (
+                            <div key={prod.id} className="flex items-center gap-3 rounded-lg border border-border bg-card px-3 py-2">
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-bold text-foreground truncate">{prod.nome}</p>
+                                <p className="text-xs text-muted-foreground">{formatPrice(prod.preco)}</p>
+                              </div>
+                              <div className="flex items-center gap-1.5">
+                                <Button
+                                  size="icon"
+                                  variant="outline"
+                                  className="h-7 w-7 rounded-lg"
+                                  disabled={qty === 0}
+                                  onClick={() => setBalcaoItens((prev) => {
+                                    const n = (prev[prod.id] || 0) - 1;
+                                    if (n <= 0) { const { [prod.id]: _, ...rest } = prev; return rest; }
+                                    return { ...prev, [prod.id]: n };
+                                  })}
+                                >
+                                  <Minus className="h-3 w-3" />
+                                </Button>
+                                <span className="w-6 text-center text-sm font-black tabular-nums text-foreground">{qty}</span>
+                                <Button
+                                  size="icon"
+                                  variant="outline"
+                                  className="h-7 w-7 rounded-lg"
+                                  onClick={() => setBalcaoItens((prev) => ({ ...prev, [prod.id]: (prev[prod.id] || 0) + 1 }))}
+                                >
+                                  <Plus className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Obs */}
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-foreground">Observação geral</label>
+              <Textarea value={balcaoObs} onChange={(e) => setBalcaoObs(e.target.value)} placeholder="Ex.: Sem cebola em todos os lanches" maxLength={200} className="min-h-[60px] rounded-xl" />
+            </div>
+          </div>
+          <DialogFooter className="gap-3 sm:gap-0">
+            <Button variant="outline" onClick={() => setBalcaoOpen(false)} className="rounded-xl font-bold">Cancelar</Button>
+            <Button onClick={handleEnviarBalcao} className="rounded-xl font-black gap-1.5">
+              <Check className="h-4 w-4" />
+              Enviar para cozinha
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <LicenseBanner blockMode={accessMode === "caixa"} />
     </>
   );
