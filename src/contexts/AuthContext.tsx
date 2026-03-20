@@ -29,7 +29,7 @@ interface AuthContextType {
   currentGerente: OperationalUser | null;
   getProfilesByRole: (role: UserRole) => OperationalUser[];
   getActiveProfilesByRole: (role: UserRole) => OperationalUser[];
-  loginWithPin: (role: UserRole, nome: string, pin: string, targetRoute?: string) => Promise<LoginResult>;
+  loginWithPin: (role: UserRole, nome: string, pin: string) => Promise<LoginResult>;
   createUser: (role: UserRole, nome: string, pin: string) => { ok: boolean; error?: string; user?: OperationalUser };
   removeUser: (id: string) => { ok: boolean; error?: string };
   deactivateUser: (id: string) => { ok: boolean; error?: string };
@@ -78,21 +78,6 @@ const toPublicUser = ({ pinHash: _pinHash, ativo: _ativo, ...user }: StoredUser)
 
 const ensureAtivoField = (users: StoredUser[]): StoredUser[] =>
   users.map((u) => ({ ...u, ativo: u.ativo !== false }));
-
-/* ── Route permission map ── */
-const ROUTE_PERMISSIONS: Record<string, UserRole[]> = {
-  "/garcom": ["garcom", "admin"],
-  "/caixa": ["caixa", "gerente", "admin"],
-  "/gerente": ["gerente", "admin"],
-  "/admin": ["admin"],
-};
-
-const isRoleAllowedForRoute = (userRole: UserRole, targetRoute?: string): boolean => {
-  if (!targetRoute) return true;
-  const allowed = ROUTE_PERMISSIONS[targetRoute];
-  if (!allowed) return true; // unknown route — allow
-  return allowed.includes(userRole);
-};
 
 const readAuthState = (): AuthState => {
   if (typeof window === "undefined") return emptyState;
@@ -233,7 +218,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return { ok: true };
   }, [state.users]);
 
-  const loginWithPin = useCallback(async (role: UserRole, nome: string, pin: string, targetRoute?: string): Promise<LoginResult> => {
+  const loginWithPin = useCallback(async (role: UserRole, nome: string, pin: string): Promise<LoginResult> => {
     const parsed = loginSchema.safeParse({ nome, pin });
     if (!parsed.success) {
       return { ok: false, error: parsed.error.issues[0]?.message ?? "Revise os dados informados" };
@@ -245,9 +230,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     let error: string | undefined;
 
     setState((prev) => {
-      // Search by name across ALL roles (allows hierarchy — e.g. gerente logging into /caixa)
       const existingUser = prev.users.find(
-        (user) => user.nome.toLocaleLowerCase("pt-BR") === nomeNormalizado.toLocaleLowerCase("pt-BR"),
+        (user) => user.role === role && user.nome.toLocaleLowerCase("pt-BR") === nomeNormalizado.toLocaleLowerCase("pt-BR"),
       );
 
       if (existingUser && existingUser.ativo === false) {
@@ -261,12 +245,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       if (!existingUser) {
-        // For routes with hierarchy, don't auto-create users
-        if (targetRoute) {
-          error = "Usuário não encontrado";
-          return prev;
-        }
-        // Legacy: auto-create if no targetRoute (backward compat)
         const storedUser: StoredUser = {
           id: `user-${role}-${Date.now()}`,
           nome: nomeNormalizado,
@@ -285,15 +263,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         };
       }
 
-      // Check route permission based on user's ACTUAL role
-      if (!isRoleAllowedForRoute(existingUser.role, targetRoute)) {
-        error = "Acesso não permitido para este perfil";
-        return prev;
-      }
-
       authenticatedUser = toPublicUser(existingUser);
 
-      // Create session under the PAGE's role key (so getCurrentUser works for that page)
       return {
         users: prev.users,
         sessions: {
