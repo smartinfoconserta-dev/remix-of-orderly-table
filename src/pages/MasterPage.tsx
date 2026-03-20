@@ -78,7 +78,6 @@ const emptyForm = {
   plano: "anual", dataInicio: new Date().toISOString().slice(0, 10), dataTermino: "",
 };
 
-const todayStr = () => new Date().toISOString().slice(0, 10);
 
 function proximoVencimento(diaVencimento: number): string {
   const hoje = new Date();
