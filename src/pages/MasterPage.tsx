@@ -375,6 +375,32 @@ const MasterPage = () => {
               </div>
             </div>
 
+            {/* Gráfico de barras CSS */}
+            <div className="rounded-2xl border bg-card p-5 space-y-4">
+              <h2 className="text-lg font-black text-foreground">Receita vs Despesas — últimos 6 meses</h2>
+              <div className="flex items-end gap-3 h-48 overflow-x-auto">
+                {chartData.map((m) => (
+                  <div key={m.key} className="flex flex-col items-center gap-1 flex-1 min-w-[60px]">
+                    <div className="flex items-end gap-1 h-36 w-full justify-center">
+                      <div className="flex flex-col items-center gap-0.5 w-1/2">
+                        <span className="text-[10px] text-emerald-500 font-bold">{m.receita > 0 ? `R$${(m.receita / 1000).toFixed(1)}k` : ""}</span>
+                        <div className="w-full rounded-t bg-emerald-500/80" style={{ height: `${Math.max((m.receita / chartMax) * 128, m.receita > 0 ? 4 : 0)}px` }} />
+                      </div>
+                      <div className="flex flex-col items-center gap-0.5 w-1/2">
+                        <span className="text-[10px] text-destructive font-bold">{m.despesa > 0 ? `R$${(m.despesa / 1000).toFixed(1)}k` : ""}</span>
+                        <div className="w-full rounded-t bg-destructive/80" style={{ height: `${Math.max((m.despesa / chartMax) * 128, m.despesa > 0 ? 4 : 0)}px` }} />
+                      </div>
+                    </div>
+                    <span className="text-xs text-muted-foreground capitalize">{m.label}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-emerald-500/80" /> Receita</span>
+                <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-destructive/80" /> Despesas</span>
+              </div>
+            </div>
+
             {/* Registrar despesa */}
             <div className="rounded-2xl border bg-card p-5 space-y-4">
               <h2 className="text-lg font-black text-foreground flex items-center gap-2"><Receipt className="w-5 h-5" />Registrar despesa</h2>
