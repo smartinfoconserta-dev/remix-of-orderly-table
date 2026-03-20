@@ -247,6 +247,30 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
     return evt ? evt.criadoEm : null;
   }, [eventos]);
 
+  const handleRegistrarMovimentacao = useCallback(() => {
+    if (!currentOperator) return;
+    const valor = parseCurrencyInput(movValor);
+    if (!Number.isFinite(valor) || valor <= 0) {
+      toast.error("Informe um valor válido", { duration: 1400 });
+      return;
+    }
+    if (!movDescricao.trim()) {
+      toast.error("Informe uma descrição", { duration: 1400 });
+      return;
+    }
+    registrarMovimentacaoCaixa({
+      tipo: movTipo,
+      descricao: movDescricao.trim(),
+      valor,
+      usuario: currentOperator,
+    });
+    toast.success(movTipo === "entrada" ? "Suprimento registrado" : "Sangria registrada", { duration: 1200, icon: movTipo === "entrada" ? "💰" : "💸" });
+    setMovModalOpen(false);
+    setMovDescricao("");
+    setMovValor("");
+    setMovTipo("entrada");
+  }, [currentOperator, movTipo, movDescricao, movValor, registrarMovimentacaoCaixa]);
+
   /* ── auth guard ── */
   if (!currentOperator) {
     return (
