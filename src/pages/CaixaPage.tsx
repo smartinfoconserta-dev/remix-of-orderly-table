@@ -989,12 +989,80 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                         Novo delivery
                       </Button>
                     </div>
-                    {pedidosDeliveryAtivos.length === 0 ? (
+
+                    {/* ── Aguardando confirmação ── */}
+                    {pedidosAguardandoConfirmacao.length > 0 && (
+                      <div className="space-y-3">
+                        <h3 className="text-xs font-black uppercase tracking-widest text-amber-400 flex items-center gap-2">
+                          <span className="h-2 w-2 rounded-full bg-amber-400 animate-pulse" />
+                          Aguardando confirmação ({pedidosAguardandoConfirmacao.length})
+                        </h3>
+                        <div className="grid gap-3 grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
+                          {pedidosAguardandoConfirmacao.map((pb) => (
+                            <div
+                              key={pb.id}
+                              className="rounded-2xl border-2 border-amber-500/50 bg-amber-500/8 p-4 space-y-3 animate-pulse"
+                            >
+                              <div className="min-w-0">
+                                <p className="text-sm font-black text-foreground truncate">{pb.clienteNome || "—"}</p>
+                                {pb.enderecoCompleto && (
+                                  <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
+                                    <MapPin className="h-3 w-3 shrink-0" />
+                                    <span className="truncate">{pb.enderecoCompleto}{pb.bairro ? ` — ${pb.bairro}` : ""}</span>
+                                  </p>
+                                )}
+                                {pb.clienteTelefone && <p className="text-xs text-muted-foreground mt-0.5">{pb.clienteTelefone}</p>}
+                              </div>
+                              <div className="text-xs text-muted-foreground space-y-0.5">
+                                {pb.itens.slice(0, 4).map((it, idx) => (
+                                  <p key={idx} className="truncate">{it.quantidade}× {it.nome}</p>
+                                ))}
+                                {pb.itens.length > 4 && <p className="text-muted-foreground/60">+{pb.itens.length - 4} itens...</p>}
+                              </div>
+                              <div className="flex items-center justify-between pt-2 border-t border-amber-500/20">
+                                <span className="text-lg font-black tabular-nums text-foreground">{formatPrice(pb.total)}</span>
+                              </div>
+                              <div className="flex gap-2">
+                                <Button
+                                  size="sm"
+                                  onClick={() => {
+                                    confirmarPedidoBalcao(pb.id);
+                                    toast.success(`Pedido #${pb.numeroPedido} confirmado!`, { duration: 1600, icon: "✅" });
+                                    // WhatsApp message
+                                    const tel = (pb.clienteTelefone || "").replace(/\D/g, "");
+                                    if (tel) {
+                                      const itensStr = pb.itens.map((it) => `${it.quantidade}x ${it.nome}`).join(", ");
+                                      const msg = `✅ Pedido %23${pb.numeroPedido} confirmado! Itens: ${itensStr}. Total: ${formatPrice(pb.total)}. Previsão: 40-60 min.`;
+                                      window.open(`https://wa.me/55${tel}?text=${encodeURIComponent(msg)}`, "_blank");
+                                    }
+                                  }}
+                                  className="flex-1 rounded-xl font-black gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white"
+                                >
+                                  <Check className="h-3.5 w-3.5" />
+                                  Confirmar pedido
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="destructive"
+                                  onClick={() => { setRejectPedidoId(pb.id); setRejectMotivo(""); setRejectDialogOpen(true); }}
+                                  className="rounded-xl font-black gap-1.5"
+                                >
+                                  <XCircle className="h-3.5 w-3.5" />
+                                  Rejeitar
+                                </Button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {pedidosDeliveryAtivos.length === 0 && pedidosAguardandoConfirmacao.length === 0 ? (
                       <div className="flex flex-col items-center justify-center gap-3 py-20 text-muted-foreground">
                         <Truck className="h-12 w-12 opacity-20" />
                         <p className="text-sm font-semibold">Nenhum delivery ativo no momento</p>
                       </div>
-                    ) : (
+                    ) : pedidosDeliveryAtivos.length > 0 ? (
                       <div className="grid gap-3 grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
                         {pedidosDeliveryAtivos.map((pb) => {
                           const isPronto = pb.statusBalcao === "pronto";
@@ -1071,7 +1139,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                           );
                         })}
                       </div>
-                    )}
+                    ) : null}
                   </div>
                 )}
                 </div>
