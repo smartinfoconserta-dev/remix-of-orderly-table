@@ -549,7 +549,7 @@ const AdminPage = () => {
                     <Select value={editForm.categoria} onValueChange={(v) => setEditForm((f) => ({ ...f, categoria: v }))}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
-                        {categorias.map((c) => (
+                        {todasCategorias.map((c) => (
                           <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>
                         ))}
                       </SelectContent>
