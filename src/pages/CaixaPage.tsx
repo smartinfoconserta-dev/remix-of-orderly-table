@@ -221,6 +221,9 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
   const [rejectPedidoId, setRejectPedidoId] = useState<string | null>(null);
   const [rejectMotivo, setRejectMotivo] = useState("");
+  const [confirmTempoId, setConfirmTempoId] = useState<string | null>(null);
+  const [confirmTempo, setConfirmTempo] = useState("");
+  const [confirmTempoCustom, setConfirmTempoCustom] = useState("");
 
   const sistemaConfig = useMemo(() => getSistemaConfig(), []);
   const audioCtxRef = useRef<AudioContext | null>(null);
