@@ -1,14 +1,23 @@
-import type { Produto } from "@/data/menuData";
+import { type Produto, produtos as baseProdutos } from "@/data/menuData";
 
 const CARDAPIO_KEY = "orderly-cardapio-overrides-v1";
 const MESAS_CONFIG_KEY = "orderly-mesas-config-v1";
 const SISTEMA_CONFIG_KEY = "orderly-config-v1";
 const LICENCA_KEY = "orderly-licenca-v1";
+const CATEGORIAS_KEY = "orderly-categorias-v1";
+
+export interface CategoriaCustom {
+  id: string;
+  nome: string;
+  icone: string;
+  ordem: number;
+}
 
 export interface ProdutoOverride extends Produto {
   ativo: boolean;
   removido?: boolean;
   imagemBase64?: string;
+  disponivelDelivery?: boolean;
 }
 
 export interface MesasConfig {
@@ -149,4 +158,33 @@ export function applyCustomPrimaryColor() {
   document.documentElement.style.setProperty("--primary", `${hDeg} ${sPct}% ${lPct}%`);
   const fgL = lPct > 55 ? 10 : 98;
   document.documentElement.style.setProperty("--primary-foreground", `${hDeg} ${Math.round(sPct * 0.3)}% ${fgL}%`);
+}
+
+// --- Categorias Custom ---
+export function getCategoriasCustom(): CategoriaCustom[] {
+  try {
+    const raw = localStorage.getItem(CATEGORIAS_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function saveCategoriasCustom(cats: CategoriaCustom[]): void {
+  localStorage.setItem(CATEGORIAS_KEY, JSON.stringify(cats));
+}
+
+// --- Produtos Delivery ---
+export function getProdutosDelivery(): ProdutoOverride[] {
+  const overrides = getCardapioOverrides();
+  const base = baseProdutos.map((p) => {
+    const ov = overrides[p.id];
+    if (ov) return { ...p, ...ov };
+    return { ...p, ativo: true } as ProdutoOverride;
+  });
+  const customIds = Object.keys(overrides).filter((id) => !baseProdutos.some((p) => p.id === id));
+  const custom = customIds.map((id) => overrides[id]);
+  return [...base, ...custom].filter(
+    (p) => p.ativo === true && p.removido !== true && p.disponivelDelivery !== false,
+  );
 }

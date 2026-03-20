@@ -51,11 +51,14 @@ import {
   getLicencaConfig,
   saveLicencaConfig,
   applyCustomPrimaryColor,
+  getCategoriasCustom,
+  saveCategoriasCustom,
   type ProdutoOverride,
   type MesasConfig,
   type SistemaConfig,
   type LicencaConfig,
   type BannerConfig,
+  type CategoriaCustom,
 } from "@/lib/adminStorage";
 import { toast } from "sonner";
 
@@ -91,6 +94,16 @@ const AdminPage = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [catFilter, setCatFilter] = useState<string>("todas");
   const [removeTarget, setRemoveTarget] = useState<ProdutoOverride | null>(null);
+  const [categoriasCustom, setCategoriasCustom] = useState<CategoriaCustom[]>(getCategoriasCustom);
+  const [catDialogOpen, setCatDialogOpen] = useState(false);
+  const [catEditando, setCatEditando] = useState<CategoriaCustom | null>(null);
+  const [catNomeInput, setCatNomeInput] = useState("");
+
+  const todasCategorias = useMemo(() => {
+    const baseCats = categorias.map((c, i) => ({ ...c, ordem: i, _isDefault: true as const }));
+    const customCats = categoriasCustom.map((c) => ({ ...c, _isDefault: false as const }));
+    return [...baseCats, ...customCats];
+  }, [categoriasCustom]);
 
   const allProducts: ProdutoOverride[] = useMemo(() => {
     // Base products with overrides
@@ -116,6 +129,18 @@ const AdminPage = () => {
       if (!product) return prev;
       const existing = prev[id] || { ...product, ativo: true };
       const next = { ...prev, [id]: { ...existing, ativo: !existing.ativo } };
+      saveCardapioOverrides(next);
+      return next;
+    });
+  }, []);
+
+  const toggleDelivery = useCallback((id: string) => {
+    setOverrides((prev) => {
+      const product = baseProdutos.find((p) => p.id === id) || prev[id];
+      if (!product) return prev;
+      const existing = prev[id] || { ...product, ativo: true };
+      const current = existing.disponivelDelivery !== false;
+      const next = { ...prev, [id]: { ...existing, disponivelDelivery: !current } };
       saveCardapioOverrides(next);
       return next;
     });
@@ -176,6 +201,7 @@ const AdminPage = () => {
           imagem: editForm.imagem.trim(),
           imagemBase64: editForm.imagemBase64 || undefined,
           ativo: existing.ativo ?? true,
+          disponivelDelivery: editProduct.disponivelDelivery,
         },
       };
       saveCardapioOverrides(updated);
@@ -366,6 +392,45 @@ const AdminPage = () => {
               </Button>
             </div>
 
+            {/* ── Category management ── */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-black text-foreground">Categorias</h3>
+                <Button size="sm" variant="outline" className="rounded-xl font-bold gap-1 text-xs" onClick={() => { setCatEditando(null); setCatNomeInput(""); setCatDialogOpen(true); }}>
+                  <Plus className="h-3.5 w-3.5" /> Nova categoria
+                </Button>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {todasCategorias.map((c) => {
+                  const count = allProducts.filter((p) => p.categoria === c.id).length;
+                  return (
+                    <div key={c.id} className="flex items-center gap-1.5 rounded-xl border border-border bg-card px-3 py-1.5">
+                      <span className="text-xs font-bold text-foreground">{c.nome}</span>
+                      <span className="text-[10px] text-muted-foreground">({count})</span>
+                      {c._isDefault ? (
+                        <span className="rounded-md bg-secondary px-1.5 py-0.5 text-[9px] font-bold text-muted-foreground">Padrão</span>
+                      ) : (
+                        <>
+                          <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => { setCatEditando(c); setCatNomeInput(c.nome); setCatDialogOpen(true); }}>
+                            <Pencil className="h-3 w-3" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-5 w-5 text-destructive hover:bg-destructive/10" onClick={() => {
+                            if (count > 0) { toast.error("Remova os produtos desta categoria primeiro"); return; }
+                            const next = categoriasCustom.filter((cc) => cc.id !== c.id);
+                            saveCategoriasCustom(next);
+                            setCategoriasCustom(next);
+                            toast.success("Categoria removida");
+                          }}>
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
             {/* Category filter bar */}
             <div className="flex flex-wrap gap-2">
               <button
@@ -382,7 +447,7 @@ const AdminPage = () => {
               >
                 Todas ({allProducts.length})
               </button>
-              {categorias.map((c) => {
+              {todasCategorias.map((c) => {
                 const count = allProducts.filter((p) => p.categoria === c.id).length;
                 return (
                   <button
@@ -414,15 +479,16 @@ const AdminPage = () => {
                     <th className="px-4 py-3 text-left font-bold text-muted-foreground">Categoria</th>
                     <th className="px-4 py-3 text-right font-bold text-muted-foreground">Preço</th>
                     <th className="px-4 py-3 text-center font-bold text-muted-foreground">Ativo</th>
+                    <th className="px-4 py-3 text-center font-bold text-muted-foreground">Delivery</th>
                     <th className="px-4 py-3 text-center font-bold text-muted-foreground">Ações</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredProducts.length === 0 ? (
-                    <tr><td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">Nenhum produto encontrado.</td></tr>
+                    <tr><td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">Nenhum produto encontrado.</td></tr>
                   ) : (
                     filteredProducts.map((p, idx) => {
-                      const cat = categorias.find((c) => c.id === p.categoria);
+                      const cat = todasCategorias.find((c) => c.id === p.categoria);
                       return (
                         <tr key={p.id} className={`slide-up border-b border-border/50 last:border-0 ${!p.ativo ? "opacity-40" : ""}`} style={{ animationDelay: `${Math.min(idx * 30, 300)}ms`, animationFillMode: 'both' }}>
                           <td className="px-4 py-2">
@@ -437,6 +503,9 @@ const AdminPage = () => {
                           <td className="px-4 py-3 text-right font-bold text-foreground">{formatPrice(p.preco)}</td>
                           <td className="px-4 py-3 text-center">
                             <Switch checked={p.ativo} onCheckedChange={() => toggleAtivo(p.id)} />
+                          </td>
+                          <td className="px-4 py-3 text-center">
+                            <Switch checked={p.disponivelDelivery !== false} onCheckedChange={() => toggleDelivery(p.id)} />
                           </td>
                           <td className="px-4 py-3 text-center">
                             <div className="flex items-center justify-center gap-1">
@@ -481,7 +550,7 @@ const AdminPage = () => {
                     <Select value={editForm.categoria} onValueChange={(v) => setEditForm((f) => ({ ...f, categoria: v }))}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
-                        {categorias.map((c) => (
+                        {todasCategorias.map((c) => (
                           <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>
                         ))}
                       </SelectContent>
@@ -523,6 +592,13 @@ const AdminPage = () => {
                     <p className="text-[10px] font-bold text-muted-foreground pt-1">Ou cole uma URL</p>
                     <Input value={editForm.imagem} onChange={(e) => setEditForm((f) => ({ ...f, imagem: e.target.value }))} placeholder="https://..." />
                   </div>
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-bold text-muted-foreground">Disponível no delivery</label>
+                    <Switch
+                      checked={editProduct?.disponivelDelivery !== false}
+                      onCheckedChange={(v) => setEditProduct((prev) => prev ? { ...prev, disponivelDelivery: v } : prev)}
+                    />
+                  </div>
                   <div className="flex gap-3 pt-2">
                     <Button variant="outline" className="flex-1" onClick={() => setEditProduct(null)}>
                       <X className="mr-1 h-4 w-4" /> Cancelar
@@ -552,6 +628,44 @@ const AdminPage = () => {
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
+
+            {/* Category Dialog */}
+            <Dialog open={catDialogOpen} onOpenChange={(open) => { if (!open) setCatDialogOpen(false); }}>
+              <DialogContent className="sm:max-w-sm">
+                <DialogHeader>
+                  <DialogTitle>{catEditando ? "Editar categoria" : "Nova categoria"}</DialogTitle>
+                  <DialogDescription>{catEditando ? "Altere o nome da categoria." : "Informe o nome da nova categoria."}</DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4 pt-2">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-muted-foreground">Nome da categoria</label>
+                    <Input value={catNomeInput} onChange={(e) => setCatNomeInput(e.target.value)} placeholder="Ex.: Massas" maxLength={40} />
+                  </div>
+                  <div className="flex gap-3">
+                    <Button variant="outline" className="flex-1" onClick={() => setCatDialogOpen(false)}>Cancelar</Button>
+                    <Button className="flex-1" disabled={!catNomeInput.trim()} onClick={() => {
+                      if (!catNomeInput.trim()) return;
+                      if (catEditando) {
+                        const next = categoriasCustom.map((c) => c.id === catEditando.id ? { ...c, nome: catNomeInput.trim() } : c);
+                        saveCategoriasCustom(next);
+                        setCategoriasCustom(next);
+                        toast.success("Categoria atualizada");
+                      } else {
+                        const slug = catNomeInput.trim().toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
+                        const nova: CategoriaCustom = { id: `${slug}-${Date.now()}`, nome: catNomeInput.trim(), icone: "tag", ordem: todasCategorias.length };
+                        const next = [...categoriasCustom, nova];
+                        saveCategoriasCustom(next);
+                        setCategoriasCustom(next);
+                        toast.success("Categoria criada");
+                      }
+                      setCatDialogOpen(false);
+                    }}>
+                      <Save className="mr-1 h-4 w-4" /> Salvar
+                    </Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
           </div>
         )}
 
