@@ -278,6 +278,34 @@ const CartDrawer = ({
 
                 <div className="absolute inset-x-0 bottom-0 border-t border-border bg-card p-4 animate-fade-in">
                   <div className="space-y-3">
+                    {showParaViagem && (
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() => onParaViagemChange?.(false)}
+                          className={`flex-1 flex items-center justify-center gap-2 rounded-xl border-2 py-2.5 text-sm font-black transition-colors ${
+                            !paraViagem
+                              ? "border-primary bg-primary/10 text-primary"
+                              : "border-border bg-card text-muted-foreground"
+                          }`}
+                        >
+                          <Utensils className="h-4 w-4" />
+                          Comer aqui
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => onParaViagemChange?.(true)}
+                          className={`flex-1 flex items-center justify-center gap-2 rounded-xl border-2 py-2.5 text-sm font-black transition-colors ${
+                            paraViagem
+                              ? "border-amber-500 bg-amber-500/10 text-amber-500"
+                              : "border-border bg-card text-muted-foreground"
+                          }`}
+                        >
+                          <ShoppingBag className="h-4 w-4" />
+                          Para viagem
+                        </button>
+                      </div>
+                    )}
                     <div className="flex items-center justify-between">
                       <span className="text-base font-medium text-muted-foreground">Subtotal</span>
                       <span className="text-xl font-black text-foreground">{formatPrice(subtotal)}</span>
