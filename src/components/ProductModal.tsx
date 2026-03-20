@@ -59,15 +59,13 @@ const createPedidoAtual = (produtoId: string | null = null): PedidoAtual => ({
   observacao: "",
 });
 
-const getTipoOptions = (produto: Produto | null) => {
-  if (!produto) return ["Padrão da casa"];
+const getTipoOptions = (produto: Produto | null): string[] => {
+  if (!produto) return [];
   if (produto.tipoOptions?.length) return produto.tipoOptions;
-  if (produto.categoria === "lanches") return ["Tradicional", "Artesanal", "No ponto da casa"];
-  if (produto.categoria === "combos") return ["Completo", "Compartilhar", "Executivo"];
-  if (produto.categoria === "bebidas") return ["Gelada", "Sem gelo", "Temperatura ambiente"];
-  if (produto.categoria === "sobremesas") return ["Tradicional", "Servir agora", "Com calda extra"];
-  return ["Padrão da casa", "Porção para compartilhar", "Execução rápida"];
+  return [];
 };
+
+const categoriasComEmbalagem = ["lanches", "combos"];
 
 const isComboProduct = (produto: Produto | null) => produto?.categoria === "combos";
 
@@ -76,7 +74,12 @@ const isStepAvailable = (produto: Produto | null, step: StepId) => {
   if (step === "adicionais") return Boolean(produto.adicionais?.length);
   if (step === "bebida") return isComboProduct(produto) && Boolean((produto.bebidaOptions?.length ?? 0) || defaultBebidaOptions.length);
   if (step === "remover") return Boolean(produto.ingredientesRemoviveis?.length);
-  if (step === "tipo" || step === "embalagem" || step === "quantidade") return true;
+  if (step === "tipo") return getTipoOptions(produto).length > 0;
+  if (step === "embalagem") {
+    if (produto.embalagemOptions?.length) return true;
+    return categoriasComEmbalagem.includes(produto.categoria);
+  }
+  if (step === "quantidade") return true;
   return false;
 };
 
