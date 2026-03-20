@@ -287,6 +287,61 @@ const GerentePage = () => {
     }));
   }, [fechFiltrados]);
 
+  // New metrics
+  const horaDePico = useMemo(() => {
+    const map = new Map<string, number>();
+    fechFiltrados.forEach((f) => {
+      const h = f.criadoEmIso.slice(11, 13);
+      map.set(h, (map.get(h) || 0) + f.total);
+    });
+    if (map.size === 0) return "—";
+    const best = [...map.entries()].sort((a, b) => b[1] - a[1])[0][0];
+    return `${best}h-${String(Number(best) + 1).padStart(2, "0")}h`;
+  }, [fechFiltrados]);
+
+  const cancelamentos = useMemo(() => {
+    return allEventos.filter((e) => {
+      const d = new Date(e.criadoEmIso);
+      return d >= dateRange.start && d <= dateRange.end && (e.acao === "cancelar_item" || e.acao === "cancelar_pedido");
+    }).length;
+  }, [allEventos, dateRange]);
+
+  const pedidosPorGarcom = useMemo(() => {
+    const map = new Map<string, { nome: string; pedidos: number; mesas: Set<string> }>();
+    allEventos.filter((e) => {
+      const d = new Date(e.criadoEmIso);
+      return d >= dateRange.start && d <= dateRange.end && e.acao === "lancar_pedido";
+    }).forEach((e) => {
+      const nome = e.garcomNome || "Desconhecido";
+      const existing = map.get(nome) || { nome, pedidos: 0, mesas: new Set<string>() };
+      existing.pedidos += 1;
+      if (e.mesaId) existing.mesas.add(e.mesaId);
+      map.set(nome, existing);
+    });
+    return [...map.values()].sort((a, b) => b.pedidos - a.pedidos);
+  }, [allEventos, dateRange]);
+
+  const tempoMedioMesa = useMemo(() => {
+    if (fechFiltrados.length === 0) return 0;
+    // Estimate: use time between first and last event per mesa, or fallback to 45min avg
+    // Since we don't have opening time, use a simple estimate from fechamentos
+    // We'll check if there's a pattern in eventos for mesa opening
+    const tempos: number[] = [];
+    fechFiltrados.forEach((f) => {
+      const fechTime = new Date(f.criadoEmIso).getTime();
+      // Find earliest event for this mesa in the period
+      const mesaEvents = allEventos.filter(
+        (e) => e.mesaId === f.mesaId && new Date(e.criadoEmIso).getTime() <= fechTime && new Date(e.criadoEmIso) >= dateRange.start
+      );
+      if (mesaEvents.length > 0) {
+        const earliest = Math.min(...mesaEvents.map((e) => new Date(e.criadoEmIso).getTime()));
+        const diff = (fechTime - earliest) / 60000;
+        if (diff > 0 && diff < 480) tempos.push(diff);
+      }
+    });
+    return tempos.length > 0 ? Math.round(tempos.reduce((a, b) => a + b, 0) / tempos.length) : 0;
+  }, [fechFiltrados, allEventos, dateRange]);
+
   /* ── auth guard ── */
   if (!currentGerente) {
     return (
