@@ -147,7 +147,7 @@ const GerentePage = () => {
     allEventos,
     allMovimentacoesCaixa,
   } = useRestaurant();
-  const { currentGerente, logout, verifyManagerAccess, getActiveProfilesByRole, createUser, deactivateUser, activateUser } = useAuth();
+  const { currentGerente, logout, verifyManagerAccess, getActiveProfilesByRole, createUser, deactivateUser } = useAuth();
   const [logFilter, setLogFilter] = useState("all");
   const [pinVerificado, setPinVerificado] = useState(false);
   const [pinInput, setPinInput] = useState("");
