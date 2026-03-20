@@ -256,6 +256,8 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
 
   /* ── active balcão orders for grid ── */
   const pedidosBalcaoAtivos = useMemo(() => pedidosBalcao.filter((p) => p.statusBalcao !== "pago"), [pedidosBalcao]);
+  const pedidosDeliveryAtivos = useMemo(() => pedidosBalcaoAtivos.filter((p) => p.origem === "delivery"), [pedidosBalcaoAtivos]);
+  const pedidosBalcaoSoAtivos = useMemo(() => pedidosBalcaoAtivos.filter((p) => p.origem === "balcao"), [pedidosBalcaoAtivos]);
 
   /* ── callbacks ── */
   const resetCloseAccountState = useCallback(() => {
