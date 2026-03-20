@@ -262,6 +262,11 @@ const AdminPage = () => {
   // --- Configurações state ---
   const [sistemaConfig, setSistemaConfig] = useState<SistemaConfig>(getSistemaConfig);
 
+  // --- Bairros state ---
+  const [bairros, setBairros] = useState<Bairro[]>(getBairros);
+  const [novoBairroNome, setNovoBairroNome] = useState("");
+  const [novoBairroTaxa, setNovoBairroTaxa] = useState("");
+
   const saveSistema = useCallback(() => {
     saveSistemaConfig(sistemaConfig);
     applyCustomPrimaryColor();
