@@ -591,6 +591,13 @@ const AdminPage = () => {
                     <p className="text-[10px] font-bold text-muted-foreground pt-1">Ou cole uma URL</p>
                     <Input value={editForm.imagem} onChange={(e) => setEditForm((f) => ({ ...f, imagem: e.target.value }))} placeholder="https://..." />
                   </div>
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-bold text-muted-foreground">Disponível no delivery</label>
+                    <Switch
+                      checked={editProduct?.disponivelDelivery !== false}
+                      onCheckedChange={(v) => setEditProduct((prev) => prev ? { ...prev, disponivelDelivery: v } : prev)}
+                    />
+                  </div>
                   <div className="flex gap-3 pt-2">
                     <Button variant="outline" className="flex-1" onClick={() => setEditProduct(null)}>
                       <X className="mr-1 h-4 w-4" /> Cancelar
