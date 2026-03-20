@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { LogOut, Plus, Pencil, Trash2, Phone, Mail, MapPin, DollarSign, Users, TrendingUp, TrendingDown, Receipt, Eye, AlertTriangle, ShieldOff, RefreshCw } from "lucide-react";
+import { LogOut, Plus, Pencil, Trash2, Phone, Mail, MapPin, DollarSign, Users, TrendingUp, TrendingDown, Receipt, Eye, AlertTriangle, ShieldOff, RefreshCw, Search } from "lucide-react";
 import type { Pagamento } from "@/lib/masterStorage";
 import { toast } from "sonner";
 import {
@@ -106,6 +106,12 @@ const MasterPage = () => {
 
   const [detailClient, setDetailClient] = useState<Cliente | null>(null);
   const [pagForm, setPagForm] = useState({ valor: 0, metodo: "pix", data: todayStr(), observacao: "" });
+
+  // Filters
+  const [busca, setBusca] = useState("");
+  const [filtroStatus, setFiltroStatus] = useState<"todos" | "ativos" | "bloqueados" | "vencidos">("todos");
+  const [filtroPlano, setFiltroPlano] = useState("todos");
+  const [activeTab, setActiveTab] = useState("clientes");
   
 
   const refresh = () => { setClientes(getClientes()); setDespesas(getDespesas()); };
@@ -181,6 +187,61 @@ const MasterPage = () => {
   const receitaPrevista = clientes.filter((c) => c.ativo).reduce((s, c) => s + (c.valorMensalidade || 0), 0);
   const clientesAtivos = clientes.filter((c) => c.ativo).length;
 
+  // Filtered clients
+  const filteredClientes = useMemo(() => {
+    const hoje = new Date(todayStr());
+    return clientes.filter((c) => {
+      // Search
+      if (busca) {
+        const q = busca.toLowerCase();
+        if (!(c.nomeRestaurante.toLowerCase().includes(q) || (c.cidade || "").toLowerCase().includes(q) || c.nomeContato.toLowerCase().includes(q))) return false;
+      }
+      // Status
+      if (filtroStatus === "ativos" && !c.ativo) return false;
+      if (filtroStatus === "bloqueados" && c.ativo) return false;
+      if (filtroStatus === "vencidos" && !(c.dataVencimento && new Date(c.dataVencimento) < hoje)) return false;
+      // Plano
+      if (filtroPlano !== "todos" && c.plano !== filtroPlano) return false;
+      return true;
+    });
+  }, [clientes, busca, filtroStatus, filtroPlano]);
+
+  // Alert: clients expiring in 3 days or already expired
+  const clientesCriticos = useMemo(() => {
+    const hoje = new Date(todayStr());
+    const em3dias = new Date(hoje);
+    em3dias.setDate(em3dias.getDate() + 3);
+    return clientes.filter((c) => c.dataVencimento && new Date(c.dataVencimento) <= em3dias);
+  }, [clientes]);
+
+  // Vencimento helpers for cards
+  const getVencAlert = (c: { dataVencimento: string }) => {
+    if (!c.dataVencimento) return null;
+    const hoje = new Date(todayStr());
+    const d = new Date(c.dataVencimento);
+    if (d < hoje) return "vencido";
+    const em7 = new Date(hoje);
+    em7.setDate(em7.getDate() + 7);
+    if (d <= em7) return "vence_breve";
+    return null;
+  };
+
+  // Chart data: last 6 months
+  const chartData = useMemo(() => {
+    const meses: { label: string; key: string; receita: number; despesa: number }[] = [];
+    const hoje = new Date();
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(hoje.getFullYear(), hoje.getMonth() - i, 1);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      const label = d.toLocaleString("pt-BR", { month: "short" }).replace(".", "");
+      const receita = clientes.filter((c) => c.ativo).reduce((s, c) => s + (c.valorMensalidade || 0), 0);
+      const despesa = despesas.filter((dp) => dp.data.startsWith(key)).reduce((s, dp) => s + dp.valor, 0);
+      meses.push({ label, key, receita, despesa });
+    }
+    return meses;
+  }, [clientes, despesas]);
+  const chartMax = Math.max(...chartData.flatMap((m) => [m.receita, m.despesa]), 1);
+
   const handleRegistrarDespesa = () => {
     if (!novaDespesa.descricao.trim()) { toast.error("Preencha a descrição."); return; }
     if (!novaDespesa.valor || novaDespesa.valor <= 0) { toast.error("Informe um valor válido."); return; }
@@ -212,30 +273,63 @@ const MasterPage = () => {
           <Button variant="outline" size="sm" onClick={() => setAuthed(false)}><LogOut className="w-4 h-4 mr-1" /> Sair</Button>
         </div>
 
-        <Tabs defaultValue="clientes" className="w-full">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="w-full grid grid-cols-3">
             <TabsTrigger value="clientes"><Users className="w-4 h-4 mr-1" />Clientes</TabsTrigger>
             <TabsTrigger value="financeiro"><DollarSign className="w-4 h-4 mr-1" />Financeiro</TabsTrigger>
             <TabsTrigger value="cobrancas"><AlertTriangle className="w-4 h-4 mr-1" />Cobranças</TabsTrigger>
           </TabsList>
 
+          {/* Alert banner */}
+          {clientesCriticos.length > 0 && (
+            <div className="mt-3 rounded-xl bg-orange-500/15 border border-orange-500/30 p-3 flex items-center justify-between gap-3 flex-wrap">
+              <p className="text-sm font-semibold text-orange-400 flex items-center gap-2"><AlertTriangle className="w-4 h-4" />{clientesCriticos.length} cliente(s) precisam de atenção — veja a aba Cobranças</p>
+              <Button size="sm" variant="outline" className="border-orange-500/50 text-orange-400 hover:bg-orange-500/20" onClick={() => setActiveTab("cobrancas")}>Ver cobranças</Button>
+            </div>
+          )}
+
           {/* ========== ABA CLIENTES ========== */}
           <TabsContent value="clientes" className="space-y-4 mt-4">
-            <div className="flex justify-end">
-              <Button onClick={openCreate}><Plus className="w-4 h-4 mr-1" /> Novo cliente</Button>
+            {/* Search & Filters */}
+            <div className="space-y-3">
+              <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
+                <div className="relative flex-1 w-full sm:max-w-sm">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input placeholder="Buscar por nome, cidade ou contato..." className="pl-9" value={busca} onChange={(e) => setBusca(e.target.value)} />
+                </div>
+                <Button onClick={openCreate}><Plus className="w-4 h-4 mr-1" /> Novo cliente</Button>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                {(["todos", "ativos", "bloqueados", "vencidos"] as const).map((s) => (
+                  <Button key={s} size="sm" variant={filtroStatus === s ? "default" : "outline"} onClick={() => setFiltroStatus(s)} className="capitalize">{s}</Button>
+                ))}
+                <Select value={filtroPlano} onValueChange={setFiltroPlano}>
+                  <SelectTrigger className="w-40 h-8"><SelectValue placeholder="Plano" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="todos">Todos os planos</SelectItem>
+                    {PLANOS.map((p) => <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+                <span className="text-xs text-muted-foreground ml-auto">{filteredClientes.length} de {clientes.length} clientes</span>
+              </div>
             </div>
             <div className="grid gap-4">
-              {clientes.map((c) => (
+              {filteredClientes.map((c) => {
+                const vencAlert = getVencAlert(c);
+                return (
                 <div key={c.id} className="rounded-2xl border bg-card p-5 space-y-3">
-                  <div className="flex flex-col md:flex-row md:items-center gap-2 justify-between">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <p className="font-black text-lg text-foreground cursor-pointer hover:underline" onClick={() => openDetail(c)}>{c.nomeRestaurante}</p>
-                      {c.segmento && <Badge variant="secondary">{SEGMENTO_LABELS[c.segmento] || c.segmento}</Badge>}
-                      {c.plano && <Badge className={PLANO_BADGE_CLASS[c.plano] || "bg-muted text-muted-foreground"}>{PLANO_LABELS[c.plano] || c.plano}</Badge>}
+                  <div className="flex flex-col md:flex-row md:items-start gap-2 justify-between">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="font-black text-lg text-foreground cursor-pointer hover:underline" onClick={() => openDetail(c)}>{c.nomeRestaurante}</p>
+                        {c.plano && <Badge className={PLANO_BADGE_CLASS[c.plano] || "bg-muted text-muted-foreground"}>{PLANO_LABELS[c.plano] || c.plano}</Badge>}
+                        <Badge className={c.ativo ? "bg-emerald-600 hover:bg-emerald-600 text-white" : "bg-destructive hover:bg-destructive text-destructive-foreground"}>{c.ativo ? "Ativo" : "Bloqueado"}</Badge>
+                        {vencAlert === "vencido" && <Badge className="bg-destructive hover:bg-destructive text-destructive-foreground">Vencido</Badge>}
+                        {vencAlert === "vence_breve" && <Badge className="bg-yellow-600 hover:bg-yellow-600 text-white">Vence em breve</Badge>}
+                      </div>
+                      {c.segmento && <p className="text-xs text-muted-foreground">{SEGMENTO_LABELS[c.segmento] || c.segmento}</p>}
                     </div>
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <Badge className={c.ativo ? "bg-emerald-600 hover:bg-emerald-600 text-white" : "bg-destructive hover:bg-destructive text-destructive-foreground"}>{c.ativo ? "Ativo" : "Bloqueado"}</Badge>
-                      {isVencido(c.dataVencimento) && <Badge className="bg-destructive hover:bg-destructive text-destructive-foreground">Vencido</Badge>}
+                    <div className="flex items-center gap-1 flex-wrap shrink-0">
                       <Switch checked={c.ativo} onCheckedChange={() => toggleAtivo(c)} />
                       <Button variant="ghost" size="icon" onClick={() => openEdit(c)}><Pencil className="w-4 h-4" /></Button>
                       <Button variant="ghost" size="icon" className="text-destructive" onClick={() => setRemoveId(c.id)}><Trash2 className="w-4 h-4" /></Button>
@@ -253,8 +347,9 @@ const MasterPage = () => {
                     <span>Licença: {c.dataVencimento || "—"}</span>
                   </div>
                 </div>
-              ))}
-              {clientes.length === 0 && <p className="text-center text-muted-foreground py-8">Nenhum cliente cadastrado.</p>}
+              );
+              })}
+              {filteredClientes.length === 0 && <p className="text-center text-muted-foreground py-8">{clientes.length === 0 ? "Nenhum cliente cadastrado." : "Nenhum cliente encontrado com os filtros atuais."}</p>}
             </div>
           </TabsContent>
 
@@ -277,6 +372,32 @@ const MasterPage = () => {
               <div className="rounded-2xl border bg-card p-4 space-y-1">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground"><Users className="w-4 h-4" />Clientes ativos</div>
                 <p className="text-xl font-black text-foreground">{clientesAtivos}</p>
+              </div>
+            </div>
+
+            {/* Gráfico de barras CSS */}
+            <div className="rounded-2xl border bg-card p-5 space-y-4">
+              <h2 className="text-lg font-black text-foreground">Receita vs Despesas — últimos 6 meses</h2>
+              <div className="flex items-end gap-3 h-48 overflow-x-auto">
+                {chartData.map((m) => (
+                  <div key={m.key} className="flex flex-col items-center gap-1 flex-1 min-w-[60px]">
+                    <div className="flex items-end gap-1 h-36 w-full justify-center">
+                      <div className="flex flex-col items-center gap-0.5 w-1/2">
+                        <span className="text-[10px] text-emerald-500 font-bold">{m.receita > 0 ? `R$${(m.receita / 1000).toFixed(1)}k` : ""}</span>
+                        <div className="w-full rounded-t bg-emerald-500/80" style={{ height: `${Math.max((m.receita / chartMax) * 128, m.receita > 0 ? 4 : 0)}px` }} />
+                      </div>
+                      <div className="flex flex-col items-center gap-0.5 w-1/2">
+                        <span className="text-[10px] text-destructive font-bold">{m.despesa > 0 ? `R$${(m.despesa / 1000).toFixed(1)}k` : ""}</span>
+                        <div className="w-full rounded-t bg-destructive/80" style={{ height: `${Math.max((m.despesa / chartMax) * 128, m.despesa > 0 ? 4 : 0)}px` }} />
+                      </div>
+                    </div>
+                    <span className="text-xs text-muted-foreground capitalize">{m.label}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-emerald-500/80" /> Receita</span>
+                <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-destructive/80" /> Despesas</span>
               </div>
             </div>
 
