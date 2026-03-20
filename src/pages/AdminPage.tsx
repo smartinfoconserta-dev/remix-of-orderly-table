@@ -62,6 +62,7 @@ import {
   type BannerConfig,
   type CategoriaCustom,
 } from "@/lib/adminStorage";
+import { getBairros, saveBairros, type Bairro } from "@/lib/deliveryStorage";
 import { toast } from "sonner";
 
 type AdminTab = "cardapio" | "mesas" | "configuracoes" | "licenca" | "usuarios";
