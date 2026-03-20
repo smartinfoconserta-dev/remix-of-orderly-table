@@ -195,6 +195,37 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
   const [balcaoItens, setBalcaoItens] = useState<Record<string, number>>({});
 
   const sistemaConfig = useMemo(() => getSistemaConfig(), []);
+  const cardapioOverrides = useMemo(() => getCardapioOverrides(), []);
+
+  /* ── Active products for balcão/delivery ── */
+  const produtosAtivos = useMemo(() => {
+    return menuProdutos.filter((p) => {
+      const ov = cardapioOverrides[p.id];
+      if (ov && !ov.ativo) return false;
+      if (ov && ov.removido) return false;
+      return true;
+    }).map((p) => {
+      const ov = cardapioOverrides[p.id];
+      return {
+        ...p,
+        nome: ov?.nome ?? p.nome,
+        preco: ov?.preco ?? p.preco,
+      };
+    });
+  }, [cardapioOverrides]);
+
+  const categoriasAtivas = useMemo(() => {
+    const catIds = new Set(produtosAtivos.map((p) => p.categoria));
+    return menuCategorias.filter((c) => catIds.has(c.id));
+  }, [produtosAtivos]);
+
+  const balcaoSubtotal = useMemo(() => {
+    return Object.entries(balcaoItens).reduce((acc, [prodId, qty]) => {
+      if (qty <= 0) return acc;
+      const prod = produtosAtivos.find((p) => p.id === prodId);
+      return acc + (prod ? prod.preco * qty : 0);
+    }, 0);
+  }, [balcaoItens, produtosAtivos]);
 
   const mesa = mesaSelecionada ? mesas.find((item) => item.id === mesaSelecionada) ?? null : null;
   const currentOperator = accessMode === "gerente" ? currentGerente : currentCaixa;
