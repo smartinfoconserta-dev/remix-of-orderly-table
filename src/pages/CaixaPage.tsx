@@ -987,14 +987,19 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                       <div className="grid gap-3 grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
                         {pedidosDeliveryAtivos.map((pb) => {
                           const isPronto = pb.statusBalcao === "pronto";
+                          const isSaiu = pb.statusBalcao === "saiu";
+                          const isEntregue = pb.statusBalcao === "entregue";
+                          const borderClass = isPronto
+                            ? "border-status-consumo/40 bg-status-consumo/5 animate-pulse"
+                            : isSaiu
+                            ? "border-blue-500/40 bg-blue-500/5"
+                            : isEntregue
+                            ? "border-muted bg-muted/20"
+                            : "border-purple-500/30 bg-purple-500/5";
                           return (
                             <div
                               key={pb.id}
-                              className={`rounded-2xl border p-4 space-y-3 transition-colors ${
-                                isPronto
-                                  ? "border-status-consumo/40 bg-status-consumo/5 animate-pulse"
-                                  : "border-purple-500/30 bg-purple-500/5"
-                              }`}
+                              className={`rounded-2xl border p-4 space-y-3 transition-colors ${borderClass}`}
                             >
                               <div className="flex items-start justify-between">
                                 <div className="min-w-0 flex-1">
