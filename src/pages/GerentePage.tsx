@@ -71,6 +71,27 @@ const actionLabels: Record<string, string> = {
   fechamento_dia: "Fechamento do dia",
 };
 
+const RELEVANT_LOG_ACTIONS = new Set([
+  "fechar_conta",
+  "abertura_caixa",
+  "fechamento_dia",
+  "cancelar_pedido",
+  "cancelar_item",
+  "zerar_mesa",
+]);
+
+const formatDateHeader = (dateStr: string): string => {
+  const date = new Date(dateStr + "T00:00:00");
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const yesterday = new Date(today);
+  yesterday.setDate(today.getDate() - 1);
+
+  if (date.getTime() === today.getTime()) return "Hoje";
+  if (date.getTime() === yesterday.getTime()) return "Ontem";
+  return date.toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long" });
+};
+
 const getEventDotColor = (acao?: string) => {
   if (!acao) return "bg-muted-foreground";
   if (acao === "pedido_cliente" || acao === "chamar_garcom") return "bg-emerald-500";

@@ -376,7 +376,7 @@ const AdminPage = () => {
             </div>
 
             {/* Products table */}
-            <div className="overflow-hidden rounded-2xl border border-border bg-card">
+            <div className="overflow-hidden rounded-2xl border border-border bg-card" data-admin-product-table>
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-border bg-secondary/50">
