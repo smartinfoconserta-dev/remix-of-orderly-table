@@ -14,7 +14,7 @@ const LOGO = sysConfig.logoUrl || "";
 const INITIALS = NOME_REST.slice(0, 2).toUpperCase();
 
 export default function MotoboyPage() {
-  const { pedidosBalcao } = useRestaurant();
+  const { pedidosBalcao, marcarBalcaoSaiu, marcarBalcaoEntregue } = useRestaurant();
   const [view, setView] = useState<"login" | "entregas">(
     () => localStorage.getItem(MOTOBOY_KEY) ? "entregas" : "login"
   );
