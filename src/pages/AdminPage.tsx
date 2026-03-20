@@ -90,7 +90,7 @@ const AdminPage = () => {
   const [overrides, setOverrides] = useState<Record<string, ProdutoOverride>>(getCardapioOverrides);
   const [editProduct, setEditProduct] = useState<ProdutoOverride | null>(null);
   const [isNewProduct, setIsNewProduct] = useState(false);
-  const [editForm, setEditForm] = useState({ nome: "", descricao: "", preco: "", categoria: "", imagem: "", imagemBase64: "" });
+  const [editForm, setEditForm] = useState({ nome: "", descricao: "", preco: "", categoria: "", imagem: "", imagemBase64: "", tipoOptionsStr: "", embalagemOptionsStr: "" });
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [catFilter, setCatFilter] = useState<string>("todas");
   const [removeTarget, setRemoveTarget] = useState<ProdutoOverride | null>(null);
@@ -156,6 +156,8 @@ const AdminPage = () => {
       categoria: product.categoria,
       imagem: product.imagem,
       imagemBase64: product.imagemBase64 || "",
+      tipoOptionsStr: product.tipoOptions?.join(", ") ?? "",
+      embalagemOptionsStr: product.embalagemOptions?.join(", ") ?? "",
     });
   }, []);
 
@@ -172,7 +174,7 @@ const AdminPage = () => {
     };
     setEditProduct(newProduct);
     setIsNewProduct(true);
-    setEditForm({ nome: "", descricao: "", preco: "", categoria: newProduct.categoria, imagem: "", imagemBase64: "" });
+    setEditForm({ nome: "", descricao: "", preco: "", categoria: newProduct.categoria, imagem: "", imagemBase64: "", tipoOptionsStr: "", embalagemOptionsStr: "" });
   }, []);
 
   const saveEdit = useCallback(() => {
@@ -202,6 +204,8 @@ const AdminPage = () => {
           imagemBase64: editForm.imagemBase64 || undefined,
           ativo: existing.ativo ?? true,
           disponivelDelivery: editProduct.disponivelDelivery,
+          tipoOptions: editForm.tipoOptionsStr.trim() ? editForm.tipoOptionsStr.split(",").map((s) => s.trim()).filter(Boolean) : undefined,
+          embalagemOptions: editForm.embalagemOptionsStr.trim() ? editForm.embalagemOptionsStr.split(",").map((s) => s.trim()).filter(Boolean) : undefined,
         },
       };
       saveCardapioOverrides(updated);
@@ -555,6 +559,24 @@ const AdminPage = () => {
                         ))}
                       </SelectContent>
                     </Select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-muted-foreground">Opções de tipo de preparo</label>
+                    <Input
+                      value={editForm.tipoOptionsStr}
+                      onChange={(e) => setEditForm((f) => ({ ...f, tipoOptionsStr: e.target.value }))}
+                      placeholder="Tradicional, Artesanal, No ponto da casa"
+                    />
+                    <p className="text-[10px] text-muted-foreground">Separadas por vírgula. Se vazio, etapa não aparece.</p>
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-muted-foreground">Opções de embalagem</label>
+                    <Input
+                      value={editForm.embalagemOptionsStr}
+                      onChange={(e) => setEditForm((f) => ({ ...f, embalagemOptionsStr: e.target.value }))}
+                      placeholder="Consumir na mesa, Para viagem"
+                    />
+                    <p className="text-[10px] text-muted-foreground">Separadas por vírgula. Se vazio, usa padrão para lanches/combos.</p>
                   </div>
                   {/* Photo upload + URL */}
                   <div className="space-y-2">

@@ -59,15 +59,13 @@ const createPedidoAtual = (produtoId: string | null = null): PedidoAtual => ({
   observacao: "",
 });
 
-const getTipoOptions = (produto: Produto | null) => {
-  if (!produto) return ["Padrão da casa"];
+const getTipoOptions = (produto: Produto | null): string[] => {
+  if (!produto) return [];
   if (produto.tipoOptions?.length) return produto.tipoOptions;
-  if (produto.categoria === "lanches") return ["Tradicional", "Artesanal", "No ponto da casa"];
-  if (produto.categoria === "combos") return ["Completo", "Compartilhar", "Executivo"];
-  if (produto.categoria === "bebidas") return ["Gelada", "Sem gelo", "Temperatura ambiente"];
-  if (produto.categoria === "sobremesas") return ["Tradicional", "Servir agora", "Com calda extra"];
-  return ["Padrão da casa", "Porção para compartilhar", "Execução rápida"];
+  return [];
 };
+
+const categoriasComEmbalagem = ["lanches", "combos"];
 
 const isComboProduct = (produto: Produto | null) => produto?.categoria === "combos";
 
@@ -76,7 +74,12 @@ const isStepAvailable = (produto: Produto | null, step: StepId) => {
   if (step === "adicionais") return Boolean(produto.adicionais?.length);
   if (step === "bebida") return isComboProduct(produto) && Boolean((produto.bebidaOptions?.length ?? 0) || defaultBebidaOptions.length);
   if (step === "remover") return Boolean(produto.ingredientesRemoviveis?.length);
-  if (step === "tipo" || step === "embalagem" || step === "quantidade") return true;
+  if (step === "tipo") return getTipoOptions(produto).length > 0;
+  if (step === "embalagem") {
+    if (produto.embalagemOptions?.length) return true;
+    return categoriasComEmbalagem.includes(produto.categoria);
+  }
+  if (step === "quantidade") return true;
   return false;
 };
 
@@ -535,7 +538,7 @@ const ProductModal = ({ produto, onClose, onAdd, isGarcomMobile = false }: Props
         className={
           isGarcomMobile
             ? "fixed bottom-0 left-0 right-0 top-auto z-[70] w-full max-h-[90dvh] max-w-none translate-x-0 translate-y-0 gap-0 overflow-hidden rounded-t-[2rem] rounded-b-none border-border bg-card p-0"
-            : "max-h-[94vh] max-w-6xl overflow-hidden rounded-[2rem] border-border bg-card p-0"
+            : "max-h-[94vh] max-w-6xl overflow-hidden rounded-[2rem] border-border bg-card p-0 max-md:fixed max-md:inset-0 max-md:max-h-[100dvh] max-md:max-w-none max-md:rounded-none max-md:translate-x-0 max-md:translate-y-0"
         }
       >
         <DialogTitle className="sr-only">Personalizar item do pedido</DialogTitle>
@@ -543,7 +546,7 @@ const ProductModal = ({ produto, onClose, onAdd, isGarcomMobile = false }: Props
           Personalize o item, adicione ao carrinho e volte ao fluxo de pedido sem perder o contexto da mesa.
         </DialogDescription>
         {produto && (
-          <div className={`flex flex-col overflow-hidden ${isGarcomMobile ? "max-h-[90dvh]" : "max-h-[94vh]"}`}>
+          <div className={`flex flex-col overflow-hidden ${isGarcomMobile ? "max-h-[90dvh]" : "max-h-[94vh] max-md:max-h-[100dvh]"}`}>
             {isGarcomMobile ? (
               <>
                 <div className="sticky top-0 z-20 border-b border-border bg-card/95 px-4 pb-3 pt-4 backdrop-blur-md">
