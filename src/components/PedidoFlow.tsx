@@ -823,43 +823,42 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
               return (
                 <article
                   key={card.id}
-                  className={`relative overflow-hidden rounded-[2rem] border border-border p-5 md:p-6 ${card.articleClassName}`}
+                  className="relative h-[160px] overflow-hidden rounded-2xl border border-border"
                 >
-                  <div className="absolute inset-0 bg-[linear-gradient(180deg,hsl(var(--background)/0.06)_0%,hsl(var(--background)/0.18)_100%)]" />
-                  <div className={`absolute -left-10 top-1/2 h-40 w-40 -translate-y-1/2 rounded-full blur-3xl ${card.ambientGlowClassName}`} />
-                  <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-foreground/12 to-transparent" />
+                  {/* Background: image or solid dark */}
+                  {card.bgImage ? (
+                    <img src={card.bgImage} alt="" className="absolute inset-0 h-full w-full object-cover" />
+                  ) : (
+                    <div className="absolute inset-0 bg-[hsl(var(--card))]" />
+                  )}
+                  {/* Dark overlay */}
+                  <div className="absolute inset-0 bg-black/55" />
 
-                  <div className="relative flex items-center justify-between gap-5">
-                    <div className="min-w-0 flex-1 space-y-5">
-                      <span className={`inline-flex rounded-full border px-4 py-1.5 text-[11px] font-bold uppercase tracking-[0.26em] ${card.badgeClassName}`}>
-                        {card.badge}
-                      </span>
-                      <div className="flex items-start gap-4">
-                        <div className={`flex h-[4.1rem] w-[4.1rem] shrink-0 items-center justify-center rounded-[1.35rem] ${card.iconWrapClassName}`}>
-                          <Icon className="h-7 w-7" />
-                        </div>
-                        <div className="min-w-0 max-w-[15rem] space-y-1.5 pt-1">
-                          <h2 className="text-[1.05rem] font-black leading-[1.05] tracking-tight text-foreground md:text-[1.25rem]">
-                            {card.title}
-                          </h2>
-                          <p className="text-sm leading-relaxed text-muted-foreground md:text-[0.98rem]">{card.subtitle}</p>
-                        </div>
+                  {/* Content */}
+                  <div className="relative flex h-full items-center justify-between gap-4 p-5">
+                    {/* Left: icon + text */}
+                    <div className="flex min-w-0 flex-1 items-start gap-3">
+                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/15 text-white backdrop-blur-sm">
+                        <Icon className="h-5 w-5" />
+                      </div>
+                      <div className="min-w-0 space-y-1 pt-0.5">
+                        <span className="inline-flex rounded-full border border-white/20 bg-white/10 px-3 py-0.5 text-[10px] font-bold uppercase tracking-widest text-white/90 backdrop-blur-sm">
+                          {card.badge}
+                        </span>
+                        <h2 className="text-[0.95rem] font-black leading-tight text-white md:text-base">
+                          {card.title}
+                        </h2>
+                        <p className="text-xs leading-snug text-white/70">{card.subtitle}</p>
                       </div>
                     </div>
-                    <div className="relative shrink-0">
-                      <div className={`absolute inset-x-5 bottom-1 h-10 rounded-full blur-2xl ${card.qrGlowClassName}`} />
-                      <div className="rounded-[1.9rem] border border-border bg-[linear-gradient(180deg,hsl(var(--background))_0%,hsl(var(--secondary))_100%)] p-3 shadow-[inset_0_1px_0_hsl(var(--foreground)/0.05),0_24px_50px_-28px_hsl(var(--foreground)/0.85)]">
-                        <div className="rounded-[1.45rem] bg-[hsl(var(--background)/0.9)] p-3 shadow-[inset_0_1px_0_hsl(var(--foreground)/0.05)]">
-                          <div className="rounded-[1.1rem] bg-white p-2.5">
-                            <img
-                              src={card.qrUrl}
-                              alt={`QR Code ${card.badge}`}
-                              className="h-[7.25rem] w-[7.25rem] rounded-[0.95rem] object-cover md:h-[7.75rem] md:w-[7.75rem]"
-                              loading="lazy"
-                            />
-                          </div>
-                        </div>
-                      </div>
+                    {/* Right: QR code */}
+                    <div className="shrink-0 rounded-xl bg-white p-2 shadow-lg">
+                      <img
+                        src={card.qrUrl}
+                        alt={`QR Code ${card.badge}`}
+                        className="h-24 w-24 rounded-lg object-cover"
+                        loading="lazy"
+                      />
                     </div>
                   </div>
                 </article>

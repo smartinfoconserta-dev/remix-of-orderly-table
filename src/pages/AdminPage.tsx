@@ -595,46 +595,95 @@ const AdminPage = () => {
               <p className="text-xs text-muted-foreground">Instagram e Wi-Fi exibidos na tela inicial do cliente</p>
             </div>
             <div className="surface-card max-w-lg space-y-5 rounded-2xl p-6">
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-muted-foreground">URL do Instagram</label>
-                <Input
-                  value={sistemaConfig.instagramUrl || ""}
-                  onChange={(e) => setSistemaConfig((c) => ({ ...c, instagramUrl: e.target.value }))}
-                  placeholder="https://instagram.com/seurestaurante"
-                />
-              </div>
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-muted-foreground">Senha do Wi-Fi</label>
-                <Input
-                  value={sistemaConfig.senhaWifi || ""}
-                  onChange={(e) => setSistemaConfig((c) => ({ ...c, senhaWifi: e.target.value }))}
-                  placeholder="Ex.: MinhaSenha123"
-                />
-              </div>
-              {(sistemaConfig.instagramUrl || sistemaConfig.senhaWifi) && (
-                <div className="flex gap-4">
-                  {sistemaConfig.instagramUrl && (
-                    <div className="text-center space-y-1">
-                      <p className="text-[10px] font-bold text-muted-foreground">Instagram</p>
-                      <img
-                        src={`https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(sistemaConfig.instagramUrl)}`}
-                        alt="QR Instagram"
-                        className="h-16 w-16 rounded-lg border border-border"
-                      />
-                    </div>
-                  )}
-                  {sistemaConfig.senhaWifi && (
-                    <div className="text-center space-y-1">
-                      <p className="text-[10px] font-bold text-muted-foreground">Wi-Fi</p>
-                      <img
-                        src={`https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(`WIFI:T:WPA;S:${sistemaConfig.nomeRestaurante};P:${sistemaConfig.senhaWifi};;`)}`}
-                        alt="QR Wi-Fi"
-                        className="h-16 w-16 rounded-lg border border-border"
-                      />
-                    </div>
-                  )}
+              {/* Instagram */}
+              <div className="space-y-3 rounded-xl border border-border p-4">
+                <p className="text-xs font-black uppercase tracking-wider text-muted-foreground">Instagram</p>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-muted-foreground">URL do Instagram</label>
+                  <Input
+                    value={sistemaConfig.instagramUrl || ""}
+                    onChange={(e) => setSistemaConfig((c) => ({ ...c, instagramUrl: e.target.value }))}
+                    placeholder="https://instagram.com/seurestaurante"
+                  />
                 </div>
-              )}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-muted-foreground">Imagem de fundo</label>
+                  <div className="flex items-center gap-3">
+                    {sistemaConfig.instagramBg && (
+                      <img src={sistemaConfig.instagramBg} alt="bg instagram" className="h-12 w-20 rounded-lg border border-border object-cover" />
+                    )}
+                    <label className="cursor-pointer rounded-lg border border-dashed border-border px-3 py-1.5 text-xs font-semibold text-muted-foreground hover:bg-accent/40">
+                      {sistemaConfig.instagramBg ? "Trocar" : "Upload"}
+                      <input type="file" accept="image/*" className="hidden" onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        const reader = new FileReader();
+                        reader.onload = () => setSistemaConfig((c) => ({ ...c, instagramBg: reader.result as string }));
+                        reader.readAsDataURL(file);
+                      }} />
+                    </label>
+                    {sistemaConfig.instagramBg && (
+                      <Button variant="ghost" size="sm" className="h-7 px-2 text-xs text-destructive" onClick={() => setSistemaConfig((c) => ({ ...c, instagramBg: "" }))}>
+                        <Trash2 className="mr-1 h-3 w-3" /> Remover
+                      </Button>
+                    )}
+                  </div>
+                </div>
+                {sistemaConfig.instagramUrl && (
+                  <div className="text-center space-y-1">
+                    <img
+                      src={`https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(sistemaConfig.instagramUrl)}`}
+                      alt="QR Instagram"
+                      className="h-16 w-16 rounded-lg border border-border"
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* Wi-Fi */}
+              <div className="space-y-3 rounded-xl border border-border p-4">
+                <p className="text-xs font-black uppercase tracking-wider text-muted-foreground">Wi-Fi</p>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-muted-foreground">Senha do Wi-Fi</label>
+                  <Input
+                    value={sistemaConfig.senhaWifi || ""}
+                    onChange={(e) => setSistemaConfig((c) => ({ ...c, senhaWifi: e.target.value }))}
+                    placeholder="Ex.: MinhaSenha123"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-muted-foreground">Imagem de fundo</label>
+                  <div className="flex items-center gap-3">
+                    {sistemaConfig.wifiBg && (
+                      <img src={sistemaConfig.wifiBg} alt="bg wifi" className="h-12 w-20 rounded-lg border border-border object-cover" />
+                    )}
+                    <label className="cursor-pointer rounded-lg border border-dashed border-border px-3 py-1.5 text-xs font-semibold text-muted-foreground hover:bg-accent/40">
+                      {sistemaConfig.wifiBg ? "Trocar" : "Upload"}
+                      <input type="file" accept="image/*" className="hidden" onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        const reader = new FileReader();
+                        reader.onload = () => setSistemaConfig((c) => ({ ...c, wifiBg: reader.result as string }));
+                        reader.readAsDataURL(file);
+                      }} />
+                    </label>
+                    {sistemaConfig.wifiBg && (
+                      <Button variant="ghost" size="sm" className="h-7 px-2 text-xs text-destructive" onClick={() => setSistemaConfig((c) => ({ ...c, wifiBg: "" }))}>
+                        <Trash2 className="mr-1 h-3 w-3" /> Remover
+                      </Button>
+                    )}
+                  </div>
+                </div>
+                {sistemaConfig.senhaWifi && (
+                  <div className="text-center space-y-1">
+                    <img
+                      src={`https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(`WIFI:T:WPA;S:${sistemaConfig.nomeRestaurante};P:${sistemaConfig.senhaWifi};;`)}`}
+                      alt="QR Wi-Fi"
+                      className="h-16 w-16 rounded-lg border border-border"
+                    />
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Banners */}
