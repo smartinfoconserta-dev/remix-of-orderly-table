@@ -14,6 +14,8 @@ import { toast } from "sonner";
 
 type Etapa = "identificacao" | "cardapio" | "confirmacao" | "sucesso";
 
+const normStr = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+
 const sysConfig = getSistemaConfig();
 const RESTAURANTE_NOME = sysConfig.nomeRestaurante || "Restaurante";
 const RESTAURANTE_LOGO = sysConfig.logoUrl || "";
