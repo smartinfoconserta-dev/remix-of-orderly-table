@@ -140,6 +140,7 @@ interface CriarPedidoBalcaoInput {
   formaPagamentoDelivery?: string;
   trocoParaQuanto?: number;
   observacaoGeral?: string;
+  taxaEntrega?: number;
 }
 
 interface RestaurantContextType {
