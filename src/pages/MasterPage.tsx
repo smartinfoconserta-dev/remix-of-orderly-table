@@ -451,7 +451,7 @@ const MasterPage = () => {
       </div>
 
       {/* Create/Edit Sheet */}
-      <Sheet open={dialogOpen} onOpenChange={setDialogOpen}>
+      <Sheet open={dialogOpen} onOpenChange={setDialogOpen} modal={false}>
         <SheetContent side="right" className="w-full sm:max-w-2xl overflow-y-auto">
           <SheetHeader><SheetTitle>{editId ? "Editar cliente" : "Novo cliente"}</SheetTitle></SheetHeader>
           <div className="space-y-5 mt-4">
