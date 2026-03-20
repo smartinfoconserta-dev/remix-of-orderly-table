@@ -57,6 +57,7 @@ const seedAdmin: StoredUser = {
   nome: "admin",
   pinHash: btoa("pin:1234").split("").reverse().join(""),
   ativo: true,
+  criadoEm: new Date().toISOString(),
 };
 
 const emptyState: AuthState = {
