@@ -1017,9 +1017,13 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                                 <span className={`shrink-0 rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-widest ${
                                   isPronto
                                     ? "border-status-consumo/25 bg-status-consumo/10 text-status-consumo"
+                                    : isSaiu
+                                    ? "border-blue-500/25 bg-blue-500/10 text-blue-400"
+                                    : isEntregue
+                                    ? "border-muted bg-muted/30 text-muted-foreground"
                                     : "border-amber-500/25 bg-amber-500/10 text-amber-400"
                                 }`}>
-                                  {isPronto ? "Pronto p/ entregar" : "Aberto"}
+                                  {isPronto ? "Pronto p/ entregar" : isSaiu ? `Saiu — ${pb.motoboyNome || ""}` : isEntregue ? "Entregue" : "Aberto"}
                                 </span>
                               </div>
                               <div className="text-xs text-muted-foreground space-y-0.5">
