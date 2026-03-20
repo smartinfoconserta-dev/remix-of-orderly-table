@@ -113,6 +113,24 @@ const MasterPage = () => {
   const isVencido = (d: string) => d && new Date(d) < new Date(todayStr());
   const ff = (key: string, value: any) => setForm((prev) => ({ ...prev, [key]: value }));
 
+  const openDetail = (c: Cliente) => {
+    setDetailClient(c);
+    setPagForm({ valor: c.valorMensalidade || 0, metodo: "pix", data: todayStr(), observacao: "" });
+  };
+
+  const handleRegistrarPagamento = () => {
+    if (!detailClient) return;
+    if (!pagForm.valor || pagForm.valor <= 0) { toast.error("Informe um valor válido."); return; }
+    const novoPag: Pagamento = { id: crypto.randomUUID(), data: pagForm.data, valor: pagForm.valor, metodo: pagForm.metodo, observacao: pagForm.observacao };
+    const hist = [...(detailClient.historicoPagamentos || []), novoPag];
+    updateCliente(detailClient.id, { historicoPagamentos: hist });
+    toast.success("Pagamento registrado.");
+    refresh();
+    const updated = getClientes().find((c) => c.id === detailClient.id);
+    if (updated) { setDetailClient(updated); }
+    setPagForm({ valor: detailClient.valorMensalidade || 0, metodo: "pix", data: todayStr(), observacao: "" });
+  };
+
   // Financeiro
   const mesAtual = todayStr().slice(0, 7);
   const despesasMes = despesas.filter((d) => d.data.startsWith(mesAtual)).sort((a, b) => b.data.localeCompare(a.data));
