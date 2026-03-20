@@ -43,10 +43,12 @@ import {
 } from "@/lib/tabletBinding";
 
 interface PedidoFlowProps {
-  modo: "cliente" | "garcom" | "caixa";
-  mesaId: string;
+  modo: "cliente" | "garcom" | "caixa" | "balcao" | "delivery";
+  mesaId?: string;
   garcomNome?: string;
+  clienteNome?: string;
   onBack?: () => void;
+  onPedidoConfirmado?: (itens: ItemCarrinho[], paraViagem: boolean) => void;
 }
 
 const sysConfig = getSistemaConfig();
