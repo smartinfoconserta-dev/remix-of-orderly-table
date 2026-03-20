@@ -1,5 +1,6 @@
 import { useState, useCallback } from "react";
 import { CheckCircle, Search, Loader2, ArrowLeft } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
