@@ -1043,7 +1043,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                 </div>
               </div>
             </div>
-          ) : (
+          ) : mesa ? (
             /* ─────────────── MESA DETAIL VIEW — DESKTOP 2-COL ─────────────── */
             <div className="mx-auto grid h-full max-w-[1600px] grid-cols-[2fr_3fr] gap-5 p-4 md:p-6 fade-in">
 
