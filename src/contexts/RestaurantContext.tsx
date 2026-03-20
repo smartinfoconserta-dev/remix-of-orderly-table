@@ -143,6 +143,7 @@ interface RestaurantContextType {
   eventos: EventoOperacional[];
   movimentacoesCaixa: MovimentacaoCaixa[];
   fechamentos: FechamentoConta[];
+  pedidosBalcao: PedidoRealizado[];
   caixaAberto: boolean;
   fundoTroco: number;
   allFechamentos: FechamentoConta[];
@@ -164,6 +165,8 @@ interface RestaurantContextType {
   registrarMovimentacaoCaixa: (input: MovimentacaoInput) => void;
   abrirCaixa: (fundoTroco: number, usuario: OperationalUser) => void;
   fecharCaixaDoDia: (usuario: OperationalUser) => void;
+  criarPedidoBalcao: (input: CriarPedidoBalcaoInput) => void;
+  marcarPedidoBalcaoPronto: (pedidoId: string) => void;
 }
 
 const _global = globalThis as unknown as { __restaurantCtx?: React.Context<RestaurantContextType | null> };
