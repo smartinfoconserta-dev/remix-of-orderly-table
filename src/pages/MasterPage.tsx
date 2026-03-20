@@ -77,6 +77,9 @@ const MasterPage = () => {
   const [despesas, setDespesas] = useState<Despesa[]>([]);
   const [novaDespesa, setNovaDespesa] = useState({ descricao: "", valor: 0, categoria: "gasolina", data: todayStr() });
 
+  const [detailClient, setDetailClient] = useState<Cliente | null>(null);
+  const [pagForm, setPagForm] = useState({ valor: 0, metodo: "pix", data: todayStr(), observacao: "" });
+
   const refresh = () => { setClientes(getClientes()); setDespesas(getDespesas()); };
 
   const handleLogin = () => {
