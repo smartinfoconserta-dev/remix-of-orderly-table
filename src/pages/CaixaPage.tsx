@@ -473,6 +473,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
       referencia: balcaoReferencia || undefined,
       formaPagamentoDelivery: balcaoFormaPag,
       trocoParaQuanto: balcaoFormaPag === "dinheiro" ? parseCurrencyInput(balcaoTroco) || undefined : undefined,
+      taxaEntrega: sistemaConfig.taxaEntrega ?? 0,
     });
     toast.success(`Pedido delivery enviado para ${balcaoClienteNome}`, { duration: 1600, icon: "🍽️" });
     setDeliveryConfirmOpen(false);
