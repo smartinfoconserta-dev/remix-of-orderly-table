@@ -273,30 +273,63 @@ const MasterPage = () => {
           <Button variant="outline" size="sm" onClick={() => setAuthed(false)}><LogOut className="w-4 h-4 mr-1" /> Sair</Button>
         </div>
 
-        <Tabs defaultValue="clientes" className="w-full">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="w-full grid grid-cols-3">
             <TabsTrigger value="clientes"><Users className="w-4 h-4 mr-1" />Clientes</TabsTrigger>
             <TabsTrigger value="financeiro"><DollarSign className="w-4 h-4 mr-1" />Financeiro</TabsTrigger>
             <TabsTrigger value="cobrancas"><AlertTriangle className="w-4 h-4 mr-1" />Cobranças</TabsTrigger>
           </TabsList>
 
+          {/* Alert banner */}
+          {clientesCriticos.length > 0 && (
+            <div className="mt-3 rounded-xl bg-orange-500/15 border border-orange-500/30 p-3 flex items-center justify-between gap-3 flex-wrap">
+              <p className="text-sm font-semibold text-orange-400 flex items-center gap-2"><AlertTriangle className="w-4 h-4" />{clientesCriticos.length} cliente(s) precisam de atenção — veja a aba Cobranças</p>
+              <Button size="sm" variant="outline" className="border-orange-500/50 text-orange-400 hover:bg-orange-500/20" onClick={() => setActiveTab("cobrancas")}>Ver cobranças</Button>
+            </div>
+          )}
+
           {/* ========== ABA CLIENTES ========== */}
           <TabsContent value="clientes" className="space-y-4 mt-4">
-            <div className="flex justify-end">
-              <Button onClick={openCreate}><Plus className="w-4 h-4 mr-1" /> Novo cliente</Button>
+            {/* Search & Filters */}
+            <div className="space-y-3">
+              <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
+                <div className="relative flex-1 w-full sm:max-w-sm">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input placeholder="Buscar por nome, cidade ou contato..." className="pl-9" value={busca} onChange={(e) => setBusca(e.target.value)} />
+                </div>
+                <Button onClick={openCreate}><Plus className="w-4 h-4 mr-1" /> Novo cliente</Button>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                {(["todos", "ativos", "bloqueados", "vencidos"] as const).map((s) => (
+                  <Button key={s} size="sm" variant={filtroStatus === s ? "default" : "outline"} onClick={() => setFiltroStatus(s)} className="capitalize">{s}</Button>
+                ))}
+                <Select value={filtroPlano} onValueChange={setFiltroPlano}>
+                  <SelectTrigger className="w-40 h-8"><SelectValue placeholder="Plano" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="todos">Todos os planos</SelectItem>
+                    {PLANOS.map((p) => <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+                <span className="text-xs text-muted-foreground ml-auto">{filteredClientes.length} de {clientes.length} clientes</span>
+              </div>
             </div>
             <div className="grid gap-4">
-              {clientes.map((c) => (
+              {filteredClientes.map((c) => {
+                const vencAlert = getVencAlert(c);
+                return (
                 <div key={c.id} className="rounded-2xl border bg-card p-5 space-y-3">
-                  <div className="flex flex-col md:flex-row md:items-center gap-2 justify-between">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <p className="font-black text-lg text-foreground cursor-pointer hover:underline" onClick={() => openDetail(c)}>{c.nomeRestaurante}</p>
-                      {c.segmento && <Badge variant="secondary">{SEGMENTO_LABELS[c.segmento] || c.segmento}</Badge>}
-                      {c.plano && <Badge className={PLANO_BADGE_CLASS[c.plano] || "bg-muted text-muted-foreground"}>{PLANO_LABELS[c.plano] || c.plano}</Badge>}
+                  <div className="flex flex-col md:flex-row md:items-start gap-2 justify-between">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="font-black text-lg text-foreground cursor-pointer hover:underline" onClick={() => openDetail(c)}>{c.nomeRestaurante}</p>
+                        {c.plano && <Badge className={PLANO_BADGE_CLASS[c.plano] || "bg-muted text-muted-foreground"}>{PLANO_LABELS[c.plano] || c.plano}</Badge>}
+                        <Badge className={c.ativo ? "bg-emerald-600 hover:bg-emerald-600 text-white" : "bg-destructive hover:bg-destructive text-destructive-foreground"}>{c.ativo ? "Ativo" : "Bloqueado"}</Badge>
+                        {vencAlert === "vencido" && <Badge className="bg-destructive hover:bg-destructive text-destructive-foreground">Vencido</Badge>}
+                        {vencAlert === "vence_breve" && <Badge className="bg-yellow-600 hover:bg-yellow-600 text-white">Vence em breve</Badge>}
+                      </div>
+                      {c.segmento && <p className="text-xs text-muted-foreground">{SEGMENTO_LABELS[c.segmento] || c.segmento}</p>}
                     </div>
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <Badge className={c.ativo ? "bg-emerald-600 hover:bg-emerald-600 text-white" : "bg-destructive hover:bg-destructive text-destructive-foreground"}>{c.ativo ? "Ativo" : "Bloqueado"}</Badge>
-                      {isVencido(c.dataVencimento) && <Badge className="bg-destructive hover:bg-destructive text-destructive-foreground">Vencido</Badge>}
+                    <div className="flex items-center gap-1 flex-wrap shrink-0">
                       <Switch checked={c.ativo} onCheckedChange={() => toggleAtivo(c)} />
                       <Button variant="ghost" size="icon" onClick={() => openEdit(c)}><Pencil className="w-4 h-4" /></Button>
                       <Button variant="ghost" size="icon" className="text-destructive" onClick={() => setRemoveId(c.id)}><Trash2 className="w-4 h-4" /></Button>
@@ -314,8 +347,9 @@ const MasterPage = () => {
                     <span>Licença: {c.dataVencimento || "—"}</span>
                   </div>
                 </div>
-              ))}
-              {clientes.length === 0 && <p className="text-center text-muted-foreground py-8">Nenhum cliente cadastrado.</p>}
+              );
+              })}
+              {filteredClientes.length === 0 && <p className="text-center text-muted-foreground py-8">{clientes.length === 0 ? "Nenhum cliente cadastrado." : "Nenhum cliente encontrado com os filtros atuais."}</p>}
             </div>
           </TabsContent>
 
