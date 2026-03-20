@@ -21,10 +21,10 @@ const App = () => {
       <Routes location={location}>
         <Route path="/" element={<Index />} />
         <Route path="/cliente" element={<ClientePage />} />
-        <Route path="/garcom" element={<GarcomPage />} />
-        <Route path="/mesa/:id" element={<MesaPage />} />
-        <Route path="/caixa" element={<CaixaPage accessMode="caixa" />} />
-        <Route path="/gerente" element={<GerentePage />} />
+        <Route path="/garcom" element={<ProtectedRoute requiredSession="garcom"><GarcomPage /></ProtectedRoute>} />
+        <Route path="/mesa/:id" element={<ProtectedRoute requiredSession="garcom"><MesaPage /></ProtectedRoute>} />
+        <Route path="/caixa" element={<ProtectedRoute requiredSession="caixa"><CaixaPage accessMode="caixa" /></ProtectedRoute>} />
+        <Route path="/gerente" element={<ProtectedRoute requiredSession="gerente"><GerentePage /></ProtectedRoute>} />
         <Route path="/cozinha" element={<CozinhaPage />} />
         <Route path="/admin" element={<AdminPage />} />
         <Route path="/master" element={<MasterPage />} />
