@@ -677,6 +677,44 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
 
                 {/* ═══ RIGHT: Activity + Movimentações (30%) ═══ */}
                 <div className="flex flex-[3] flex-col border-l border-border bg-card/50 overflow-hidden">
+                  {/* ── Turno Summary ── */}
+                  <div className="border-b border-border shrink-0 p-4 space-y-3">
+                    <h2 className="text-xs font-black uppercase tracking-widest text-muted-foreground">Resumo do turno</h2>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="rounded-lg border border-border bg-card p-2.5">
+                        <p className="text-[10px] font-bold text-muted-foreground">Total vendido</p>
+                        <p className="text-sm font-black tabular-nums text-foreground">{formatPrice(resumoFinanceiro.totalDia)}</p>
+                      </div>
+                      <div className="rounded-lg border border-border bg-card p-2.5">
+                        <p className="text-[10px] font-bold text-muted-foreground">Comandas fechadas</p>
+                        <p className="text-sm font-black tabular-nums text-foreground">{fechamentos.length}</p>
+                      </div>
+                      <div className="rounded-lg border border-border bg-card p-2.5">
+                        <p className="text-[10px] font-bold text-muted-foreground">Forma mais usada</p>
+                        <p className="text-sm font-black text-foreground">
+                          {(() => {
+                            const methods = [
+                              { label: "Dinheiro", val: resumoFinanceiro.dinheiro },
+                              { label: "Crédito", val: resumoFinanceiro.credito },
+                              { label: "Débito", val: resumoFinanceiro.debito },
+                              { label: "PIX", val: resumoFinanceiro.pix },
+                            ];
+                            const best = methods.sort((a, b) => b.val - a.val)[0];
+                            return best.val > 0 ? best.label : "—";
+                          })()}
+                        </p>
+                      </div>
+                      <div className="rounded-lg border border-border bg-card p-2.5">
+                        <p className="text-[10px] font-bold text-muted-foreground">Última comanda</p>
+                        <p className="text-sm font-black tabular-nums text-foreground">
+                          {fechamentos.length > 0
+                            ? `Mesa ${String(fechamentos[0].mesaNumero).padStart(2, "0")} • ${formatPrice(fechamentos[0].total)}`
+                            : "—"}
+                        </p>
+                      </div>
+                    </div>
+                    <p className="text-xs text-muted-foreground text-center">Selecione uma mesa para iniciar o atendimento</p>
+                  </div>
                   {/* Movimentações do turno */}
                   {movimentacoesCaixa.length > 0 && (
                     <div className="border-b border-border shrink-0">
