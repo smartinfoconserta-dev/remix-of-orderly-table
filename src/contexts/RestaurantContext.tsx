@@ -39,6 +39,7 @@ export interface PedidoRealizado {
   formaPagamentoDelivery?: string;
   trocoParaQuanto?: number;
   observacaoGeral?: string;
+  statusBalcao?: "aberto" | "pronto" | "pago";
 }
 
 export interface EventoOperacional {
@@ -111,7 +112,7 @@ interface ActionAuditInput {
   motivo?: string;
 }
 
-interface FecharContaInput {
+export interface FecharContaInput {
   usuario: OperationalUser;
   pagamentos: SplitPayment[];
 }
@@ -169,6 +170,7 @@ interface RestaurantContextType {
   fecharCaixaDoDia: (usuario: OperationalUser) => void;
   criarPedidoBalcao: (input: CriarPedidoBalcaoInput) => void;
   marcarPedidoBalcaoPronto: (pedidoId: string) => void;
+  fecharContaBalcao: (pedidoId: string, input: FecharContaInput) => void;
 }
 
 const _global = globalThis as unknown as { __restaurantCtx?: React.Context<RestaurantContextType | null> };
@@ -1001,6 +1003,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         formaPagamentoDelivery: input.formaPagamentoDelivery,
         trocoParaQuanto: input.trocoParaQuanto,
         observacaoGeral: input.observacaoGeral,
+        statusBalcao: "aberto",
       };
       return {
         ...prev,
@@ -1021,7 +1024,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     setStore((prev) => ({
       ...prev,
       pedidosBalcao: prev.pedidosBalcao.map((p) =>
-        p.id === pedidoId ? { ...p, pronto: true } : p,
+        p.id === pedidoId ? { ...p, pronto: true, statusBalcao: "pronto" as const } : p,
       ),
       eventos: appendEvent(prev.eventos, {
         tipo: "pedido",
@@ -1029,6 +1032,47 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         acao: "pedido_pronto",
       }),
     }));
+  }, []);
+
+  const fecharContaBalcao = useCallback((pedidoId: string, input: FecharContaInput) => {
+    setStore((prev) => {
+      const pedido = prev.pedidosBalcao.find((p) => p.id === pedidoId);
+      if (!pedido) return prev;
+
+      const now = new Date();
+      const pagamentos = input.pagamentos.map((payment) => ({ ...payment }));
+      const resumoPagamento = pagamentos.length === 1
+        ? pagamentos[0].formaPagamento
+        : `${pagamentos.length} formas de pagamento`;
+
+      const fechamento: FechamentoConta = {
+        id: `fechamento-${now.getTime()}-${pedido.id}`,
+        mesaId: pedido.mesaId,
+        mesaNumero: 0,
+        total: pedido.total,
+        formaPagamento: pagamentos[0].formaPagamento,
+        pagamentos,
+        itens: pedido.itens.map(cloneItem),
+        criadoEm: formatDateTime(now),
+        criadoEmIso: now.toISOString(),
+        caixaId: input.usuario.id,
+        caixaNome: input.usuario.nome,
+      };
+
+      return {
+        ...prev,
+        pedidosBalcao: prev.pedidosBalcao.filter((p) => p.id !== pedidoId),
+        fechamentos: [fechamento, ...prev.fechamentos],
+        eventos: appendEvent(prev.eventos, {
+          tipo: "caixa",
+          descricao: `Caixa ${input.usuario.nome} fechou conta ${pedido.origem === "delivery" ? "delivery" : "balcão"} — ${pedido.clienteNome ?? ""} com ${resumoPagamento}`,
+          usuarioId: input.usuario.id,
+          usuarioNome: input.usuario.nome,
+          acao: "fechar_conta",
+          valor: pedido.total,
+        }),
+      };
+    });
   }, []);
 
   return (
@@ -1062,6 +1106,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         fecharCaixaDoDia,
         criarPedidoBalcao,
         marcarPedidoBalcaoPronto,
+        fecharContaBalcao,
       }}
     >
       {children}

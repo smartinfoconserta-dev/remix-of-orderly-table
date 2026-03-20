@@ -39,7 +39,7 @@ const CozinhaPage = () => {
       }
     }
     for (const pedido of pedidosBalcao) {
-      if (!pedido.pronto) all.push({ ...pedido, mesaNumero: 0, isBalcao: true });
+      if (!pedido.pronto && pedido.statusBalcao !== "pago") all.push({ ...pedido, mesaNumero: 0, isBalcao: true });
     }
     all.sort((a, b) => new Date(a.criadoEmIso).getTime() - new Date(b.criadoEmIso).getTime());
     return all;
