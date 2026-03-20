@@ -347,13 +347,34 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
       toast.error("Adicione pelo menos 1 item ao pedido", { duration: 1400 });
       return;
     }
+    if (balcaoTipo === "balcao" && !balcaoClienteNome.trim()) {
+      toast.error("Informe o nome do cliente", { duration: 1400 });
+      return;
+    }
     if (balcaoTipo === "delivery" && !balcaoClienteNome.trim()) {
       toast.error("Informe o nome do cliente para delivery", { duration: 1400 });
+      return;
+    }
+    if (balcaoTipo === "delivery" && !balcaoTelefone.trim()) {
+      toast.error("Informe o telefone do cliente", { duration: 1400 });
       return;
     }
     if (balcaoTipo === "delivery" && !balcaoEndereco.trim()) {
       toast.error("Informe o endereço para delivery", { duration: 1400 });
       return;
+    }
+    // Save delivery client
+    if (balcaoTipo === "delivery") {
+      upsertClienteDelivery({
+        nome: balcaoClienteNome.trim(),
+        cpf: balcaoCpf.trim(),
+        telefone: balcaoTelefone.trim(),
+        endereco: balcaoEndereco.trim(),
+        numero: balcaoNumero.trim(),
+        bairro: balcaoBairro.trim(),
+        complemento: balcaoComplemento.trim(),
+        referencia: balcaoReferencia.trim(),
+      });
     }
     const cartItens: ItemCarrinho[] = itensArr.map(([prodId, qty]) => {
       const prod = produtosAtivos.find((p) => p.id === prodId)!;
@@ -373,9 +394,9 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
       itens: cartItens,
       origem: balcaoTipo,
       operador: currentOperator,
-      clienteNome: balcaoClienteNome || undefined,
+      clienteNome: balcaoClienteNome.trim() || undefined,
       clienteTelefone: balcaoTelefone || undefined,
-      enderecoCompleto: balcaoEndereco || undefined,
+      enderecoCompleto: balcaoEndereco ? `${balcaoEndereco}${balcaoNumero ? `, ${balcaoNumero}` : ""}` : undefined,
       bairro: balcaoBairro || undefined,
       referencia: balcaoReferencia || undefined,
       formaPagamentoDelivery: balcaoTipo === "delivery" ? balcaoFormaPag : undefined,
@@ -385,7 +406,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
     toast.success(
       balcaoTipo === "delivery"
         ? `Pedido delivery enviado para ${balcaoClienteNome}`
-        : "Pedido balcão enviado para a cozinha",
+        : `Pedido balcão enviado — ${balcaoClienteNome}`,
       { duration: 1600, icon: "🍽️" },
     );
     setBalcaoOpen(false);
@@ -399,7 +420,12 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
     setBalcaoTroco("");
     setBalcaoObs("");
     setBalcaoItens({});
-  }, [currentOperator, balcaoItens, balcaoTipo, balcaoClienteNome, balcaoTelefone, balcaoEndereco, balcaoBairro, balcaoReferencia, balcaoFormaPag, balcaoTroco, balcaoObs, produtosAtivos, criarPedidoBalcao]);
+    setBalcaoCpf("");
+    setBalcaoNumero("");
+    setBalcaoComplemento("");
+    setDeliveryBusca("");
+    setDeliveryResultados([]);
+  }, [currentOperator, balcaoItens, balcaoTipo, balcaoClienteNome, balcaoTelefone, balcaoEndereco, balcaoBairro, balcaoReferencia, balcaoFormaPag, balcaoTroco, balcaoObs, produtosAtivos, criarPedidoBalcao, balcaoCpf, balcaoNumero, balcaoComplemento]);
 
   /* ── auth guard ── */
   if (!currentOperator) {
