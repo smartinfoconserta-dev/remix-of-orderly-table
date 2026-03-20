@@ -1046,8 +1046,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                                   onClick={() => { setRejectPedidoId(pb.id); setRejectMotivo(""); setRejectDialogOpen(true); }}
                                   className="rounded-xl font-black gap-1.5"
                                 >
-                                  <XCircle className="h-3.5 w-3.5" />
-                                  Rejeitar
+                                  ❌ Rejeitar
                                 </Button>
                               </div>
                             </div>
