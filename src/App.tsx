@@ -9,6 +9,7 @@ import CozinhaPage from "./pages/CozinhaPage";
 import AdminPage from "./pages/AdminPage";
 import MasterPage from "./pages/MasterPage";
 import PedidoPage from "./pages/PedidoPage";
+import MotoboyPage from "./pages/MotoboyPage";
 import NotFound from "./pages/NotFound";
 
 const App = () => {
@@ -27,6 +28,7 @@ const App = () => {
         <Route path="/admin" element={<AdminPage />} />
         <Route path="/master" element={<MasterPage />} />
         <Route path="/pedido" element={<PedidoPage />} />
+        <Route path="/motoboy" element={<MotoboyPage />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </div>
