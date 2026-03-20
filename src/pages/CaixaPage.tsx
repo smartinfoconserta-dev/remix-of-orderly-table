@@ -452,9 +452,38 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
   }
 
   if (balcaoFlowAtivo) {
+  const handleDeliveryConfirm = () => {
+    upsertClienteDelivery({
+      nome: balcaoClienteNome.trim(),
+      cpf: balcaoCpf.trim(),
+      telefone: balcaoTelefone.trim(),
+      endereco: balcaoEndereco.trim(),
+      numero: balcaoNumero.trim(),
+      bairro: balcaoBairro.trim(),
+      complemento: balcaoComplemento.trim(),
+      referencia: balcaoReferencia.trim(),
+    });
+    criarPedidoBalcao({
+      itens: deliveryPendingItens,
+      origem: "delivery",
+      operador: currentOperator,
+      clienteNome: balcaoClienteNome.trim() || undefined,
+      clienteTelefone: balcaoTelefone || undefined,
+      enderecoCompleto: balcaoEndereco ? `${balcaoEndereco}${balcaoNumero ? `, ${balcaoNumero}` : ""}` : undefined,
+      bairro: balcaoBairro || undefined,
+      referencia: balcaoReferencia || undefined,
+      formaPagamentoDelivery: balcaoFormaPag,
+      trocoParaQuanto: balcaoFormaPag === "dinheiro" ? parseCurrencyInput(balcaoTroco) || undefined : undefined,
+    });
+    toast.success(`Pedido delivery enviado para ${balcaoClienteNome}`, { duration: 1600, icon: "🍽️" });
+    setDeliveryConfirmOpen(false);
+    setDeliveryPendingItens([]);
+    resetBalcaoStates();
+  };
+
+  if (balcaoFlowAtivo) {
     const handleBalcaoConfirmado = (itens: ItemCarrinho[], paraViagem: boolean) => {
       if (balcaoTipo === "delivery") {
-        // Store pending items and show confirmation dialog
         setDeliveryPendingItens(itens);
         setDeliveryPendingParaViagem(paraViagem);
         setBalcaoFormaPag("dinheiro");
@@ -463,7 +492,6 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
         setDeliveryConfirmOpen(true);
         return;
       }
-      // Balcão: create immediately
       criarPedidoBalcao({
         itens,
         origem: "balcao",
@@ -472,35 +500,6 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
         clienteTelefone: balcaoTelefone || undefined,
       });
       toast.success(`Pedido balcão enviado — ${balcaoClienteNome}`, { duration: 1600, icon: "🍽️" });
-      resetBalcaoStates();
-    };
-
-    const handleDeliveryConfirm = () => {
-      upsertClienteDelivery({
-        nome: balcaoClienteNome.trim(),
-        cpf: balcaoCpf.trim(),
-        telefone: balcaoTelefone.trim(),
-        endereco: balcaoEndereco.trim(),
-        numero: balcaoNumero.trim(),
-        bairro: balcaoBairro.trim(),
-        complemento: balcaoComplemento.trim(),
-        referencia: balcaoReferencia.trim(),
-      });
-      criarPedidoBalcao({
-        itens: deliveryPendingItens,
-        origem: "delivery",
-        operador: currentOperator,
-        clienteNome: balcaoClienteNome.trim() || undefined,
-        clienteTelefone: balcaoTelefone || undefined,
-        enderecoCompleto: balcaoEndereco ? `${balcaoEndereco}${balcaoNumero ? `, ${balcaoNumero}` : ""}` : undefined,
-        bairro: balcaoBairro || undefined,
-        referencia: balcaoReferencia || undefined,
-        formaPagamentoDelivery: balcaoFormaPag,
-        trocoParaQuanto: balcaoFormaPag === "dinheiro" ? parseCurrencyInput(balcaoTroco) || undefined : undefined,
-      });
-      toast.success(`Pedido delivery enviado para ${balcaoClienteNome}`, { duration: 1600, icon: "🍽️" });
-      setDeliveryConfirmOpen(false);
-      setDeliveryPendingItens([]);
       resetBalcaoStates();
     };
 
