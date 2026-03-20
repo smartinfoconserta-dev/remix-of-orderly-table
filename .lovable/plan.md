@@ -1,40 +1,60 @@
 
 
-## Plano
+## Problema
 
-### Passo 1: Reverter via histórico
-O usuário está visualizando o commit correto (antes do ProtectedRoute quebrar). Basta clicar "Restore" nessa versão.
+O `ProtectedRoute` atual é pass-through (não faz nada). Um garçom logado em `/garcom` pode digitar `/caixa` na URL e ver a página do caixa (formulário de login). O usuário quer bloquear isso.
 
-### Passo 2: Reimplementar ProtectedRoute (simplificado)
+## Solução
 
-O guard atual é agressivo demais — redireciona quando existe qualquer sessão em outro slot. A segurança real já está em 3 camadas:
-- `loginWithPin` bloqueia login com role errado
-- `sanitizeSessions` limpa sessões stale
-- `getCurrentUser` valida role ao ler sessão
+Reimplementar o `ProtectedRoute` com lógica inteligente:
 
-O novo ProtectedRoute será passivo — **nunca redireciona antes do login**. Só atua se detectar sessão ativa no slot com role incompatível (caso edge de manipulação de localStorage).
+- **Sem nenhuma sessão ativa** → mostra a página (formulário de login) ✓
+- **Sessão ativa no slot correto** → mostra a página (já autenticado) ✓  
+- **Sessão ativa em OUTRO slot, mas NÃO no slot requerido** → redireciona para `/` ✗
 
-**`src/components/ProtectedRoute.tsx`** — reescrever:
+### Arquivo: `src/components/ProtectedRoute.tsx`
+
 ```typescript
-export const ProtectedRoute = ({ children, requiredSession }) => {
-  // Sempre renderiza children (página com formulário de login)
-  // A validação real acontece em loginWithPin + sanitizeSessions
-  return <>{children}</>;
+import { Navigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import type { UserRole } from "@/types/operations";
+
+interface ProtectedRouteProps {
+  children: React.ReactNode;
+  requiredSession: UserRole;
+}
+
+export const ProtectedRoute = ({ children, requiredSession }: ProtectedRouteProps) => {
+  const { currentGarcom, currentCaixa, currentGerente } = useAuth();
+
+  const sessionMap: Record<UserRole, unknown> = {
+    garcom: currentGarcom,
+    caixa: currentCaixa,
+    gerente: currentGerente,
+  };
+
+  // Se tem sessão no slot requerido → acesso OK
+  if (sessionMap[requiredSession]) return <>{children}</>;
+
+  // Se NÃO tem nenhuma sessão → mostra login da página
+  const hasAnySession = !!(currentGarcom || currentCaixa || currentGerente);
+  if (!hasAnySession) return <>{children}</>;
+
+  // Tem sessão em outro slot → bloqueia
+  return <Navigate to="/" replace />;
 };
 ```
 
-Na prática o componente vira um pass-through. Mantemos ele no App.tsx para documentação e caso futuro onde queiramos adicionar lógica (ex: redirect após logout forçado).
+### Comportamento
 
-**`src/App.tsx`** — mantém as rotas envolvidas com ProtectedRoute como estão (não muda nada).
+| Situação | Resultado |
+|----------|-----------|
+| Ninguém logado, acessa /caixa | Vê formulário de login do caixa ✓ |
+| Caixa logado, acessa /caixa | Entra normalmente ✓ |
+| Garçom logado, acessa /caixa | Redireciona para / ✓ |
+| Garçom logado, acessa /gerente | Redireciona para / ✓ |
+| Gerente logado, acessa /caixa | Entra (gerente tem sessão no slot caixa via loginWithPin) ✓ |
+| Admin logado em /gerente, acessa /caixa | Depende se logou no slot caixa também |
 
-### Resultado
-
-| Cenário | Comportamento |
-|---------|--------------|
-| Acessa /gerente sem login | Vê formulário de login da página |
-| Caixa tenta logar em /gerente | `loginWithPin` retorna erro "Acesso negado" |
-| Sessão stale de caixa em slot gerente | `sanitizeSessions` limpa automaticamente |
-| Admin loga em qualquer lugar | Bypass funciona normalmente |
-
-### Passo 1 — Restaure a versão anterior primeiro:
+O `App.tsx` já tem as rotas envolvidas com `ProtectedRoute` — não precisa alterar.
 
