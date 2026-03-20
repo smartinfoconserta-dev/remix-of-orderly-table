@@ -1065,6 +1065,23 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                               </div>
                               {confirmTempoId === pb.id ? (
                                 <div className="space-y-2 p-3 rounded-xl border border-emerald-500/30 bg-emerald-500/5">
+                                  {/* Taxa de entrega */}
+                                  <div className="space-y-1">
+                                    <p className="text-xs font-black text-foreground">Taxa de entrega (R$)</p>
+                                    <Input
+                                      type="text"
+                                      inputMode="decimal"
+                                      placeholder="0,00"
+                                      value={confirmTaxaEntrega}
+                                      onChange={(e) => setConfirmTaxaEntrega(e.target.value)}
+                                      className="h-8 text-xs rounded-lg"
+                                    />
+                                    {parseCurrencyInput(confirmTaxaEntrega) > 0 && (
+                                      <p className="text-[10px] text-emerald-400 font-bold">
+                                        Taxa: {formatPrice(parseCurrencyInput(confirmTaxaEntrega))}
+                                      </p>
+                                    )}
+                                  </div>
                                   <p className="text-xs font-black text-foreground">Tempo estimado de entrega</p>
                                   <div className="flex flex-wrap gap-1.5">
                                     {["20 min", "30 min", "45 min", "60 min"].map((t) => (
@@ -1089,7 +1106,9 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                                     <Button
                                       size="sm"
                                       onClick={() => {
-                                        confirmarPedidoBalcao(pb.id);
+                                        const taxaVal = parseCurrencyInput(confirmTaxaEntrega);
+                                        const taxaFinal = Number.isFinite(taxaVal) && taxaVal > 0 ? taxaVal : 0;
+                                        confirmarPedidoBalcao(pb.id, taxaFinal > 0 ? taxaFinal : undefined);
                                         toast.success(`Pedido #${pb.numeroPedido} confirmado!`, { duration: 1600, icon: "✅" });
                                         const tel = (pb.clienteTelefone || "").replace(/\D/g, "");
                                         if (tel) {
@@ -1104,12 +1123,13 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                                         setConfirmTempoId(null);
                                         setConfirmTempo("");
                                         setConfirmTempoCustom("");
+                                        setConfirmTaxaEntrega("");
                                       }}
                                       className="flex-1 rounded-xl font-black bg-emerald-600 hover:bg-emerald-700 text-white"
                                     >
                                       Confirmar com este tempo
                                     </Button>
-                                    <Button size="sm" variant="ghost" onClick={() => setConfirmTempoId(null)} className="rounded-xl text-xs">
+                                    <Button size="sm" variant="ghost" onClick={() => { setConfirmTempoId(null); setConfirmTaxaEntrega(""); }} className="rounded-xl text-xs">
                                       Cancelar
                                     </Button>
                                   </div>
@@ -1118,7 +1138,17 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                                 <div className="flex gap-2">
                                   <Button
                                     size="sm"
-                                    onClick={() => { setConfirmTempoId(pb.id); setConfirmTempo(""); setConfirmTempoCustom(""); }}
+                                    onClick={() => {
+                                      setConfirmTempoId(pb.id);
+                                      setConfirmTempo("");
+                                      setConfirmTempoCustom("");
+                                      // Auto-fill taxa from bairros
+                                      const normStr = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+                                      const bairros = getBairros().filter((b) => b.ativo);
+                                      const bairroPedido = pb.bairro || "";
+                                      const match = bairroPedido ? bairros.find((b) => normStr(b.nome) === normStr(bairroPedido)) : null;
+                                      setConfirmTaxaEntrega(match ? match.taxa.toFixed(2).replace(".", ",") : "");
+                                    }}
                                     className="flex-1 rounded-xl font-black gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white"
                                   >
                                     ✅ Confirmar e avisar cliente
