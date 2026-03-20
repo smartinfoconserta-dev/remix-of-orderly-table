@@ -209,7 +209,7 @@ export default function PedidoPage() {
     }
   };
 
-  const formValido = nome.trim() && telefone.trim() && cpf.trim() && endereco.trim() && numero.trim();
+  const formValido = nome.trim() && telefone.trim() && cpf.trim() && endereco.trim() && numero.trim() && !bairroNaoAtendido;
 
   const handleSalvarCadastro = () => {
     if (!formValido) {
