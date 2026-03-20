@@ -1920,7 +1920,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                     <Input value={balcaoEndereco} onChange={(e) => setBalcaoEndereco(e.target.value)} placeholder="Rua" />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xs font-semibold text-foreground">Número</label>
+                    <label className="text-xs font-semibold text-foreground">Número *</label>
                     <Input value={balcaoNumero} onChange={(e) => setBalcaoNumero(e.target.value)} placeholder="Nº" />
                   </div>
                 </div>
