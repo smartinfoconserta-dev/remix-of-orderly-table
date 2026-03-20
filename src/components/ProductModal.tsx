@@ -14,6 +14,7 @@ interface Props {
   onClose: () => void;
   onAdd: (item: ItemCarrinho) => void;
   isGarcomMobile?: boolean;
+  skipEmbalagemDefault?: boolean;
 }
 
 type StepId = ProductStep;
