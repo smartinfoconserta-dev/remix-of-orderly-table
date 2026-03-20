@@ -457,7 +457,7 @@ const GerentePage = () => {
         {/* ═══ TAB 2: Relatórios ═══ */}
         <TabsContent value="relatorio" className="flex-1 overflow-y-auto p-4 md:p-6 mt-0">
           {!pinVerificado ? pinGateUI : (
-          <div className="mx-auto max-w-2xl space-y-6 p-4 md:p-6">
+          <div className="mx-auto max-w-2xl space-y-6">
 
             {/* ── Period Filter ── */}
             <div className="space-y-3">
