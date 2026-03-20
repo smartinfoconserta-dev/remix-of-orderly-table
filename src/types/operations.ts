@@ -1,4 +1,4 @@
-export type UserRole = "garcom" | "caixa" | "gerente";
+export type UserRole = "garcom" | "caixa" | "gerente" | "admin";
 
 export type PaymentMethod = "dinheiro" | "credito" | "debito" | "pix";
 
