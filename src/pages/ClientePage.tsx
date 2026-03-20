@@ -170,47 +170,6 @@ const ClientePage = () => {
             </Button>
           </div>
 
-          {/* Esqueci meu PIN */}
-          <div className="pt-2 text-center">
-            {!showReset ? (
-              <button
-                type="button"
-                onClick={() => setShowReset(true)}
-                className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground transition-colors"
-              >
-                Esqueci meu PIN
-              </button>
-            ) : (
-              <div className="space-y-3 rounded-xl border border-border bg-secondary/30 p-4 text-left">
-                <p className="text-xs font-bold text-muted-foreground">Redefinir PIN para 1234</p>
-                <div className="space-y-2">
-                  <Input
-                    value={resetNome}
-                    onChange={(e) => setResetNome(e.target.value.slice(0, 40))}
-                    placeholder="Nome do funcionário"
-                  />
-                  <Select value={resetRole} onValueChange={(v) => setResetRole(v as UserRole)}>
-                    <SelectTrigger className="h-10 rounded-lg text-sm">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="garcom">Garçom</SelectItem>
-                      <SelectItem value="caixa">Caixa</SelectItem>
-                      <SelectItem value="gerente">Gerente</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="flex gap-2">
-                  <Button variant="outline" size="sm" onClick={() => { setShowReset(false); setResetNome(""); }}>
-                    Cancelar
-                  </Button>
-                  <Button size="sm" onClick={handleResetPin} disabled={resetNome.trim().length < 2}>
-                    Redefinir para 1234
-                  </Button>
-                </div>
-              </div>
-            )}
-          </div>
         </div>
       </div>
     );
