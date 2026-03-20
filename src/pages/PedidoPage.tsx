@@ -163,6 +163,7 @@ export default function PedidoPage() {
       referencia: referencia.trim(),
       formaPagamentoDelivery: formaPag,
       trocoParaQuanto: formaPag === "dinheiro" && troco ? parseFloat(troco.replace(",", ".")) : undefined,
+      taxaEntrega,
     });
 
     // Get the latest pedido number
