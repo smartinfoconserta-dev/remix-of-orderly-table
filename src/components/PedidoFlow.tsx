@@ -471,7 +471,7 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
         orderSubmissionCooldownRef.current = null;
       }, ORDER_SUBMIT_LOCK_MS);
     }
-  }, [carrinho.length, confirmarPedido, currentCaixa, currentGarcom, mesaId, modo, validatePendingCart]);
+  }, [carrinho.length, confirmarPedido, currentCaixa, currentGarcom, mesaId, modo, paraViagem, validatePendingCart]);
 
   const handleSuccessAcknowledge = useCallback(() => {
     if (openProductTimerRef.current) {
