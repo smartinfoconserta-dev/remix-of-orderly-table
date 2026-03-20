@@ -30,6 +30,8 @@ export interface SistemaConfig {
   banners?: BannerConfig[];
   instagramUrl?: string;
   senhaWifi?: string;
+  instagramBg?: string;
+  wifiBg?: string;
 }
 
 export interface LicencaConfig {
