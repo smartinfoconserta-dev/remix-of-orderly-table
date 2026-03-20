@@ -98,7 +98,7 @@ const resolveSteps = (produto: Produto | null, skipEmbalagemDefault = false): St
   return standardFlowOrder.filter((step) => isStepAvailable(produto, step, skipEmbalagemDefault));
 };
 
-const ProductModal = ({ produto, onClose, onAdd, isGarcomMobile = false }: Props) => {
+const ProductModal = ({ produto, onClose, onAdd, isGarcomMobile = false, skipEmbalagemDefault = false }: Props) => {
   const [pedidoAtual, setPedidoAtual] = useState<PedidoAtual>(() => createPedidoAtual());
   const [isAddLocked, setIsAddLocked] = useState(false);
   const [displayStep, setDisplayStep] = useState<StepId>("quantidade");
