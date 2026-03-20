@@ -564,6 +564,49 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
     resetCloseAccountState();
   };
 
+  /* ── balcão payment handlers ── */
+  const handleAddBalcaoPayment = () => {
+    if (!balcaoPedido) return;
+    const valor = parseCurrencyInput(balcaoPaymentValue);
+    if (!Number.isFinite(valor) || valor <= 0) {
+      toast.error("Informe um valor válido", { duration: 1400 });
+      return;
+    }
+    if (toCents(valor) > toCents(balcaoValorRestante)) {
+      toast.error("O valor ultrapassa o restante da conta", { duration: 1400 });
+      return;
+    }
+    setBalcaoPayments((prev) => [
+      ...prev,
+      { id: `pag-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, formaPagamento: balcaoPaymentMethod, valor: Number(valor.toFixed(2)) },
+    ]);
+    setBalcaoPaymentValue("");
+  };
+
+  const handleFecharBalcao = () => {
+    if (!balcaoPedidoSelecionado || !balcaoPedido) return;
+    if (!balcaoFechamentoPronto) {
+      toast.error("O total pago deve ser igual ao total da conta", { duration: 1600 });
+      return;
+    }
+    fecharContaBalcao(balcaoPedidoSelecionado, { usuario: currentOperator, pagamentos: balcaoPayments });
+    toast.success(
+      balcaoPayments.length > 1
+        ? "Conta fechada com múltiplas formas de pagamento"
+        : `Conta fechada em ${getPaymentMethodLabel(balcaoPayments[0].formaPagamento)}`,
+      { duration: 1400, icon: "✅" },
+    );
+    handleVoltar();
+  };
+
+  const handleSelecionarBalcao = useCallback((pedidoId: string) => {
+    setMesaSelecionada(null);
+    setBalcaoPedidoSelecionado(pedidoId);
+    setBalcaoPayments([]);
+    setBalcaoPaymentMethod("dinheiro");
+    setBalcaoPaymentValue("");
+  }, []);
+
   const handleUnlockFinance = async () => {
     if (!financeManagerName.trim()) { setFinanceError("Informe o nome do gerente"); return; }
     if (!/^\d{4,6}$/.test(financeManagerPin)) { setFinanceError("Informe o PIN do gerente"); return; }
