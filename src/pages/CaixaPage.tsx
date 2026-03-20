@@ -57,7 +57,7 @@ import { useRouteLock } from "@/hooks/use-route-lock";
 import type { PaymentMethod, SplitPayment, UserRole } from "@/types/operations";
 import { getSistemaConfig } from "@/lib/adminStorage";
 import type { ItemCarrinho } from "@/contexts/RestaurantContext";
-import { findClienteDelivery, upsertClienteDelivery, type ClienteDelivery } from "@/lib/deliveryStorage";
+import { findClienteDelivery, upsertClienteDelivery, getBairros, type ClienteDelivery } from "@/lib/deliveryStorage";
 
 /* ── helpers ── */
 const formatPrice = (v: number) => `R$ ${v.toFixed(2).replace(".", ",")}`;
