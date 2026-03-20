@@ -213,6 +213,9 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
   const [balcaoPaymentValue, setBalcaoPaymentValue] = useState("");
   const [balcaoFlowAtivo, setBalcaoFlowAtivo] = useState(false);
   const [caixaView, setCaixaView] = useState<"mesas" | "delivery">("mesas");
+  const [deliveryConfirmOpen, setDeliveryConfirmOpen] = useState(false);
+  const [deliveryPendingItens, setDeliveryPendingItens] = useState<ItemCarrinho[]>([]);
+  const [deliveryPendingParaViagem, setDeliveryPendingParaViagem] = useState(false);
 
   const sistemaConfig = useMemo(() => getSistemaConfig(), []);
 
