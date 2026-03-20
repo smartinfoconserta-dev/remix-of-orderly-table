@@ -14,6 +14,8 @@ import { toast } from "sonner";
 
 type Etapa = "identificacao" | "cardapio" | "confirmacao" | "sucesso";
 
+const normStr = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+
 const sysConfig = getSistemaConfig();
 const RESTAURANTE_NOME = sysConfig.nomeRestaurante || "Restaurante";
 const RESTAURANTE_LOGO = sysConfig.logoUrl || "";
@@ -124,6 +126,7 @@ export default function PedidoPage() {
   // Bairros
   const [bairrosDisponiveis] = useState<Bairro[]>(() => getBairros().filter((b) => b.ativo));
   const [bairroSelecionadoId, setBairroSelecionadoId] = useState("");
+  const [bairroNaoAtendido, setBairroNaoAtendido] = useState(false);
 
   // Order
   const [itens, setItens] = useState<ItemCarrinho[]>([]);
@@ -178,8 +181,25 @@ export default function PedidoPage() {
           setCepErro("CEP não encontrado");
         } else {
           setEndereco(data.logradouro || "");
-          setBairro(data.bairro || "");
+          const bairroViaCep = data.bairro || "";
+          setBairro(bairroViaCep);
           setCidade(data.localidade || "");
+
+          // Auto-match bairro with registered bairros
+          if (bairrosDisponiveis.length > 0 && bairroViaCep) {
+            const norm = normStr(bairroViaCep);
+            const match = bairrosDisponiveis.find((b) => normStr(b.nome) === norm);
+            if (match) {
+              setBairroSelecionadoId(match.id);
+              setBairroNaoAtendido(false);
+            } else {
+              setBairroSelecionadoId("");
+              setBairroNaoAtendido(true);
+            }
+          } else {
+            setBairroSelecionadoId("");
+            setBairroNaoAtendido(false);
+          }
         }
       } catch {
         setCepErro("Erro ao buscar CEP");
@@ -189,7 +209,7 @@ export default function PedidoPage() {
     }
   };
 
-  const formValido = nome.trim() && telefone.trim() && cpf.trim() && endereco.trim() && numero.trim();
+  const formValido = nome.trim() && telefone.trim() && cpf.trim() && endereco.trim() && numero.trim() && !bairroNaoAtendido;
 
   const handleSalvarCadastro = () => {
     if (!formValido) {
@@ -257,6 +277,7 @@ export default function PedidoPage() {
     setComplemento("");
     setReferencia("");
     setBairroSelecionadoId("");
+    setBairroNaoAtendido(false);
     setItens([]);
     setParaViagem(false);
     setFormaPag("pix");
@@ -370,29 +391,41 @@ export default function PedidoPage() {
                 <Input placeholder="Endereço / Rua *" value={endereco} onChange={(e) => setEndereco(e.target.value)} />
                 <div className="grid grid-cols-2 gap-2">
                   <Input placeholder="Número *" value={numero} onChange={(e) => setNumero(e.target.value)} />
-                  {bairrosDisponiveis.length > 0 ? (
-                    <Select value={bairroSelecionadoId} onValueChange={(v) => {
-                      setBairroSelecionadoId(v);
-                      const sel = bairrosDisponiveis.find((b) => b.id === v);
-                      if (sel) setBairro(sel.nome);
-                    }}>
-                      <SelectTrigger><SelectValue placeholder="Selecione o bairro" /></SelectTrigger>
-                      <SelectContent container={document.body}>
-                        {bairrosDisponiveis.map((b) => (
-                          <SelectItem key={b.id} value={b.id}>
-                            {b.nome} — R$ {b.taxa.toFixed(2).replace(".", ",")}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  ) : (
-                    <Input placeholder="Bairro" value={bairro} onChange={(e) => setBairro(e.target.value)} />
-                  )}
+                  <Input
+                    placeholder="Bairro"
+                    value={bairro}
+                    onChange={(e) => {
+                      setBairro(e.target.value);
+                      if (bairrosDisponiveis.length > 0 && e.target.value.trim()) {
+                        const norm = normStr(e.target.value);
+                        const match = bairrosDisponiveis.find((b) => normStr(b.nome) === norm);
+                        if (match) {
+                          setBairroSelecionadoId(match.id);
+                          setBairroNaoAtendido(false);
+                        } else {
+                          setBairroSelecionadoId("");
+                          setBairroNaoAtendido(true);
+                        }
+                      } else {
+                        setBairroSelecionadoId("");
+                        setBairroNaoAtendido(false);
+                      }
+                    }}
+                    readOnly={!!bairroSelecionadoId}
+                    className={bairroSelecionadoId ? "bg-muted" : ""}
+                  />
                 </div>
-                {bairroSelecionadoId && bairrosDisponiveis.length > 0 && (
-                  <p className="text-xs font-semibold text-primary">
-                    Taxa de entrega: R$ {(bairrosDisponiveis.find((b) => b.id === bairroSelecionadoId)?.taxa ?? 0).toFixed(2).replace(".", ",")}
-                  </p>
+                {/* Bairro match feedback */}
+                {bairrosDisponiveis.length > 0 && bairro.trim() && (
+                  bairroSelecionadoId ? (
+                    <p className="text-xs font-semibold" style={{ color: "hsl(var(--primary))" }}>
+                      ✓ Taxa de entrega: R$ {(bairrosDisponiveis.find((b) => b.id === bairroSelecionadoId)?.taxa ?? 0).toFixed(2).replace(".", ",")}
+                    </p>
+                  ) : bairroNaoAtendido ? (
+                    <p className="text-xs font-semibold text-orange-500">
+                      ⚠ Bairro não atendido — entre em contato para verificar disponibilidade
+                    </p>
+                  ) : null
                 )}
                 {cidade && (
                   <Input placeholder="Cidade" value={cidade} readOnly className="bg-muted" />
