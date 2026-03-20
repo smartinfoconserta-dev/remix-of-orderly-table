@@ -591,9 +591,9 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                   {currentOperator.nome.charAt(0).toUpperCase()}
                 </div>
                 <div className="min-w-0">
-                  <p className="text-sm font-black text-foreground truncate">{currentOperator.nome}</p>
+                  <p className="text-sm font-black text-foreground truncate">{sistemaConfig.nomeRestaurante || currentOperator.nome}</p>
                   <p className="text-[10px] text-muted-foreground">
-                    {accessMode === "gerente" ? "Acesso completo" : "Operador de caixa"}
+                    {currentOperator.nome} • {accessMode === "gerente" ? "Acesso completo" : "Operador de caixa"}
                   </p>
                 </div>
                 <div className="flex items-center gap-2 ml-2">
