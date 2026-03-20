@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import {
   AlertDialog,
@@ -823,6 +824,39 @@ const AdminPage = () => {
                   placeholder="0.00"
                 />
                 <p className="text-xs text-muted-foreground">Valor adicionado automaticamente aos pedidos delivery</p>
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-muted-foreground">Telefone WhatsApp do restaurante</label>
+                <Input
+                  value={sistemaConfig.telefoneRestaurante || ""}
+                  onChange={(e) => setSistemaConfig((c) => ({ ...c, telefoneRestaurante: e.target.value.replace(/\D/g, "") }))}
+                  placeholder="11999999999 (só números com DDD)"
+                  inputMode="tel"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-muted-foreground">Tempo estimado de entrega</label>
+                <Select
+                  value={sistemaConfig.tempoEntrega || ""}
+                  onValueChange={(v) => setSistemaConfig((c) => ({ ...c, tempoEntrega: v }))}
+                >
+                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="20-30 min">20-30 min</SelectItem>
+                    <SelectItem value="30-45 min">30-45 min</SelectItem>
+                    <SelectItem value="40-60 min">40-60 min</SelectItem>
+                    <SelectItem value="45-60 min">45-60 min</SelectItem>
+                    <SelectItem value="60-90 min">60-90 min</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-muted-foreground">Mensagem de boas-vindas WhatsApp</label>
+                <Textarea
+                  value={sistemaConfig.mensagemBoasVindas ?? `Olá! Bem-vindo ao ${sistemaConfig.nomeRestaurante}! 😊 Clique para fazer seu pedido:`}
+                  onChange={(e) => setSistemaConfig((c) => ({ ...c, mensagemBoasVindas: e.target.value }))}
+                  rows={3}
+                />
               </div>
             </div>
 

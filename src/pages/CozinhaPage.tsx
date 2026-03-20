@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Check, ChefHat, Clock, User } from "lucide-react";
 import { useRestaurant } from "@/contexts/RestaurantContext";
 import type { PedidoRealizado } from "@/contexts/RestaurantContext";
@@ -19,15 +19,75 @@ const formatTime = (d: Date) =>
 const origemLabel = (origem: string) =>
   origem === "garcom" ? "Garçom" : origem === "caixa" ? "Caixa" : origem === "balcao" ? "Balcão" : origem === "delivery" ? "Delivery" : "Cliente";
 
+function tocarSom(tipo: "novo_pedido" | "alerta", ctxRef: React.MutableRefObject<AudioContext | null>) {
+  try {
+    if (!ctxRef.current) ctxRef.current = new AudioContext();
+    const ctx = ctxRef.current;
+    if (ctx.state === "suspended") ctx.resume();
+    if (tipo === "novo_pedido") {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.frequency.value = 880;
+      osc.type = "sine";
+      gain.gain.value = 0.3;
+      osc.connect(gain).connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.2);
+    } else {
+      for (let i = 0; i < 2; i++) {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.frequency.value = 660;
+        osc.type = "sine";
+        gain.gain.value = 0.3;
+        osc.connect(gain).connect(ctx.destination);
+        osc.start(ctx.currentTime + i * 0.25);
+        osc.stop(ctx.currentTime + i * 0.25 + 0.15);
+      }
+    }
+  } catch {}
+}
+
 const CozinhaPage = () => {
   const { mesas, pedidosBalcao, marcarPedidoPronto, marcarPedidoBalcaoPronto } = useRestaurant();
   const [, setTick] = useState(0);
   const [clock, setClock] = useState(() => formatTime(new Date()));
   const [fadingOut, setFadingOut] = useState<Set<string>>(new Set());
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const prevCountRef = useRef<number | null>(null);
 
   useEffect(() => {
     const id = setInterval(() => { setTick((t) => t + 1); setClock(formatTime(new Date())); }, 30_000);
     return () => clearInterval(id);
+  }, []);
+
+  // Sound notification when new orders arrive
+  const activePedidosCount = useMemo(() => {
+    let count = 0;
+    for (const mesa of mesas) {
+      if (mesa.status === "livre") continue;
+      for (const pedido of mesa.pedidos) {
+        if (!pedido.pronto) count++;
+      }
+    }
+    for (const pedido of pedidosBalcao) {
+      if (!pedido.pronto && pedido.statusBalcao !== "pago" && pedido.statusBalcao !== "aguardando_confirmacao") count++;
+    }
+    return count;
+  }, [mesas, pedidosBalcao]);
+
+  useEffect(() => {
+    if (prevCountRef.current !== null && activePedidosCount > prevCountRef.current) {
+      tocarSom("novo_pedido", audioCtxRef);
+      document.title = "🔴 NOVO PEDIDO — Cozinha";
+      const timer = setTimeout(() => { document.title = "Cozinha — Orderly Table"; }, 5000);
+      return () => clearTimeout(timer);
+    }
+    prevCountRef.current = activePedidosCount;
+  }, [activePedidosCount]);
+
+  useEffect(() => {
+    return () => { document.title = "Orderly Table"; };
   }, []);
 
   const activePedidos = useMemo(() => {

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowLeft,
   Loader2,
@@ -223,6 +223,8 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
   const [rejectMotivo, setRejectMotivo] = useState("");
 
   const sistemaConfig = useMemo(() => getSistemaConfig(), []);
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const prevAguardandoRef = useRef<number | null>(null);
 
   const mesa = mesaSelecionada ? mesas.find((item) => item.id === mesaSelecionada) ?? null : null;
   const balcaoPedido = balcaoPedidoSelecionado ? pedidosBalcao.find((p) => p.id === balcaoPedidoSelecionado) ?? null : null;
@@ -235,6 +237,38 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
     const id = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(id);
   }, []);
+
+  // Sound when new delivery arrives
+  const aguardandoCount = useMemo(() => pedidosBalcao.filter((p) => p.origem === "delivery" && p.statusBalcao === "aguardando_confirmacao").length, [pedidosBalcao]);
+  useEffect(() => {
+    if (prevAguardandoRef.current !== null && aguardandoCount > prevAguardandoRef.current) {
+      try {
+        if (!audioCtxRef.current) audioCtxRef.current = new AudioContext();
+        const ctx = audioCtxRef.current;
+        if (ctx.state === "suspended") ctx.resume();
+        for (let i = 0; i < 2; i++) {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.frequency.value = 440;
+          osc.type = "sine";
+          gain.gain.value = 0.3;
+          osc.connect(gain).connect(ctx.destination);
+          osc.start(ctx.currentTime + i * 0.35);
+          osc.stop(ctx.currentTime + i * 0.35 + 0.3);
+        }
+      } catch {}
+    }
+    prevAguardandoRef.current = aguardandoCount;
+  }, [aguardandoCount]);
+
+  useEffect(() => {
+    if (aguardandoCount > 0) {
+      document.title = "🔔 DELIVERY — Caixa";
+    } else {
+      document.title = "Caixa — Orderly Table";
+    }
+    return () => { document.title = "Orderly Table"; };
+  }, [aguardandoCount]);
 
   /* ── financial summary ── */
   const resumoFinanceiro = useMemo(() => {
@@ -873,7 +907,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                   <Truck className="h-3.5 w-3.5" />
                   Delivery
                   {(pedidosDeliveryAtivos.length + pedidosAguardandoConfirmacao.length) > 0 && (
-                    <span className="rounded-full bg-purple-500/20 text-purple-400 px-1.5 py-0.5 text-[10px] font-black tabular-nums leading-none">{pedidosDeliveryAtivos.length + pedidosAguardandoConfirmacao.length}</span>
+                    <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-black tabular-nums leading-none ${pedidosAguardandoConfirmacao.length > 0 ? "bg-amber-500/20 text-amber-400 animate-pulse" : "bg-purple-500/20 text-purple-400"}`}>{pedidosDeliveryAtivos.length + pedidosAguardandoConfirmacao.length}</span>
                   )}
                 </button>
 
@@ -1032,7 +1066,9 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                                     const tel = (pb.clienteTelefone || "").replace(/\D/g, "");
                                     if (tel) {
                                       const itensStr = pb.itens.map((it) => `${it.quantidade}x ${it.nome}`).join(", ");
-                                      const msg = `✅ Pedido %23${pb.numeroPedido} confirmado! Itens: ${itensStr}. Total: ${formatPrice(pb.total)}. Previsão: 40-60 min.`;
+                                      const nomeRest = sistemaConfig.nomeRestaurante || "Restaurante";
+                                      const tempo = sistemaConfig.tempoEntrega || "40-60 min";
+                                      const msg = `✅ Pedido %23${pb.numeroPedido} confirmado! — ${nomeRest}\n\n${itensStr}\n\nTotal: ${formatPrice(pb.total)}\nPrevisão: ${tempo}\n\nObrigado! 🍔`;
                                       window.open(`https://wa.me/55${tel}?text=${encodeURIComponent(msg)}`, "_blank");
                                     }
                                   }}
