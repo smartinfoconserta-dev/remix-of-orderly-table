@@ -328,60 +328,9 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
     setMovConfirmStep(false);
   }, [currentOperator, movTipo, movDescricao, movValor, movConfirmStep, registrarMovimentacaoCaixa]);
 
-  /* ── Balcão/Delivery handler ── */
-  const handleEnviarBalcao = useCallback(() => {
-    if (!currentOperator) return;
-    if (balcaoItens.length === 0) {
-      toast.error("Adicione pelo menos 1 item ao pedido", { duration: 1400 });
-      return;
-    }
-    if (balcaoTipo === "balcao" && !balcaoClienteNome.trim()) {
-      toast.error("Informe o nome do cliente", { duration: 1400 });
-      return;
-    }
-    if (balcaoTipo === "delivery" && !balcaoClienteNome.trim()) {
-      toast.error("Informe o nome do cliente para delivery", { duration: 1400 });
-      return;
-    }
-    if (balcaoTipo === "delivery" && !balcaoTelefone.trim()) {
-      toast.error("Informe o telefone do cliente", { duration: 1400 });
-      return;
-    }
-    if (balcaoTipo === "delivery" && !balcaoEndereco.trim()) {
-      toast.error("Informe o endereço para delivery", { duration: 1400 });
-      return;
-    }
-    if (balcaoTipo === "delivery") {
-      upsertClienteDelivery({
-        nome: balcaoClienteNome.trim(),
-        cpf: balcaoCpf.trim(),
-        telefone: balcaoTelefone.trim(),
-        endereco: balcaoEndereco.trim(),
-        numero: balcaoNumero.trim(),
-        bairro: balcaoBairro.trim(),
-        complemento: balcaoComplemento.trim(),
-        referencia: balcaoReferencia.trim(),
-      });
-    }
-    criarPedidoBalcao({
-      itens: balcaoItens,
-      origem: balcaoTipo,
-      operador: currentOperator,
-      clienteNome: balcaoClienteNome.trim() || undefined,
-      clienteTelefone: balcaoTelefone || undefined,
-      enderecoCompleto: balcaoEndereco ? `${balcaoEndereco}${balcaoNumero ? `, ${balcaoNumero}` : ""}` : undefined,
-      bairro: balcaoBairro || undefined,
-      referencia: balcaoReferencia || undefined,
-      formaPagamentoDelivery: balcaoTipo === "delivery" ? balcaoFormaPag : undefined,
-      trocoParaQuanto: balcaoTipo === "delivery" && balcaoFormaPag === "dinheiro" ? parseCurrencyInput(balcaoTroco) || undefined : undefined,
-      observacaoGeral: balcaoObs || undefined,
-    });
-    toast.success(
-      balcaoTipo === "delivery"
-        ? `Pedido delivery enviado para ${balcaoClienteNome}`
-        : `Pedido balcão enviado — ${balcaoClienteNome}`,
-      { duration: 1600, icon: "🍽️" },
-    );
+  /* ── Balcão/Delivery helpers ── */
+  const resetBalcaoStates = useCallback(() => {
+    setBalcaoFlowAtivo(false);
     setBalcaoOpen(false);
     setBalcaoTipo("balcao");
     setBalcaoClienteNome("");
@@ -391,14 +340,12 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
     setBalcaoReferencia("");
     setBalcaoFormaPag("dinheiro");
     setBalcaoTroco("");
-    setBalcaoObs("");
-    setBalcaoItens([]);
     setBalcaoCpf("");
     setBalcaoNumero("");
     setBalcaoComplemento("");
     setDeliveryBusca("");
     setDeliveryResultados([]);
-  }, [currentOperator, balcaoItens, balcaoTipo, balcaoClienteNome, balcaoTelefone, balcaoEndereco, balcaoBairro, balcaoReferencia, balcaoFormaPag, balcaoTroco, balcaoObs, criarPedidoBalcao, balcaoCpf, balcaoNumero, balcaoComplemento]);
+  }, []);
 
   /* ── auth guard ── */
   if (!currentOperator) {
