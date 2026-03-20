@@ -266,7 +266,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
 
   const mesaLogs = useMemo(() => (mesa ? eventos.filter((e) => e.mesaId === mesa.id) : []), [eventos, mesa]);
 
-  /* ── payment math ── */
+  /* ── payment math (mesa) ── */
   const totalConta = mesa?.total ?? 0;
   const totalContaCents = toCents(totalConta);
   const totalPago = useMemo(() => closingPayments.reduce((acc, p) => acc + p.valor, 0), [closingPayments]);
@@ -274,6 +274,18 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
   const valorRestante = Math.max((totalContaCents - totalPagoCents) / 100, 0);
   const fechamentoPronto = totalContaCents > 0 && totalPagoCents === totalContaCents;
   const paymentProgress = totalContaCents > 0 ? Math.min(totalPagoCents / totalContaCents, 1) : 0;
+
+  /* ── payment math (balcão) ── */
+  const balcaoTotalConta = balcaoPedido?.total ?? 0;
+  const balcaoTotalContaCents = toCents(balcaoTotalConta);
+  const balcaoTotalPago = useMemo(() => balcaoPayments.reduce((acc, p) => acc + p.valor, 0), [balcaoPayments]);
+  const balcaoTotalPagoCents = toCents(balcaoTotalPago);
+  const balcaoValorRestante = Math.max((balcaoTotalContaCents - balcaoTotalPagoCents) / 100, 0);
+  const balcaoFechamentoPronto = balcaoTotalContaCents > 0 && balcaoTotalPagoCents === balcaoTotalContaCents;
+  const balcaoPaymentProgress = balcaoTotalContaCents > 0 ? Math.min(balcaoTotalPagoCents / balcaoTotalContaCents, 1) : 0;
+
+  /* ── active balcão orders for grid ── */
+  const pedidosBalcaoAtivos = useMemo(() => pedidosBalcao.filter((p) => p.statusBalcao !== "pago"), [pedidosBalcao]);
 
   /* ── callbacks ── */
   const resetCloseAccountState = useCallback(() => {
