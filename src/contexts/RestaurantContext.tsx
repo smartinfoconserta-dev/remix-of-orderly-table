@@ -629,6 +629,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           garcomNome: origem === "garcom" ? meta?.operador?.nome : undefined,
           caixaId: origem === "caixa" ? meta?.operador?.id : undefined,
           caixaNome: origem === "caixa" ? meta?.operador?.nome : undefined,
+          paraViagem: meta?.paraViagem || false,
         };
 
         eventInput = origem === "garcom"
