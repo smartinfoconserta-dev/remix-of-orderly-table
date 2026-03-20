@@ -8,28 +8,33 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { LogOut, Plus, Pencil, Trash2, Phone, Mail, MapPin, DollarSign } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { LogOut, Plus, Pencil, Trash2, Phone, Mail, MapPin, DollarSign, Users, TrendingUp, TrendingDown, Receipt } from "lucide-react";
 import { toast } from "sonner";
-import { type Cliente, getClientes, addCliente, updateCliente, removeCliente } from "@/lib/masterStorage";
+import {
+  type Cliente, type Despesa,
+  getClientes, addCliente, updateCliente, removeCliente,
+  getDespesas, addDespesa,
+} from "@/lib/masterStorage";
 
 const MASTER_PASS = "master2025";
 
 const SEGMENTOS = ["hamburgeria", "pizzaria", "sushi", "pastel", "a-la-carte", "outro"];
 const SEGMENTO_LABELS: Record<string, string> = {
-  hamburgeria: "Hamburgeria",
-  pizzaria: "Pizzaria",
-  sushi: "Sushi",
-  pastel: "Pastel",
-  "a-la-carte": "À la carte",
-  outro: "Outro",
+  hamburgeria: "Hamburgeria", pizzaria: "Pizzaria", sushi: "Sushi",
+  pastel: "Pastel", "a-la-carte": "À la carte", outro: "Outro",
 };
-
-const ESTADOS = [
-  "AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG","PA",
-  "PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC","SP","SE","TO",
-];
-
+const ESTADOS = ["AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG","PA","PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC","SP","SE","TO"];
 const DIAS_VENCIMENTO = [1, 5, 10, 15, 20, 25];
+
+const CATEGORIAS_DESPESA = [
+  { value: "gasolina", label: "Gasolina" },
+  { value: "manutencao", label: "Manutenção" },
+  { value: "visita", label: "Visita a cliente" },
+  { value: "software", label: "Software/Assinatura" },
+  { value: "outro", label: "Outro" },
+];
+const CAT_LABEL: Record<string, string> = Object.fromEntries(CATEGORIAS_DESPESA.map((c) => [c.value, c.label]));
 
 const emptyForm = {
   nomeRestaurante: "", nomeContato: "", email: "", dataVencimento: "",
@@ -39,14 +44,13 @@ const emptyForm = {
   observacoes: "", historicoPagamentos: [] as any[],
 };
 
+const todayStr = () => new Date().toISOString().slice(0, 10);
+
 function proximoVencimento(diaVencimento: number): string {
   const hoje = new Date();
   let mes = hoje.getMonth();
   let ano = hoje.getFullYear();
-  if (hoje.getDate() > diaVencimento) {
-    mes += 1;
-    if (mes > 11) { mes = 0; ano += 1; }
-  }
+  if (hoje.getDate() > diaVencimento) { mes += 1; if (mes > 11) { mes = 0; ano += 1; } }
   const lastDay = new Date(ano, mes + 1, 0).getDate();
   const dia = Math.min(diaVencimento, lastDay);
   return `${String(dia).padStart(2, "0")}/${String(mes + 1).padStart(2, "0")}/${ano}`;
@@ -63,7 +67,10 @@ const MasterPage = () => {
   const [form, setForm] = useState(emptyForm);
   const [removeId, setRemoveId] = useState<string | null>(null);
 
-  const refresh = () => setClientes(getClientes());
+  const [despesas, setDespesas] = useState<Despesa[]>([]);
+  const [novaDespesa, setNovaDespesa] = useState({ descricao: "", valor: 0, categoria: "gasolina", data: todayStr() });
+
+  const refresh = () => { setClientes(getClientes()); setDespesas(getDespesas()); };
 
   const handleLogin = () => {
     if (senha === MASTER_PASS) { setAuthed(true); setSenhaErro(false); refresh(); }
@@ -71,7 +78,6 @@ const MasterPage = () => {
   };
 
   const openCreate = () => { setEditId(null); setForm(emptyForm); setDialogOpen(true); };
-
   const openEdit = (c: Cliente) => {
     setEditId(c.id);
     setForm({
@@ -86,25 +92,32 @@ const MasterPage = () => {
   };
 
   const handleSave = () => {
-    if (!form.nomeRestaurante.trim() || !form.nomeContato.trim()) {
-      toast.error("Preencha nome do restaurante e contato.");
-      return;
-    }
+    if (!form.nomeRestaurante.trim() || !form.nomeContato.trim()) { toast.error("Preencha nome do restaurante e contato."); return; }
     if (editId) { updateCliente(editId, form); toast.success("Cliente atualizado."); }
     else { addCliente(form); toast.success("Cliente criado."); }
-    setDialogOpen(false);
+    setDialogOpen(false); refresh();
+  };
+
+  const handleRemove = () => { if (removeId) { removeCliente(removeId); toast.success("Cliente removido."); setRemoveId(null); refresh(); } };
+  const toggleAtivo = (c: Cliente) => { updateCliente(c.id, { ativo: !c.ativo }); refresh(); };
+  const isVencido = (d: string) => d && new Date(d) < new Date(todayStr());
+  const ff = (key: string, value: any) => setForm((prev) => ({ ...prev, [key]: value }));
+
+  // Financeiro
+  const mesAtual = todayStr().slice(0, 7);
+  const despesasMes = despesas.filter((d) => d.data.startsWith(mesAtual)).sort((a, b) => b.data.localeCompare(a.data));
+  const totalDespesasMes = despesasMes.reduce((s, d) => s + d.valor, 0);
+  const receitaPrevista = clientes.filter((c) => c.ativo).reduce((s, c) => s + (c.valorMensalidade || 0), 0);
+  const clientesAtivos = clientes.filter((c) => c.ativo).length;
+
+  const handleRegistrarDespesa = () => {
+    if (!novaDespesa.descricao.trim()) { toast.error("Preencha a descrição."); return; }
+    if (!novaDespesa.valor || novaDespesa.valor <= 0) { toast.error("Informe um valor válido."); return; }
+    addDespesa(novaDespesa);
+    toast.success("Despesa registrada.");
+    setNovaDespesa({ descricao: "", valor: 0, categoria: "gasolina", data: todayStr() });
     refresh();
   };
-
-  const handleRemove = () => {
-    if (removeId) { removeCliente(removeId); toast.success("Cliente removido."); setRemoveId(null); refresh(); }
-  };
-
-  const toggleAtivo = (c: Cliente) => { updateCliente(c.id, { ativo: !c.ativo }); refresh(); };
-
-  const isVencido = (d: string) => d && new Date(d) < new Date(new Date().toISOString().slice(0, 10));
-
-  const f = (key: string, value: any) => setForm((prev) => ({ ...prev, [key]: value }));
 
   if (!authed) {
     return (
@@ -128,48 +141,114 @@ const MasterPage = () => {
           <Button variant="outline" size="sm" onClick={() => setAuthed(false)}><LogOut className="w-4 h-4 mr-1" /> Sair</Button>
         </div>
 
-        {/* Toolbar */}
-        <div className="flex justify-end">
-          <Button onClick={openCreate}><Plus className="w-4 h-4 mr-1" /> Novo cliente</Button>
-        </div>
+        <Tabs defaultValue="clientes" className="w-full">
+          <TabsList className="w-full grid grid-cols-2">
+            <TabsTrigger value="clientes"><Users className="w-4 h-4 mr-1" />Clientes</TabsTrigger>
+            <TabsTrigger value="financeiro"><DollarSign className="w-4 h-4 mr-1" />Financeiro</TabsTrigger>
+          </TabsList>
 
-        {/* List */}
-        <div className="grid gap-4">
-          {clientes.map((c) => (
-            <div key={c.id} className="rounded-2xl border bg-card p-5 space-y-3">
-              {/* Row 1 - Name + badges */}
-              <div className="flex flex-col md:flex-row md:items-center gap-2 justify-between">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <p className="font-black text-lg text-foreground">{c.nomeRestaurante}</p>
-                  {c.segmento && <Badge variant="secondary">{SEGMENTO_LABELS[c.segmento] || c.segmento}</Badge>}
+          {/* ========== ABA CLIENTES ========== */}
+          <TabsContent value="clientes" className="space-y-4 mt-4">
+            <div className="flex justify-end">
+              <Button onClick={openCreate}><Plus className="w-4 h-4 mr-1" /> Novo cliente</Button>
+            </div>
+            <div className="grid gap-4">
+              {clientes.map((c) => (
+                <div key={c.id} className="rounded-2xl border bg-card p-5 space-y-3">
+                  <div className="flex flex-col md:flex-row md:items-center gap-2 justify-between">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="font-black text-lg text-foreground">{c.nomeRestaurante}</p>
+                      {c.segmento && <Badge variant="secondary">{SEGMENTO_LABELS[c.segmento] || c.segmento}</Badge>}
+                    </div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <Badge className={c.ativo ? "bg-emerald-600 hover:bg-emerald-600 text-white" : "bg-destructive hover:bg-destructive text-destructive-foreground"}>{c.ativo ? "Ativo" : "Bloqueado"}</Badge>
+                      {isVencido(c.dataVencimento) && <Badge className="bg-destructive hover:bg-destructive text-destructive-foreground">Vencido</Badge>}
+                      <Switch checked={c.ativo} onCheckedChange={() => toggleAtivo(c)} />
+                      <Button variant="ghost" size="icon" onClick={() => openEdit(c)}><Pencil className="w-4 h-4" /></Button>
+                      <Button variant="ghost" size="icon" className="text-destructive" onClick={() => setRemoveId(c.id)}><Trash2 className="w-4 h-4" /></Button>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 text-sm text-muted-foreground">
+                    <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5" />{c.cidade && c.estado ? `${c.cidade} - ${c.estado}` : "—"}</span>
+                    <span className="flex items-center gap-1"><Phone className="w-3.5 h-3.5" />{c.telefone || "—"}</span>
+                    <span className="flex items-center gap-1"><Mail className="w-3.5 h-3.5" />{c.email || "—"}</span>
+                    <span className="flex items-center gap-1 font-semibold text-foreground"><DollarSign className="w-3.5 h-3.5" />R$ {(c.valorMensalidade || 0).toFixed(2)}</span>
+                  </div>
+                  <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                    <span>{c.nomeContato}</span>
+                    <span>Próximo venc.: {c.diaVencimento ? proximoVencimento(c.diaVencimento) : "—"}</span>
+                    <span>Licença: {c.dataVencimento || "—"}</span>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2 flex-wrap">
-                  <Badge className={c.ativo ? "bg-emerald-600 hover:bg-emerald-600 text-white" : "bg-destructive hover:bg-destructive text-destructive-foreground"}>{c.ativo ? "Ativo" : "Bloqueado"}</Badge>
-                  {isVencido(c.dataVencimento) && <Badge className="bg-destructive hover:bg-destructive text-destructive-foreground">Vencido</Badge>}
-                  <Switch checked={c.ativo} onCheckedChange={() => toggleAtivo(c)} />
-                  <Button variant="ghost" size="icon" onClick={() => openEdit(c)}><Pencil className="w-4 h-4" /></Button>
-                  <Button variant="ghost" size="icon" className="text-destructive" onClick={() => setRemoveId(c.id)}><Trash2 className="w-4 h-4" /></Button>
-                </div>
-              </div>
+              ))}
+              {clientes.length === 0 && <p className="text-center text-muted-foreground py-8">Nenhum cliente cadastrado.</p>}
+            </div>
+          </TabsContent>
 
-              {/* Row 2 - Details */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 text-sm text-muted-foreground">
-                <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5" />{c.cidade && c.estado ? `${c.cidade} - ${c.estado}` : "—"}</span>
-                <span className="flex items-center gap-1"><Phone className="w-3.5 h-3.5" />{c.telefone || "—"}</span>
-                <span className="flex items-center gap-1"><Mail className="w-3.5 h-3.5" />{c.email || "—"}</span>
-                <span className="flex items-center gap-1 font-semibold text-foreground"><DollarSign className="w-3.5 h-3.5" />R$ {(c.valorMensalidade || 0).toFixed(2)}</span>
+          {/* ========== ABA FINANCEIRO ========== */}
+          <TabsContent value="financeiro" className="space-y-6 mt-4">
+            {/* Resumo */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="rounded-2xl border bg-card p-4 space-y-1">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground"><TrendingUp className="w-4 h-4" />Receita prevista</div>
+                <p className="text-xl font-black text-emerald-500">R$ {receitaPrevista.toFixed(2)}</p>
               </div>
-
-              {/* Row 3 - Vencimento */}
-              <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                <span>{c.nomeContato}</span>
-                <span>Próximo venc.: {c.diaVencimento ? proximoVencimento(c.diaVencimento) : "—"}</span>
-                <span>Licença: {c.dataVencimento || "—"}</span>
+              <div className="rounded-2xl border bg-card p-4 space-y-1">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground"><TrendingDown className="w-4 h-4" />Despesas do mês</div>
+                <p className="text-xl font-black text-destructive">R$ {totalDespesasMes.toFixed(2)}</p>
+              </div>
+              <div className="rounded-2xl border bg-card p-4 space-y-1">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground"><DollarSign className="w-4 h-4" />Lucro líquido</div>
+                <p className={`text-xl font-black ${receitaPrevista - totalDespesasMes >= 0 ? "text-emerald-500" : "text-destructive"}`}>R$ {(receitaPrevista - totalDespesasMes).toFixed(2)}</p>
+              </div>
+              <div className="rounded-2xl border bg-card p-4 space-y-1">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground"><Users className="w-4 h-4" />Clientes ativos</div>
+                <p className="text-xl font-black text-foreground">{clientesAtivos}</p>
               </div>
             </div>
-          ))}
-          {clientes.length === 0 && <p className="text-center text-muted-foreground py-8">Nenhum cliente cadastrado.</p>}
-        </div>
+
+            {/* Registrar despesa */}
+            <div className="rounded-2xl border bg-card p-5 space-y-4">
+              <h2 className="text-lg font-black text-foreground flex items-center gap-2"><Receipt className="w-5 h-5" />Registrar despesa</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 items-end">
+                <div><Label>Descrição</Label><Input placeholder="Ex: Gasolina visita" value={novaDespesa.descricao} onChange={(e) => setNovaDespesa({ ...novaDespesa, descricao: e.target.value })} /></div>
+                <div>
+                  <Label>Valor</Label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">R$</span>
+                    <Input type="number" className="pl-10" value={novaDespesa.valor || ""} onChange={(e) => setNovaDespesa({ ...novaDespesa, valor: parseFloat(e.target.value) || 0 })} />
+                  </div>
+                </div>
+                <div>
+                  <Label>Categoria</Label>
+                  <Select value={novaDespesa.categoria} onValueChange={(v) => setNovaDespesa({ ...novaDespesa, categoria: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>{CATEGORIAS_DESPESA.map((c) => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+                <div><Label>Data</Label><Input type="date" value={novaDespesa.data} onChange={(e) => setNovaDespesa({ ...novaDespesa, data: e.target.value })} /></div>
+                <Button onClick={handleRegistrarDespesa} className="h-10">Registrar</Button>
+              </div>
+            </div>
+
+            {/* Histórico */}
+            <div className="rounded-2xl border bg-card p-5 space-y-4">
+              <h2 className="text-lg font-black text-foreground">Histórico de despesas do mês</h2>
+              {despesasMes.length === 0 && <p className="text-sm text-muted-foreground">Nenhuma despesa registrada neste mês.</p>}
+              <div className="space-y-2">
+                {despesasMes.map((d) => (
+                  <div key={d.id} className="flex items-center justify-between rounded-xl border bg-background p-3">
+                    <div className="space-y-0.5">
+                      <p className="text-sm font-semibold text-foreground">{d.descricao}</p>
+                      <p className="text-xs text-muted-foreground">{CAT_LABEL[d.categoria] || d.categoria} · {d.data}</p>
+                    </div>
+                    <p className="text-sm font-black text-destructive">- R$ {d.valor.toFixed(2)}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </TabsContent>
+        </Tabs>
       </div>
 
       {/* Create/Edit Dialog */}
@@ -177,77 +256,42 @@ const MasterPage = () => {
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle>{editId ? "Editar cliente" : "Novo cliente"}</DialogTitle></DialogHeader>
           <div className="space-y-5">
-            {/* Identificação */}
             <div className="space-y-3">
               <h3 className="text-sm font-bold text-foreground uppercase tracking-wide">Identificação</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div><Label>Nome do restaurante</Label><Input value={form.nomeRestaurante} onChange={(e) => f("nomeRestaurante", e.target.value)} /></div>
-                <div>
-                  <Label>Segmento</Label>
-                  <Select value={form.segmento} onValueChange={(v) => f("segmento", v)}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      {SEGMENTOS.map((s) => <SelectItem key={s} value={s}>{SEGMENTO_LABELS[s]}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div><Label>CNPJ</Label><Input placeholder="00.000.000/0000-00" value={form.cnpj} onChange={(e) => f("cnpj", e.target.value)} /></div>
-                <div><Label>Telefone</Label><Input placeholder="(00) 00000-0000" value={form.telefone} onChange={(e) => f("telefone", e.target.value)} /></div>
+                <div><Label>Nome do restaurante</Label><Input value={form.nomeRestaurante} onChange={(e) => ff("nomeRestaurante", e.target.value)} /></div>
+                <div><Label>Segmento</Label><Select value={form.segmento} onValueChange={(v) => ff("segmento", v)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{SEGMENTOS.map((s) => <SelectItem key={s} value={s}>{SEGMENTO_LABELS[s]}</SelectItem>)}</SelectContent></Select></div>
+                <div><Label>CNPJ</Label><Input placeholder="00.000.000/0000-00" value={form.cnpj} onChange={(e) => ff("cnpj", e.target.value)} /></div>
+                <div><Label>Telefone</Label><Input placeholder="(00) 00000-0000" value={form.telefone} onChange={(e) => ff("telefone", e.target.value)} /></div>
               </div>
             </div>
-
-            {/* Contato */}
             <div className="space-y-3">
               <h3 className="text-sm font-bold text-foreground uppercase tracking-wide">Contato</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div><Label>Nome do contato</Label><Input value={form.nomeContato} onChange={(e) => f("nomeContato", e.target.value)} /></div>
-                <div><Label>Email</Label><Input type="email" value={form.email} onChange={(e) => f("email", e.target.value)} /></div>
+                <div><Label>Nome do contato</Label><Input value={form.nomeContato} onChange={(e) => ff("nomeContato", e.target.value)} /></div>
+                <div><Label>Email</Label><Input type="email" value={form.email} onChange={(e) => ff("email", e.target.value)} /></div>
               </div>
             </div>
-
-            {/* Localização */}
             <div className="space-y-3">
               <h3 className="text-sm font-bold text-foreground uppercase tracking-wide">Localização</h3>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div className="sm:col-span-3"><Label>Endereço</Label><Input placeholder="Rua, número" value={form.endereco} onChange={(e) => f("endereco", e.target.value)} /></div>
-                <div><Label>Cidade</Label><Input value={form.cidade} onChange={(e) => f("cidade", e.target.value)} /></div>
-                <div>
-                  <Label>Estado</Label>
-                  <Select value={form.estado} onValueChange={(v) => f("estado", v)}>
-                    <SelectTrigger><SelectValue placeholder="UF" /></SelectTrigger>
-                    <SelectContent>{ESTADOS.map((uf) => <SelectItem key={uf} value={uf}>{uf}</SelectItem>)}</SelectContent>
-                  </Select>
-                </div>
+                <div className="sm:col-span-3"><Label>Endereço</Label><Input placeholder="Rua, número" value={form.endereco} onChange={(e) => ff("endereco", e.target.value)} /></div>
+                <div><Label>Cidade</Label><Input value={form.cidade} onChange={(e) => ff("cidade", e.target.value)} /></div>
+                <div><Label>Estado</Label><Select value={form.estado} onValueChange={(v) => ff("estado", v)}><SelectTrigger><SelectValue placeholder="UF" /></SelectTrigger><SelectContent>{ESTADOS.map((uf) => <SelectItem key={uf} value={uf}>{uf}</SelectItem>)}</SelectContent></Select></div>
               </div>
             </div>
-
-            {/* Contrato */}
             <div className="space-y-3">
               <h3 className="text-sm font-bold text-foreground uppercase tracking-wide">Contrato</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <Label>Valor da mensalidade</Label>
-                  <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">R$</span>
-                    <Input type="number" className="pl-10" value={form.valorMensalidade || ""} onChange={(e) => f("valorMensalidade", parseFloat(e.target.value) || 0)} />
-                  </div>
-                </div>
-                <div>
-                  <Label>Dia de vencimento</Label>
-                  <Select value={String(form.diaVencimento)} onValueChange={(v) => f("diaVencimento", Number(v))}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>{DIAS_VENCIMENTO.map((d) => <SelectItem key={d} value={String(d)}>Dia {d}</SelectItem>)}</SelectContent>
-                  </Select>
-                </div>
-                <div><Label>Data de vencimento da licença</Label><Input type="date" value={form.dataVencimento} onChange={(e) => f("dataVencimento", e.target.value)} /></div>
-                <div className="flex items-center gap-2 pt-5"><Switch checked={form.ativo} onCheckedChange={(v) => f("ativo", v)} /><Label>{form.ativo ? "Ativo" : "Bloqueado"}</Label></div>
+                <div><Label>Valor da mensalidade</Label><div className="relative"><span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">R$</span><Input type="number" className="pl-10" value={form.valorMensalidade || ""} onChange={(e) => ff("valorMensalidade", parseFloat(e.target.value) || 0)} /></div></div>
+                <div><Label>Dia de vencimento</Label><Select value={String(form.diaVencimento)} onValueChange={(v) => ff("diaVencimento", Number(v))}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{DIAS_VENCIMENTO.map((d) => <SelectItem key={d} value={String(d)}>Dia {d}</SelectItem>)}</SelectContent></Select></div>
+                <div><Label>Data de vencimento da licença</Label><Input type="date" value={form.dataVencimento} onChange={(e) => ff("dataVencimento", e.target.value)} /></div>
+                <div className="flex items-center gap-2 pt-5"><Switch checked={form.ativo} onCheckedChange={(v) => ff("ativo", v)} /><Label>{form.ativo ? "Ativo" : "Bloqueado"}</Label></div>
               </div>
             </div>
-
-            {/* Observações */}
             <div className="space-y-3">
               <h3 className="text-sm font-bold text-foreground uppercase tracking-wide">Observações</h3>
-              <Textarea placeholder="Observações livres sobre o cliente..." value={form.observacoes} onChange={(e) => f("observacoes", e.target.value)} rows={3} />
+              <Textarea placeholder="Observações livres sobre o cliente..." value={form.observacoes} onChange={(e) => ff("observacoes", e.target.value)} rows={3} />
             </div>
           </div>
           <DialogFooter><Button onClick={handleSave}>Salvar</Button></DialogFooter>
