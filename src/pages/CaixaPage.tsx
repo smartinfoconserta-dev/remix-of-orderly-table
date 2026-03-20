@@ -451,7 +451,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
     );
   }
 
-  const handleDeliveryConfirm = () => {
+  function handleDeliveryConfirm() {
     upsertClienteDelivery({
       nome: balcaoClienteNome.trim(),
       cpf: balcaoCpf.trim(),
@@ -478,7 +478,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
     setDeliveryConfirmOpen(false);
     setDeliveryPendingItens([]);
     resetBalcaoStates();
-  };
+  }
 
   if (balcaoFlowAtivo) {
     const handleBalcaoConfirmado = (itens: ItemCarrinho[], paraViagem: boolean) => {
