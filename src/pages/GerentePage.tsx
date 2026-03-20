@@ -157,7 +157,14 @@ const GerentePage = () => {
   const [customInicio, setCustomInicio] = useState("");
   const [customFim, setCustomFim] = useState("");
 
-  useRouteLock("/gerente");
+  // Equipe state
+  const garcons = useMemo(() => getActiveProfilesByRole("garcom"), [getActiveProfilesByRole]);
+  const caixas = useMemo(() => getActiveProfilesByRole("caixa"), [getActiveProfilesByRole]);
+  const [newEmpName, setNewEmpName] = useState("");
+  const [newEmpPin, setNewEmpPin] = useState("");
+  const [newEmpRole, setNewEmpRole] = useState<"garcom" | "caixa">("garcom");
+  const [empError, setEmpError] = useState<string | null>(null);
+
 
   const handleVerificarPin = useCallback(async () => {
     if (!currentGerente) return;
