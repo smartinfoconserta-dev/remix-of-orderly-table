@@ -154,7 +154,7 @@ export default function PedidoPage() {
     criarPedidoBalcao({
       itens,
       origem: "delivery",
-      operador: { id: cliente.id, nome: cliente.nome, pin: "", role: "garcom" },
+      operador: { id: cliente.id, nome: cliente.nome, role: "garcom", criadoEm: new Date().toISOString() },
       clienteNome: nome.trim(),
       clienteTelefone: telefone.trim(),
       enderecoCompleto: `${endereco}, ${numero}${complemento ? ` - ${complemento}` : ""}`,
