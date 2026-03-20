@@ -139,6 +139,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
     removeFromCart,
     ajustarItemPedido,
     cancelarPedido,
+    registrarMovimentacaoCaixa,
   } = useRestaurant();
   const { currentCaixa, currentGerente, logout, verifyManagerAccess } = useAuth();
 
@@ -166,6 +167,10 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
   const [turnoError, setTurnoError] = useState<string | null>(null);
   const [isClosingTurno, setIsClosingTurno] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [movModalOpen, setMovModalOpen] = useState(false);
+  const [movTipo, setMovTipo] = useState<"entrada" | "saida">("entrada");
+  const [movDescricao, setMovDescricao] = useState("");
+  const [movValor, setMovValor] = useState("");
 
   const mesa = mesaSelecionada ? mesas.find((item) => item.id === mesaSelecionada) ?? null : null;
   const currentOperator = accessMode === "gerente" ? currentGerente : currentCaixa;
@@ -241,6 +246,30 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
     const evt = [...eventos].reverse().find(e => e.acao === "abertura_caixa");
     return evt ? evt.criadoEm : null;
   }, [eventos]);
+
+  const handleRegistrarMovimentacao = useCallback(() => {
+    if (!currentOperator) return;
+    const valor = parseCurrencyInput(movValor);
+    if (!Number.isFinite(valor) || valor <= 0) {
+      toast.error("Informe um valor válido", { duration: 1400 });
+      return;
+    }
+    if (!movDescricao.trim()) {
+      toast.error("Informe uma descrição", { duration: 1400 });
+      return;
+    }
+    registrarMovimentacaoCaixa({
+      tipo: movTipo,
+      descricao: movDescricao.trim(),
+      valor,
+      usuario: currentOperator,
+    });
+    toast.success(movTipo === "entrada" ? "Suprimento registrado" : "Sangria registrada", { duration: 1200, icon: movTipo === "entrada" ? "💰" : "💸" });
+    setMovModalOpen(false);
+    setMovDescricao("");
+    setMovValor("");
+    setMovTipo("entrada");
+  }, [currentOperator, movTipo, movDescricao, movValor, registrarMovimentacaoCaixa]);
 
   /* ── auth guard ── */
   if (!currentOperator) {
@@ -594,9 +623,20 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                   <span className="text-lg font-black tabular-nums text-muted-foreground leading-none">{mesasLivre}</span>
                   <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80">Livres</span>
                 </div>
-                <div className="ml-auto flex items-center gap-2 rounded-xl border border-primary/30 bg-primary/8 px-4 py-1.5">
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-primary/80">Em aberto</span>
-                  <span className="text-lg font-black tabular-nums text-primary leading-none">{formatPrice(valorTotalAberto)}</span>
+                <div className="flex items-center gap-2 ml-auto">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setMovModalOpen(true)}
+                    className="rounded-xl font-bold gap-1.5 text-xs"
+                  >
+                    <Banknote className="h-3.5 w-3.5" />
+                    Sangria / Suprimento
+                  </Button>
+                  <div className="flex items-center gap-2 rounded-xl border border-primary/30 bg-primary/8 px-4 py-1.5">
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-primary/80">Em aberto</span>
+                    <span className="text-lg font-black tabular-nums text-primary leading-none">{formatPrice(valorTotalAberto)}</span>
+                  </div>
                 </div>
               </div>
 
@@ -620,8 +660,31 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                   </div>
                 </div>
 
-                {/* ═══ RIGHT: Activity Feed (30%) ═══ */}
+                {/* ═══ RIGHT: Activity + Movimentações (30%) ═══ */}
                 <div className="flex flex-[3] flex-col border-l border-border bg-card/50 overflow-hidden">
+                  {/* Movimentações do turno */}
+                  {movimentacoesCaixa.length > 0 && (
+                    <div className="border-b border-border shrink-0">
+                      <div className="flex items-center gap-2.5 px-5 py-3">
+                        <Banknote className="h-4 w-4 text-foreground" />
+                        <h2 className="text-sm font-black text-foreground flex-1">Movimentações</h2>
+                        <span className="text-xs font-bold tabular-nums text-muted-foreground">{movimentacoesCaixa.length}</span>
+                      </div>
+                      <div className="max-h-[180px] overflow-y-auto px-4 pb-3 space-y-1.5 scrollbar-hide">
+                        {movimentacoesCaixa.map((mov) => (
+                          <div key={mov.id} className="flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 slide-up">
+                            <span className={`text-xs font-black tabular-nums ${mov.tipo === "entrada" ? "text-emerald-400" : "text-destructive"}`}>
+                              {mov.tipo === "entrada" ? "+" : "−"} {formatPrice(mov.valor)}
+                            </span>
+                            <span className="flex-1 truncate text-[10px] text-muted-foreground">{mov.descricao}</span>
+                            <span className="text-[10px] tabular-nums text-muted-foreground/60">{mov.criadoEm}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Activity Feed */}
                   <div className="flex items-center gap-2.5 px-5 py-4 border-b border-border shrink-0">
                     <ScrollText className="h-4 w-4 text-foreground" />
                     <h2 className="text-sm font-black text-foreground flex-1">Atividade recente</h2>
@@ -1036,6 +1099,49 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
             <Button variant="outline" onClick={() => setTurnoModalOpen(false)} className="rounded-xl font-bold">Cancelar</Button>
             <Button variant="destructive" onClick={handleCloseTurno} className="rounded-xl font-black" disabled={isClosingTurno}>
               Confirmar fechamento
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Movimentação Modal ── */}
+      <Dialog open={movModalOpen} onOpenChange={setMovModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Registrar movimentação</DialogTitle>
+            <DialogDescription>Sangria (saída) ou suprimento (entrada) de valores no caixa.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-sm font-semibold text-foreground">Tipo</label>
+              <Select value={movTipo} onValueChange={(v) => setMovTipo(v as "entrada" | "saida")}>
+                <SelectTrigger className="rounded-xl"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="entrada">Suprimento (entrada)</SelectItem>
+                  <SelectItem value="saida">Sangria (saída)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-semibold text-foreground">Descrição</label>
+              <Input value={movDescricao} onChange={(e) => setMovDescricao(e.target.value)} placeholder="Ex.: Troco para delivery" maxLength={100} />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-semibold text-foreground">Valor (R$)</label>
+              <Input
+                value={movValor}
+                onChange={(e) => setMovValor(e.target.value)}
+                placeholder="0,00"
+                inputMode="decimal"
+                className="text-lg font-black"
+                onKeyDown={(e) => e.key === "Enter" && handleRegistrarMovimentacao()}
+              />
+            </div>
+          </div>
+          <DialogFooter className="gap-3 sm:gap-0">
+            <Button variant="outline" onClick={() => setMovModalOpen(false)} className="rounded-xl font-bold">Cancelar</Button>
+            <Button onClick={handleRegistrarMovimentacao} className="rounded-xl font-black">
+              Registrar
             </Button>
           </DialogFooter>
         </DialogContent>

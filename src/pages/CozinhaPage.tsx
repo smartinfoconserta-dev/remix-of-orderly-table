@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Check, ChefHat, Clock, User } from "lucide-react";
 import { useRestaurant } from "@/contexts/RestaurantContext";
 import type { PedidoRealizado } from "@/contexts/RestaurantContext";
@@ -28,6 +28,7 @@ const CozinhaPage = () => {
   const { mesas, marcarPedidoPronto } = useRestaurant();
   const [, setTick] = useState(0);
   const [clock, setClock] = useState(() => formatTime(new Date()));
+  const [fadingOut, setFadingOut] = useState<Set<string>>(new Set());
 
   /* tick every 30s to refresh elapsed times */
   useEffect(() => {
@@ -56,7 +57,15 @@ const CozinhaPage = () => {
 
   const handlePronto = useCallback(
     (mesaId: string, pedidoId: string) => {
-      marcarPedidoPronto(mesaId, pedidoId);
+      setFadingOut((prev) => new Set(prev).add(pedidoId));
+      setTimeout(() => {
+        marcarPedidoPronto(mesaId, pedidoId);
+        setFadingOut((prev) => {
+          const next = new Set(prev);
+          next.delete(pedidoId);
+          return next;
+        });
+      }, 200);
     },
     [marcarPedidoPronto],
   );
@@ -101,7 +110,7 @@ const CozinhaPage = () => {
           return (
             <div
               key={pedido.id}
-              className={`slide-up flex flex-col rounded-2xl border bg-card transition-all ${
+              className={`slide-up flex flex-col rounded-2xl border bg-card transition-all ${fadingOut.has(pedido.id) ? "fade-out-remove" : ""} ${
                 isLate
                   ? "border-destructive/60 animate-pulse shadow-[0_0_20px_hsl(var(--destructive)/0.2)]"
                   : "border-border"
