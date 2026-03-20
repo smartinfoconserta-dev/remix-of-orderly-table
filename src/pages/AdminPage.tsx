@@ -715,6 +715,57 @@ const AdminPage = () => {
             <p className="text-xs text-muted-foreground">
               As alterações serão aplicadas ao reabrir o caixa do dia. Mínimo 1, máximo 50.
             </p>
+
+            {/* ── QR Codes das mesas ── */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-black text-foreground">QR Codes das mesas</h3>
+                  <p className="text-xs text-muted-foreground">Cada QR Code direciona para a mesa correspondente</p>
+                </div>
+                <Button
+                  onClick={() => {
+                    const printWindow = window.open("", "_blank");
+                    if (!printWindow) return;
+                    const total = parseInt(mesasInput) || mesasConfig.totalMesas;
+                    const baseUrl = window.location.origin;
+                    let html = `<html><head><title>QR Codes - Mesas</title><style>
+                      body { margin: 0; padding: 20px; font-family: sans-serif; }
+                      .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+                      .item { text-align: center; page-break-inside: avoid; }
+                      .item img { width: 200px; height: 200px; }
+                      .item p { margin: 8px 0 0; font-size: 18px; font-weight: bold; }
+                      @media print { body { padding: 10mm; } }
+                    </style></head><body><div class="grid">`;
+                    for (let i = 1; i <= total; i++) {
+                      const url = `${baseUrl}/mesa/${i}`;
+                      const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(url)}`;
+                      html += `<div class="item"><img src="${qrUrl}" alt="Mesa ${String(i).padStart(2, "0")}" /><p>Mesa ${String(i).padStart(2, "0")}</p></div>`;
+                    }
+                    html += `</div></body></html>`;
+                    printWindow.document.write(html);
+                    printWindow.document.close();
+                    setTimeout(() => printWindow.print(), 1000);
+                  }}
+                  className="rounded-xl font-bold gap-1.5"
+                >
+                  Imprimir todos os QR Codes
+                </Button>
+              </div>
+              <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                {Array.from({ length: parseInt(mesasInput) || mesasConfig.totalMesas }, (_, i) => {
+                  const num = i + 1;
+                  const url = `${window.location.origin}/mesa/${num}`;
+                  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(url)}`;
+                  return (
+                    <div key={num} className="flex flex-col items-center gap-2 rounded-xl border border-border bg-card p-3">
+                      <img src={qrUrl} alt={`Mesa ${String(num).padStart(2, "0")}`} className="w-full aspect-square rounded-lg" loading="lazy" />
+                      <span className="text-xs font-black text-foreground">Mesa {String(num).padStart(2, "0")}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
           </div>
         )}
 

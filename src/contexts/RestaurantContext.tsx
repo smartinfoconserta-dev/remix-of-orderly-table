@@ -39,7 +39,7 @@ export interface PedidoRealizado {
   formaPagamentoDelivery?: string;
   trocoParaQuanto?: number;
   observacaoGeral?: string;
-  statusBalcao?: "aberto" | "pronto" | "pago" | "saiu" | "entregue";
+  statusBalcao?: "aberto" | "pronto" | "pago" | "saiu" | "entregue" | "aguardando_confirmacao";
   motoboyNome?: string;
 }
 
@@ -175,6 +175,8 @@ interface RestaurantContextType {
   marcarBalcaoSaiu: (pedidoId: string, motoboyNome: string) => void;
   marcarBalcaoEntregue: (pedidoId: string) => void;
   fecharContaBalcao: (pedidoId: string, input: FecharContaInput) => void;
+  confirmarPedidoBalcao: (pedidoId: string) => void;
+  rejeitarPedidoBalcao: (pedidoId: string, motivo: string) => void;
 }
 
 const _global = globalThis as unknown as { __restaurantCtx?: React.Context<RestaurantContextType | null> };
@@ -1007,7 +1009,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         formaPagamentoDelivery: input.formaPagamentoDelivery,
         trocoParaQuanto: input.trocoParaQuanto,
         observacaoGeral: input.observacaoGeral,
-        statusBalcao: "aberto",
+        statusBalcao: input.origem === "delivery" ? "aguardando_confirmacao" : "aberto",
       };
       return {
         ...prev,
@@ -1107,6 +1109,33 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     });
   }, []);
 
+  const confirmarPedidoBalcao = useCallback((pedidoId: string) => {
+    setStore((prev) => ({
+      ...prev,
+      pedidosBalcao: prev.pedidosBalcao.map((p) =>
+        p.id === pedidoId ? { ...p, statusBalcao: "aberto" as const } : p,
+      ),
+      eventos: appendEvent(prev.eventos, {
+        tipo: "caixa",
+        descricao: `Pedido delivery confirmado pelo caixa`,
+        acao: "confirmar_delivery",
+      }),
+    }));
+  }, []);
+
+  const rejeitarPedidoBalcao = useCallback((pedidoId: string, motivo: string) => {
+    setStore((prev) => ({
+      ...prev,
+      pedidosBalcao: prev.pedidosBalcao.filter((p) => p.id !== pedidoId),
+      eventos: appendEvent(prev.eventos, {
+        tipo: "caixa",
+        descricao: `Pedido delivery rejeitado — ${motivo}`,
+        acao: "rejeitar_delivery",
+        motivo,
+      }),
+    }));
+  }, []);
+
   return (
     <RestaurantContext.Provider
       value={{
@@ -1141,6 +1170,8 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         marcarBalcaoSaiu,
         marcarBalcaoEntregue,
         fecharContaBalcao,
+        confirmarPedidoBalcao,
+        rejeitarPedidoBalcao,
       }}
     >
       {children}
