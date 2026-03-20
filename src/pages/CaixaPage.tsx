@@ -357,6 +357,11 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
     setBalcaoComplemento("");
     setDeliveryBusca("");
     setDeliveryResultados([]);
+    setDeliveryStep("busca");
+    setDeliveryCep("");
+    setDeliveryCepLoading(false);
+    setDeliveryCepErro("");
+    setDeliveryCidade("");
   }, []);
 
   /* ── auth guard ── */
