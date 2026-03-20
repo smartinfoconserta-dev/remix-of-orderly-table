@@ -4,13 +4,6 @@ import { LockKeyhole, TabletSmartphone } from "lucide-react";
 import PedidoFlow from "@/components/PedidoFlow";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRestaurant } from "@/contexts/RestaurantContext";
 import { useRouteLock } from "@/hooks/use-route-lock";
@@ -24,18 +17,16 @@ import {
   clearBoundTabletMesaId,
   clearTabletLoginUser,
 } from "@/lib/tabletBinding";
-import type { UserRole } from "@/types/operations";
 import { toast } from "sonner";
 
 const ClientePage = () => {
   const { mesas } = useRestaurant();
-  const { verifyEmployeeAccess, resetPin } = useAuth();
+  const { verifyEmployeeAccess } = useAuth();
   const [searchParams] = useSearchParams();
 
   const [mesaId, setMesaId] = useState<string | null>(() => {
     const savedMesa = getBoundTabletMesaId();
     const savedUser = getTabletLoginUser();
-    // If there's a bound mesa but no logged-in user, clear binding and require fresh login
     if (savedMesa && !savedUser) {
       clearBoundTabletMesaId();
       return null;
@@ -47,11 +38,6 @@ const ClientePage = () => {
   const [pin, setPin] = useState("");
   const [loginError, setLoginError] = useState<string | null>(null);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
-
-  // PIN reset state
-  const [showReset, setShowReset] = useState(false);
-  const [resetNome, setResetNome] = useState("");
-  const [resetRole, setResetRole] = useState<UserRole>("garcom");
 
   // QR Code: se veio ?mesa=ID, vincula automaticamente e pula login/seleção
   useEffect(() => {
@@ -122,16 +108,6 @@ const ClientePage = () => {
     setMesaId(boundMesaId);
   };
 
-  const handleResetPin = () => {
-    const result = resetPin(resetRole, resetNome);
-    if (result.ok) {
-      toast.success("PIN redefinido para 1234", { duration: 3000, icon: "🔑" });
-      setShowReset(false);
-      setResetNome("");
-    } else {
-      toast.error(result.error ?? "Usuário não encontrado");
-    }
-  };
 
   if (mesaId) {
     return <PedidoFlow modo="cliente" mesaId={mesaId} />;
@@ -186,47 +162,6 @@ const ClientePage = () => {
             </Button>
           </div>
 
-          {/* Esqueci meu PIN */}
-          <div className="pt-2 text-center">
-            {!showReset ? (
-              <button
-                type="button"
-                onClick={() => setShowReset(true)}
-                className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground transition-colors"
-              >
-                Esqueci meu PIN
-              </button>
-            ) : (
-              <div className="space-y-3 rounded-xl border border-border bg-secondary/30 p-4 text-left">
-                <p className="text-xs font-bold text-muted-foreground">Redefinir PIN para 1234</p>
-                <div className="space-y-2">
-                  <Input
-                    value={resetNome}
-                    onChange={(e) => setResetNome(e.target.value.slice(0, 40))}
-                    placeholder="Nome do funcionário"
-                  />
-                  <Select value={resetRole} onValueChange={(v) => setResetRole(v as UserRole)}>
-                    <SelectTrigger className="h-10 rounded-lg text-sm">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="garcom">Garçom</SelectItem>
-                      <SelectItem value="caixa">Caixa</SelectItem>
-                      <SelectItem value="gerente">Gerente</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="flex gap-2">
-                  <Button variant="outline" size="sm" onClick={() => { setShowReset(false); setResetNome(""); }}>
-                    Cancelar
-                  </Button>
-                  <Button size="sm" onClick={handleResetPin} disabled={resetNome.trim().length < 2}>
-                    Redefinir para 1234
-                  </Button>
-                </div>
-              </div>
-            )}
-          </div>
         </div>
       </div>
     );

@@ -9,6 +9,7 @@ import {
   Plus,
   Save,
   Trash2,
+  Users,
   X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -58,11 +59,12 @@ import {
 } from "@/lib/adminStorage";
 import { toast } from "sonner";
 
-type AdminTab = "cardapio" | "mesas" | "configuracoes" | "licenca";
+type AdminTab = "cardapio" | "mesas" | "configuracoes" | "licenca" | "usuarios";
 
 const sidebarSections = [
   { id: "cardapio" as const, label: "Cardápio", icon: ClipboardList },
   { id: "mesas" as const, label: "Mesas", icon: Grid3X3 },
+  { id: "usuarios" as const, label: "Usuários", icon: Users },
   { id: "configuracoes" as const, label: "Configurações", icon: Settings },
   { id: "licenca" as const, label: "Licença", icon: Shield },
 ];
@@ -70,7 +72,7 @@ const sidebarSections = [
 const formatPrice = (v: number) => `R$ ${v.toFixed(2).replace(".", ",")}`;
 
 const AdminPage = () => {
-  const { verifyManagerAccess } = useAuth();
+  const { verifyManagerAccess, getProfilesByRole, createUser, removeUser } = useAuth();
 
   // Auth gate state
   const [authenticated, setAuthenticated] = useState(false);
@@ -240,6 +242,33 @@ const AdminPage = () => {
     saveLicencaConfig(licencaConfig);
     toast.success("Licença salva");
   }, [licencaConfig]);
+
+  // --- Usuários (gerentes) state ---
+  const gerentes = useMemo(() => getProfilesByRole("gerente"), [getProfilesByRole]);
+  const [newGerenteName, setNewGerenteName] = useState("");
+  const [newGerentePin, setNewGerentePin] = useState("");
+  const [userError, setUserError] = useState<string | null>(null);
+
+  const handleCreateGerente = () => {
+    setUserError(null);
+    const result = createUser("gerente", newGerenteName, newGerentePin);
+    if (!result.ok) {
+      setUserError(result.error ?? "Erro ao criar gerente");
+      return;
+    }
+    toast.success(`Gerente "${result.user?.nome}" criado com sucesso`);
+    setNewGerenteName("");
+    setNewGerentePin("");
+  };
+
+  const handleRemoveGerente = (id: string, nome: string) => {
+    const result = removeUser(id);
+    if (!result.ok) {
+      toast.error(result.error ?? "Erro ao remover");
+      return;
+    }
+    toast.success(`Gerente "${nome}" removido`);
+  };
 
   // --- Auth gate ---
   const handleAuth = async () => {
@@ -811,6 +840,76 @@ const AdminPage = () => {
               <Button onClick={saveLicenca} className="w-full">
                 <Save className="mr-1 h-4 w-4" /> Salvar licença
               </Button>
+            </div>
+          </div>
+        )}
+
+        {/* ═══ USUÁRIOS ═══ */}
+        {tab === "usuarios" && (
+          <div className="space-y-6 fade-in">
+            <div>
+              <h2 className="text-2xl font-black text-foreground">Gerentes</h2>
+              <p className="text-sm text-muted-foreground">Crie e gerencie contas de gerentes do sistema</p>
+            </div>
+
+            {/* Create form */}
+            <div className="surface-card max-w-lg space-y-4 rounded-2xl p-6">
+              <p className="text-sm font-black text-foreground">Novo gerente</p>
+              <div className="space-y-3">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-muted-foreground">Nome</label>
+                  <Input
+                    value={newGerenteName}
+                    onChange={(e) => setNewGerenteName(e.target.value)}
+                    placeholder="Nome do gerente"
+                    maxLength={40}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-muted-foreground">PIN (4-6 dígitos)</label>
+                  <Input
+                    value={newGerentePin}
+                    onChange={(e) => setNewGerentePin(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                    placeholder="1234"
+                    inputMode="numeric"
+                  />
+                </div>
+                {userError && <p className="rounded-xl border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive">{userError}</p>}
+                <Button onClick={handleCreateGerente} disabled={!newGerenteName.trim() || newGerentePin.length < 4} className="w-full rounded-xl font-bold gap-1.5">
+                  <Plus className="h-4 w-4" /> Criar gerente
+                </Button>
+              </div>
+            </div>
+
+            {/* List */}
+            <div className="surface-card max-w-lg rounded-2xl overflow-hidden">
+              <div className="px-5 py-3 border-b border-border bg-secondary/50">
+                <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">Gerentes cadastrados ({gerentes.length})</p>
+              </div>
+              {gerentes.length === 0 ? (
+                <p className="px-5 py-6 text-sm text-muted-foreground text-center">Nenhum gerente cadastrado.</p>
+              ) : (
+                <div className="divide-y divide-border/50">
+                  {gerentes.map((g) => (
+                    <div key={g.id} className="flex items-center justify-between px-5 py-3">
+                      <div>
+                        <p className="text-sm font-bold text-foreground">{g.nome}</p>
+                        <p className="text-xs text-muted-foreground">Criado em {new Date(g.criadoEm).toLocaleDateString("pt-BR")}</p>
+                      </div>
+                      {!g.id.startsWith("seed-") && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleRemoveGerente(g.id, g.nome)}
+                          className="text-destructive hover:bg-destructive/10"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         )}
