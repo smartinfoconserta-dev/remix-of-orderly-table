@@ -195,7 +195,8 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
   const [balcaoFormaPag, setBalcaoFormaPag] = useState<PaymentMethod>("dinheiro");
   const [balcaoTroco, setBalcaoTroco] = useState("");
   const [balcaoObs, setBalcaoObs] = useState("");
-  const [balcaoItens, setBalcaoItens] = useState<Record<string, number>>({});
+  const [balcaoItens, setBalcaoItens] = useState<ItemCarrinho[]>([]);
+  const [balcaoModalProduto, setBalcaoModalProduto] = useState<Produto | null>(null);
   const [balcaoCatAtiva, setBalcaoCatAtiva] = useState("");
   const [balcaoCpf, setBalcaoCpf] = useState("");
   const [balcaoNumero, setBalcaoNumero] = useState("");
