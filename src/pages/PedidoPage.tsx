@@ -317,75 +317,22 @@ export default function PedidoPage() {
 
         {/* ── ETAPA 3: Confirmação ── */}
         {etapa === "confirmacao" && (
-          <div className="max-w-md mx-auto space-y-6 pt-4">
-            <Button variant="ghost" size="sm" onClick={() => setEtapa("cardapio")} className="gap-1">
-              <ArrowLeft className="w-4 h-4" /> Voltar ao cardápio
-            </Button>
-
-            <h2 className="text-lg font-bold">Confirme seu pedido</h2>
-
-            {/* Client info */}
-            <Card>
-              <CardContent className="p-4 space-y-1">
-                <p className="font-semibold">{nome}</p>
-                <p className="text-sm text-muted-foreground">
-                  {endereco}, {numero}{complemento ? ` - ${complemento}` : ""} — {bairro}
-                </p>
-              </CardContent>
-            </Card>
-
-            {/* Items */}
-            <Card>
-              <CardContent className="p-4 space-y-2">
-                <h3 className="font-semibold text-sm">Itens</h3>
-                {itens.map((item) => (
-                  <div key={item.uid} className="flex justify-between text-sm">
-                    <span>{item.quantidade}x {item.nome}</span>
-                    <span>R$ {(item.precoUnitario * item.quantidade).toFixed(2)}</span>
-                  </div>
-                ))}
-                {taxaEntrega > 0 && (
-                  <div className="flex justify-between text-sm text-muted-foreground">
-                    <span>Taxa de entrega</span>
-                    <span>R$ {taxaEntrega.toFixed(2)}</span>
-                  </div>
-                )}
-                <div className="border-t border-border pt-2 flex justify-between font-bold">
-                  <span>Total</span>
-                  <span>R$ {totalPedido.toFixed(2)}</span>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Payment */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Forma de pagamento</label>
-              <Select value={formaPag} onValueChange={setFormaPag}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent container={document.body}>
-                  <SelectItem value="pix">PIX</SelectItem>
-                  <SelectItem value="dinheiro">Dinheiro</SelectItem>
-                  <SelectItem value="credito">Crédito</SelectItem>
-                  <SelectItem value="debito">Débito</SelectItem>
-                </SelectContent>
-              </Select>
-              {formaPag === "dinheiro" && (
-                <Input
-                  placeholder="Troco para quanto? (opcional)"
-                  value={troco}
-                  onChange={(e) => setTroco(e.target.value)}
-                  type="text"
-                  inputMode="decimal"
-                />
-              )}
-            </div>
-
-            <Button className="w-full" size="lg" onClick={handleConfirmarPedido}>
-              Confirmar pedido
-            </Button>
-          </div>
+          <ConfirmacaoEtapa
+            nome={nome}
+            endereco={endereco}
+            numero={numero}
+            complemento={complemento}
+            bairro={bairro}
+            itens={itens}
+            taxaEntrega={taxaEntrega}
+            totalPedido={totalPedido}
+            formaPag={formaPag}
+            setFormaPag={setFormaPag}
+            troco={troco}
+            setTroco={setTroco}
+            onVoltar={() => setEtapa("cardapio")}
+            onConfirmar={handleConfirmarPedido}
+          />
         )}
 
         {/* ── ETAPA 4: Sucesso ── */}
