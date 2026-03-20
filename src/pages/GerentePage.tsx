@@ -257,10 +257,10 @@ const GerentePage = () => {
       const day = f.criadoEmIso.slice(0, 10);
       map.set(day, (map.get(day) || 0) + f.total);
     });
-    const entries = [...map.entries()].sort();
+    const entries = [...map.entries()].sort().slice(-14);
     const max = Math.max(...entries.map(([, v]) => v), 1);
     return entries.map(([day, value]) => ({
-      day: day.slice(5).replace("-", "/"),
+      day: `${day.slice(8, 10)}/${day.slice(5, 7)}`,
       value,
       height: Math.max((value / max) * 100, 4),
     }));
