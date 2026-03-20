@@ -134,6 +134,18 @@ const AdminPage = () => {
     });
   }, []);
 
+  const toggleDelivery = useCallback((id: string) => {
+    setOverrides((prev) => {
+      const product = baseProdutos.find((p) => p.id === id) || prev[id];
+      if (!product) return prev;
+      const existing = prev[id] || { ...product, ativo: true };
+      const current = existing.disponivelDelivery !== false;
+      const next = { ...prev, [id]: { ...existing, disponivelDelivery: !current } };
+      saveCardapioOverrides(next);
+      return next;
+    });
+  }, []);
+
   const openEdit = useCallback((product: ProdutoOverride) => {
     setEditProduct(product);
     setIsNewProduct(false);
