@@ -627,6 +627,44 @@ const AdminPage = () => {
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
+
+            {/* Category Dialog */}
+            <Dialog open={catDialogOpen} onOpenChange={(open) => { if (!open) setCatDialogOpen(false); }}>
+              <DialogContent className="sm:max-w-sm">
+                <DialogHeader>
+                  <DialogTitle>{catEditando ? "Editar categoria" : "Nova categoria"}</DialogTitle>
+                  <DialogDescription>{catEditando ? "Altere o nome da categoria." : "Informe o nome da nova categoria."}</DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4 pt-2">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-muted-foreground">Nome da categoria</label>
+                    <Input value={catNomeInput} onChange={(e) => setCatNomeInput(e.target.value)} placeholder="Ex.: Massas" maxLength={40} />
+                  </div>
+                  <div className="flex gap-3">
+                    <Button variant="outline" className="flex-1" onClick={() => setCatDialogOpen(false)}>Cancelar</Button>
+                    <Button className="flex-1" disabled={!catNomeInput.trim()} onClick={() => {
+                      if (!catNomeInput.trim()) return;
+                      if (catEditando) {
+                        const next = categoriasCustom.map((c) => c.id === catEditando.id ? { ...c, nome: catNomeInput.trim() } : c);
+                        saveCategoriasCustom(next);
+                        setCategoriasCustom(next);
+                        toast.success("Categoria atualizada");
+                      } else {
+                        const slug = catNomeInput.trim().toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
+                        const nova: CategoriaCustom = { id: `${slug}-${Date.now()}`, nome: catNomeInput.trim(), icone: "tag", ordem: todasCategorias.length };
+                        const next = [...categoriasCustom, nova];
+                        saveCategoriasCustom(next);
+                        setCategoriasCustom(next);
+                        toast.success("Categoria criada");
+                      }
+                      setCatDialogOpen(false);
+                    }}>
+                      <Save className="mr-1 h-4 w-4" /> Salvar
+                    </Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
           </div>
         )}
 
