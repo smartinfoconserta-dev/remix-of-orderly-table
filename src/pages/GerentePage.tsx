@@ -713,7 +713,7 @@ const GerentePage = () => {
         {/* ═══ TAB 4: Equipe ═══ */}
         <TabsContent value="equipe" className="flex-1 overflow-y-auto p-4 md:p-6 mt-0">
           {!pinVerificado ? pinGateUI : (
-          <div className="mx-auto max-w-2xl space-y-6 p-4 md:p-6">
+          <div className="mx-auto max-w-2xl space-y-6">
             <div>
               <h2 className="text-lg font-black text-foreground">Gerenciar equipe</h2>
               <p className="text-sm text-muted-foreground">Crie garçons e caixas, ou desative funcionários</p>
