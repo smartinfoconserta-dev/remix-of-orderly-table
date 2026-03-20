@@ -180,12 +180,37 @@ const GerentePage = () => {
   const saidas = movimentacoesCaixa.filter((m) => m.tipo === "saida").reduce((acc, m) => acc + m.valor, 0);
   const totalLiquido = fundoTroco + totalVendas + entradasExtras - saidas;
 
-  /* ── audit logs ── */
-  const filteredEvents = logFilter === "all"
-    ? eventos
-    : eventos.filter((e) => e.acao === logFilter);
+  /* ── audit logs — only relevant actions ── */
+  const relevantEvents = useMemo(
+    () => eventos.filter((e) => e.acao && RELEVANT_LOG_ACTIONS.has(e.acao)),
+    [eventos]
+  );
 
-  const uniqueActions = [...new Set(eventos.map((e) => e.acao).filter(Boolean))] as string[];
+  const filteredEvents = logFilter === "all"
+    ? relevantEvents
+    : relevantEvents.filter((e) => e.acao === logFilter);
+
+  const uniqueActions = [...new Set(relevantEvents.map((e) => e.acao).filter(Boolean))] as string[];
+
+  // Group events by date
+  const groupedEvents = useMemo(() => {
+    const groups: { date: string; label: string; events: typeof filteredEvents }[] = [];
+    const map = new Map<string, typeof filteredEvents>();
+
+    filteredEvents.forEach((e) => {
+      const dateKey = e.criadoEmIso.slice(0, 10);
+      if (!map.has(dateKey)) map.set(dateKey, []);
+      map.get(dateKey)!.push(e);
+    });
+
+    // Sort dates descending
+    const sortedDates = [...map.keys()].sort().reverse();
+    sortedDates.forEach((date) => {
+      groups.push({ date, label: formatDateHeader(date), events: map.get(date)! });
+    });
+
+    return groups;
+  }, [filteredEvents]);
 
   /* ── relatório data ── */
   const dateRange = getDateRange(periodo, customInicio, customFim);
