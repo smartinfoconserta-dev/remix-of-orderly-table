@@ -560,6 +560,24 @@ const AdminPage = () => {
                       </SelectContent>
                     </Select>
                   </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-muted-foreground">Opções de tipo de preparo</label>
+                    <Input
+                      value={editForm.tipoOptionsStr}
+                      onChange={(e) => setEditForm((f) => ({ ...f, tipoOptionsStr: e.target.value }))}
+                      placeholder="Tradicional, Artesanal, No ponto da casa"
+                    />
+                    <p className="text-[10px] text-muted-foreground">Separadas por vírgula. Se vazio, etapa não aparece.</p>
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-muted-foreground">Opções de embalagem</label>
+                    <Input
+                      value={editForm.embalagemOptionsStr}
+                      onChange={(e) => setEditForm((f) => ({ ...f, embalagemOptionsStr: e.target.value }))}
+                      placeholder="Consumir na mesa, Para viagem"
+                    />
+                    <p className="text-[10px] text-muted-foreground">Separadas por vírgula. Se vazio, usa padrão para lanches/combos.</p>
+                  </div>
                   {/* Photo upload + URL */}
                   <div className="space-y-2">
                     <label className="text-xs font-bold text-muted-foreground">Foto do produto</label>
