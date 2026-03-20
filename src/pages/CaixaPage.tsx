@@ -218,6 +218,9 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
   const [deliveryConfirmOpen, setDeliveryConfirmOpen] = useState(false);
   const [deliveryPendingItens, setDeliveryPendingItens] = useState<ItemCarrinho[]>([]);
   const [deliveryPendingParaViagem, setDeliveryPendingParaViagem] = useState(false);
+  const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
+  const [rejectPedidoId, setRejectPedidoId] = useState<string | null>(null);
+  const [rejectMotivo, setRejectMotivo] = useState("");
 
   const sistemaConfig = useMemo(() => getSistemaConfig(), []);
 
