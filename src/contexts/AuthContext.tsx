@@ -87,10 +87,12 @@ const readAuthState = (): AuthState => {
     if (!raw) return emptyState;
 
     const parsed = JSON.parse(raw) as Partial<AuthState>;
-    return {
-      users: ensureAtivoField(Array.isArray(parsed.users) ? parsed.users : []),
-      sessions: parsed.sessions ?? {},
-    };
+    const users = ensureAtivoField(Array.isArray(parsed.users) ? parsed.users : []);
+    // If no users exist in storage, inject the seed admin
+    if (users.length === 0) {
+      return { users: [seedAdmin], sessions: parsed.sessions ?? {} };
+    }
+    return { users, sessions: parsed.sessions ?? {} };
   } catch {
     return emptyState;
   }
