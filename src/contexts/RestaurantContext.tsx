@@ -96,6 +96,7 @@ export interface Mesa {
 interface PedidoMeta {
   modo: "cliente" | "garcom" | "caixa";
   operador?: OperationalUser | null;
+  paraViagem?: boolean;
 }
 
 interface MovimentacaoInput {
