@@ -175,7 +175,7 @@ interface RestaurantContextType {
   marcarBalcaoSaiu: (pedidoId: string, motoboyNome: string) => void;
   marcarBalcaoEntregue: (pedidoId: string) => void;
   fecharContaBalcao: (pedidoId: string, input: FecharContaInput) => void;
-  confirmarPedidoBalcao: (pedidoId: string) => void;
+  confirmarPedidoBalcao: (pedidoId: string, taxaEntrega?: number) => void;
   rejeitarPedidoBalcao: (pedidoId: string, motivo: string) => void;
 }
 
@@ -1109,12 +1109,16 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     });
   }, []);
 
-  const confirmarPedidoBalcao = useCallback((pedidoId: string) => {
+  const confirmarPedidoBalcao = useCallback((pedidoId: string, taxaEntrega?: number) => {
     setStore((prev) => ({
       ...prev,
-      pedidosBalcao: prev.pedidosBalcao.map((p) =>
-        p.id === pedidoId ? { ...p, statusBalcao: "aberto" as const } : p,
-      ),
+      pedidosBalcao: prev.pedidosBalcao.map((p) => {
+        if (p.id !== pedidoId) return p;
+        const taxa = taxaEntrega && taxaEntrega > 0 ? taxaEntrega : 0;
+        const taxaItem: ItemCarrinho = { uid: `taxa-${Date.now()}`, produtoId: "taxa-entrega", nome: "Taxa de entrega", precoBase: taxa, quantidade: 1, removidos: [], adicionais: [], precoUnitario: taxa };
+        const itensAtualizados = taxa > 0 ? [...p.itens, taxaItem] : p.itens;
+        return { ...p, statusBalcao: "aberto" as const, itens: itensAtualizados, total: p.total + taxa };
+      }),
       eventos: appendEvent(prev.eventos, {
         tipo: "caixa",
         descricao: `Pedido delivery confirmado pelo caixa`,
