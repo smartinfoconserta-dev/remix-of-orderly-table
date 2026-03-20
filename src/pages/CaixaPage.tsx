@@ -230,12 +230,8 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
   }, [produtosAtivos]);
 
   const balcaoSubtotal = useMemo(() => {
-    return Object.entries(balcaoItens).reduce((acc, [prodId, qty]) => {
-      if (qty <= 0) return acc;
-      const prod = produtosAtivos.find((p) => p.id === prodId);
-      return acc + (prod ? prod.preco * qty : 0);
-    }, 0);
-  }, [balcaoItens, produtosAtivos]);
+    return balcaoItens.reduce((acc, item) => acc + (item.precoUnitario * item.quantidade), 0);
+  }, [balcaoItens]);
 
   const mesa = mesaSelecionada ? mesas.find((item) => item.id === mesaSelecionada) ?? null : null;
   const currentOperator = accessMode === "gerente" ? currentGerente : currentCaixa;
