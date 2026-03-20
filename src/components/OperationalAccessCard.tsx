@@ -38,13 +38,11 @@ const roleCopy = {
 } satisfies Record<UserRole, { title: string; description: string; submit: string; icon: typeof HandPlatter }>;
 
 const OperationalAccessCard = ({ role }: OperationalAccessCardProps) => {
-  const { getProfilesByRole, loginWithPin, resetPin } = useAuth();
+  const { getProfilesByRole, loginWithPin } = useAuth();
   const [nome, setNome] = useState("");
   const [pin, setPin] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showReset, setShowReset] = useState(false);
-  const [resetNome, setResetNome] = useState("");
 
   const knownUsers = useMemo(() => getProfilesByRole(role), [getProfilesByRole, role]);
   const copy = roleCopy[role];
@@ -76,19 +74,6 @@ const OperationalAccessCard = ({ role }: OperationalAccessCardProps) => {
       icon: role === "garcom" ? "🍽️" : role === "gerente" ? "🛡️" : "💰",
     });
     setIsSubmitting(false);
-  };
-
-  const handleResetPin = () => {
-    const result = resetPin(role, resetNome);
-    if (result.ok) {
-      toast.success("PIN redefinido para 1234", { duration: 3000, icon: "🔑" });
-      setShowReset(false);
-      setResetNome("");
-      setNome(resetNome.trim());
-      setPin("");
-    } else {
-      toast.error(result.error ?? "Não foi possível redefinir");
-    }
   };
 
   return (
@@ -130,34 +115,6 @@ const OperationalAccessCard = ({ role }: OperationalAccessCardProps) => {
             {copy.submit}
           </Button>
         </form>
-
-        {!showReset ? (
-          <button
-            type="button"
-            onClick={() => setShowReset(true)}
-            className="mx-auto text-xs text-muted-foreground underline-offset-2 hover:underline"
-          >
-            Esqueci meu PIN
-          </button>
-        ) : (
-          <div className="flex flex-col gap-2 rounded-xl border border-border bg-muted/50 p-3">
-            <p className="text-xs font-semibold text-foreground">Redefinir PIN</p>
-            <Input
-              value={resetNome}
-              onChange={(e) => setResetNome(e.target.value)}
-              placeholder="Digite seu nome"
-              maxLength={40}
-            />
-            <div className="flex gap-2">
-              <Button variant="ghost" size="sm" onClick={() => { setShowReset(false); setResetNome(""); }}>
-                Cancelar
-              </Button>
-              <Button size="sm" onClick={handleResetPin} disabled={resetNome.trim().length < 2}>
-                Redefinir para 1234
-              </Button>
-            </div>
-          </div>
-        )}
       </div>
 
       <div className="rounded-2xl border border-border bg-card p-4">

@@ -116,16 +116,6 @@ const ClientePage = () => {
     setMesaId(boundMesaId);
   };
 
-  const handleResetPin = () => {
-    const result = resetPin(resetRole, resetNome);
-    if (result.ok) {
-      toast.success("PIN redefinido para 1234", { duration: 3000, icon: "🔑" });
-      setShowReset(false);
-      setResetNome("");
-    } else {
-      toast.error(result.error ?? "Usuário não encontrado");
-    }
-  };
 
   if (mesaId) {
     return <PedidoFlow modo="cliente" mesaId={mesaId} />;

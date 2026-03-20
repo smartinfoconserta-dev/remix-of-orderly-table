@@ -4,6 +4,7 @@ import type { OperationalUser, UserRole } from "@/types/operations";
 
 interface StoredUser extends OperationalUser {
   pinHash: string;
+  ativo: boolean;
 }
 
 interface StoredSession {
@@ -27,10 +28,14 @@ interface AuthContextType {
   currentCaixa: OperationalUser | null;
   currentGerente: OperationalUser | null;
   getProfilesByRole: (role: UserRole) => OperationalUser[];
+  getActiveProfilesByRole: (role: UserRole) => OperationalUser[];
   loginWithPin: (role: UserRole, nome: string, pin: string) => Promise<LoginResult>;
+  createUser: (role: UserRole, nome: string, pin: string) => { ok: boolean; error?: string; user?: OperationalUser };
+  removeUser: (id: string) => { ok: boolean; error?: string };
+  deactivateUser: (id: string) => { ok: boolean; error?: string };
+  activateUser: (id: string) => { ok: boolean; error?: string };
   verifyManagerAccess: (nome: string, pin: string) => Promise<LoginResult>;
   verifyEmployeeAccess: (nome: string, pin: string) => Promise<LoginResult>;
-  resetPin: (role: UserRole, nome: string) => { ok: boolean; error?: string };
   logout: (role: UserRole) => void;
 }
 
@@ -61,12 +66,12 @@ authContextStore.__obsidianAuthContext__ = AuthContext;
 const hashPin = (pin: string) => btoa(`pin:${pin}`).split("").reverse().join("");
 
 const seedUsers: StoredUser[] = [
-  { id: "seed-gerente", nome: "gerente", role: "gerente", criadoEm: new Date().toISOString(), pinHash: hashPin("1234") },
-  { id: "seed-caixa", nome: "caixa", role: "caixa", criadoEm: new Date().toISOString(), pinHash: hashPin("1234") },
-  { id: "seed-garcom", nome: "garcom", role: "garcom", criadoEm: new Date().toISOString(), pinHash: hashPin("1234") },
+  { id: "seed-gerente", nome: "gerente", role: "gerente", criadoEm: new Date().toISOString(), pinHash: hashPin("1234"), ativo: true },
+  { id: "seed-caixa", nome: "caixa", role: "caixa", criadoEm: new Date().toISOString(), pinHash: hashPin("1234"), ativo: true },
+  { id: "seed-garcom", nome: "garcom", role: "garcom", criadoEm: new Date().toISOString(), pinHash: hashPin("1234"), ativo: true },
 ];
 
-const toPublicUser = ({ pinHash: _pinHash, ...user }: StoredUser): OperationalUser => user;
+const toPublicUser = ({ pinHash: _pinHash, ativo: _ativo, ...user }: StoredUser): OperationalUser => user;
 
 const mergeSeedUsers = (users: StoredUser[]): StoredUser[] => {
   const merged = [...users];
@@ -76,7 +81,8 @@ const mergeSeedUsers = (users: StoredUser[]): StoredUser[] => {
     );
     if (!exists) merged.push(seed);
   }
-  return merged;
+  // Ensure all users have the ativo field (migration for old data)
+  return merged.map((u) => ({ ...u, ativo: u.ativo !== false }));
 };
 
 const readAuthState = (): AuthState => {
@@ -123,6 +129,79 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     [state.users],
   );
 
+  const getActiveProfilesByRole = useCallback(
+    (role: UserRole) => state.users.filter((user) => user.role === role && user.ativo !== false).map(toPublicUser),
+    [state.users],
+  );
+
+  const createUser = useCallback((role: UserRole, nome: string, pin: string): { ok: boolean; error?: string; user?: OperationalUser } => {
+    const parsed = loginSchema.safeParse({ nome, pin });
+    if (!parsed.success) {
+      return { ok: false, error: parsed.error.issues[0]?.message ?? "Revise os dados informados" };
+    }
+
+    const nomeNormalizado = parsed.data.nome.trim();
+    const pinHash = hashPin(parsed.data.pin);
+
+    const existing = state.users.find(
+      (u) => u.role === role && u.nome.toLocaleLowerCase("pt-BR") === nomeNormalizado.toLocaleLowerCase("pt-BR"),
+    );
+
+    if (existing) {
+      return { ok: false, error: "Já existe um usuário com este nome neste perfil" };
+    }
+
+    const newUser: StoredUser = {
+      id: `user-${role}-${Date.now()}`,
+      nome: nomeNormalizado,
+      role,
+      criadoEm: new Date().toISOString(),
+      pinHash,
+      ativo: true,
+    };
+
+    setState((prev) => ({
+      ...prev,
+      users: [newUser, ...prev.users],
+    }));
+
+    return { ok: true, user: toPublicUser(newUser) };
+  }, [state.users]);
+
+  const removeUser = useCallback((id: string): { ok: boolean; error?: string } => {
+    const user = state.users.find((u) => u.id === id);
+    if (!user) return { ok: false, error: "Usuário não encontrado" };
+    if (id.startsWith("seed-")) return { ok: false, error: "Não é possível remover usuários padrão" };
+
+    setState((prev) => ({
+      users: prev.users.filter((u) => u.id !== id),
+      sessions: prev.sessions,
+    }));
+    return { ok: true };
+  }, [state.users]);
+
+  const deactivateUser = useCallback((id: string): { ok: boolean; error?: string } => {
+    const user = state.users.find((u) => u.id === id);
+    if (!user) return { ok: false, error: "Usuário não encontrado" };
+
+    setState((prev) => ({
+      ...prev,
+      users: prev.users.map((u) => u.id === id ? { ...u, ativo: false } : u),
+    }));
+    return { ok: true };
+  }, [state.users]);
+
+  const activateUser = useCallback((id: string): { ok: boolean; error?: string } => {
+    const user = state.users.find((u) => u.id === id);
+    if (!user) return { ok: false, error: "Usuário não encontrado" };
+
+    setState((prev) => ({
+      ...prev,
+      users: prev.users.map((u) => u.id === id ? { ...u, ativo: true } : u),
+    }));
+    return { ok: true };
+  }, [state.users]);
+
   const loginWithPin = useCallback(async (role: UserRole, nome: string, pin: string): Promise<LoginResult> => {
     const parsed = loginSchema.safeParse({ nome, pin });
     if (!parsed.success) {
@@ -139,6 +218,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         (user) => user.role === role && user.nome.toLocaleLowerCase("pt-BR") === nomeNormalizado.toLocaleLowerCase("pt-BR"),
       );
 
+      if (existingUser && existingUser.ativo === false) {
+        error = "Este usuário está desativado. Contacte o gerente.";
+        return prev;
+      }
+
       if (existingUser && existingUser.pinHash !== pinHash) {
         error = "PIN inválido para este usuário";
         return prev;
@@ -150,6 +234,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         role,
         criadoEm: new Date().toISOString(),
         pinHash,
+        ativo: true,
       };
 
       authenticatedUser = toPublicUser(storedUser);
@@ -188,6 +273,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return { ok: false, error: "Gerente não encontrado" };
     }
 
+    if (gerente.ativo === false) {
+      return { ok: false, error: "Este gerente está desativado" };
+    }
+
     if (gerente.pinHash !== hashPin(parsed.data.pin)) {
       return { ok: false, error: "PIN do gerente inválido" };
     }
@@ -211,6 +300,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return { ok: false, error: "Funcionário não encontrado" };
     }
 
+    if (employee.ativo === false) {
+      return { ok: false, error: "Este funcionário está desativado. Contacte o gerente." };
+    }
+
     if (employee.pinHash !== pinHashed) {
       return { ok: false, error: "PIN inválido" };
     }
@@ -226,26 +319,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
   }, []);
 
-  const resetPin = useCallback((role: UserRole, nome: string): { ok: boolean; error?: string } => {
-    const nomeNorm = nome.trim().toLocaleLowerCase("pt-BR");
-    if (nomeNorm.length < 2) return { ok: false, error: "Informe um nome válido" };
-
-    let found = false;
-    setState((prev) => {
-      const idx = prev.users.findIndex(
-        (u) => u.role === role && u.nome.toLocaleLowerCase("pt-BR") === nomeNorm,
-      );
-      if (idx === -1) return prev;
-      found = true;
-      const users = [...prev.users];
-      users[idx] = { ...users[idx], pinHash: hashPin("1234") };
-      return { ...prev, users };
-    });
-
-    if (!found) return { ok: false, error: "Usuário não encontrado neste perfil" };
-    return { ok: true };
-  }, []);
-
   return (
     <AuthContext.Provider
       value={{
@@ -253,10 +326,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         currentCaixa,
         currentGerente,
         getProfilesByRole,
+        getActiveProfilesByRole,
         loginWithPin,
+        createUser,
+        removeUser,
+        deactivateUser,
+        activateUser,
         verifyManagerAccess,
         verifyEmployeeAccess,
-        resetPin,
         logout,
       }}
     >
