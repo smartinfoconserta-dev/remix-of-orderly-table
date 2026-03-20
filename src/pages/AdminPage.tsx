@@ -834,22 +834,7 @@ const AdminPage = () => {
                   inputMode="tel"
                 />
               </div>
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-muted-foreground">Tempo estimado de entrega</label>
-                <Select
-                  value={sistemaConfig.tempoEntrega || ""}
-                  onValueChange={(v) => setSistemaConfig((c) => ({ ...c, tempoEntrega: v }))}
-                >
-                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="20-30 min">20-30 min</SelectItem>
-                    <SelectItem value="30-45 min">30-45 min</SelectItem>
-                    <SelectItem value="40-60 min">40-60 min</SelectItem>
-                    <SelectItem value="45-60 min">45-60 min</SelectItem>
-                    <SelectItem value="60-90 min">60-90 min</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              {/* Tempo estimado removido — agora é selecionado pelo caixa ao confirmar cada pedido */}
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-muted-foreground">Mensagem de boas-vindas WhatsApp</label>
                 <Textarea
