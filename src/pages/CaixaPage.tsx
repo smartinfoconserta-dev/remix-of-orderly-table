@@ -194,6 +194,12 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
   const [balcaoTroco, setBalcaoTroco] = useState("");
   const [balcaoObs, setBalcaoObs] = useState("");
   const [balcaoItens, setBalcaoItens] = useState<Record<string, number>>({});
+  const [balcaoCatAtiva, setBalcaoCatAtiva] = useState("");
+  const [balcaoCpf, setBalcaoCpf] = useState("");
+  const [balcaoNumero, setBalcaoNumero] = useState("");
+  const [balcaoComplemento, setBalcaoComplemento] = useState("");
+  const [deliveryBusca, setDeliveryBusca] = useState("");
+  const [deliveryResultados, setDeliveryResultados] = useState<ClienteDelivery[]>([]);
 
   const sistemaConfig = useMemo(() => getSistemaConfig(), []);
   const cardapioOverrides = useMemo(() => getCardapioOverrides(), []);
