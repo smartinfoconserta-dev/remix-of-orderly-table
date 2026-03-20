@@ -251,7 +251,7 @@ const AdminPage = () => {
 
   const handleCreateGerente = () => {
     setUserError(null);
-    const result = createUser(newGerenteName, newGerentePin, "gerente");
+    const result = createUser("gerente", newGerenteName, newGerentePin);
     if (!result.ok) {
       setUserError(result.error ?? "Erro ao criar gerente");
       return;

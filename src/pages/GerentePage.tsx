@@ -159,8 +159,8 @@ const GerentePage = () => {
   const [customFim, setCustomFim] = useState("");
 
   // Equipe state
-  const garcons = useMemo(() => getProfilesByRole("garcom"), [getProfilesByRole]);
-  const caixas = useMemo(() => getProfilesByRole("caixa"), [getProfilesByRole]);
+  const garcons = useMemo(() => getActiveProfilesByRole("garcom"), [getActiveProfilesByRole]);
+  const caixas = useMemo(() => getActiveProfilesByRole("caixa"), [getActiveProfilesByRole]);
   const [newEmpName, setNewEmpName] = useState("");
   const [newEmpPin, setNewEmpPin] = useState("");
   const [newEmpRole, setNewEmpRole] = useState<"garcom" | "caixa">("garcom");
