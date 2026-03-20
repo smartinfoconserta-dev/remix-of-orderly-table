@@ -21,7 +21,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { categorias, produtos as baseProdutos, type Categoria, type Produto } from "@/data/menuData";
-import { getCardapioOverrides, getSistemaConfig } from "@/lib/adminStorage";
+import { getCardapioOverrides, getSistemaConfig, getProdutosDelivery } from "@/lib/adminStorage";
 import { HOME_CAROUSEL_INTERVAL_MS, homeHeroSlides, homeShowcaseConfig } from "@/data/homeShowcaseData";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRestaurant, type ItemCarrinho } from "@/contexts/RestaurantContext";
@@ -43,10 +43,12 @@ import {
 } from "@/lib/tabletBinding";
 
 interface PedidoFlowProps {
-  modo: "cliente" | "garcom" | "caixa";
-  mesaId: string;
+  modo: "cliente" | "garcom" | "caixa" | "balcao" | "delivery";
+  mesaId?: string;
   garcomNome?: string;
+  clienteNome?: string;
   onBack?: () => void;
+  onPedidoConfirmado?: (itens: ItemCarrinho[], paraViagem: boolean) => void;
 }
 
 const sysConfig = getSistemaConfig();
@@ -112,7 +114,7 @@ const formatMesaLabel = (mesaId: string) => {
   return `Mesa ${numeroMesa.padStart(2, "0")}`;
 };
 
-const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
+const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, onBack, onPedidoConfirmado }: PedidoFlowProps) => {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const { currentGarcom, currentCaixa, verifyEmployeeAccess } = useAuth();
@@ -126,8 +128,10 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
     chamarGarcom,
     dismissChamarGarcom,
   } = useRestaurant();
-  const [categoriaAtiva, setCategoriaAtiva] = useState(HOME_TAB_ID);
-  const [categoriaExibida, setCategoriaExibida] = useState(HOME_TAB_ID);
+  const isExternalOrder = modo === "balcao" || modo === "delivery";
+  const [localCarrinho, setLocalCarrinho] = useState<ItemCarrinho[]>([]);
+  const [categoriaAtiva, setCategoriaAtiva] = useState(isExternalOrder ? categorias[0]?.id ?? HOME_TAB_ID : HOME_TAB_ID);
+  const [categoriaExibida, setCategoriaExibida] = useState(isExternalOrder ? categorias[0]?.id ?? HOME_TAB_ID : HOME_TAB_ID);
   const [categoryFadeKey, setCategoryFadeKey] = useState(0);
   const [selectedProductCardId, setSelectedProductCardId] = useState<string | null>(null);
   const [bannerIndex, setBannerIndex] = useState(0);
@@ -156,22 +160,32 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
   const desktopMainRef = useRef<HTMLElement>(null);
 
   const mesa = getMesa(mesaId);
-  const carrinho = mesa?.carrinho ?? [];
+  const carrinho = isExternalOrder ? localCarrinho : (mesa?.carrinho ?? []);
 
-  const mesaLabel = formatMesaLabel(mesaId);
+  const mesaLabel = isExternalOrder
+    ? (modo === "delivery" ? `Delivery — ${clienteNome || ""}` : `Balcão — ${clienteNome || ""}`)
+    : formatMesaLabel(mesaId);
   const nomeAtendimento = garcomNome?.trim() || currentGarcom?.nome || currentCaixa?.nome || "Equipe operacional";
   const isGarcomMobile = modo === "garcom" && isMobile;
   const isHomeActive = categoriaExibida === HOME_TAB_ID;
   const isTabletViewport = !isMobile && typeof window !== "undefined" && window.innerWidth >= TABLET_MIN_WIDTH && window.innerWidth <= TABLET_MAX_WIDTH;
   const shouldEnableClientIdle = modo === "cliente" && isTabletViewport;
+
+  const produtosDisponiveis = useMemo(() => {
+    if (modo === "delivery") {
+      return getProdutosDelivery() as unknown as Produto[];
+    }
+    return produtos;
+  }, [modo]);
+
   const cartTotal = useMemo(
     () => carrinho.reduce((acc, item) => acc + item.precoUnitario * item.quantidade, 0),
     [carrinho],
   );
   const cartItemCount = useMemo(() => carrinho.reduce((acc, item) => acc + item.quantidade, 0), [carrinho]);
   const produtosFiltrados = useMemo(
-    () => produtos.filter((p) => p.categoria === categoriaExibida),
-    [categoriaExibida],
+    () => produtosDisponiveis.filter((p) => p.categoria === categoriaExibida),
+    [categoriaExibida, produtosDisponiveis],
   );
   const featuredProducts = useMemo(
     () => ["c1", "l2", "pr1"].map((id) => produtos.find((produto) => produto.id === id)).filter(Boolean) as Produto[],
@@ -359,17 +373,25 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
 
   const handleAddToCart = useCallback(
     (item: ItemCarrinho) => {
-      addToCart(mesaId, {
-        ...item,
-        removidos: [...item.removidos],
-        adicionais: item.adicionais.map((adicional) => ({ ...adicional })),
-      });
+      if (isExternalOrder) {
+        setLocalCarrinho(prev => [...prev, {
+          ...item,
+          removidos: [...item.removidos],
+          adicionais: item.adicionais.map((adicional) => ({ ...adicional })),
+        }]);
+      } else {
+        addToCart(mesaId, {
+          ...item,
+          removidos: [...item.removidos],
+          adicionais: item.adicionais.map((adicional) => ({ ...adicional })),
+        });
+      }
       setSelectedProductCardId(null);
       setProdutoSelecionado(null);
       setIsClientIdle(false);
       handleCartOpenChange(true);
     },
-    [addToCart, handleCartOpenChange, mesaId],
+    [addToCart, handleCartOpenChange, isExternalOrder, mesaId],
   );
 
   const handleChamarGarcom = useCallback(() => {
@@ -448,7 +470,7 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
 
   const handleConfirmar = useCallback(async () => {
     if (carrinho.length === 0 || orderSubmissionLockRef.current) return false;
-    if (!validatePendingCart()) return false;
+    if (!isExternalOrder && !validatePendingCart()) return false;
 
     orderSubmissionLockRef.current = true;
 
@@ -456,11 +478,16 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
       window.clearTimeout(orderSubmissionCooldownRef.current);
     }
 
-    const operador = modo === "garcom" ? currentGarcom : modo === "caixa" ? currentCaixa : undefined;
-
     try {
+      if (isExternalOrder && onPedidoConfirmado) {
+        onPedidoConfirmado([...carrinho], paraViagem);
+        setLocalCarrinho([]);
+        return true;
+      }
+
+      const operador = modo === "garcom" ? currentGarcom : modo === "caixa" ? currentCaixa : undefined;
       confirmarPedido(mesaId, {
-        modo,
+        modo: modo as "cliente" | "garcom" | "caixa",
         operador,
         paraViagem,
       });
@@ -471,7 +498,7 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
         orderSubmissionCooldownRef.current = null;
       }, ORDER_SUBMIT_LOCK_MS);
     }
-  }, [carrinho.length, confirmarPedido, currentCaixa, currentGarcom, mesaId, modo, paraViagem, validatePendingCart]);
+  }, [carrinho, confirmarPedido, currentCaixa, currentGarcom, isExternalOrder, mesaId, modo, onPedidoConfirmado, paraViagem, validatePendingCart]);
 
   const handleSuccessAcknowledge = useCallback(() => {
     if (openProductTimerRef.current) {
@@ -497,7 +524,7 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
     });
   }, []);
 
-  if (!mesa) {
+  if (!mesa && !isExternalOrder) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background px-4">
         <div className="surface-card w-full max-w-md space-y-2 p-6 text-center">
@@ -588,23 +615,39 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
                 {nomeAtendimento}
               </div>
             ) : null}
-            <Button
-              type="button"
-              variant="outline"
-              size="default"
-              onClick={() => setContaOpen(true)}
-              className="h-auto gap-2 rounded-xl px-4 py-2.5 text-sm font-bold md:text-base"
-              aria-label="Abrir minha conta"
-            >
-              <Wallet className="h-4 w-4 md:h-5 md:w-5" />
-              <span>Minha Conta</span>
-            </Button>
+            {!isExternalOrder && (
+              <Button
+                type="button"
+                variant="outline"
+                size="default"
+                onClick={() => setContaOpen(true)}
+                className="h-auto gap-2 rounded-xl px-4 py-2.5 text-sm font-bold md:text-base"
+                aria-label="Abrir minha conta"
+              >
+                <Wallet className="h-4 w-4 md:h-5 md:w-5" />
+                <span>Minha Conta</span>
+              </Button>
+            )}
           </>
         )}
         <CartDrawer
           carrinho={carrinho}
-          onUpdateQty={(uid, delta) => updateCartItemQty(mesaId, uid, delta)}
-          onRemove={(uid) => removeFromCart(mesaId, uid)}
+          onUpdateQty={(uid, delta) => {
+            if (isExternalOrder) {
+              setLocalCarrinho(prev => prev.map(item =>
+                item.uid === uid ? { ...item, quantidade: Math.max(1, item.quantidade + delta) } : item
+              ));
+            } else {
+              updateCartItemQty(mesaId, uid, delta);
+            }
+          }}
+          onRemove={(uid) => {
+            if (isExternalOrder) {
+              setLocalCarrinho(prev => prev.filter(item => item.uid !== uid));
+            } else {
+              removeFromCart(mesaId, uid);
+            }
+          }}
           onConfirmar={handleConfirmar}
           onContinueOrdering={() => handleCartOpenChange(false)}
           onSuccessAcknowledge={handleSuccessAcknowledge}
@@ -1027,7 +1070,7 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
         {header}
         {isMobile ? mobileContent : desktopContent}
         <ProductModal produto={produtoSelecionado} onClose={handleCloseProductModal} onAdd={handleAddToCart} isGarcomMobile={isGarcomMobile} />
-        <MinhaContaDrawer pedidos={mesa.pedidos} total={mesa.total} open={contaOpen} onOpenChange={setContaOpen} />
+        {mesa && <MinhaContaDrawer pedidos={mesa.pedidos} total={mesa.total} open={contaOpen} onOpenChange={setContaOpen} />}
         {idleOverlay}
       </div>
 
