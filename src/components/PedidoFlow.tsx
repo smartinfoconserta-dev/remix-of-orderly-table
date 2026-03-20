@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AlertTriangle, ArrowLeft, Bell, Instagram, LockKeyhole, Plus, RefreshCw, ShoppingCart, Unlink, Wallet, Wifi } from "lucide-react";
+import qrInstagramFallback from "@/assets/qr-instagram-premium.svg";
+import qrWifiFallback from "@/assets/qr-wifi-premium.svg";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import CategoryTabs from "@/components/CategoryTabs";
@@ -690,41 +692,30 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
 
   // Dynamic QR code info cards
   const qrInfoCards = useMemo(() => {
-    const cards: Array<{
-      id: string;
-      title: string;
-      subtitle: string;
-      icon: typeof Instagram;
-      badge: string;
-      qrUrl: string;
-      bgImage?: string;
-    }> = [];
-
-    if (sysConfig.instagramUrl) {
-      cards.push({
+    return [
+      {
         id: "instagram",
         title: "Visite nosso Instagram",
         subtitle: "Aponte a câmera para acessar nosso perfil",
         icon: Instagram,
         badge: "Instagram",
-        qrUrl: `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(sysConfig.instagramUrl)}`,
+        qrUrl: sysConfig.instagramUrl
+          ? `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(sysConfig.instagramUrl)}`
+          : qrInstagramFallback,
         bgImage: sysConfig.instagramBg || undefined,
-      });
-    }
-
-    if (sysConfig.senhaWifi) {
-      cards.push({
+      },
+      {
         id: "wifi",
         title: "Conecte-se ao Wi‑Fi grátis",
         subtitle: "Escaneie para acessar a rede da casa",
         icon: Wifi,
         badge: "Wi‑Fi",
-        qrUrl: `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(`WIFI:T:WPA;S:${RESTAURANTE.nome};P:${sysConfig.senhaWifi};;`)}`,
+        qrUrl: sysConfig.senhaWifi
+          ? `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(`WIFI:T:WPA;S:${RESTAURANTE.nome};P:${sysConfig.senhaWifi};;`)}`
+          : qrWifiFallback,
         bgImage: sysConfig.wifiBg || undefined,
-      });
-    }
-
-    return cards;
+      },
+    ];
   }, []);
 
   const categoryFadeClass = "";
@@ -816,8 +807,7 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
       {heroBanner}
       <div className="px-4 md:px-6 space-y-6">
         {/* Dynamic QR info cards */}
-        {qrInfoCards.length > 0 && (
-          <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid gap-4 md:grid-cols-2">
             {qrInfoCards.map((card) => {
               const Icon = card.icon;
               return (
@@ -865,7 +855,6 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
               );
             })}
           </div>
-        )}
 
         {/* Combos section */}
         {comboProducts.length > 0 && (
