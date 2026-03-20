@@ -224,6 +224,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
   const [confirmTempoId, setConfirmTempoId] = useState<string | null>(null);
   const [confirmTempo, setConfirmTempo] = useState("");
   const [confirmTempoCustom, setConfirmTempoCustom] = useState("");
+  const [confirmTaxaEntrega, setConfirmTaxaEntrega] = useState("");
 
   const sistemaConfig = useMemo(() => getSistemaConfig(), []);
   const audioCtxRef = useRef<AudioContext | null>(null);
