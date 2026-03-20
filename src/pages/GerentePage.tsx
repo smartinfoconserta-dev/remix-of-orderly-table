@@ -10,6 +10,7 @@ import {
   Filter,
   LockKeyhole,
   LogOut,
+  Printer,
   ScrollText,
   ShieldCheck,
   Smartphone,
@@ -48,6 +49,7 @@ import { useRestaurant } from "@/contexts/RestaurantContext";
 import type { FechamentoConta } from "@/contexts/RestaurantContext";
 import { useRouteLock } from "@/hooks/use-route-lock";
 import type { PaymentMethod } from "@/types/operations";
+import { getSistemaConfig } from "@/lib/adminStorage";
 
 /* ── helpers ── */
 const formatPrice = (v: number) => `R$ ${v.toFixed(2).replace(".", ",")}`;
@@ -459,12 +461,65 @@ const GerentePage = () => {
           {!pinVerificado ? pinGateUI : (
           <div className="mx-auto max-w-2xl space-y-6">
 
-            {/* ── Period Filter ── */}
-            <div className="space-y-3">
+            {/* ── Header with Print ── */}
+            <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 text-sm font-black uppercase tracking-widest text-muted-foreground">
                 <Calendar className="h-4 w-4" />
                 Período
               </div>
+              <Button variant="outline" size="sm" className="gap-1.5 rounded-xl text-xs font-bold" onClick={() => {
+                const nomeRestaurante = getSistemaConfig().nomeRestaurante || "Relatório";
+                const periodoLabel = periodo === "hoje" ? "Hoje" : periodo === "semana" ? "Esta semana" : periodo === "mes" ? "Este mês" : `${customInicio || "—"} a ${customFim || "—"}`;
+                const geradoEm = new Date().toLocaleString("pt-BR");
+
+                const prodRows = topProducts.map(p => `<tr><td>${p.nome}</td><td style="text-align:center">${p.qty}</td><td style="text-align:right">${formatPrice(p.total)}</td></tr>`).join("");
+                const pgtoRows = paymentBreakdown.map(p => `<tr><td>${p.label}</td><td style="text-align:right">${formatPrice(p.total)}</td><td style="text-align:right">${p.pct}%</td></tr>`).join("");
+                const comandaRows = [...fechFiltrados].sort((a, b) => new Date(b.criadoEmIso).getTime() - new Date(a.criadoEmIso).getTime()).map(f => {
+                  const itensStr = (f.itens || []).map(i => `${i.quantidade}x ${i.nome}`).join(", ") || "—";
+                  const pgto = f.pagamentos.length > 1
+                    ? f.pagamentos.map(p => `${paymentMethods.find(pm => pm.value === p.formaPagamento)?.label ?? p.formaPagamento}: R$${p.valor.toFixed(2)}`).join(", ")
+                    : paymentMethods.find(pm => pm.value === f.formaPagamento)?.label ?? f.formaPagamento;
+                  return `<tr><td>Mesa ${String(f.mesaNumero).padStart(2,"0")}</td><td>${f.criadoEm}</td><td>${f.caixaNome}</td><td>${itensStr}</td><td style="text-align:right">${formatPrice(f.total)}</td><td>${pgto}</td></tr>`;
+                }).join("");
+
+                const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Relatório</title><style>
+                  body{font-family:Arial,sans-serif;color:#111;background:#fff;padding:24px;max-width:900px;margin:0 auto}
+                  h1{font-size:20px;margin:0}h2{font-size:15px;margin:24px 0 8px;border-bottom:1px solid #ccc;padding-bottom:4px}
+                  .center{text-align:center}.meta{color:#666;font-size:12px}
+                  table{width:100%;border-collapse:collapse;font-size:13px;margin-top:6px}
+                  th,td{border:1px solid #ddd;padding:6px 8px;text-align:left}
+                  th{background:#f5f5f5;font-weight:700}
+                  .summary{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:8px}
+                  .summary-item{border:1px solid #ddd;border-radius:8px;padding:12px}
+                  .summary-item .label{font-size:11px;color:#666;text-transform:uppercase}.summary-item .value{font-size:20px;font-weight:900}
+                  @media print{body{padding:0}@page{margin:12mm}}
+                </style></head><body>
+                  <div class="center"><h1>${nomeRestaurante}</h1><p style="font-size:16px;font-weight:700;margin:4px 0">Relatório de Vendas</p><p class="meta">Período: ${periodoLabel} — Gerado em ${geradoEm}</p></div>
+                  <h2>Resumo</h2>
+                  <div class="summary">
+                    <div class="summary-item"><div class="label">Total faturado</div><div class="value">${formatPrice(relTotalFaturado)}</div></div>
+                    <div class="summary-item"><div class="label">Ticket médio</div><div class="value">${formatPrice(relTicketMedio)}</div></div>
+                    <div class="summary-item"><div class="label">Comandas fechadas</div><div class="value">${relComandasFechadas}</div></div>
+                    <div class="summary-item"><div class="label">Pedidos realizados</div><div class="value">${relPedidosRealizados}</div></div>
+                  </div>
+                  <h2>Produtos mais vendidos</h2>
+                  <table><thead><tr><th>Produto</th><th style="text-align:center">Qtd</th><th style="text-align:right">Total R$</th></tr></thead><tbody>${prodRows || "<tr><td colspan=3 style='text-align:center;color:#999'>Sem dados</td></tr>"}</tbody></table>
+                  <h2>Formas de pagamento</h2>
+                  <table><thead><tr><th>Forma</th><th style="text-align:right">Total R$</th><th style="text-align:right">%</th></tr></thead><tbody>${pgtoRows}</tbody></table>
+                  <h2>Comandas fechadas</h2>
+                  <table><thead><tr><th>Mesa</th><th>Horário</th><th>Operador</th><th>Itens</th><th style="text-align:right">Valor</th><th>Pagamento</th></tr></thead><tbody>${comandaRows || "<tr><td colspan=6 style='text-align:center;color:#999'>Sem comandas</td></tr>"}</tbody></table>
+                </body></html>`;
+
+                const w = window.open("", "_blank");
+                if (w) { w.document.write(html); w.document.close(); w.print(); }
+              }}>
+                <Printer className="h-3.5 w-3.5" />
+                Imprimir / Salvar PDF
+              </Button>
+            </div>
+
+            {/* ── Period Filter ── */}
+            <div className="space-y-3">
               <div className="flex flex-wrap gap-2">
                 {([
                   { key: "hoje", label: "Hoje" },
