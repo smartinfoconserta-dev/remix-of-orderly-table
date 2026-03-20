@@ -1900,7 +1900,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                     <Input value={balcaoClienteNome} onChange={(e) => setBalcaoClienteNome(e.target.value)} placeholder="Nome completo" />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xs font-semibold text-foreground">CPF</label>
+                    <label className="text-xs font-semibold text-foreground">CPF *</label>
                     <Input value={balcaoCpf} onChange={(e) => setBalcaoCpf(e.target.value)} placeholder="000.000.000-00" />
                   </div>
                 </div>
@@ -1910,7 +1910,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                     <Input value={balcaoTelefone} onChange={(e) => setBalcaoTelefone(e.target.value)} placeholder="(00) 00000-0000" />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xs font-semibold text-foreground">Bairro</label>
+                    <label className="text-xs font-semibold text-foreground">Bairro *</label>
                     <Input value={balcaoBairro} onChange={(e) => setBalcaoBairro(e.target.value)} placeholder="Bairro" />
                   </div>
                 </div>
