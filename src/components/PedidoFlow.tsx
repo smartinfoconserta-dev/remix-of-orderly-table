@@ -53,9 +53,9 @@ interface PedidoFlowProps {
 
 const sysConfig = getSistemaConfig();
 const RESTAURANTE = {
-  nome: sysConfig.nomeRestaurante || "Obsidian",
+  nome: sysConfig.nomeRestaurante || "Restaurante",
   logoUrl: sysConfig.logoUrl || "",
-  logoFallback: (sysConfig.nomeRestaurante || "Obsidian").slice(0, 2).toUpperCase(),
+  logoFallback: (sysConfig.nomeRestaurante || "Restaurante").slice(0, 2).toUpperCase(),
 };
 
 // Filter out inactive/removed products and merge custom products

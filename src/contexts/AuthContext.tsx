@@ -65,40 +65,25 @@ authContextStore.__obsidianAuthContext__ = AuthContext;
 
 const hashPin = (pin: string) => btoa(`pin:${pin}`).split("").reverse().join("");
 
-const seedUsers: StoredUser[] = [
-  { id: "seed-gerente", nome: "gerente", role: "gerente", criadoEm: new Date().toISOString(), pinHash: hashPin("1234"), ativo: true },
-  { id: "seed-caixa", nome: "caixa", role: "caixa", criadoEm: new Date().toISOString(), pinHash: hashPin("1234"), ativo: true },
-  { id: "seed-garcom", nome: "garcom", role: "garcom", criadoEm: new Date().toISOString(), pinHash: hashPin("1234"), ativo: true },
-];
-
 const toPublicUser = ({ pinHash: _pinHash, ativo: _ativo, ...user }: StoredUser): OperationalUser => user;
 
-const mergeSeedUsers = (users: StoredUser[]): StoredUser[] => {
-  const merged = [...users];
-  for (const seed of seedUsers) {
-    const exists = merged.some(
-      (u) => u.role === seed.role && u.nome.toLocaleLowerCase("pt-BR") === seed.nome.toLocaleLowerCase("pt-BR"),
-    );
-    if (!exists) merged.push(seed);
-  }
-  // Ensure all users have the ativo field (migration for old data)
-  return merged.map((u) => ({ ...u, ativo: u.ativo !== false }));
-};
+const ensureAtivoField = (users: StoredUser[]): StoredUser[] =>
+  users.map((u) => ({ ...u, ativo: u.ativo !== false }));
 
 const readAuthState = (): AuthState => {
-  if (typeof window === "undefined") return { ...emptyState, users: [...seedUsers] };
+  if (typeof window === "undefined") return emptyState;
 
   try {
     const raw = window.localStorage.getItem(AUTH_STORAGE_KEY);
-    if (!raw) return { users: [...seedUsers], sessions: {} };
+    if (!raw) return emptyState;
 
     const parsed = JSON.parse(raw) as Partial<AuthState>;
     return {
-      users: mergeSeedUsers(Array.isArray(parsed.users) ? parsed.users : []),
+      users: ensureAtivoField(Array.isArray(parsed.users) ? parsed.users : []),
       sessions: parsed.sessions ?? {},
     };
   } catch {
-    return { users: [...seedUsers], sessions: {} };
+    return emptyState;
   }
 };
 
