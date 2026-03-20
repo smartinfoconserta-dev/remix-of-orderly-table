@@ -855,7 +855,6 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
               );
             })}
           </div>
-        )}
 
         {/* Combos section */}
         {comboProducts.length > 0 && (
