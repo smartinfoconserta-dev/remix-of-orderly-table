@@ -1115,9 +1115,8 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       pedidosBalcao: prev.pedidosBalcao.map((p) => {
         if (p.id !== pedidoId) return p;
         const taxa = taxaEntrega && taxaEntrega > 0 ? taxaEntrega : 0;
-        const itensAtualizados = taxa > 0
-          ? [...p.itens, { uid: `taxa-${Date.now()}`, id: "taxa-entrega", nome: "Taxa de entrega", precoUnitario: taxa, quantidade: 1, observacao: "" }]
-          : p.itens;
+        const taxaItem: ItemCarrinho = { uid: `taxa-${Date.now()}`, produtoId: "taxa-entrega", nome: "Taxa de entrega", precoBase: taxa, quantidade: 1, removidos: [], adicionais: [], precoUnitario: taxa };
+        const itensAtualizados = taxa > 0 ? [...p.itens, taxaItem] : p.itens;
         return { ...p, statusBalcao: "aberto" as const, itens: itensAtualizados, total: p.total + taxa };
       }),
       eventos: appendEvent(prev.eventos, {
