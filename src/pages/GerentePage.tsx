@@ -348,7 +348,7 @@ const GerentePage = () => {
       </header>
 
       {/* Tabs */}
-      <Tabs defaultValue="fechamento" className="flex-1 flex flex-col overflow-hidden">
+      <Tabs defaultValue="fechamento" className="flex flex-col flex-1 min-h-0 overflow-hidden">
         <div className="border-b border-border bg-card/80 px-4 md:px-6">
           <TabsList className="bg-transparent h-auto p-0 gap-1">
             <TabsTrigger value="fechamento" className="rounded-xl data-[state=active]:bg-primary/15 data-[state=active]:text-primary font-bold text-xs px-3 py-2 gap-1.5">
