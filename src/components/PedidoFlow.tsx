@@ -524,7 +524,7 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
     });
   }, []);
 
-  if (!mesa) {
+  if (!mesa && !isExternalOrder) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background px-4">
         <div className="surface-card w-full max-w-md space-y-2 p-6 text-center">
