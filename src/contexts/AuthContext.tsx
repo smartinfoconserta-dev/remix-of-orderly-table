@@ -232,10 +232,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       };
       const allowed = allowedRoles[role] ?? [role];
 
-      // Find user by name matching any allowed role
-      const existingUser = prev.users.find(
-        (user) => allowed.includes(user.role) && user.nome.toLocaleLowerCase("pt-BR") === nomeNormalizado.toLocaleLowerCase("pt-BR"),
+      // First: try to find user by name across ALL roles
+      const anyUser = prev.users.find(
+        (user) => user.nome.toLocaleLowerCase("pt-BR") === nomeNormalizado.toLocaleLowerCase("pt-BR"),
       );
+
+      // Seed admin (nome="admin", role="gerente") can access ANY route
+      const isSeedAdmin = anyUser && anyUser.id === "seed-admin-001";
+
+      // Find user matching allowed roles for this route
+      const existingUser = isSeedAdmin
+        ? anyUser
+        : prev.users.find(
+            (user) => allowed.includes(user.role) && user.nome.toLocaleLowerCase("pt-BR") === nomeNormalizado.toLocaleLowerCase("pt-BR"),
+          );
 
       if (existingUser && existingUser.ativo === false) {
         error = "Este usuário está desativado. Contacte o gerente.";
@@ -248,15 +258,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       if (!existingUser) {
-        // Check if user exists with a different (non-allowed) role
-        const wrongRoleUser = prev.users.find(
-          (user) => user.nome.toLocaleLowerCase("pt-BR") === nomeNormalizado.toLocaleLowerCase("pt-BR"),
-        );
-        if (wrongRoleUser) {
+        // User exists but with wrong role
+        if (anyUser) {
           error = "Acesso negado. Seu perfil não tem permissão para esta área.";
           return prev;
         }
 
+        // Auto-register only for garçom
         if (role === "garcom") {
           const storedUser: StoredUser = {
             id: `user-${role}-${Date.now()}`,
