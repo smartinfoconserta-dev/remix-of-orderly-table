@@ -623,9 +623,20 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                   <span className="text-lg font-black tabular-nums text-muted-foreground leading-none">{mesasLivre}</span>
                   <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80">Livres</span>
                 </div>
-                <div className="ml-auto flex items-center gap-2 rounded-xl border border-primary/30 bg-primary/8 px-4 py-1.5">
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-primary/80">Em aberto</span>
-                  <span className="text-lg font-black tabular-nums text-primary leading-none">{formatPrice(valorTotalAberto)}</span>
+                <div className="flex items-center gap-2 ml-auto">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setMovModalOpen(true)}
+                    className="rounded-xl font-bold gap-1.5 text-xs"
+                  >
+                    <Banknote className="h-3.5 w-3.5" />
+                    Sangria / Suprimento
+                  </Button>
+                  <div className="flex items-center gap-2 rounded-xl border border-primary/30 bg-primary/8 px-4 py-1.5">
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-primary/80">Em aberto</span>
+                    <span className="text-lg font-black tabular-nums text-primary leading-none">{formatPrice(valorTotalAberto)}</span>
+                  </div>
                 </div>
               </div>
 
