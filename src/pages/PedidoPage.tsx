@@ -124,6 +124,7 @@ export default function PedidoPage() {
   // Bairros
   const [bairrosDisponiveis] = useState<Bairro[]>(() => getBairros().filter((b) => b.ativo));
   const [bairroSelecionadoId, setBairroSelecionadoId] = useState("");
+  const [bairroNaoAtendido, setBairroNaoAtendido] = useState(false);
 
   // Order
   const [itens, setItens] = useState<ItemCarrinho[]>([]);

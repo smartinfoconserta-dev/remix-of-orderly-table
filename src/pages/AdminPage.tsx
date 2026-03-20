@@ -969,6 +969,10 @@ const AdminPage = () => {
                   ))}
                 </div>
               )}
+            </div>
+
+            {/* WhatsApp & Messages */}
+            <div className="surface-card max-w-lg space-y-5 rounded-2xl p-6">
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-muted-foreground">Telefone WhatsApp do restaurante</label>
                 <Input
