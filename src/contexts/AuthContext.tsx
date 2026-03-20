@@ -125,7 +125,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (!session) return null;
 
       const user = state.users.find((item) => item.id === session.userId);
-      return user ? toPublicUser(user) : null;
+      if (!user) return null;
+
+      // Seed admin pode estar em qualquer sessão
+      if (user.id === "seed-admin-001") return toPublicUser(user);
+
+      // Validar que o role do usuário é permitido para esta sessão
+      const allowedRoles: Record<UserRole, UserRole[]> = {
+        garcom: ["garcom"],
+        caixa: ["caixa", "gerente"],
+        gerente: ["gerente"],
+      };
+      const allowed = allowedRoles[role] ?? [role];
+      if (!allowed.includes(user.role)) return null;
+
+      return toPublicUser(user);
     },
     [state.sessions, state.users],
   );
