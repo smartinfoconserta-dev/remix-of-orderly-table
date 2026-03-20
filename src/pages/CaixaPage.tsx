@@ -139,6 +139,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
     removeFromCart,
     ajustarItemPedido,
     cancelarPedido,
+    registrarMovimentacaoCaixa,
   } = useRestaurant();
   const { currentCaixa, currentGerente, logout, verifyManagerAccess } = useAuth();
 
