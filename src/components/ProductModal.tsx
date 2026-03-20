@@ -118,7 +118,7 @@ const ProductModal = ({ produto, onClose, onAdd, isGarcomMobile = false, skipEmb
     () => (produto?.embalagemOptions?.length ? produto.embalagemOptions : defaultEmbalagemOptions),
     [produto],
   );
-  const flowSteps = useMemo(() => resolveSteps(produto), [produto]);
+  const flowSteps = useMemo(() => resolveSteps(produto, skipEmbalagemDefault), [produto, skipEmbalagemDefault]);
 
   const clearAddLockTimeout = useCallback(() => {
     if (addLockTimeoutRef.current) {
