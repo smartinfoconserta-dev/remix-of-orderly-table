@@ -708,6 +708,146 @@ const GerentePage = () => {
             )}
           </div>
         </TabsContent>
+
+        {/* ═══ TAB 4: Equipe ═══ */}
+        <TabsContent value="equipe" className="flex-1 overflow-y-auto mt-0">
+          {!pinVerificado ? pinGateUI : (
+          <div className="mx-auto max-w-2xl space-y-6 p-4 md:p-6">
+            <div>
+              <h2 className="text-lg font-black text-foreground">Gerenciar equipe</h2>
+              <p className="text-sm text-muted-foreground">Crie garçons e caixas, ou desative funcionários</p>
+            </div>
+
+            {/* Create form */}
+            <div className="surface-card rounded-2xl p-5 space-y-4">
+              <p className="text-sm font-black text-foreground">Novo funcionário</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-muted-foreground">Nome</label>
+                  <Input
+                    value={newEmpName}
+                    onChange={(e) => setNewEmpName(e.target.value)}
+                    placeholder="Nome do funcionário"
+                    maxLength={40}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-muted-foreground">PIN (4-6 dígitos)</label>
+                  <Input
+                    value={newEmpPin}
+                    onChange={(e) => setNewEmpPin(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                    placeholder="1234"
+                    inputMode="numeric"
+                  />
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setNewEmpRole("garcom")}
+                  className={`rounded-xl px-4 py-2 text-xs font-bold transition-colors ${
+                    newEmpRole === "garcom"
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-secondary text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  Garçom
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setNewEmpRole("caixa")}
+                  className={`rounded-xl px-4 py-2 text-xs font-bold transition-colors ${
+                    newEmpRole === "caixa"
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-secondary text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  Caixa
+                </button>
+              </div>
+              {empError && <p className="rounded-xl border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive">{empError}</p>}
+              <Button
+                onClick={() => {
+                  setEmpError(null);
+                  const result = createUser(newEmpRole, newEmpName, newEmpPin);
+                  if (!result.ok) { setEmpError(result.error ?? "Erro"); return; }
+                  toast.success(`${newEmpRole === "garcom" ? "Garçom" : "Caixa"} "${result.user?.nome}" criado`);
+                  setNewEmpName("");
+                  setNewEmpPin("");
+                }}
+                disabled={!newEmpName.trim() || newEmpPin.length < 4}
+                className="w-full rounded-xl font-bold gap-1.5"
+              >
+                <Plus className="h-4 w-4" /> Criar {newEmpRole === "garcom" ? "garçom" : "caixa"}
+              </Button>
+            </div>
+
+            {/* Garçons list */}
+            <div className="surface-card rounded-2xl overflow-hidden">
+              <div className="px-5 py-3 border-b border-border bg-secondary/50">
+                <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">Garçons ativos ({garcons.length})</p>
+              </div>
+              {garcons.length === 0 ? (
+                <p className="px-5 py-6 text-sm text-muted-foreground text-center">Nenhum garçom cadastrado.</p>
+              ) : (
+                <div className="divide-y divide-border/50">
+                  {garcons.map((g) => (
+                    <div key={g.id} className="flex items-center justify-between px-5 py-3">
+                      <div>
+                        <p className="text-sm font-bold text-foreground">{g.nome}</p>
+                        <p className="text-xs text-muted-foreground">Desde {new Date(g.criadoEm).toLocaleDateString("pt-BR")}</p>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          deactivateUser(g.id);
+                          toast.success(`Garçom "${g.nome}" desativado`);
+                        }}
+                        className="text-destructive hover:bg-destructive/10 text-xs font-bold"
+                      >
+                        Desativar
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Caixas list */}
+            <div className="surface-card rounded-2xl overflow-hidden">
+              <div className="px-5 py-3 border-b border-border bg-secondary/50">
+                <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">Caixas ativos ({caixas.length})</p>
+              </div>
+              {caixas.length === 0 ? (
+                <p className="px-5 py-6 text-sm text-muted-foreground text-center">Nenhum caixa cadastrado.</p>
+              ) : (
+                <div className="divide-y divide-border/50">
+                  {caixas.map((c) => (
+                    <div key={c.id} className="flex items-center justify-between px-5 py-3">
+                      <div>
+                        <p className="text-sm font-bold text-foreground">{c.nome}</p>
+                        <p className="text-xs text-muted-foreground">Desde {new Date(c.criadoEm).toLocaleDateString("pt-BR")}</p>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          deactivateUser(c.id);
+                          toast.success(`Caixa "${c.nome}" desativado`);
+                        }}
+                        className="text-destructive hover:bg-destructive/10 text-xs font-bold"
+                      >
+                        Desativar
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+          )}
+        </TabsContent>
       </Tabs>
     </div>
   );
