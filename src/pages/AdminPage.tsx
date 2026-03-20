@@ -3,6 +3,7 @@ import {
   ClipboardList,
   Grid3X3,
   ImagePlus,
+  LogOut,
   Settings,
   Shield,
   Pencil,
