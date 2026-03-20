@@ -181,8 +181,25 @@ export default function PedidoPage() {
           setCepErro("CEP não encontrado");
         } else {
           setEndereco(data.logradouro || "");
-          setBairro(data.bairro || "");
+          const bairroViaCep = data.bairro || "";
+          setBairro(bairroViaCep);
           setCidade(data.localidade || "");
+
+          // Auto-match bairro with registered bairros
+          if (bairrosDisponiveis.length > 0 && bairroViaCep) {
+            const norm = normStr(bairroViaCep);
+            const match = bairrosDisponiveis.find((b) => normStr(b.nome) === norm);
+            if (match) {
+              setBairroSelecionadoId(match.id);
+              setBairroNaoAtendido(false);
+            } else {
+              setBairroSelecionadoId("");
+              setBairroNaoAtendido(true);
+            }
+          } else {
+            setBairroSelecionadoId("");
+            setBairroNaoAtendido(false);
+          }
         }
       } catch {
         setCepErro("Erro ao buscar CEP");
