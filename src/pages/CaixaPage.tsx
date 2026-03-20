@@ -341,8 +341,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
   /* ── Balcão/Delivery handler ── */
   const handleEnviarBalcao = useCallback(() => {
     if (!currentOperator) return;
-    const itensArr = Object.entries(balcaoItens).filter(([, qty]) => qty > 0);
-    if (itensArr.length === 0) {
+    if (balcaoItens.length === 0) {
       toast.error("Adicione pelo menos 1 item ao pedido", { duration: 1400 });
       return;
     }
@@ -362,7 +361,6 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
       toast.error("Informe o endereço para delivery", { duration: 1400 });
       return;
     }
-    // Save delivery client
     if (balcaoTipo === "delivery") {
       upsertClienteDelivery({
         nome: balcaoClienteNome.trim(),
@@ -375,22 +373,8 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
         referencia: balcaoReferencia.trim(),
       });
     }
-    const cartItens: ItemCarrinho[] = itensArr.map(([prodId, qty]) => {
-      const prod = produtosAtivos.find((p) => p.id === prodId)!;
-      return {
-        uid: `balcao-${Date.now()}-${prodId}`,
-        produtoId: prodId,
-        nome: prod.nome,
-        precoBase: prod.preco,
-        quantidade: qty,
-        removidos: [],
-        adicionais: [],
-        observacoes: "",
-        precoUnitario: prod.preco,
-      };
-    });
     criarPedidoBalcao({
-      itens: cartItens,
+      itens: balcaoItens,
       origem: balcaoTipo,
       operador: currentOperator,
       clienteNome: balcaoClienteNome.trim() || undefined,
@@ -418,13 +402,13 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
     setBalcaoFormaPag("dinheiro");
     setBalcaoTroco("");
     setBalcaoObs("");
-    setBalcaoItens({});
+    setBalcaoItens([]);
     setBalcaoCpf("");
     setBalcaoNumero("");
     setBalcaoComplemento("");
     setDeliveryBusca("");
     setDeliveryResultados([]);
-  }, [currentOperator, balcaoItens, balcaoTipo, balcaoClienteNome, balcaoTelefone, balcaoEndereco, balcaoBairro, balcaoReferencia, balcaoFormaPag, balcaoTroco, balcaoObs, produtosAtivos, criarPedidoBalcao, balcaoCpf, balcaoNumero, balcaoComplemento]);
+  }, [currentOperator, balcaoItens, balcaoTipo, balcaoClienteNome, balcaoTelefone, balcaoEndereco, balcaoBairro, balcaoReferencia, balcaoFormaPag, balcaoTroco, balcaoObs, criarPedidoBalcao, balcaoCpf, balcaoNumero, balcaoComplemento]);
 
   /* ── auth guard ── */
   if (!currentOperator) {
