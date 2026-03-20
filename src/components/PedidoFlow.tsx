@@ -135,6 +135,7 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
   const [cartOpen, setCartOpen] = useState(false);
   const [contaOpen, setContaOpen] = useState(false);
   const [showExitAlert, setShowExitAlert] = useState(false);
+  const [paraViagem, setParaViagem] = useState(false);
   const [isClientIdle, setIsClientIdle] = useState(false);
 
   // Hidden admin modal state
