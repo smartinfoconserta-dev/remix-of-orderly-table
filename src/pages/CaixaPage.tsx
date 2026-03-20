@@ -167,6 +167,10 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
   const [turnoError, setTurnoError] = useState<string | null>(null);
   const [isClosingTurno, setIsClosingTurno] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [movModalOpen, setMovModalOpen] = useState(false);
+  const [movTipo, setMovTipo] = useState<"entrada" | "saida">("entrada");
+  const [movDescricao, setMovDescricao] = useState("");
+  const [movValor, setMovValor] = useState("");
 
   const mesa = mesaSelecionada ? mesas.find((item) => item.id === mesaSelecionada) ?? null : null;
   const currentOperator = accessMode === "gerente" ? currentGerente : currentCaixa;
