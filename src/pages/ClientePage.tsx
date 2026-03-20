@@ -21,6 +21,7 @@ import {
   getTabletLoginUser,
   setBoundTabletMesaId,
   setTabletLoginUser,
+  clearBoundTabletMesaId,
   clearTabletLoginUser,
 } from "@/lib/tabletBinding";
 import type { UserRole } from "@/types/operations";
