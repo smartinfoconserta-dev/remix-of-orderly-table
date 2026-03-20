@@ -79,6 +79,37 @@ const toPublicUser = ({ pinHash: _pinHash, ativo: _ativo, ...user }: StoredUser)
 const ensureAtivoField = (users: StoredUser[]): StoredUser[] =>
   users.map((u) => ({ ...u, ativo: u.ativo !== false }));
 
+const SESSION_ALLOWED_ROLES: Record<UserRole, UserRole[]> = {
+  garcom: ["garcom"],
+  caixa: ["caixa", "gerente"],
+  gerente: ["gerente"],
+};
+
+const sanitizeSessions = (
+  users: StoredUser[],
+  sessions: Partial<Record<UserRole, StoredSession>>,
+): Partial<Record<UserRole, StoredSession>> => {
+  const next: Partial<Record<UserRole, StoredSession>> = {};
+
+  (Object.entries(sessions) as [UserRole, StoredSession | undefined][]).forEach(([sessionRole, session]) => {
+    if (!session) return;
+
+    const user = users.find((item) => item.id === session.userId);
+    if (!user) return;
+    if (user.id === "seed-admin-001") {
+      next[sessionRole] = session;
+      return;
+    }
+
+    const allowed = SESSION_ALLOWED_ROLES[sessionRole] ?? [sessionRole];
+    if (allowed.includes(user.role)) {
+      next[sessionRole] = session;
+    }
+  });
+
+  return next;
+};
+
 const readAuthState = (): AuthState => {
   if (typeof window === "undefined") return emptyState;
 
@@ -92,19 +123,17 @@ const readAuthState = (): AuthState => {
 
     const parsed = JSON.parse(raw) as Partial<AuthState>;
     let users = ensureAtivoField(Array.isArray(parsed.users) ? parsed.users : []);
-    // Migrate any invalid "admin" role to "gerente"
     users = users.map((u) => (u.role as string) === "admin" ? { ...u, role: "gerente" as UserRole } : u);
-    // Ensure seed admin always exists
+
     const hasSeedAdmin = users.some(
       (u) => u.role === "gerente" && u.nome.toLocaleLowerCase("pt-BR") === "admin",
     );
     if (!hasSeedAdmin) {
       users = [seedAdmin, ...users];
-      const patched = { users, sessions: parsed.sessions ?? {} };
-      window.localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(patched));
-      return patched;
     }
-    const patched = { users, sessions: parsed.sessions ?? {} };
+
+    const sessions = sanitizeSessions(users, parsed.sessions ?? {});
+    const patched = { users, sessions };
     window.localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(patched));
     return patched;
   } catch {
@@ -114,6 +143,13 @@ const readAuthState = (): AuthState => {
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [state, setState] = useState<AuthState>(readAuthState);
+
+  useEffect(() => {
+    const sanitizedSessions = sanitizeSessions(state.users, state.sessions);
+    if (JSON.stringify(sanitizedSessions) !== JSON.stringify(state.sessions)) {
+      setState((prev) => ({ ...prev, sessions: sanitizedSessions }));
+    }
+  }, [state.sessions, state.users]);
 
   useEffect(() => {
     window.localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(state));
@@ -126,17 +162,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       const user = state.users.find((item) => item.id === session.userId);
       if (!user) return null;
-
-      // Seed admin pode estar em qualquer sessão
       if (user.id === "seed-admin-001") return toPublicUser(user);
 
-      // Validar que o role do usuário é permitido para esta sessão
-      const allowedRoles: Record<UserRole, UserRole[]> = {
-        garcom: ["garcom"],
-        caixa: ["caixa", "gerente"],
-        gerente: ["gerente"],
-      };
-      const allowed = allowedRoles[role] ?? [role];
+      const allowed = SESSION_ALLOWED_ROLES[role] ?? [role];
       if (!allowed.includes(user.role)) return null;
 
       return toPublicUser(user);
