@@ -123,6 +123,7 @@ const MasterPage = () => {
       estado: c.estado || "", endereco: c.endereco || "", segmento: c.segmento || "hamburgeria",
       diaVencimento: c.diaVencimento || 10, valorMensalidade: c.valorMensalidade || 0,
       observacoes: c.observacoes || "", historicoPagamentos: c.historicoPagamentos || [],
+      plano: c.plano || "anual", dataInicio: c.dataInicio || "", dataTermino: c.dataTermino || "",
     });
     setDialogOpen(true);
   };
