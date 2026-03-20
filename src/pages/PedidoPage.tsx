@@ -390,29 +390,41 @@ export default function PedidoPage() {
                 <Input placeholder="Endereço / Rua *" value={endereco} onChange={(e) => setEndereco(e.target.value)} />
                 <div className="grid grid-cols-2 gap-2">
                   <Input placeholder="Número *" value={numero} onChange={(e) => setNumero(e.target.value)} />
-                  {bairrosDisponiveis.length > 0 ? (
-                    <Select value={bairroSelecionadoId} onValueChange={(v) => {
-                      setBairroSelecionadoId(v);
-                      const sel = bairrosDisponiveis.find((b) => b.id === v);
-                      if (sel) setBairro(sel.nome);
-                    }}>
-                      <SelectTrigger><SelectValue placeholder="Selecione o bairro" /></SelectTrigger>
-                      <SelectContent container={document.body}>
-                        {bairrosDisponiveis.map((b) => (
-                          <SelectItem key={b.id} value={b.id}>
-                            {b.nome} — R$ {b.taxa.toFixed(2).replace(".", ",")}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  ) : (
-                    <Input placeholder="Bairro" value={bairro} onChange={(e) => setBairro(e.target.value)} />
-                  )}
+                  <Input
+                    placeholder="Bairro"
+                    value={bairro}
+                    onChange={(e) => {
+                      setBairro(e.target.value);
+                      if (bairrosDisponiveis.length > 0 && e.target.value.trim()) {
+                        const norm = normStr(e.target.value);
+                        const match = bairrosDisponiveis.find((b) => normStr(b.nome) === norm);
+                        if (match) {
+                          setBairroSelecionadoId(match.id);
+                          setBairroNaoAtendido(false);
+                        } else {
+                          setBairroSelecionadoId("");
+                          setBairroNaoAtendido(true);
+                        }
+                      } else {
+                        setBairroSelecionadoId("");
+                        setBairroNaoAtendido(false);
+                      }
+                    }}
+                    readOnly={!!bairroSelecionadoId}
+                    className={bairroSelecionadoId ? "bg-muted" : ""}
+                  />
                 </div>
-                {bairroSelecionadoId && bairrosDisponiveis.length > 0 && (
-                  <p className="text-xs font-semibold text-primary">
-                    Taxa de entrega: R$ {(bairrosDisponiveis.find((b) => b.id === bairroSelecionadoId)?.taxa ?? 0).toFixed(2).replace(".", ",")}
-                  </p>
+                {/* Bairro match feedback */}
+                {bairrosDisponiveis.length > 0 && bairro.trim() && (
+                  bairroSelecionadoId ? (
+                    <p className="text-xs font-semibold" style={{ color: "hsl(var(--primary))" }}>
+                      ✓ Taxa de entrega: R$ {(bairrosDisponiveis.find((b) => b.id === bairroSelecionadoId)?.taxa ?? 0).toFixed(2).replace(".", ",")}
+                    </p>
+                  ) : bairroNaoAtendido ? (
+                    <p className="text-xs font-semibold text-orange-500">
+                      ⚠ Bairro não atendido — entre em contato para verificar disponibilidade
+                    </p>
+                  ) : null
                 )}
                 {cidade && (
                   <Input placeholder="Cidade" value={cidade} readOnly className="bg-muted" />
