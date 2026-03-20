@@ -331,7 +331,7 @@ const GerentePage = () => {
   );
 
   return (
-    <div className="h-svh flex flex-col bg-background overflow-hidden">
+    <div className="flex flex-col h-screen bg-background">
       {/* Header */}
       <header className="flex items-center gap-3 border-b border-border bg-card px-4 py-3 shrink-0 md:px-6">
         <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/15 text-primary">
