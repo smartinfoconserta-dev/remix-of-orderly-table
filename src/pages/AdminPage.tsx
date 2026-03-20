@@ -94,6 +94,16 @@ const AdminPage = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [catFilter, setCatFilter] = useState<string>("todas");
   const [removeTarget, setRemoveTarget] = useState<ProdutoOverride | null>(null);
+  const [categoriasCustom, setCategoriasCustom] = useState<CategoriaCustom[]>(getCategoriasCustom);
+  const [catDialogOpen, setCatDialogOpen] = useState(false);
+  const [catEditando, setCatEditando] = useState<CategoriaCustom | null>(null);
+  const [catNomeInput, setCatNomeInput] = useState("");
+
+  const todasCategorias = useMemo(() => {
+    const baseCats = categorias.map((c, i) => ({ ...c, ordem: i, _isDefault: true as const }));
+    const customCats = categoriasCustom.map((c) => ({ ...c, _isDefault: false as const }));
+    return [...baseCats, ...customCats];
+  }, [categoriasCustom]);
 
   const allProducts: ProdutoOverride[] = useMemo(() => {
     // Base products with overrides
