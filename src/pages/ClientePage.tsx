@@ -29,13 +29,12 @@ import { toast } from "sonner";
 
 const ClientePage = () => {
   const { mesas } = useRestaurant();
-  const { verifyEmployeeAccess, resetPin } = useAuth();
+  const { verifyEmployeeAccess } = useAuth();
   const [searchParams] = useSearchParams();
 
   const [mesaId, setMesaId] = useState<string | null>(() => {
     const savedMesa = getBoundTabletMesaId();
     const savedUser = getTabletLoginUser();
-    // If there's a bound mesa but no logged-in user, clear binding and require fresh login
     if (savedMesa && !savedUser) {
       clearBoundTabletMesaId();
       return null;
@@ -47,11 +46,6 @@ const ClientePage = () => {
   const [pin, setPin] = useState("");
   const [loginError, setLoginError] = useState<string | null>(null);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
-
-  // PIN reset state
-  const [showReset, setShowReset] = useState(false);
-  const [resetNome, setResetNome] = useState("");
-  const [resetRole, setResetRole] = useState<UserRole>("garcom");
 
   // QR Code: se veio ?mesa=ID, vincula automaticamente e pula login/seleção
   useEffect(() => {
