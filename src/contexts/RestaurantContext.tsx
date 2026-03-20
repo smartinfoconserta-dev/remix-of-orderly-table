@@ -170,6 +170,7 @@ interface RestaurantContextType {
   fecharCaixaDoDia: (usuario: OperationalUser) => void;
   criarPedidoBalcao: (input: CriarPedidoBalcaoInput) => void;
   marcarPedidoBalcaoPronto: (pedidoId: string) => void;
+  fecharContaBalcao: (pedidoId: string, input: FecharContaInput) => void;
 }
 
 const _global = globalThis as unknown as { __restaurantCtx?: React.Context<RestaurantContextType | null> };
