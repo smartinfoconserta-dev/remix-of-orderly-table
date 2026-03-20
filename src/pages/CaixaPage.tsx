@@ -1866,9 +1866,8 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
       </Dialog>
 
       {/* ── BALCÃO / DELIVERY DIALOG ── */}
-      {/* ── BALCÃO / DELIVERY DIALOG ── */}
-      <Dialog open={balcaoOpen && !balcaoFlowAtivo} onOpenChange={(open) => { if (!open) setBalcaoOpen(false); }}>
-        <DialogContent className="rounded-2xl border-border bg-background sm:max-w-lg max-h-[80vh] overflow-y-auto">
+      <Dialog open={balcaoOpen && !balcaoFlowAtivo} onOpenChange={(open) => { if (!open) { setBalcaoOpen(false); setDeliveryStep("busca"); } }}>
+        <DialogContent className="rounded-2xl border-border bg-background sm:max-w-lg max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <ShoppingBag className="h-5 w-5 text-primary" />
@@ -1878,8 +1877,8 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
           </DialogHeader>
           <div className="space-y-4">
             <div className="flex gap-2">
-              <Button variant={balcaoTipo === "balcao" ? "default" : "outline"} onClick={() => setBalcaoTipo("balcao")} className="flex-1 rounded-xl font-black">Balcão</Button>
-              <Button variant={balcaoTipo === "delivery" ? "default" : "outline"} onClick={() => setBalcaoTipo("delivery")} className="flex-1 rounded-xl font-black">Delivery</Button>
+              <Button variant={balcaoTipo === "balcao" ? "default" : "outline"} onClick={() => { setBalcaoTipo("balcao"); setDeliveryStep("busca"); }} className="flex-1 rounded-xl font-black">Balcão</Button>
+              <Button variant={balcaoTipo === "delivery" ? "default" : "outline"} onClick={() => { setBalcaoTipo("delivery"); setDeliveryStep("busca"); }} className="flex-1 rounded-xl font-black">Delivery</Button>
             </div>
 
             {balcaoTipo === "balcao" && (
@@ -1889,32 +1888,67 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
               </div>
             )}
 
-            {balcaoTipo === "delivery" && (
+            {balcaoTipo === "delivery" && deliveryStep === "busca" && (
+              <div className="space-y-3 rounded-xl border border-border bg-card p-4">
+                <label className="text-xs font-semibold text-foreground">Buscar cliente por CPF ou Telefone</label>
+                <div className="flex gap-2">
+                  <Input
+                    value={deliveryBusca}
+                    onChange={(e) => setDeliveryBusca(e.target.value)}
+                    placeholder="CPF ou telefone..."
+                    onKeyDown={(e) => { if (e.key === "Enter") setDeliveryResultados(findClienteDelivery(deliveryBusca)); }}
+                  />
+                  <Button size="sm" onClick={() => setDeliveryResultados(findClienteDelivery(deliveryBusca))} className="rounded-xl font-bold gap-1.5 shrink-0">
+                    <Search className="h-4 w-4" />
+                    Buscar
+                  </Button>
+                </div>
+                {deliveryResultados.length > 0 && (
+                  <div className="space-y-1.5 mt-2">
+                    {deliveryResultados.slice(0, 5).map((cli) => (
+                      <button
+                        key={cli.id}
+                        type="button"
+                        onClick={() => {
+                          setBalcaoClienteNome(cli.nome);
+                          setBalcaoCpf(cli.cpf);
+                          setBalcaoTelefone(cli.telefone);
+                          setBalcaoEndereco(cli.endereco);
+                          setBalcaoNumero(cli.numero);
+                          setBalcaoBairro(cli.bairro);
+                          setBalcaoComplemento(cli.complemento);
+                          setBalcaoReferencia(cli.referencia);
+                          setDeliveryStep("form");
+                        }}
+                        className="w-full text-left rounded-xl border border-border bg-secondary p-3 hover:bg-secondary/80 transition-colors"
+                      >
+                        <p className="text-sm font-bold text-foreground">{cli.nome}</p>
+                        <p className="text-xs text-muted-foreground">{cli.telefone} {cli.endereco ? `— ${cli.endereco}, ${cli.numero}` : ""}</p>
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {deliveryBusca.trim() && deliveryResultados.length === 0 && (
+                  <div className="text-center py-3 space-y-2">
+                    <p className="text-xs text-muted-foreground">Cliente não encontrado</p>
+                    <Button size="sm" variant="outline" onClick={() => setDeliveryStep("form")} className="rounded-xl font-bold">
+                      Cadastrar novo cliente
+                    </Button>
+                  </div>
+                )}
+                {!deliveryBusca.trim() && (
+                  <Button size="sm" variant="ghost" onClick={() => setDeliveryStep("form")} className="w-full rounded-xl font-bold text-xs text-muted-foreground">
+                    Pular busca — cadastrar novo
+                  </Button>
+                )}
+              </div>
+            )}
+
+            {balcaoTipo === "delivery" && deliveryStep === "form" && (
               <div className="space-y-3 rounded-xl border border-border bg-card p-4">
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-foreground">Buscar cliente cadastrado</label>
-                  <Input value={deliveryBusca} onChange={(e) => { setDeliveryBusca(e.target.value); setDeliveryResultados(findClienteDelivery(e.target.value)); }} placeholder="Nome, telefone ou CPF..." />
-                  {deliveryResultados.length > 0 && (
-                    <div className="max-h-[120px] overflow-y-auto space-y-1 mt-1">
-                      {deliveryResultados.slice(0, 5).map((cli) => (
-                        <button key={cli.id} type="button" onClick={() => { setBalcaoClienteNome(cli.nome); setBalcaoCpf(cli.cpf); setBalcaoTelefone(cli.telefone); setBalcaoEndereco(cli.endereco); setBalcaoNumero(cli.numero); setBalcaoBairro(cli.bairro); setBalcaoComplemento(cli.complemento); setBalcaoReferencia(cli.referencia); setDeliveryBusca(""); setDeliveryResultados([]); }} className="w-full text-left rounded-lg border border-border bg-secondary px-3 py-2 text-xs hover:bg-secondary/80 transition-colors">
-                          <span className="font-bold text-foreground">{cli.nome}</span>
-                          <span className="text-muted-foreground ml-2">{cli.telefone}</span>
-                          {cli.endereco && <span className="text-muted-foreground ml-2">— {cli.endereco}</span>}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1">
-                    <label className="text-xs font-semibold text-foreground">Nome completo *</label>
-                    <Input value={balcaoClienteNome} onChange={(e) => setBalcaoClienteNome(e.target.value)} placeholder="Nome completo" />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-xs font-semibold text-foreground">CPF *</label>
-                    <Input value={balcaoCpf} onChange={(e) => setBalcaoCpf(e.target.value)} placeholder="000.000.000-00" />
-                  </div>
+                  <label className="text-xs font-semibold text-foreground">Nome completo *</label>
+                  <Input value={balcaoClienteNome} onChange={(e) => setBalcaoClienteNome(e.target.value)} placeholder="Nome completo" />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1">
@@ -1922,18 +1956,63 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                     <Input value={balcaoTelefone} onChange={(e) => setBalcaoTelefone(e.target.value)} placeholder="(00) 00000-0000" />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xs font-semibold text-foreground">Bairro *</label>
-                    <Input value={balcaoBairro} onChange={(e) => setBalcaoBairro(e.target.value)} placeholder="Bairro" />
+                    <label className="text-xs font-semibold text-foreground">CPF *</label>
+                    <Input value={balcaoCpf} onChange={(e) => setBalcaoCpf(e.target.value)} placeholder="000.000.000-00" />
                   </div>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-foreground">CEP</label>
+                  <div className="flex gap-2 items-center">
+                    <Input
+                      value={deliveryCep}
+                      onChange={(e) => {
+                        let v = e.target.value.replace(/\D/g, "").slice(0, 8);
+                        if (v.length > 5) v = v.slice(0, 5) + "-" + v.slice(5);
+                        setDeliveryCep(v);
+                        setDeliveryCepErro("");
+                        const digits = v.replace(/\D/g, "");
+                        if (digits.length === 8) {
+                          setDeliveryCepLoading(true);
+                          fetch(`https://viacep.com.br/ws/${digits}/json/`)
+                            .then(r => r.json())
+                            .then(data => {
+                              if (data.erro) {
+                                setDeliveryCepErro("CEP não encontrado");
+                              } else {
+                                setBalcaoEndereco(data.logradouro || "");
+                                setBalcaoBairro(data.bairro || "");
+                                setDeliveryCidade(data.localidade ? `${data.localidade} - ${data.uf}` : "");
+                              }
+                            })
+                            .catch(() => setDeliveryCepErro("Erro ao buscar CEP"))
+                            .finally(() => setDeliveryCepLoading(false));
+                        }
+                      }}
+                      placeholder="00000-000"
+                      className="flex-1"
+                    />
+                    {deliveryCepLoading && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+                  </div>
+                  {deliveryCepErro && <p className="text-xs text-destructive">{deliveryCepErro}</p>}
                 </div>
                 <div className="grid grid-cols-3 gap-3">
                   <div className="col-span-2 space-y-1">
-                    <label className="text-xs font-semibold text-foreground">Endereço *</label>
+                    <label className="text-xs font-semibold text-foreground">Endereço / Rua *</label>
                     <Input value={balcaoEndereco} onChange={(e) => setBalcaoEndereco(e.target.value)} placeholder="Rua" />
                   </div>
                   <div className="space-y-1">
                     <label className="text-xs font-semibold text-foreground">Número *</label>
                     <Input value={balcaoNumero} onChange={(e) => setBalcaoNumero(e.target.value)} placeholder="Nº" />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-foreground">Bairro</label>
+                    <Input value={balcaoBairro} onChange={(e) => setBalcaoBairro(e.target.value)} placeholder="Bairro" />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-foreground">Cidade</label>
+                    <Input value={deliveryCidade} readOnly={!!deliveryCidade} onChange={(e) => setDeliveryCidade(e.target.value)} placeholder="Cidade" className={deliveryCidade ? "bg-muted" : ""} />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
@@ -1946,43 +2025,60 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                     <Input value={balcaoReferencia} onChange={(e) => setBalcaoReferencia(e.target.value)} placeholder="Próximo a..." />
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1">
-                    <label className="text-xs font-semibold text-foreground">Forma de pagamento</label>
-                    <select value={balcaoFormaPag} onChange={(e) => setBalcaoFormaPag(e.target.value as PaymentMethod)} className="w-full rounded-xl border border-border bg-secondary px-3 py-2 text-sm text-foreground">
-                      <option value="dinheiro">Dinheiro</option>
-                      <option value="credito">Crédito</option>
-                      <option value="debito">Débito</option>
-                      <option value="pix">PIX</option>
-                    </select>
-                  </div>
-                  {balcaoFormaPag === "dinheiro" && (
+
+                {/* Pagamento */}
+                <div className="border-t border-border pt-3 mt-2 space-y-3">
+                  <p className="text-xs font-black text-foreground uppercase tracking-widest">Pagamento</p>
+                  <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1">
-                      <label className="text-xs font-semibold text-foreground">Troco para quanto?</label>
-                      <Input value={balcaoTroco} onChange={(e) => setBalcaoTroco(e.target.value)} placeholder="0,00" inputMode="decimal" />
+                      <label className="text-xs font-semibold text-foreground">Forma de pagamento</label>
+                      <select value={balcaoFormaPag} onChange={(e) => setBalcaoFormaPag(e.target.value as PaymentMethod)} className="w-full rounded-xl border border-border bg-secondary px-3 py-2 text-sm text-foreground">
+                        <option value="dinheiro">Dinheiro</option>
+                        <option value="credito">Crédito</option>
+                        <option value="debito">Débito</option>
+                        <option value="pix">PIX</option>
+                      </select>
                     </div>
-                  )}
+                    {balcaoFormaPag === "dinheiro" && (
+                      <div className="space-y-1">
+                        <label className="text-xs font-semibold text-foreground">Troco para quanto?</label>
+                        <Input value={balcaoTroco} onChange={(e) => setBalcaoTroco(e.target.value)} placeholder="0,00" inputMode="decimal" />
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             )}
           </div>
           <DialogFooter className="gap-3 sm:gap-0">
-            <Button variant="outline" onClick={() => setBalcaoOpen(false)} className="rounded-xl font-bold">Cancelar</Button>
-            <Button onClick={() => {
-              if (balcaoTipo === "balcao" && !balcaoClienteNome.trim()) { toast.error("Informe o nome do cliente", { duration: 1400 }); return; }
-              if (balcaoTipo === "delivery") {
-                if (!balcaoClienteNome.trim()) { toast.error("Informe o nome do cliente", { duration: 1400 }); return; }
-                if (!balcaoCpf.trim()) { toast.error("Informe o CPF do cliente", { duration: 1400 }); return; }
-                if (!balcaoTelefone.trim()) { toast.error("Informe o telefone", { duration: 1400 }); return; }
-                if (!balcaoEndereco.trim()) { toast.error("Informe o endereço", { duration: 1400 }); return; }
-                if (!balcaoNumero.trim()) { toast.error("Informe o número do endereço", { duration: 1400 }); return; }
-                if (!balcaoBairro.trim()) { toast.error("Informe o bairro", { duration: 1400 }); return; }
-              }
-              setBalcaoFlowAtivo(true);
-            }} className="rounded-xl font-black gap-1.5">
-              <ShoppingCart className="h-4 w-4" />
-              Abrir cardápio
-            </Button>
+            {balcaoTipo === "delivery" && deliveryStep === "form" && (
+              <Button variant="ghost" onClick={() => setDeliveryStep("busca")} className="rounded-xl font-bold mr-auto">← Voltar</Button>
+            )}
+            <Button variant="outline" onClick={() => { setBalcaoOpen(false); setDeliveryStep("busca"); }} className="rounded-xl font-bold">Cancelar</Button>
+            {(balcaoTipo === "balcao" || deliveryStep === "form") && (
+              <Button
+                disabled={
+                  balcaoTipo === "balcao"
+                    ? !balcaoClienteNome.trim()
+                    : !balcaoClienteNome.trim() || !balcaoTelefone.trim() || !balcaoCpf.trim() || !balcaoEndereco.trim() || !balcaoNumero.trim()
+                }
+                onClick={() => {
+                  if (balcaoTipo === "balcao" && !balcaoClienteNome.trim()) { toast.error("Informe o nome do cliente", { duration: 1400 }); return; }
+                  if (balcaoTipo === "delivery") {
+                    if (!balcaoClienteNome.trim()) { toast.error("Informe o nome do cliente", { duration: 1400 }); return; }
+                    if (!balcaoTelefone.trim()) { toast.error("Informe o telefone", { duration: 1400 }); return; }
+                    if (!balcaoCpf.trim()) { toast.error("Informe o CPF do cliente", { duration: 1400 }); return; }
+                    if (!balcaoEndereco.trim()) { toast.error("Informe o endereço", { duration: 1400 }); return; }
+                    if (!balcaoNumero.trim()) { toast.error("Informe o número do endereço", { duration: 1400 }); return; }
+                  }
+                  setBalcaoFlowAtivo(true);
+                }}
+                className="rounded-xl font-black gap-1.5"
+              >
+                <ShoppingCart className="h-4 w-4" />
+                {balcaoTipo === "delivery" ? "Salvar e abrir cardápio" : "Abrir cardápio"}
+              </Button>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>
