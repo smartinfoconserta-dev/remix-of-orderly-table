@@ -28,6 +28,7 @@ const App = () => {
         <Route path="/admin" element={<AdminPage />} />
         <Route path="/master" element={<MasterPage />} />
         <Route path="/pedido" element={<PedidoPage />} />
+        <Route path="/motoboy" element={<MotoboyPage />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </div>
