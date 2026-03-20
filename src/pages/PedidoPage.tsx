@@ -121,6 +121,10 @@ export default function PedidoPage() {
   const [cepLoading, setCepLoading] = useState(false);
   const [cepErro, setCepErro] = useState("");
 
+  // Bairros
+  const [bairrosDisponiveis] = useState<Bairro[]>(() => getBairros().filter((b) => b.ativo));
+  const [bairroSelecionadoId, setBairroSelecionadoId] = useState("");
+
   // Order
   const [itens, setItens] = useState<ItemCarrinho[]>([]);
   const [paraViagem, setParaViagem] = useState(false);
