@@ -314,6 +314,66 @@ const AdminPage = () => {
   };
 
   if (!authenticated) {
+    // Welcome wizard when no gerente exists
+    if (gerentes.length === 0) {
+      return (
+        <div className="min-h-svh flex items-center justify-center bg-background p-6">
+          <div className="w-full max-w-md space-y-8">
+            <div className="text-center space-y-2">
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/15 text-primary">
+                <Settings className="h-8 w-8" />
+              </div>
+              <h2 className="text-2xl font-black text-foreground">Configuração inicial do sistema</h2>
+              <p className="text-sm text-muted-foreground">Siga os passos para configurar seu restaurante</p>
+            </div>
+            <div className="surface-card rounded-2xl p-6 space-y-4">
+              {[
+                { n: 1, t: "Criar primeiro gerente" },
+                { n: 2, t: "Configurar nome e logo" },
+                { n: 3, t: "Ajustar cardápio" },
+                { n: 4, t: "Configurar mesas e QR Codes" },
+              ].map((s) => (
+                <div key={s.n} className="flex items-center gap-3">
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary text-sm font-black">{s.n}</span>
+                  <span className="text-sm text-foreground font-semibold">{s.t}</span>
+                </div>
+              ))}
+            </div>
+            <div className="space-y-4">
+              <p className="text-xs text-muted-foreground text-center">Crie o primeiro gerente para começar:</p>
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-muted-foreground">Nome do gerente</label>
+                <Input value={newGerenteName} onChange={(e) => setNewGerenteName(e.target.value)} placeholder="Ex.: Mariana" maxLength={40} />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-muted-foreground">PIN (4-6 dígitos)</label>
+                <Input
+                  value={newGerentePin}
+                  onChange={(e) => setNewGerentePin(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                  placeholder="4 a 6 dígitos"
+                  inputMode="numeric"
+                />
+              </div>
+              {userError && <p className="rounded-xl border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive">{userError}</p>}
+              <Button
+                onClick={() => {
+                  handleCreateGerente();
+                  if (newGerenteName.trim() && /^\d{4,6}$/.test(newGerentePin)) {
+                    setAuthenticated(true);
+                    setTab("usuarios");
+                  }
+                }}
+                disabled={!newGerenteName.trim() || !/^\d{4,6}$/.test(newGerentePin)}
+                className="w-full h-12 rounded-xl text-base font-black"
+              >
+                Começar configuração
+              </Button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="min-h-svh flex items-center justify-center bg-background p-6">
         <div className="w-full max-w-sm space-y-6">
@@ -834,22 +894,7 @@ const AdminPage = () => {
                   inputMode="tel"
                 />
               </div>
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-muted-foreground">Tempo estimado de entrega</label>
-                <Select
-                  value={sistemaConfig.tempoEntrega || ""}
-                  onValueChange={(v) => setSistemaConfig((c) => ({ ...c, tempoEntrega: v }))}
-                >
-                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="20-30 min">20-30 min</SelectItem>
-                    <SelectItem value="30-45 min">30-45 min</SelectItem>
-                    <SelectItem value="40-60 min">40-60 min</SelectItem>
-                    <SelectItem value="45-60 min">45-60 min</SelectItem>
-                    <SelectItem value="60-90 min">60-90 min</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              {/* Tempo estimado removido — agora é selecionado pelo caixa ao confirmar cada pedido */}
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-muted-foreground">Mensagem de boas-vindas WhatsApp</label>
                 <Textarea

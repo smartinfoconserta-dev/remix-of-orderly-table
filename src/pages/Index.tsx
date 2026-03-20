@@ -1,5 +1,7 @@
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Bike, BriefcaseBusiness, ChefHat, HandPlatter, Settings, User, Wallet } from "lucide-react";
+import { getSistemaConfig } from "@/lib/adminStorage";
 
 interface ModeCardProps {
   title: string;
@@ -25,12 +27,40 @@ const ModeCard = ({ title, description, icon, onClick }: ModeCardProps) => (
 
 const Index = () => {
   const navigate = useNavigate();
+  const config = getSistemaConfig();
+  const nomeRestaurante = config.nomeRestaurante || "Orderly Table";
+
+  // PWA install prompt
+  const [installPrompt, setInstallPrompt] = useState<Event | null>(null);
+  const [showInstallBanner, setShowInstallBanner] = useState(false);
+  const deferredRef = useRef<any>(null);
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      e.preventDefault();
+      deferredRef.current = e;
+      setInstallPrompt(e);
+      setShowInstallBanner(true);
+    };
+    window.addEventListener("beforeinstallprompt", handler);
+    return () => window.removeEventListener("beforeinstallprompt", handler);
+  }, []);
+
+  const handleInstall = async () => {
+    if (!deferredRef.current) return;
+    deferredRef.current.prompt();
+    const result = await deferredRef.current.userChoicePromise;
+    if (result?.outcome === "accepted") {
+      setShowInstallBanner(false);
+    }
+    deferredRef.current = null;
+  };
 
   return (
-    <div className="min-h-svh bg-background flex flex-col items-center justify-center p-6 gap-6">
+    <div className="min-h-svh bg-background flex flex-col items-center justify-center p-6 gap-6 relative">
       <div className="text-center mb-4">
         <h1 className="text-foreground text-3xl md:text-4xl font-black tracking-tight">
-          Restaurante
+          {nomeRestaurante}
         </h1>
         <p className="text-muted-foreground text-sm md:text-base mt-2">
           Selecione o modo de acesso
@@ -81,6 +111,17 @@ const Index = () => {
           onClick={() => navigate("/admin")}
         />
       </div>
+
+      {showInstallBanner && (
+        <div className="fixed bottom-0 inset-x-0 z-50 p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
+          <button
+            onClick={handleInstall}
+            className="w-full max-w-lg mx-auto flex items-center justify-center gap-2 rounded-2xl bg-primary/15 border border-primary/25 px-4 py-3 text-sm font-bold text-primary backdrop-blur-sm transition-colors hover:bg-primary/20"
+          >
+            📲 Instalar como app — toque aqui
+          </button>
+        </div>
+      )}
     </div>
   );
 };
