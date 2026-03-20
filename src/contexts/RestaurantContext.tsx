@@ -418,6 +418,8 @@ const readStore = (): RestaurantStore => {
         : [],
       caixaAberto: Boolean((parsed as Partial<RestaurantStore>).caixaAberto),
       fundoTroco: Number((parsed as Partial<RestaurantStore>).fundoTroco ?? 0),
+      pedidosBalcao: Array.isArray((parsed as Partial<RestaurantStore>).pedidosBalcao)
+        ? (parsed as Partial<RestaurantStore>).pedidosBalcao! : [],
     };
   } catch {
     return {
@@ -427,6 +429,7 @@ const readStore = (): RestaurantStore => {
       fechamentos: [],
       caixaAberto: false,
       fundoTroco: 0,
+      pedidosBalcao: [],
     };
   }
 };
