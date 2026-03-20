@@ -1275,6 +1275,42 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                 <span className="font-black tabular-nums text-primary text-lg">{formatPrice(fundoTroco + resumoFinanceiro.totalDia + resumoFinanceiro.entradasExtras - resumoFinanceiro.saidas)}</span>
               </div>
             </div>
+            {/* ── Cash reconciliation ── */}
+            <div className="rounded-xl border border-border bg-card p-4 space-y-3">
+              <h3 className="text-sm font-black text-foreground">Conferência de caixa</h3>
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-muted-foreground">Dinheiro contado em caixa (R$)</label>
+                <Input
+                  value={dinheiroContado}
+                  onChange={(e) => setDinheiroContado(e.target.value)}
+                  placeholder="0,00"
+                  inputMode="decimal"
+                  className="text-lg font-black h-12 rounded-xl"
+                />
+              </div>
+              {(() => {
+                const contado = parseCurrencyInput(dinheiroContado);
+                const esperado = fundoTroco + resumoFinanceiro.dinheiro + resumoFinanceiro.entradasExtras - resumoFinanceiro.saidas;
+                if (!Number.isFinite(contado)) return null;
+                const diff = contado - esperado;
+                return (
+                  <div className="space-y-1">
+                    <div className="flex justify-between text-xs text-muted-foreground">
+                      <span>Total esperado em dinheiro</span>
+                      <span className="font-black tabular-nums">{formatPrice(esperado)}</span>
+                    </div>
+                    <div className={`flex justify-between items-center rounded-lg p-2 ${diff === 0 ? "bg-emerald-500/10" : diff > 0 ? "bg-emerald-500/10" : "bg-destructive/10"}`}>
+                      <span className="text-sm font-black">
+                        {diff === 0 ? "Caixa conferido ✓" : diff > 0 ? "Sobra de caixa" : "Falta de caixa"}
+                      </span>
+                      <span className={`text-sm font-black tabular-nums ${diff === 0 ? "text-emerald-400" : diff > 0 ? "text-emerald-400" : "text-destructive"}`}>
+                        {diff === 0 ? "R$ 0,00" : diff > 0 ? `+${formatPrice(diff)}` : formatPrice(diff)}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
             <div className="flex justify-between text-xs text-muted-foreground">
               <span>Aberto: {caixaOpenTime || "—"}</span>
               <span>Agora: {clockStr}</span>
