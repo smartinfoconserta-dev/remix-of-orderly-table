@@ -1109,12 +1109,17 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     });
   }, []);
 
-  const confirmarPedidoBalcao = useCallback((pedidoId: string) => {
+  const confirmarPedidoBalcao = useCallback((pedidoId: string, taxaEntrega?: number) => {
     setStore((prev) => ({
       ...prev,
-      pedidosBalcao: prev.pedidosBalcao.map((p) =>
-        p.id === pedidoId ? { ...p, statusBalcao: "aberto" as const } : p,
-      ),
+      pedidosBalcao: prev.pedidosBalcao.map((p) => {
+        if (p.id !== pedidoId) return p;
+        const taxa = taxaEntrega && taxaEntrega > 0 ? taxaEntrega : 0;
+        const itensAtualizados = taxa > 0
+          ? [...p.itens, { uid: `taxa-${Date.now()}`, id: "taxa-entrega", nome: "Taxa de entrega", precoUnitario: taxa, quantidade: 1, observacao: "" }]
+          : p.itens;
+        return { ...p, statusBalcao: "aberto" as const, itens: itensAtualizados, total: p.total + taxa };
+      }),
       eventos: appendEvent(prev.eventos, {
         tipo: "caixa",
         descricao: `Pedido delivery confirmado pelo caixa`,
