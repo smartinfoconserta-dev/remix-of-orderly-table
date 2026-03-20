@@ -51,7 +51,9 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useRestaurant } from "@/contexts/RestaurantContext";
 import { useRouteLock } from "@/hooks/use-route-lock";
 import type { PaymentMethod, SplitPayment, UserRole } from "@/types/operations";
-import { getSistemaConfig } from "@/lib/adminStorage";
+import { getSistemaConfig, getCardapioOverrides } from "@/lib/adminStorage";
+import { produtos as menuProdutos, categorias as menuCategorias } from "@/data/menuData";
+import type { ItemCarrinho } from "@/contexts/RestaurantContext";
 
 /* ── helpers ── */
 const formatPrice = (v: number) => `R$ ${v.toFixed(2).replace(".", ",")}`;
