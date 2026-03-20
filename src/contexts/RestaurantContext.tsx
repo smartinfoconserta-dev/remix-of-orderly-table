@@ -175,7 +175,7 @@ interface RestaurantContextType {
   marcarBalcaoSaiu: (pedidoId: string, motoboyNome: string) => void;
   marcarBalcaoEntregue: (pedidoId: string) => void;
   fecharContaBalcao: (pedidoId: string, input: FecharContaInput) => void;
-  confirmarPedidoBalcao: (pedidoId: string) => void;
+  confirmarPedidoBalcao: (pedidoId: string, taxaEntrega?: number) => void;
   rejeitarPedidoBalcao: (pedidoId: string, motivo: string) => void;
 }
 
