@@ -80,7 +80,7 @@ const ensureAtivoField = (users: StoredUser[]): StoredUser[] =>
   users.map((u) => ({ ...u, ativo: u.ativo !== false }));
 
 const SESSION_ALLOWED_ROLES: Record<UserRole, UserRole[]> = {
-  garcom: ["garcom"],
+  garcom: ["garcom", "caixa", "gerente"],
   caixa: ["caixa", "gerente"],
   gerente: ["gerente"],
 };
@@ -268,7 +268,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setState((prev) => {
       // Roles allowed per target route
       const allowedRoles: Record<UserRole, UserRole[]> = {
-        garcom: ["garcom"],
+        garcom: ["garcom", "caixa", "gerente"],
         caixa: ["caixa", "gerente"],
         gerente: ["gerente"],
       };
