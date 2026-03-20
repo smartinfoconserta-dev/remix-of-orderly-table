@@ -114,7 +114,7 @@ const formatMesaLabel = (mesaId: string) => {
   return `Mesa ${numeroMesa.padStart(2, "0")}`;
 };
 
-const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
+const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, onBack, onPedidoConfirmado }: PedidoFlowProps) => {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const { currentGarcom, currentCaixa, verifyEmployeeAccess } = useAuth();
