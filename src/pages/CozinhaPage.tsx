@@ -117,7 +117,7 @@ const CozinhaPage = () => {
                       DELIVERY — {pedido.clienteNome || "Cliente"}
                     </span>
                   )}
-                  {isParaViagem && !isBalcaoOrder && !isDeliveryOrder && (
+                  {isParaViagem && !isDeliveryOrder && (
                     <span className="inline-block rounded-lg bg-amber-500/15 border border-amber-500/30 px-2.5 py-1 text-xs font-black text-amber-400">
                       PARA VIAGEM
                     </span>

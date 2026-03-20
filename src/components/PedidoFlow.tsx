@@ -652,11 +652,11 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
           onContinueOrdering={() => handleCartOpenChange(false)}
           onSuccessAcknowledge={handleSuccessAcknowledge}
           open={cartOpen}
-          onOpenChange={handleCartOpenChange}
-          hideTrigger={isGarcomMobile}
-          showParaViagem
-          paraViagem={paraViagem}
-          onParaViagemChange={setParaViagem}
+           onOpenChange={handleCartOpenChange}
+           hideTrigger={isGarcomMobile}
+           showParaViagem={modo === "cliente" || modo === "garcom"}
+           paraViagem={paraViagem}
+           onParaViagemChange={setParaViagem}
         />
         {modo === "cliente" && (
           <Button

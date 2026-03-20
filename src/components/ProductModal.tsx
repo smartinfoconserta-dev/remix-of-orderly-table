@@ -151,7 +151,7 @@ const ProductModal = ({ produto, onClose, onAdd, isGarcomMobile = false, skipEmb
     setTransitionPhase("idle");
 
     if (produto) {
-      const resolvedSteps = resolveSteps(produto);
+      const resolvedSteps = resolveSteps(produto, skipEmbalagemDefault);
       setDisplayStep(resolvedSteps[0] ?? "quantidade");
       resetPedidoAtual(produto.id);
       return;
