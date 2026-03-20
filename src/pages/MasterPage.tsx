@@ -43,15 +43,41 @@ const METODOS_PAGAMENTO = [
   { value: "transferencia", label: "Transferência" },
 ];
 
+const PLANOS = [
+  { value: "teste", label: "Teste grátis (30 dias)" },
+  { value: "semestral", label: "Semestral (6 meses)" },
+  { value: "anual", label: "Anual (12 meses)" },
+  { value: "dezoito_meses", label: "18 meses" },
+];
+const PLANO_LABELS: Record<string, string> = { teste: "Teste", semestral: "Semestral", anual: "Anual", dezoito_meses: "18 meses" };
+const PLANO_BADGE_CLASS: Record<string, string> = {
+  teste: "bg-muted text-muted-foreground",
+  semestral: "bg-blue-600 hover:bg-blue-600 text-white",
+  anual: "bg-emerald-600 hover:bg-emerald-600 text-white",
+  dezoito_meses: "bg-purple-600 hover:bg-purple-600 text-white",
+};
+
+function calcDataTermino(plano: string, dataInicio: string): string {
+  if (!dataInicio) return "";
+  const d = new Date(dataInicio);
+  if (plano === "teste") { d.setDate(d.getDate() + 30); }
+  else if (plano === "semestral") { d.setMonth(d.getMonth() + 6); }
+  else if (plano === "anual") { d.setMonth(d.getMonth() + 12); }
+  else if (plano === "dezoito_meses") { d.setMonth(d.getMonth() + 18); }
+  return d.toISOString().slice(0, 10);
+}
+
+const todayStr = () => new Date().toISOString().slice(0, 10);
+
 const emptyForm = {
   nomeRestaurante: "", nomeContato: "", email: "", dataVencimento: "",
   ativo: true, avisoAtivo: false, avisoTexto: "",
   telefone: "", cnpj: "", cidade: "", estado: "", endereco: "",
   segmento: "hamburgeria", diaVencimento: 10, valorMensalidade: 0,
   observacoes: "", historicoPagamentos: [] as any[],
+  plano: "anual", dataInicio: new Date().toISOString().slice(0, 10), dataTermino: "",
 };
 
-const todayStr = () => new Date().toISOString().slice(0, 10);
 
 function proximoVencimento(diaVencimento: number): string {
   const hoje = new Date();
@@ -97,6 +123,7 @@ const MasterPage = () => {
       estado: c.estado || "", endereco: c.endereco || "", segmento: c.segmento || "hamburgeria",
       diaVencimento: c.diaVencimento || 10, valorMensalidade: c.valorMensalidade || 0,
       observacoes: c.observacoes || "", historicoPagamentos: c.historicoPagamentos || [],
+      plano: c.plano || "anual", dataInicio: c.dataInicio || "", dataTermino: c.dataTermino || "",
     });
     setDialogOpen(true);
   };
@@ -111,7 +138,21 @@ const MasterPage = () => {
   const handleRemove = () => { if (removeId) { removeCliente(removeId); toast.success("Cliente removido."); setRemoveId(null); refresh(); } };
   const toggleAtivo = (c: Cliente) => { updateCliente(c.id, { ativo: !c.ativo }); refresh(); };
   const isVencido = (d: string) => d && new Date(d) < new Date(todayStr());
-  const ff = (key: string, value: any) => setForm((prev) => ({ ...prev, [key]: value }));
+  const ff = (key: string, value: any) => {
+    setForm((prev) => {
+      const next = { ...prev, [key]: value };
+      if (key === "plano" || key === "dataInicio") {
+        const plano = key === "plano" ? value : prev.plano;
+        const dataInicio = key === "dataInicio" ? value : prev.dataInicio;
+        if (plano && dataInicio) {
+          const dt = calcDataTermino(plano, dataInicio);
+          next.dataTermino = dt;
+          next.dataVencimento = dt;
+        }
+      }
+      return next;
+    });
+  };
 
   const openDetail = (c: Cliente) => {
     setDetailClient(c);
@@ -188,6 +229,7 @@ const MasterPage = () => {
                     <div className="flex items-center gap-2 flex-wrap">
                       <p className="font-black text-lg text-foreground cursor-pointer hover:underline" onClick={() => openDetail(c)}>{c.nomeRestaurante}</p>
                       {c.segmento && <Badge variant="secondary">{SEGMENTO_LABELS[c.segmento] || c.segmento}</Badge>}
+                      {c.plano && <Badge className={PLANO_BADGE_CLASS[c.plano] || "bg-muted text-muted-foreground"}>{PLANO_LABELS[c.plano] || c.plano}</Badge>}
                     </div>
                     <div className="flex items-center gap-2 flex-wrap">
                       <Badge className={c.ativo ? "bg-emerald-600 hover:bg-emerald-600 text-white" : "bg-destructive hover:bg-destructive text-destructive-foreground"}>{c.ativo ? "Ativo" : "Bloqueado"}</Badge>
@@ -438,6 +480,8 @@ const MasterPage = () => {
             <div className="space-y-3">
               <h3 className="text-sm font-bold text-foreground uppercase tracking-wide">Contrato</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div><Label>Plano</Label><Select value={form.plano} onValueChange={(v) => ff("plano", v)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{PLANOS.map((p) => <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>)}</SelectContent></Select></div>
+                <div><Label>Data de início do contrato</Label><Input type="date" value={form.dataInicio} onChange={(e) => ff("dataInicio", e.target.value)} /></div>
                 <div><Label>Valor da mensalidade</Label><div className="relative"><span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">R$</span><Input type="number" className="pl-10" value={form.valorMensalidade || ""} onChange={(e) => ff("valorMensalidade", parseFloat(e.target.value) || 0)} /></div></div>
                 <div><Label>Dia de vencimento</Label><Select value={String(form.diaVencimento)} onValueChange={(v) => ff("diaVencimento", Number(v))}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{DIAS_VENCIMENTO.map((d) => <SelectItem key={d} value={String(d)}>Dia {d}</SelectItem>)}</SelectContent></Select></div>
                 <div><Label>Data de vencimento da licença</Label><Input type="date" value={form.dataVencimento} onChange={(e) => ff("dataVencimento", e.target.value)} /></div>
@@ -472,6 +516,8 @@ const MasterPage = () => {
                   <div><span className="text-muted-foreground">Email:</span> <span className="font-semibold text-foreground">{detailClient.email || "—"}</span></div>
                   <div className="sm:col-span-2"><span className="text-muted-foreground">Endereço:</span> <span className="font-semibold text-foreground">{[detailClient.endereco, detailClient.cidade, detailClient.estado].filter(Boolean).join(", ") || "—"}</span></div>
                   <div><span className="text-muted-foreground">Mensalidade:</span> <span className="font-semibold text-foreground">R$ {(detailClient.valorMensalidade || 0).toFixed(2)}</span></div>
+                  <div><span className="text-muted-foreground">Plano:</span> <Badge className={PLANO_BADGE_CLASS[detailClient.plano] || "bg-muted text-muted-foreground"}>{PLANO_LABELS[detailClient.plano] || detailClient.plano || "—"}</Badge></div>
+                  <div><span className="text-muted-foreground">Início contrato:</span> <span className="font-semibold text-foreground">{detailClient.dataInicio || "—"}</span></div>
                   <div><span className="text-muted-foreground">Dia vencimento:</span> <span className="font-semibold text-foreground">{detailClient.diaVencimento || "—"}</span></div>
                   <div><span className="text-muted-foreground">Licença:</span> <span className="font-semibold text-foreground">{detailClient.dataVencimento || "—"}</span></div>
                   <div><span className="text-muted-foreground">Status:</span> <Badge className={detailClient.ativo ? "bg-emerald-600 hover:bg-emerald-600 text-white" : "bg-destructive hover:bg-destructive text-destructive-foreground"}>{detailClient.ativo ? "Ativo" : "Bloqueado"}</Badge></div>
