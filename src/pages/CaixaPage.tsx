@@ -213,6 +213,9 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
   const [balcaoPaymentValue, setBalcaoPaymentValue] = useState("");
   const [balcaoFlowAtivo, setBalcaoFlowAtivo] = useState(false);
   const [caixaView, setCaixaView] = useState<"mesas" | "delivery">("mesas");
+  const [deliveryConfirmOpen, setDeliveryConfirmOpen] = useState(false);
+  const [deliveryPendingItens, setDeliveryPendingItens] = useState<ItemCarrinho[]>([]);
+  const [deliveryPendingParaViagem, setDeliveryPendingParaViagem] = useState(false);
 
   const sistemaConfig = useMemo(() => getSistemaConfig(), []);
 
@@ -449,37 +452,54 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
   }
 
   if (balcaoFlowAtivo) {
+  const handleDeliveryConfirm = () => {
+    upsertClienteDelivery({
+      nome: balcaoClienteNome.trim(),
+      cpf: balcaoCpf.trim(),
+      telefone: balcaoTelefone.trim(),
+      endereco: balcaoEndereco.trim(),
+      numero: balcaoNumero.trim(),
+      bairro: balcaoBairro.trim(),
+      complemento: balcaoComplemento.trim(),
+      referencia: balcaoReferencia.trim(),
+    });
+    criarPedidoBalcao({
+      itens: deliveryPendingItens,
+      origem: "delivery",
+      operador: currentOperator,
+      clienteNome: balcaoClienteNome.trim() || undefined,
+      clienteTelefone: balcaoTelefone || undefined,
+      enderecoCompleto: balcaoEndereco ? `${balcaoEndereco}${balcaoNumero ? `, ${balcaoNumero}` : ""}` : undefined,
+      bairro: balcaoBairro || undefined,
+      referencia: balcaoReferencia || undefined,
+      formaPagamentoDelivery: balcaoFormaPag,
+      trocoParaQuanto: balcaoFormaPag === "dinheiro" ? parseCurrencyInput(balcaoTroco) || undefined : undefined,
+    });
+    toast.success(`Pedido delivery enviado para ${balcaoClienteNome}`, { duration: 1600, icon: "🍽️" });
+    setDeliveryConfirmOpen(false);
+    setDeliveryPendingItens([]);
+    resetBalcaoStates();
+  };
+
+  if (balcaoFlowAtivo) {
     const handleBalcaoConfirmado = (itens: ItemCarrinho[], paraViagem: boolean) => {
       if (balcaoTipo === "delivery") {
-        upsertClienteDelivery({
-          nome: balcaoClienteNome.trim(),
-          cpf: balcaoCpf.trim(),
-          telefone: balcaoTelefone.trim(),
-          endereco: balcaoEndereco.trim(),
-          numero: balcaoNumero.trim(),
-          bairro: balcaoBairro.trim(),
-          complemento: balcaoComplemento.trim(),
-          referencia: balcaoReferencia.trim(),
-        });
+        setDeliveryPendingItens(itens);
+        setDeliveryPendingParaViagem(paraViagem);
+        setBalcaoFormaPag("dinheiro");
+        setBalcaoTroco("");
+        setBalcaoFlowAtivo(false);
+        setDeliveryConfirmOpen(true);
+        return;
       }
       criarPedidoBalcao({
         itens,
-        origem: balcaoTipo,
+        origem: "balcao",
         operador: currentOperator,
         clienteNome: balcaoClienteNome.trim() || undefined,
         clienteTelefone: balcaoTelefone || undefined,
-        enderecoCompleto: balcaoEndereco ? `${balcaoEndereco}${balcaoNumero ? `, ${balcaoNumero}` : ""}` : undefined,
-        bairro: balcaoBairro || undefined,
-        referencia: balcaoReferencia || undefined,
-        formaPagamentoDelivery: balcaoTipo === "delivery" ? balcaoFormaPag : undefined,
-        trocoParaQuanto: balcaoTipo === "delivery" && balcaoFormaPag === "dinheiro" ? parseCurrencyInput(balcaoTroco) || undefined : undefined,
       });
-      toast.success(
-        balcaoTipo === "delivery"
-          ? `Pedido delivery enviado para ${balcaoClienteNome}`
-          : `Pedido balcão enviado — ${balcaoClienteNome}`,
-        { duration: 1600, icon: "🍽️" },
-      );
+      toast.success(`Pedido balcão enviado — ${balcaoClienteNome}`, { duration: 1600, icon: "🍽️" });
       resetBalcaoStates();
     };
 
@@ -2025,28 +2045,6 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                     <Input value={balcaoReferencia} onChange={(e) => setBalcaoReferencia(e.target.value)} placeholder="Próximo a..." />
                   </div>
                 </div>
-
-                {/* Pagamento */}
-                <div className="border-t border-border pt-3 mt-2 space-y-3">
-                  <p className="text-xs font-black text-foreground uppercase tracking-widest">Pagamento</p>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-1">
-                      <label className="text-xs font-semibold text-foreground">Forma de pagamento</label>
-                      <select value={balcaoFormaPag} onChange={(e) => setBalcaoFormaPag(e.target.value as PaymentMethod)} className="w-full rounded-xl border border-border bg-secondary px-3 py-2 text-sm text-foreground">
-                        <option value="dinheiro">Dinheiro</option>
-                        <option value="credito">Crédito</option>
-                        <option value="debito">Débito</option>
-                        <option value="pix">PIX</option>
-                      </select>
-                    </div>
-                    {balcaoFormaPag === "dinheiro" && (
-                      <div className="space-y-1">
-                        <label className="text-xs font-semibold text-foreground">Troco para quanto?</label>
-                        <Input value={balcaoTroco} onChange={(e) => setBalcaoTroco(e.target.value)} placeholder="0,00" inputMode="decimal" />
-                      </div>
-                    )}
-                  </div>
-                </div>
               </div>
             )}
           </div>
@@ -2079,6 +2077,70 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                 {balcaoTipo === "delivery" ? "Salvar e abrir cardápio" : "Abrir cardápio"}
               </Button>
             )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── DELIVERY CONFIRMATION DIALOG ── */}
+      <Dialog open={deliveryConfirmOpen} onOpenChange={(open) => { if (!open) { setDeliveryConfirmOpen(false); setDeliveryPendingItens([]); } }}>
+        <DialogContent className="rounded-2xl border-border bg-background sm:max-w-lg max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Truck className="h-5 w-5 text-purple-400" />
+              Confirmar pedido delivery
+            </DialogTitle>
+            <DialogDescription>Revise o pedido antes de enviar para a cozinha.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            {/* Resumo dos itens */}
+            <div className="rounded-xl border border-border bg-card p-3 space-y-2">
+              <p className="text-xs font-black text-foreground uppercase tracking-widest">Itens do pedido</p>
+              {deliveryPendingItens.map((it, idx) => (
+                <div key={idx} className="flex justify-between text-sm">
+                  <span className="text-foreground">{it.quantidade}× {it.nome}</span>
+                  <span className="font-bold tabular-nums text-foreground">{formatPrice(it.precoUnitario * it.quantidade)}</span>
+                </div>
+              ))}
+              <div className="border-t border-border pt-2 flex justify-between">
+                <span className="text-sm font-black text-foreground">Total</span>
+                <span className="text-lg font-black tabular-nums text-primary">{formatPrice(deliveryPendingItens.reduce((s, it) => s + it.precoUnitario * it.quantidade, 0))}</span>
+              </div>
+            </div>
+
+            {/* Endereço */}
+            <div className="rounded-xl border border-border bg-card p-3 space-y-1">
+              <p className="text-xs font-black text-foreground uppercase tracking-widest">Entrega</p>
+              <p className="text-sm text-foreground">{balcaoClienteNome}</p>
+              <p className="text-xs text-muted-foreground">{balcaoEndereco}{balcaoNumero ? `, ${balcaoNumero}` : ""}{balcaoBairro ? ` — ${balcaoBairro}` : ""}</p>
+              {balcaoTelefone && <p className="text-xs text-muted-foreground">{balcaoTelefone}</p>}
+            </div>
+
+            {/* Pagamento */}
+            <div className="rounded-xl border border-border bg-card p-3 space-y-3">
+              <p className="text-xs font-black text-foreground uppercase tracking-widest">Pagamento</p>
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-foreground">Forma de pagamento</label>
+                <select value={balcaoFormaPag} onChange={(e) => setBalcaoFormaPag(e.target.value as PaymentMethod)} className="w-full rounded-xl border border-border bg-secondary px-3 py-2 text-sm text-foreground">
+                  <option value="dinheiro">Dinheiro</option>
+                  <option value="credito">Crédito</option>
+                  <option value="debito">Débito</option>
+                  <option value="pix">PIX</option>
+                </select>
+              </div>
+              {balcaoFormaPag === "dinheiro" && (
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-foreground">Troco para quanto?</label>
+                  <Input value={balcaoTroco} onChange={(e) => setBalcaoTroco(e.target.value)} placeholder="0,00" inputMode="decimal" />
+                </div>
+              )}
+            </div>
+          </div>
+          <DialogFooter className="gap-3 sm:gap-0">
+            <Button variant="outline" onClick={() => { setDeliveryConfirmOpen(false); setBalcaoFlowAtivo(true); }} className="rounded-xl font-bold">← Voltar ao cardápio</Button>
+            <Button onClick={handleDeliveryConfirm} className="rounded-xl font-black gap-1.5">
+              <Check className="h-4 w-4" />
+              Confirmar e enviar para cozinha
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
