@@ -387,12 +387,12 @@ const AdminPage = () => {
               <Shield className="h-8 w-8" />
             </div>
             <h2 className="text-2xl font-black text-foreground">Painel Admin</h2>
-            <p className="text-sm text-muted-foreground">Autentique com PIN de gerente para acessar.</p>
+            <p className="text-sm text-muted-foreground">Acesso restrito ao administrador do sistema.</p>
           </div>
           <div className="space-y-3">
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-muted-foreground">Nome do gerente</label>
-              <Input value={authName} onChange={(e) => setAuthName(e.target.value)} placeholder="Ex.: Mariana" maxLength={40} />
+              <label className="text-xs font-bold text-muted-foreground">Nome do administrador</label>
+              <Input value={authName} onChange={(e) => setAuthName(e.target.value)} placeholder="Ex.: admin" maxLength={40} />
             </div>
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-muted-foreground">PIN</label>
