@@ -76,7 +76,7 @@ const sidebarSections = [
 const formatPrice = (v: number) => `R$ ${v.toFixed(2).replace(".", ",")}`;
 
 const AdminPage = () => {
-  const { verifyManagerAccess, getProfilesByRole, createUser, removeUser } = useAuth();
+  const { verifyManagerAccess, verifyEmployeeAccess, getProfilesByRole, createUser, removeUser } = useAuth();
 
   // Auth gate state
   const [authenticated, setAuthenticated] = useState(false);
@@ -303,12 +303,17 @@ const AdminPage = () => {
 
   // --- Auth gate ---
   const handleAuth = async () => {
-    if (!authName.trim()) { setAuthError("Informe o nome do gerente"); return; }
+    if (!authName.trim()) { setAuthError("Informe o nome do administrador"); return; }
     if (!/^\d{4,6}$/.test(authPin)) { setAuthError("PIN inválido (4-6 dígitos)"); return; }
     setAuthLoading(true);
     setAuthError(null);
-    const result = await verifyManagerAccess(authName, authPin);
+    const result = await verifyEmployeeAccess(authName, authPin);
     if (!result.ok) { setAuthError(result.error ?? "Não autorizado"); setAuthLoading(false); return; }
+    if (result.user?.role !== "admin") {
+      setAuthError("Acesso restrito ao administrador do sistema");
+      setAuthLoading(false);
+      return;
+    }
     setAuthenticated(true);
     setAuthLoading(false);
   };
@@ -382,12 +387,12 @@ const AdminPage = () => {
               <Shield className="h-8 w-8" />
             </div>
             <h2 className="text-2xl font-black text-foreground">Painel Admin</h2>
-            <p className="text-sm text-muted-foreground">Autentique com PIN de gerente para acessar.</p>
+            <p className="text-sm text-muted-foreground">Acesso restrito ao administrador do sistema.</p>
           </div>
           <div className="space-y-3">
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-muted-foreground">Nome do gerente</label>
-              <Input value={authName} onChange={(e) => setAuthName(e.target.value)} placeholder="Ex.: Mariana" maxLength={40} />
+              <label className="text-xs font-bold text-muted-foreground">Nome do administrador</label>
+              <Input value={authName} onChange={(e) => setAuthName(e.target.value)} placeholder="Ex.: admin" maxLength={40} />
             </div>
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-muted-foreground">PIN</label>

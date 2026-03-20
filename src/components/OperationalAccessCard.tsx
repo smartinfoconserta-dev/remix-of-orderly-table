@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { BriefcaseBusiness, HandPlatter, KeyRound, Wallet } from "lucide-react";
+import { useState } from "react";
+import { BriefcaseBusiness, HandPlatter, KeyRound, Shield, Wallet } from "lucide-react";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +9,7 @@ import { toast } from "sonner";
 
 interface OperationalAccessCardProps {
   role: UserRole;
+  targetRoute?: string;
 }
 
 const accessSchema = z.object({
@@ -16,35 +17,40 @@ const accessSchema = z.object({
   pin: z.string().regex(/^\d{4,6}$/, "Use um PIN de 4 a 6 dígitos"),
 });
 
-const roleCopy = {
+const roleCopy: Record<UserRole, { title: string; description: string; submit: string; icon: typeof HandPlatter }> = {
   garcom: {
     title: "Acesso do Garçom",
-    description: "Identifique este aparelho para registrar quem lançou cada pedido.",
+    description: "Identifique-se para registrar pedidos.",
     submit: "Entrar como garçom",
     icon: HandPlatter,
   },
   caixa: {
     title: "Acesso do Caixa",
-    description: "Identifique o operador para registrar fechamentos, ajustes e movimentações.",
+    description: "Identifique o operador para registrar movimentações.",
     submit: "Entrar no caixa",
     icon: Wallet,
   },
   gerente: {
     title: "Validação do Gerente",
-    description: "Use este acesso para autorizar relatórios completos e ações críticas.",
+    description: "Acesso para relatórios e ações críticas.",
     submit: "Validar gerente",
     icon: BriefcaseBusiness,
   },
-} satisfies Record<UserRole, { title: string; description: string; submit: string; icon: typeof HandPlatter }>;
+  admin: {
+    title: "Acesso Administrativo",
+    description: "Acesso restrito ao administrador do sistema.",
+    submit: "Entrar como admin",
+    icon: Shield,
+  },
+};
 
-const OperationalAccessCard = ({ role }: OperationalAccessCardProps) => {
-  const { getProfilesByRole, loginWithPin } = useAuth();
+const OperationalAccessCard = ({ role, targetRoute }: OperationalAccessCardProps) => {
+  const { loginWithPin } = useAuth();
   const [nome, setNome] = useState("");
   const [pin, setPin] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const knownUsers = useMemo(() => getProfilesByRole(role), [getProfilesByRole, role]);
   const copy = roleCopy[role];
   const Icon = copy.icon;
 
@@ -60,7 +66,7 @@ const OperationalAccessCard = ({ role }: OperationalAccessCardProps) => {
     setIsSubmitting(true);
     setError(null);
 
-    const result = await loginWithPin(role, parsed.data.nome, parsed.data.pin);
+    const result = await loginWithPin(role, parsed.data.nome, parsed.data.pin, targetRoute);
 
     if (!result.ok) {
       setError(result.error ?? "Não foi possível entrar agora");
@@ -71,7 +77,7 @@ const OperationalAccessCard = ({ role }: OperationalAccessCardProps) => {
     setPin("");
     toast.success(`${result.user?.nome ?? "Usuário"} identificado com sucesso`, {
       duration: 1200,
-      icon: role === "garcom" ? "🍽️" : role === "gerente" ? "🛡️" : "💰",
+      icon: role === "garcom" ? "🍽️" : role === "gerente" ? "🛡️" : role === "admin" ? "🔒" : "💰",
     });
     setIsSubmitting(false);
   };
@@ -115,27 +121,6 @@ const OperationalAccessCard = ({ role }: OperationalAccessCardProps) => {
             {copy.submit}
           </Button>
         </form>
-      </div>
-
-      <div className="rounded-2xl border border-border bg-card p-4">
-        <p className="text-sm font-bold text-foreground">Uso local neste dispositivo</p>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Este protótipo salva usuários e sessões no próprio navegador para simular a operação real.
-        </p>
-        {knownUsers.length > 0 && (
-          <div className="mt-4 flex flex-wrap gap-2">
-            {knownUsers.map((user) => (
-              <button
-                key={user.id}
-                type="button"
-                onClick={() => setNome(user.nome)}
-                className="rounded-full border border-border bg-secondary px-3 py-1.5 text-xs font-bold text-foreground transition-colors hover:bg-secondary/80"
-              >
-                {user.nome}
-              </button>
-            ))}
-          </div>
-        )}
       </div>
     </div>
   );
