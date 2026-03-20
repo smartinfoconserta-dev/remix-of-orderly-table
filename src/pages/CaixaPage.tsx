@@ -193,10 +193,6 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
   const [balcaoReferencia, setBalcaoReferencia] = useState("");
   const [balcaoFormaPag, setBalcaoFormaPag] = useState<PaymentMethod>("dinheiro");
   const [balcaoTroco, setBalcaoTroco] = useState("");
-  const [balcaoObs, setBalcaoObs] = useState("");
-  const [balcaoItens, setBalcaoItens] = useState<ItemCarrinho[]>([]);
-  const [balcaoModalProduto, setBalcaoModalProduto] = useState<Produto | null>(null);
-  const [balcaoCatAtiva, setBalcaoCatAtiva] = useState("");
   const [balcaoCpf, setBalcaoCpf] = useState("");
   const [balcaoNumero, setBalcaoNumero] = useState("");
   const [balcaoComplemento, setBalcaoComplemento] = useState("");
@@ -206,35 +202,9 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
   const [balcaoPayments, setBalcaoPayments] = useState<SplitPayment[]>([]);
   const [balcaoPaymentMethod, setBalcaoPaymentMethod] = useState<PaymentMethod>("dinheiro");
   const [balcaoPaymentValue, setBalcaoPaymentValue] = useState("");
+  const [balcaoFlowAtivo, setBalcaoFlowAtivo] = useState(false);
 
   const sistemaConfig = useMemo(() => getSistemaConfig(), []);
-  const cardapioOverrides = useMemo(() => getCardapioOverrides(), []);
-
-  /* ── Active products for balcão/delivery ── */
-  const produtosAtivos = useMemo(() => {
-    return menuProdutos.filter((p) => {
-      const ov = cardapioOverrides[p.id];
-      if (ov && !ov.ativo) return false;
-      if (ov && ov.removido) return false;
-      return true;
-    }).map((p) => {
-      const ov = cardapioOverrides[p.id];
-      return {
-        ...p,
-        nome: ov?.nome ?? p.nome,
-        preco: ov?.preco ?? p.preco,
-      };
-    });
-  }, [cardapioOverrides]);
-
-  const categoriasAtivas = useMemo(() => {
-    const catIds = new Set(produtosAtivos.map((p) => p.categoria));
-    return menuCategorias.filter((c) => catIds.has(c.id));
-  }, [produtosAtivos]);
-
-  const balcaoSubtotal = useMemo(() => {
-    return balcaoItens.reduce((acc, item) => acc + (item.precoUnitario * item.quantidade), 0);
-  }, [balcaoItens]);
 
   const mesa = mesaSelecionada ? mesas.find((item) => item.id === mesaSelecionada) ?? null : null;
   const balcaoPedido = balcaoPedidoSelecionado ? pedidosBalcao.find((p) => p.id === balcaoPedidoSelecionado) ?? null : null;
