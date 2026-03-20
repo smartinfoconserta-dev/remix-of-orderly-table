@@ -459,7 +459,7 @@ const MasterPage = () => {
               <h3 className="text-sm font-bold text-foreground uppercase tracking-wide">Identificação</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div><Label>Nome do restaurante</Label><Input value={form.nomeRestaurante} onChange={(e) => ff("nomeRestaurante", e.target.value)} /></div>
-                <div><Label>Segmento</Label><Select value={form.segmento} onValueChange={(v) => ff("segmento", v)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent position="popper">{SEGMENTOS.map((s) => <SelectItem key={s} value={s}>{SEGMENTO_LABELS[s]}</SelectItem>)}</SelectContent></Select></div>
+                <div><Label>Segmento</Label><Select value={form.segmento} onValueChange={(v) => ff("segmento", v)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent container={sheetContentRef.current ?? undefined} position="popper">{SEGMENTOS.map((s) => <SelectItem key={s} value={s}>{SEGMENTO_LABELS[s]}</SelectItem>)}</SelectContent></Select></div>
                 <div><Label>CNPJ</Label><Input placeholder="00.000.000/0000-00" value={form.cnpj} onChange={(e) => ff("cnpj", e.target.value)} /></div>
                 <div><Label>Telefone</Label><Input placeholder="(00) 00000-0000" value={form.telefone} onChange={(e) => ff("telefone", e.target.value)} /></div>
               </div>
