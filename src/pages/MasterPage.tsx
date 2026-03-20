@@ -37,6 +37,12 @@ const CATEGORIAS_DESPESA = [
 ];
 const CAT_LABEL: Record<string, string> = Object.fromEntries(CATEGORIAS_DESPESA.map((c) => [c.value, c.label]));
 
+const METODOS_PAGAMENTO = [
+  { value: "pix", label: "PIX" },
+  { value: "dinheiro", label: "Dinheiro" },
+  { value: "transferencia", label: "Transferência" },
+];
+
 const emptyForm = {
   nomeRestaurante: "", nomeContato: "", email: "", dataVencimento: "",
   ativo: true, avisoAtivo: false, avisoTexto: "",
