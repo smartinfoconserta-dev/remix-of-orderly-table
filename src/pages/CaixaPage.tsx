@@ -145,6 +145,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
     ajustarItemPedido,
     cancelarPedido,
     registrarMovimentacaoCaixa,
+    criarPedidoBalcao,
   } = useRestaurant();
   const { currentCaixa, currentGerente, logout, verifyManagerAccess } = useAuth();
 
@@ -178,6 +179,20 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
   const [movValor, setMovValor] = useState("");
   const [movConfirmStep, setMovConfirmStep] = useState(false);
   const [turnoReportOpen, setTurnoReportOpen] = useState(false);
+  const [dinheiroContado, setDinheiroContado] = useState("");
+
+  /* ── Balcão/Delivery state ── */
+  const [balcaoOpen, setBalcaoOpen] = useState(false);
+  const [balcaoTipo, setBalcaoTipo] = useState<"balcao" | "delivery">("balcao");
+  const [balcaoClienteNome, setBalcaoClienteNome] = useState("");
+  const [balcaoTelefone, setBalcaoTelefone] = useState("");
+  const [balcaoEndereco, setBalcaoEndereco] = useState("");
+  const [balcaoBairro, setBalcaoBairro] = useState("");
+  const [balcaoReferencia, setBalcaoReferencia] = useState("");
+  const [balcaoFormaPag, setBalcaoFormaPag] = useState<PaymentMethod>("dinheiro");
+  const [balcaoTroco, setBalcaoTroco] = useState("");
+  const [balcaoObs, setBalcaoObs] = useState("");
+  const [balcaoItens, setBalcaoItens] = useState<Record<string, number>>({});
 
   const sistemaConfig = useMemo(() => getSistemaConfig(), []);
 
