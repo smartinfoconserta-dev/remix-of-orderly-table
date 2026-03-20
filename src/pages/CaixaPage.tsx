@@ -1104,6 +1104,49 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
         </DialogContent>
       </Dialog>
 
+      {/* ── Movimentação Modal ── */}
+      <Dialog open={movModalOpen} onOpenChange={setMovModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Registrar movimentação</DialogTitle>
+            <DialogDescription>Sangria (saída) ou suprimento (entrada) de valores no caixa.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-sm font-semibold text-foreground">Tipo</label>
+              <Select value={movTipo} onValueChange={(v) => setMovTipo(v as "entrada" | "saida")}>
+                <SelectTrigger className="rounded-xl"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="entrada">Suprimento (entrada)</SelectItem>
+                  <SelectItem value="saida">Sangria (saída)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-semibold text-foreground">Descrição</label>
+              <Input value={movDescricao} onChange={(e) => setMovDescricao(e.target.value)} placeholder="Ex.: Troco para delivery" maxLength={100} />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-semibold text-foreground">Valor (R$)</label>
+              <Input
+                value={movValor}
+                onChange={(e) => setMovValor(e.target.value)}
+                placeholder="0,00"
+                inputMode="decimal"
+                className="text-lg font-black"
+                onKeyDown={(e) => e.key === "Enter" && handleRegistrarMovimentacao()}
+              />
+            </div>
+          </div>
+          <DialogFooter className="gap-3 sm:gap-0">
+            <Button variant="outline" onClick={() => setMovModalOpen(false)} className="rounded-xl font-bold">Cancelar</Button>
+            <Button onClick={handleRegistrarMovimentacao} className="rounded-xl font-black">
+              Registrar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <LicenseBanner blockMode={accessMode === "caixa"} />
     </>
   );
