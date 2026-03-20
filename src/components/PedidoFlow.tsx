@@ -697,11 +697,7 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
       icon: typeof Instagram;
       badge: string;
       qrUrl: string;
-      articleClassName: string;
-      iconWrapClassName: string;
-      badgeClassName: string;
-      ambientGlowClassName: string;
-      qrGlowClassName: string;
+      bgImage?: string;
     }> = [];
 
     if (sysConfig.instagramUrl) {
@@ -712,11 +708,7 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
         icon: Instagram,
         badge: "Instagram",
         qrUrl: `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(sysConfig.instagramUrl)}`,
-        articleClassName: "bg-[linear-gradient(90deg,hsl(var(--primary)/0.18)_0%,hsl(var(--card))_26%,hsl(var(--card))_72%,hsl(var(--secondary))_100%)] shadow-[0_24px_60px_-34px_hsl(var(--primary)/0.38)]",
-        iconWrapClassName: "border border-primary/30 bg-[linear-gradient(180deg,hsl(var(--primary)/0.16)_0%,hsl(var(--primary)/0.08)_100%)] text-primary shadow-[0_20px_38px_-22px_hsl(var(--primary)/0.8)]",
-        badgeClassName: "border-primary/20 bg-[hsl(var(--background)/0.45)] text-primary",
-        ambientGlowClassName: "bg-primary/18",
-        qrGlowClassName: "bg-foreground/20",
+        bgImage: sysConfig.instagramBg || undefined,
       });
     }
 
@@ -728,11 +720,7 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
         icon: Wifi,
         badge: "Wi‑Fi",
         qrUrl: `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(`WIFI:T:WPA;S:${RESTAURANTE.nome};P:${sysConfig.senhaWifi};;`)}`,
-        articleClassName: "bg-[linear-gradient(90deg,hsl(var(--card))_0%,hsl(var(--card))_58%,hsl(var(--secondary))_100%)] shadow-[0_24px_60px_-34px_hsl(var(--foreground)/0.28)]",
-        iconWrapClassName: "border border-border bg-[linear-gradient(180deg,hsl(var(--secondary-foreground)/0.08)_0%,hsl(var(--secondary))_100%)] text-foreground shadow-[0_18px_34px_-22px_hsl(var(--foreground)/0.55)]",
-        badgeClassName: "border-border bg-[hsl(var(--background)/0.45)] text-foreground/82",
-        ambientGlowClassName: "bg-foreground/6",
-        qrGlowClassName: "bg-foreground/18",
+        bgImage: sysConfig.wifiBg || undefined,
       });
     }
 
