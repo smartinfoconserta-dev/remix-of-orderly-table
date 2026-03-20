@@ -1960,8 +1960,11 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
               if (balcaoTipo === "balcao" && !balcaoClienteNome.trim()) { toast.error("Informe o nome do cliente", { duration: 1400 }); return; }
               if (balcaoTipo === "delivery") {
                 if (!balcaoClienteNome.trim()) { toast.error("Informe o nome do cliente", { duration: 1400 }); return; }
+                if (!balcaoCpf.trim()) { toast.error("Informe o CPF do cliente", { duration: 1400 }); return; }
                 if (!balcaoTelefone.trim()) { toast.error("Informe o telefone", { duration: 1400 }); return; }
                 if (!balcaoEndereco.trim()) { toast.error("Informe o endereço", { duration: 1400 }); return; }
+                if (!balcaoNumero.trim()) { toast.error("Informe o número do endereço", { duration: 1400 }); return; }
+                if (!balcaoBairro.trim()) { toast.error("Informe o bairro", { duration: 1400 }); return; }
               }
               setBalcaoFlowAtivo(true);
             }} className="rounded-xl font-black gap-1.5">
