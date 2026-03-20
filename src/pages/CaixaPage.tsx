@@ -816,6 +816,27 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
 
               {/* ── KPI Bar ── */}
               <div className="flex items-center gap-3 border-b border-border bg-card/60 px-5 py-2.5 shrink-0">
+                {/* View tabs */}
+                <button
+                  onClick={() => setCaixaView("mesas")}
+                  className={`flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-black transition-colors ${caixaView === "mesas" ? "bg-primary/15 text-primary border border-primary/30" : "border border-border text-muted-foreground hover:bg-secondary"}`}
+                >
+                  <ShoppingBag className="h-3.5 w-3.5" />
+                  Mesas
+                </button>
+                <button
+                  onClick={() => setCaixaView("delivery")}
+                  className={`flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-black transition-colors ${caixaView === "delivery" ? "bg-purple-500/15 text-purple-400 border border-purple-500/30" : "border border-border text-muted-foreground hover:bg-secondary"}`}
+                >
+                  <Truck className="h-3.5 w-3.5" />
+                  Delivery
+                  {pedidosDeliveryAtivos.length > 0 && (
+                    <span className="rounded-full bg-purple-500/20 text-purple-400 px-1.5 py-0.5 text-[10px] font-black tabular-nums leading-none">{pedidosDeliveryAtivos.length}</span>
+                  )}
+                </button>
+
+                <div className="w-px h-6 bg-border mx-1" />
+
                 <div className="flex items-center gap-2 rounded-xl border border-status-consumo/30 bg-status-consumo/8 px-3 py-1.5">
                   <span className="text-lg font-black tabular-nums text-status-consumo leading-none">{mesasConsumo}</span>
                   <span className="text-[10px] font-bold uppercase tracking-widest text-status-consumo/80">Consumo</span>
