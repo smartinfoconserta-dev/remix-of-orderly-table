@@ -10,6 +10,7 @@ import {
   Filter,
   LockKeyhole,
   LogOut,
+  Printer,
   ScrollText,
   ShieldCheck,
   Smartphone,
