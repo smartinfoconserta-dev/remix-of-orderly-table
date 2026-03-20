@@ -883,6 +883,8 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
 
                 {/* ═══ LEFT: Mesa Grid (70%) ═══ */}
                 <div className="flex-[7] overflow-y-auto p-5 lg:p-6 scrollbar-hide">
+                {caixaView === "mesas" ? (
+                  <>
                   <div className="grid gap-3 fade-in" style={{ gridTemplateColumns: "repeat(5, 1fr)" }}>
                     {mesas.map((item, i) => (
                       <div key={item.id} className="slide-up" style={{ animationDelay: `${Math.min(i * 30, 300)}ms`, animationFillMode: 'both' }}>
@@ -895,9 +897,8 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                         />
                       </div>
                     ))}
-                    {/* ── Balcão / Delivery cards ── */}
-                    {pedidosBalcaoAtivos.map((pb) => {
-                      const isDelivery = pb.origem === "delivery";
+                    {/* ── Balcão cards only ── */}
+                    {pedidosBalcaoSoAtivos.map((pb) => {
                       const isPronto = pb.statusBalcao === "pronto";
                       return (
                         <div key={pb.id} className="slide-up">
@@ -910,7 +911,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                             }`}
                           >
                             <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
-                              {isDelivery ? "Delivery" : "Balcão"}
+                              Balcão
                             </span>
                             <span className="text-sm font-black text-foreground truncate max-w-full px-1">
                               {pb.clienteNome || "—"}
@@ -930,6 +931,86 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                       );
                     })}
                   </div>
+                  </>
+                ) : (
+                  /* ── DELIVERY PANEL ── */
+                  <div className="space-y-4 fade-in">
+                    <div className="flex items-center gap-3">
+                      <Truck className="h-5 w-5 text-purple-400" />
+                      <h2 className="text-base font-black text-foreground flex-1">Pedidos Delivery</h2>
+                      <Button
+                        size="sm"
+                        onClick={() => { setBalcaoTipo("delivery"); setBalcaoOpen(true); }}
+                        className="rounded-xl font-black gap-1.5 text-xs"
+                      >
+                        <Plus className="h-3.5 w-3.5" />
+                        Novo delivery
+                      </Button>
+                    </div>
+                    {pedidosDeliveryAtivos.length === 0 ? (
+                      <div className="flex flex-col items-center justify-center gap-3 py-20 text-muted-foreground">
+                        <Truck className="h-12 w-12 opacity-20" />
+                        <p className="text-sm font-semibold">Nenhum delivery ativo no momento</p>
+                      </div>
+                    ) : (
+                      <div className="grid gap-3 grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
+                        {pedidosDeliveryAtivos.map((pb) => {
+                          const isPronto = pb.statusBalcao === "pronto";
+                          return (
+                            <div
+                              key={pb.id}
+                              className={`rounded-2xl border p-4 space-y-3 transition-colors ${
+                                isPronto
+                                  ? "border-status-consumo/40 bg-status-consumo/5 animate-pulse"
+                                  : "border-purple-500/30 bg-purple-500/5"
+                              }`}
+                            >
+                              <div className="flex items-start justify-between">
+                                <div className="min-w-0 flex-1">
+                                  <p className="text-sm font-black text-foreground truncate">{pb.clienteNome || "—"}</p>
+                                  {pb.enderecoCompleto && (
+                                    <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
+                                      <MapPin className="h-3 w-3 shrink-0" />
+                                      <span className="truncate">{pb.enderecoCompleto}{pb.bairro ? ` — ${pb.bairro}` : ""}</span>
+                                    </p>
+                                  )}
+                                  {pb.clienteTelefone && (
+                                    <p className="text-xs text-muted-foreground mt-0.5">{pb.clienteTelefone}</p>
+                                  )}
+                                </div>
+                                <span className={`shrink-0 rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-widest ${
+                                  isPronto
+                                    ? "border-status-consumo/25 bg-status-consumo/10 text-status-consumo"
+                                    : "border-amber-500/25 bg-amber-500/10 text-amber-400"
+                                }`}>
+                                  {isPronto ? "Pronto p/ entregar" : "Aberto"}
+                                </span>
+                              </div>
+                              <div className="text-xs text-muted-foreground space-y-0.5">
+                                {pb.itens.slice(0, 4).map((it, idx) => (
+                                  <p key={idx} className="truncate">{it.quantidade}× {it.nome}</p>
+                                ))}
+                                {pb.itens.length > 4 && <p className="text-muted-foreground/60">+{pb.itens.length - 4} itens...</p>}
+                              </div>
+                              <div className="flex items-center justify-between pt-2 border-t border-border">
+                                <span className="text-lg font-black tabular-nums text-foreground">{formatPrice(pb.total)}</span>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleSelecionarBalcao(pb.id)}
+                                  className="rounded-xl font-bold gap-1.5 text-xs"
+                                >
+                                  <Wallet className="h-3.5 w-3.5" />
+                                  Ver comanda / Receber
+                                </Button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )}
                 </div>
 
                 {/* ═══ RIGHT: Activity + Movimentações (30%) ═══ */}
