@@ -204,6 +204,8 @@ const AdminPage = () => {
           imagemBase64: editForm.imagemBase64 || undefined,
           ativo: existing.ativo ?? true,
           disponivelDelivery: editProduct.disponivelDelivery,
+          tipoOptions: editForm.tipoOptionsStr.trim() ? editForm.tipoOptionsStr.split(",").map((s) => s.trim()).filter(Boolean) : undefined,
+          embalagemOptions: editForm.embalagemOptionsStr.trim() ? editForm.embalagemOptionsStr.split(",").map((s) => s.trim()).filter(Boolean) : undefined,
         },
       };
       saveCardapioOverrides(updated);
