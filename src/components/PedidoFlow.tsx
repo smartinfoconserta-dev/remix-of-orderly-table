@@ -139,7 +139,7 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
   const [cartOpen, setCartOpen] = useState(false);
   const [contaOpen, setContaOpen] = useState(false);
   const [showExitAlert, setShowExitAlert] = useState(false);
-  const [paraViagem, setParaViagem] = useState(false);
+  const [paraViagem, setParaViagem] = useState(modo === "delivery");
   const [isClientIdle, setIsClientIdle] = useState(false);
 
   // Hidden admin modal state
@@ -652,11 +652,11 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
           onContinueOrdering={() => handleCartOpenChange(false)}
           onSuccessAcknowledge={handleSuccessAcknowledge}
           open={cartOpen}
-          onOpenChange={handleCartOpenChange}
-          hideTrigger={isGarcomMobile}
-          showParaViagem
-          paraViagem={paraViagem}
-          onParaViagemChange={setParaViagem}
+           onOpenChange={handleCartOpenChange}
+           hideTrigger={isGarcomMobile}
+           showParaViagem={modo === "cliente" || modo === "garcom"}
+           paraViagem={paraViagem}
+           onParaViagemChange={setParaViagem}
         />
         {modo === "cliente" && (
           <Button
@@ -1069,7 +1069,7 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
       <div className="flex min-h-screen flex-col bg-background">
         {header}
         {isMobile ? mobileContent : desktopContent}
-        <ProductModal produto={produtoSelecionado} onClose={handleCloseProductModal} onAdd={handleAddToCart} isGarcomMobile={isGarcomMobile} />
+        <ProductModal produto={produtoSelecionado} onClose={handleCloseProductModal} onAdd={handleAddToCart} isGarcomMobile={isGarcomMobile} skipEmbalagemDefault={modo === "cliente" || modo === "garcom"} />
         {mesa && <MinhaContaDrawer pedidos={mesa.pedidos} total={mesa.total} open={contaOpen} onOpenChange={setContaOpen} />}
         {idleOverlay}
       </div>

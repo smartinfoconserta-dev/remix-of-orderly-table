@@ -14,6 +14,7 @@ interface Props {
   onClose: () => void;
   onAdd: (item: ItemCarrinho) => void;
   isGarcomMobile?: boolean;
+  skipEmbalagemDefault?: boolean;
 }
 
 type StepId = ProductStep;
@@ -69,27 +70,35 @@ const categoriasComEmbalagem = ["lanches", "combos"];
 
 const isComboProduct = (produto: Produto | null) => produto?.categoria === "combos";
 
-const isStepAvailable = (produto: Produto | null, step: StepId) => {
+const isStepAvailable = (produto: Produto | null, step: StepId, skipEmbalagemDefault = false) => {
   if (!produto) return false;
   if (step === "adicionais") return Boolean(produto.adicionais?.length);
   if (step === "bebida") return isComboProduct(produto) && Boolean((produto.bebidaOptions?.length ?? 0) || defaultBebidaOptions.length);
   if (step === "remover") return Boolean(produto.ingredientesRemoviveis?.length);
   if (step === "tipo") return getTipoOptions(produto).length > 0;
   if (step === "embalagem") {
-    if (produto.embalagemOptions?.length) return true;
+    // Custom embalagem options that differ from default always show
+    if (produto.embalagemOptions?.length) {
+      const isDefault = produto.embalagemOptions.length === 2
+        && produto.embalagemOptions.includes("Consumir na mesa")
+        && produto.embalagemOptions.includes("Para viagem");
+      if (!isDefault) return true;
+    }
+    // Skip default embalagem when CartDrawer already shows para viagem toggle
+    if (skipEmbalagemDefault) return false;
     return categoriasComEmbalagem.includes(produto.categoria);
   }
   if (step === "quantidade") return true;
   return false;
 };
 
-const resolveSteps = (produto: Produto | null): StepId[] => {
+const resolveSteps = (produto: Produto | null, skipEmbalagemDefault = false): StepId[] => {
   if (!produto) return ["quantidade"];
 
-  return standardFlowOrder.filter((step) => isStepAvailable(produto, step));
+  return standardFlowOrder.filter((step) => isStepAvailable(produto, step, skipEmbalagemDefault));
 };
 
-const ProductModal = ({ produto, onClose, onAdd, isGarcomMobile = false }: Props) => {
+const ProductModal = ({ produto, onClose, onAdd, isGarcomMobile = false, skipEmbalagemDefault = false }: Props) => {
   const [pedidoAtual, setPedidoAtual] = useState<PedidoAtual>(() => createPedidoAtual());
   const [isAddLocked, setIsAddLocked] = useState(false);
   const [displayStep, setDisplayStep] = useState<StepId>("quantidade");
@@ -109,7 +118,7 @@ const ProductModal = ({ produto, onClose, onAdd, isGarcomMobile = false }: Props
     () => (produto?.embalagemOptions?.length ? produto.embalagemOptions : defaultEmbalagemOptions),
     [produto],
   );
-  const flowSteps = useMemo(() => resolveSteps(produto), [produto]);
+  const flowSteps = useMemo(() => resolveSteps(produto, skipEmbalagemDefault), [produto, skipEmbalagemDefault]);
 
   const clearAddLockTimeout = useCallback(() => {
     if (addLockTimeoutRef.current) {
@@ -142,7 +151,7 @@ const ProductModal = ({ produto, onClose, onAdd, isGarcomMobile = false }: Props
     setTransitionPhase("idle");
 
     if (produto) {
-      const resolvedSteps = resolveSteps(produto);
+      const resolvedSteps = resolveSteps(produto, skipEmbalagemDefault);
       setDisplayStep(resolvedSteps[0] ?? "quantidade");
       resetPedidoAtual(produto.id);
       return;
