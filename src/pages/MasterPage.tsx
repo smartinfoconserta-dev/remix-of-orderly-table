@@ -106,6 +106,7 @@ const MasterPage = () => {
 
   const [detailClient, setDetailClient] = useState<Cliente | null>(null);
   const [pagForm, setPagForm] = useState({ valor: 0, metodo: "pix", data: todayStr(), observacao: "" });
+  const sheetContentRef = useRef<HTMLDivElement | null>(null);
 
   const refresh = () => { setClientes(getClientes()); setDespesas(getDespesas()); };
 
