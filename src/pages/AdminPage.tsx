@@ -478,15 +478,16 @@ const AdminPage = () => {
                     <th className="px-4 py-3 text-left font-bold text-muted-foreground">Categoria</th>
                     <th className="px-4 py-3 text-right font-bold text-muted-foreground">Preço</th>
                     <th className="px-4 py-3 text-center font-bold text-muted-foreground">Ativo</th>
+                    <th className="px-4 py-3 text-center font-bold text-muted-foreground">Delivery</th>
                     <th className="px-4 py-3 text-center font-bold text-muted-foreground">Ações</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredProducts.length === 0 ? (
-                    <tr><td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">Nenhum produto encontrado.</td></tr>
+                    <tr><td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">Nenhum produto encontrado.</td></tr>
                   ) : (
                     filteredProducts.map((p, idx) => {
-                      const cat = categorias.find((c) => c.id === p.categoria);
+                      const cat = todasCategorias.find((c) => c.id === p.categoria);
                       return (
                         <tr key={p.id} className={`slide-up border-b border-border/50 last:border-0 ${!p.ativo ? "opacity-40" : ""}`} style={{ animationDelay: `${Math.min(idx * 30, 300)}ms`, animationFillMode: 'both' }}>
                           <td className="px-4 py-2">
@@ -501,6 +502,9 @@ const AdminPage = () => {
                           <td className="px-4 py-3 text-right font-bold text-foreground">{formatPrice(p.preco)}</td>
                           <td className="px-4 py-3 text-center">
                             <Switch checked={p.ativo} onCheckedChange={() => toggleAtivo(p.id)} />
+                          </td>
+                          <td className="px-4 py-3 text-center">
+                            <Switch checked={p.disponivelDelivery !== false} onCheckedChange={() => toggleDelivery(p.id)} />
                           </td>
                           <td className="px-4 py-3 text-center">
                             <div className="flex items-center justify-center gap-1">
