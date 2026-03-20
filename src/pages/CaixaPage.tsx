@@ -451,7 +451,6 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
     );
   }
 
-  if (balcaoFlowAtivo) {
   const handleDeliveryConfirm = () => {
     upsertClienteDelivery({
       nome: balcaoClienteNome.trim(),
