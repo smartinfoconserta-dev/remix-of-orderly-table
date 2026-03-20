@@ -137,7 +137,8 @@ export default function PedidoPage() {
     setEtapa("confirmacao");
   };
 
-  const totalPedido = itens.reduce((s, i) => s + i.precoUnitario * i.quantidade, 0);
+  const taxaEntrega = sysConfig.taxaEntrega ?? 0;
+  const totalPedido = itens.reduce((s, i) => s + i.precoUnitario * i.quantidade, 0) + taxaEntrega;
 
   const handleConfirmarPedido = () => {
     const cliente = upsertClienteDelivery({
@@ -342,6 +343,12 @@ export default function PedidoPage() {
                     <span>R$ {(item.precoUnitario * item.quantidade).toFixed(2)}</span>
                   </div>
                 ))}
+                {taxaEntrega > 0 && (
+                  <div className="flex justify-between text-sm text-muted-foreground">
+                    <span>Taxa de entrega</span>
+                    <span>R$ {taxaEntrega.toFixed(2)}</span>
+                  </div>
+                )}
                 <div className="border-t border-border pt-2 flex justify-between font-bold">
                   <span>Total</span>
                   <span>R$ {totalPedido.toFixed(2)}</span>

@@ -739,6 +739,18 @@ const AdminPage = () => {
                   <span className="text-sm text-muted-foreground font-mono">{sistemaConfig.corPrimaria || "#f97316"}</span>
                 </div>
               </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-muted-foreground">Taxa de entrega (R$)</label>
+                <Input
+                  type="number"
+                  min="0"
+                  step="0.5"
+                  value={sistemaConfig.taxaEntrega ?? ""}
+                  onChange={(e) => setSistemaConfig((c) => ({ ...c, taxaEntrega: e.target.value ? parseFloat(e.target.value) : undefined }))}
+                  placeholder="0.00"
+                />
+                <p className="text-xs text-muted-foreground">Valor adicionado automaticamente aos pedidos delivery</p>
+              </div>
             </div>
 
             {/* Instagram & Wi-Fi */}

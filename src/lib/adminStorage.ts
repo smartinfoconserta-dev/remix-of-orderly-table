@@ -41,6 +41,7 @@ export interface SistemaConfig {
   senhaWifi?: string;
   instagramBg?: string;
   wifiBg?: string;
+  taxaEntrega?: number;
 }
 
 export interface LicencaConfig {

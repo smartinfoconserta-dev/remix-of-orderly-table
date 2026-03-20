@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { Bike, LogOut, MapPin, Phone, DollarSign, Clock } from "lucide-react";
+import { useState } from "react";
+import { Bike, LogOut, MapPin, Phone, DollarSign, Clock, Map, Navigation } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -42,7 +42,7 @@ export default function MotoboyPage() {
   const statusConfig = (s?: string) => {
     switch (s) {
       case "pronto":
-        return { label: "PRONTO PARA ENTREGA", className: "bg-green-600 text-white animate-pulse" };
+        return { label: "PRONTO PARA RETIRAR", className: "bg-green-600 text-white animate-pulse" };
       case "saiu":
         return { label: "SAIU PARA ENTREGA", className: "bg-blue-600 text-white" };
       case "entregue":
@@ -50,6 +50,25 @@ export default function MotoboyPage() {
       default:
         return { label: "AGUARDANDO COZINHA", className: "bg-yellow-600 text-white" };
     }
+  };
+
+  const buildEnderecoCompleto = (p: typeof deliveriesAtivos[0]) =>
+    [p.enderecoCompleto, p.bairro, p.referencia].filter(Boolean).join(", ");
+
+  const handleVerRota = (p: typeof deliveriesAtivos[0]) => {
+    const addr = buildEnderecoCompleto(p);
+    if (!addr) return;
+    window.open(`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(addr)}`, "_blank");
+  };
+
+  const handleVerTodasRotas = () => {
+    const enderecos = deliveriesAtivos
+      .filter((p) => p.statusBalcao !== "entregue")
+      .map(buildEnderecoCompleto)
+      .filter(Boolean);
+    if (enderecos.length === 0) return;
+    const url = `https://www.google.com/maps/dir/${enderecos.map(encodeURIComponent).join("/")}`;
+    window.open(url, "_blank");
   };
 
   const Logo = () =>
@@ -84,8 +103,10 @@ export default function MotoboyPage() {
     );
   }
 
+  const entregasPendentes = deliveriesAtivos.filter((p) => p.statusBalcao !== "entregue");
+
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col">
+    <div className="min-h-screen bg-background text-foreground flex flex-col pb-20">
       {/* Header */}
       <div className="shrink-0 flex items-center justify-between px-4 py-3 border-b border-border">
         <div className="flex items-center gap-3">
@@ -115,18 +136,22 @@ export default function MotoboyPage() {
         ) : (
           deliveriesAtivos.map((p) => {
             const st = statusConfig(p.statusBalcao);
+            const addr = buildEnderecoCompleto(p);
             return (
-              <Card key={p.id} className={p.statusBalcao === "pronto" ? "border-green-600/50" : ""}>
+              <Card key={p.id} className={
+                p.statusBalcao === "pronto" ? "border-green-600/50" :
+                p.statusBalcao === "saiu" ? "border-blue-500/50" : ""
+              }>
                 <CardContent className="p-4 space-y-2">
                   <div className="flex items-start justify-between">
                     <p className="font-bold">{p.clienteNome || "Cliente"}</p>
                     <Badge className={st.className}>{st.label}</Badge>
                   </div>
 
-                  {(p.enderecoCompleto || p.bairro) && (
+                  {addr && (
                     <div className="flex gap-2 text-sm text-muted-foreground">
                       <MapPin className="w-4 h-4 shrink-0 mt-0.5" />
-                      <span>{[p.enderecoCompleto, p.bairro, p.referencia].filter(Boolean).join(" — ")}</span>
+                      <span>{addr}</span>
                     </div>
                   )}
 
@@ -161,15 +186,22 @@ export default function MotoboyPage() {
                     <span>{p.criadoEm}</span>
                   </div>
 
+                  {/* Ver rota */}
+                  {addr && p.statusBalcao !== "entregue" && (
+                    <Button variant="outline" size="sm" className="w-full gap-2" onClick={() => handleVerRota(p)}>
+                      <Map className="w-4 h-4" /> Ver rota no Maps
+                    </Button>
+                  )}
+
                   {/* Action buttons */}
                   <div className="pt-2 border-t border-border flex gap-2">
                     {p.statusBalcao === "pronto" && (
-                      <Button size="sm" className="flex-1 bg-blue-600 hover:bg-blue-700" onClick={() => marcarBalcaoSaiu(p.id, nome)}>
+                      <Button size="sm" className="flex-1 bg-blue-600 hover:bg-blue-700 text-white" onClick={() => marcarBalcaoSaiu(p.id, nome)}>
                         Confirmar retirada
                       </Button>
                     )}
                     {p.statusBalcao === "saiu" && (
-                      <Button size="sm" className="flex-1" onClick={() => marcarBalcaoEntregue(p.id)}>
+                      <Button size="sm" className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => marcarBalcaoEntregue(p.id)}>
                         Marcar como entregue
                       </Button>
                     )}
@@ -186,6 +218,15 @@ export default function MotoboyPage() {
           })
         )}
       </div>
+
+      {/* Floating button */}
+      {entregasPendentes.length > 0 && (
+        <div className="fixed bottom-0 left-0 right-0 p-4 bg-background/90 backdrop-blur-sm border-t border-border">
+          <Button className="w-full h-12 gap-2 font-bold" onClick={handleVerTodasRotas}>
+            <Navigation className="w-5 h-5" /> Ver todas as rotas ({entregasPendentes.length})
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

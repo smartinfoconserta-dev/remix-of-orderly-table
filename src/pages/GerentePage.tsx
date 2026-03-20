@@ -1,4 +1,5 @@
 import { useMemo, useState, useCallback } from "react";
+import { Bike } from "lucide-react";
 import {
   AlertTriangle,
   Banknote,
@@ -150,6 +151,7 @@ const GerentePage = () => {
     allFechamentos,
     allEventos,
     allMovimentacoesCaixa,
+    pedidosBalcao,
   } = useRestaurant();
   const { currentGerente, logout, verifyManagerAccess, getActiveProfilesByRole, createUser, deactivateUser } = useAuth();
   const [logFilter, setLogFilter] = useState("all");
@@ -768,7 +770,73 @@ const GerentePage = () => {
               </div>
             </div>
 
-            {/* ── Closed Bills List ── */}
+            {/* ── Entregas Delivery ── */}
+            {(() => {
+              const deliveryPedidos = pedidosBalcao.filter((p) => {
+                if (p.origem !== "delivery") return false;
+                const d = new Date(p.criadoEmIso);
+                return d >= dateRange.start && d <= dateRange.end;
+              });
+              const deliveryFech = fechFiltrados.filter((f) => f.mesaId?.startsWith("balcao-"));
+              const totalDelivery = deliveryPedidos.reduce((s, p) => s + p.total, 0) + deliveryFech.reduce((s, f) => s + f.total, 0);
+              const entregues = deliveryPedidos.filter((p) => p.statusBalcao === "entregue" || p.statusBalcao === "pago").length + deliveryFech.length;
+              const emAndamento = deliveryPedidos.filter((p) => p.statusBalcao === "saiu").length;
+              const aguardando = deliveryPedidos.filter((p) => p.statusBalcao === "aberto" || p.statusBalcao === "pronto").length;
+              const totalPedidos = deliveryPedidos.length + deliveryFech.length;
+
+              const motoboyMap = new Map<string, number>();
+              deliveryPedidos.forEach((p) => {
+                if (p.motoboyNome) motoboyMap.set(p.motoboyNome, (motoboyMap.get(p.motoboyNome) || 0) + 1);
+              });
+              const topMotoboys = [...motoboyMap.entries()]
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 5);
+
+              if (totalPedidos === 0) return null;
+
+              return (
+                <div className="space-y-3">
+                  <h2 className="text-sm font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                    <Bike className="h-4 w-4" /> Entregas Delivery
+                  </h2>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="rounded-2xl border border-border bg-card p-4">
+                      <p className="text-xs font-bold text-muted-foreground">Total pedidos</p>
+                      <p className="text-lg font-black tabular-nums text-foreground">{totalPedidos}</p>
+                    </div>
+                    <div className="rounded-2xl border border-border bg-card p-4">
+                      <p className="text-xs font-bold text-muted-foreground">Valor total</p>
+                      <p className="text-lg font-black tabular-nums text-primary">{formatPrice(totalDelivery)}</p>
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap gap-3 text-xs">
+                    <span className="rounded-full border border-border bg-card px-3 py-1.5 font-bold">
+                      ✅ Entregues: {entregues}
+                    </span>
+                    <span className="rounded-full border border-border bg-card px-3 py-1.5 font-bold">
+                      🚚 Em andamento: {emAndamento}
+                    </span>
+                    <span className="rounded-full border border-border bg-card px-3 py-1.5 font-bold">
+                      ⏳ Aguardando: {aguardando}
+                    </span>
+                  </div>
+                  {topMotoboys.length > 0 && (
+                    <div className="rounded-2xl border border-border bg-card overflow-hidden">
+                      <div className="grid grid-cols-[1fr_auto] gap-x-4 px-4 py-2.5 border-b border-border bg-secondary/50">
+                        <span className="text-xs font-black uppercase tracking-wider text-muted-foreground">Motoboy</span>
+                        <span className="text-xs font-black uppercase tracking-wider text-muted-foreground text-right">Entregas</span>
+                      </div>
+                      {topMotoboys.map(([name, count], i) => (
+                        <div key={name} className={`grid grid-cols-[1fr_auto] gap-x-4 px-4 py-3 ${i > 0 ? "border-t border-border/50" : ""}`}>
+                          <span className="text-sm font-bold text-foreground">{name}</span>
+                          <span className="text-sm font-black tabular-nums text-foreground text-right">{count}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <h2 className="text-sm font-black uppercase tracking-widest text-muted-foreground">Comandas fechadas no período</h2>
