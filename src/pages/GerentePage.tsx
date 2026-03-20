@@ -662,27 +662,32 @@ const GerentePage = () => {
 
           {/* Event list */}
           <div className="flex-1 overflow-y-auto p-4 md:px-6">
-            {filteredEvents.length === 0 ? (
+            {groupedEvents.length === 0 ? (
               <p className="text-sm text-muted-foreground py-8 text-center">Nenhum evento registrado.</p>
             ) : (
-              <div className="mx-auto max-w-2xl space-y-1.5">
-                {filteredEvents.map((evento) => (
-                  <div key={evento.id} className="flex items-start gap-3 rounded-xl border border-border bg-card px-4 py-3">
-                    <span className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${getEventDotColor(evento.acao)}`} />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-bold text-foreground leading-snug">{evento.descricao}</p>
-                      <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1">
-                        <span className="text-xs text-muted-foreground">{evento.criadoEm}</span>
-                        {evento.acao && (
-                          <span className="text-xs font-bold text-muted-foreground">
-                            {actionLabels[evento.acao] ?? evento.acao}
-                          </span>
-                        )}
-                        {evento.motivo && (
-                          <span className="text-xs text-destructive italic">Motivo: {evento.motivo}</span>
-                        )}
+              <div className="mx-auto max-w-2xl space-y-5">
+                {groupedEvents.map((group) => (
+                  <div key={group.date} className="space-y-1.5">
+                    <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground pb-1">{group.label}</h3>
+                    {group.events.map((evento) => (
+                      <div key={evento.id} className="flex items-start gap-3 rounded-xl border border-border bg-card px-4 py-3">
+                        <span className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${getEventDotColor(evento.acao)}`} />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-bold text-foreground leading-snug">{evento.descricao}</p>
+                          <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1">
+                            <span className="text-xs text-muted-foreground">{evento.criadoEm}</span>
+                            {evento.acao && (
+                              <span className="text-xs font-bold text-muted-foreground">
+                                {actionLabels[evento.acao] ?? evento.acao}
+                              </span>
+                            )}
+                            {evento.motivo && (
+                              <span className="text-xs text-destructive italic">Motivo: {evento.motivo}</span>
+                            )}
+                          </div>
+                        </div>
                       </div>
-                    </div>
+                    ))}
                   </div>
                 ))}
               </div>
