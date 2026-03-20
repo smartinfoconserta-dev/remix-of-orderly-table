@@ -137,7 +137,8 @@ export default function PedidoPage() {
     setEtapa("confirmacao");
   };
 
-  const totalPedido = itens.reduce((s, i) => s + i.precoUnitario * i.quantidade, 0);
+  const taxaEntrega = sysConfig.taxaEntrega ?? 0;
+  const totalPedido = itens.reduce((s, i) => s + i.precoUnitario * i.quantidade, 0) + taxaEntrega;
 
   const handleConfirmarPedido = () => {
     const cliente = upsertClienteDelivery({
