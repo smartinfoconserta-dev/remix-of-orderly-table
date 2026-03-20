@@ -271,7 +271,8 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
 
   /* ── active balcão orders for grid ── */
   const pedidosBalcaoAtivos = useMemo(() => pedidosBalcao.filter((p) => p.statusBalcao !== "pago"), [pedidosBalcao]);
-  const pedidosDeliveryAtivos = useMemo(() => pedidosBalcaoAtivos.filter((p) => p.origem === "delivery"), [pedidosBalcaoAtivos]);
+  const pedidosDeliveryAtivos = useMemo(() => pedidosBalcaoAtivos.filter((p) => p.origem === "delivery" && p.statusBalcao !== "aguardando_confirmacao"), [pedidosBalcaoAtivos]);
+  const pedidosAguardandoConfirmacao = useMemo(() => pedidosBalcao.filter((p) => p.origem === "delivery" && p.statusBalcao === "aguardando_confirmacao"), [pedidosBalcao]);
   const pedidosBalcaoSoAtivos = useMemo(() => pedidosBalcaoAtivos.filter((p) => p.origem === "balcao"), [pedidosBalcaoAtivos]);
 
   /* ── callbacks ── */
