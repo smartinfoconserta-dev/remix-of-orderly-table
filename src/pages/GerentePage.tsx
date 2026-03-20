@@ -711,7 +711,7 @@ const GerentePage = () => {
         </TabsContent>
 
         {/* ═══ TAB 4: Equipe ═══ */}
-        <TabsContent value="equipe" className="flex-1 overflow-y-auto mt-0">
+        <TabsContent value="equipe" className="flex-1 overflow-y-auto p-4 md:p-6 mt-0">
           {!pinVerificado ? pinGateUI : (
           <div className="mx-auto max-w-2xl space-y-6 p-4 md:p-6">
             <div>
