@@ -970,6 +970,61 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       fechamentos: [],
       caixaAberto: false,
       fundoTroco: 0,
+      pedidosBalcao: [],
+    }));
+  }, []);
+
+  const criarPedidoBalcao = useCallback((input: CriarPedidoBalcaoInput) => {
+    setStore((prev) => {
+      const now = new Date();
+      const totalPedido = calcularTotalItens(input.itens);
+      const label = input.origem === "delivery" ? `DELIVERY — ${input.clienteNome ?? ""}` : "BALCÃO";
+      const novoPedido: PedidoRealizado = {
+        id: `pedido-balcao-${now.getTime()}-${Math.random().toString(36).slice(2, 7)}`,
+        numeroPedido: prev.pedidosBalcao.length + 1,
+        itens: input.itens.map(cloneItem),
+        total: totalPedido,
+        criadoEm: formatClock(now),
+        criadoEmIso: now.toISOString(),
+        origem: input.origem,
+        mesaId: `balcao-${now.getTime()}`,
+        caixaId: input.operador.id,
+        caixaNome: input.operador.nome,
+        clienteNome: input.clienteNome,
+        clienteTelefone: input.clienteTelefone,
+        enderecoCompleto: input.enderecoCompleto,
+        bairro: input.bairro,
+        referencia: input.referencia,
+        formaPagamentoDelivery: input.formaPagamentoDelivery,
+        trocoParaQuanto: input.trocoParaQuanto,
+        observacaoGeral: input.observacaoGeral,
+      };
+      return {
+        ...prev,
+        pedidosBalcao: [...prev.pedidosBalcao, novoPedido],
+        eventos: appendEvent(prev.eventos, {
+          tipo: "caixa",
+          descricao: `Caixa ${input.operador.nome} criou pedido ${label}`,
+          usuarioId: input.operador.id,
+          usuarioNome: input.operador.nome,
+          acao: "lancar_pedido",
+          valor: totalPedido,
+        }),
+      };
+    });
+  }, []);
+
+  const marcarPedidoBalcaoPronto = useCallback((pedidoId: string) => {
+    setStore((prev) => ({
+      ...prev,
+      pedidosBalcao: prev.pedidosBalcao.map((p) =>
+        p.id === pedidoId ? { ...p, pronto: true } : p,
+      ),
+      eventos: appendEvent(prev.eventos, {
+        tipo: "pedido",
+        descricao: `Pedido balcão/delivery marcado como pronto`,
+        acao: "pedido_pronto",
+      }),
     }));
   }, []);
 
@@ -980,6 +1035,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         eventos: store.eventos,
         movimentacoesCaixa: store.movimentacoesCaixa,
         fechamentos: store.fechamentos,
+        pedidosBalcao: store.pedidosBalcao,
         caixaAberto: store.caixaAberto,
         fundoTroco: store.fundoTroco,
         allFechamentos,
@@ -1001,6 +1057,8 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         registrarMovimentacaoCaixa,
         abrirCaixa,
         fecharCaixaDoDia,
+        criarPedidoBalcao,
+        marcarPedidoBalcaoPronto,
       }}
     >
       {children}
