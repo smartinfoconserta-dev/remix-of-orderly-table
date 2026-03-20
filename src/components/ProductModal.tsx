@@ -92,10 +92,10 @@ const isStepAvailable = (produto: Produto | null, step: StepId, skipEmbalagemDef
   return false;
 };
 
-const resolveSteps = (produto: Produto | null): StepId[] => {
+const resolveSteps = (produto: Produto | null, skipEmbalagemDefault = false): StepId[] => {
   if (!produto) return ["quantidade"];
 
-  return standardFlowOrder.filter((step) => isStepAvailable(produto, step));
+  return standardFlowOrder.filter((step) => isStepAvailable(produto, step, skipEmbalagemDefault));
 };
 
 const ProductModal = ({ produto, onClose, onAdd, isGarcomMobile = false }: Props) => {
