@@ -462,6 +462,7 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
       confirmarPedido(mesaId, {
         modo,
         operador,
+        paraViagem,
       });
       return true;
     } finally {
