@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { BriefcaseBusiness, ChefHat, HandPlatter, Settings, User, Wallet } from "lucide-react";
+import { Bike, BriefcaseBusiness, ChefHat, HandPlatter, Settings, User, Wallet } from "lucide-react";
 
 interface ModeCardProps {
   title: string;
