@@ -1066,7 +1066,9 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                                     const tel = (pb.clienteTelefone || "").replace(/\D/g, "");
                                     if (tel) {
                                       const itensStr = pb.itens.map((it) => `${it.quantidade}x ${it.nome}`).join(", ");
-                                      const msg = `✅ Pedido %23${pb.numeroPedido} confirmado! Itens: ${itensStr}. Total: ${formatPrice(pb.total)}. Previsão: 40-60 min.`;
+                                      const nomeRest = sistemaConfig.nomeRestaurante || "Restaurante";
+                                      const tempo = sistemaConfig.tempoEntrega || "40-60 min";
+                                      const msg = `✅ Pedido %23${pb.numeroPedido} confirmado! — ${nomeRest}\n\n${itensStr}\n\nTotal: ${formatPrice(pb.total)}\nPrevisão: ${tempo}\n\nObrigado! 🍔`;
                                       window.open(`https://wa.me/55${tel}?text=${encodeURIComponent(msg)}`, "_blank");
                                     }
                                   }}
