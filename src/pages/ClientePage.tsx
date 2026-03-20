@@ -17,7 +17,6 @@ import {
   clearBoundTabletMesaId,
   clearTabletLoginUser,
 } from "@/lib/tabletBinding";
-import type { UserRole } from "@/types/operations";
 import { toast } from "sonner";
 
 const ClientePage = () => {
