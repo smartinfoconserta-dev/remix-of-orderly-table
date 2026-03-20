@@ -331,7 +331,7 @@ const GerentePage = () => {
   );
 
   return (
-    <div className="h-svh flex flex-col bg-background overflow-hidden">
+    <div className="flex flex-col h-screen bg-background">
       {/* Header */}
       <header className="flex items-center gap-3 border-b border-border bg-card px-4 py-3 shrink-0 md:px-6">
         <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/15 text-primary">
@@ -348,8 +348,8 @@ const GerentePage = () => {
       </header>
 
       {/* Tabs */}
-      <Tabs defaultValue="fechamento" className="flex-1 flex flex-col overflow-hidden">
-        <div className="border-b border-border bg-card/80 px-4 md:px-6">
+      <Tabs defaultValue="fechamento" className="flex flex-col flex-1 min-h-0 overflow-hidden">
+        <div className="shrink-0 border-b border-border bg-card/80 px-4 md:px-6">
           <TabsList className="bg-transparent h-auto p-0 gap-1">
             <TabsTrigger value="fechamento" className="rounded-xl data-[state=active]:bg-primary/15 data-[state=active]:text-primary font-bold text-xs px-3 py-2 gap-1.5">
               <LockKeyhole className="h-3.5 w-3.5" />
@@ -455,9 +455,9 @@ const GerentePage = () => {
         </TabsContent>
 
         {/* ═══ TAB 2: Relatórios ═══ */}
-        <TabsContent value="relatorio" className="flex-1 overflow-y-auto mt-0">
+        <TabsContent value="relatorio" className="flex-1 overflow-y-auto p-4 md:p-6 mt-0">
           {!pinVerificado ? pinGateUI : (
-          <div className="mx-auto max-w-2xl space-y-6 p-4 md:p-6">
+          <div className="mx-auto max-w-2xl space-y-6">
 
             {/* ── Period Filter ── */}
             <div className="space-y-3">
@@ -653,9 +653,9 @@ const GerentePage = () => {
         </TabsContent>
 
         {/* ═══ TAB 3: Logs de Auditoria ═══ */}
-        <TabsContent value="logs" className="flex-1 flex flex-col overflow-hidden mt-0">
+        <TabsContent value="logs" className="flex-1 overflow-y-auto p-4 md:p-6 mt-0">
           {/* Filter bar */}
-          <div className="border-b border-border bg-card/50 px-4 py-3 md:px-6 flex items-center gap-3">
+          <div className="border-b border-border bg-card/50 px-0 py-3 flex items-center gap-3">
             <Filter className="h-4 w-4 text-muted-foreground shrink-0" />
             <Select value={logFilter} onValueChange={setLogFilter}>
               <SelectTrigger className="w-[200px] h-8 rounded-lg text-xs font-bold">
@@ -676,7 +676,7 @@ const GerentePage = () => {
           </div>
 
           {/* Event list */}
-          <div className="flex-1 overflow-y-auto p-4 md:px-6">
+          <div className="pt-4">
             {groupedEvents.length === 0 ? (
               <p className="text-sm text-muted-foreground py-8 text-center">Nenhum evento registrado.</p>
             ) : (
@@ -711,9 +711,9 @@ const GerentePage = () => {
         </TabsContent>
 
         {/* ═══ TAB 4: Equipe ═══ */}
-        <TabsContent value="equipe" className="flex-1 overflow-y-auto mt-0">
+        <TabsContent value="equipe" className="flex-1 overflow-y-auto p-4 md:p-6 mt-0">
           {!pinVerificado ? pinGateUI : (
-          <div className="mx-auto max-w-2xl space-y-6 p-4 md:p-6">
+          <div className="mx-auto max-w-2xl space-y-6">
             <div>
               <h2 className="text-lg font-black text-foreground">Gerenciar equipe</h2>
               <p className="text-sm text-muted-foreground">Crie garçons e caixas, ou desative funcionários</p>
