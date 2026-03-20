@@ -54,6 +54,7 @@ import type { PaymentMethod, SplitPayment, UserRole } from "@/types/operations";
 import { getSistemaConfig, getCardapioOverrides } from "@/lib/adminStorage";
 import { produtos as menuProdutos, categorias as menuCategorias } from "@/data/menuData";
 import type { ItemCarrinho } from "@/contexts/RestaurantContext";
+import { findClienteDelivery, upsertClienteDelivery, type ClienteDelivery } from "@/lib/deliveryStorage";
 
 /* ── helpers ── */
 const formatPrice = (v: number) => `R$ ${v.toFixed(2).replace(".", ",")}`;
