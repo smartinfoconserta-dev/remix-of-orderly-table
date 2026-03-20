@@ -138,7 +138,21 @@ const MasterPage = () => {
   const handleRemove = () => { if (removeId) { removeCliente(removeId); toast.success("Cliente removido."); setRemoveId(null); refresh(); } };
   const toggleAtivo = (c: Cliente) => { updateCliente(c.id, { ativo: !c.ativo }); refresh(); };
   const isVencido = (d: string) => d && new Date(d) < new Date(todayStr());
-  const ff = (key: string, value: any) => setForm((prev) => ({ ...prev, [key]: value }));
+  const ff = (key: string, value: any) => {
+    setForm((prev) => {
+      const next = { ...prev, [key]: value };
+      if (key === "plano" || key === "dataInicio") {
+        const plano = key === "plano" ? value : prev.plano;
+        const dataInicio = key === "dataInicio" ? value : prev.dataInicio;
+        if (plano && dataInicio) {
+          const dt = calcDataTermino(plano, dataInicio);
+          next.dataTermino = dt;
+          next.dataVencimento = dt;
+        }
+      }
+      return next;
+    });
+  };
 
   const openDetail = (c: Cliente) => {
     setDetailClient(c);
