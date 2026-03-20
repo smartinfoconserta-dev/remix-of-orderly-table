@@ -2099,7 +2099,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
               {deliveryPendingItens.map((it, idx) => (
                 <div key={idx} className="flex justify-between text-sm">
                   <span className="text-foreground">{it.quantidade}× {it.nome}</span>
-                  <span className="font-bold tabular-nums text-foreground">{formatPrice(it.precoTotal * it.quantidade)}</span>
+                  <span className="font-bold tabular-nums text-foreground">{formatPrice(it.precoUnitario * it.quantidade)}</span>
                 </div>
               ))}
               <div className="border-t border-border pt-2 flex justify-between">
