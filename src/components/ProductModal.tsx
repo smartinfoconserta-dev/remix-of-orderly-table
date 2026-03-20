@@ -546,7 +546,7 @@ const ProductModal = ({ produto, onClose, onAdd, isGarcomMobile = false }: Props
           Personalize o item, adicione ao carrinho e volte ao fluxo de pedido sem perder o contexto da mesa.
         </DialogDescription>
         {produto && (
-          <div className={`flex flex-col overflow-hidden ${isGarcomMobile ? "max-h-[90dvh]" : "max-h-[94vh] max-md:max-h-[100dvh]"}`}>
+          <div className={`flex flex-col overflow-hidden ${isGarcomMobile ? "h-[100dvh]" : "max-h-[94vh] max-md:max-h-[100dvh]"}`}>
             {isGarcomMobile ? (
               <>
                 <div className="sticky top-0 z-20 border-b border-border bg-card/95 px-4 pb-3 pt-4 backdrop-blur-md">
