@@ -39,7 +39,8 @@ export interface PedidoRealizado {
   formaPagamentoDelivery?: string;
   trocoParaQuanto?: number;
   observacaoGeral?: string;
-  statusBalcao?: "aberto" | "pronto" | "pago";
+  statusBalcao?: "aberto" | "pronto" | "pago" | "saiu" | "entregue";
+  motoboyNome?: string;
 }
 
 export interface EventoOperacional {
