@@ -232,6 +232,9 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
   const mesa = mesaSelecionada ? mesas.find((item) => item.id === mesaSelecionada) ?? null : null;
   const balcaoPedido = balcaoPedidoSelecionado ? pedidosBalcao.find((p) => p.id === balcaoPedidoSelecionado) ?? null : null;
   const currentOperator = accessMode === "gerente" ? currentGerente : currentCaixa;
+  const hasCaixaAccess = accessMode === "gerente"
+    ? currentGerente?.role === "gerente" || currentGerente?.id === "seed-admin-001"
+    : currentCaixa?.role === "caixa" || currentCaixa?.role === "gerente" || currentCaixa?.id === "seed-admin-001";
 
   useRouteLock(accessMode === "gerente" ? "/gerente" : "/caixa");
 
@@ -411,7 +414,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
   }, []);
 
   /* ── auth guard ── */
-  if (!currentOperator) {
+  if (!currentOperator || !hasCaixaAccess) {
     return (
       <div className="min-h-svh flex flex-col bg-background">
         <header className="flex items-center gap-3 border-b border-border bg-card px-4 py-4 shrink-0 md:px-6">
