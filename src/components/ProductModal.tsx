@@ -568,7 +568,7 @@ const ProductModal = ({ produto, onClose, onAdd, isGarcomMobile = false }: Props
                 </div>
 
                 <section className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-4 pt-3">
-                  <div className="mb-4 flex gap-2 overflow-x-auto pb-1">
+                  <div className="mb-4 flex gap-2 overflow-x-auto pb-1 scrollbar-hide" style={{ WebkitOverflowScrolling: 'touch', msOverflowStyle: 'none', scrollbarWidth: 'none' }}>
                     {flowSteps.map((step, index) => {
                       const selected = activeStep === step;
                       const completed = index < activeStepIndex;
