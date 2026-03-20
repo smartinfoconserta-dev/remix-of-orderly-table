@@ -243,6 +243,33 @@ const AdminPage = () => {
     toast.success("Licença salva");
   }, [licencaConfig]);
 
+  // --- Usuários (gerentes) state ---
+  const gerentes = useMemo(() => getProfilesByRole("gerente"), [getProfilesByRole]);
+  const [newGerenteName, setNewGerenteName] = useState("");
+  const [newGerentePin, setNewGerentePin] = useState("");
+  const [userError, setUserError] = useState<string | null>(null);
+
+  const handleCreateGerente = () => {
+    setUserError(null);
+    const result = createUser("gerente", newGerenteName, newGerentePin);
+    if (!result.ok) {
+      setUserError(result.error ?? "Erro ao criar gerente");
+      return;
+    }
+    toast.success(`Gerente "${result.user?.nome}" criado com sucesso`);
+    setNewGerenteName("");
+    setNewGerentePin("");
+  };
+
+  const handleRemoveGerente = (id: string, nome: string) => {
+    const result = removeUser(id);
+    if (!result.ok) {
+      toast.error(result.error ?? "Erro ao remover");
+      return;
+    }
+    toast.success(`Gerente "${nome}" removido`);
+  };
+
   // --- Auth gate ---
   const handleAuth = async () => {
     if (!authName.trim()) { setAuthError("Informe o nome do gerente"); return; }
