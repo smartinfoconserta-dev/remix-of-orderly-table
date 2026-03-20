@@ -16,7 +16,7 @@ const accessSchema = z.object({
   pin: z.string().regex(/^\d{4,6}$/, "Use um PIN de 4 a 6 dígitos"),
 });
 
-const roleCopy: Record<UserRole, { title: string; description: string; submit: string; icon: typeof HandPlatter }> = {
+const roleCopy: Record<string, { title: string; description: string; submit: string; icon: typeof HandPlatter }> = {
   garcom: {
     title: "Acesso do Garçom",
     description: "Identifique-se para registrar pedidos.",
@@ -34,12 +34,6 @@ const roleCopy: Record<UserRole, { title: string; description: string; submit: s
     description: "Acesso para relatórios e ações críticas.",
     submit: "Validar gerente",
     icon: BriefcaseBusiness,
-  },
-  admin: {
-    title: "Acesso Administrativo",
-    description: "Acesso restrito ao administrador do sistema.",
-    submit: "Entrar como admin",
-    icon: Shield,
   },
 };
 
@@ -76,7 +70,7 @@ const OperationalAccessCard = ({ role }: OperationalAccessCardProps) => {
     setPin("");
     toast.success(`${result.user?.nome ?? "Usuário"} identificado com sucesso`, {
       duration: 1200,
-      icon: role === "garcom" ? "🍽️" : role === "gerente" ? "🛡️" : role === "admin" ? "🔒" : "💰",
+      icon: role === "garcom" ? "🍽️" : role === "gerente" ? "🛡️" : "💰",
     });
     setIsSubmitting(false);
   };

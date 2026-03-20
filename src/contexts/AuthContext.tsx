@@ -53,7 +53,7 @@ const loginSchema = z.object({
 
 const seedAdmin: StoredUser = {
   id: "seed-admin-001",
-  role: "admin" as UserRole,
+  role: "gerente",
   nome: "admin",
   pinHash: btoa("pin:1234").split("").reverse().join(""),
   ativo: true,
@@ -92,9 +92,11 @@ const readAuthState = (): AuthState => {
 
     const parsed = JSON.parse(raw) as Partial<AuthState>;
     let users = ensureAtivoField(Array.isArray(parsed.users) ? parsed.users : []);
+    // Migrate any invalid "admin" role to "gerente"
+    users = users.map((u) => (u.role as string) === "admin" ? { ...u, role: "gerente" as UserRole } : u);
     // Ensure seed admin always exists
     const hasSeedAdmin = users.some(
-      (u) => (u.role === "admin" || u.role === "gerente") && u.nome.toLocaleLowerCase("pt-BR") === "admin",
+      (u) => u.role === "gerente" && u.nome.toLocaleLowerCase("pt-BR") === "admin",
     );
     if (!hasSeedAdmin) {
       users = [seedAdmin, ...users];
@@ -102,17 +104,9 @@ const readAuthState = (): AuthState => {
       window.localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(patched));
       return patched;
     }
-    // Migrate existing seed admin from gerente to admin role
-    const existingSeed = users.find(
-      (u) => u.id === "seed-admin-001" && u.role === "gerente"
-    );
-    if (existingSeed) {
-      existingSeed.role = "admin";
-      const patched = { users, sessions: parsed.sessions ?? {} };
-      window.localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(patched));
-      return patched;
-    }
-    return { users, sessions: parsed.sessions ?? {} };
+    const patched = { users, sessions: parsed.sessions ?? {} };
+    window.localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(patched));
+    return patched;
   } catch {
     return emptyState;
   }
@@ -289,7 +283,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const nomeNormalizado = parsed.data.nome.trim();
     const user = state.users.find(
-      (u) => (u.role === "gerente" || u.role === "admin") && u.nome.toLocaleLowerCase("pt-BR") === nomeNormalizado.toLocaleLowerCase("pt-BR"),
+      (u) => u.role === "gerente" && u.nome.toLocaleLowerCase("pt-BR") === nomeNormalizado.toLocaleLowerCase("pt-BR"),
     );
 
     if (!user) {
