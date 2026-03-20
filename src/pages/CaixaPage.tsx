@@ -609,7 +609,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => { setTurnoModalOpen(true); setTurnoManagerName(accessMode === "gerente" ? currentOperator.nome : ""); setTurnoManagerPin(""); setTurnoError(null); }}
+                  onClick={() => setTurnoReportOpen(true)}
                   className="rounded-xl font-bold gap-1.5 text-xs border-destructive/30 text-destructive hover:bg-destructive/10"
                 >
                   <LockKeyhole className="h-3.5 w-3.5" />
