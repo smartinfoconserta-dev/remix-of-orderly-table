@@ -772,9 +772,45 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
           </div>
         )}
 
+        {/* ── BALCÃO DETAIL header ── */}
+        {!mesa && balcaoPedido && (
+          <div className="view-fade-in contents">
+            <header className="flex items-center gap-3 border-b border-border bg-card px-4 py-3 shrink-0 md:px-6">
+              <button onClick={handleVoltar} className="flex h-9 w-9 items-center justify-center rounded-xl border border-border bg-secondary text-foreground transition-colors hover:bg-secondary/80">
+                <ArrowLeft className="h-4 w-4" />
+              </button>
+              <h1 className="text-lg font-black tracking-tight text-foreground truncate flex-1">
+                {balcaoPedido.origem === "delivery" ? "DELIVERY" : "BALCÃO"} — {balcaoPedido.clienteNome || "Sem nome"}
+              </h1>
+              <Button variant="outline" onClick={() => logout(accessMode)} className="gap-2 rounded-xl font-bold h-9 px-3 text-sm">
+                <LogOut className="h-4 w-4" />
+                <span className="hidden sm:inline">Sair</span>
+              </Button>
+            </header>
+            <div className="border-b border-border bg-card/80 backdrop-blur-sm px-4 py-3 md:px-6">
+              <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-x-5 gap-y-2">
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl font-black tabular-nums text-foreground">{formatPrice(balcaoPedido.total)}</span>
+                  <span className={`rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-widest ${
+                    balcaoPedido.statusBalcao === "pronto"
+                      ? "border-status-consumo/25 bg-status-consumo/10 text-status-consumo animate-pulse"
+                      : "border-amber-500/25 bg-amber-500/10 text-amber-400"
+                  }`}>
+                    {balcaoPedido.statusBalcao === "pronto" ? "Pronto" : "Aberto"}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <User className="h-3.5 w-3.5" />
+                  <span>{currentOperator.nome}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* ── MAIN CONTENT ── */}
         <main className="flex-1 overflow-hidden">
-          {!mesa ? (
+          {!mesa && !balcaoPedido ? (
             /* ─────────────── MAIN VIEW — PROFESSIONAL DESKTOP ─────────────── */
             <div className="flex flex-col h-full view-fade-in">
 
