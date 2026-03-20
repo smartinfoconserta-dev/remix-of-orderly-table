@@ -807,8 +807,7 @@ const PedidoFlow = ({ modo, mesaId, garcomNome, onBack }: PedidoFlowProps) => {
       {heroBanner}
       <div className="px-4 md:px-6 space-y-6">
         {/* Dynamic QR info cards */}
-        {qrInfoCards.length > 0 && (
-          <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid gap-4 md:grid-cols-2">
             {qrInfoCards.map((card) => {
               const Icon = card.icon;
               return (
