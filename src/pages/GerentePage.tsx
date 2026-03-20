@@ -362,6 +362,10 @@ const GerentePage = () => {
               <ScrollText className="h-3.5 w-3.5" />
               Logs
             </TabsTrigger>
+            <TabsTrigger value="equipe" className="rounded-xl data-[state=active]:bg-primary/15 data-[state=active]:text-primary font-bold text-xs px-3 py-2 gap-1.5">
+              <Users className="h-3.5 w-3.5" />
+              Equipe
+            </TabsTrigger>
           </TabsList>
         </div>
 
