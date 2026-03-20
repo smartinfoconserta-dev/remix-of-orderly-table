@@ -170,9 +170,10 @@ const MasterPage = () => {
         </div>
 
         <Tabs defaultValue="clientes" className="w-full">
-          <TabsList className="w-full grid grid-cols-2">
+          <TabsList className="w-full grid grid-cols-3">
             <TabsTrigger value="clientes"><Users className="w-4 h-4 mr-1" />Clientes</TabsTrigger>
             <TabsTrigger value="financeiro"><DollarSign className="w-4 h-4 mr-1" />Financeiro</TabsTrigger>
+            <TabsTrigger value="cobrancas"><AlertTriangle className="w-4 h-4 mr-1" />Cobranças</TabsTrigger>
           </TabsList>
 
           {/* ========== ABA CLIENTES ========== */}
