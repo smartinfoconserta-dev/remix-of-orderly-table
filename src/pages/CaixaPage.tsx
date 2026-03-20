@@ -240,6 +240,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
   }, [balcaoItens]);
 
   const mesa = mesaSelecionada ? mesas.find((item) => item.id === mesaSelecionada) ?? null : null;
+  const balcaoPedido = balcaoPedidoSelecionado ? pedidosBalcao.find((p) => p.id === balcaoPedidoSelecionado) ?? null : null;
   const currentOperator = accessMode === "gerente" ? currentGerente : currentCaixa;
 
   useRouteLock(accessMode === "gerente" ? "/gerente" : "/caixa");
