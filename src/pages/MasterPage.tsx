@@ -187,6 +187,61 @@ const MasterPage = () => {
   const receitaPrevista = clientes.filter((c) => c.ativo).reduce((s, c) => s + (c.valorMensalidade || 0), 0);
   const clientesAtivos = clientes.filter((c) => c.ativo).length;
 
+  // Filtered clients
+  const filteredClientes = useMemo(() => {
+    const hoje = new Date(todayStr());
+    return clientes.filter((c) => {
+      // Search
+      if (busca) {
+        const q = busca.toLowerCase();
+        if (!(c.nomeRestaurante.toLowerCase().includes(q) || (c.cidade || "").toLowerCase().includes(q) || c.nomeContato.toLowerCase().includes(q))) return false;
+      }
+      // Status
+      if (filtroStatus === "ativos" && !c.ativo) return false;
+      if (filtroStatus === "bloqueados" && c.ativo) return false;
+      if (filtroStatus === "vencidos" && !(c.dataVencimento && new Date(c.dataVencimento) < hoje)) return false;
+      // Plano
+      if (filtroPlano !== "todos" && c.plano !== filtroPlano) return false;
+      return true;
+    });
+  }, [clientes, busca, filtroStatus, filtroPlano]);
+
+  // Alert: clients expiring in 3 days or already expired
+  const clientesCriticos = useMemo(() => {
+    const hoje = new Date(todayStr());
+    const em3dias = new Date(hoje);
+    em3dias.setDate(em3dias.getDate() + 3);
+    return clientes.filter((c) => c.dataVencimento && new Date(c.dataVencimento) <= em3dias);
+  }, [clientes]);
+
+  // Vencimento helpers for cards
+  const getVencAlert = (c: { dataVencimento: string }) => {
+    if (!c.dataVencimento) return null;
+    const hoje = new Date(todayStr());
+    const d = new Date(c.dataVencimento);
+    if (d < hoje) return "vencido";
+    const em7 = new Date(hoje);
+    em7.setDate(em7.getDate() + 7);
+    if (d <= em7) return "vence_breve";
+    return null;
+  };
+
+  // Chart data: last 6 months
+  const chartData = useMemo(() => {
+    const meses: { label: string; key: string; receita: number; despesa: number }[] = [];
+    const hoje = new Date();
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(hoje.getFullYear(), hoje.getMonth() - i, 1);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      const label = d.toLocaleString("pt-BR", { month: "short" }).replace(".", "");
+      const receita = clientes.filter((c) => c.ativo).reduce((s, c) => s + (c.valorMensalidade || 0), 0);
+      const despesa = despesas.filter((dp) => dp.data.startsWith(key)).reduce((s, dp) => s + dp.valor, 0);
+      meses.push({ label, key, receita, despesa });
+    }
+    return meses;
+  }, [clientes, despesas]);
+  const chartMax = Math.max(...chartData.flatMap((m) => [m.receita, m.despesa]), 1);
+
   const handleRegistrarDespesa = () => {
     if (!novaDespesa.descricao.trim()) { toast.error("Preencha a descrição."); return; }
     if (!novaDespesa.valor || novaDespesa.valor <= 0) { toast.error("Informe um valor válido."); return; }
