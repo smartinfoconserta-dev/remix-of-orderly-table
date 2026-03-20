@@ -7,7 +7,7 @@ import { Progress } from "@/components/ui/progress";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { getSistemaConfig } from "@/lib/adminStorage";
-import { findClienteDelivery, upsertClienteDelivery, type ClienteDelivery } from "@/lib/deliveryStorage";
+import { findClienteDelivery, upsertClienteDelivery, getBairros, type ClienteDelivery, type Bairro } from "@/lib/deliveryStorage";
 import { useRestaurant, type ItemCarrinho } from "@/contexts/RestaurantContext";
 import PedidoFlow from "@/components/PedidoFlow";
 import { toast } from "sonner";
