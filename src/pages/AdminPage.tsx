@@ -391,6 +391,45 @@ const AdminPage = () => {
               </Button>
             </div>
 
+            {/* ── Category management ── */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-black text-foreground">Categorias</h3>
+                <Button size="sm" variant="outline" className="rounded-xl font-bold gap-1 text-xs" onClick={() => { setCatEditando(null); setCatNomeInput(""); setCatDialogOpen(true); }}>
+                  <Plus className="h-3.5 w-3.5" /> Nova categoria
+                </Button>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {todasCategorias.map((c) => {
+                  const count = allProducts.filter((p) => p.categoria === c.id).length;
+                  return (
+                    <div key={c.id} className="flex items-center gap-1.5 rounded-xl border border-border bg-card px-3 py-1.5">
+                      <span className="text-xs font-bold text-foreground">{c.nome}</span>
+                      <span className="text-[10px] text-muted-foreground">({count})</span>
+                      {c._isDefault ? (
+                        <span className="rounded-md bg-secondary px-1.5 py-0.5 text-[9px] font-bold text-muted-foreground">Padrão</span>
+                      ) : (
+                        <>
+                          <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => { setCatEditando(c); setCatNomeInput(c.nome); setCatDialogOpen(true); }}>
+                            <Pencil className="h-3 w-3" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-5 w-5 text-destructive hover:bg-destructive/10" onClick={() => {
+                            if (count > 0) { toast.error("Remova os produtos desta categoria primeiro"); return; }
+                            const next = categoriasCustom.filter((cc) => cc.id !== c.id);
+                            saveCategoriasCustom(next);
+                            setCategoriasCustom(next);
+                            toast.success("Categoria removida");
+                          }}>
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
             {/* Category filter bar */}
             <div className="flex flex-wrap gap-2">
               <button
@@ -407,7 +446,7 @@ const AdminPage = () => {
               >
                 Todas ({allProducts.length})
               </button>
-              {categorias.map((c) => {
+              {todasCategorias.map((c) => {
                 const count = allProducts.filter((p) => p.categoria === c.id).length;
                 return (
                   <button
