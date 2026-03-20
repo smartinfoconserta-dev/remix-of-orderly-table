@@ -420,9 +420,14 @@ const AdminPage = () => {
     <div className="flex min-h-screen bg-background">
       {/* Sidebar */}
       <aside className="flex w-[220px] shrink-0 flex-col border-r border-border bg-card">
-        <div className="border-b border-border px-5 py-5">
-          <h1 className="text-lg font-black text-foreground">Admin</h1>
-          <p className="text-xs text-muted-foreground">Painel de controle</p>
+        <div className="flex items-center justify-between border-b border-border px-5 py-5">
+          <div>
+            <h1 className="text-lg font-black text-foreground">Admin</h1>
+            <p className="text-xs text-muted-foreground">Painel de controle</p>
+          </div>
+          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => { setAuthenticated(false); setAuthName(""); setAuthPin(""); setAuthError(null); }} title="Sair">
+            <LogOut className="h-4 w-4" />
+          </Button>
         </div>
         <nav className="flex-1 space-y-1 p-3">
           {sidebarSections.map((s) => {
