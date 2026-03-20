@@ -33,6 +33,69 @@ const etapaLabel: Record<Etapa, string> = {
   sucesso: "Pedido enviado",
 };
 
+function ConfirmacaoEtapa({ nome, endereco, numero, complemento, bairro, itens, taxaEntrega, totalPedido, formaPag, setFormaPag, troco, setTroco, onVoltar, onConfirmar }: {
+  nome: string; endereco: string; numero: string; complemento: string; bairro: string;
+  itens: ItemCarrinho[]; taxaEntrega: number; totalPedido: number;
+  formaPag: string; setFormaPag: (v: string) => void;
+  troco: string; setTroco: (v: string) => void;
+  onVoltar: () => void; onConfirmar: () => void;
+}) {
+  const [confirmado, setConfirmado] = useState(false);
+  return (
+    <div className="max-w-md mx-auto space-y-6 pt-4">
+      <Button variant="ghost" size="sm" onClick={onVoltar} className="gap-1">
+        <ArrowLeft className="w-4 h-4" /> Voltar ao cardápio
+      </Button>
+      <h2 className="text-lg font-bold">Confirme seu pedido</h2>
+      <Card><CardContent className="p-4 space-y-1">
+        <p className="font-semibold">{nome}</p>
+        <p className="text-sm text-muted-foreground">{endereco}, {numero}{complemento ? ` - ${complemento}` : ""} — {bairro}</p>
+      </CardContent></Card>
+      <Card><CardContent className="p-4 space-y-2">
+        <h3 className="font-semibold text-sm">Itens</h3>
+        {itens.map((item) => (
+          <div key={item.uid} className="flex justify-between text-sm">
+            <span>{item.quantidade}x {item.nome}</span>
+            <span>R$ {(item.precoUnitario * item.quantidade).toFixed(2)}</span>
+          </div>
+        ))}
+        {taxaEntrega > 0 && (
+          <div className="flex justify-between text-sm text-muted-foreground">
+            <span>Taxa de entrega</span>
+            <span>R$ {taxaEntrega.toFixed(2)}</span>
+          </div>
+        )}
+        <div className="border-t border-border pt-2 flex justify-between font-bold">
+          <span>Total</span>
+          <span>R$ {totalPedido.toFixed(2)}</span>
+        </div>
+      </CardContent></Card>
+      <div className="space-y-2">
+        <label className="text-sm font-medium">Forma de pagamento</label>
+        <Select value={formaPag} onValueChange={setFormaPag}>
+          <SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectContent container={document.body}>
+            <SelectItem value="pix">PIX</SelectItem>
+            <SelectItem value="dinheiro">Dinheiro</SelectItem>
+            <SelectItem value="credito">Crédito</SelectItem>
+            <SelectItem value="debito">Débito</SelectItem>
+          </SelectContent>
+        </Select>
+        {formaPag === "dinheiro" && (
+          <Input placeholder="Troco para quanto? (opcional)" value={troco} onChange={(e) => setTroco(e.target.value)} type="text" inputMode="decimal" />
+        )}
+      </div>
+      <div className="flex items-center gap-2">
+        <Checkbox id="confirmo" checked={confirmado} onCheckedChange={(v) => setConfirmado(v === true)} />
+        <label htmlFor="confirmo" className="text-sm cursor-pointer">Confirmo que as informações estão corretas</label>
+      </div>
+      <Button className="w-full" size="lg" onClick={onConfirmar} disabled={!confirmado}>
+        Confirmar pedido
+      </Button>
+    </div>
+  );
+}
+
 export default function PedidoPage() {
   const { criarPedidoBalcao } = useRestaurant();
 
