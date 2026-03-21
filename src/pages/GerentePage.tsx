@@ -1127,17 +1127,8 @@ const GerentePage = () => {
 
             {/* ── Motoboys ── */}
             {(() => {
-              const MOTOBOY_KEY = "obsidian-motoboys-v1";
-              const getMotoboys = (): { id: string; nome: string; pinHash: string; ativo: boolean }[] => {
-                try { const raw = localStorage.getItem(MOTOBOY_KEY); return raw ? JSON.parse(raw) : []; } catch { return []; }
-              };
-              const [motoboys, setMotoboysList] = useState(() => getMotoboys());
-              const [mNome, setMNome] = useState("");
-              const [mPin, setMPin] = useState("");
-              const [mError, setMError] = useState<string | null>(null);
-
-              const saveMotoboys = (list: typeof motoboys) => {
-                localStorage.setItem(MOTOBOY_KEY, JSON.stringify(list));
+              const saveMotoboys = (list: typeof motoboysList) => {
+                localStorage.setItem("obsidian-motoboys-v1", JSON.stringify(list));
                 setMotoboysList(list);
               };
 
@@ -1145,7 +1136,7 @@ const GerentePage = () => {
                 setMError(null);
                 if (!mNome.trim()) { setMError("Nome obrigatório"); return; }
                 if (mPin.length < 4) { setMError("PIN deve ter 4-6 dígitos"); return; }
-                if (motoboys.some((m) => m.nome.toLowerCase() === mNome.trim().toLowerCase() && m.ativo)) {
+                if (motoboysList.some((m) => m.nome.toLowerCase() === mNome.trim().toLowerCase() && m.ativo)) {
                   setMError("Já existe motoboy com esse nome"); return;
                 }
                 const novo = {
@@ -1154,18 +1145,18 @@ const GerentePage = () => {
                   pinHash: btoa("pin:" + mPin),
                   ativo: true,
                 };
-                saveMotoboys([...motoboys, novo]);
+                saveMotoboys([...motoboysList, novo]);
                 setMNome("");
                 setMPin("");
                 toast.success(`Motoboy "${novo.nome}" cadastrado`);
               };
 
               const handleRemoveMotoboy = (id: string) => {
-                saveMotoboys(motoboys.filter((m) => m.id !== id));
+                saveMotoboys(motoboysList.filter((m) => m.id !== id));
                 toast.success("Motoboy removido");
               };
 
-              const ativosOnly = motoboys.filter((m) => m.ativo);
+              const ativosOnly = motoboysList.filter((m) => m.ativo);
 
               return (
                 <div className="surface-card rounded-2xl overflow-hidden">
