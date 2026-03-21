@@ -1089,7 +1089,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                 <div className="w-px h-8 mx-1 bg-gray-300" />
                 <button
                   onClick={() => setTurnoReportOpen(true)}
-                  className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded text-xs border border-destructive/50 bg-card text-destructive hover:bg-destructive/10 transition-colors"
+                  className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded text-xs border border-red-400 bg-white text-red-600 hover:bg-red-50 transition-colors"
                   style={{ minWidth: 64 }}
                 >
                   <LockKeyhole className="h-4 w-4" />
