@@ -611,6 +611,14 @@ const MasterPage = () => {
                   onClick={() => {
                     const aviso = { mensagem: avisoMensagem.trim(), tipo: avisoTipo, enviadoEm: new Date().toISOString(), lido: false };
                     localStorage.setItem("obsidian-master-aviso-v1", JSON.stringify(aviso));
+                    // Save to history
+                    try {
+                      const histRaw = localStorage.getItem("obsidian-master-avisos-historico-v1");
+                      const hist = histRaw ? JSON.parse(histRaw) : [];
+                      hist.unshift({ ...aviso });
+                      if (hist.length > 50) hist.length = 50;
+                      localStorage.setItem("obsidian-master-avisos-historico-v1", JSON.stringify(hist));
+                    } catch {}
                     toast.success("Aviso enviado ao caixa!");
                     setAvisoMensagem("");
                   }}
@@ -619,20 +627,43 @@ const MasterPage = () => {
                 </Button>
               </div>
             </div>
-            {(() => {
-              try {
-                const raw = localStorage.getItem("obsidian-master-aviso-v1");
-                if (!raw) return <p className="text-sm text-muted-foreground text-center">Nenhum aviso enviado.</p>;
-                const aviso = JSON.parse(raw);
-                const tipoCores: Record<string, string> = { info: "border-blue-500/50 bg-blue-500/10", alerta: "border-yellow-500/50 bg-yellow-500/10", urgente: "border-destructive/50 bg-destructive/10" };
-                return (
-                  <div className={`rounded-2xl border p-4 ${tipoCores[aviso.tipo] || ""}`}>
-                    <p className="text-xs text-muted-foreground mb-1">Último aviso — {new Date(aviso.enviadoEm).toLocaleString("pt-BR")} {aviso.lido ? "(lido)" : "(não lido)"}</p>
-                    <p className="text-sm font-semibold text-foreground">{aviso.mensagem}</p>
-                  </div>
-                );
-              } catch { return null; }
-            })()}
+
+            {/* Histórico de avisos */}
+            <div className="rounded-2xl border bg-card p-5 space-y-4">
+              <h2 className="text-lg font-black text-foreground">Histórico de avisos</h2>
+              {(() => {
+                try {
+                  const histRaw = localStorage.getItem("obsidian-master-avisos-historico-v1");
+                  const hist: Array<{ mensagem: string; tipo: string; enviadoEm: string; lido?: boolean }> = histRaw ? JSON.parse(histRaw) : [];
+                  if (hist.length === 0) return <p className="text-sm text-muted-foreground text-center py-4">Nenhum aviso enviado ainda.</p>;
+                  const tipoCores: Record<string, string> = { info: "border-blue-500/50 bg-blue-500/10", alerta: "border-yellow-500/50 bg-yellow-500/10", urgente: "border-destructive/50 bg-destructive/10" };
+                  const tipoLabels: Record<string, string> = { info: "Info", alerta: "Alerta", urgente: "Urgente" };
+                  // Check current active aviso to show lido status
+                  let currentAviso: { mensagem: string; lido?: boolean } | null = null;
+                  try { const raw = localStorage.getItem("obsidian-master-aviso-v1"); if (raw) currentAviso = JSON.parse(raw); } catch {}
+                  return (
+                    <div className="space-y-2 max-h-80 overflow-y-auto">
+                      {hist.map((a, i) => {
+                        const isActive = currentAviso && currentAviso.mensagem === a.mensagem;
+                        const lido = isActive ? currentAviso?.lido : undefined;
+                        return (
+                          <div key={i} className={`rounded-xl border p-3 ${tipoCores[a.tipo] || "border-border"}`}>
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">{tipoLabels[a.tipo] || a.tipo}</span>
+                              <span className="text-[10px] text-muted-foreground">
+                                {new Date(a.enviadoEm).toLocaleString("pt-BR")}
+                                {isActive && lido !== undefined && (lido ? " · ✓ Lido" : " · Não lido")}
+                              </span>
+                            </div>
+                            <p className="text-sm font-semibold text-foreground">{a.mensagem}</p>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                } catch { return null; }
+              })()}
+            </div>
           </TabsContent>
         </Tabs>
       </div>
