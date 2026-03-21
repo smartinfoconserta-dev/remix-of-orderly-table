@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Bike, LogOut, MapPin, Phone, DollarSign, Clock, Map, Navigation, QrCode, GripVertical, CheckCircle2, Package } from "lucide-react";
+import { Bike, LogOut, MapPin, Phone, DollarSign, Clock, Map, Navigation, QrCode, GripVertical, CheckCircle2, Package, XCircle, Camera } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
