@@ -1,39 +1,106 @@
-import { useState } from "react";
-import { Bike, LogOut, MapPin, Phone, DollarSign, Clock, Map, Navigation } from "lucide-react";
+import { useCallback, useRef, useState } from "react";
+import { Bike, LogOut, MapPin, Phone, DollarSign, Clock, Map, Navigation, QrCode, Camera } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { getSistemaConfig } from "@/lib/adminStorage";
 import { useRestaurant } from "@/contexts/RestaurantContext";
+import { toast } from "sonner";
+import jsQR from "jsqr";
 
-const MOTOBOY_KEY = "orderly-motoboy-nome";
-const sysConfig = getSistemaConfig();
-const NOME_REST = sysConfig.nomeRestaurante || "Restaurante";
-const LOGO = sysConfig.logoUrl || "";
-const INITIALS = NOME_REST.slice(0, 2).toUpperCase();
+const SESSAO_KEY = "obsidian-motoboy-sessao-v1";
+const MOTOBOY_LIST_KEY = "obsidian-motoboys-v1";
+
+type Motoboy = { id: string; nome: string; pinHash: string; ativo: boolean };
+
+const getMotoboys = (): Motoboy[] => {
+  try { const raw = localStorage.getItem(MOTOBOY_LIST_KEY); return raw ? JSON.parse(raw) : []; } catch { return []; }
+};
+
+const getSessao = (): { id: string; nome: string } | null => {
+  try { const raw = localStorage.getItem(SESSAO_KEY); return raw ? JSON.parse(raw) : null; } catch { return null; }
+};
 
 export default function MotoboyPage() {
+  const sysConfig = getSistemaConfig();
+  const NOME_REST = sysConfig.nomeRestaurante || "Restaurante";
+  const LOGO = sysConfig.logoBase64 || sysConfig.logoUrl || "";
+  const INITIALS = NOME_REST.slice(0, 2).toUpperCase();
+
   const { pedidosBalcao, marcarBalcaoSaiu, marcarBalcaoEntregue } = useRestaurant();
-  const [view, setView] = useState<"login" | "entregas">(
-    () => localStorage.getItem(MOTOBOY_KEY) ? "entregas" : "login"
-  );
-  const [nome, setNome] = useState(() => localStorage.getItem(MOTOBOY_KEY) || "");
-  const [inputNome, setInputNome] = useState("");
+  const [sessao, setSessao] = useState<{ id: string; nome: string } | null>(() => getSessao());
+  const [selectedMotoboyId, setSelectedMotoboyId] = useState("");
+  const [pinInput, setPinInput] = useState("");
+  const [loginError, setLoginError] = useState("");
+  const [scanningPedidoId, setScanningPedidoId] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleEntrar = () => {
-    if (!inputNome.trim()) return;
-    localStorage.setItem(MOTOBOY_KEY, inputNome.trim());
-    setNome(inputNome.trim());
-    setView("entregas");
+  const motoboys = getMotoboys().filter((m) => m.ativo);
+
+  const handleLogin = useCallback(() => {
+    setLoginError("");
+    const motoboy = motoboys.find((m) => m.id === selectedMotoboyId);
+    if (!motoboy) { setLoginError("Selecione um motoboy"); return; }
+    if (pinInput.length < 4) { setLoginError("PIN deve ter 4 dígitos"); return; }
+    const expectedHash = btoa("pin:" + pinInput);
+    if (motoboy.pinHash !== expectedHash) { setLoginError("PIN incorreto"); return; }
+    const s = { id: motoboy.id, nome: motoboy.nome };
+    localStorage.setItem(SESSAO_KEY, JSON.stringify(s));
+    setSessao(s);
+    toast.success(`Bem-vindo, ${motoboy.nome}!`);
+  }, [selectedMotoboyId, pinInput, motoboys]);
+
+  const handleLogout = () => {
+    localStorage.removeItem(SESSAO_KEY);
+    setSessao(null);
+    setSelectedMotoboyId("");
+    setPinInput("");
   };
 
-  const handleSair = () => {
-    localStorage.removeItem(MOTOBOY_KEY);
-    setNome("");
-    setInputNome("");
-    setView("login");
+  const handleScanQR = (pedidoId: string) => {
+    setScanningPedidoId(pedidoId);
+    fileInputRef.current?.click();
   };
+
+  const handleFileSelected = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !scanningPedidoId) return;
+
+    try {
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+      img.src = url;
+      await new Promise((resolve) => { img.onload = resolve; });
+
+      const canvas = document.createElement("canvas");
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext("2d")!;
+      ctx.drawImage(img, 0, 0);
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      URL.revokeObjectURL(url);
+
+      const code = jsQR(imageData.data, imageData.width, imageData.height);
+      if (code?.data?.startsWith("RETIRADA:")) {
+        const pedidoId = code.data.replace("RETIRADA:", "");
+        if (pedidoId === scanningPedidoId) {
+          marcarBalcaoSaiu(pedidoId, sessao?.nome || "Motoboy");
+          toast.success("Retirada confirmada! Boa entrega. 🏍️");
+        } else {
+          toast.error("QR Code não corresponde a este pedido");
+        }
+      } else {
+        toast.error("QR Code não reconhecido");
+      }
+    } catch {
+      toast.error("Erro ao ler QR Code");
+    }
+
+    setScanningPedidoId(null);
+    e.target.value = "";
+  }, [scanningPedidoId, marcarBalcaoSaiu, sessao]);
 
   const deliveriesAtivos = pedidosBalcao.filter(
     (p) => p.origem === "delivery" && p.statusBalcao !== "pago"
@@ -41,14 +108,10 @@ export default function MotoboyPage() {
 
   const statusConfig = (s?: string) => {
     switch (s) {
-      case "pronto":
-        return { label: "PRONTO PARA RETIRAR", className: "bg-green-600 text-white animate-pulse" };
-      case "saiu":
-        return { label: "SAIU PARA ENTREGA", className: "bg-blue-600 text-white" };
-      case "entregue":
-        return { label: "ENTREGUE", className: "bg-muted text-muted-foreground" };
-      default:
-        return { label: "AGUARDANDO COZINHA", className: "bg-yellow-600 text-white" };
+      case "pronto": return { label: "PRONTO PARA RETIRAR", className: "bg-green-600 text-white animate-pulse" };
+      case "saiu": return { label: "SAIU PARA ENTREGA", className: "bg-blue-600 text-white" };
+      case "entregue": return { label: "ENTREGUE", className: "bg-muted text-muted-foreground" };
+      default: return { label: "AGUARDANDO COZINHA", className: "bg-yellow-600 text-white" };
     }
   };
 
@@ -80,43 +143,174 @@ export default function MotoboyPage() {
       </div>
     );
 
-  if (view === "login") {
+  /* ── Login screen ── */
+  if (!sessao) {
     return (
       <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center px-4">
         <div className="max-w-sm w-full space-y-6 text-center">
           <div className="flex justify-center"><Logo /></div>
           <h1 className="text-xl font-bold">{NOME_REST}</h1>
           <p className="text-sm text-muted-foreground">Painel do Motoboy</p>
-          <div className="space-y-3">
-            <Input
-              placeholder="Seu nome"
-              value={inputNome}
-              onChange={(e) => setInputNome(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleEntrar()}
-            />
-            <Button className="w-full" onClick={handleEntrar} disabled={!inputNome.trim()}>
-              <Bike className="w-4 h-4 mr-2" /> Entrar
-            </Button>
-          </div>
+
+          {motoboys.length === 0 ? (
+            <div className="rounded-xl border border-border p-4 space-y-2">
+              <p className="text-sm text-muted-foreground">Nenhum motoboy cadastrado.</p>
+              <p className="text-xs text-muted-foreground">Peça ao gerente para cadastrar motoboys na aba Equipe.</p>
+            </div>
+          ) : (
+            <div className="space-y-3 text-left">
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-muted-foreground">Motoboy</label>
+                <Select value={selectedMotoboyId} onValueChange={setSelectedMotoboyId}>
+                  <SelectTrigger className="rounded-xl">
+                    <SelectValue placeholder="Selecione seu nome" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {motoboys.map((m) => (
+                      <SelectItem key={m.id} value={m.id}>{m.nome}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-muted-foreground">PIN</label>
+                <Input
+                  type="password"
+                  inputMode="numeric"
+                  maxLength={6}
+                  placeholder="••••"
+                  value={pinInput}
+                  onChange={(e) => setPinInput(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                  onKeyDown={(e) => e.key === "Enter" && handleLogin()}
+                />
+              </div>
+              {loginError && (
+                <p className="rounded-xl border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive">{loginError}</p>
+              )}
+              <Button className="w-full rounded-xl" onClick={handleLogin} disabled={!selectedMotoboyId || pinInput.length < 4}>
+                <Bike className="w-4 h-4 mr-2" /> Entrar
+              </Button>
+            </div>
+          )}
         </div>
       </div>
     );
   }
 
+  /* ── Main content ── */
   const entregasPendentes = deliveriesAtivos.filter((p) => p.statusBalcao !== "entregue");
+
+  const renderCard = (p: typeof deliveriesAtivos[0]) => {
+    const st = statusConfig(p.statusBalcao);
+    const addr = buildEnderecoCompleto(p);
+    return (
+      <Card key={p.id} className={
+        p.statusBalcao === "pronto" ? "border-green-600/50" :
+        p.statusBalcao === "saiu" ? "border-blue-500/50" : ""
+      }>
+        <CardContent className="p-4 space-y-2">
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="font-bold">{p.clienteNome || "Cliente"}</p>
+              {p.bairro && <Badge className="bg-orange-600 text-white text-[10px] mt-1">{p.bairro}</Badge>}
+            </div>
+            <Badge className={st.className}>{st.label}</Badge>
+          </div>
+
+          {addr && (
+            <div className="flex gap-2 text-sm text-muted-foreground">
+              <MapPin className="w-4 h-4 shrink-0 mt-0.5" />
+              <span>{addr}</span>
+            </div>
+          )}
+
+          {p.clienteTelefone && (
+            <div className="flex gap-2 text-sm text-muted-foreground">
+              <Phone className="w-4 h-4 shrink-0" />
+              <span>{p.clienteTelefone}</span>
+            </div>
+          )}
+
+          <p className="text-sm">
+            {p.itens.map((i) => `${i.quantidade}x ${i.nome}`).join(", ")}
+          </p>
+
+          <div className="flex items-center justify-between pt-1 border-t border-border">
+            <div className="flex items-center gap-1 text-sm">
+              <DollarSign className="w-4 h-4" />
+              <span className="font-semibold">R$ {p.total.toFixed(2)}</span>
+              {p.formaPagamentoDelivery && (
+                <span className="text-muted-foreground ml-1">({p.formaPagamentoDelivery})</span>
+              )}
+            </div>
+            {p.formaPagamentoDelivery === "dinheiro" && p.trocoParaQuanto && (
+              <span className="text-xs text-muted-foreground">
+                Troco p/ R$ {p.trocoParaQuanto.toFixed(2)}
+              </span>
+            )}
+          </div>
+
+          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+            <Clock className="w-3 h-3" />
+            <span>{p.criadoEm}</span>
+          </div>
+
+          {addr && p.statusBalcao !== "entregue" && (
+            <Button variant="outline" size="sm" className="w-full gap-2" onClick={() => handleVerRota(p)}>
+              <Map className="w-4 h-4" /> Ver rota no Maps
+            </Button>
+          )}
+
+          <div className="pt-2 border-t border-border flex gap-2">
+            {p.statusBalcao === "pronto" && (
+              <>
+                <Button size="sm" className="flex-1 gap-1.5" variant="outline" onClick={() => handleScanQR(p.id)}>
+                  <QrCode className="w-4 h-4" /> Escanear QR
+                </Button>
+                <Button size="sm" className="flex-1 bg-blue-600 hover:bg-blue-700 text-white" onClick={() => marcarBalcaoSaiu(p.id, sessao.nome)}>
+                  Confirmar retirada
+                </Button>
+              </>
+            )}
+            {p.statusBalcao === "saiu" && (
+              <Button size="sm" className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => marcarBalcaoEntregue(p.id)}>
+                Marcar como entregue
+              </Button>
+            )}
+            {p.statusBalcao === "aberto" && (
+              <p className="text-xs text-muted-foreground italic">Aguardando preparo na cozinha…</p>
+            )}
+            {p.statusBalcao === "entregue" && (
+              <p className="text-xs text-muted-foreground italic">Entrega concluída ✓</p>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  };
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col pb-20">
+      {/* Hidden file input for QR scanning */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        className="hidden"
+        onChange={handleFileSelected}
+      />
+
       {/* Header */}
       <div className="shrink-0 flex items-center justify-between px-4 py-3 border-b border-border">
         <div className="flex items-center gap-3">
           <Logo />
           <div>
-            <p className="font-semibold text-sm">{nome}</p>
+            <p className="font-semibold text-sm">{sessao.nome}</p>
             <p className="text-xs text-muted-foreground">Motoboy</p>
           </div>
         </div>
-        <Button variant="ghost" size="sm" onClick={handleSair}>
+        <Button variant="ghost" size="sm" onClick={handleLogout}>
           <LogOut className="w-4 h-4 mr-1" /> Sair
         </Button>
       </div>
@@ -134,7 +328,6 @@ export default function MotoboyPage() {
             <p>Nenhuma entrega no momento</p>
           </div>
         ) : (() => {
-          // Group by bairro
           const grupos: Record<string, typeof deliveriesAtivos> = {};
           for (const p of deliveriesAtivos) {
             const bairro = p.bairro?.trim() || "Sem bairro";
@@ -151,92 +344,6 @@ export default function MotoboyPage() {
               .filter(Boolean);
             if (ends.length === 0) return;
             window.open(`https://www.google.com/maps/dir/${ends.map(encodeURIComponent).join("/")}`, "_blank");
-          };
-
-          const renderCard = (p: typeof deliveriesAtivos[0]) => {
-            const st = statusConfig(p.statusBalcao);
-            const addr = buildEnderecoCompleto(p);
-            return (
-              <Card key={p.id} className={
-                p.statusBalcao === "pronto" ? "border-green-600/50" :
-                p.statusBalcao === "saiu" ? "border-blue-500/50" : ""
-              }>
-                <CardContent className="p-4 space-y-2">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <p className="font-bold">{p.clienteNome || "Cliente"}</p>
-                      {p.bairro && (
-                        <Badge className="bg-orange-600 text-white text-[10px] mt-1">{p.bairro}</Badge>
-                      )}
-                    </div>
-                    <Badge className={st.className}>{st.label}</Badge>
-                  </div>
-
-                  {addr && (
-                    <div className="flex gap-2 text-sm text-muted-foreground">
-                      <MapPin className="w-4 h-4 shrink-0 mt-0.5" />
-                      <span>{addr}</span>
-                    </div>
-                  )}
-
-                  {p.clienteTelefone && (
-                    <div className="flex gap-2 text-sm text-muted-foreground">
-                      <Phone className="w-4 h-4 shrink-0" />
-                      <span>{p.clienteTelefone}</span>
-                    </div>
-                  )}
-
-                  <p className="text-sm">
-                    {p.itens.map((i) => `${i.quantidade}x ${i.nome}`).join(", ")}
-                  </p>
-
-                  <div className="flex items-center justify-between pt-1 border-t border-border">
-                    <div className="flex items-center gap-1 text-sm">
-                      <DollarSign className="w-4 h-4" />
-                      <span className="font-semibold">R$ {p.total.toFixed(2)}</span>
-                      {p.formaPagamentoDelivery && (
-                        <span className="text-muted-foreground ml-1">({p.formaPagamentoDelivery})</span>
-                      )}
-                    </div>
-                    {p.formaPagamentoDelivery === "dinheiro" && p.trocoParaQuanto && (
-                      <span className="text-xs text-muted-foreground">
-                        Troco p/ R$ {p.trocoParaQuanto.toFixed(2)}
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                    <Clock className="w-3 h-3" />
-                    <span>{p.criadoEm}</span>
-                  </div>
-
-                  {addr && p.statusBalcao !== "entregue" && (
-                    <Button variant="outline" size="sm" className="w-full gap-2" onClick={() => handleVerRota(p)}>
-                      <Map className="w-4 h-4" /> Ver rota no Maps
-                    </Button>
-                  )}
-
-                  <div className="pt-2 border-t border-border flex gap-2">
-                    {p.statusBalcao === "pronto" && (
-                      <Button size="sm" className="flex-1 bg-blue-600 hover:bg-blue-700 text-white" onClick={() => marcarBalcaoSaiu(p.id, nome)}>
-                        Confirmar retirada
-                      </Button>
-                    )}
-                    {p.statusBalcao === "saiu" && (
-                      <Button size="sm" className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => marcarBalcaoEntregue(p.id)}>
-                        Marcar como entregue
-                      </Button>
-                    )}
-                    {p.statusBalcao === "aberto" && (
-                      <p className="text-xs text-muted-foreground italic">Aguardando preparo na cozinha…</p>
-                    )}
-                    {p.statusBalcao === "entregue" && (
-                      <p className="text-xs text-muted-foreground italic">Entrega concluída ✓</p>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            );
           };
 
           if (usarGrupos) {
@@ -260,6 +367,7 @@ export default function MotoboyPage() {
 
           return deliveriesAtivos.map(renderCard);
         })()}
+
         {/* ── Prestação de contas ── */}
         {(() => {
           const entregues = pedidosBalcao.filter(
