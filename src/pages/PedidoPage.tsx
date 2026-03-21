@@ -131,10 +131,12 @@ function ConfirmacaoEtapa({ nome, endereco, numero, complemento, bairro, itens, 
 export default function PedidoPage() {
   const { criarPedidoBalcao, pedidosBalcao } = useRestaurant();
 
-  // Check if delivery is active
+  // Read config inside component so it reacts to admin changes
+  const sysConfig = getSistemaConfig();
+  const MODO_ID = sysConfig.modoIdentificacaoDelivery || "visitante";
   const deliveryAtivo = sysConfig.deliveryAtivo !== false;
   const isCadastro = MODO_ID === "cadastro";
-  const [etapa, setEtapa] = useState<Etapa>(isCadastro ? "login" : "cardapio");
+  const [etapa, setEtapa] = useState<Etapa>(() => isCadastro ? "login" : "cardapio");
 
   // Login state (cadastro mode)
   const [loginTel, setLoginTel] = useState("");

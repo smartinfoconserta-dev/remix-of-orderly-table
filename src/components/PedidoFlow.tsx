@@ -97,12 +97,8 @@ const activeBannerSlides = configBanners.length > 0
 
 const HOME_TAB_ID = "inicio";
 const HOME_TAB: Categoria = { id: HOME_TAB_ID, nome: "Início", icone: "house" };
-const customCats = getCategoriasCustom();
-const allCategorias: Categoria[] = [
-  ...categorias,
-  ...customCats.map((c) => ({ id: c.id, nome: c.nome, icone: c.icone })),
-];
-const navigationItems = [HOME_TAB, ...allCategorias];
+// customCats moved inside component via useMemo
+const BASE_NAV_CATEGORIAS = categorias;
 const CARD_STAGGER_STEP_MS = 50;
 const CARD_ANIMATION_DURATION_MS = 200;
 const PRODUCT_MODAL_OPEN_DELAY_MS = 120;
