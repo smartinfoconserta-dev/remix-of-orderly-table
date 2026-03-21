@@ -669,10 +669,16 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
         {modo === "cliente" && (
           <Button
             onClick={handleChamarGarcom}
-            className="h-auto gap-2 rounded-xl bg-destructive px-5 py-2.5 text-base font-bold text-destructive-foreground hover:bg-destructive/90"
+            className={`h-auto gap-2 rounded-xl px-5 py-2.5 text-base font-bold transition-all duration-300 ${
+              mesa?.chamarGarcom
+                ? "bg-amber-500 text-white hover:bg-amber-600"
+                : "bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            }`}
           >
-            <Bell className="h-5 w-5" />
-            <span className="hidden sm:inline">Chamar Garçom</span>
+            <Bell className={`h-5 w-5 ${mesa?.chamarGarcom ? "animate-pulse" : ""}`} />
+            <span className="hidden sm:inline">
+              {mesa?.chamarGarcom ? "Garçom a caminho ✕" : "Chamar Garçom"}
+            </span>
           </Button>
         )}
       </div>
