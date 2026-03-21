@@ -958,6 +958,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                     Imprimir
                   </Button>
                 </div>
+              </div>
             </div>
           </div>
         )}
