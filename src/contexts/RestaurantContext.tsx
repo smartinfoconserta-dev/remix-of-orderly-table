@@ -1,5 +1,6 @@
 import React, { createContext, useCallback, useContext, useEffect, useState } from "react";
 import type { CashMovementType, OperationalUser, PaymentMethod, SplitPayment } from "@/types/operations";
+import { getSistemaConfig } from "@/lib/adminStorage";
 
 export interface ItemCarrinho {
   uid: string;
