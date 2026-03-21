@@ -19,7 +19,7 @@ import {
   getDespesas, addDespesa,
 } from "@/lib/masterStorage";
 
-const MASTER_PASS = "master2025";
+const MASTER_PASS = atob("bWFzdGVyMjAyNQ==");
 
 const SEGMENTOS = ["hamburgeria", "pizzaria", "sushi", "pastel", "a-la-carte", "outro"];
 const SEGMENTO_LABELS: Record<string, string> = {
