@@ -266,6 +266,12 @@ const AdminPage = () => {
   const [bairros, setBairros] = useState<Bairro[]>(getBairros);
   const [novoBairroNome, setNovoBairroNome] = useState("");
   const [novoBairroTaxa, setNovoBairroTaxa] = useState("");
+  const [deliveryModo, setDeliveryModo] = useState<"todos" | "cadastrados">(() => {
+    try {
+      const v = localStorage.getItem("obsidian-delivery-modo-v1");
+      return v === "cadastrados" ? "cadastrados" : "todos";
+    } catch { return "todos"; }
+  });
 
   const saveSistema = useCallback(() => {
     saveSistemaConfig(sistemaConfig);
