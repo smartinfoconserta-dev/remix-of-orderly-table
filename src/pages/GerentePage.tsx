@@ -120,10 +120,12 @@ const formatDateHeader = (dateStr: string): string => {
 
 const getEventDotColor = (acao?: string) => {
   if (!acao) return "bg-muted-foreground";
-  if (acao === "pedido_cliente" || acao === "chamar_garcom") return "bg-emerald-500";
-  if (acao === "fechar_conta" || acao === "zerar_mesa" || acao === "fechamento_dia") return "bg-blue-500";
-  if (acao === "cancelar_item" || acao === "cancelar_pedido") return "bg-destructive";
-  return "bg-amber-500";
+  if (["pedido_cliente", "pedido_garcom", "pedido_caixa", "chamar_garcom"].includes(acao)) return "bg-emerald-500";
+  if (["fechar_conta", "fechar_turno", "fechamento_dia", "abrir_caixa", "abertura_caixa"].includes(acao)) return "bg-blue-500";
+  if (["confirmar_delivery", "delivery_entregue"].includes(acao)) return "bg-purple-500";
+  if (["rejeitar_delivery"].includes(acao)) return "bg-destructive";
+  if (["sangria", "suprimento"].includes(acao)) return "bg-amber-500";
+  return "bg-muted-foreground";
 };
 
 type PeriodoFiltro = "hoje" | "semana" | "mes" | "custom";
