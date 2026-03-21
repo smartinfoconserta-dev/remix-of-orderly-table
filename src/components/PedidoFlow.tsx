@@ -141,6 +141,8 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
   const [showExitAlert, setShowExitAlert] = useState(false);
   const [paraViagem, setParaViagem] = useState(modo === "delivery");
   const [isClientIdle, setIsClientIdle] = useState(false);
+  const [showGarcomBanner, setShowGarcomBanner] = useState(false);
+  const garcomBannerTimerRef = useRef<number | null>(null);
 
   // Hidden admin modal state
   const [adminModalOpen, setAdminModalOpen] = useState(false);
@@ -166,7 +168,7 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
     ? (modo === "delivery" ? `Delivery — ${clienteNome || ""}` : `Balcão — ${clienteNome || ""}`)
     : formatMesaLabel(mesaId);
   const nomeAtendimento = garcomNome?.trim() || currentGarcom?.nome || currentCaixa?.nome || "Equipe operacional";
-  const isGarcomMobile = (modo === "garcom" || modo === "delivery") && isMobile;
+  const isGarcomMobile = modo === "garcom" || modo === "delivery";
   const isHomeActive = categoriaExibida === HOME_TAB_ID;
   const isTabletViewport = !isMobile && typeof window !== "undefined" && window.innerWidth >= TABLET_MIN_WIDTH && window.innerWidth <= TABLET_MAX_WIDTH;
   const shouldEnableClientIdle = modo === "cliente" && isTabletViewport;
@@ -398,6 +400,14 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
     chamarGarcom(mesaId);
     toast.success("Garçom a caminho", { duration: 1000, icon: "🔔" });
     setIsClientIdle(false);
+
+    // Show visual banner
+    if (garcomBannerTimerRef.current) window.clearTimeout(garcomBannerTimerRef.current);
+    setShowGarcomBanner(true);
+    garcomBannerTimerRef.current = window.setTimeout(() => {
+      setShowGarcomBanner(false);
+      garcomBannerTimerRef.current = null;
+    }, 4000);
   }, [chamarGarcom, mesaId]);
 
   // ── Long-press admin gesture ──
@@ -1064,11 +1074,19 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
     </div>
   );
 
+  const garcomBanner = showGarcomBanner ? (
+    <div className="animate-fade-in px-4 py-3 bg-amber-500/90 backdrop-blur-sm flex items-center gap-3 text-white">
+      <Bell className="h-6 w-6 shrink-0 animate-pulse" />
+      <span className="text-sm font-bold">Garçom chamado! Estamos a caminho.</span>
+    </div>
+  ) : null;
+
   return (
     <>
       <div className="flex min-h-screen flex-col bg-background">
         {header}
-        {isMobile ? mobileContent : desktopContent}
+        {garcomBanner}
+        {(isMobile || modo === "garcom" || modo === "delivery") ? mobileContent : desktopContent}
         <ProductModal produto={produtoSelecionado} onClose={handleCloseProductModal} onAdd={handleAddToCart} isGarcomMobile={isGarcomMobile} skipEmbalagemDefault={modo === "cliente" || modo === "garcom"} />
         {mesa && <MinhaContaDrawer pedidos={mesa.pedidos} total={mesa.total} open={contaOpen} onOpenChange={setContaOpen} />}
         {idleOverlay}

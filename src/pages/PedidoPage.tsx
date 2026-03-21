@@ -101,6 +101,8 @@ function ConfirmacaoEtapa({ nome, endereco, numero, complemento, bairro, itens, 
 export default function PedidoPage() {
   const { criarPedidoBalcao, pedidosBalcao } = useRestaurant();
 
+  // Check if delivery is active
+  const deliveryAtivo = sysConfig.deliveryAtivo !== false;
   const [etapa, setEtapa] = useState<Etapa>("identificacao");
 
   // Identification
@@ -284,6 +286,22 @@ export default function PedidoPage() {
     setTroco("");
     setEtapa("identificacao");
   };
+
+  // ── Delivery desativado ──
+  if (!deliveryAtivo) {
+    return (
+      <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center p-6 text-center space-y-4">
+        <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center text-3xl">🛵</div>
+        <h1 className="text-2xl font-black text-foreground">Delivery indisponível no momento</h1>
+        <p className="text-muted-foreground">Entre em contato pelo WhatsApp para mais informações</p>
+        {sysConfig.telefoneRestaurante && (
+          <Button variant="outline" onClick={() => window.open(`https://wa.me/55${sysConfig.telefoneRestaurante}`, "_blank")}>
+            📲 Falar no WhatsApp
+          </Button>
+        )}
+      </div>
+    );
+  }
 
   // ── Cardápio (full screen PedidoFlow) ──
   if (etapa === "cardapio") {
