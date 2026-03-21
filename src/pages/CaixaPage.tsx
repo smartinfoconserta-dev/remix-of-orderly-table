@@ -25,6 +25,7 @@ import {
   Truck,
   User,
   Wallet,
+  X,
   XCircle,
 } from "lucide-react";
 import { toast } from "sonner";
