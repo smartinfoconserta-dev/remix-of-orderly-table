@@ -195,7 +195,7 @@ export default function PedidoPage() {
               setBairroNaoAtendido(false);
             } else {
               setBairroSelecionadoId("");
-              setBairroNaoAtendido(true);
+              setBairroNaoAtendido(deliveryModo === "cadastrados");
             }
           } else {
             setBairroSelecionadoId("");
