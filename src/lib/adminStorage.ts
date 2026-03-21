@@ -45,6 +45,7 @@ export interface SistemaConfig {
   telefoneRestaurante?: string;
   tempoEntrega?: string;
   mensagemBoasVindas?: string;
+  deliveryAtivo?: boolean;
 }
 
 export interface LicencaConfig {
