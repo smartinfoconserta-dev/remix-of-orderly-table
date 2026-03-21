@@ -1039,8 +1039,8 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
   );
 
   const desktopContent = (
-    <div className={`flex flex-1 overflow-hidden transition-all duration-500 ${isClientIdle ? "brightness-[0.2] saturate-50" : "brightness-100 saturate-100"}`}>
-      <aside className="w-[19rem] shrink-0 overflow-y-auto border-r border-border bg-card/95 px-3 py-3 lg:w-[21rem] h-[calc(100vh-73px)] sticky top-[73px]">
+    <div className={`flex flex-1 items-start transition-all duration-500 ${isClientIdle ? "brightness-[0.2] saturate-50" : "brightness-100 saturate-100"}`}>
+      <aside className="w-[19rem] shrink-0 overflow-y-auto border-r border-border bg-card/95 px-3 py-3 lg:w-[21rem] self-start sticky top-[73px] max-h-[calc(100vh-73px)]">
         <div className="sticky top-0 z-10 rounded-[1.5rem] border border-border bg-background/85 px-5 py-5 backdrop-blur-md">
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">{RESTAURANTE.nome}</p>
           <p className="mt-2 text-lg font-black text-foreground">Cardápio</p>
