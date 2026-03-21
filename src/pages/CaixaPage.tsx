@@ -429,6 +429,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
     taxaEntrega?: number;
     total: number;
     formaPagamento?: string;
+    paraViagem?: boolean;
   }) => {
     let el = document.getElementById("comanda-print");
     if (!el) {
@@ -444,10 +445,14 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
     const pagHtml = data.formaPagamento
       ? `<div class="print-center">${data.formaPagamento}</div>`
       : "";
+    const paraLevarHtml = data.paraViagem
+      ? `<div class="print-divider"></div><div class="print-center" style="font-size:18px;font-weight:900;letter-spacing:2px">*** PARA LEVAR — EMBALAR ***</div><div class="print-divider"></div>`
+      : "";
     el.innerHTML = `
       <h2>${nomeRest}</h2>
       <div class="print-center">${data.tipo}</div>
       <div class="print-center">Pedido #${data.numero} — ${data.dataHora}</div>
+      ${paraLevarHtml}
       <div class="print-divider"></div>
       ${data.itens.map((it) => `<div class="print-item"><span>${it.quantidade}x ${it.nome}</span><span>R$ ${(it.preco * it.quantidade).toFixed(2).replace(".", ",")}</span></div>`).join("")}
       <div class="print-divider"></div>
@@ -878,6 +883,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                         itens: allItens.map((it) => ({ quantidade: it.quantidade, nome: it.nome, preco: it.precoUnitario })),
                         subtotal: mesa.total,
                         total: mesa.total,
+                        paraViagem: mesa.pedidos.some((p) => p.paraViagem),
                       });
                     }} className="rounded-xl font-bold gap-1.5">
                       <Printer className="h-3.5 w-3.5" />
@@ -956,6 +962,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                       taxaEntrega: (balcaoPedido as any).taxaEntrega,
                       total: balcaoPedido.total,
                       formaPagamento: balcaoPedido.formaPagamentoDelivery ? getPaymentMethodLabel(balcaoPedido.formaPagamentoDelivery as PaymentMethod) : undefined,
+                      paraViagem: (balcaoPedido as any).paraViagem === true,
                     });
                   }} className="rounded-xl font-bold gap-1.5">
                     <Printer className="h-3.5 w-3.5" />
@@ -1118,6 +1125,12 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                             }`}>
                               {isPronto ? "Pronto" : "Aberto"}
                             </span>
+                            {(pb as any).paraViagem === true && (
+                              <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/40 bg-amber-500/15 px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest text-amber-400">
+                                <ShoppingBag className="h-2.5 w-2.5" />
+                                Para levar
+                              </span>
+                            )}
                             <span className="mt-1 text-sm font-black tabular-nums text-foreground">
                               {formatPrice(pb.total)}
                             </span>
