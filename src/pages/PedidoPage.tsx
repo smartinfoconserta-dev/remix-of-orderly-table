@@ -99,7 +99,7 @@ function ConfirmacaoEtapa({ nome, endereco, numero, complemento, bairro, itens, 
 }
 
 export default function PedidoPage() {
-  const { criarPedidoBalcao } = useRestaurant();
+  const { criarPedidoBalcao, pedidosBalcao } = useRestaurant();
 
   const [etapa, setEtapa] = useState<Etapa>("identificacao");
 
