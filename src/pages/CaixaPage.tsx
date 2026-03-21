@@ -1097,7 +1097,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                 </button>
                 <button
                   onClick={() => logout(accessMode)}
-                  className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded text-xs border border-border bg-card text-foreground hover:bg-accent transition-colors"
+                  className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded text-xs border border-gray-300 bg-white text-gray-700 hover:bg-blue-50 transition-colors"
                   style={{ minWidth: 64 }}
                 >
                   <LogOut className="h-4 w-4" />
