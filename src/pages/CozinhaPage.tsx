@@ -175,6 +175,8 @@ const CozinhaPage = () => {
         {activePedidos.map((pedido, i) => {
           const mins = minutesAgo(pedido.criadoEmIso);
           const isLate = mins >= 15 && mins <= MAX_ELAPSED_MINUTES;
+          const isCritical = mins >= 40 && mins <= MAX_ELAPSED_MINUTES;
+          const isWarning = mins >= 20 && mins <= MAX_ELAPSED_MINUTES;
           const isBalcaoOrder = pedido.origem === "balcao";
           const isDeliveryOrder = pedido.origem === "delivery";
           const isParaViagem = pedido.paraViagem === true;
