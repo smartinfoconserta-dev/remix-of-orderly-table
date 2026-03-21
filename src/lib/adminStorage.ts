@@ -94,6 +94,7 @@ const defaultSistemaConfig: SistemaConfig = {
   banners: [],
   instagramUrl: "",
   senhaWifi: "",
+  cozinhaAtiva: false,
 };
 
 export function getSistemaConfig(): SistemaConfig {
