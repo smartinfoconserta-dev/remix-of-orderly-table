@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowLeft,
+  Bell,
   Loader2,
   Printer,
   Search,
@@ -28,7 +29,6 @@ import {
   X,
   XCircle,
 } from "lucide-react";
-import { Bell } from "lucide-react";
 import { toast } from "sonner";
 import PedidoFlow from "@/components/PedidoFlow";
 import MesaCard from "@/components/MesaCard";
