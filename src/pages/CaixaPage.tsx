@@ -883,6 +883,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                         itens: allItens.map((it) => ({ quantidade: it.quantidade, nome: it.nome, preco: it.precoUnitario })),
                         subtotal: mesa.total,
                         total: mesa.total,
+                        paraViagem: mesa.pedidos.some((p) => p.paraViagem),
                       });
                     }} className="rounded-xl font-bold gap-1.5">
                       <Printer className="h-3.5 w-3.5" />
