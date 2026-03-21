@@ -214,7 +214,10 @@ export default function MotoboyPage() {
               <p className="font-bold">{p.clienteNome || "Cliente"}</p>
               {p.bairro && <Badge className="bg-orange-600 text-white text-[10px] mt-1">{p.bairro}</Badge>}
             </div>
-            <Badge className={st.className}>{st.label}</Badge>
+            <div className="flex flex-col items-end gap-1">
+              <span className="text-4xl font-black text-amber-500 leading-none">#{p.numeroPedido}</span>
+              <Badge className={st.className}>{st.label}</Badge>
+            </div>
           </div>
 
           {addr && (
