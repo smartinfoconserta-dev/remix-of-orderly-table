@@ -172,7 +172,7 @@ const GerentePage = () => {
   } = useRestaurant();
   const { currentGerente, logout, verifyManagerAccess, getActiveProfilesByRole, createUser, deactivateUser } = useAuth();
   useRouteLock("/gerente");
-  const [logFilter, setLogFilter] = useState("all");
+  const [logFilter, setLogFilter] = useState<LogCategory>("all");
   const [pinVerificado, setPinVerificado] = useState(false);
   const [pinInput, setPinInput] = useState("");
   const [pinError, setPinError] = useState("");
