@@ -1088,6 +1088,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                   <ShoppingBag className="h-3.5 w-3.5" />
                   Mesas
                 </button>
+                {sistemaConfig.deliveryAtivo !== false && (
                 <button
                   onClick={() => setCaixaView("delivery")}
                   className={`flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-black transition-colors ${caixaView === "delivery" ? "bg-purple-500/15 text-purple-400 border border-purple-500/30" : "border border-border text-muted-foreground hover:bg-secondary"}`}
@@ -1098,6 +1099,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                     <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-black tabular-nums leading-none ${pedidosAguardandoConfirmacao.length > 0 ? "bg-amber-500/20 text-amber-400 animate-pulse" : "bg-purple-500/20 text-purple-400"}`}>{pedidosDeliveryAtivos.length + pedidosAguardandoConfirmacao.length}</span>
                   )}
                 </button>
+                )}
 
                 <div className="w-px h-6 bg-border mx-1" />
 
