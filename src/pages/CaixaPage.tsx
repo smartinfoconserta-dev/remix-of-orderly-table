@@ -1454,28 +1454,22 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
               </div>
 
               {/* ── Windows-style Status Bar ── */}
-              <div className="flex items-center shrink-0 divide-x text-[10px]" style={{ background: '#f0f0f0', borderTop: '1px solid #c0c0c0' }}>
-                <span className="flex items-center gap-1.5 px-3 py-1.5" style={{ color: '#333', borderColor: '#c0c0c0' }}>
+              <div className="flex items-center shrink-0 divide-x divide-border text-[10px] bg-secondary border-t border-border text-muted-foreground">
+                <span className="flex items-center gap-1.5 px-3 py-1.5">
                   <span className="h-2 w-2 rounded-full bg-green-500 inline-block" /> Online
                 </span>
-                <span className="px-3 py-1.5 font-bold" style={{ color: '#333', borderColor: '#c0c0c0' }}>
+                <span className="px-3 py-1.5 font-bold">
                   Operador: {currentOperator.nome}
                 </span>
                 {caixaOpenTime && (
-                  <span className="px-3 py-1.5" style={{ color: '#333', borderColor: '#c0c0c0' }}>
+                  <span className="px-3 py-1.5">
                     Turno: aberto {caixaOpenTime}
                   </span>
                 )}
-                <span className="px-3 py-1.5" style={{ color: '#333', borderColor: '#c0c0c0' }}>
-                  Consumo: {mesasConsumo}
-                </span>
-                <span className="px-3 py-1.5" style={{ color: '#333', borderColor: '#c0c0c0' }}>
-                  Livres: {mesasLivre}
-                </span>
-                <span className="px-3 py-1.5" style={{ color: '#333', borderColor: '#c0c0c0' }}>
-                  Fechadas: {fechamentos.length}
-                </span>
-                <span className="px-3 py-1.5" style={{ color: '#333', borderColor: '#c0c0c0' }}>
+                <span className="px-3 py-1.5">Consumo: {mesasConsumo}</span>
+                <span className="px-3 py-1.5">Livres: {mesasLivre}</span>
+                <span className="px-3 py-1.5">Fechadas: {fechamentos.length}</span>
+                <span className="px-3 py-1.5">
                   Último: {fechamentos.length > 0 ? (() => {
                     const f = fechamentos[0];
                     const id = f.mesaId || "";
@@ -1487,8 +1481,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                 {pedidosAguardandoConfirmacao.length > 0 && (
                   <button
                     onClick={() => setCaixaView("delivery")}
-                    className="px-3 py-1.5 font-bold animate-pulse"
-                    style={{ color: '#b45309', background: '#fef3c7', borderColor: '#c0c0c0' }}
+                    className="px-3 py-1.5 font-bold animate-pulse bg-amber-500/15 text-amber-500"
                   >
                     🛵 {pedidosAguardandoConfirmacao.length} delivery aguardando
                   </button>
