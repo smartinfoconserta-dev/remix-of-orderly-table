@@ -75,19 +75,36 @@ const actionLabels: Record<string, string> = {
   chamar_garcom: "Chamada de garçom",
   lancar_pedido: "Lançamento de pedido",
   pedido_cliente: "Pedido do cliente",
+  pedido_garcom: "Pedido do garçom",
+  pedido_caixa: "Pedido do caixa",
   pedido_pronto: "Pedido pronto",
   abertura_caixa: "Abertura de caixa",
+  abrir_caixa: "Abertura de caixa",
+  fechar_turno: "Fechamento de turno",
   fechamento_dia: "Fechamento do dia",
+  confirmar_delivery: "Delivery confirmado",
+  rejeitar_delivery: "Delivery rejeitado",
+  delivery_entregue: "Delivery entregue",
+  sangria: "Sangria",
+  suprimento: "Suprimento",
 };
 
 const RELEVANT_LOG_ACTIONS = new Set([
+  "pedido_cliente", "pedido_garcom", "pedido_caixa",
   "fechar_conta",
-  "abertura_caixa",
-  "fechamento_dia",
-  "cancelar_pedido",
-  "cancelar_item",
-  "zerar_mesa",
+  "confirmar_delivery", "rejeitar_delivery", "delivery_entregue",
+  "chamar_garcom",
+  "abrir_caixa", "abertura_caixa", "fechar_turno", "fechamento_dia",
+  "sangria", "suprimento",
 ]);
+
+type LogCategory = "all" | "pedidos" | "caixa" | "delivery";
+const LOG_CATEGORY_ACTIONS: Record<LogCategory, Set<string> | null> = {
+  all: null,
+  pedidos: new Set(["pedido_cliente", "pedido_garcom", "pedido_caixa", "fechar_conta", "chamar_garcom"]),
+  caixa: new Set(["abrir_caixa", "abertura_caixa", "fechar_turno", "fechamento_dia", "sangria", "suprimento"]),
+  delivery: new Set(["confirmar_delivery", "rejeitar_delivery", "delivery_entregue"]),
+};
 
 const formatDateHeader = (dateStr: string): string => {
   const date = new Date(dateStr + "T00:00:00");
