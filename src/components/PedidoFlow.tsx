@@ -397,18 +397,16 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
   );
 
   const handleChamarGarcom = useCallback(() => {
-    chamarGarcom(mesaId);
-    toast.success("Garçom a caminho", { duration: 1000, icon: "🔔" });
+    if (mesa?.chamarGarcom) {
+      // Already called — dismiss
+      dismissChamarGarcom(mesaId);
+      toast("Chamado cancelado", { duration: 1000, icon: "✕" });
+    } else {
+      chamarGarcom(mesaId);
+      toast.success("Garçom a caminho", { duration: 1000, icon: "🔔" });
+    }
     setIsClientIdle(false);
-
-    // Show visual banner
-    if (garcomBannerTimerRef.current) window.clearTimeout(garcomBannerTimerRef.current);
-    setShowGarcomBanner(true);
-    garcomBannerTimerRef.current = window.setTimeout(() => {
-      setShowGarcomBanner(false);
-      garcomBannerTimerRef.current = null;
-    }, 4000);
-  }, [chamarGarcom, mesaId]);
+  }, [chamarGarcom, dismissChamarGarcom, mesa?.chamarGarcom, mesaId]);
 
   // ── Long-press admin gesture ──
   const handleLogoPointerDown = useCallback(() => {
