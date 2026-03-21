@@ -772,6 +772,8 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
     const result = await verifyManagerAccess(turnoManagerName, turnoManagerPin);
     if (!result.ok) { setTurnoError(result.error ?? "Não autorizado"); setIsClosingTurno(false); return; }
     fecharCaixaDoDia(currentOperator);
+    // Clear operator shift tracking
+    try { localStorage.removeItem("obsidian-caixa-operadores-v1"); } catch {}
     setTurnoModalOpen(false);
     setIsClosingTurno(false);
     setTurnoManagerName("");

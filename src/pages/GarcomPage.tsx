@@ -45,7 +45,7 @@ const GarcomPage = () => {
   const chamadoCount = mesas.filter((m) => m.chamarGarcom).length;
 
   const mesasFiltradas = mesas.filter((m) => {
-    if (filtro === "consumo") return m.status === "ocupada";
+    if (filtro === "consumo") return m.status === "consumo";
     if (filtro === "livres") return m.status === "livre";
     if (filtro === "chamado") return m.chamarGarcom;
     return true;
