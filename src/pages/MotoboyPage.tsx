@@ -74,8 +74,14 @@ export default function MotoboyPage() {
   };
 
   // ── QR scan ──
-  const handleScanQR = (pedidoId: string) => {
-    setScanningPedidoId(pedidoId);
+  const handleScanQR = (pedidoId?: string) => {
+    if (pedidoId) {
+      setScanningPedidoId(pedidoId);
+      setGeneralScan(false);
+    } else {
+      setScanningPedidoId(null);
+      setGeneralScan(true);
+    }
     fileInputRef.current?.click();
   };
 
