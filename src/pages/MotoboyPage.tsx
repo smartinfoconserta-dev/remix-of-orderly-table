@@ -119,8 +119,8 @@ export default function MotoboyPage() {
     const ordemObj: Record<string, number> = {};
     ordem.forEach((id, i) => { ordemObj[id] = i; });
     return [...pending].sort((a, b) => {
-      const ia = ordemMap.get(a.id) ?? 9999;
-      const ib = ordemMap.get(b.id) ?? 9999;
+      const ia = ordemObj[a.id] ?? 9999;
+      const ib = ordemObj[b.id] ?? 9999;
       if (ia !== ib) return ia - ib;
       return new Date(a.criadoEmIso).getTime() - new Date(b.criadoEmIso).getTime();
     });
