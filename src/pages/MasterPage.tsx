@@ -112,6 +112,10 @@ const MasterPage = () => {
   const [filtroStatus, setFiltroStatus] = useState<"todos" | "ativos" | "bloqueados" | "vencidos">("todos");
   const [filtroPlano, setFiltroPlano] = useState("todos");
   const [activeTab, setActiveTab] = useState("clientes");
+
+  // Aviso state
+  const [avisoMensagem, setAvisoMensagem] = useState("");
+  const [avisoTipo, setAvisoTipo] = useState<"info" | "alerta" | "urgente">("info");
   
 
   const refresh = () => { setClientes(getClientes()); setDespesas(getDespesas()); };
