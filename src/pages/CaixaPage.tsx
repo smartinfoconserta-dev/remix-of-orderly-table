@@ -1690,6 +1690,13 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                     )}
                   </div>
 
+                  {mesa.pedidos.some((p) => p.paraViagem) && !fechamentoPronto && totalConta > 0 && (
+                    <div className="flex items-center gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-2.5">
+                      <ShoppingBag className="h-4 w-4 text-amber-400 shrink-0" />
+                      <p className="text-xs font-bold text-amber-400">Lembrar: pedido para levar — verifique a embalagem</p>
+                    </div>
+                  )}
+
                   {/* Payment method large buttons */}
                   {!fechamentoPronto && totalConta > 0 && (
                     <div className="grid grid-cols-2 gap-3">
