@@ -260,6 +260,84 @@ export default function MotoboyPage() {
 
           return deliveriesAtivos.map(renderCard);
         })()}
+        {/* ── Prestação de contas ── */}
+        {(() => {
+          const entregues = pedidosBalcao.filter(
+            (p) => p.origem === "delivery" && p.statusBalcao === "entregue" && p.motoboyNome
+          );
+          if (entregues.length === 0) return null;
+
+          const PRESTACAO_KEY = "orderly-motoboy-prestacao-v1";
+          const getPrestados = (): string[] => {
+            try { const raw = localStorage.getItem(PRESTACAO_KEY); return raw ? JSON.parse(raw) : []; } catch { return []; }
+          };
+          const marcarPrestado = (motoboyNome: string) => {
+            const ids = entregues.filter((p) => p.motoboyNome === motoboyNome).map((p) => p.id);
+            const current = getPrestados();
+            localStorage.setItem(PRESTACAO_KEY, JSON.stringify([...current, ...ids]));
+          };
+          const prestados = getPrestados();
+
+          const porMotoboy: Record<string, typeof entregues> = {};
+          for (const p of entregues) {
+            const key = p.motoboyNome!;
+            if (!porMotoboy[key]) porMotoboy[key] = [];
+            porMotoboy[key].push(p);
+          }
+
+          const motoboyNames = Object.keys(porMotoboy);
+          if (motoboyNames.length === 0) return null;
+
+          return (
+            <div className="mt-6 space-y-3">
+              <h2 className="font-bold text-lg flex items-center gap-2">
+                <DollarSign className="w-5 h-5 text-primary" /> Prestação de contas
+              </h2>
+              {motoboyNames.map((mNome) => {
+                const pedidos = porMotoboy[mNome];
+                const todosPrestados = pedidos.every((p) => prestados.includes(p.id));
+                const totalDinheiro = pedidos.filter((p) => p.formaPagamentoDelivery === "dinheiro").reduce((s, p) => s + p.total, 0);
+                const totalOutros = pedidos.filter((p) => p.formaPagamentoDelivery !== "dinheiro").reduce((s, p) => s + p.total, 0);
+
+                return (
+                  <Card key={mNome} className={todosPrestados ? "opacity-50" : ""}>
+                    <CardContent className="p-4 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <p className="font-bold">{mNome}</p>
+                        <Badge variant="outline">{pedidos.length} entrega(s)</Badge>
+                      </div>
+                      <div className="text-sm space-y-1">
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Dinheiro (a prestar contas)</span>
+                          <span className="font-bold text-amber-500">R$ {totalDinheiro.toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">PIX/Cartão (já liquidado)</span>
+                          <span className="font-bold text-emerald-500">R$ {totalOutros.toFixed(2)}</span>
+                        </div>
+                      </div>
+                      {!todosPrestados && totalDinheiro > 0 && (
+                        <Button
+                          size="sm"
+                          className="w-full"
+                          onClick={() => {
+                            marcarPrestado(mNome);
+                            window.location.reload();
+                          }}
+                        >
+                          Confirmar prestação — R$ {totalDinheiro.toFixed(2)}
+                        </Button>
+                      )}
+                      {todosPrestados && (
+                        <p className="text-xs text-muted-foreground italic text-center">Prestação confirmada ✓</p>
+                      )}
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          );
+        })()}
       </div>
 
       {/* Floating button */}

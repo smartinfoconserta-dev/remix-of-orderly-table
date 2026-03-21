@@ -2008,6 +2008,25 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                 );
               })()}
             </div>
+            {/* ── Delivery do turno ── */}
+            {(() => {
+              const deliveryPedidos = pedidosBalcao.filter((p) => p.origem === "delivery" && p.statusBalcao !== "aguardando_confirmacao");
+              if (deliveryPedidos.length === 0) return null;
+              const totalDelivery = deliveryPedidos.reduce((s, p) => s + p.total, 0);
+              const dinheiroDelivery = deliveryPedidos.filter((p) => p.formaPagamentoDelivery === "dinheiro").reduce((s, p) => s + p.total, 0);
+              const outrosDelivery = totalDelivery - dinheiroDelivery;
+              return (
+                <div className="rounded-xl border border-border bg-card p-4 space-y-2 text-sm">
+                  <h3 className="text-sm font-black text-foreground flex items-center gap-2">
+                    <Truck className="h-4 w-4 text-primary" /> Delivery do turno
+                  </h3>
+                  <div className="flex justify-between"><span className="text-muted-foreground">Pedidos delivery</span><span className="font-black tabular-nums text-foreground">{deliveryPedidos.length}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">Valor total delivery</span><span className="font-black tabular-nums text-foreground">{formatPrice(totalDelivery)}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">Em dinheiro (motoboy presta contas)</span><span className="font-black tabular-nums text-amber-400">{formatPrice(dinheiroDelivery)}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">PIX/cartão (já liquidado)</span><span className="font-black tabular-nums text-emerald-400">{formatPrice(outrosDelivery)}</span></div>
+                </div>
+              );
+            })()}
             <div className="flex justify-between text-xs text-muted-foreground">
               <span>Aberto: {caixaOpenTime || "—"}</span>
               <span>Agora: {clockStr}</span>
