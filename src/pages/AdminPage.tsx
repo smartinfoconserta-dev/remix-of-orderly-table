@@ -856,10 +856,15 @@ const AdminPage = () => {
         {/* ═══ CONFIGURAÇÕES ═══ */}
         {tab === "configuracoes" && (
           <div className="space-y-8 fade-in">
-            {/* Identity */}
+            {/* ── Seção 1: Identidade Visual ── */}
             <div>
               <h2 className="text-2xl font-black text-foreground">Configurações</h2>
-              <p className="text-sm text-muted-foreground">Personalize o visual do restaurante</p>
+              <p className="text-sm text-muted-foreground">Personalize o visual e funcionamento do restaurante</p>
+            </div>
+
+            <div>
+              <h3 className="text-lg font-black text-foreground flex items-center gap-2">🎨 Identidade Visual</h3>
+              <p className="text-xs text-muted-foreground mb-3">Logo, nome e cores do restaurante</p>
             </div>
             <div className="surface-card max-w-lg space-y-5 rounded-2xl p-6">
               <div className="space-y-1.5">
@@ -896,26 +901,46 @@ const AdminPage = () => {
                   <span className="text-sm text-muted-foreground font-mono">{sistemaConfig.corPrimaria || "#f97316"}</span>
                 </div>
               </div>
+            </div>
+
+            <div className="max-w-lg border-t border-border" />
+
+            {/* ── Seção 2: WhatsApp ── */}
+            <div>
+              <h3 className="text-lg font-black text-foreground flex items-center gap-2">📱 WhatsApp</h3>
+              <p className="text-xs text-muted-foreground mb-3">Número e mensagens para delivery</p>
+            </div>
+            <div className="surface-card max-w-lg space-y-5 rounded-2xl p-6">
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-muted-foreground">Taxa de entrega padrão (R$)</label>
+                <label className="text-xs font-bold text-muted-foreground">Telefone WhatsApp do restaurante</label>
                 <Input
-                  type="number"
-                  min="0"
-                  step="0.5"
-                  value={sistemaConfig.taxaEntrega ?? ""}
-                  onChange={(e) => setSistemaConfig((c) => ({ ...c, taxaEntrega: e.target.value ? parseFloat(e.target.value) : undefined }))}
-                  placeholder="0.00"
+                  value={sistemaConfig.telefoneRestaurante || ""}
+                  onChange={(e) => setSistemaConfig((c) => ({ ...c, telefoneRestaurante: e.target.value.replace(/\D/g, "") }))}
+                  placeholder="11999999999 (só números com DDD)"
+                  inputMode="tel"
                 />
-                <p className="text-xs text-muted-foreground">Usado quando nenhum bairro está cadastrado</p>
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-muted-foreground">Mensagem de boas-vindas WhatsApp</label>
+                <Textarea
+                  value={sistemaConfig.mensagemBoasVindas ?? `Olá! Bem-vindo ao ${sistemaConfig.nomeRestaurante}! 😊 Clique para fazer seu pedido:`}
+                  onChange={(e) => setSistemaConfig((c) => ({ ...c, mensagemBoasVindas: e.target.value }))}
+                  rows={3}
+                />
               </div>
             </div>
 
-            {/* Modo de entrega */}
+            <div className="max-w-lg border-t border-border" />
+
+            {/* ── Seção 3: Delivery ── */}
             <div>
-              <h3 className="text-lg font-black text-foreground">Modo de entrega</h3>
-              <p className="text-xs text-muted-foreground">Define se aceita pedidos de qualquer bairro ou apenas dos cadastrados</p>
+              <h3 className="text-lg font-black text-foreground flex items-center gap-2">🛵 Delivery</h3>
+              <p className="text-xs text-muted-foreground mb-3">Modo de entrega e taxas por bairro</p>
             </div>
+
+            {/* Modo de entrega */}
             <div className="surface-card max-w-lg rounded-2xl p-6 space-y-3">
+              <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">Modo de entrega</p>
               <label className="flex items-center gap-3 cursor-pointer" onClick={() => { setDeliveryModo("todos"); localStorage.setItem("obsidian-delivery-modo-v1", "todos"); }}>
                 <span className={`h-5 w-5 rounded-full border-2 flex items-center justify-center ${deliveryModo === "todos" ? "border-primary" : "border-muted-foreground/40"}`}>
                   {deliveryModo === "todos" && <span className="h-2.5 w-2.5 rounded-full bg-primary" />}
@@ -930,13 +955,25 @@ const AdminPage = () => {
               </label>
             </div>
 
-            {/* Taxa por bairro */}
-            <div>
-              <h3 className="text-lg font-black text-foreground">Taxa por bairro</h3>
-              <p className="text-xs text-muted-foreground">Defina taxas de entrega diferentes por bairro</p>
+            {/* Taxa fixa legado */}
+            <div className="surface-card max-w-lg rounded-2xl p-6 space-y-2">
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-muted-foreground">Taxa de entrega padrão (R$)</label>
+                <Input
+                  type="number"
+                  min="0"
+                  step="0.5"
+                  value={sistemaConfig.taxaEntrega ?? ""}
+                  onChange={(e) => setSistemaConfig((c) => ({ ...c, taxaEntrega: e.target.value ? parseFloat(e.target.value) : undefined }))}
+                  placeholder="0.00"
+                />
+                <p className="text-[10px] text-amber-400 font-semibold">⚠️ Taxa legada — usada quando nenhum bairro está cadastrado</p>
+              </div>
             </div>
+
+            {/* Taxa por bairro */}
             <div className="surface-card max-w-lg space-y-4 rounded-2xl p-6">
-              {/* Add new bairro */}
+              <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">Taxas por bairro</p>
               <div className="flex gap-2 items-end">
                 <div className="flex-1 space-y-1.5">
                   <label className="text-xs font-bold text-muted-foreground">Nome do bairro</label>
@@ -964,8 +1001,6 @@ const AdminPage = () => {
                   <Plus className="h-4 w-4" /> Adicionar
                 </Button>
               </div>
-
-              {/* List */}
               {bairros.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-4">Nenhum bairro cadastrado. A taxa padrão será usada.</p>
               ) : (
@@ -997,32 +1032,12 @@ const AdminPage = () => {
               )}
             </div>
 
-            {/* WhatsApp & Messages */}
-            <div className="surface-card max-w-lg space-y-5 rounded-2xl p-6">
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-muted-foreground">Telefone WhatsApp do restaurante</label>
-                <Input
-                  value={sistemaConfig.telefoneRestaurante || ""}
-                  onChange={(e) => setSistemaConfig((c) => ({ ...c, telefoneRestaurante: e.target.value.replace(/\D/g, "") }))}
-                  placeholder="11999999999 (só números com DDD)"
-                  inputMode="tel"
-                />
-              </div>
-              {/* Tempo estimado removido — agora é selecionado pelo caixa ao confirmar cada pedido */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-muted-foreground">Mensagem de boas-vindas WhatsApp</label>
-                <Textarea
-                  value={sistemaConfig.mensagemBoasVindas ?? `Olá! Bem-vindo ao ${sistemaConfig.nomeRestaurante}! 😊 Clique para fazer seu pedido:`}
-                  onChange={(e) => setSistemaConfig((c) => ({ ...c, mensagemBoasVindas: e.target.value }))}
-                  rows={3}
-                />
-              </div>
-            </div>
+            <div className="max-w-lg border-t border-border" />
 
-            {/* Instagram & Wi-Fi */}
+            {/* ── Seção 4: QR Codes ── */}
             <div>
-              <h3 className="text-lg font-black text-foreground">QR Codes</h3>
-              <p className="text-xs text-muted-foreground">Instagram e Wi-Fi exibidos na tela inicial do cliente</p>
+              <h3 className="text-lg font-black text-foreground flex items-center gap-2">📲 QR Codes</h3>
+              <p className="text-xs text-muted-foreground mb-3">Instagram e Wi-Fi exibidos na tela inicial do cliente</p>
             </div>
             <div className="surface-card max-w-lg space-y-5 rounded-2xl p-6">
               {/* Instagram */}
@@ -1078,7 +1093,7 @@ const AdminPage = () => {
                   <Input
                     value={sistemaConfig.senhaWifi || ""}
                     onChange={(e) => setSistemaConfig((c) => ({ ...c, senhaWifi: e.target.value }))}
-                    placeholder="Ex.: MinhaSenha123"
+                    placeholder="Senha da rede Wi-Fi"
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -1116,10 +1131,12 @@ const AdminPage = () => {
               </div>
             </div>
 
-            {/* Banners */}
+            <div className="max-w-lg border-t border-border" />
+
+            {/* ── Seção 5: Banners ── */}
             <div>
-              <h3 className="text-lg font-black text-foreground">Banners do carrossel</h3>
-              <p className="text-xs text-muted-foreground">Até 5 banners exibidos na tela inicial do cliente</p>
+              <h3 className="text-lg font-black text-foreground flex items-center gap-2">🖼️ Banners</h3>
+              <p className="text-xs text-muted-foreground mb-3">Até 5 banners exibidos na tela inicial do cliente</p>
             </div>
             <div className="space-y-3 max-w-lg">
               {(sistemaConfig.banners ?? []).map((banner, idx) => (

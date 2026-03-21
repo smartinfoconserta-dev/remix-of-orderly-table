@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowLeft,
   Loader2,
+  Printer,
   Search,
   Banknote,
   Check,
@@ -414,7 +415,51 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
     setDeliveryCidade("");
   }, []);
 
-  /* ── auth guard ── */
+  /* ── Print receipt helper (must be before early returns) ── */
+  const handlePrintComanda = useCallback((data: {
+    tipo: string;
+    numero: number;
+    dataHora: string;
+    itens: Array<{ quantidade: number; nome: string; preco: number }>;
+    subtotal: number;
+    taxaEntrega?: number;
+    total: number;
+    formaPagamento?: string;
+  }) => {
+    let el = document.getElementById("comanda-print");
+    if (!el) {
+      el = document.createElement("div");
+      el.id = "comanda-print";
+      el.style.display = "none";
+      document.body.appendChild(el);
+    }
+    const nomeRest = sistemaConfig.nomeRestaurante || "Restaurante";
+    const taxaHtml = (data.taxaEntrega ?? 0) > 0
+      ? `<div class="print-item"><span>Taxa de entrega</span><span>R$ ${data.taxaEntrega!.toFixed(2).replace(".", ",")}</span></div>`
+      : "";
+    const pagHtml = data.formaPagamento
+      ? `<div class="print-center">${data.formaPagamento}</div>`
+      : "";
+    el.innerHTML = `
+      <h2>${nomeRest}</h2>
+      <div class="print-center">${data.tipo}</div>
+      <div class="print-center">Pedido #${data.numero} — ${data.dataHora}</div>
+      <div class="print-divider"></div>
+      ${data.itens.map((it) => `<div class="print-item"><span>${it.quantidade}x ${it.nome}</span><span>R$ ${(it.preco * it.quantidade).toFixed(2).replace(".", ",")}</span></div>`).join("")}
+      <div class="print-divider"></div>
+      <div class="print-item"><span>Subtotal</span><span>R$ ${data.subtotal.toFixed(2).replace(".", ",")}</span></div>
+      ${taxaHtml}
+      <div class="print-total"><span>TOTAL</span><span>R$ ${data.total.toFixed(2).replace(".", ",")}</span></div>
+      <div class="print-divider"></div>
+      ${pagHtml}
+      <div class="print-center" style="margin-top:8px;font-size:10px">Obrigado pela preferência!</div>
+    `;
+    el.style.display = "block";
+    window.print();
+    el.style.display = "none";
+  }, [sistemaConfig.nomeRestaurante]);
+
+
   if (!currentOperator || !hasCaixaAccess) {
     return (
       <div className="min-h-svh flex flex-col bg-background">
@@ -819,6 +864,22 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                   <span>{currentOperator.nome}</span>
                 </div>
                 <div className="ml-auto flex flex-wrap items-center gap-2">
+                  {mesa.pedidos.length > 0 && (
+                    <Button variant="outline" size="sm" onClick={() => {
+                      const allItens = mesa.pedidos.flatMap((p) => p.itens);
+                      handlePrintComanda({
+                        tipo: `Mesa ${String(mesa.numero).padStart(2, "0")}`,
+                        numero: mesa.pedidos[mesa.pedidos.length - 1].numeroPedido,
+                        dataHora: new Date().toLocaleString("pt-BR"),
+                        itens: allItens.map((it) => ({ quantidade: it.quantidade, nome: it.nome, preco: it.precoUnitario })),
+                        subtotal: mesa.total,
+                        total: mesa.total,
+                      });
+                    }} className="rounded-xl font-bold gap-1.5">
+                      <Printer className="h-3.5 w-3.5" />
+                      Imprimir
+                    </Button>
+                  )}
                   <Button variant="outline" size="sm" onClick={() => setComandaOpen(true)} className="rounded-xl font-bold gap-1.5">
                     <ShoppingCart className="h-3.5 w-3.5" />
                     Abrir comanda
@@ -876,6 +937,26 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <User className="h-3.5 w-3.5" />
                   <span>{currentOperator.nome}</span>
+                </div>
+                <div className="ml-auto">
+                  <Button variant="outline" size="sm" onClick={() => {
+                    const tipo = balcaoPedido.origem === "delivery"
+                      ? `Delivery — ${balcaoPedido.clienteNome || ""}`
+                      : `Balcão — ${balcaoPedido.clienteNome || ""}`;
+                    handlePrintComanda({
+                      tipo,
+                      numero: balcaoPedido.numeroPedido,
+                      dataHora: new Date().toLocaleString("pt-BR"),
+                      itens: balcaoPedido.itens.map((it) => ({ quantidade: it.quantidade, nome: it.nome, preco: it.precoUnitario })),
+                      subtotal: balcaoPedido.itens.reduce((s, it) => s + it.precoUnitario * it.quantidade, 0),
+                      taxaEntrega: (balcaoPedido as any).taxaEntrega,
+                      total: balcaoPedido.total,
+                      formaPagamento: balcaoPedido.formaPagamentoDelivery ? getPaymentMethodLabel(balcaoPedido.formaPagamentoDelivery as PaymentMethod) : undefined,
+                    });
+                  }} className="rounded-xl font-bold gap-1.5">
+                    <Printer className="h-3.5 w-3.5" />
+                    Imprimir
+                  </Button>
                 </div>
               </div>
             </div>

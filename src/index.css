@@ -192,3 +192,49 @@
 .mesa-card-interactive:active {
   transform: scale(0.97);
 }
+
+/* ── Print receipt styles ── */
+@media print {
+  body > *:not(#comanda-print) {
+    display: none !important;
+  }
+  #comanda-print {
+    display: block !important;
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+    background: white;
+    color: black;
+    padding: 8mm;
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    line-height: 1.4;
+    width: 80mm;
+    max-width: 80mm;
+    margin: 0 auto;
+  }
+  #comanda-print h2 {
+    font-size: 16px;
+    text-align: center;
+    margin-bottom: 4px;
+    font-weight: 900;
+  }
+  #comanda-print .print-divider {
+    border-top: 1px dashed #000;
+    margin: 6px 0;
+  }
+  #comanda-print .print-item {
+    display: flex;
+    justify-content: space-between;
+    gap: 4px;
+  }
+  #comanda-print .print-total {
+    font-weight: 900;
+    font-size: 14px;
+    display: flex;
+    justify-content: space-between;
+  }
+  #comanda-print .print-center {
+    text-align: center;
+  }
+}
