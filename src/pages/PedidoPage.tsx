@@ -14,11 +14,15 @@ import { toast } from "sonner";
 
 const normStr = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
 
-const sysConfig = getSistemaConfig();
-const RESTAURANTE_NOME = sysConfig.nomeRestaurante || "Restaurante";
-const RESTAURANTE_LOGO = sysConfig.logoUrl || "";
-const RESTAURANTE_INITIALS = RESTAURANTE_NOME.slice(0, 2).toUpperCase();
-const MODO_ID = sysConfig.modoIdentificacaoDelivery || "visitante";
+const getStaticConfig = () => {
+  const sc = getSistemaConfig();
+  return {
+    nome: sc.nomeRestaurante || "Restaurante",
+    logo: sc.logoUrl || "",
+    initials: (sc.nomeRestaurante || "Restaurante").slice(0, 2).toUpperCase(),
+  };
+};
+const { nome: RESTAURANTE_NOME, logo: RESTAURANTE_LOGO, initials: RESTAURANTE_INITIALS } = getStaticConfig();
 
 // ── Etapas por modo ──
 // Visitante: cardapio → identificacao → confirmacao → sucesso
@@ -127,10 +131,12 @@ function ConfirmacaoEtapa({ nome, endereco, numero, complemento, bairro, itens, 
 export default function PedidoPage() {
   const { criarPedidoBalcao, pedidosBalcao } = useRestaurant();
 
-  // Check if delivery is active
+  // Read config inside component so it reacts to admin changes
+  const sysConfig = getSistemaConfig();
+  const MODO_ID = sysConfig.modoIdentificacaoDelivery || "visitante";
   const deliveryAtivo = sysConfig.deliveryAtivo !== false;
   const isCadastro = MODO_ID === "cadastro";
-  const [etapa, setEtapa] = useState<Etapa>(isCadastro ? "login" : "cardapio");
+  const [etapa, setEtapa] = useState<Etapa>(() => isCadastro ? "login" : "cardapio");
 
   // Login state (cadastro mode)
   const [loginTel, setLoginTel] = useState("");

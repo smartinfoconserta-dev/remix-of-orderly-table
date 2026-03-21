@@ -63,6 +63,7 @@ import type { ItemCarrinho } from "@/contexts/RestaurantContext";
 import { findClienteDelivery, upsertClienteDelivery, getBairros, type ClienteDelivery } from "@/lib/deliveryStorage";
 
 /* ── helpers ── */
+const normStr = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
 const formatPrice = (v: number) => `R$ ${v.toFixed(2).replace(".", ",")}`;
 const toCents = (value: number) => Math.round(value * 100);
 
@@ -622,7 +623,6 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
       formaPagamentoDelivery: balcaoFormaPag,
       trocoParaQuanto: balcaoFormaPag === "dinheiro" ? parseCurrencyInput(balcaoTroco) || undefined : undefined,
       taxaEntrega: (() => {
-        const normStr = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
         const bairrosDisp = getBairros().filter((b) => b.ativo);
         const match = balcaoBairro.trim() ? bairrosDisp.find((b) => normStr(b.nome) === normStr(balcaoBairro)) : null;
         return match ? match.taxa : 0;
@@ -1262,7 +1262,6 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                                       className="h-8 text-xs rounded-lg"
                                     />
                                     {(() => {
-                                      const normStr = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
                                       const bairros = getBairros().filter((b) => b.ativo);
                                       const bairroPedido = pb.bairro || "";
                                       const match = bairroPedido ? bairros.find((b) => normStr(b.nome) === normStr(bairroPedido)) : null;
@@ -1339,7 +1338,6 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                                       setConfirmTempo("");
                                       setConfirmTempoCustom("");
                                       // Auto-fill taxa from bairros
-                                      const normStr = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
                                       const bairros = getBairros().filter((b) => b.ativo);
                                       const bairroPedido = pb.bairro || "";
                                       const match = bairroPedido ? bairros.find((b) => normStr(b.nome) === normStr(bairroPedido)) : null;

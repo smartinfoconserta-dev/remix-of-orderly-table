@@ -97,12 +97,7 @@ const activeBannerSlides = configBanners.length > 0
 
 const HOME_TAB_ID = "inicio";
 const HOME_TAB: Categoria = { id: HOME_TAB_ID, nome: "Início", icone: "house" };
-const customCats = getCategoriasCustom();
-const allCategorias: Categoria[] = [
-  ...categorias,
-  ...customCats.map((c) => ({ id: c.id, nome: c.nome, icone: c.icone })),
-];
-const navigationItems = [HOME_TAB, ...allCategorias];
+// customCats & navigationItems moved inside component via useMemo
 const CARD_STAGGER_STEP_MS = 50;
 const CARD_ANIMATION_DURATION_MS = 200;
 const PRODUCT_MODAL_OPEN_DELAY_MS = 120;
@@ -134,6 +129,12 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
     dismissChamarGarcom,
   } = useRestaurant();
   const isExternalOrder = modo === "balcao" || modo === "delivery";
+  const customCats = useMemo(() => getCategoriasCustom(), []);
+  const allCategorias: Categoria[] = useMemo(() => [
+    ...categorias,
+    ...customCats.map((c) => ({ id: c.id, nome: c.nome, icone: c.icone })),
+  ], [customCats]);
+  const navigationItems = useMemo(() => [HOME_TAB, ...allCategorias], [allCategorias]);
   const [localCarrinho, setLocalCarrinho] = useState<ItemCarrinho[]>([]);
   const [categoriaAtiva, setCategoriaAtiva] = useState(isExternalOrder ? categorias[0]?.id ?? HOME_TAB_ID : HOME_TAB_ID);
   const [categoriaExibida, setCategoriaExibida] = useState(isExternalOrder ? categorias[0]?.id ?? HOME_TAB_ID : HOME_TAB_ID);
