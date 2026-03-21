@@ -1338,7 +1338,6 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                                       setConfirmTempo("");
                                       setConfirmTempoCustom("");
                                       // Auto-fill taxa from bairros
-                                      const normStr = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
                                       const bairros = getBairros().filter((b) => b.ativo);
                                       const bairroPedido = pb.bairro || "";
                                       const match = bairroPedido ? bairros.find((b) => normStr(b.nome) === normStr(bairroPedido)) : null;
