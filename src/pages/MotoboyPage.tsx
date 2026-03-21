@@ -188,6 +188,13 @@ export default function MotoboyPage() {
     toast.success("Entrega confirmada! ✓");
   };
 
+  const handleCancelar = (pedidoId: string) => {
+    cancelarEntregaMotoboy(pedidoId, cancelMotivo || undefined);
+    toast.info("Entrega devolvida ao caixa");
+    setCancelingId(null);
+    setCancelMotivo("");
+  };
+
   // ── Drag and drop (native, touch-friendly) ──
   const handleDragStart = (id: string) => setDraggingId(id);
   const handleDragOver = (e: React.DragEvent, id: string) => {
