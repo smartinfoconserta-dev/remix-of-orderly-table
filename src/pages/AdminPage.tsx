@@ -485,7 +485,7 @@ const AdminPage = () => {
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <h3 className="text-sm font-black text-foreground">Categorias</h3>
-                <Button size="sm" variant="outline" className="rounded-xl font-bold gap-1 text-xs" onClick={() => { setCatEditando(null); setCatNomeInput(""); setCatDialogOpen(true); }}>
+                <Button size="sm" variant="outline" className="rounded-xl font-bold gap-1 text-xs" onClick={() => { setCatEditando(null); setCatNomeInput(""); setCatIconeInput("tag"); setCatDialogOpen(true); }}>
                   <Plus className="h-3.5 w-3.5" /> Nova categoria
                 </Button>
               </div>
