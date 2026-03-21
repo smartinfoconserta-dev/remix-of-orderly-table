@@ -425,7 +425,7 @@ export default function MotoboyPage() {
                             {p.statusBalcao === "pronto" && (
                               <>
                                 <Button size="sm" variant="outline" className="gap-1 text-xs" onClick={() => handleScanQR(p.id)}>
-                                  <QrCode className="w-3.5 h-3.5" /> QR
+                                  📷 Escanear retirada
                                 </Button>
                                 <Button size="sm" className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-xs" onClick={() => marcarBalcaoSaiu(p.id, sessao.nome)}>
                                   Retirar
