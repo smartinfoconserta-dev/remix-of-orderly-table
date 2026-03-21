@@ -1096,12 +1096,7 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
     </div>
   );
 
-  const garcomBanner = showGarcomBanner ? (
-    <div className="animate-fade-in px-4 py-3 bg-amber-500/90 backdrop-blur-sm flex items-center gap-3 text-white">
-      <Bell className="h-6 w-6 shrink-0 animate-pulse" />
-      <span className="text-sm font-bold">Garçom chamado! Estamos a caminho.</span>
-    </div>
-  ) : null;
+  const garcomBanner = null;
 
   return (
     <>
