@@ -962,6 +962,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                       taxaEntrega: (balcaoPedido as any).taxaEntrega,
                       total: balcaoPedido.total,
                       formaPagamento: balcaoPedido.formaPagamentoDelivery ? getPaymentMethodLabel(balcaoPedido.formaPagamentoDelivery as PaymentMethod) : undefined,
+                      paraViagem: (balcaoPedido as any).paraViagem === true,
                     });
                   }} className="rounded-xl font-bold gap-1.5">
                     <Printer className="h-3.5 w-3.5" />
