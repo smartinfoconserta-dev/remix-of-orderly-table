@@ -1464,12 +1464,6 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                 {caixaView === "mesas" && (
                 <div className="flex flex-[3] flex-col border-l border-border bg-card/50 overflow-hidden">
                   <div className="flex-1 flex flex-col items-center justify-center p-6 space-y-6">
-                    {/* Total em aberto */}
-                    <div className="text-center space-y-1">
-                      <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">Total em aberto</p>
-                      <p className="text-4xl font-black tabular-nums text-primary">{formatPrice(valorTotalAberto)}</p>
-                    </div>
-
                     {/* KPIs */}
                     <div className="grid grid-cols-2 gap-3 w-full max-w-xs">
                       <div className="rounded-xl border border-border bg-card p-3 text-center">
@@ -1487,32 +1481,33 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                       <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Último fechamento</p>
                       <p className="text-sm font-black text-foreground mt-1">
                         {fechamentos.length > 0
-                          ? `Mesa ${String(fechamentos[0].mesaNumero).padStart(2, "0")} — ${formatPrice(fechamentos[0].total)}`
+                          ? (() => {
+                              const f = fechamentos[0];
+                              const id = f.mesaId || "";
+                              if (id.includes("delivery")) return "Delivery";
+                              if (id.includes("balcao") || f.mesaNumero === 0) return "Balcão";
+                              return `Mesa ${String(f.mesaNumero).padStart(2, "0")}`;
+                            })()
                           : "Nenhum ainda"}
                       </p>
                     </div>
 
-                    {/* Resumo vendas */}
-                    <div className="w-full max-w-xs space-y-1.5">
-                      <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground text-center">Vendas do turno</p>
-                      <div className="rounded-xl border border-border bg-card p-3 space-y-1">
-                        <div className="flex justify-between text-xs"><span className="text-muted-foreground">Dinheiro</span><span className="font-black tabular-nums text-foreground">{formatPrice(resumoFinanceiro.dinheiro)}</span></div>
-                        <div className="flex justify-between text-xs"><span className="text-muted-foreground">Crédito</span><span className="font-black tabular-nums text-foreground">{formatPrice(resumoFinanceiro.credito)}</span></div>
-                        <div className="flex justify-between text-xs"><span className="text-muted-foreground">Débito</span><span className="font-black tabular-nums text-foreground">{formatPrice(resumoFinanceiro.debito)}</span></div>
-                        <div className="flex justify-between text-xs"><span className="text-muted-foreground">PIX</span><span className="font-black tabular-nums text-foreground">{formatPrice(resumoFinanceiro.pix)}</span></div>
-                        <div className="flex justify-between text-xs border-t border-border pt-1 mt-1"><span className="font-bold text-foreground">Total</span><span className="font-black tabular-nums text-primary">{formatPrice(resumoFinanceiro.totalDia)}</span></div>
+                    {/* Lembrete delivery */}
+                    {pedidosAguardandoConfirmacao.length > 0 && (
+                      <div className="w-full max-w-xs rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-center space-y-2">
+                        <p className="text-sm font-black text-amber-400">
+                          🛵 {pedidosAguardandoConfirmacao.length} pedido(s) delivery aguardando confirmação
+                        </p>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="rounded-lg font-black text-xs border-amber-500/30 text-amber-400 hover:bg-amber-500/10"
+                          onClick={() => setCaixaView("delivery")}
+                        >
+                          Ver agora
+                        </Button>
                       </div>
-                    </div>
-
-                    {/* Fechar turno */}
-                    <Button
-                      onClick={() => setTurnoModalOpen(true)}
-                      variant="outline"
-                      className="w-full max-w-xs rounded-xl font-black gap-2 h-12 border-destructive/30 text-destructive hover:bg-destructive/10"
-                    >
-                      <LockKeyhole className="h-4 w-4" />
-                      Fechar turno
-                    </Button>
+                    )}
                   </div>
                 </div>
                 )}
