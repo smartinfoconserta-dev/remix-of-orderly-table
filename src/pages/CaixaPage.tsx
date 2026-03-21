@@ -429,6 +429,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
     taxaEntrega?: number;
     total: number;
     formaPagamento?: string;
+    paraViagem?: boolean;
   }) => {
     let el = document.getElementById("comanda-print");
     if (!el) {
