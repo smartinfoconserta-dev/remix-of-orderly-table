@@ -2218,43 +2218,70 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
           </DialogContent>
         </Dialog>
       )}
-      <Dialog open={turnoModalOpen} onOpenChange={(open) => { if (!open) { setTurnoModalOpen(false); setTurnoError(null); } }}>
-        <DialogContent className="rounded-2xl border-border bg-background sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <LockKeyhole className="h-5 w-5 text-destructive" />
-              Fechar turno
-            </DialogTitle>
-            <DialogDescription>
-              Autorização de gerente necessária para confirmar o fechamento.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-foreground">Nome do gerente</label>
-              <Input value={turnoManagerName} onChange={(e) => setTurnoManagerName(e.target.value)} placeholder="Ex.: Mariana" maxLength={40} />
+      {isDesktop ? (
+        /* ── TURNO CLOSE — DESKTOP CENTERED CARD WITH BACKDROP ── */
+        turnoModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center animate-in fade-in duration-200">
+            <div className="absolute inset-0 bg-foreground/80" onClick={() => { setTurnoModalOpen(false); setTurnoError(null); }} />
+            <div className="relative z-10 w-full max-w-md rounded-2xl border border-border bg-background p-6 shadow-2xl space-y-4">
+              <div className="flex items-center gap-2">
+                <LockKeyhole className="h-5 w-5 text-destructive" />
+                <h2 className="text-lg font-black text-foreground flex-1">Fechar turno</h2>
+                <button onClick={() => { setTurnoModalOpen(false); setTurnoError(null); }} className="flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-secondary text-foreground hover:bg-secondary/80">
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+              <p className="text-sm text-muted-foreground">Autorização de gerente necessária para confirmar o fechamento.</p>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-foreground">Nome do gerente</label>
+                  <Input value={turnoManagerName} onChange={(e) => setTurnoManagerName(e.target.value)} placeholder="Ex.: Mariana" maxLength={40} />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-foreground">PIN do gerente</label>
+                  <Input value={turnoManagerPin} onChange={(e) => setTurnoManagerPin(e.target.value.replace(/\D/g, "").slice(0, 6))} placeholder="4 a 6 dígitos" inputMode="numeric" autoComplete="one-time-code" onKeyDown={(e) => e.key === "Enter" && handleCloseTurno()} />
+                </div>
+                {turnoError && <p className="rounded-xl border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive">{turnoError}</p>}
+              </div>
+              <div className="flex justify-end gap-3 pt-2">
+                <Button variant="outline" onClick={() => setTurnoModalOpen(false)} className="rounded-xl font-bold">Cancelar</Button>
+                <Button variant="destructive" onClick={handleCloseTurno} className="rounded-xl font-black" disabled={isClosingTurno}>
+                  Confirmar fechamento
+                </Button>
+              </div>
             </div>
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-foreground">PIN do gerente</label>
-              <Input
-                value={turnoManagerPin}
-                onChange={(e) => setTurnoManagerPin(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                placeholder="4 a 6 dígitos"
-                inputMode="numeric"
-                autoComplete="one-time-code"
-                onKeyDown={(e) => e.key === "Enter" && handleCloseTurno()}
-              />
-            </div>
-            {turnoError && <p className="rounded-xl border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive">{turnoError}</p>}
           </div>
-          <DialogFooter className="gap-3 sm:gap-0">
-            <Button variant="outline" onClick={() => setTurnoModalOpen(false)} className="rounded-xl font-bold">Cancelar</Button>
-            <Button variant="destructive" onClick={handleCloseTurno} className="rounded-xl font-black" disabled={isClosingTurno}>
-              Confirmar fechamento
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        )
+      ) : (
+        <Dialog open={turnoModalOpen} onOpenChange={(open) => { if (!open) { setTurnoModalOpen(false); setTurnoError(null); } }}>
+          <DialogContent className="rounded-2xl border-border bg-background sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <LockKeyhole className="h-5 w-5 text-destructive" />
+                Fechar turno
+              </DialogTitle>
+              <DialogDescription>Autorização de gerente necessária para confirmar o fechamento.</DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-foreground">Nome do gerente</label>
+                <Input value={turnoManagerName} onChange={(e) => setTurnoManagerName(e.target.value)} placeholder="Ex.: Mariana" maxLength={40} />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-foreground">PIN do gerente</label>
+                <Input value={turnoManagerPin} onChange={(e) => setTurnoManagerPin(e.target.value.replace(/\D/g, "").slice(0, 6))} placeholder="4 a 6 dígitos" inputMode="numeric" autoComplete="one-time-code" onKeyDown={(e) => e.key === "Enter" && handleCloseTurno()} />
+              </div>
+              {turnoError && <p className="rounded-xl border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive">{turnoError}</p>}
+            </div>
+            <DialogFooter className="gap-3 sm:gap-0">
+              <Button variant="outline" onClick={() => setTurnoModalOpen(false)} className="rounded-xl font-bold">Cancelar</Button>
+              <Button variant="destructive" onClick={handleCloseTurno} className="rounded-xl font-black" disabled={isClosingTurno}>
+                Confirmar fechamento
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
 
       {/* ── Movimentação Modal ── */}
       <Dialog open={movModalOpen} onOpenChange={(open) => { if (!open) { setMovModalOpen(false); setMovConfirmStep(false); } }}>
