@@ -864,6 +864,22 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                   <span>{currentOperator.nome}</span>
                 </div>
                 <div className="ml-auto flex flex-wrap items-center gap-2">
+                  {mesa.pedidos.length > 0 && (
+                    <Button variant="outline" size="sm" onClick={() => {
+                      const allItens = mesa.pedidos.flatMap((p) => p.itens);
+                      handlePrintComanda({
+                        tipo: `Mesa ${String(mesa.numero).padStart(2, "0")}`,
+                        numero: mesa.pedidos[mesa.pedidos.length - 1].numeroPedido,
+                        dataHora: new Date().toLocaleString("pt-BR"),
+                        itens: allItens.map((it) => ({ quantidade: it.quantidade, nome: it.nome, preco: it.precoUnitario })),
+                        subtotal: mesa.total,
+                        total: mesa.total,
+                      });
+                    }} className="rounded-xl font-bold gap-1.5">
+                      <Printer className="h-3.5 w-3.5" />
+                      Imprimir
+                    </Button>
+                  )}
                   <Button variant="outline" size="sm" onClick={() => setComandaOpen(true)} className="rounded-xl font-bold gap-1.5">
                     <ShoppingCart className="h-3.5 w-3.5" />
                     Abrir comanda
