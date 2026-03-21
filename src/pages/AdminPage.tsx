@@ -910,20 +910,36 @@ const AdminPage = () => {
                   placeholder="Nome do restaurante"
                 />
               </div>
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-muted-foreground">URL da logo</label>
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-muted-foreground">Logo do restaurante</label>
+                {(sistemaConfig.logoBase64 || sistemaConfig.logoUrl) && (
+                  <div className="flex items-center gap-3">
+                    <img src={sistemaConfig.logoBase64 || sistemaConfig.logoUrl} alt="Logo" className="h-12 w-12 rounded-xl border border-border object-cover" />
+                    {sistemaConfig.logoBase64 && (
+                      <button type="button" onClick={() => setSistemaConfig((c) => ({ ...c, logoBase64: "" }))} className="text-xs text-destructive hover:underline">Remover foto</button>
+                    )}
+                  </div>
+                )}
+                <label className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border bg-secondary/30 px-4 py-4 text-sm font-bold text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground">
+                  <Upload className="h-5 w-5" />
+                  Fazer upload da logo
+                  <input type="file" accept="image/*" className="hidden" onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    if (file.size > 2 * 1024 * 1024) { toast.error("Imagem muito grande (máx 2MB)"); return; }
+                    const reader = new FileReader();
+                    reader.onload = () => setSistemaConfig((c) => ({ ...c, logoBase64: reader.result as string }));
+                    reader.readAsDataURL(file);
+                    e.target.value = "";
+                  }} />
+                </label>
+                <p className="text-[10px] font-bold text-muted-foreground pt-1">Ou cole uma URL</p>
                 <Input
                   value={sistemaConfig.logoUrl}
                   onChange={(e) => setSistemaConfig((c) => ({ ...c, logoUrl: e.target.value }))}
                   placeholder="https://..."
                 />
               </div>
-              {sistemaConfig.logoUrl && (
-                <div className="flex items-center gap-3">
-                  <span className="text-xs text-muted-foreground">Preview:</span>
-                  <img src={sistemaConfig.logoUrl} alt="Logo" className="h-12 w-12 rounded-xl border border-border object-cover" />
-                </div>
-              )}
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-muted-foreground">Cor primária</label>
                 <div className="flex items-center gap-3">
