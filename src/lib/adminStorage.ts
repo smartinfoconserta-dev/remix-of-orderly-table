@@ -30,11 +30,13 @@ export interface BannerConfig {
   subtitulo: string;
   preco: string;
   imagemUrl: string;
+  imagemBase64?: string;
 }
 
 export interface SistemaConfig {
   nomeRestaurante: string;
   logoUrl: string;
+  logoBase64?: string;
   corPrimaria: string;
   banners?: BannerConfig[];
   instagramUrl?: string;
