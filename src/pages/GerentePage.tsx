@@ -9,7 +9,6 @@ import {
   ClipboardList,
   CreditCard,
   Download,
-  Filter,
   LockKeyhole,
   LogOut,
   Printer,
