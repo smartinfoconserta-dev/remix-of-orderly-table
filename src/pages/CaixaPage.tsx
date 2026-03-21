@@ -242,10 +242,12 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
 
   useRouteLock(accessMode === "gerente" ? "/gerente" : "/caixa");
 
-  // Live clock
+  // Live clock + desktop detection
   useEffect(() => {
     const id = setInterval(() => setCurrentTime(new Date()), 1000);
-    return () => clearInterval(id);
+    const handleResize = () => setIsDesktop(window.innerWidth >= 768);
+    window.addEventListener("resize", handleResize);
+    return () => { clearInterval(id); window.removeEventListener("resize", handleResize); };
   }, []);
 
   // Sound when new delivery arrives
