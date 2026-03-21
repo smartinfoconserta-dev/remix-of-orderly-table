@@ -1,6 +1,8 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 import {
   ClipboardList,
+  Download,
+  Upload,
   Grid3X3,
   ImagePlus,
   LogOut,
