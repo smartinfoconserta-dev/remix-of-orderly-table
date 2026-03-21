@@ -1012,7 +1012,36 @@ const AdminPage = () => {
               </label>
             </div>
 
-            {/* Taxa fixa legado */}
+            {/* Modo de identificação delivery */}
+            <div className="surface-card max-w-lg rounded-2xl p-6 space-y-3">
+              <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">Modo de identificação</p>
+              <label className="flex items-center gap-3 cursor-pointer" onClick={() => {
+                const next = { ...sistemaConfig, modoIdentificacaoDelivery: "visitante" as const };
+                setSistemaConfig(next);
+                saveSistemaConfig(next);
+              }}>
+                <span className={`h-5 w-5 rounded-full border-2 flex items-center justify-center ${(sistemaConfig.modoIdentificacaoDelivery || "visitante") === "visitante" ? "border-primary" : "border-muted-foreground/40"}`}>
+                  {(sistemaConfig.modoIdentificacaoDelivery || "visitante") === "visitante" && <span className="h-2.5 w-2.5 rounded-full bg-primary" />}
+                </span>
+                <div>
+                  <span className={`text-sm font-semibold ${(sistemaConfig.modoIdentificacaoDelivery || "visitante") === "visitante" ? "text-foreground" : "text-muted-foreground"}`}>Modo visitante</span>
+                  <p className="text-[10px] text-muted-foreground">Cliente preenche dados ao finalizar o pedido</p>
+                </div>
+              </label>
+              <label className="flex items-center gap-3 cursor-pointer" onClick={() => {
+                const next = { ...sistemaConfig, modoIdentificacaoDelivery: "cadastro" as const };
+                setSistemaConfig(next);
+                saveSistemaConfig(next);
+              }}>
+                <span className={`h-5 w-5 rounded-full border-2 flex items-center justify-center ${sistemaConfig.modoIdentificacaoDelivery === "cadastro" ? "border-primary" : "border-muted-foreground/40"}`}>
+                  {sistemaConfig.modoIdentificacaoDelivery === "cadastro" && <span className="h-2.5 w-2.5 rounded-full bg-primary" />}
+                </span>
+                <div>
+                  <span className={`text-sm font-semibold ${sistemaConfig.modoIdentificacaoDelivery === "cadastro" ? "text-foreground" : "text-muted-foreground"}`}>Modo cadastro</span>
+                  <p className="text-[10px] text-muted-foreground">Cliente cria conta com telefone e senha</p>
+                </div>
+              </label>
+            </div>
             <div className="surface-card max-w-lg rounded-2xl p-6 space-y-2">
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-muted-foreground">Taxa de entrega padrão (R$)</label>
