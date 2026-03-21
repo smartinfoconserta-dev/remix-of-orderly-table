@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Check, ChefHat, Clock, ShoppingBag, User } from "lucide-react";
 import { useRestaurant } from "@/contexts/RestaurantContext";
 import type { PedidoRealizado } from "@/contexts/RestaurantContext";
+import { getSistemaConfig } from "@/lib/adminStorage";
 
 const minutesAgo = (isoDate: string) => {
   const diff = Date.now() - new Date(isoDate).getTime();
