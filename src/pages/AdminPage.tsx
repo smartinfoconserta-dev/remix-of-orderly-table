@@ -1330,6 +1330,71 @@ const AdminPage = () => {
             <Button onClick={saveSistema} className="w-full max-w-lg">
               <Save className="mr-1 h-4 w-4" /> Salvar configurações
             </Button>
+
+            <div className="max-w-lg border-t border-border" />
+
+            {/* ── Seção 6: Backup e Restauração ── */}
+            <div>
+              <h3 className="text-lg font-black text-foreground flex items-center gap-2">💾 Backup e Restauração</h3>
+              <p className="text-xs text-muted-foreground mb-3">Exporte ou importe todos os dados do sistema</p>
+            </div>
+            <div className="surface-card max-w-lg space-y-4 rounded-2xl p-6">
+              <Button
+                variant="outline"
+                className="w-full rounded-xl font-bold gap-2"
+                onClick={() => {
+                  const data: Record<string, unknown> = {};
+                  for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    if (key && (key.startsWith("obsidian-") || key.startsWith("orderly-"))) {
+                      try { data[key] = JSON.parse(localStorage.getItem(key)!); } catch { data[key] = localStorage.getItem(key); }
+                    }
+                  }
+                  const blob = new Blob([JSON.stringify({ _backupDate: new Date().toISOString(), _version: 1, data }, null, 2)], { type: "application/json" });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement("a");
+                  a.href = url;
+                  a.download = `backup-orderly-${new Date().toISOString().slice(0, 10)}.json`;
+                  a.click();
+                  URL.revokeObjectURL(url);
+                  toast.success("Backup exportado com sucesso!");
+                }}
+              >
+                <Download className="h-4 w-4" /> Exportar backup
+              </Button>
+
+              <div className="space-y-2">
+                <label className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border bg-secondary/30 px-4 py-4 text-sm font-bold text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground">
+                  <Upload className="h-5 w-5" />
+                  Importar backup (.json)
+                  <input type="file" accept=".json" className="hidden" onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    const reader = new FileReader();
+                    reader.onload = () => {
+                      try {
+                        const parsed = JSON.parse(reader.result as string);
+                        const backupData = parsed.data || parsed;
+                        if (typeof backupData !== "object") throw new Error("Formato inválido");
+                        if (!window.confirm("Isso vai substituir todos os dados atuais. Confirmar?")) return;
+                        Object.entries(backupData).forEach(([key, value]) => {
+                          if (key.startsWith("obsidian-") || key.startsWith("orderly-")) {
+                            localStorage.setItem(key, typeof value === "string" ? value : JSON.stringify(value));
+                          }
+                        });
+                        toast.success("Backup restaurado! Recarregando...");
+                        setTimeout(() => window.location.reload(), 800);
+                      } catch {
+                        toast.error("Arquivo de backup inválido");
+                      }
+                    };
+                    reader.readAsText(file);
+                    e.target.value = "";
+                  }} />
+                </label>
+                <p className="text-[10px] text-muted-foreground text-center">Selecione um arquivo .json exportado anteriormente</p>
+              </div>
+            </div>
           </div>
         )}
 

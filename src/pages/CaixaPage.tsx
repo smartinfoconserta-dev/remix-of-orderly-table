@@ -868,9 +868,42 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
 
   const clockStr = currentTime.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
 
+  const dismissAviso = () => {
+    try {
+      const raw = localStorage.getItem("obsidian-master-aviso-v1");
+      if (raw) {
+        const aviso = JSON.parse(raw);
+        aviso.lido = true;
+        localStorage.setItem("obsidian-master-aviso-v1", JSON.stringify(aviso));
+      }
+    } catch {}
+    setMasterAviso(null);
+  };
+
+  const avisoColors: Record<string, string> = {
+    info: "bg-blue-600/20 border-blue-500/50 text-blue-300",
+    alerta: "bg-yellow-600/20 border-yellow-500/50 text-yellow-300",
+    urgente: "bg-destructive/20 border-destructive/50 text-destructive",
+  };
+
   return (
     <>
       <div className="h-svh flex flex-col bg-background overflow-hidden">
+        {/* Master aviso banner */}
+        {masterAviso && (
+          <div className={`flex items-center justify-between gap-3 px-4 py-3 border-b text-sm font-semibold ${avisoColors[masterAviso.tipo] || avisoColors.info}`}>
+            <div className="flex items-center gap-2">
+              <Bell className="h-4 w-4 shrink-0" />
+              <span>{masterAviso.mensagem}</span>
+            </div>
+            {avisoCanDismiss && (
+              <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={dismissAviso}>
+                <X className="h-4 w-4" />
+              </Button>
+            )}
+            {!avisoCanDismiss && <span className="text-[10px] opacity-70 shrink-0">Aguarde 60s</span>}
+          </div>
+        )}
         {/* ── MESA DETAIL keeps original header ── */}
         {mesa && (
           <div className="view-fade-in contents">

@@ -575,6 +575,65 @@ const MasterPage = () => {
               );
             })()}
           </TabsContent>
+
+          {/* ========== ABA AVISOS ========== */}
+          <TabsContent value="avisos" className="space-y-6 mt-4">
+            <div className="rounded-2xl border bg-card p-5 space-y-4">
+              <h2 className="text-lg font-black text-foreground flex items-center gap-2"><Send className="w-5 h-5" />Enviar aviso ao caixa</h2>
+              <div className="space-y-3">
+                <div>
+                  <Label>Mensagem</Label>
+                  <Textarea placeholder="Escreva o aviso..." value={avisoMensagem} onChange={(e) => setAvisoMensagem(e.target.value)} rows={3} />
+                </div>
+                <div>
+                  <Label>Tipo</Label>
+                  <div className="flex gap-2 mt-1">
+                    {([
+                      { value: "info" as const, label: "Info", color: "bg-blue-600 text-white" },
+                      { value: "alerta" as const, label: "Alerta", color: "bg-yellow-600 text-white" },
+                      { value: "urgente" as const, label: "Urgente", color: "bg-destructive text-destructive-foreground" },
+                    ]).map((t) => (
+                      <Button
+                        key={t.value}
+                        size="sm"
+                        variant={avisoTipo === t.value ? "default" : "outline"}
+                        className={avisoTipo === t.value ? t.color : ""}
+                        onClick={() => setAvisoTipo(t.value)}
+                      >
+                        {t.label}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+                <Button
+                  className="w-full"
+                  disabled={!avisoMensagem.trim()}
+                  onClick={() => {
+                    const aviso = { mensagem: avisoMensagem.trim(), tipo: avisoTipo, enviadoEm: new Date().toISOString(), lido: false };
+                    localStorage.setItem("obsidian-master-aviso-v1", JSON.stringify(aviso));
+                    toast.success("Aviso enviado ao caixa!");
+                    setAvisoMensagem("");
+                  }}
+                >
+                  <Send className="w-4 h-4 mr-1" /> Enviar aviso
+                </Button>
+              </div>
+            </div>
+            {(() => {
+              try {
+                const raw = localStorage.getItem("obsidian-master-aviso-v1");
+                if (!raw) return <p className="text-sm text-muted-foreground text-center">Nenhum aviso enviado.</p>;
+                const aviso = JSON.parse(raw);
+                const tipoCores: Record<string, string> = { info: "border-blue-500/50 bg-blue-500/10", alerta: "border-yellow-500/50 bg-yellow-500/10", urgente: "border-destructive/50 bg-destructive/10" };
+                return (
+                  <div className={`rounded-2xl border p-4 ${tipoCores[aviso.tipo] || ""}`}>
+                    <p className="text-xs text-muted-foreground mb-1">Último aviso — {new Date(aviso.enviadoEm).toLocaleString("pt-BR")} {aviso.lido ? "(lido)" : "(não lido)"}</p>
+                    <p className="text-sm font-semibold text-foreground">{aviso.mensagem}</p>
+                  </div>
+                );
+              } catch { return null; }
+            })()}
+          </TabsContent>
         </Tabs>
       </div>
 
