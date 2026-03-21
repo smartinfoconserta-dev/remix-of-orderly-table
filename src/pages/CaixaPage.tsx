@@ -1074,7 +1074,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                   <Banknote className="h-4 w-4" />
                   <span className="text-[10px] font-bold">Sangria</span>
                 </button>
-                <div className="w-px h-8 mx-1 bg-border" />
+                <div className="w-px h-8 mx-1 bg-gray-300" />
                 <button
                   onClick={() => {
                     const w = window.open("", "_blank", "width=400,height=600");
