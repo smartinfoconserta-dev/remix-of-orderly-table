@@ -17,14 +17,14 @@ const MesaCard = ({ mesa, onClick, showTotal = true, showIndicators = true, time
   const hasParaViagem = pedidos.some((p) => p.paraViagem === true);
 
   const toneClass = chamarGarcom
-    ? "border-destructive/45 bg-destructive/5"
+    ? "border-red-400 bg-red-50"
     : status === "pendente"
-      ? "border-[#dc2626]/50 bg-[#1f0a0a] animate-[pulse_2s_ease-in-out_infinite]"
+      ? "border-red-400 bg-red-50 animate-[pulse_2s_ease-in-out_infinite]"
       : status === "consumo"
-        ? "border-[#16a34a]/50 bg-[#0d2218]"
+        ? "border-green-400 bg-green-50"
         : subtle
-          ? "border-border/30 bg-secondary/15 opacity-60"
-          : "border-border/50 bg-secondary/30";
+          ? "border-gray-200 bg-white opacity-60"
+          : "border-gray-200 bg-white";
 
   return (
     <button
@@ -37,10 +37,10 @@ const MesaCard = ({ mesa, onClick, showTotal = true, showIndicators = true, time
         </span>
       )}
 
-      <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
+      <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-500">
         Mesa
       </span>
-      <span className="text-3xl font-black tabular-nums text-foreground md:text-4xl">
+      <span className="text-3xl font-black tabular-nums text-gray-800 md:text-4xl">
         {String(mesa.numero).padStart(2, "0")}
       </span>
 
