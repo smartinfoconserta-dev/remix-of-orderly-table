@@ -131,6 +131,90 @@ const CozinhaPage = () => {
     prevIdsRef.current = currentIds;
   }, [activePedidos]);
 
+  // Auto-print new orders
+  useEffect(() => {
+    if (printedIdsRef.current === null) {
+      // First load — populate set without printing
+      printedIdsRef.current = new Set(activePedidos.map((p) => p.id));
+      initialLoadRef.current = false;
+      return;
+    }
+    const nomeRest = getSistemaConfig().nomeRestaurante || "Restaurante";
+    const newPedidos = activePedidos.filter((p) => !printedIdsRef.current!.has(p.id));
+    for (const pedido of newPedidos) {
+      printedIdsRef.current.add(pedido.id);
+      // Detect if ADIÇÃO: another active order from same mesa exists
+      const isBalcaoOrder = pedido.origem === "balcao";
+      const isDeliveryOrder = pedido.origem === "delivery";
+      const isParaViagem = pedido.paraViagem === true;
+      const isAdicao = !isBalcaoOrder && !isDeliveryOrder && pedido.mesaId &&
+        activePedidos.some((p) => p.id !== pedido.id && p.mesaId === pedido.mesaId);
+
+      const tipoLabel = isBalcaoOrder
+        ? `Balcão — ${pedido.clienteNome || "Cliente"}`
+        : isDeliveryOrder
+          ? `Delivery — ${pedido.clienteNome || "Cliente"}`
+          : `Mesa ${String(pedido.mesaNumero).padStart(2, "0")}`;
+
+      const hora = new Date(pedido.criadoEmIso).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+
+      let specialBlock = "";
+      if (isAdicao) {
+        specialBlock += `<div class="c-special">*** ADIÇÃO DE PEDIDO ***</div><div class="c-note">Item(ns) anteriores já em preparo</div>`;
+      }
+      if (isParaViagem) {
+        specialBlock += `<div class="c-special c-viagem">*** PARA LEVAR — EMBALAR ***</div>`;
+      }
+
+      const itensHtml = pedido.itens.map((it) => {
+        let line = `<div class="c-item"><span class="c-qty">${it.quantidade}x</span> ${it.nome}</div>`;
+        if (it.adicionais.length > 0) line += `<div class="c-add">+ ${it.adicionais.map((a) => a.nome).join(", ")}</div>`;
+        if (it.removidos.length > 0) line += `<div class="c-rem">- Sem ${it.removidos.join(", ")}</div>`;
+        if (it.observacoes) line += `<div class="c-obs">${it.observacoes}</div>`;
+        return line;
+      }).join("");
+
+      const deliveryInfo = isDeliveryOrder && (pedido as any).endereco
+        ? `<div class="c-note">${(pedido as any).endereco}</div>` : "";
+
+      const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Comanda #${pedido.numeroPedido}</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Courier New',monospace;width:80mm;padding:4mm;color:#000;background:#fff}
+.c-header{text-align:center;font-size:16px;font-weight:900;margin-bottom:4px}
+.c-tipo{text-align:center;font-size:14px;font-weight:700;margin-bottom:2px}
+.c-num{text-align:center;font-size:12px;margin-bottom:6px}
+.c-divider{border-top:1px dashed #000;margin:6px 0}
+.c-special{text-align:center;font-size:16px;font-weight:900;padding:6px 0;border-top:2px solid #000;border-bottom:2px solid #000;margin:6px 0;letter-spacing:1px}
+.c-viagem{background:#f59e0b;color:#000}
+.c-note{text-align:center;font-size:11px;margin-bottom:4px}
+.c-item{font-size:13px;font-weight:700;margin:4px 0 1px}
+.c-qty{font-weight:900}
+.c-add{font-size:11px;color:#333;margin-left:16px}
+.c-rem{font-size:11px;color:#900;margin-left:16px}
+.c-obs{font-size:11px;font-style:italic;margin-left:16px;color:#555}
+</style></head><body>
+<div class="c-header">${nomeRest}</div>
+<div class="c-tipo">${tipoLabel}</div>
+<div class="c-num">Pedido #${pedido.numeroPedido} — ${hora}</div>
+${deliveryInfo}
+${specialBlock}
+<div class="c-divider"></div>
+${itensHtml}
+<div class="c-divider"></div>
+${pedido.observacaoGeral ? `<div class="c-obs">Obs: ${pedido.observacaoGeral}</div>` : ""}
+</body></html>`;
+
+      try {
+        const w = window.open("", "_blank", "width=350,height=600");
+        if (w) {
+          w.document.write(html);
+          w.document.close();
+        }
+      } catch {}
+    }
+  }, [activePedidos]);
+
   useEffect(() => {
     return () => { document.title = "Orderly Table"; };
   }, []);
