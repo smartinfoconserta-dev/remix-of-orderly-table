@@ -101,6 +101,7 @@ const AdminPage = () => {
   const [catDialogOpen, setCatDialogOpen] = useState(false);
   const [catEditando, setCatEditando] = useState<CategoriaCustom | null>(null);
   const [catNomeInput, setCatNomeInput] = useState("");
+  const [catIconeInput, setCatIconeInput] = useState("tag");
 
   const todasCategorias = useMemo(() => {
     const baseCats = categorias.map((c, i) => ({ ...c, ordem: i, _isDefault: true as const }));
