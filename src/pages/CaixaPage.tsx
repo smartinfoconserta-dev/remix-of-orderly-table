@@ -1080,7 +1080,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                     const w = window.open("", "_blank", "width=400,height=600");
                     if (w) { w.document.write("<p>Impressão</p>"); w.print(); }
                   }}
-                  className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded text-xs border border-border bg-card text-foreground hover:bg-accent transition-colors"
+                  className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded text-xs border border-gray-300 bg-white text-gray-700 hover:bg-blue-50 transition-colors"
                   style={{ minWidth: 64 }}
                 >
                   <Printer className="h-4 w-4" />
