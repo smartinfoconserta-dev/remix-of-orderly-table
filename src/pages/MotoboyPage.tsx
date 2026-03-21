@@ -37,7 +37,7 @@ export default function MotoboyPage() {
 
   const { pedidosBalcao, marcarBalcaoSaiu, marcarBalcaoEntregue } = useRestaurant();
   const [sessao, setSessao] = useState<{ id: string; nome: string } | null>(() => getSessao());
-  const [selectedMotoboyId, setSelectedMotoboyId] = useState("");
+  const [nomeInput, setNomeInput] = useState("");
   const [pinInput, setPinInput] = useState("");
   const [loginError, setLoginError] = useState("");
   const [scanningPedidoId, setScanningPedidoId] = useState<string | null>(null);
