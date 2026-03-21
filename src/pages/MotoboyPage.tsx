@@ -52,16 +52,17 @@ export default function MotoboyPage() {
   // ── Login ──
   const handleLogin = useCallback(() => {
     setLoginError("");
-    const motoboy = motoboys.find((m) => m.id === selectedMotoboyId);
-    if (!motoboy) { setLoginError("Selecione um motoboy"); return; }
-    if (pinInput.length < 4) { setLoginError("PIN deve ter 4 dígitos"); return; }
+    const norm = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+    const motoboy = motoboys.find((m) => norm(m.nome) === norm(nomeInput));
+    if (!motoboy) { setLoginError("Nome ou PIN incorreto"); return; }
+    if (pinInput.length < 4) { setLoginError("Nome ou PIN incorreto"); return; }
     const expectedHash = btoa("pin:" + pinInput);
-    if (motoboy.pinHash !== expectedHash) { setLoginError("PIN incorreto"); return; }
+    if (motoboy.pinHash !== expectedHash) { setLoginError("Nome ou PIN incorreto"); return; }
     const s = { id: motoboy.id, nome: motoboy.nome };
     localStorage.setItem(SESSAO_KEY, JSON.stringify(s));
     setSessao(s);
     toast.success(`Bem-vindo, ${motoboy.nome}!`);
-  }, [selectedMotoboyId, pinInput, motoboys]);
+  }, [nomeInput, pinInput, motoboys]);
 
   const handleLogout = () => {
     localStorage.removeItem(SESSAO_KEY);
