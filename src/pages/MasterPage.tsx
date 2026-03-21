@@ -482,8 +482,10 @@ const MasterPage = () => {
               };
 
               const handleBloquear = (c: Cliente) => {
-                updateCliente(c.id, { ativo: false });
-                toast.success(`${c.nomeRestaurante} bloqueado.`);
+                const ontem = new Date();
+                ontem.setDate(ontem.getDate() - 1);
+                updateCliente(c.id, { ativo: false, dataVencimento: ontem.toISOString().slice(0, 10) });
+                toast.success(`${c.nomeRestaurante} bloqueado imediatamente.`);
                 refresh();
               };
 
