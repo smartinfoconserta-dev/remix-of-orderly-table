@@ -14,6 +14,7 @@ interface Props {
 
 const MesaCard = ({ mesa, onClick, showTotal = true, showIndicators = true, timeLabel, subtle }: Props) => {
   const { status, chamarGarcom, carrinho, pedidos, total } = mesa;
+  const hasParaViagem = pedidos.some((p) => p.paraViagem === true);
 
   const toneClass = chamarGarcom
     ? "border-destructive/45 bg-destructive/5"
