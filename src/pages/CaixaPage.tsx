@@ -2020,113 +2020,204 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
         </DialogContent>
       </Dialog>
 
-      {/* ── TURNO REPORT DIALOG ── */}
-      <Dialog open={turnoReportOpen} onOpenChange={setTurnoReportOpen}>
-        <DialogContent className="rounded-2xl border-border bg-background sm:max-w-lg max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
+      {isDesktop ? (
+        /* ── TURNO REPORT — FULLSCREEN DESKTOP ── */
+        turnoReportOpen && (
+          <div className="fixed inset-0 z-50 bg-background flex flex-col animate-in fade-in duration-200">
+            <header className="flex items-center gap-3 border-b border-border bg-card px-6 py-4 shrink-0">
               <ReceiptText className="h-5 w-5 text-primary" />
-              Relatório do turno
-            </DialogTitle>
-            <DialogDescription>Confira o resumo antes de fechar o turno.</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-3">
-              {paymentMethodOptions.map((pm) => {
-                const val = resumoFinanceiro[pm.value as keyof typeof resumoFinanceiro] as number;
-                return (
-                  <div key={pm.value} className="rounded-xl border border-border bg-card p-3 flex items-center gap-3">
-                    <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${pm.bgColor} ${pm.color}`}>
-                      {(() => { const Icon = pm.icon; return <Icon className="h-4 w-4" />; })()}
-                    </div>
-                    <div>
-                      <p className="text-[10px] font-bold text-muted-foreground">{pm.label}</p>
-                      <p className={`text-sm font-black tabular-nums ${pm.color}`}>{formatPrice(val)}</p>
-                    </div>
+              <h2 className="text-lg font-black text-foreground flex-1">Relatório do turno</h2>
+              <p className="text-sm text-muted-foreground">Confira o resumo antes de fechar o turno.</p>
+              <button onClick={() => setTurnoReportOpen(false)} className="ml-4 flex h-9 w-9 items-center justify-center rounded-xl border border-border bg-secondary text-foreground hover:bg-secondary/80">
+                <X className="h-4 w-4" />
+              </button>
+            </header>
+            <div className="flex-1 overflow-y-auto p-8">
+              <div className="mx-auto max-w-3xl space-y-6">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {paymentMethodOptions.map((pm) => {
+                    const val = resumoFinanceiro[pm.value as keyof typeof resumoFinanceiro] as number;
+                    return (
+                      <div key={pm.value} className="rounded-xl border border-border bg-card p-4 flex items-center gap-3">
+                        <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${pm.bgColor} ${pm.color}`}>
+                          {(() => { const Icon = pm.icon; return <Icon className="h-5 w-5" />; })()}
+                        </div>
+                        <div>
+                          <p className="text-xs font-bold text-muted-foreground">{pm.label}</p>
+                          <p className={`text-lg font-black tabular-nums ${pm.color}`}>{formatPrice(val)}</p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="rounded-xl border border-border bg-card p-6 space-y-3 text-sm">
+                  <div className="flex justify-between"><span className="text-muted-foreground">Sangrias (saídas)</span><span className="font-black tabular-nums text-destructive">{formatPrice(resumoFinanceiro.saidas)}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">Suprimentos (entradas)</span><span className="font-black tabular-nums text-emerald-400">{formatPrice(resumoFinanceiro.entradasExtras)}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">Fundo de troco inicial</span><span className="font-black tabular-nums text-foreground">{formatPrice(fundoTroco)}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">Comandas fechadas</span><span className="font-black tabular-nums text-foreground">{fechamentos.length}</span></div>
+                  <div className="border-t border-border pt-3 flex justify-between">
+                    <span className="font-black text-foreground text-base">Total líquido em caixa</span>
+                    <span className="font-black tabular-nums text-primary text-xl">{formatPrice(fundoTroco + resumoFinanceiro.totalDia + resumoFinanceiro.entradasExtras - resumoFinanceiro.saidas)}</span>
                   </div>
-                );
-              })}
-            </div>
-            <div className="rounded-xl border border-border bg-card p-4 space-y-2 text-sm">
-              <div className="flex justify-between"><span className="text-muted-foreground">Sangrias (saídas)</span><span className="font-black tabular-nums text-destructive">{formatPrice(resumoFinanceiro.saidas)}</span></div>
-              <div className="flex justify-between"><span className="text-muted-foreground">Suprimentos (entradas)</span><span className="font-black tabular-nums text-emerald-400">{formatPrice(resumoFinanceiro.entradasExtras)}</span></div>
-              <div className="flex justify-between"><span className="text-muted-foreground">Fundo de troco inicial</span><span className="font-black tabular-nums text-foreground">{formatPrice(fundoTroco)}</span></div>
-              <div className="flex justify-between"><span className="text-muted-foreground">Comandas fechadas</span><span className="font-black tabular-nums text-foreground">{fechamentos.length}</span></div>
-              <div className="border-t border-border pt-2 flex justify-between">
-                <span className="font-black text-foreground">Total líquido em caixa</span>
-                <span className="font-black tabular-nums text-primary text-lg">{formatPrice(fundoTroco + resumoFinanceiro.totalDia + resumoFinanceiro.entradasExtras - resumoFinanceiro.saidas)}</span>
+                </div>
+                {/* Cash reconciliation */}
+                <div className="rounded-xl border border-border bg-card p-6 space-y-4">
+                  <h3 className="text-base font-black text-foreground">Conferência de caixa</h3>
+                  <div className="space-y-1">
+                    <label className="text-sm font-semibold text-muted-foreground">Dinheiro contado em caixa (R$)</label>
+                    <Input value={dinheiroContado} onChange={(e) => setDinheiroContado(e.target.value)} placeholder="0,00" inputMode="decimal" className="text-lg font-black h-12 rounded-xl max-w-xs" />
+                  </div>
+                  {(() => {
+                    const contado = parseCurrencyInput(dinheiroContado);
+                    const esperado = fundoTroco + resumoFinanceiro.dinheiro + resumoFinanceiro.entradasExtras - resumoFinanceiro.saidas;
+                    if (!Number.isFinite(contado)) return null;
+                    const diff = contado - esperado;
+                    return (
+                      <div className="space-y-1">
+                        <div className="flex justify-between text-sm text-muted-foreground">
+                          <span>Total esperado em dinheiro</span>
+                          <span className="font-black tabular-nums">{formatPrice(esperado)}</span>
+                        </div>
+                        <div className={`flex justify-between items-center rounded-lg p-3 ${diff === 0 ? "bg-emerald-500/10" : diff > 0 ? "bg-emerald-500/10" : "bg-destructive/10"}`}>
+                          <span className="text-sm font-black">{diff === 0 ? "Caixa conferido ✓" : diff > 0 ? "Sobra de caixa" : "Falta de caixa"}</span>
+                          <span className={`text-sm font-black tabular-nums ${diff === 0 ? "text-emerald-400" : diff > 0 ? "text-emerald-400" : "text-destructive"}`}>
+                            {diff === 0 ? "R$ 0,00" : diff > 0 ? `+${formatPrice(diff)}` : formatPrice(diff)}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </div>
+                {/* Delivery do turno */}
+                {(() => {
+                  const deliveryPedidos = pedidosBalcao.filter((p) => p.origem === "delivery" && p.statusBalcao !== "aguardando_confirmacao");
+                  if (deliveryPedidos.length === 0) return null;
+                  const totalDelivery = deliveryPedidos.reduce((s, p) => s + p.total, 0);
+                  const dinheiroDelivery = deliveryPedidos.filter((p) => p.formaPagamentoDelivery === "dinheiro").reduce((s, p) => s + p.total, 0);
+                  const outrosDelivery = totalDelivery - dinheiroDelivery;
+                  return (
+                    <div className="rounded-xl border border-border bg-card p-6 space-y-3 text-sm">
+                      <h3 className="text-base font-black text-foreground flex items-center gap-2">
+                        <Truck className="h-4 w-4 text-primary" /> Delivery do turno
+                      </h3>
+                      <div className="flex justify-between"><span className="text-muted-foreground">Pedidos delivery</span><span className="font-black tabular-nums text-foreground">{deliveryPedidos.length}</span></div>
+                      <div className="flex justify-between"><span className="text-muted-foreground">Valor total delivery</span><span className="font-black tabular-nums text-foreground">{formatPrice(totalDelivery)}</span></div>
+                      <div className="flex justify-between"><span className="text-muted-foreground">Em dinheiro (motoboy presta contas)</span><span className="font-black tabular-nums text-amber-400">{formatPrice(dinheiroDelivery)}</span></div>
+                      <div className="flex justify-between"><span className="text-muted-foreground">PIX/cartão (já liquidado)</span><span className="font-black tabular-nums text-emerald-400">{formatPrice(outrosDelivery)}</span></div>
+                    </div>
+                  );
+                })()}
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span>Aberto: {caixaOpenTime || "—"}</span>
+                  <span>Agora: {clockStr}</span>
+                </div>
               </div>
             </div>
-            {/* ── Cash reconciliation ── */}
-            <div className="rounded-xl border border-border bg-card p-4 space-y-3">
-              <h3 className="text-sm font-black text-foreground">Conferência de caixa</h3>
-              <div className="space-y-1">
-                <label className="text-xs font-semibold text-muted-foreground">Dinheiro contado em caixa (R$)</label>
-                <Input
-                  value={dinheiroContado}
-                  onChange={(e) => setDinheiroContado(e.target.value)}
-                  placeholder="0,00"
-                  inputMode="decimal"
-                  className="text-lg font-black h-12 rounded-xl"
-                />
+            <footer className="border-t border-border bg-card px-8 py-4 flex items-center justify-end gap-3 shrink-0">
+              <Button variant="outline" onClick={() => setTurnoReportOpen(false)} className="rounded-xl font-bold">Cancelar</Button>
+              <Button variant="destructive" onClick={() => { setTurnoReportOpen(false); setTurnoModalOpen(true); setTurnoManagerName(accessMode === "gerente" ? currentOperator.nome : ""); setTurnoManagerPin(""); setTurnoError(null); }} className="rounded-xl font-black">
+                Prosseguir com fechamento
+              </Button>
+            </footer>
+          </div>
+        )
+      ) : (
+        /* ── TURNO REPORT — MOBILE DIALOG ── */
+        <Dialog open={turnoReportOpen} onOpenChange={setTurnoReportOpen}>
+          <DialogContent className="rounded-2xl border-border bg-background sm:max-w-lg max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <ReceiptText className="h-5 w-5 text-primary" />
+                Relatório do turno
+              </DialogTitle>
+              <DialogDescription>Confira o resumo antes de fechar o turno.</DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                {paymentMethodOptions.map((pm) => {
+                  const val = resumoFinanceiro[pm.value as keyof typeof resumoFinanceiro] as number;
+                  return (
+                    <div key={pm.value} className="rounded-xl border border-border bg-card p-3 flex items-center gap-3">
+                      <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${pm.bgColor} ${pm.color}`}>
+                        {(() => { const Icon = pm.icon; return <Icon className="h-4 w-4" />; })()}
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-bold text-muted-foreground">{pm.label}</p>
+                        <p className={`text-sm font-black tabular-nums ${pm.color}`}>{formatPrice(val)}</p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="rounded-xl border border-border bg-card p-4 space-y-2 text-sm">
+                <div className="flex justify-between"><span className="text-muted-foreground">Sangrias (saídas)</span><span className="font-black tabular-nums text-destructive">{formatPrice(resumoFinanceiro.saidas)}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">Suprimentos (entradas)</span><span className="font-black tabular-nums text-emerald-400">{formatPrice(resumoFinanceiro.entradasExtras)}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">Fundo de troco inicial</span><span className="font-black tabular-nums text-foreground">{formatPrice(fundoTroco)}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">Comandas fechadas</span><span className="font-black tabular-nums text-foreground">{fechamentos.length}</span></div>
+                <div className="border-t border-border pt-2 flex justify-between">
+                  <span className="font-black text-foreground">Total líquido em caixa</span>
+                  <span className="font-black tabular-nums text-primary text-lg">{formatPrice(fundoTroco + resumoFinanceiro.totalDia + resumoFinanceiro.entradasExtras - resumoFinanceiro.saidas)}</span>
+                </div>
+              </div>
+              <div className="rounded-xl border border-border bg-card p-4 space-y-3">
+                <h3 className="text-sm font-black text-foreground">Conferência de caixa</h3>
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-muted-foreground">Dinheiro contado em caixa (R$)</label>
+                  <Input value={dinheiroContado} onChange={(e) => setDinheiroContado(e.target.value)} placeholder="0,00" inputMode="decimal" className="text-lg font-black h-12 rounded-xl" />
+                </div>
+                {(() => {
+                  const contado = parseCurrencyInput(dinheiroContado);
+                  const esperado = fundoTroco + resumoFinanceiro.dinheiro + resumoFinanceiro.entradasExtras - resumoFinanceiro.saidas;
+                  if (!Number.isFinite(contado)) return null;
+                  const diff = contado - esperado;
+                  return (
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-xs text-muted-foreground">
+                        <span>Total esperado em dinheiro</span>
+                        <span className="font-black tabular-nums">{formatPrice(esperado)}</span>
+                      </div>
+                      <div className={`flex justify-between items-center rounded-lg p-2 ${diff === 0 ? "bg-emerald-500/10" : diff > 0 ? "bg-emerald-500/10" : "bg-destructive/10"}`}>
+                        <span className="text-sm font-black">{diff === 0 ? "Caixa conferido ✓" : diff > 0 ? "Sobra de caixa" : "Falta de caixa"}</span>
+                        <span className={`text-sm font-black tabular-nums ${diff === 0 ? "text-emerald-400" : diff > 0 ? "text-emerald-400" : "text-destructive"}`}>
+                          {diff === 0 ? "R$ 0,00" : diff > 0 ? `+${formatPrice(diff)}` : formatPrice(diff)}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
               {(() => {
-                const contado = parseCurrencyInput(dinheiroContado);
-                const esperado = fundoTroco + resumoFinanceiro.dinheiro + resumoFinanceiro.entradasExtras - resumoFinanceiro.saidas;
-                if (!Number.isFinite(contado)) return null;
-                const diff = contado - esperado;
+                const deliveryPedidos = pedidosBalcao.filter((p) => p.origem === "delivery" && p.statusBalcao !== "aguardando_confirmacao");
+                if (deliveryPedidos.length === 0) return null;
+                const totalDelivery = deliveryPedidos.reduce((s, p) => s + p.total, 0);
+                const dinheiroDelivery = deliveryPedidos.filter((p) => p.formaPagamentoDelivery === "dinheiro").reduce((s, p) => s + p.total, 0);
+                const outrosDelivery = totalDelivery - dinheiroDelivery;
                 return (
-                  <div className="space-y-1">
-                    <div className="flex justify-between text-xs text-muted-foreground">
-                      <span>Total esperado em dinheiro</span>
-                      <span className="font-black tabular-nums">{formatPrice(esperado)}</span>
-                    </div>
-                    <div className={`flex justify-between items-center rounded-lg p-2 ${diff === 0 ? "bg-emerald-500/10" : diff > 0 ? "bg-emerald-500/10" : "bg-destructive/10"}`}>
-                      <span className="text-sm font-black">
-                        {diff === 0 ? "Caixa conferido ✓" : diff > 0 ? "Sobra de caixa" : "Falta de caixa"}
-                      </span>
-                      <span className={`text-sm font-black tabular-nums ${diff === 0 ? "text-emerald-400" : diff > 0 ? "text-emerald-400" : "text-destructive"}`}>
-                        {diff === 0 ? "R$ 0,00" : diff > 0 ? `+${formatPrice(diff)}` : formatPrice(diff)}
-                      </span>
-                    </div>
+                  <div className="rounded-xl border border-border bg-card p-4 space-y-2 text-sm">
+                    <h3 className="text-sm font-black text-foreground flex items-center gap-2">
+                      <Truck className="h-4 w-4 text-primary" /> Delivery do turno
+                    </h3>
+                    <div className="flex justify-between"><span className="text-muted-foreground">Pedidos delivery</span><span className="font-black tabular-nums text-foreground">{deliveryPedidos.length}</span></div>
+                    <div className="flex justify-between"><span className="text-muted-foreground">Valor total delivery</span><span className="font-black tabular-nums text-foreground">{formatPrice(totalDelivery)}</span></div>
+                    <div className="flex justify-between"><span className="text-muted-foreground">Em dinheiro (motoboy presta contas)</span><span className="font-black tabular-nums text-amber-400">{formatPrice(dinheiroDelivery)}</span></div>
+                    <div className="flex justify-between"><span className="text-muted-foreground">PIX/cartão (já liquidado)</span><span className="font-black tabular-nums text-emerald-400">{formatPrice(outrosDelivery)}</span></div>
                   </div>
                 );
               })()}
+              <div className="flex justify-between text-xs text-muted-foreground">
+                <span>Aberto: {caixaOpenTime || "—"}</span>
+                <span>Agora: {clockStr}</span>
+              </div>
             </div>
-            {/* ── Delivery do turno ── */}
-            {(() => {
-              const deliveryPedidos = pedidosBalcao.filter((p) => p.origem === "delivery" && p.statusBalcao !== "aguardando_confirmacao");
-              if (deliveryPedidos.length === 0) return null;
-              const totalDelivery = deliveryPedidos.reduce((s, p) => s + p.total, 0);
-              const dinheiroDelivery = deliveryPedidos.filter((p) => p.formaPagamentoDelivery === "dinheiro").reduce((s, p) => s + p.total, 0);
-              const outrosDelivery = totalDelivery - dinheiroDelivery;
-              return (
-                <div className="rounded-xl border border-border bg-card p-4 space-y-2 text-sm">
-                  <h3 className="text-sm font-black text-foreground flex items-center gap-2">
-                    <Truck className="h-4 w-4 text-primary" /> Delivery do turno
-                  </h3>
-                  <div className="flex justify-between"><span className="text-muted-foreground">Pedidos delivery</span><span className="font-black tabular-nums text-foreground">{deliveryPedidos.length}</span></div>
-                  <div className="flex justify-between"><span className="text-muted-foreground">Valor total delivery</span><span className="font-black tabular-nums text-foreground">{formatPrice(totalDelivery)}</span></div>
-                  <div className="flex justify-between"><span className="text-muted-foreground">Em dinheiro (motoboy presta contas)</span><span className="font-black tabular-nums text-amber-400">{formatPrice(dinheiroDelivery)}</span></div>
-                  <div className="flex justify-between"><span className="text-muted-foreground">PIX/cartão (já liquidado)</span><span className="font-black tabular-nums text-emerald-400">{formatPrice(outrosDelivery)}</span></div>
-                </div>
-              );
-            })()}
-            <div className="flex justify-between text-xs text-muted-foreground">
-              <span>Aberto: {caixaOpenTime || "—"}</span>
-              <span>Agora: {clockStr}</span>
-            </div>
-          </div>
-          <DialogFooter className="gap-3 sm:gap-0">
-            <Button variant="outline" onClick={() => setTurnoReportOpen(false)} className="rounded-xl font-bold">Cancelar</Button>
-            <Button variant="destructive" onClick={() => { setTurnoReportOpen(false); setTurnoModalOpen(true); setTurnoManagerName(accessMode === "gerente" ? currentOperator.nome : ""); setTurnoManagerPin(""); setTurnoError(null); }} className="rounded-xl font-black">
-              Prosseguir com fechamento
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* ── TURNO CLOSE MODAL ── */}
+            <DialogFooter className="gap-3 sm:gap-0">
+              <Button variant="outline" onClick={() => setTurnoReportOpen(false)} className="rounded-xl font-bold">Cancelar</Button>
+              <Button variant="destructive" onClick={() => { setTurnoReportOpen(false); setTurnoModalOpen(true); setTurnoManagerName(accessMode === "gerente" ? currentOperator.nome : ""); setTurnoManagerPin(""); setTurnoError(null); }} className="rounded-xl font-black">
+                Prosseguir com fechamento
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
       <Dialog open={turnoModalOpen} onOpenChange={(open) => { if (!open) { setTurnoModalOpen(false); setTurnoError(null); } }}>
         <DialogContent className="rounded-2xl border-border bg-background sm:max-w-md">
           <DialogHeader>
