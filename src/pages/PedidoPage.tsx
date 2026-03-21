@@ -49,7 +49,7 @@ const etapaLabel: Record<Etapa, string> = {
   sucesso: "Pedido enviado",
 };
 
-function ConfirmacaoEtapa({ nome, endereco, numero, complemento, bairro, itens, taxaEntrega, totalPedido, formaPag, setFormaPag, troco, setTroco, onVoltar, onConfirmar, editEndereco, setEditEndereco }: {
+function ConfirmacaoEtapa({ nome, endereco, numero, complemento, bairro, itens, taxaEntrega, totalPedido, formaPag, setFormaPag, troco, setTroco, onVoltar, onConfirmar, editEndereco }: {
   nome: string; endereco: string; numero: string; complemento: string; bairro: string;
   itens: ItemCarrinho[]; taxaEntrega: number; totalPedido: number;
   formaPag: string; setFormaPag: (v: string) => void;
