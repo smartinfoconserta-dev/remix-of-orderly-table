@@ -30,6 +30,7 @@ export interface BannerConfig {
   subtitulo: string;
   preco: string;
   imagemUrl: string;
+  imagemBase64?: string;
 }
 
 export interface SistemaConfig {
