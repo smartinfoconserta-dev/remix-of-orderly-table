@@ -116,7 +116,8 @@ export default function MotoboyPage() {
       (p) => p.origem === "delivery" && (p.statusBalcao === "pronto" || p.statusBalcao === "saiu" || p.statusBalcao === "aberto" || p.statusBalcao === "aguardando_confirmacao" || !p.statusBalcao)
     ).filter((p) => p.statusBalcao !== "pago" && p.statusBalcao !== "entregue");
     // Sort by saved order
-    const ordemMap = new Map<string, number>(ordem.map((id, i) => [id, i]));
+    const ordemObj: Record<string, number> = {};
+    ordem.forEach((id, i) => { ordemObj[id] = i; });
     return [...pending].sort((a, b) => {
       const ia = ordemMap.get(a.id) ?? 9999;
       const ib = ordemMap.get(b.id) ?? 9999;
