@@ -131,12 +131,13 @@ export default function MotoboyPage() {
     e.target.value = "";
   }, [scanningPedidoId, generalScan, marcarBalcaoSaiu, sessao, pedidosBalcao]);
 
-  // ── Data ──
+  // ── Data — only show pedidos scanned by this motoboy ──
   const emRota = useMemo(() => {
     const pending = pedidosBalcao.filter(
-      (p) => p.origem === "delivery" && (p.statusBalcao === "pronto" || p.statusBalcao === "saiu" || p.statusBalcao === "aberto" || p.statusBalcao === "aguardando_confirmacao" || !p.statusBalcao)
-    ).filter((p) => p.statusBalcao !== "pago" && p.statusBalcao !== "entregue");
-    // Sort by saved order
+      (p) => p.origem === "delivery" &&
+        p.motoboyNome === sessao?.nome &&
+        (p.statusBalcao === "saiu")
+    );
     const ordemObj: Record<string, number> = {};
     ordem.forEach((id, i) => { ordemObj[id] = i; });
     return [...pending].sort((a, b) => {
@@ -145,7 +146,7 @@ export default function MotoboyPage() {
       if (ia !== ib) return ia - ib;
       return new Date(a.criadoEmIso).getTime() - new Date(b.criadoEmIso).getTime();
     });
-  }, [pedidosBalcao, ordem]);
+  }, [pedidosBalcao, ordem, sessao]);
 
   const entregues = useMemo(() =>
     pedidosBalcao.filter((p) => p.origem === "delivery" && p.statusBalcao === "entregue"),
