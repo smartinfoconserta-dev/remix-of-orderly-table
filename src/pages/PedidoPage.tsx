@@ -127,6 +127,7 @@ export default function PedidoPage() {
   const [bairrosDisponiveis] = useState<Bairro[]>(() => getBairros().filter((b) => b.ativo));
   const [bairroSelecionadoId, setBairroSelecionadoId] = useState("");
   const [bairroNaoAtendido, setBairroNaoAtendido] = useState(false);
+  const deliveryModo = (() => { try { const v = localStorage.getItem("obsidian-delivery-modo-v1"); return v === "cadastrados" ? "cadastrados" : "todos"; } catch { return "todos" as const; } })();
 
   // Order
   const [itens, setItens] = useState<ItemCarrinho[]>([]);
@@ -194,7 +195,7 @@ export default function PedidoPage() {
               setBairroNaoAtendido(false);
             } else {
               setBairroSelecionadoId("");
-              setBairroNaoAtendido(true);
+              setBairroNaoAtendido(deliveryModo === "cadastrados");
             }
           } else {
             setBairroSelecionadoId("");
@@ -404,7 +405,7 @@ export default function PedidoPage() {
                           setBairroNaoAtendido(false);
                         } else {
                           setBairroSelecionadoId("");
-                          setBairroNaoAtendido(true);
+                          setBairroNaoAtendido(deliveryModo === "cadastrados");
                         }
                       } else {
                         setBairroSelecionadoId("");

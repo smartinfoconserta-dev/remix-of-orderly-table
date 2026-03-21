@@ -266,6 +266,12 @@ const AdminPage = () => {
   const [bairros, setBairros] = useState<Bairro[]>(getBairros);
   const [novoBairroNome, setNovoBairroNome] = useState("");
   const [novoBairroTaxa, setNovoBairroTaxa] = useState("");
+  const [deliveryModo, setDeliveryModo] = useState<"todos" | "cadastrados">(() => {
+    try {
+      const v = localStorage.getItem("obsidian-delivery-modo-v1");
+      return v === "cadastrados" ? "cadastrados" : "todos";
+    } catch { return "todos"; }
+  });
 
   const saveSistema = useCallback(() => {
     saveSistemaConfig(sistemaConfig);
@@ -902,6 +908,26 @@ const AdminPage = () => {
                 />
                 <p className="text-xs text-muted-foreground">Usado quando nenhum bairro está cadastrado</p>
               </div>
+            </div>
+
+            {/* Modo de entrega */}
+            <div>
+              <h3 className="text-lg font-black text-foreground">Modo de entrega</h3>
+              <p className="text-xs text-muted-foreground">Define se aceita pedidos de qualquer bairro ou apenas dos cadastrados</p>
+            </div>
+            <div className="surface-card max-w-lg rounded-2xl p-6 space-y-3">
+              <label className="flex items-center gap-3 cursor-pointer" onClick={() => { setDeliveryModo("todos"); localStorage.setItem("obsidian-delivery-modo-v1", "todos"); }}>
+                <span className={`h-5 w-5 rounded-full border-2 flex items-center justify-center ${deliveryModo === "todos" ? "border-primary" : "border-muted-foreground/40"}`}>
+                  {deliveryModo === "todos" && <span className="h-2.5 w-2.5 rounded-full bg-primary" />}
+                </span>
+                <span className={`text-sm font-semibold ${deliveryModo === "todos" ? "text-foreground" : "text-muted-foreground"}`}>Atender todos os bairros</span>
+              </label>
+              <label className="flex items-center gap-3 cursor-pointer" onClick={() => { setDeliveryModo("cadastrados"); localStorage.setItem("obsidian-delivery-modo-v1", "cadastrados"); }}>
+                <span className={`h-5 w-5 rounded-full border-2 flex items-center justify-center ${deliveryModo === "cadastrados" ? "border-primary" : "border-muted-foreground/40"}`}>
+                  {deliveryModo === "cadastrados" && <span className="h-2.5 w-2.5 rounded-full bg-primary" />}
+                </span>
+                <span className={`text-sm font-semibold ${deliveryModo === "cadastrados" ? "text-foreground" : "text-muted-foreground"}`}>Somente bairros cadastrados</span>
+              </label>
             </div>
 
             {/* Taxa por bairro */}
