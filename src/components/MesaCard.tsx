@@ -1,4 +1,4 @@
-import { Bell, Receipt, ShoppingCart } from "lucide-react";
+import { Bell, Receipt, ShoppingBag, ShoppingCart } from "lucide-react";
 import type { Mesa } from "@/contexts/RestaurantContext";
 
 const formatPrice = (v: number) => `R$ ${v.toFixed(2).replace(".", ",")}`;
@@ -14,6 +14,7 @@ interface Props {
 
 const MesaCard = ({ mesa, onClick, showTotal = true, showIndicators = true, timeLabel, subtle }: Props) => {
   const { status, chamarGarcom, carrinho, pedidos, total } = mesa;
+  const hasParaViagem = pedidos.some((p) => p.paraViagem === true);
 
   const toneClass = chamarGarcom
     ? "border-destructive/45 bg-destructive/5"
@@ -48,6 +49,13 @@ const MesaCard = ({ mesa, onClick, showTotal = true, showIndicators = true, time
       {timeLabel && (
         <span className="text-[10px] font-bold tabular-nums text-status-consumo">
           {timeLabel}
+        </span>
+      )}
+
+      {hasParaViagem && (
+        <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/40 bg-amber-500/15 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-amber-400">
+          <ShoppingBag className="h-2.5 w-2.5" />
+          Para levar
         </span>
       )}
 

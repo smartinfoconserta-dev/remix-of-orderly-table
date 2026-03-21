@@ -1493,6 +1493,13 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                   </h2>
                 </div>
 
+                {mesa.pedidos.some((p) => p.paraViagem) && (
+                  <div className="flex items-center gap-2 border-b border-amber-500/30 bg-amber-500/10 px-5 py-2.5">
+                    <ShoppingBag className="h-4 w-4 text-amber-400 shrink-0" />
+                    <p className="text-xs font-black text-amber-400">Este pedido é para levar — embale ao finalizar</p>
+                  </div>
+                )}
+
                 <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-hide">
                   {mesa.pedidos.length === 0 && mesa.carrinho.length === 0 ? (
                     <div className="flex flex-col items-center justify-center gap-3 py-16 text-muted-foreground">
@@ -1682,6 +1689,13 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                       </div>
                     )}
                   </div>
+
+                  {mesa.pedidos.some((p) => p.paraViagem) && !fechamentoPronto && totalConta > 0 && (
+                    <div className="flex items-center gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-2.5">
+                      <ShoppingBag className="h-4 w-4 text-amber-400 shrink-0" />
+                      <p className="text-xs font-bold text-amber-400">Lembrar: pedido para levar — verifique a embalagem</p>
+                    </div>
+                  )}
 
                   {/* Payment method large buttons */}
                   {!fechamentoPronto && totalConta > 0 && (

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Check, ChefHat, Clock, User } from "lucide-react";
+import { Check, ChefHat, Clock, ShoppingBag, User } from "lucide-react";
 import { useRestaurant } from "@/contexts/RestaurantContext";
 import type { PedidoRealizado } from "@/contexts/RestaurantContext";
 
@@ -188,7 +188,7 @@ const CozinhaPage = () => {
                 isLate
                   ? "border-destructive/60 animate-pulse shadow-[0_0_20px_hsl(var(--destructive)/0.2)]"
                   : isParaViagem
-                    ? "border-amber-500/40"
+                    ? "border-amber-500/60"
                     : "border-border"
               }`}
               style={{ animationDelay: `${Math.min(i * 30, 300)}ms`, animationFillMode: 'both' }}
@@ -197,7 +197,8 @@ const CozinhaPage = () => {
               {(isBalcaoOrder || isDeliveryOrder || isParaViagem) && (
                 <div className="px-4 pt-3 flex flex-wrap gap-1.5">
                   {isBalcaoOrder && (
-                    <span className="inline-block rounded-lg bg-amber-500/15 border border-amber-500/30 px-2.5 py-1 text-xs font-black text-amber-400">
+                    <span className="inline-flex items-center gap-1 rounded-lg bg-amber-500/15 border border-amber-500/30 px-2.5 py-1 text-xs font-black text-amber-400">
+                      {isParaViagem && <ShoppingBag className="h-3 w-3" />}
                       BALCÃO{pedido.clienteNome ? ` — ${pedido.clienteNome}` : ""}
                     </span>
                   )}
@@ -206,8 +207,9 @@ const CozinhaPage = () => {
                       DELIVERY — {pedido.clienteNome || "Cliente"}
                     </span>
                   )}
-                  {isParaViagem && !isDeliveryOrder && (
-                    <span className="inline-block rounded-lg bg-amber-500/15 border border-amber-500/30 px-2.5 py-1 text-xs font-black text-amber-400">
+                  {isParaViagem && !isDeliveryOrder && !isBalcaoOrder && (
+                    <span className="inline-flex items-center gap-1 rounded-lg bg-amber-500/30 border border-amber-500/60 px-2.5 py-1 text-xs font-black text-amber-400">
+                      <ShoppingBag className="h-3 w-3" />
                       PARA VIAGEM
                     </span>
                   )}
@@ -219,7 +221,7 @@ const CozinhaPage = () => {
                   <p className="text-2xl font-black text-foreground leading-none">
                     {isBalcaoOrder || isDeliveryOrder
                       ? (isBalcaoOrder ? "Balcão" : "Delivery")
-                      : `Mesa ${String(pedido.mesaNumero).padStart(2, "0")}`}
+                      : `Mesa ${String(pedido.mesaNumero).padStart(2, "0")}${isParaViagem ? " — Para levar" : ""}`}
                   </p>
                   <div className="mt-1 flex items-center gap-2">
                     <span className="text-xs font-bold text-muted-foreground">#{pedido.numeroPedido}</span>
