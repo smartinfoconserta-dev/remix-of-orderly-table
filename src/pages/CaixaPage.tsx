@@ -25,6 +25,7 @@ import {
   Truck,
   User,
   Wallet,
+  X,
   XCircle,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -227,6 +228,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
   const [confirmTempoCustom, setConfirmTempoCustom] = useState("");
   const [confirmTaxaEntrega, setConfirmTaxaEntrega] = useState("");
 
+  const [isDesktop, setIsDesktop] = useState(() => typeof window !== "undefined" && window.innerWidth >= 768);
   const sistemaConfig = useMemo(() => getSistemaConfig(), []);
   const audioCtxRef = useRef<AudioContext | null>(null);
   const prevAguardandoRef = useRef<number | null>(null);
@@ -240,10 +242,12 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
 
   useRouteLock(accessMode === "gerente" ? "/gerente" : "/caixa");
 
-  // Live clock
+  // Live clock + desktop detection
   useEffect(() => {
     const id = setInterval(() => setCurrentTime(new Date()), 1000);
-    return () => clearInterval(id);
+    const handleResize = () => setIsDesktop(window.innerWidth >= 768);
+    window.addEventListener("resize", handleResize);
+    return () => { clearInterval(id); window.removeEventListener("resize", handleResize); };
   }, []);
 
   // Sound when new delivery arrives
@@ -2016,286 +2020,429 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
         </DialogContent>
       </Dialog>
 
-      {/* ── TURNO REPORT DIALOG ── */}
-      <Dialog open={turnoReportOpen} onOpenChange={setTurnoReportOpen}>
-        <DialogContent className="rounded-2xl border-border bg-background sm:max-w-lg max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
+      {isDesktop ? (
+        /* ── TURNO REPORT — FULLSCREEN DESKTOP ── */
+        turnoReportOpen && (
+          <div className="fixed inset-0 z-50 bg-background flex flex-col animate-in fade-in duration-200">
+            <header className="flex items-center gap-3 border-b border-border bg-card px-6 py-4 shrink-0">
               <ReceiptText className="h-5 w-5 text-primary" />
-              Relatório do turno
-            </DialogTitle>
-            <DialogDescription>Confira o resumo antes de fechar o turno.</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-3">
-              {paymentMethodOptions.map((pm) => {
-                const val = resumoFinanceiro[pm.value as keyof typeof resumoFinanceiro] as number;
-                return (
-                  <div key={pm.value} className="rounded-xl border border-border bg-card p-3 flex items-center gap-3">
-                    <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${pm.bgColor} ${pm.color}`}>
-                      {(() => { const Icon = pm.icon; return <Icon className="h-4 w-4" />; })()}
-                    </div>
-                    <div>
-                      <p className="text-[10px] font-bold text-muted-foreground">{pm.label}</p>
-                      <p className={`text-sm font-black tabular-nums ${pm.color}`}>{formatPrice(val)}</p>
-                    </div>
+              <h2 className="text-lg font-black text-foreground flex-1">Relatório do turno</h2>
+              <p className="text-sm text-muted-foreground">Confira o resumo antes de fechar o turno.</p>
+              <button onClick={() => setTurnoReportOpen(false)} className="ml-4 flex h-9 w-9 items-center justify-center rounded-xl border border-border bg-secondary text-foreground hover:bg-secondary/80">
+                <X className="h-4 w-4" />
+              </button>
+            </header>
+            <div className="flex-1 overflow-y-auto p-8">
+              <div className="mx-auto max-w-3xl space-y-6">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {paymentMethodOptions.map((pm) => {
+                    const val = resumoFinanceiro[pm.value as keyof typeof resumoFinanceiro] as number;
+                    return (
+                      <div key={pm.value} className="rounded-xl border border-border bg-card p-4 flex items-center gap-3">
+                        <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${pm.bgColor} ${pm.color}`}>
+                          {(() => { const Icon = pm.icon; return <Icon className="h-5 w-5" />; })()}
+                        </div>
+                        <div>
+                          <p className="text-xs font-bold text-muted-foreground">{pm.label}</p>
+                          <p className={`text-lg font-black tabular-nums ${pm.color}`}>{formatPrice(val)}</p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="rounded-xl border border-border bg-card p-6 space-y-3 text-sm">
+                  <div className="flex justify-between"><span className="text-muted-foreground">Sangrias (saídas)</span><span className="font-black tabular-nums text-destructive">{formatPrice(resumoFinanceiro.saidas)}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">Suprimentos (entradas)</span><span className="font-black tabular-nums text-emerald-400">{formatPrice(resumoFinanceiro.entradasExtras)}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">Fundo de troco inicial</span><span className="font-black tabular-nums text-foreground">{formatPrice(fundoTroco)}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">Comandas fechadas</span><span className="font-black tabular-nums text-foreground">{fechamentos.length}</span></div>
+                  <div className="border-t border-border pt-3 flex justify-between">
+                    <span className="font-black text-foreground text-base">Total líquido em caixa</span>
+                    <span className="font-black tabular-nums text-primary text-xl">{formatPrice(fundoTroco + resumoFinanceiro.totalDia + resumoFinanceiro.entradasExtras - resumoFinanceiro.saidas)}</span>
                   </div>
-                );
-              })}
-            </div>
-            <div className="rounded-xl border border-border bg-card p-4 space-y-2 text-sm">
-              <div className="flex justify-between"><span className="text-muted-foreground">Sangrias (saídas)</span><span className="font-black tabular-nums text-destructive">{formatPrice(resumoFinanceiro.saidas)}</span></div>
-              <div className="flex justify-between"><span className="text-muted-foreground">Suprimentos (entradas)</span><span className="font-black tabular-nums text-emerald-400">{formatPrice(resumoFinanceiro.entradasExtras)}</span></div>
-              <div className="flex justify-between"><span className="text-muted-foreground">Fundo de troco inicial</span><span className="font-black tabular-nums text-foreground">{formatPrice(fundoTroco)}</span></div>
-              <div className="flex justify-between"><span className="text-muted-foreground">Comandas fechadas</span><span className="font-black tabular-nums text-foreground">{fechamentos.length}</span></div>
-              <div className="border-t border-border pt-2 flex justify-between">
-                <span className="font-black text-foreground">Total líquido em caixa</span>
-                <span className="font-black tabular-nums text-primary text-lg">{formatPrice(fundoTroco + resumoFinanceiro.totalDia + resumoFinanceiro.entradasExtras - resumoFinanceiro.saidas)}</span>
+                </div>
+                {/* Cash reconciliation */}
+                <div className="rounded-xl border border-border bg-card p-6 space-y-4">
+                  <h3 className="text-base font-black text-foreground">Conferência de caixa</h3>
+                  <div className="space-y-1">
+                    <label className="text-sm font-semibold text-muted-foreground">Dinheiro contado em caixa (R$)</label>
+                    <Input value={dinheiroContado} onChange={(e) => setDinheiroContado(e.target.value)} placeholder="0,00" inputMode="decimal" className="text-lg font-black h-12 rounded-xl max-w-xs" />
+                  </div>
+                  {(() => {
+                    const contado = parseCurrencyInput(dinheiroContado);
+                    const esperado = fundoTroco + resumoFinanceiro.dinheiro + resumoFinanceiro.entradasExtras - resumoFinanceiro.saidas;
+                    if (!Number.isFinite(contado)) return null;
+                    const diff = contado - esperado;
+                    return (
+                      <div className="space-y-1">
+                        <div className="flex justify-between text-sm text-muted-foreground">
+                          <span>Total esperado em dinheiro</span>
+                          <span className="font-black tabular-nums">{formatPrice(esperado)}</span>
+                        </div>
+                        <div className={`flex justify-between items-center rounded-lg p-3 ${diff === 0 ? "bg-emerald-500/10" : diff > 0 ? "bg-emerald-500/10" : "bg-destructive/10"}`}>
+                          <span className="text-sm font-black">{diff === 0 ? "Caixa conferido ✓" : diff > 0 ? "Sobra de caixa" : "Falta de caixa"}</span>
+                          <span className={`text-sm font-black tabular-nums ${diff === 0 ? "text-emerald-400" : diff > 0 ? "text-emerald-400" : "text-destructive"}`}>
+                            {diff === 0 ? "R$ 0,00" : diff > 0 ? `+${formatPrice(diff)}` : formatPrice(diff)}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </div>
+                {/* Delivery do turno */}
+                {(() => {
+                  const deliveryPedidos = pedidosBalcao.filter((p) => p.origem === "delivery" && p.statusBalcao !== "aguardando_confirmacao");
+                  if (deliveryPedidos.length === 0) return null;
+                  const totalDelivery = deliveryPedidos.reduce((s, p) => s + p.total, 0);
+                  const dinheiroDelivery = deliveryPedidos.filter((p) => p.formaPagamentoDelivery === "dinheiro").reduce((s, p) => s + p.total, 0);
+                  const outrosDelivery = totalDelivery - dinheiroDelivery;
+                  return (
+                    <div className="rounded-xl border border-border bg-card p-6 space-y-3 text-sm">
+                      <h3 className="text-base font-black text-foreground flex items-center gap-2">
+                        <Truck className="h-4 w-4 text-primary" /> Delivery do turno
+                      </h3>
+                      <div className="flex justify-between"><span className="text-muted-foreground">Pedidos delivery</span><span className="font-black tabular-nums text-foreground">{deliveryPedidos.length}</span></div>
+                      <div className="flex justify-between"><span className="text-muted-foreground">Valor total delivery</span><span className="font-black tabular-nums text-foreground">{formatPrice(totalDelivery)}</span></div>
+                      <div className="flex justify-between"><span className="text-muted-foreground">Em dinheiro (motoboy presta contas)</span><span className="font-black tabular-nums text-amber-400">{formatPrice(dinheiroDelivery)}</span></div>
+                      <div className="flex justify-between"><span className="text-muted-foreground">PIX/cartão (já liquidado)</span><span className="font-black tabular-nums text-emerald-400">{formatPrice(outrosDelivery)}</span></div>
+                    </div>
+                  );
+                })()}
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span>Aberto: {caixaOpenTime || "—"}</span>
+                  <span>Agora: {clockStr}</span>
+                </div>
               </div>
             </div>
-            {/* ── Cash reconciliation ── */}
-            <div className="rounded-xl border border-border bg-card p-4 space-y-3">
-              <h3 className="text-sm font-black text-foreground">Conferência de caixa</h3>
-              <div className="space-y-1">
-                <label className="text-xs font-semibold text-muted-foreground">Dinheiro contado em caixa (R$)</label>
-                <Input
-                  value={dinheiroContado}
-                  onChange={(e) => setDinheiroContado(e.target.value)}
-                  placeholder="0,00"
-                  inputMode="decimal"
-                  className="text-lg font-black h-12 rounded-xl"
-                />
+            <footer className="border-t border-border bg-card px-8 py-4 flex items-center justify-end gap-3 shrink-0">
+              <Button variant="outline" onClick={() => setTurnoReportOpen(false)} className="rounded-xl font-bold">Cancelar</Button>
+              <Button variant="destructive" onClick={() => { setTurnoReportOpen(false); setTurnoModalOpen(true); setTurnoManagerName(accessMode === "gerente" ? currentOperator.nome : ""); setTurnoManagerPin(""); setTurnoError(null); }} className="rounded-xl font-black">
+                Prosseguir com fechamento
+              </Button>
+            </footer>
+          </div>
+        )
+      ) : (
+        /* ── TURNO REPORT — MOBILE DIALOG ── */
+        <Dialog open={turnoReportOpen} onOpenChange={setTurnoReportOpen}>
+          <DialogContent className="rounded-2xl border-border bg-background sm:max-w-lg max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <ReceiptText className="h-5 w-5 text-primary" />
+                Relatório do turno
+              </DialogTitle>
+              <DialogDescription>Confira o resumo antes de fechar o turno.</DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                {paymentMethodOptions.map((pm) => {
+                  const val = resumoFinanceiro[pm.value as keyof typeof resumoFinanceiro] as number;
+                  return (
+                    <div key={pm.value} className="rounded-xl border border-border bg-card p-3 flex items-center gap-3">
+                      <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${pm.bgColor} ${pm.color}`}>
+                        {(() => { const Icon = pm.icon; return <Icon className="h-4 w-4" />; })()}
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-bold text-muted-foreground">{pm.label}</p>
+                        <p className={`text-sm font-black tabular-nums ${pm.color}`}>{formatPrice(val)}</p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="rounded-xl border border-border bg-card p-4 space-y-2 text-sm">
+                <div className="flex justify-between"><span className="text-muted-foreground">Sangrias (saídas)</span><span className="font-black tabular-nums text-destructive">{formatPrice(resumoFinanceiro.saidas)}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">Suprimentos (entradas)</span><span className="font-black tabular-nums text-emerald-400">{formatPrice(resumoFinanceiro.entradasExtras)}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">Fundo de troco inicial</span><span className="font-black tabular-nums text-foreground">{formatPrice(fundoTroco)}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">Comandas fechadas</span><span className="font-black tabular-nums text-foreground">{fechamentos.length}</span></div>
+                <div className="border-t border-border pt-2 flex justify-between">
+                  <span className="font-black text-foreground">Total líquido em caixa</span>
+                  <span className="font-black tabular-nums text-primary text-lg">{formatPrice(fundoTroco + resumoFinanceiro.totalDia + resumoFinanceiro.entradasExtras - resumoFinanceiro.saidas)}</span>
+                </div>
+              </div>
+              <div className="rounded-xl border border-border bg-card p-4 space-y-3">
+                <h3 className="text-sm font-black text-foreground">Conferência de caixa</h3>
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-muted-foreground">Dinheiro contado em caixa (R$)</label>
+                  <Input value={dinheiroContado} onChange={(e) => setDinheiroContado(e.target.value)} placeholder="0,00" inputMode="decimal" className="text-lg font-black h-12 rounded-xl" />
+                </div>
+                {(() => {
+                  const contado = parseCurrencyInput(dinheiroContado);
+                  const esperado = fundoTroco + resumoFinanceiro.dinheiro + resumoFinanceiro.entradasExtras - resumoFinanceiro.saidas;
+                  if (!Number.isFinite(contado)) return null;
+                  const diff = contado - esperado;
+                  return (
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-xs text-muted-foreground">
+                        <span>Total esperado em dinheiro</span>
+                        <span className="font-black tabular-nums">{formatPrice(esperado)}</span>
+                      </div>
+                      <div className={`flex justify-between items-center rounded-lg p-2 ${diff === 0 ? "bg-emerald-500/10" : diff > 0 ? "bg-emerald-500/10" : "bg-destructive/10"}`}>
+                        <span className="text-sm font-black">{diff === 0 ? "Caixa conferido ✓" : diff > 0 ? "Sobra de caixa" : "Falta de caixa"}</span>
+                        <span className={`text-sm font-black tabular-nums ${diff === 0 ? "text-emerald-400" : diff > 0 ? "text-emerald-400" : "text-destructive"}`}>
+                          {diff === 0 ? "R$ 0,00" : diff > 0 ? `+${formatPrice(diff)}` : formatPrice(diff)}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
               {(() => {
-                const contado = parseCurrencyInput(dinheiroContado);
-                const esperado = fundoTroco + resumoFinanceiro.dinheiro + resumoFinanceiro.entradasExtras - resumoFinanceiro.saidas;
-                if (!Number.isFinite(contado)) return null;
-                const diff = contado - esperado;
+                const deliveryPedidos = pedidosBalcao.filter((p) => p.origem === "delivery" && p.statusBalcao !== "aguardando_confirmacao");
+                if (deliveryPedidos.length === 0) return null;
+                const totalDelivery = deliveryPedidos.reduce((s, p) => s + p.total, 0);
+                const dinheiroDelivery = deliveryPedidos.filter((p) => p.formaPagamentoDelivery === "dinheiro").reduce((s, p) => s + p.total, 0);
+                const outrosDelivery = totalDelivery - dinheiroDelivery;
                 return (
-                  <div className="space-y-1">
-                    <div className="flex justify-between text-xs text-muted-foreground">
-                      <span>Total esperado em dinheiro</span>
-                      <span className="font-black tabular-nums">{formatPrice(esperado)}</span>
-                    </div>
-                    <div className={`flex justify-between items-center rounded-lg p-2 ${diff === 0 ? "bg-emerald-500/10" : diff > 0 ? "bg-emerald-500/10" : "bg-destructive/10"}`}>
-                      <span className="text-sm font-black">
-                        {diff === 0 ? "Caixa conferido ✓" : diff > 0 ? "Sobra de caixa" : "Falta de caixa"}
-                      </span>
-                      <span className={`text-sm font-black tabular-nums ${diff === 0 ? "text-emerald-400" : diff > 0 ? "text-emerald-400" : "text-destructive"}`}>
-                        {diff === 0 ? "R$ 0,00" : diff > 0 ? `+${formatPrice(diff)}` : formatPrice(diff)}
-                      </span>
-                    </div>
+                  <div className="rounded-xl border border-border bg-card p-4 space-y-2 text-sm">
+                    <h3 className="text-sm font-black text-foreground flex items-center gap-2">
+                      <Truck className="h-4 w-4 text-primary" /> Delivery do turno
+                    </h3>
+                    <div className="flex justify-between"><span className="text-muted-foreground">Pedidos delivery</span><span className="font-black tabular-nums text-foreground">{deliveryPedidos.length}</span></div>
+                    <div className="flex justify-between"><span className="text-muted-foreground">Valor total delivery</span><span className="font-black tabular-nums text-foreground">{formatPrice(totalDelivery)}</span></div>
+                    <div className="flex justify-between"><span className="text-muted-foreground">Em dinheiro (motoboy presta contas)</span><span className="font-black tabular-nums text-amber-400">{formatPrice(dinheiroDelivery)}</span></div>
+                    <div className="flex justify-between"><span className="text-muted-foreground">PIX/cartão (já liquidado)</span><span className="font-black tabular-nums text-emerald-400">{formatPrice(outrosDelivery)}</span></div>
                   </div>
                 );
               })()}
-            </div>
-            {/* ── Delivery do turno ── */}
-            {(() => {
-              const deliveryPedidos = pedidosBalcao.filter((p) => p.origem === "delivery" && p.statusBalcao !== "aguardando_confirmacao");
-              if (deliveryPedidos.length === 0) return null;
-              const totalDelivery = deliveryPedidos.reduce((s, p) => s + p.total, 0);
-              const dinheiroDelivery = deliveryPedidos.filter((p) => p.formaPagamentoDelivery === "dinheiro").reduce((s, p) => s + p.total, 0);
-              const outrosDelivery = totalDelivery - dinheiroDelivery;
-              return (
-                <div className="rounded-xl border border-border bg-card p-4 space-y-2 text-sm">
-                  <h3 className="text-sm font-black text-foreground flex items-center gap-2">
-                    <Truck className="h-4 w-4 text-primary" /> Delivery do turno
-                  </h3>
-                  <div className="flex justify-between"><span className="text-muted-foreground">Pedidos delivery</span><span className="font-black tabular-nums text-foreground">{deliveryPedidos.length}</span></div>
-                  <div className="flex justify-between"><span className="text-muted-foreground">Valor total delivery</span><span className="font-black tabular-nums text-foreground">{formatPrice(totalDelivery)}</span></div>
-                  <div className="flex justify-between"><span className="text-muted-foreground">Em dinheiro (motoboy presta contas)</span><span className="font-black tabular-nums text-amber-400">{formatPrice(dinheiroDelivery)}</span></div>
-                  <div className="flex justify-between"><span className="text-muted-foreground">PIX/cartão (já liquidado)</span><span className="font-black tabular-nums text-emerald-400">{formatPrice(outrosDelivery)}</span></div>
-                </div>
-              );
-            })()}
-            <div className="flex justify-between text-xs text-muted-foreground">
-              <span>Aberto: {caixaOpenTime || "—"}</span>
-              <span>Agora: {clockStr}</span>
-            </div>
-          </div>
-          <DialogFooter className="gap-3 sm:gap-0">
-            <Button variant="outline" onClick={() => setTurnoReportOpen(false)} className="rounded-xl font-bold">Cancelar</Button>
-            <Button variant="destructive" onClick={() => { setTurnoReportOpen(false); setTurnoModalOpen(true); setTurnoManagerName(accessMode === "gerente" ? currentOperator.nome : ""); setTurnoManagerPin(""); setTurnoError(null); }} className="rounded-xl font-black">
-              Prosseguir com fechamento
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* ── TURNO CLOSE MODAL ── */}
-      <Dialog open={turnoModalOpen} onOpenChange={(open) => { if (!open) { setTurnoModalOpen(false); setTurnoError(null); } }}>
-        <DialogContent className="rounded-2xl border-border bg-background sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <LockKeyhole className="h-5 w-5 text-destructive" />
-              Fechar turno
-            </DialogTitle>
-            <DialogDescription>
-              Autorização de gerente necessária para confirmar o fechamento.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-foreground">Nome do gerente</label>
-              <Input value={turnoManagerName} onChange={(e) => setTurnoManagerName(e.target.value)} placeholder="Ex.: Mariana" maxLength={40} />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-foreground">PIN do gerente</label>
-              <Input
-                value={turnoManagerPin}
-                onChange={(e) => setTurnoManagerPin(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                placeholder="4 a 6 dígitos"
-                inputMode="numeric"
-                autoComplete="one-time-code"
-                onKeyDown={(e) => e.key === "Enter" && handleCloseTurno()}
-              />
-            </div>
-            {turnoError && <p className="rounded-xl border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive">{turnoError}</p>}
-          </div>
-          <DialogFooter className="gap-3 sm:gap-0">
-            <Button variant="outline" onClick={() => setTurnoModalOpen(false)} className="rounded-xl font-bold">Cancelar</Button>
-            <Button variant="destructive" onClick={handleCloseTurno} className="rounded-xl font-black" disabled={isClosingTurno}>
-              Confirmar fechamento
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* ── Movimentação Modal ── */}
-      <Dialog open={movModalOpen} onOpenChange={(open) => { if (!open) { setMovModalOpen(false); setMovConfirmStep(false); } }}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Registrar movimentação</DialogTitle>
-            <DialogDescription>Sangria (saída) ou suprimento (entrada) de valores no caixa.</DialogDescription>
-          </DialogHeader>
-          {movConfirmStep ? (
-            <div className="space-y-4">
-              <div className="rounded-xl border border-amber-500/30 bg-amber-500/8 p-4 text-sm text-center space-y-1">
-                <p className="font-black text-foreground">Confirma {movTipo === "saida" ? "sangria" : "suprimento"} de {formatPrice(parseCurrencyInput(movValor) || 0)}?</p>
-                <p className="text-muted-foreground">Motivo: {movDescricao}</p>
+              <div className="flex justify-between text-xs text-muted-foreground">
+                <span>Aberto: {caixaOpenTime || "—"}</span>
+                <span>Agora: {clockStr}</span>
               </div>
-              <DialogFooter className="gap-3 sm:gap-0">
-                <Button variant="outline" onClick={() => setMovConfirmStep(false)} className="rounded-xl font-bold">Voltar</Button>
-                <Button onClick={handleRegistrarMovimentacao} className="rounded-xl font-black">
-                  Confirmar
-                </Button>
-              </DialogFooter>
             </div>
-          ) : (
-            <>
+            <DialogFooter className="gap-3 sm:gap-0">
+              <Button variant="outline" onClick={() => setTurnoReportOpen(false)} className="rounded-xl font-bold">Cancelar</Button>
+              <Button variant="destructive" onClick={() => { setTurnoReportOpen(false); setTurnoModalOpen(true); setTurnoManagerName(accessMode === "gerente" ? currentOperator.nome : ""); setTurnoManagerPin(""); setTurnoError(null); }} className="rounded-xl font-black">
+                Prosseguir com fechamento
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
+      {isDesktop ? (
+        /* ── TURNO CLOSE — DESKTOP CENTERED CARD WITH BACKDROP ── */
+        turnoModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center animate-in fade-in duration-200">
+            <div className="absolute inset-0 bg-foreground/80" onClick={() => { setTurnoModalOpen(false); setTurnoError(null); }} />
+            <div className="relative z-10 w-full max-w-md rounded-2xl border border-border bg-background p-6 shadow-2xl space-y-4">
+              <div className="flex items-center gap-2">
+                <LockKeyhole className="h-5 w-5 text-destructive" />
+                <h2 className="text-lg font-black text-foreground flex-1">Fechar turno</h2>
+                <button onClick={() => { setTurnoModalOpen(false); setTurnoError(null); }} className="flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-secondary text-foreground hover:bg-secondary/80">
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+              <p className="text-sm text-muted-foreground">Autorização de gerente necessária para confirmar o fechamento.</p>
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <label className="text-sm font-semibold text-foreground">Tipo</label>
-                  <select
-                    value={movTipo}
-                    onChange={(e) => setMovTipo(e.target.value as "entrada" | "saida")}
-                    className="w-full rounded-xl border border-border bg-secondary px-3 py-2 text-sm text-foreground"
-                  >
-                    <option value="entrada">Suprimento (entrada)</option>
-                    <option value="saida">Sangria (saída)</option>
-                  </select>
+                  <label className="text-sm font-semibold text-foreground">Nome do gerente</label>
+                  <Input value={turnoManagerName} onChange={(e) => setTurnoManagerName(e.target.value)} placeholder="Ex.: Mariana" maxLength={40} />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-semibold text-foreground">Motivo / Descrição *</label>
-                  <Input value={movDescricao} onChange={(e) => setMovDescricao(e.target.value)} placeholder="Ex.: Troco para entrega, Reforço de caixa" maxLength={100} />
+                  <label className="text-sm font-semibold text-foreground">PIN do gerente</label>
+                  <Input value={turnoManagerPin} onChange={(e) => setTurnoManagerPin(e.target.value.replace(/\D/g, "").slice(0, 6))} placeholder="4 a 6 dígitos" inputMode="numeric" autoComplete="one-time-code" onKeyDown={(e) => e.key === "Enter" && handleCloseTurno()} />
                 </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-semibold text-foreground">Valor (R$) *</label>
-                  <Input
-                    value={movValor}
-                    onChange={(e) => setMovValor(e.target.value)}
-                    placeholder="0,00"
-                    inputMode="decimal"
-                    className="text-lg font-black"
-                    onKeyDown={(e) => e.key === "Enter" && handleRegistrarMovimentacao()}
-                  />
+                {turnoError && <p className="rounded-xl border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive">{turnoError}</p>}
+              </div>
+              <div className="flex justify-end gap-3 pt-2">
+                <Button variant="outline" onClick={() => setTurnoModalOpen(false)} className="rounded-xl font-bold">Cancelar</Button>
+                <Button variant="destructive" onClick={handleCloseTurno} className="rounded-xl font-black" disabled={isClosingTurno}>
+                  Confirmar fechamento
+                </Button>
+              </div>
+            </div>
+          </div>
+        )
+      ) : (
+        <Dialog open={turnoModalOpen} onOpenChange={(open) => { if (!open) { setTurnoModalOpen(false); setTurnoError(null); } }}>
+          <DialogContent className="rounded-2xl border-border bg-background sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <LockKeyhole className="h-5 w-5 text-destructive" />
+                Fechar turno
+              </DialogTitle>
+              <DialogDescription>Autorização de gerente necessária para confirmar o fechamento.</DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-foreground">Nome do gerente</label>
+                <Input value={turnoManagerName} onChange={(e) => setTurnoManagerName(e.target.value)} placeholder="Ex.: Mariana" maxLength={40} />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-foreground">PIN do gerente</label>
+                <Input value={turnoManagerPin} onChange={(e) => setTurnoManagerPin(e.target.value.replace(/\D/g, "").slice(0, 6))} placeholder="4 a 6 dígitos" inputMode="numeric" autoComplete="one-time-code" onKeyDown={(e) => e.key === "Enter" && handleCloseTurno()} />
+              </div>
+              {turnoError && <p className="rounded-xl border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive">{turnoError}</p>}
+            </div>
+            <DialogFooter className="gap-3 sm:gap-0">
+              <Button variant="outline" onClick={() => setTurnoModalOpen(false)} className="rounded-xl font-bold">Cancelar</Button>
+              <Button variant="destructive" onClick={handleCloseTurno} className="rounded-xl font-black" disabled={isClosingTurno}>
+                Confirmar fechamento
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* ── Movimentação Modal ── */}
+      {isDesktop ? (
+        /* ── DESKTOP RIGHT PANEL 480px ── */
+        movModalOpen && (
+          <div className="fixed inset-0 z-50 flex animate-in fade-in duration-200">
+            <div className="flex-1 bg-foreground/60" onClick={() => { setMovModalOpen(false); setMovConfirmStep(false); }} />
+            <div className="w-[480px] h-screen bg-background border-l border-border flex flex-col animate-in slide-in-from-right duration-300">
+              <header className="flex items-center gap-3 border-b border-border px-5 py-4 shrink-0">
+                <Banknote className="h-5 w-5 text-primary" />
+                <div className="flex-1">
+                  <h2 className="text-base font-black text-foreground">Registrar movimentação</h2>
+                  <p className="text-xs text-muted-foreground">Sangria (saída) ou suprimento (entrada) de valores no caixa.</p>
                 </div>
-                {movimentacoesCaixa.length > 0 && (
-                  <div className="space-y-2">
-                    <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">Últimas movimentações</p>
-                    <div className="space-y-1.5 max-h-[120px] overflow-y-auto">
-                      {movimentacoesCaixa.slice(0, 5).map((mov) => (
-                        <div key={mov.id} className="flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-xs">
-                          <span className={`font-black tabular-nums ${mov.tipo === "entrada" ? "text-emerald-400" : "text-destructive"}`}>
-                            {mov.tipo === "entrada" ? "Suprimento" : "Sangria"}
-                          </span>
-                          <span className="font-black tabular-nums text-foreground">{formatPrice(mov.valor)}</span>
-                          <span className="flex-1 truncate text-muted-foreground">{mov.descricao}</span>
-                          <span className="tabular-nums text-muted-foreground/60">{mov.criadoEm}</span>
-                        </div>
-                      ))}
+                <button onClick={() => { setMovModalOpen(false); setMovConfirmStep(false); }} className="flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-secondary text-foreground hover:bg-secondary/80">
+                  <X className="h-4 w-4" />
+                </button>
+              </header>
+              <div className="flex-1 overflow-y-auto p-5 space-y-4">
+                {movConfirmStep ? (
+                  <div className="space-y-4">
+                    <div className="rounded-xl border border-amber-500/30 bg-amber-500/8 p-4 text-sm text-center space-y-1">
+                      <p className="font-black text-foreground">Confirma {movTipo === "saida" ? "sangria" : "suprimento"} de {formatPrice(parseCurrencyInput(movValor) || 0)}?</p>
+                      <p className="text-muted-foreground">Motivo: {movDescricao}</p>
+                    </div>
+                    <div className="flex justify-end gap-3">
+                      <Button variant="outline" onClick={() => setMovConfirmStep(false)} className="rounded-xl font-bold">Voltar</Button>
+                      <Button onClick={handleRegistrarMovimentacao} className="rounded-xl font-black">Confirmar</Button>
                     </div>
                   </div>
+                ) : (
+                  <>
+                    <div className="space-y-2">
+                      <label className="text-sm font-semibold text-foreground">Tipo</label>
+                      <select value={movTipo} onChange={(e) => setMovTipo(e.target.value as "entrada" | "saida")} className="w-full rounded-xl border border-border bg-secondary px-3 py-2 text-sm text-foreground">
+                        <option value="entrada">Suprimento (entrada)</option>
+                        <option value="saida">Sangria (saída)</option>
+                      </select>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-semibold text-foreground">Motivo / Descrição *</label>
+                      <Input value={movDescricao} onChange={(e) => setMovDescricao(e.target.value)} placeholder="Ex.: Troco para entrega, Reforço de caixa" maxLength={100} />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-semibold text-foreground">Valor (R$) *</label>
+                      <Input value={movValor} onChange={(e) => setMovValor(e.target.value)} placeholder="0,00" inputMode="decimal" className="text-lg font-black" onKeyDown={(e) => e.key === "Enter" && handleRegistrarMovimentacao()} />
+                    </div>
+                    {movimentacoesCaixa.length > 0 && (
+                      <div className="space-y-2">
+                        <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">Últimas movimentações</p>
+                        <div className="space-y-1.5 max-h-[200px] overflow-y-auto">
+                          {movimentacoesCaixa.slice(0, 5).map((mov) => (
+                            <div key={mov.id} className="flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-xs">
+                              <span className={`font-black tabular-nums ${mov.tipo === "entrada" ? "text-emerald-400" : "text-destructive"}`}>{mov.tipo === "entrada" ? "Suprimento" : "Sangria"}</span>
+                              <span className="font-black tabular-nums text-foreground">{formatPrice(mov.valor)}</span>
+                              <span className="flex-1 truncate text-muted-foreground">{mov.descricao}</span>
+                              <span className="tabular-nums text-muted-foreground/60">{mov.criadoEm}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
-              <DialogFooter className="gap-3 sm:gap-0">
-                <Button variant="outline" onClick={() => setMovModalOpen(false)} className="rounded-xl font-bold">Cancelar</Button>
-                <Button onClick={handleRegistrarMovimentacao} className="rounded-xl font-black">
-                  Registrar
-                </Button>
-              </DialogFooter>
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
+              {!movConfirmStep && (
+                <footer className="border-t border-border px-5 py-4 flex justify-end gap-3 shrink-0">
+                  <Button variant="outline" onClick={() => setMovModalOpen(false)} className="rounded-xl font-bold">Cancelar</Button>
+                  <Button onClick={handleRegistrarMovimentacao} className="rounded-xl font-black">Registrar</Button>
+                </footer>
+              )}
+            </div>
+          </div>
+        )
+      ) : (
+        <Dialog open={movModalOpen} onOpenChange={(open) => { if (!open) { setMovModalOpen(false); setMovConfirmStep(false); } }}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Registrar movimentação</DialogTitle>
+              <DialogDescription>Sangria (saída) ou suprimento (entrada) de valores no caixa.</DialogDescription>
+            </DialogHeader>
+            {movConfirmStep ? (
+              <div className="space-y-4">
+                <div className="rounded-xl border border-amber-500/30 bg-amber-500/8 p-4 text-sm text-center space-y-1">
+                  <p className="font-black text-foreground">Confirma {movTipo === "saida" ? "sangria" : "suprimento"} de {formatPrice(parseCurrencyInput(movValor) || 0)}?</p>
+                  <p className="text-muted-foreground">Motivo: {movDescricao}</p>
+                </div>
+                <DialogFooter className="gap-3 sm:gap-0">
+                  <Button variant="outline" onClick={() => setMovConfirmStep(false)} className="rounded-xl font-bold">Voltar</Button>
+                  <Button onClick={handleRegistrarMovimentacao} className="rounded-xl font-black">Confirmar</Button>
+                </DialogFooter>
+              </div>
+            ) : (
+              <>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold text-foreground">Tipo</label>
+                    <select value={movTipo} onChange={(e) => setMovTipo(e.target.value as "entrada" | "saida")} className="w-full rounded-xl border border-border bg-secondary px-3 py-2 text-sm text-foreground">
+                      <option value="entrada">Suprimento (entrada)</option>
+                      <option value="saida">Sangria (saída)</option>
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold text-foreground">Motivo / Descrição *</label>
+                    <Input value={movDescricao} onChange={(e) => setMovDescricao(e.target.value)} placeholder="Ex.: Troco para entrega, Reforço de caixa" maxLength={100} />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold text-foreground">Valor (R$) *</label>
+                    <Input value={movValor} onChange={(e) => setMovValor(e.target.value)} placeholder="0,00" inputMode="decimal" className="text-lg font-black" onKeyDown={(e) => e.key === "Enter" && handleRegistrarMovimentacao()} />
+                  </div>
+                  {movimentacoesCaixa.length > 0 && (
+                    <div className="space-y-2">
+                      <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">Últimas movimentações</p>
+                      <div className="space-y-1.5 max-h-[120px] overflow-y-auto">
+                        {movimentacoesCaixa.slice(0, 5).map((mov) => (
+                          <div key={mov.id} className="flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-xs">
+                            <span className={`font-black tabular-nums ${mov.tipo === "entrada" ? "text-emerald-400" : "text-destructive"}`}>{mov.tipo === "entrada" ? "Suprimento" : "Sangria"}</span>
+                            <span className="font-black tabular-nums text-foreground">{formatPrice(mov.valor)}</span>
+                            <span className="flex-1 truncate text-muted-foreground">{mov.descricao}</span>
+                            <span className="tabular-nums text-muted-foreground/60">{mov.criadoEm}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+                <DialogFooter className="gap-3 sm:gap-0">
+                  <Button variant="outline" onClick={() => setMovModalOpen(false)} className="rounded-xl font-bold">Cancelar</Button>
+                  <Button onClick={handleRegistrarMovimentacao} className="rounded-xl font-black">Registrar</Button>
+                </DialogFooter>
+              </>
+            )}
+          </DialogContent>
+        </Dialog>
+      )}
 
-      {/* ── BALCÃO / DELIVERY DIALOG ── */}
-      <Dialog open={balcaoOpen && !balcaoFlowAtivo} onOpenChange={(open) => { if (!open) { setBalcaoOpen(false); setDeliveryStep("busca"); } }}>
-        <DialogContent className="rounded-2xl border-border bg-background sm:max-w-lg max-h-[85vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <ShoppingBag className="h-5 w-5 text-primary" />
-              Pedido Balcão / Delivery
-            </DialogTitle>
-            <DialogDescription>Preencha os dados e abra o cardápio completo.</DialogDescription>
-          </DialogHeader>
+      {/* ── BALCÃO / DELIVERY ── */}
+      {(() => {
+        const balcaoFormContent = (
           <div className="space-y-4">
             <div className="flex gap-2">
               <Button variant={balcaoTipo === "balcao" ? "default" : "outline"} onClick={() => { setBalcaoTipo("balcao"); setDeliveryStep("busca"); }} className="flex-1 rounded-xl font-black">Balcão</Button>
               <Button variant={balcaoTipo === "delivery" ? "default" : "outline"} onClick={() => { setBalcaoTipo("delivery"); setDeliveryStep("busca"); }} className="flex-1 rounded-xl font-black">Delivery</Button>
             </div>
-
             {balcaoTipo === "balcao" && (
               <div className="space-y-1">
                 <label className="text-xs font-semibold text-foreground">Nome do cliente *</label>
                 <Input value={balcaoClienteNome} onChange={(e) => setBalcaoClienteNome(e.target.value)} placeholder="Nome do cliente" />
               </div>
             )}
-
             {balcaoTipo === "delivery" && deliveryStep === "busca" && (
               <div className="space-y-3 rounded-xl border border-border bg-card p-4">
                 <label className="text-xs font-semibold text-foreground">Buscar cliente por CPF ou Telefone</label>
                 <div className="flex gap-2">
-                  <Input
-                    value={deliveryBusca}
-                    onChange={(e) => setDeliveryBusca(e.target.value)}
-                    placeholder="CPF ou telefone..."
-                    onKeyDown={(e) => { if (e.key === "Enter") setDeliveryResultados(findClienteDelivery(deliveryBusca)); }}
-                  />
-                  <Button size="sm" onClick={() => setDeliveryResultados(findClienteDelivery(deliveryBusca))} className="rounded-xl font-bold gap-1.5 shrink-0">
-                    <Search className="h-4 w-4" />
-                    Buscar
-                  </Button>
+                  <Input value={deliveryBusca} onChange={(e) => setDeliveryBusca(e.target.value)} placeholder="CPF ou telefone..." onKeyDown={(e) => { if (e.key === "Enter") setDeliveryResultados(findClienteDelivery(deliveryBusca)); }} />
+                  <Button size="sm" onClick={() => setDeliveryResultados(findClienteDelivery(deliveryBusca))} className="rounded-xl font-bold gap-1.5 shrink-0"><Search className="h-4 w-4" />Buscar</Button>
                 </div>
                 {deliveryResultados.length > 0 && (
                   <div className="space-y-1.5 mt-2">
                     {deliveryResultados.slice(0, 5).map((cli) => (
-                      <button
-                        key={cli.id}
-                        type="button"
-                        onClick={() => {
-                          setBalcaoClienteNome(cli.nome);
-                          setBalcaoCpf(cli.cpf);
-                          setBalcaoTelefone(cli.telefone);
-                          setBalcaoEndereco(cli.endereco);
-                          setBalcaoNumero(cli.numero);
-                          setBalcaoBairro(cli.bairro);
-                          setBalcaoComplemento(cli.complemento);
-                          setBalcaoReferencia(cli.referencia);
-                          setDeliveryStep("form");
-                        }}
-                        className="w-full text-left rounded-xl border border-border bg-secondary p-3 hover:bg-secondary/80 transition-colors"
-                      >
+                      <button key={cli.id} type="button" onClick={() => { setBalcaoClienteNome(cli.nome); setBalcaoCpf(cli.cpf); setBalcaoTelefone(cli.telefone); setBalcaoEndereco(cli.endereco); setBalcaoNumero(cli.numero); setBalcaoBairro(cli.bairro); setBalcaoComplemento(cli.complemento); setBalcaoReferencia(cli.referencia); setDeliveryStep("form"); }} className="w-full text-left rounded-xl border border-border bg-secondary p-3 hover:bg-secondary/80 transition-colors">
                         <p className="text-sm font-bold text-foreground">{cli.nome}</p>
                         <p className="text-xs text-muted-foreground">{cli.telefone} {cli.endereco ? `— ${cli.endereco}, ${cli.numero}` : ""}</p>
                       </button>
@@ -2305,115 +2452,55 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                 {deliveryBusca.trim() && deliveryResultados.length === 0 && (
                   <div className="text-center py-3 space-y-2">
                     <p className="text-xs text-muted-foreground">Cliente não encontrado</p>
-                    <Button size="sm" variant="outline" onClick={() => setDeliveryStep("form")} className="rounded-xl font-bold">
-                      Cadastrar novo cliente
-                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => setDeliveryStep("form")} className="rounded-xl font-bold">Cadastrar novo cliente</Button>
                   </div>
                 )}
                 {!deliveryBusca.trim() && (
-                  <Button size="sm" variant="ghost" onClick={() => setDeliveryStep("form")} className="w-full rounded-xl font-bold text-xs text-muted-foreground">
-                    Pular busca — cadastrar novo
-                  </Button>
+                  <Button size="sm" variant="ghost" onClick={() => setDeliveryStep("form")} className="w-full rounded-xl font-bold text-xs text-muted-foreground">Pular busca — cadastrar novo</Button>
                 )}
               </div>
             )}
-
             {balcaoTipo === "delivery" && deliveryStep === "form" && (
               <div className="space-y-3 rounded-xl border border-border bg-card p-4">
-                <div className="space-y-1">
-                  <label className="text-xs font-semibold text-foreground">Nome completo *</label>
-                  <Input value={balcaoClienteNome} onChange={(e) => setBalcaoClienteNome(e.target.value)} placeholder="Nome completo" />
-                </div>
+                <div className="space-y-1"><label className="text-xs font-semibold text-foreground">Nome completo *</label><Input value={balcaoClienteNome} onChange={(e) => setBalcaoClienteNome(e.target.value)} placeholder="Nome completo" /></div>
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1">
-                    <label className="text-xs font-semibold text-foreground">Telefone *</label>
-                    <Input value={balcaoTelefone} onChange={(e) => setBalcaoTelefone(e.target.value)} placeholder="(00) 00000-0000" />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-xs font-semibold text-foreground">CPF *</label>
-                    <Input value={balcaoCpf} onChange={(e) => setBalcaoCpf(e.target.value)} placeholder="000.000.000-00" />
-                  </div>
+                  <div className="space-y-1"><label className="text-xs font-semibold text-foreground">Telefone *</label><Input value={balcaoTelefone} onChange={(e) => setBalcaoTelefone(e.target.value)} placeholder="(00) 00000-0000" /></div>
+                  <div className="space-y-1"><label className="text-xs font-semibold text-foreground">CPF *</label><Input value={balcaoCpf} onChange={(e) => setBalcaoCpf(e.target.value)} placeholder="000.000.000-00" /></div>
                 </div>
                 <div className="space-y-1">
                   <label className="text-xs font-semibold text-foreground">CEP</label>
                   <div className="flex gap-2 items-center">
-                    <Input
-                      value={deliveryCep}
-                      onChange={(e) => {
-                        let v = e.target.value.replace(/\D/g, "").slice(0, 8);
-                        if (v.length > 5) v = v.slice(0, 5) + "-" + v.slice(5);
-                        setDeliveryCep(v);
-                        setDeliveryCepErro("");
-                        const digits = v.replace(/\D/g, "");
-                        if (digits.length === 8) {
-                          setDeliveryCepLoading(true);
-                          fetch(`https://viacep.com.br/ws/${digits}/json/`)
-                            .then(r => r.json())
-                            .then(data => {
-                              if (data.erro) {
-                                setDeliveryCepErro("CEP não encontrado");
-                              } else {
-                                setBalcaoEndereco(data.logradouro || "");
-                                setBalcaoBairro(data.bairro || "");
-                                setDeliveryCidade(data.localidade ? `${data.localidade} - ${data.uf}` : "");
-                              }
-                            })
-                            .catch(() => setDeliveryCepErro("Erro ao buscar CEP"))
-                            .finally(() => setDeliveryCepLoading(false));
-                        }
-                      }}
-                      placeholder="00000-000"
-                      className="flex-1"
-                    />
+                    <Input value={deliveryCep} onChange={(e) => { let v = e.target.value.replace(/\D/g, "").slice(0, 8); if (v.length > 5) v = v.slice(0, 5) + "-" + v.slice(5); setDeliveryCep(v); setDeliveryCepErro(""); const digits = v.replace(/\D/g, ""); if (digits.length === 8) { setDeliveryCepLoading(true); fetch(`https://viacep.com.br/ws/${digits}/json/`).then(r => r.json()).then(data => { if (data.erro) { setDeliveryCepErro("CEP não encontrado"); } else { setBalcaoEndereco(data.logradouro || ""); setBalcaoBairro(data.bairro || ""); setDeliveryCidade(data.localidade ? `${data.localidade} - ${data.uf}` : ""); } }).catch(() => setDeliveryCepErro("Erro ao buscar CEP")).finally(() => setDeliveryCepLoading(false)); } }} placeholder="00000-000" className="flex-1" />
                     {deliveryCepLoading && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
                   </div>
                   {deliveryCepErro && <p className="text-xs text-destructive">{deliveryCepErro}</p>}
                 </div>
                 <div className="grid grid-cols-3 gap-3">
-                  <div className="col-span-2 space-y-1">
-                    <label className="text-xs font-semibold text-foreground">Endereço / Rua *</label>
-                    <Input value={balcaoEndereco} onChange={(e) => setBalcaoEndereco(e.target.value)} placeholder="Rua" />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-xs font-semibold text-foreground">Número *</label>
-                    <Input value={balcaoNumero} onChange={(e) => setBalcaoNumero(e.target.value)} placeholder="Nº" />
-                  </div>
+                  <div className="col-span-2 space-y-1"><label className="text-xs font-semibold text-foreground">Endereço / Rua *</label><Input value={balcaoEndereco} onChange={(e) => setBalcaoEndereco(e.target.value)} placeholder="Rua" /></div>
+                  <div className="space-y-1"><label className="text-xs font-semibold text-foreground">Número *</label><Input value={balcaoNumero} onChange={(e) => setBalcaoNumero(e.target.value)} placeholder="Nº" /></div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1">
-                    <label className="text-xs font-semibold text-foreground">Bairro</label>
-                    <Input value={balcaoBairro} onChange={(e) => setBalcaoBairro(e.target.value)} placeholder="Bairro" />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-xs font-semibold text-foreground">Cidade</label>
-                    <Input value={deliveryCidade} readOnly={!!deliveryCidade} onChange={(e) => setDeliveryCidade(e.target.value)} placeholder="Cidade" className={deliveryCidade ? "bg-muted" : ""} />
-                  </div>
+                  <div className="space-y-1"><label className="text-xs font-semibold text-foreground">Bairro</label><Input value={balcaoBairro} onChange={(e) => setBalcaoBairro(e.target.value)} placeholder="Bairro" /></div>
+                  <div className="space-y-1"><label className="text-xs font-semibold text-foreground">Cidade</label><Input value={deliveryCidade} readOnly={!!deliveryCidade} onChange={(e) => setDeliveryCidade(e.target.value)} placeholder="Cidade" className={deliveryCidade ? "bg-muted" : ""} /></div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1">
-                    <label className="text-xs font-semibold text-foreground">Complemento</label>
-                    <Input value={balcaoComplemento} onChange={(e) => setBalcaoComplemento(e.target.value)} placeholder="Apto, bloco..." />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-xs font-semibold text-foreground">Referência</label>
-                    <Input value={balcaoReferencia} onChange={(e) => setBalcaoReferencia(e.target.value)} placeholder="Próximo a..." />
-                  </div>
+                  <div className="space-y-1"><label className="text-xs font-semibold text-foreground">Complemento</label><Input value={balcaoComplemento} onChange={(e) => setBalcaoComplemento(e.target.value)} placeholder="Apto, bloco..." /></div>
+                  <div className="space-y-1"><label className="text-xs font-semibold text-foreground">Referência</label><Input value={balcaoReferencia} onChange={(e) => setBalcaoReferencia(e.target.value)} placeholder="Próximo a..." /></div>
                 </div>
               </div>
             )}
           </div>
-          <DialogFooter className="gap-3 sm:gap-0">
+        );
+
+        const balcaoFooterButtons = (
+          <>
             {balcaoTipo === "delivery" && deliveryStep === "form" && (
               <Button variant="ghost" onClick={() => setDeliveryStep("busca")} className="rounded-xl font-bold mr-auto">← Voltar</Button>
             )}
             <Button variant="outline" onClick={() => { setBalcaoOpen(false); setDeliveryStep("busca"); }} className="rounded-xl font-bold">Cancelar</Button>
             {(balcaoTipo === "balcao" || deliveryStep === "form") && (
               <Button
-                disabled={
-                  balcaoTipo === "balcao"
-                    ? !balcaoClienteNome.trim()
-                    : !balcaoClienteNome.trim() || !balcaoTelefone.trim() || !balcaoCpf.trim() || !balcaoEndereco.trim() || !balcaoNumero.trim()
-                }
+                disabled={balcaoTipo === "balcao" ? !balcaoClienteNome.trim() : !balcaoClienteNome.trim() || !balcaoTelefone.trim() || !balcaoCpf.trim() || !balcaoEndereco.trim() || !balcaoNumero.trim()}
                 onClick={() => {
                   if (balcaoTipo === "balcao" && !balcaoClienteNome.trim()) { toast.error("Informe o nome do cliente", { duration: 1400 }); return; }
                   if (balcaoTipo === "delivery") {
@@ -2431,9 +2518,48 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                 {balcaoTipo === "delivery" ? "Salvar e abrir cardápio" : "Abrir cardápio"}
               </Button>
             )}
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </>
+        );
+
+        return isDesktop ? (
+          (balcaoOpen && !balcaoFlowAtivo) && (
+            <div className="fixed inset-0 z-50 flex animate-in fade-in duration-200">
+              <div className="flex-1 bg-foreground/60" onClick={() => { setBalcaoOpen(false); setDeliveryStep("busca"); }} />
+              <div className="w-[520px] h-screen bg-background border-l border-border flex flex-col animate-in slide-in-from-right duration-300">
+                <header className="flex items-center gap-3 border-b border-border px-5 py-4 shrink-0">
+                  <ShoppingBag className="h-5 w-5 text-primary" />
+                  <div className="flex-1">
+                    <h2 className="text-base font-black text-foreground">Pedido Balcão / Delivery</h2>
+                    <p className="text-xs text-muted-foreground">Preencha os dados e abra o cardápio completo.</p>
+                  </div>
+                  <button onClick={() => { setBalcaoOpen(false); setDeliveryStep("busca"); }} className="flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-secondary text-foreground hover:bg-secondary/80">
+                    <X className="h-4 w-4" />
+                  </button>
+                </header>
+                <div className="flex-1 overflow-y-auto p-5">
+                  {balcaoFormContent}
+                </div>
+                <footer className="border-t border-border px-5 py-4 flex items-center justify-end gap-3 shrink-0">
+                  {balcaoFooterButtons}
+                </footer>
+              </div>
+            </div>
+          )
+        ) : (
+          <Dialog open={balcaoOpen && !balcaoFlowAtivo} onOpenChange={(open) => { if (!open) { setBalcaoOpen(false); setDeliveryStep("busca"); } }}>
+            <DialogContent className="rounded-2xl border-border bg-background sm:max-w-lg max-h-[85vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2"><ShoppingBag className="h-5 w-5 text-primary" />Pedido Balcão / Delivery</DialogTitle>
+                <DialogDescription>Preencha os dados e abra o cardápio completo.</DialogDescription>
+              </DialogHeader>
+              {balcaoFormContent}
+              <DialogFooter className="gap-3 sm:gap-0">
+                {balcaoFooterButtons}
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        );
+      })()}
 
       {/* ── DELIVERY CONFIRMATION DIALOG ── */}
       <Dialog open={deliveryConfirmOpen} onOpenChange={(open) => { if (!open) { setDeliveryConfirmOpen(false); setDeliveryPendingItens([]); } }}>
