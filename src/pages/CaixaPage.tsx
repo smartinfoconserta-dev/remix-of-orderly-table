@@ -415,7 +415,51 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
     setDeliveryCidade("");
   }, []);
 
-  /* ── auth guard ── */
+  /* ── Print receipt helper (must be before early returns) ── */
+  const handlePrintComanda = useCallback((data: {
+    tipo: string;
+    numero: number;
+    dataHora: string;
+    itens: Array<{ quantidade: number; nome: string; preco: number }>;
+    subtotal: number;
+    taxaEntrega?: number;
+    total: number;
+    formaPagamento?: string;
+  }) => {
+    let el = document.getElementById("comanda-print");
+    if (!el) {
+      el = document.createElement("div");
+      el.id = "comanda-print";
+      el.style.display = "none";
+      document.body.appendChild(el);
+    }
+    const nomeRest = sistemaConfig.nomeRestaurante || "Restaurante";
+    const taxaHtml = (data.taxaEntrega ?? 0) > 0
+      ? `<div class="print-item"><span>Taxa de entrega</span><span>R$ ${data.taxaEntrega!.toFixed(2).replace(".", ",")}</span></div>`
+      : "";
+    const pagHtml = data.formaPagamento
+      ? `<div class="print-center">${data.formaPagamento}</div>`
+      : "";
+    el.innerHTML = `
+      <h2>${nomeRest}</h2>
+      <div class="print-center">${data.tipo}</div>
+      <div class="print-center">Pedido #${data.numero} — ${data.dataHora}</div>
+      <div class="print-divider"></div>
+      ${data.itens.map((it) => `<div class="print-item"><span>${it.quantidade}x ${it.nome}</span><span>R$ ${(it.preco * it.quantidade).toFixed(2).replace(".", ",")}</span></div>`).join("")}
+      <div class="print-divider"></div>
+      <div class="print-item"><span>Subtotal</span><span>R$ ${data.subtotal.toFixed(2).replace(".", ",")}</span></div>
+      ${taxaHtml}
+      <div class="print-total"><span>TOTAL</span><span>R$ ${data.total.toFixed(2).replace(".", ",")}</span></div>
+      <div class="print-divider"></div>
+      ${pagHtml}
+      <div class="print-center" style="margin-top:8px;font-size:10px">Obrigado pela preferência!</div>
+    `;
+    el.style.display = "block";
+    window.print();
+    el.style.display = "none";
+  }, [sistemaConfig.nomeRestaurante]);
+
+
   if (!currentOperator || !hasCaixaAccess) {
     return (
       <div className="min-h-svh flex flex-col bg-background">
