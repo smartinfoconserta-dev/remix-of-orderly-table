@@ -34,7 +34,7 @@ export default function MotoboyPage() {
   const LOGO = sysConfig.logoBase64 || sysConfig.logoUrl || "";
   const INITIALS = NOME_REST.slice(0, 2).toUpperCase();
 
-  const { pedidosBalcao, marcarBalcaoSaiu, marcarBalcaoEntregue } = useRestaurant();
+  const { pedidosBalcao, marcarBalcaoSaiu, marcarBalcaoEntregue, cancelarEntregaMotoboy } = useRestaurant();
   const [sessao, setSessao] = useState<{ id: string; nome: string } | null>(() => getSessao());
   const [nomeInput, setNomeInput] = useState("");
   const [pinInput, setPinInput] = useState("");
