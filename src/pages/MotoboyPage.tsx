@@ -274,24 +274,25 @@ export default function MotoboyPage() {
           ) : (
             <div className="space-y-3 text-left">
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-muted-foreground">Motoboy</label>
-                <Select value={selectedMotoboyId} onValueChange={setSelectedMotoboyId}>
-                  <SelectTrigger className="rounded-xl"><SelectValue placeholder="Selecione seu nome" /></SelectTrigger>
-                  <SelectContent>
-                    {motoboys.map((m) => (<SelectItem key={m.id} value={m.id}>{m.nome}</SelectItem>))}
-                  </SelectContent>
-                </Select>
+                <label className="text-xs font-bold text-muted-foreground">Seu nome</label>
+                <Input
+                  type="text"
+                  placeholder="Digite seu nome"
+                  value={nomeInput}
+                  onChange={(e) => setNomeInput(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleLogin()}
+                />
               </div>
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-muted-foreground">PIN</label>
-                <Input type="password" inputMode="numeric" maxLength={6} placeholder="••••" value={pinInput}
-                  onChange={(e) => setPinInput(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                <Input type="password" inputMode="numeric" maxLength={4} placeholder="••••" value={pinInput}
+                  onChange={(e) => setPinInput(e.target.value.replace(/\D/g, "").slice(0, 4))}
                   onKeyDown={(e) => e.key === "Enter" && handleLogin()} />
               </div>
               {loginError && (
                 <p className="rounded-xl border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive">{loginError}</p>
               )}
-              <Button className="w-full rounded-xl" onClick={handleLogin} disabled={!selectedMotoboyId || pinInput.length < 4}>
+              <Button className="w-full rounded-xl" onClick={handleLogin} disabled={!nomeInput.trim() || pinInput.length < 4}>
                 <Bike className="w-4 h-4 mr-2" /> Entrar
               </Button>
             </div>
