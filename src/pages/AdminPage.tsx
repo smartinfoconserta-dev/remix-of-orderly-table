@@ -770,18 +770,29 @@ const AdminPage = () => {
                     <label className="text-xs font-bold text-muted-foreground">Nome da categoria</label>
                     <Input value={catNomeInput} onChange={(e) => setCatNomeInput(e.target.value)} placeholder="Ex.: Massas" maxLength={40} />
                   </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-muted-foreground">Ícone</label>
+                    <div className="flex flex-wrap gap-1.5">
+                      {["burger", "pizza", "coffee", "beer", "cake", "box", "flame", "star", "leaf", "tag", "beef", "popcorn", "cup-soda"].map((ic) => (
+                        <button key={ic} type="button" onClick={() => setCatIconeInput(ic)}
+                          className={`flex h-9 w-9 items-center justify-center rounded-lg border transition-all ${catIconeInput === ic ? "border-primary bg-primary/15 text-primary" : "border-border bg-card text-muted-foreground hover:bg-secondary"}`}>
+                          <CategoryIcon name={ic} className="h-4 w-4" />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                   <div className="flex gap-3">
                     <Button variant="outline" className="flex-1" onClick={() => setCatDialogOpen(false)}>Cancelar</Button>
                     <Button className="flex-1" disabled={!catNomeInput.trim()} onClick={() => {
                       if (!catNomeInput.trim()) return;
                       if (catEditando) {
-                        const next = categoriasCustom.map((c) => c.id === catEditando.id ? { ...c, nome: catNomeInput.trim() } : c);
+                        const next = categoriasCustom.map((c) => c.id === catEditando.id ? { ...c, nome: catNomeInput.trim(), icone: catIconeInput } : c);
                         saveCategoriasCustom(next);
                         setCategoriasCustom(next);
                         toast.success("Categoria atualizada");
                       } else {
                         const slug = catNomeInput.trim().toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
-                        const nova: CategoriaCustom = { id: `${slug}-${Date.now()}`, nome: catNomeInput.trim(), icone: "tag", ordem: todasCategorias.length };
+                        const nova: CategoriaCustom = { id: `${slug}-${Date.now()}`, nome: catNomeInput.trim(), icone: catIconeInput, ordem: todasCategorias.length };
                         const next = [...categoriasCustom, nova];
                         saveCategoriasCustom(next);
                         setCategoriasCustom(next);

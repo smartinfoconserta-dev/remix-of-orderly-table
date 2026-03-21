@@ -364,8 +364,13 @@ export default function PedidoPage() {
 
             {/* Cliente encontrado */}
             {buscaFeita && clienteEncontrado && !showForm && (
-              <Card>
+              <Card className="border-primary/30 bg-primary/5">
                 <CardContent className="p-4 space-y-3">
+                  <div className="flex items-center gap-2 text-primary">
+                    <CheckCircle className="w-5 h-5" />
+                    <span className="font-semibold text-sm">Bem-vindo de volta, {clienteEncontrado.nome}!</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">Seus dados foram preenchidos automaticamente.</p>
                   <div>
                     <p className="font-semibold">{clienteEncontrado.nome}</p>
                     <p className="text-sm text-muted-foreground">
