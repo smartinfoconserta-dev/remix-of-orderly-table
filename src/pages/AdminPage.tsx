@@ -938,6 +938,30 @@ const AdminPage = () => {
               <p className="text-xs text-muted-foreground mb-3">Modo de entrega e taxas por bairro</p>
             </div>
 
+            {/* Toggle delivery ativo */}
+            <div className="surface-card max-w-lg rounded-2xl p-6 space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-bold text-foreground">{sistemaConfig.deliveryAtivo !== false ? "Delivery ativado" : "Delivery desativado"}</p>
+                  <p className="text-xs text-muted-foreground">Controle se o link de delivery aceita pedidos</p>
+                </div>
+                <Switch
+                  checked={sistemaConfig.deliveryAtivo !== false}
+                  onCheckedChange={(v) => {
+                    const next = { ...sistemaConfig, deliveryAtivo: v };
+                    setSistemaConfig(next);
+                    saveSistemaConfig(next);
+                    toast.success(v ? "Delivery ativado" : "Delivery desativado");
+                  }}
+                />
+              </div>
+              {sistemaConfig.deliveryAtivo === false && (
+                <p className="text-xs font-semibold text-destructive rounded-lg bg-destructive/10 px-3 py-2">
+                  ⚠ Clientes não conseguem fazer pedidos pelo link de delivery
+                </p>
+              )}
+            </div>
+
             {/* Modo de entrega */}
             <div className="surface-card max-w-lg rounded-2xl p-6 space-y-3">
               <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">Modo de entrega</p>
