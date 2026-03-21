@@ -1074,11 +1074,19 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
     </div>
   );
 
+  const garcomBanner = showGarcomBanner ? (
+    <div className="animate-fade-in px-4 py-3 bg-amber-500/90 backdrop-blur-sm flex items-center gap-3 text-white">
+      <Bell className="h-6 w-6 shrink-0 animate-pulse" />
+      <span className="text-sm font-bold">Garçom chamado! Estamos a caminho.</span>
+    </div>
+  ) : null;
+
   return (
     <>
       <div className="flex min-h-screen flex-col bg-background">
         {header}
-        {isMobile ? mobileContent : desktopContent}
+        {garcomBanner}
+        {(isMobile || modo === "garcom" || modo === "delivery") ? mobileContent : desktopContent}
         <ProductModal produto={produtoSelecionado} onClose={handleCloseProductModal} onAdd={handleAddToCart} isGarcomMobile={isGarcomMobile} skipEmbalagemDefault={modo === "cliente" || modo === "garcom"} />
         {mesa && <MinhaContaDrawer pedidos={mesa.pedidos} total={mesa.total} open={contaOpen} onOpenChange={setContaOpen} />}
         {idleOverlay}

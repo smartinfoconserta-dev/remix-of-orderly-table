@@ -96,7 +96,9 @@ export function getSistemaConfig(): SistemaConfig {
   try {
     const raw = localStorage.getItem(SISTEMA_CONFIG_KEY);
     if (!raw) return { ...defaultSistemaConfig };
-    return { ...defaultSistemaConfig, ...JSON.parse(raw) };
+    const parsed = { ...defaultSistemaConfig, ...JSON.parse(raw) };
+    if (parsed.deliveryAtivo === undefined) parsed.deliveryAtivo = true;
+    return parsed;
   } catch {
     return { ...defaultSistemaConfig };
   }
