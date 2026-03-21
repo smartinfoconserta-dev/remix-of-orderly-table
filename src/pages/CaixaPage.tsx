@@ -1135,11 +1135,11 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                 <div className="flex-1" style={{ borderBottom: '1px solid #c0c0c0' }} />
               </div>
 
-              {/* ── 2-Column Content ── */}
-              <div className="flex flex-1 overflow-hidden">
+              {/* ── Content Area ── */}
+              <div className="flex flex-1 overflow-hidden" style={{ borderTop: '1px solid #c0c0c0' }}>
 
-                {/* ═══ LEFT: Mesa Grid ═══ */}
-                <div className={`${caixaView === "delivery" ? "flex-1" : "flex-[7]"} overflow-y-auto p-5 lg:p-6 scrollbar-hide`}>
+                {/* ═══ Full-width content ═══ */}
+                <div className="flex-1 overflow-y-auto p-5 lg:p-6 scrollbar-hide">
                 {caixaView === "mesas" ? (
                   <>
                   <div className="grid gap-3 fade-in" style={{ gridTemplateColumns: "repeat(5, 1fr)" }}>
