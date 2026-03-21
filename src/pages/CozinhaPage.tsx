@@ -174,14 +174,42 @@ const CozinhaPage = () => {
         return line;
       }).join("");
 
-      const deliveryInfo = isDeliveryOrder && (pedido as any).endereco
+      // Delivery: big number header + QR + client info
+      let deliveryHeaderBlock = "";
+      if (isDeliveryOrder) {
+        const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=RETIRADA:${pedido.id}`;
+        const clienteNome = pedido.clienteNome || "Cliente";
+        const clienteTel = (pedido as any).clienteTelefone || "";
+        const endereco = (pedido as any).enderecoCompleto || (pedido as any).endereco || "";
+        const bairro = (pedido as any).bairro || "";
+        const endFull = [endereco, bairro].filter(Boolean).join(" — ");
+        deliveryHeaderBlock = `
+          <div class="c-entrega-num">ENTREGA #${pedido.numeroPedido}</div>
+          <div class="c-qr"><img src="${qrUrl}" width="150" height="150" alt="QR"/></div>
+          <div class="c-cliente-info">
+            <div><strong>Nome:</strong> ${clienteNome}</div>
+            ${endFull ? `<div><strong>End:</strong> ${endFull}</div>` : ""}
+            ${clienteTel ? `<div><strong>Tel:</strong> ${clienteTel}</div>` : ""}
+          </div>
+          <div class="c-divider"></div>`;
+      }
+
+      const deliveryInfo = !isDeliveryOrder && (pedido as any).endereco
         ? `<div class="c-note">${(pedido as any).endereco}</div>` : "";
+
+      // Total for delivery
+      const totalBlock = isDeliveryOrder
+        ? `<div class="c-total">TOTAL: R$ ${pedido.total.toFixed(2)}</div>${(pedido as any).formaPagamentoDelivery ? `<div class="c-pagamento">${(pedido as any).formaPagamentoDelivery.toUpperCase()}</div>` : ""}`
+        : "";
 
       const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Comanda #${pedido.numeroPedido}</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:'Courier New',monospace;width:80mm;padding:4mm;color:#000;background:#fff}
 .c-header{text-align:center;font-size:16px;font-weight:900;margin-bottom:4px}
+.c-entrega-num{text-align:center;font-size:48px;font-weight:900;margin:8px 0;letter-spacing:2px}
+.c-qr{text-align:center;margin:8px 0}
+.c-cliente-info{font-size:12px;margin:6px 0;line-height:1.6}
 .c-tipo{text-align:center;font-size:14px;font-weight:700;margin-bottom:2px}
 .c-num{text-align:center;font-size:12px;margin-bottom:6px}
 .c-divider{border-top:1px dashed #000;margin:6px 0}
@@ -193,8 +221,11 @@ body{font-family:'Courier New',monospace;width:80mm;padding:4mm;color:#000;backg
 .c-add{font-size:11px;color:#333;margin-left:16px}
 .c-rem{font-size:11px;color:#900;margin-left:16px}
 .c-obs{font-size:11px;font-style:italic;margin-left:16px;color:#555}
+.c-total{text-align:center;font-size:16px;font-weight:900;margin:6px 0}
+.c-pagamento{text-align:center;font-size:13px;font-weight:700;margin-bottom:4px}
 </style></head><body>
 <div class="c-header">${nomeRest}</div>
+${deliveryHeaderBlock}
 <div class="c-tipo">${tipoLabel}</div>
 <div class="c-num">Pedido #${pedido.numeroPedido} — ${hora}</div>
 ${deliveryInfo}
@@ -202,6 +233,7 @@ ${specialBlock}
 <div class="c-divider"></div>
 ${itensHtml}
 <div class="c-divider"></div>
+${totalBlock}
 ${pedido.observacaoGeral ? `<div class="c-obs">Obs: ${pedido.observacaoGeral}</div>` : ""}
 </body></html>`;
 
