@@ -1451,56 +1451,47 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                 )}
                 </div>
 
-                {/* ═══ RIGHT: Summary (30%) — hidden in delivery view ═══ */}
-                {caixaView === "mesas" && (
-                <div className="flex flex-[3] flex-col border-l border-border bg-card/50 overflow-hidden">
-                  <div className="flex-1 flex flex-col items-center justify-center p-6 space-y-6">
-                    {/* KPIs */}
-                    <div className="grid grid-cols-2 gap-3 w-full max-w-xs">
-                      <div className="rounded-xl border border-border bg-card p-3 text-center">
-                        <p className="text-2xl font-black tabular-nums text-status-consumo">{mesasConsumo}</p>
-                        <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mt-1">Mesas em consumo</p>
-                      </div>
-                      <div className="rounded-xl border border-border bg-card p-3 text-center">
-                        <p className="text-2xl font-black tabular-nums text-foreground">{fechamentos.length}</p>
-                        <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mt-1">Comandas fechadas</p>
-                      </div>
-                    </div>
+              </div>
 
-                    {/* Último fechamento */}
-                    <div className="w-full max-w-xs rounded-xl border border-border bg-card p-3 text-center">
-                      <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Último fechamento</p>
-                      <p className="text-sm font-black text-foreground mt-1">
-                        {fechamentos.length > 0
-                          ? (() => {
-                              const f = fechamentos[0];
-                              const id = f.mesaId || "";
-                              if (id.includes("delivery")) return "Delivery";
-                              if (id.includes("balcao") || f.mesaNumero === 0) return "Balcão";
-                              return `Mesa ${String(f.mesaNumero).padStart(2, "0")}`;
-                            })()
-                          : "Nenhum ainda"}
-                      </p>
-                    </div>
-
-                    {/* Lembrete delivery */}
-                    {pedidosAguardandoConfirmacao.length > 0 && (
-                      <div className="w-full max-w-xs rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-center space-y-2">
-                        <p className="text-sm font-black text-amber-400">
-                          🛵 {pedidosAguardandoConfirmacao.length} pedido(s) delivery aguardando confirmação
-                        </p>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="rounded-lg font-black text-xs border-amber-500/30 text-amber-400 hover:bg-amber-500/10"
-                          onClick={() => setCaixaView("delivery")}
-                        >
-                          Ver agora
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                </div>
+              {/* ── Windows-style Status Bar ── */}
+              <div className="flex items-center shrink-0 divide-x text-[10px]" style={{ background: '#f0f0f0', borderTop: '1px solid #c0c0c0' }}>
+                <span className="flex items-center gap-1.5 px-3 py-1.5" style={{ color: '#333', borderColor: '#c0c0c0' }}>
+                  <span className="h-2 w-2 rounded-full bg-green-500 inline-block" /> Online
+                </span>
+                <span className="px-3 py-1.5 font-bold" style={{ color: '#333', borderColor: '#c0c0c0' }}>
+                  Operador: {currentOperator.nome}
+                </span>
+                {caixaOpenTime && (
+                  <span className="px-3 py-1.5" style={{ color: '#333', borderColor: '#c0c0c0' }}>
+                    Turno: aberto {caixaOpenTime}
+                  </span>
+                )}
+                <span className="px-3 py-1.5" style={{ color: '#333', borderColor: '#c0c0c0' }}>
+                  Consumo: {mesasConsumo}
+                </span>
+                <span className="px-3 py-1.5" style={{ color: '#333', borderColor: '#c0c0c0' }}>
+                  Livres: {mesasLivre}
+                </span>
+                <span className="px-3 py-1.5" style={{ color: '#333', borderColor: '#c0c0c0' }}>
+                  Fechadas: {fechamentos.length}
+                </span>
+                <span className="px-3 py-1.5" style={{ color: '#333', borderColor: '#c0c0c0' }}>
+                  Último: {fechamentos.length > 0 ? (() => {
+                    const f = fechamentos[0];
+                    const id = f.mesaId || "";
+                    if (id.includes("delivery")) return "Delivery";
+                    if (id.includes("balcao") || f.mesaNumero === 0) return "Balcão";
+                    return `Mesa ${String(f.mesaNumero).padStart(2, "0")}`;
+                  })() : "—"}
+                </span>
+                {pedidosAguardandoConfirmacao.length > 0 && (
+                  <button
+                    onClick={() => setCaixaView("delivery")}
+                    className="px-3 py-1.5 font-bold animate-pulse"
+                    style={{ color: '#b45309', background: '#fef3c7', borderColor: '#c0c0c0' }}
+                  >
+                    🛵 {pedidosAguardandoConfirmacao.length} delivery aguardando
+                  </button>
                 )}
               </div>
             </div>
