@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { CheckCircle, Search, Loader2, ArrowLeft } from "lucide-react";
+import { CheckCircle, Search, Loader2, ArrowLeft, LockKeyhole } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,12 +7,10 @@ import { Progress } from "@/components/ui/progress";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { getSistemaConfig } from "@/lib/adminStorage";
-import { findClienteDelivery, upsertClienteDelivery, getBairros, type ClienteDelivery, type Bairro } from "@/lib/deliveryStorage";
+import { findClienteDelivery, upsertClienteDelivery, getBairros, getClientesDelivery, saveClientesDelivery, type ClienteDelivery, type Bairro } from "@/lib/deliveryStorage";
 import { useRestaurant, type ItemCarrinho } from "@/contexts/RestaurantContext";
 import PedidoFlow from "@/components/PedidoFlow";
 import { toast } from "sonner";
-
-type Etapa = "identificacao" | "cardapio" | "confirmacao" | "sucesso";
 
 const normStr = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
 
@@ -20,27 +18,44 @@ const sysConfig = getSistemaConfig();
 const RESTAURANTE_NOME = sysConfig.nomeRestaurante || "Restaurante";
 const RESTAURANTE_LOGO = sysConfig.logoUrl || "";
 const RESTAURANTE_INITIALS = RESTAURANTE_NOME.slice(0, 2).toUpperCase();
+const MODO_ID = sysConfig.modoIdentificacaoDelivery || "visitante";
 
-const etapaProgress: Record<Etapa, number> = {
-  identificacao: 25,
+// ── Etapas por modo ──
+// Visitante: cardapio → identificacao → confirmacao → sucesso
+// Cadastro: login → (cadastro) → cardapio → confirmacao → sucesso
+type Etapa = "login" | "cadastro" | "identificacao" | "cardapio" | "confirmacao" | "sucesso";
+
+const etapaProgressVisitante: Record<string, number> = {
+  cardapio: 25,
+  identificacao: 50,
+  confirmacao: 75,
+  sucesso: 100,
+};
+
+const etapaProgressCadastro: Record<string, number> = {
+  login: 10,
+  cadastro: 25,
   cardapio: 50,
   confirmacao: 75,
   sucesso: 100,
 };
 
 const etapaLabel: Record<Etapa, string> = {
+  login: "Login",
+  cadastro: "Cadastro",
   identificacao: "Identificação",
   cardapio: "Cardápio",
   confirmacao: "Confirmação",
   sucesso: "Pedido enviado",
 };
 
-function ConfirmacaoEtapa({ nome, endereco, numero, complemento, bairro, itens, taxaEntrega, totalPedido, formaPag, setFormaPag, troco, setTroco, onVoltar, onConfirmar }: {
+function ConfirmacaoEtapa({ nome, endereco, numero, complemento, bairro, itens, taxaEntrega, totalPedido, formaPag, setFormaPag, troco, setTroco, onVoltar, onConfirmar, editEndereco, setEditEndereco }: {
   nome: string; endereco: string; numero: string; complemento: string; bairro: string;
   itens: ItemCarrinho[]; taxaEntrega: number; totalPedido: number;
   formaPag: string; setFormaPag: (v: string) => void;
   troco: string; setTroco: (v: string) => void;
   onVoltar: () => void; onConfirmar: () => void;
+  editEndereco?: { endereco: string; numero: string; complemento: string; bairro: string; setEndereco: (v: string) => void; setNumero: (v: string) => void; setComplemento: (v: string) => void; setBairro: (v: string) => void } | null;
 }) {
   const [confirmado, setConfirmado] = useState(false);
   return (
@@ -51,7 +66,18 @@ function ConfirmacaoEtapa({ nome, endereco, numero, complemento, bairro, itens, 
       <h2 className="text-lg font-bold">Confirme seu pedido</h2>
       <Card><CardContent className="p-4 space-y-1">
         <p className="font-semibold">{nome}</p>
-        <p className="text-sm text-muted-foreground">{endereco}, {numero}{complemento ? ` - ${complemento}` : ""} — {bairro}</p>
+        {editEndereco ? (
+          <div className="space-y-2 pt-2">
+            <Input placeholder="Endereço" value={editEndereco.endereco} onChange={(e) => editEndereco.setEndereco(e.target.value)} />
+            <div className="grid grid-cols-2 gap-2">
+              <Input placeholder="Número" value={editEndereco.numero} onChange={(e) => editEndereco.setNumero(e.target.value)} />
+              <Input placeholder="Bairro" value={editEndereco.bairro} onChange={(e) => editEndereco.setBairro(e.target.value)} />
+            </div>
+            <Input placeholder="Complemento" value={editEndereco.complemento} onChange={(e) => editEndereco.setComplemento(e.target.value)} />
+          </div>
+        ) : (
+          <p className="text-sm text-muted-foreground">{endereco}, {numero}{complemento ? ` - ${complemento}` : ""} — {bairro}</p>
+        )}
       </CardContent></Card>
       <Card><CardContent className="p-4 space-y-2">
         <h3 className="font-semibold text-sm">Itens</h3>
@@ -103,9 +129,16 @@ export default function PedidoPage() {
 
   // Check if delivery is active
   const deliveryAtivo = sysConfig.deliveryAtivo !== false;
-  const [etapa, setEtapa] = useState<Etapa>("identificacao");
+  const isCadastro = MODO_ID === "cadastro";
+  const [etapa, setEtapa] = useState<Etapa>(isCadastro ? "login" : "cardapio");
 
-  // Identification
+  // Login state (cadastro mode)
+  const [loginTel, setLoginTel] = useState("");
+  const [loginSenha, setLoginSenha] = useState("");
+  const [loginError, setLoginError] = useState("");
+  const [loggedClient, setLoggedClient] = useState<ClienteDelivery | null>(null);
+
+  // Identification (visitante mode)
   const [busca, setBusca] = useState("");
   const [clienteEncontrado, setClienteEncontrado] = useState<ClienteDelivery | null>(null);
   const [buscaFeita, setBuscaFeita] = useState(false);
@@ -125,6 +158,10 @@ export default function PedidoPage() {
   const [cepLoading, setCepLoading] = useState(false);
   const [cepErro, setCepErro] = useState("");
 
+  // Cadastro mode - registration fields
+  const [regSenha, setRegSenha] = useState("");
+  const [regSenhaConfirm, setRegSenhaConfirm] = useState("");
+
   // Bairros
   const [bairrosDisponiveis] = useState<Bairro[]>(() => getBairros().filter((b) => b.ativo));
   const [bairroSelecionadoId, setBairroSelecionadoId] = useState("");
@@ -138,6 +175,56 @@ export default function PedidoPage() {
   const [troco, setTroco] = useState("");
   const [numeroPedido, setNumeroPedido] = useState(0);
 
+  const progress = isCadastro ? (etapaProgressCadastro[etapa] ?? 0) : (etapaProgressVisitante[etapa] ?? 0);
+
+  // ── Login handler (cadastro mode) ──
+  const handleLogin = useCallback(() => {
+    const telNorm = loginTel.replace(/\D/g, "");
+    if (!telNorm) { setLoginError("Informe o telefone"); return; }
+    if (!loginSenha) { setLoginError("Informe a senha"); return; }
+    const clientes = getClientesDelivery();
+    const found = clientes.find((c) => c.telefone.replace(/\D/g, "") === telNorm);
+    if (!found || !found.senhaHash) { setLoginError("Telefone ou senha incorretos"); return; }
+    const expectedHash = btoa(telNorm + ":" + loginSenha);
+    if (found.senhaHash !== expectedHash) { setLoginError("Telefone ou senha incorretos"); return; }
+    setLoggedClient(found);
+    setNome(found.nome);
+    setTelefone(found.telefone);
+    setCpf(found.cpf);
+    setEndereco(found.endereco);
+    setNumero(found.numero);
+    setBairro(found.bairro);
+    setComplemento(found.complemento);
+    setReferencia(found.referencia);
+    setLoginError("");
+    setEtapa("cardapio");
+    toast.success(`Bem-vindo de volta, ${found.nome}!`);
+  }, [loginTel, loginSenha]);
+
+  // ── Registration handler (cadastro mode) ──
+  const handleRegistrar = useCallback(() => {
+    if (!nome.trim() || !telefone.trim() || !cpf.trim() || !regSenha) {
+      toast.error("Preencha todos os campos obrigatórios"); return;
+    }
+    if (regSenha !== regSenhaConfirm) { toast.error("Senhas não coincidem"); return; }
+    if (regSenha.length < 4) { toast.error("Senha deve ter pelo menos 4 caracteres"); return; }
+    const telNorm = telefone.replace(/\D/g, "");
+    const senhaHash = btoa(telNorm + ":" + regSenha);
+    const cliente = upsertClienteDelivery({
+      nome: nome.trim(), cpf: cpf.trim(), telefone: telefone.trim(),
+      endereco: endereco.trim(), numero: numero.trim(), bairro: bairro.trim(),
+      complemento: complemento.trim(), referencia: referencia.trim(),
+    });
+    // Save senha hash
+    const all = getClientesDelivery();
+    const updated = all.map((c) => c.id === cliente.id ? { ...c, senhaHash } : c);
+    saveClientesDelivery(updated);
+    setLoggedClient({ ...cliente, senhaHash });
+    setEtapa("cardapio");
+    toast.success("Conta criada com sucesso!");
+  }, [nome, telefone, cpf, regSenha, regSenhaConfirm, endereco, numero, bairro, complemento, referencia]);
+
+  // ── Visitante busca ──
   const handleBuscar = useCallback(() => {
     if (!busca.trim()) return;
     const results = findClienteDelivery(busca.trim());
@@ -151,82 +238,55 @@ export default function PedidoPage() {
   }, [busca]);
 
   const preencherDoCliente = (c: ClienteDelivery) => {
-    setNome(c.nome);
-    setTelefone(c.telefone);
-    setCpf(c.cpf);
-    setEndereco(c.endereco);
-    setNumero(c.numero);
-    setBairro(c.bairro);
-    setCidade("");
-    setComplemento(c.complemento);
-    setReferencia(c.referencia);
+    setNome(c.nome); setTelefone(c.telefone); setCpf(c.cpf);
+    setEndereco(c.endereco); setNumero(c.numero); setBairro(c.bairro);
+    setComplemento(c.complemento); setReferencia(c.referencia); setCidade("");
   };
 
   const handleSelecionarCliente = () => {
-    if (clienteEncontrado) {
-      preencherDoCliente(clienteEncontrado);
-      setEtapa("cardapio");
-    }
+    if (clienteEncontrado) { preencherDoCliente(clienteEncontrado); setEtapa("confirmacao"); }
   };
 
   const handleCepChange = async (val: string) => {
     const digits = val.replace(/\D/g, "").slice(0, 8);
     const formatted = digits.length > 5 ? `${digits.slice(0, 5)}-${digits.slice(5)}` : digits;
-    setCep(formatted);
-    setCepErro("");
-
+    setCep(formatted); setCepErro("");
     if (digits.length === 8) {
       setCepLoading(true);
       try {
         const res = await fetch(`https://viacep.com.br/ws/${digits}/json/`);
         const data = await res.json();
-        if (data.erro) {
-          setCepErro("CEP não encontrado");
-        } else {
+        if (data.erro) { setCepErro("CEP não encontrado"); }
+        else {
           setEndereco(data.logradouro || "");
           const bairroViaCep = data.bairro || "";
-          setBairro(bairroViaCep);
-          setCidade(data.localidade || "");
-
-          // Auto-match bairro with registered bairros
+          setBairro(bairroViaCep); setCidade(data.localidade || "");
           if (bairrosDisponiveis.length > 0 && bairroViaCep) {
             const norm = normStr(bairroViaCep);
             const match = bairrosDisponiveis.find((b) => normStr(b.nome) === norm);
-            if (match) {
-              setBairroSelecionadoId(match.id);
-              setBairroNaoAtendido(false);
-            } else {
-              setBairroSelecionadoId("");
-              setBairroNaoAtendido(deliveryModo === "cadastrados");
-            }
-          } else {
-            setBairroSelecionadoId("");
-            setBairroNaoAtendido(false);
-          }
+            if (match) { setBairroSelecionadoId(match.id); setBairroNaoAtendido(false); }
+            else { setBairroSelecionadoId(""); setBairroNaoAtendido(deliveryModo === "cadastrados"); }
+          } else { setBairroSelecionadoId(""); setBairroNaoAtendido(false); }
         }
-      } catch {
-        setCepErro("Erro ao buscar CEP");
-      } finally {
-        setCepLoading(false);
-      }
+      } catch { setCepErro("Erro ao buscar CEP"); }
+      finally { setCepLoading(false); }
     }
   };
 
   const formValido = nome.trim() && telefone.trim() && cpf.trim() && endereco.trim() && numero.trim() && !bairroNaoAtendido;
 
-  const handleSalvarCadastro = () => {
-    if (!formValido) {
-      toast.error("Preencha todos os campos obrigatórios");
-      return;
-    }
-    setEtapa("cardapio");
+  const handleSalvarIdentificacao = () => {
+    if (!formValido) { toast.error("Preencha todos os campos obrigatórios"); return; }
+    setEtapa("confirmacao");
   };
 
   const handlePedidoConfirmado = (itensPedido: ItemCarrinho[], pv: boolean) => {
-    setItens(itensPedido);
-    setParaViagem(pv);
-    setEtapa("confirmacao");
+    setItens(itensPedido); setParaViagem(pv);
+    if (isCadastro) { setEtapa("confirmacao"); }
+    else { setEtapa("identificacao"); }
   };
+
+  // Visitante: after identification, go to confirmacao is handled by handleSalvarIdentificacao
 
   const bairroSel = bairrosDisponiveis.find((b) => b.id === bairroSelecionadoId);
   const taxaEntrega = bairroSel ? bairroSel.taxa : (sysConfig.taxaEntrega ?? 0);
@@ -234,57 +294,34 @@ export default function PedidoPage() {
 
   const handleConfirmarPedido = () => {
     const cliente = upsertClienteDelivery({
-      nome: nome.trim(),
-      cpf: cpf.trim(),
-      telefone: telefone.trim(),
-      endereco: endereco.trim(),
-      numero: numero.trim(),
-      bairro: bairro.trim(),
-      complemento: complemento.trim(),
-      referencia: referencia.trim(),
+      nome: nome.trim(), cpf: cpf.trim(), telefone: telefone.trim(),
+      endereco: endereco.trim(), numero: numero.trim(), bairro: bairro.trim(),
+      complemento: complemento.trim(), referencia: referencia.trim(),
     });
-
     criarPedidoBalcao({
-      itens,
-      origem: "delivery",
+      itens, origem: "delivery",
       operador: { id: cliente.id, nome: cliente.nome, role: "garcom", criadoEm: new Date().toISOString() },
-      clienteNome: nome.trim(),
-      clienteTelefone: telefone.trim(),
+      clienteNome: nome.trim(), clienteTelefone: telefone.trim(),
       enderecoCompleto: `${endereco}, ${numero}${complemento ? ` - ${complemento}` : ""}`,
-      bairro: bairro.trim(),
-      referencia: referencia.trim(),
+      bairro: bairro.trim(), referencia: referencia.trim(),
       formaPagamentoDelivery: formaPag,
       trocoParaQuanto: formaPag === "dinheiro" && troco ? parseFloat(troco.replace(",", ".")) : undefined,
       taxaEntrega,
     });
-
     setNumeroPedido(pedidosBalcao.length + 1);
     setEtapa("sucesso");
     toast.success("Pedido enviado com sucesso!");
   };
 
   const handleNovoPedido = () => {
-    setBusca("");
-    setClienteEncontrado(null);
-    setBuscaFeita(false);
-    setShowForm(false);
-    setNome("");
-    setTelefone("");
-    setCpf("");
-    setCep("");
-    setEndereco("");
-    setNumero("");
-    setBairro("");
-    setCidade("");
-    setComplemento("");
-    setReferencia("");
-    setBairroSelecionadoId("");
-    setBairroNaoAtendido(false);
-    setItens([]);
-    setParaViagem(false);
-    setFormaPag("pix");
-    setTroco("");
-    setEtapa("identificacao");
+    setBusca(""); setClienteEncontrado(null); setBuscaFeita(false); setShowForm(false);
+    setNome(""); setTelefone(""); setCpf(""); setCep(""); setEndereco(""); setNumero("");
+    setBairro(""); setCidade(""); setComplemento(""); setReferencia("");
+    setBairroSelecionadoId(""); setBairroNaoAtendido(false); setItens([]);
+    setParaViagem(false); setFormaPag("pix"); setTroco("");
+    setLoginTel(""); setLoginSenha(""); setLoginError(""); setLoggedClient(null);
+    setRegSenha(""); setRegSenhaConfirm("");
+    setEtapa(isCadastro ? "login" : "cardapio");
   };
 
   // ── Delivery desativado ──
@@ -309,9 +346,9 @@ export default function PedidoPage() {
       <div className="fixed inset-0 z-50 bg-background">
         <PedidoFlow
           modo="delivery"
-          clienteNome={nome}
+          clienteNome={nome || loggedClient?.nome || ""}
           onPedidoConfirmado={handlePedidoConfirmado}
-          onBack={() => setEtapa("identificacao")}
+          onBack={() => setEtapa(isCadastro ? (loggedClient ? "login" : "login") : "identificacao")}
         />
       </div>
     );
@@ -335,28 +372,87 @@ export default function PedidoPage() {
       <div className="shrink-0 px-4 py-3 space-y-1">
         <div className="flex justify-between text-xs text-muted-foreground">
           <span>{etapaLabel[etapa]}</span>
-          <span>{etapaProgress[etapa]}%</span>
+          <span>{progress}%</span>
         </div>
-        <Progress value={etapaProgress[etapa]} className="h-2" />
+        <Progress value={progress} className="h-2" />
       </div>
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto px-4 pb-8">
-        {/* ── ETAPA 1: Identificação ── */}
-        {etapa === "identificacao" && (
+
+        {/* ═══ MODO CADASTRO: LOGIN ═══ */}
+        {etapa === "login" && (
           <div className="max-w-md mx-auto space-y-6 pt-4">
             <div className="text-center space-y-1">
-              <h1 className="text-xl font-bold">Faça seu pedido</h1>
-              <p className="text-sm text-muted-foreground">Informe seu CPF ou telefone para começar</p>
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/15 text-primary">
+                <LockKeyhole className="h-6 w-6" />
+              </div>
+              <h1 className="text-xl font-bold">Faça login</h1>
+              <p className="text-sm text-muted-foreground">Entre com seu telefone e senha</p>
+            </div>
+            <div className="space-y-3">
+              <Input placeholder="Telefone" value={loginTel} onChange={(e) => setLoginTel(e.target.value)} inputMode="tel" />
+              <Input type="password" placeholder="Senha" value={loginSenha} onChange={(e) => setLoginSenha(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleLogin()} />
+              {loginError && <p className="text-xs text-destructive font-semibold">{loginError}</p>}
+              <Button className="w-full" size="lg" onClick={handleLogin}>Entrar</Button>
+            </div>
+            <div className="text-center">
+              <Button variant="link" onClick={() => { setEtapa("cadastro"); }}>
+                Não tenho cadastro
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* ═══ MODO CADASTRO: REGISTRO ═══ */}
+        {etapa === "cadastro" && (
+          <div className="max-w-md mx-auto space-y-6 pt-4">
+            <Button variant="ghost" size="sm" onClick={() => setEtapa("login")} className="gap-1">
+              <ArrowLeft className="w-4 h-4" /> Voltar ao login
+            </Button>
+            <h1 className="text-xl font-bold">Criar conta</h1>
+            <div className="space-y-3">
+              <Input placeholder="Nome completo *" value={nome} onChange={(e) => setNome(e.target.value)} />
+              <Input placeholder="Telefone *" value={telefone} onChange={(e) => setTelefone(e.target.value)} inputMode="tel" />
+              <Input placeholder="CPF *" value={cpf} onChange={(e) => setCpf(e.target.value)} />
+              <Input type="password" placeholder="Criar senha *" value={regSenha} onChange={(e) => setRegSenha(e.target.value)} />
+              <Input type="password" placeholder="Confirmar senha *" value={regSenhaConfirm} onChange={(e) => setRegSenhaConfirm(e.target.value)} />
+              <div className="relative">
+                <Input placeholder="CEP (opcional)" value={cep} onChange={(e) => handleCepChange(e.target.value)} />
+                {cepLoading && <Loader2 className="absolute right-3 top-2.5 w-4 h-4 animate-spin text-muted-foreground" />}
+              </div>
+              {cepErro && <p className="text-xs text-destructive">{cepErro}</p>}
+              <Input placeholder="Endereço / Rua *" value={endereco} onChange={(e) => setEndereco(e.target.value)} />
+              <div className="grid grid-cols-2 gap-2">
+                <Input placeholder="Número *" value={numero} onChange={(e) => setNumero(e.target.value)} />
+                <Input placeholder="Bairro" value={bairro} onChange={(e) => setBairro(e.target.value)} />
+              </div>
+              {cidade && <Input placeholder="Cidade" value={cidade} readOnly className="bg-muted" />}
+              <Input placeholder="Complemento" value={complemento} onChange={(e) => setComplemento(e.target.value)} />
+              <Input placeholder="Referência" value={referencia} onChange={(e) => setReferencia(e.target.value)} />
+              <Button className="w-full" size="lg" onClick={handleRegistrar}
+                disabled={!nome.trim() || !telefone.trim() || !cpf.trim() || !regSenha || regSenha !== regSenhaConfirm}>
+                Criar conta e ver cardápio
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* ═══ MODO VISITANTE: IDENTIFICAÇÃO (após cardápio) ═══ */}
+        {etapa === "identificacao" && (
+          <div className="max-w-md mx-auto space-y-6 pt-4">
+            <Button variant="ghost" size="sm" onClick={() => setEtapa("cardapio")} className="gap-1">
+              <ArrowLeft className="w-4 h-4" /> Voltar ao cardápio
+            </Button>
+            <div className="text-center space-y-1">
+              <h1 className="text-xl font-bold">Seus dados</h1>
+              <p className="text-sm text-muted-foreground">Informe seu CPF ou telefone para buscar seus dados</p>
             </div>
 
             <div className="flex gap-2">
-              <Input
-                placeholder="CPF ou Telefone"
-                value={busca}
-                onChange={(e) => setBusca(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleBuscar()}
-              />
+              <Input placeholder="CPF ou Telefone" value={busca} onChange={(e) => setBusca(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleBuscar()} />
               <Button onClick={handleBuscar} size="icon" variant="secondary">
                 <Search className="w-4 h-4" />
               </Button>
@@ -381,8 +477,7 @@ export default function PedidoPage() {
                   <div className="flex gap-2">
                     <Button className="flex-1" onClick={handleSelecionarCliente}>Sou eu, continuar</Button>
                     <Button variant="outline" className="flex-1" onClick={() => {
-                      setClienteEncontrado(null);
-                      setShowForm(true);
+                      setClienteEncontrado(null); setShowForm(true);
                     }}>Não sou eu</Button>
                   </div>
                 </CardContent>
@@ -394,15 +489,15 @@ export default function PedidoPage() {
               <Card>
                 <CardContent className="p-4 text-center space-y-3">
                   <p className="text-sm text-muted-foreground">Cliente não encontrado</p>
-                  <Button onClick={() => setShowForm(true)}>Cadastrar novo cliente</Button>
+                  <Button onClick={() => setShowForm(true)}>Preencher dados</Button>
                 </CardContent>
               </Card>
             )}
 
-            {/* Formulário de cadastro */}
-            {showForm && (
+            {/* Formulário */}
+            {(showForm || (!buscaFeita)) && (
               <div className="space-y-3">
-                <h2 className="font-semibold">Cadastro</h2>
+                {!buscaFeita && <p className="text-xs text-muted-foreground text-center">Ou preencha seus dados abaixo</p>}
                 <Input placeholder="Nome completo *" value={nome} onChange={(e) => setNome(e.target.value)} />
                 <Input placeholder="Telefone *" value={telefone} onChange={(e) => setTelefone(e.target.value)} />
                 <Input placeholder="CPF *" value={cpf} onChange={(e) => setCpf(e.target.value)} />
@@ -414,31 +509,16 @@ export default function PedidoPage() {
                 <Input placeholder="Endereço / Rua *" value={endereco} onChange={(e) => setEndereco(e.target.value)} />
                 <div className="grid grid-cols-2 gap-2">
                   <Input placeholder="Número *" value={numero} onChange={(e) => setNumero(e.target.value)} />
-                  <Input
-                    placeholder="Bairro"
-                    value={bairro}
-                    onChange={(e) => {
-                      setBairro(e.target.value);
-                      if (bairrosDisponiveis.length > 0 && e.target.value.trim()) {
-                        const norm = normStr(e.target.value);
-                        const match = bairrosDisponiveis.find((b) => normStr(b.nome) === norm);
-                        if (match) {
-                          setBairroSelecionadoId(match.id);
-                          setBairroNaoAtendido(false);
-                        } else {
-                          setBairroSelecionadoId("");
-                          setBairroNaoAtendido(deliveryModo === "cadastrados");
-                        }
-                      } else {
-                        setBairroSelecionadoId("");
-                        setBairroNaoAtendido(false);
-                      }
-                    }}
-                    readOnly={!!bairroSelecionadoId}
-                    className={bairroSelecionadoId ? "bg-muted" : ""}
-                  />
+                  <Input placeholder="Bairro" value={bairro} onChange={(e) => {
+                    setBairro(e.target.value);
+                    if (bairrosDisponiveis.length > 0 && e.target.value.trim()) {
+                      const norm = normStr(e.target.value);
+                      const match = bairrosDisponiveis.find((b) => normStr(b.nome) === norm);
+                      if (match) { setBairroSelecionadoId(match.id); setBairroNaoAtendido(false); }
+                      else { setBairroSelecionadoId(""); setBairroNaoAtendido(deliveryModo === "cadastrados"); }
+                    } else { setBairroSelecionadoId(""); setBairroNaoAtendido(false); }
+                  }} readOnly={!!bairroSelecionadoId} className={bairroSelecionadoId ? "bg-muted" : ""} />
                 </div>
-                {/* Bairro match feedback */}
                 {bairrosDisponiveis.length > 0 && bairro.trim() && (
                   bairroSelecionadoId ? (
                     <p className="text-xs font-semibold" style={{ color: "hsl(var(--primary))" }}>
@@ -450,20 +530,18 @@ export default function PedidoPage() {
                     </p>
                   ) : null
                 )}
-                {cidade && (
-                  <Input placeholder="Cidade" value={cidade} readOnly className="bg-muted" />
-                )}
+                {cidade && <Input placeholder="Cidade" value={cidade} readOnly className="bg-muted" />}
                 <Input placeholder="Complemento" value={complemento} onChange={(e) => setComplemento(e.target.value)} />
                 <Input placeholder="Referência" value={referencia} onChange={(e) => setReferencia(e.target.value)} />
-                <Button className="w-full" disabled={!formValido} onClick={handleSalvarCadastro}>
-                  Salvar e ver cardápio
+                <Button className="w-full" disabled={!formValido} onClick={handleSalvarIdentificacao}>
+                  Continuar para confirmação
                 </Button>
               </div>
             )}
           </div>
         )}
 
-        {/* ── ETAPA 3: Confirmação ── */}
+        {/* ═══ CONFIRMAÇÃO ═══ */}
         {etapa === "confirmacao" && (
           <ConfirmacaoEtapa
             nome={nome}
@@ -480,10 +558,11 @@ export default function PedidoPage() {
             setTroco={setTroco}
             onVoltar={() => setEtapa("cardapio")}
             onConfirmar={handleConfirmarPedido}
+            editEndereco={isCadastro ? { endereco, numero, complemento, bairro, setEndereco, setNumero, setComplemento, setBairro } : null}
           />
         )}
 
-        {/* ── ETAPA 4: Sucesso ── */}
+        {/* ═══ SUCESSO ═══ */}
         {etapa === "sucesso" && (
           <div className="max-w-md mx-auto text-center space-y-6 pt-12">
             <CheckCircle className="w-16 h-16 text-green-500 mx-auto" />
