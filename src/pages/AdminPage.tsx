@@ -13,6 +13,7 @@ import {
   Users,
   X,
 } from "lucide-react";
+import CategoryIcon from "@/components/CategoryIcon";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
