@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Check, ChefHat, Clock, User } from "lucide-react";
+import { Check, ChefHat, Clock, ShoppingBag, User } from "lucide-react";
 import { useRestaurant } from "@/contexts/RestaurantContext";
 import type { PedidoRealizado } from "@/contexts/RestaurantContext";
 
