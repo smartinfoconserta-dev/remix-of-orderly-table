@@ -1460,100 +1460,63 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                 )}
                 </div>
 
-                {/* ═══ RIGHT: Activity + Movimentações (30%) ═══ */}
+                {/* ═══ RIGHT: Summary (30%) — hidden in delivery view ═══ */}
+                {caixaView === "mesas" && (
                 <div className="flex flex-[3] flex-col border-l border-border bg-card/50 overflow-hidden">
-                  {/* ── Turno Summary ── */}
-                  <div className="border-b border-border shrink-0 p-4 space-y-3">
-                    <h2 className="text-xs font-black uppercase tracking-widest text-muted-foreground">Resumo do turno</h2>
-                    <div className="grid grid-cols-2 gap-2">
-                      <div className="rounded-lg border border-border bg-card p-2.5">
-                        <p className="text-[10px] font-bold text-muted-foreground">Total vendido</p>
-                        <p className="text-sm font-black tabular-nums text-foreground">{formatPrice(resumoFinanceiro.totalDia)}</p>
-                      </div>
-                      <div className="rounded-lg border border-border bg-card p-2.5">
-                        <p className="text-[10px] font-bold text-muted-foreground">Comandas fechadas</p>
-                        <p className="text-sm font-black tabular-nums text-foreground">{fechamentos.length}</p>
-                      </div>
-                      <div className="rounded-lg border border-border bg-card p-2.5">
-                        <p className="text-[10px] font-bold text-muted-foreground">Forma mais usada</p>
-                        <p className="text-sm font-black text-foreground">
-                          {(() => {
-                            const methods = [
-                              { label: "Dinheiro", val: resumoFinanceiro.dinheiro },
-                              { label: "Crédito", val: resumoFinanceiro.credito },
-                              { label: "Débito", val: resumoFinanceiro.debito },
-                              { label: "PIX", val: resumoFinanceiro.pix },
-                            ];
-                            const best = methods.sort((a, b) => b.val - a.val)[0];
-                            return best.val > 0 ? best.label : "—";
-                          })()}
-                        </p>
-                      </div>
-                      <div className="rounded-lg border border-border bg-card p-2.5">
-                        <p className="text-[10px] font-bold text-muted-foreground">Última comanda</p>
-                        <p className="text-sm font-black tabular-nums text-foreground">
-                          {fechamentos.length > 0
-                            ? `Mesa ${String(fechamentos[0].mesaNumero).padStart(2, "0")} • ${formatPrice(fechamentos[0].total)}`
-                            : "—"}
-                        </p>
-                      </div>
+                  <div className="flex-1 flex flex-col items-center justify-center p-6 space-y-6">
+                    {/* Total em aberto */}
+                    <div className="text-center space-y-1">
+                      <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">Total em aberto</p>
+                      <p className="text-4xl font-black tabular-nums text-primary">{formatPrice(valorTotalAberto)}</p>
                     </div>
-                    <p className="text-xs text-muted-foreground text-center">Selecione uma mesa para iniciar o atendimento</p>
-                  </div>
-                  {/* Movimentações do turno */}
-                  {movimentacoesCaixa.length > 0 && (
-                    <div className="border-b border-border shrink-0">
-                      <div className="flex items-center gap-2.5 px-5 py-3">
-                        <Banknote className="h-4 w-4 text-foreground" />
-                        <h2 className="text-sm font-black text-foreground flex-1">Movimentações</h2>
-                        <span className="text-xs font-bold tabular-nums text-muted-foreground">{movimentacoesCaixa.length}</span>
-                      </div>
-                      <div className="max-h-[180px] overflow-y-auto px-4 pb-3 space-y-1.5 scrollbar-hide">
-                        {movimentacoesCaixa.map((mov) => (
-                          <div key={mov.id} className="flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 slide-up">
-                            <span className={`text-xs font-black tabular-nums ${mov.tipo === "entrada" ? "text-emerald-400" : "text-destructive"}`}>
-                              {mov.tipo === "entrada" ? "+" : "−"} {formatPrice(mov.valor)}
-                            </span>
-                            <span className="flex-1 truncate text-[10px] text-muted-foreground">{mov.descricao}</span>
-                            <span className="text-[10px] tabular-nums text-muted-foreground/60">{mov.criadoEm}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
 
-                  {/* Activity Feed */}
-                  <div className="flex items-center gap-2.5 px-5 py-4 border-b border-border shrink-0">
-                    <ScrollText className="h-4 w-4 text-foreground" />
-                    <h2 className="text-sm font-black text-foreground flex-1">Atividade recente</h2>
-                    <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-status-consumo">
-                      <span className="h-1.5 w-1.5 rounded-full bg-status-consumo animate-pulse" />
-                      Ao vivo
-                    </span>
-                  </div>
-                  <div className="flex-1 overflow-y-auto p-4 space-y-2 scrollbar-hide">
-                    {recentEvents.length === 0 ? (
-                      <div className="flex flex-col items-center justify-center gap-3 py-16 text-muted-foreground">
-                        <ScrollText className="h-10 w-10 opacity-20" />
-                        <p className="text-sm">Nenhuma atividade ainda.</p>
+                    {/* KPIs */}
+                    <div className="grid grid-cols-2 gap-3 w-full max-w-xs">
+                      <div className="rounded-xl border border-border bg-card p-3 text-center">
+                        <p className="text-2xl font-black tabular-nums text-status-consumo">{mesasConsumo}</p>
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mt-1">Mesas em consumo</p>
                       </div>
-                    ) : (
-                      recentEvents.map((evento) => (
-                        <div key={evento.id} className="flex items-start gap-2.5 rounded-xl border border-border bg-card p-3">
-                          <span className={`mt-1 h-2 w-2 shrink-0 rounded-full ${getEventDotColor(evento)}`} />
-                          <div className="min-w-0 flex-1">
-                            <p className="text-xs font-semibold text-foreground leading-snug">{evento.descricao}</p>
-                            <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] text-muted-foreground">
-                              <span className="font-semibold">{evento.usuarioNome ?? "Sistema"}</span>
-                              <span>{actionLabels[evento.acao ?? ""] ?? evento.tipo}</span>
-                              <span className="tabular-nums">{evento.criadoEm}</span>
-                            </div>
-                          </div>
-                        </div>
-                      ))
-                    )}
+                      <div className="rounded-xl border border-border bg-card p-3 text-center">
+                        <p className="text-2xl font-black tabular-nums text-foreground">{fechamentos.length}</p>
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mt-1">Comandas fechadas</p>
+                      </div>
+                    </div>
+
+                    {/* Último fechamento */}
+                    <div className="w-full max-w-xs rounded-xl border border-border bg-card p-3 text-center">
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Último fechamento</p>
+                      <p className="text-sm font-black text-foreground mt-1">
+                        {fechamentos.length > 0
+                          ? `Mesa ${String(fechamentos[0].mesaNumero).padStart(2, "0")} — ${formatPrice(fechamentos[0].total)}`
+                          : "Nenhum ainda"}
+                      </p>
+                    </div>
+
+                    {/* Resumo vendas */}
+                    <div className="w-full max-w-xs space-y-1.5">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground text-center">Vendas do turno</p>
+                      <div className="rounded-xl border border-border bg-card p-3 space-y-1">
+                        <div className="flex justify-between text-xs"><span className="text-muted-foreground">Dinheiro</span><span className="font-black tabular-nums text-foreground">{formatPrice(resumoFinanceiro.dinheiro)}</span></div>
+                        <div className="flex justify-between text-xs"><span className="text-muted-foreground">Crédito</span><span className="font-black tabular-nums text-foreground">{formatPrice(resumoFinanceiro.credito)}</span></div>
+                        <div className="flex justify-between text-xs"><span className="text-muted-foreground">Débito</span><span className="font-black tabular-nums text-foreground">{formatPrice(resumoFinanceiro.debito)}</span></div>
+                        <div className="flex justify-between text-xs"><span className="text-muted-foreground">PIX</span><span className="font-black tabular-nums text-foreground">{formatPrice(resumoFinanceiro.pix)}</span></div>
+                        <div className="flex justify-between text-xs border-t border-border pt-1 mt-1"><span className="font-bold text-foreground">Total</span><span className="font-black tabular-nums text-primary">{formatPrice(resumoFinanceiro.totalDia)}</span></div>
+                      </div>
+                    </div>
+
+                    {/* Fechar turno */}
+                    <Button
+                      onClick={() => setTurnoModalOpen(true)}
+                      variant="outline"
+                      className="w-full max-w-xs rounded-xl font-black gap-2 h-12 border-destructive/30 text-destructive hover:bg-destructive/10"
+                    >
+                      <LockKeyhole className="h-4 w-4" />
+                      Fechar turno
+                    </Button>
                   </div>
                 </div>
+                )}
+              </div>
               </div>
             </div>
           ) : mesa ? (
