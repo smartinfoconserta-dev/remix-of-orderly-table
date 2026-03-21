@@ -916,22 +916,27 @@ const GerentePage = () => {
 
         {/* ═══ TAB 3: Logs de Auditoria ═══ */}
         <TabsContent value="logs" className="flex-1 overflow-y-auto p-4 md:p-6 mt-0">
-          {/* Filter bar */}
-          <div className="border-b border-border bg-card/50 px-0 py-3 flex items-center gap-3">
-            <Filter className="h-4 w-4 text-muted-foreground shrink-0" />
-            <Select value={logFilter} onValueChange={setLogFilter}>
-              <SelectTrigger className="w-[200px] h-8 rounded-lg text-xs font-bold">
-                <SelectValue placeholder="Filtrar por tipo" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos os eventos</SelectItem>
-                {uniqueActions.map((action) => (
-                  <SelectItem key={action} value={action}>
-                    {actionLabels[action] ?? action}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          {/* Filter pills */}
+          <div className="flex items-center gap-2 flex-wrap pb-4 border-b border-border">
+            {([
+              { key: "all" as LogCategory, label: "Todos" },
+              { key: "pedidos" as LogCategory, label: "Pedidos" },
+              { key: "caixa" as LogCategory, label: "Caixa" },
+              { key: "delivery" as LogCategory, label: "Delivery" },
+            ]).map((pill) => (
+              <button
+                key={pill.key}
+                type="button"
+                onClick={() => setLogFilter(pill.key)}
+                className={`rounded-full px-4 py-1.5 text-xs font-bold transition-all ${
+                  logFilter === pill.key
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-secondary text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {pill.label}
+              </button>
+            ))}
             <span className="text-xs text-muted-foreground ml-auto">
               {filteredEvents.length} evento{filteredEvents.length !== 1 ? "s" : ""}
             </span>
