@@ -1110,6 +1110,8 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   }, []);
 
   const confirmarPedidoBalcao = useCallback((pedidoId: string, taxaEntrega?: number) => {
+    const cfg = getSistemaConfig();
+    const statusInicial = cfg.cozinhaAtiva === false ? "pronto" as const : "aberto" as const;
     setStore((prev) => ({
       ...prev,
       pedidosBalcao: prev.pedidosBalcao.map((p) => {
@@ -1117,7 +1119,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         const taxa = taxaEntrega && taxaEntrega > 0 ? taxaEntrega : 0;
         const taxaItem: ItemCarrinho = { uid: `taxa-${Date.now()}`, produtoId: "taxa-entrega", nome: "Taxa de entrega", precoBase: taxa, quantidade: 1, removidos: [], adicionais: [], precoUnitario: taxa };
         const itensAtualizados = taxa > 0 ? [...p.itens, taxaItem] : p.itens;
-        return { ...p, statusBalcao: "aberto" as const, itens: itensAtualizados, total: p.total + taxa };
+        return { ...p, statusBalcao: statusInicial, pronto: statusInicial === "pronto", itens: itensAtualizados, total: p.total + taxa };
       }),
       eventos: appendEvent(prev.eventos, {
         tipo: "caixa",

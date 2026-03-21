@@ -423,16 +423,16 @@ export default function MotoboyPage() {
                               </Button>
                             )}
                             {p.statusBalcao === "pronto" && (
-                              <>
-                                <Button size="sm" variant="outline" className="gap-1 text-xs" onClick={() => handleScanQR(p.id)}>
-                                  📷 Escanear retirada
-                                </Button>
-                                <Button size="sm" className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-xs" onClick={() => marcarBalcaoSaiu(p.id, sessao.nome)}>
-                                  Retirar
-                                </Button>
-                              </>
+                              <Button size="sm" variant="outline" className="gap-1 text-xs" onClick={() => handleScanQR(p.id)}>
+                                📷 Escanear retirada
+                              </Button>
                             )}
-                            {p.statusBalcao === "saiu" && (
+                            {p.statusBalcao === "pronto" && (
+                              <Button size="sm" className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-xs" onClick={() => marcarBalcaoSaiu(p.id, sessao.nome)}>
+                                Retirar
+                              </Button>
+                            )}
+                            {(p.statusBalcao === "pronto" || p.statusBalcao === "saiu") && (
                               <Button size="sm" className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold" onClick={() => handleEntregue(p.id)}>
                                 <CheckCircle2 className="w-4 h-4 mr-1" /> Entregue
                               </Button>
