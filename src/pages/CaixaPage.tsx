@@ -246,6 +246,28 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
 
   useRouteLock(accessMode === "gerente" ? "/gerente" : "/caixa");
 
+  // Check master aviso every 30s
+  useEffect(() => {
+    const checkAviso = () => {
+      try {
+        const raw = localStorage.getItem("obsidian-master-aviso-v1");
+        if (!raw) { setMasterAviso(null); return; }
+        const aviso = JSON.parse(raw);
+        if (aviso.lido) { setMasterAviso(null); return; }
+        setMasterAviso(aviso);
+        if (aviso.tipo === "urgente") {
+          setAvisoCanDismiss(false);
+          setTimeout(() => setAvisoCanDismiss(true), 60000);
+        } else {
+          setAvisoCanDismiss(true);
+        }
+      } catch { setMasterAviso(null); }
+    };
+    checkAviso();
+    const id = setInterval(checkAviso, 30000);
+    return () => clearInterval(id);
+  }, []);
+
   // Live clock + desktop detection
   useEffect(() => {
     const id = setInterval(() => setCurrentTime(new Date()), 1000);
