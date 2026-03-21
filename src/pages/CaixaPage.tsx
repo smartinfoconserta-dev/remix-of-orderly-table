@@ -949,7 +949,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                       dataHora: new Date().toLocaleString("pt-BR"),
                       itens: balcaoPedido.itens.map((it) => ({ quantidade: it.quantidade, nome: it.nome, preco: it.precoUnitario })),
                       subtotal: balcaoPedido.itens.reduce((s, it) => s + it.precoUnitario * it.quantidade, 0),
-                      taxaEntrega: balcaoPedido.taxaEntrega,
+                      taxaEntrega: (balcaoPedido as any).taxaEntrega,
                       total: balcaoPedido.total,
                       formaPagamento: balcaoPedido.formaPagamentoDelivery ? getPaymentMethodLabel(balcaoPedido.formaPagamentoDelivery as PaymentMethod) : undefined,
                     });
