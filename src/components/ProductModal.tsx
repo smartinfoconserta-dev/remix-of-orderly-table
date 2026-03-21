@@ -693,7 +693,7 @@ const ProductModal = ({ produto, onClose, onAdd, isGarcomMobile = false, skipEmb
                   </button>
                 </div>
 
-                <div className="grid min-h-0 flex-1 md:grid-cols-[300px_1fr]">
+                <div className="grid min-h-0 flex-1 overflow-hidden md:grid-cols-[300px_1fr]">
                   <aside className="border-b border-border bg-secondary/20 p-4 md:border-b-0 md:border-r md:p-5">
                     <div className="space-y-2">
                       {flowSteps.map((step, index) => {
@@ -728,8 +728,8 @@ const ProductModal = ({ produto, onClose, onAdd, isGarcomMobile = false, skipEmb
                     </div>
                   </aside>
 
-                  <section className="min-h-0 overflow-y-auto p-5 md:p-6">
-                    <div className="relative min-h-full overflow-hidden">
+                  <section className="flex min-h-0 flex-col overflow-y-auto p-5 md:p-6">
+                    <div className="relative min-h-[520px] flex-1 overflow-hidden">
                       {previousStep ? (
                         <div
                           className={`absolute inset-0 transition-all ease-in-out ${
@@ -764,7 +764,6 @@ const ProductModal = ({ produto, onClose, onAdd, isGarcomMobile = false, skipEmb
                         {renderStepContent(displayStep)}
                       </div>
                     </div>
-                    <div className="h-6" />
                   </section>
                 </div>
 

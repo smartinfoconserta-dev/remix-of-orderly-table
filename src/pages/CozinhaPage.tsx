@@ -230,7 +230,7 @@ const CozinhaPage = () => {
                   </div>
                 </div>
                 <div className={`flex items-center gap-1.5 rounded-xl px-2.5 py-1 text-xs font-bold ${
-                  isLate ? "bg-destructive/15 text-destructive" : mins >= 8 ? "bg-primary/15 text-primary" : "bg-secondary text-muted-foreground"
+                  isCritical ? "bg-destructive/20 text-destructive animate-pulse" : isWarning ? "bg-destructive/15 text-destructive animate-pulse" : isLate ? "bg-destructive/10 text-destructive" : mins >= 8 ? "bg-primary/15 text-primary" : "bg-secondary text-muted-foreground"
                 }`}>
                   <Clock className="h-3 w-3" />
                   {formatElapsed(mins)}
