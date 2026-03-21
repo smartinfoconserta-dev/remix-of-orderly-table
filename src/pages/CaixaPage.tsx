@@ -1454,7 +1454,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
               </div>
 
               {/* ── Windows-style Status Bar ── */}
-              <div className="flex items-center shrink-0 divide-x divide-border text-[10px] bg-secondary border-t border-border text-muted-foreground">
+              <div className="flex items-center shrink-0 divide-x divide-gray-300 text-[10px] bg-gray-100 border-t border-gray-300 text-gray-600">
                 <span className="flex items-center gap-1.5 px-3 py-1.5">
                   <span className="h-2 w-2 rounded-full bg-green-500 inline-block" /> Online
                 </span>
