@@ -1042,106 +1042,97 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
             /* ─────────────── MAIN VIEW — PROFESSIONAL DESKTOP ─────────────── */
             <div className="flex flex-col h-full view-fade-in">
 
-              {/* ── Professional Header ── */}
-              <div className="flex items-center gap-4 border-b border-border bg-card px-5 py-3 shrink-0">
-                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary/15 text-primary font-black text-sm">
-                  {currentOperator.nome.charAt(0).toUpperCase()}
-                </div>
-                <div className="min-w-0">
-                  <p className="text-sm font-black text-foreground truncate">{sistemaConfig.nomeRestaurante || currentOperator.nome}</p>
-                  <p className="text-[10px] text-muted-foreground">
-                    {currentOperator.nome} • {accessMode === "gerente" ? "Acesso completo" : "Operador de caixa"}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2 ml-2">
-                  <Clock className="h-3.5 w-3.5 text-muted-foreground" />
-                  <span className="text-sm font-black tabular-nums text-foreground">{clockStr}</span>
-                </div>
-                {caixaOpenTime && (
-                  <span className="rounded-lg bg-status-consumo/10 border border-status-consumo/20 px-2.5 py-1 text-[10px] font-bold text-status-consumo">
-                    Aberto desde {caixaOpenTime}
-                  </span>
-                )}
+              {/* ── Windows-style Title Bar ── */}
+              <div className="flex items-center px-4 py-2 shrink-0" style={{ background: '#1e3a5f' }}>
+                <p className="text-sm font-black text-white truncate">{sistemaConfig.nomeRestaurante || "Orderly"}</p>
                 <div className="flex-1" />
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setTurnoReportOpen(true)}
-                  className="rounded-xl font-bold gap-1.5 text-xs border-destructive/30 text-destructive hover:bg-destructive/10"
-                >
-                  <LockKeyhole className="h-3.5 w-3.5" />
-                  Fechar turno
-                </Button>
-                <Button variant="outline" onClick={() => logout(accessMode)} className="gap-2 rounded-xl font-bold h-9 px-3 text-sm">
-                  <LogOut className="h-4 w-4" />
-                  <span className="hidden sm:inline">Sair</span>
-                </Button>
+                <p className="text-xs text-white/70">
+                  {currentOperator.nome} • {accessMode === "gerente" ? "Acesso completo" : "Operador de caixa"}
+                </p>
+                <div className="flex-1" />
+                <div className="flex items-center gap-1.5">
+                  <Clock className="h-3.5 w-3.5 text-white/70" />
+                  <span className="text-sm font-black tabular-nums text-white">{clockStr}</span>
+                </div>
               </div>
 
-              {/* ── KPI Bar ── */}
-              <div className="flex items-center gap-3 border-b border-border bg-card/60 px-5 py-2.5 shrink-0">
-                {/* View tabs */}
+              {/* ── Windows-style Toolbar ── */}
+              <div className="flex items-center gap-1 border-b px-3 py-1.5 shrink-0" style={{ background: '#f0f0f0', borderColor: '#c0c0c0' }}>
+                <button
+                  onClick={() => setBalcaoOpen(true)}
+                  className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded text-xs hover:bg-blue-100 transition-colors"
+                  style={{ border: '1px solid #c0c0c0', background: 'white', minWidth: 64 }}
+                >
+                  <ReceiptText className="h-4 w-4 text-foreground" />
+                  <span className="text-[10px] font-bold text-foreground">Novo pedido</span>
+                </button>
+                <button
+                  onClick={() => setMovModalOpen(true)}
+                  className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded text-xs hover:bg-blue-100 transition-colors"
+                  style={{ border: '1px solid #c0c0c0', background: 'white', minWidth: 64 }}
+                >
+                  <Banknote className="h-4 w-4 text-foreground" />
+                  <span className="text-[10px] font-bold text-foreground">Sangria</span>
+                </button>
+                <div className="w-px h-8 mx-1" style={{ background: '#c0c0c0' }} />
+                <button
+                  onClick={() => {
+                    const w = window.open("", "_blank", "width=400,height=600");
+                    if (w) { w.document.write("<p>Impressão</p>"); w.print(); }
+                  }}
+                  className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded text-xs hover:bg-blue-100 transition-colors"
+                  style={{ border: '1px solid #c0c0c0', background: 'white', minWidth: 64 }}
+                >
+                  <Printer className="h-4 w-4 text-foreground" />
+                  <span className="text-[10px] font-bold text-foreground">Imprimir</span>
+                </button>
+                <div className="w-px h-8 mx-1" style={{ background: '#c0c0c0' }} />
+                <button
+                  onClick={() => setTurnoReportOpen(true)}
+                  className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded text-xs hover:bg-red-100 transition-colors"
+                  style={{ border: '1px solid #dc2626', background: 'white', minWidth: 64 }}
+                >
+                  <LockKeyhole className="h-4 w-4 text-red-600" />
+                  <span className="text-[10px] font-bold text-red-600">Fechar turno</span>
+                </button>
+                <button
+                  onClick={() => logout(accessMode)}
+                  className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded text-xs hover:bg-blue-100 transition-colors"
+                  style={{ border: '1px solid #c0c0c0', background: 'white', minWidth: 64 }}
+                >
+                  <LogOut className="h-4 w-4 text-foreground" />
+                  <span className="text-[10px] font-bold text-foreground">Sair</span>
+                </button>
+              </div>
+
+              {/* ── Windows-style Tabs ── */}
+              <div className="flex items-end px-3 pt-1 shrink-0" style={{ background: '#f0f0f0' }}>
                 <button
                   onClick={() => setCaixaView("mesas")}
-                  className={`flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-black transition-colors ${caixaView === "mesas" ? "bg-primary/15 text-primary border border-primary/30" : "border border-border text-muted-foreground hover:bg-secondary"}`}
+                  className="px-4 py-1.5 text-xs font-bold transition-colors"
+                  style={caixaView === "mesas"
+                    ? { background: 'white', border: '1px solid #c0c0c0', borderBottom: '1px solid white', borderRadius: '4px 4px 0 0', marginBottom: -1, zIndex: 1, position: 'relative' }
+                    : { background: '#e0e0e0', border: '1px solid #c0c0c0', borderRadius: '4px 4px 0 0', marginBottom: -1 }
+                  }
                 >
-                  <ShoppingBag className="h-3.5 w-3.5" />
                   Mesas
                 </button>
                 {sistemaConfig.deliveryAtivo !== false && (
                 <button
                   onClick={() => setCaixaView("delivery")}
-                  className={`flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-black transition-colors ${caixaView === "delivery" ? "bg-purple-500/15 text-purple-400 border border-purple-500/30" : "border border-border text-muted-foreground hover:bg-secondary"}`}
+                  className="px-4 py-1.5 text-xs font-bold transition-colors flex items-center gap-1.5"
+                  style={caixaView === "delivery"
+                    ? { background: 'white', border: '1px solid #c0c0c0', borderBottom: '1px solid white', borderRadius: '4px 4px 0 0', marginBottom: -1, zIndex: 1, position: 'relative' }
+                    : { background: '#e0e0e0', border: '1px solid #c0c0c0', borderRadius: '4px 4px 0 0', marginBottom: -1 }
+                  }
                 >
-                  <Truck className="h-3.5 w-3.5" />
                   Delivery
                   {(pedidosDeliveryAtivos.length + pedidosAguardandoConfirmacao.length) > 0 && (
-                    <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-black tabular-nums leading-none ${pedidosAguardandoConfirmacao.length > 0 ? "bg-amber-500/20 text-amber-400 animate-pulse" : "bg-purple-500/20 text-purple-400"}`}>{pedidosDeliveryAtivos.length + pedidosAguardandoConfirmacao.length}</span>
+                    <span className="rounded-full px-1.5 py-0.5 text-[10px] font-black tabular-nums leading-none bg-red-600 text-white">{pedidosDeliveryAtivos.length + pedidosAguardandoConfirmacao.length}</span>
                   )}
                 </button>
                 )}
-
-                <div className="w-px h-6 bg-border mx-1" />
-
-                <div className="flex items-center gap-2 rounded-xl border border-status-consumo/30 bg-status-consumo/8 px-3 py-1.5">
-                  <span className="text-lg font-black tabular-nums text-status-consumo leading-none">{mesasConsumo}</span>
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-status-consumo/80">Consumo</span>
-                </div>
-                <div className={`flex flex-col items-center gap-0.5 rounded-xl border border-amber-500/30 bg-amber-500/8 px-3 py-1.5 ${mesasPendente > 0 ? "animate-pulse" : ""}`}>
-                  <div className="flex items-center gap-2">
-                    <span className="text-lg font-black tabular-nums text-amber-400 leading-none">{mesasPendente}</span>
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-amber-400/80">Pendentes</span>
-                  </div>
-                  {mesasPendente > 0 && <span className="text-[9px] text-amber-400/60">aguardando cozinha</span>}
-                </div>
-                <div className="flex items-center gap-2 rounded-xl border border-border bg-secondary/60 px-3 py-1.5">
-                  <span className="text-lg font-black tabular-nums text-muted-foreground leading-none">{mesasLivre}</span>
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80">Livres</span>
-                </div>
-                <div className="flex items-center gap-2 ml-auto">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setBalcaoOpen(true)}
-                    className="rounded-xl font-bold gap-1.5 text-xs"
-                  >
-                    <ShoppingBag className="h-3.5 w-3.5" />
-                    Novo pedido
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setMovModalOpen(true)}
-                    className="rounded-xl font-bold gap-1.5 text-xs"
-                  >
-                    <Banknote className="h-3.5 w-3.5" />
-                    Sangria / Suprimento
-                  </Button>
-                  <div className="flex items-center gap-2 rounded-xl border border-primary/30 bg-primary/8 px-4 py-1.5">
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-primary/80">Em aberto</span>
-                    <span className="text-lg font-black tabular-nums text-primary leading-none">{formatPrice(valorTotalAberto)}</span>
-                  </div>
-                </div>
+                <div className="flex-1" style={{ borderBottom: '1px solid #c0c0c0' }} />
               </div>
 
               {/* ── 2-Column Content ── */}
