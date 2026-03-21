@@ -19,20 +19,50 @@ const formatTime = (d: Date) =>
 const origemLabel = (origem: string) =>
   origem === "garcom" ? "Garçom" : origem === "caixa" ? "Caixa" : origem === "balcao" ? "Balcão" : origem === "delivery" ? "Delivery" : "Cliente";
 
-function tocarSom(tipo: "novo_pedido" | "alerta", ctxRef: React.MutableRefObject<AudioContext | null>) {
+type SomOrigem = "mesa" | "delivery" | "balcao";
+
+function tocarSom(tipo: "novo_pedido" | "alerta", ctxRef: React.MutableRefObject<AudioContext | null>, origem?: SomOrigem) {
   try {
     if (!ctxRef.current) ctxRef.current = new AudioContext();
     const ctx = ctxRef.current;
     if (ctx.state === "suspended") ctx.resume();
+
     if (tipo === "novo_pedido") {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.frequency.value = 880;
-      osc.type = "sine";
-      gain.gain.value = 0.3;
-      osc.connect(gain).connect(ctx.destination);
-      osc.start();
-      osc.stop(ctx.currentTime + 0.2);
+      if (origem === "delivery") {
+        // Delivery: three higher-pitched notes
+        for (let i = 0; i < 3; i++) {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.frequency.value = 1046;
+          osc.type = "sine";
+          gain.gain.value = 0.3;
+          osc.connect(gain).connect(ctx.destination);
+          osc.start(ctx.currentTime + i * 0.2);
+          osc.stop(ctx.currentTime + i * 0.2 + 0.15);
+        }
+      } else if (origem === "balcao") {
+        // Balcão: two lower-pitched notes
+        for (let i = 0; i < 2; i++) {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.frequency.value = 523;
+          osc.type = "sine";
+          gain.gain.value = 0.3;
+          osc.connect(gain).connect(ctx.destination);
+          osc.start(ctx.currentTime + i * 0.3);
+          osc.stop(ctx.currentTime + i * 0.3 + 0.2);
+        }
+      } else {
+        // Mesa (cliente/garcom): two standard notes
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.frequency.value = 880;
+        osc.type = "sine";
+        gain.gain.value = 0.3;
+        osc.connect(gain).connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.2);
+      }
     } else {
       for (let i = 0; i < 2; i++) {
         const osc = ctx.createOscillator();
@@ -54,42 +84,14 @@ const CozinhaPage = () => {
   const [clock, setClock] = useState(() => formatTime(new Date()));
   const [fadingOut, setFadingOut] = useState<Set<string>>(new Set());
   const audioCtxRef = useRef<AudioContext | null>(null);
-  const prevCountRef = useRef<number | null>(null);
+  const prevIdsRef = useRef<Set<string> | null>(null);
 
   useEffect(() => {
     const id = setInterval(() => { setTick((t) => t + 1); setClock(formatTime(new Date())); }, 30_000);
     return () => clearInterval(id);
   }, []);
 
-  // Sound notification when new orders arrive
-  const activePedidosCount = useMemo(() => {
-    let count = 0;
-    for (const mesa of mesas) {
-      if (mesa.status === "livre") continue;
-      for (const pedido of mesa.pedidos) {
-        if (!pedido.pronto) count++;
-      }
-    }
-    for (const pedido of pedidosBalcao) {
-      if (!pedido.pronto && pedido.statusBalcao !== "pago" && pedido.statusBalcao !== "aguardando_confirmacao") count++;
-    }
-    return count;
-  }, [mesas, pedidosBalcao]);
-
-  useEffect(() => {
-    if (prevCountRef.current !== null && activePedidosCount > prevCountRef.current) {
-      tocarSom("novo_pedido", audioCtxRef);
-      document.title = "🔴 NOVO PEDIDO — Cozinha";
-      const timer = setTimeout(() => { document.title = "Cozinha — Orderly Table"; }, 5000);
-      return () => clearTimeout(timer);
-    }
-    prevCountRef.current = activePedidosCount;
-  }, [activePedidosCount]);
-
-  useEffect(() => {
-    return () => { document.title = "Orderly Table"; };
-  }, []);
-
+  // Build active pedidos for rendering
   const activePedidos = useMemo(() => {
     const all: (PedidoRealizado & { mesaNumero: number; isBalcao?: boolean })[] = [];
     for (const mesa of mesas) {
@@ -104,6 +106,30 @@ const CozinhaPage = () => {
     all.sort((a, b) => new Date(a.criadoEmIso).getTime() - new Date(b.criadoEmIso).getTime());
     return all;
   }, [mesas, pedidosBalcao]);
+
+  // Sound notification when new orders arrive — detect by origin
+  useEffect(() => {
+    const currentIds = new Set(activePedidos.map((p) => p.id));
+    if (prevIdsRef.current !== null) {
+      const newPedidos = activePedidos.filter((p) => !prevIdsRef.current!.has(p.id));
+      if (newPedidos.length > 0) {
+        // Play sound based on the first new order's origin
+        const firstNew = newPedidos[0];
+        let somOrigem: SomOrigem = "mesa";
+        if (firstNew.origem === "delivery") somOrigem = "delivery";
+        else if (firstNew.origem === "balcao") somOrigem = "balcao";
+        tocarSom("novo_pedido", audioCtxRef, somOrigem);
+        document.title = "🔴 NOVO PEDIDO — Cozinha";
+        const timer = setTimeout(() => { document.title = "Cozinha — Orderly Table"; }, 5000);
+        return () => clearTimeout(timer);
+      }
+    }
+    prevIdsRef.current = currentIds;
+  }, [activePedidos]);
+
+  useEffect(() => {
+    return () => { document.title = "Orderly Table"; };
+  }, []);
 
   const handlePronto = useCallback(
     (mesaId: string, pedidoId: string, isBalcao?: boolean) => {
