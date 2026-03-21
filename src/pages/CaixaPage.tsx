@@ -1307,12 +1307,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                                         const taxaFinal = Number.isFinite(taxaVal) && taxaVal > 0 ? taxaVal : 0;
                                         confirmarPedidoBalcao(pb.id, taxaFinal > 0 ? taxaFinal : undefined);
                                         toast.success(`Pedido #${pb.numeroPedido} confirmado!`, { duration: 1600, icon: "✅" });
-                                        // Show QR for motoboy pickup
-                                        if (pb.origem === "delivery") {
-                                          setQrRetiradaPedidoId(pb.id);
-                                          if (qrRetiradaTimerRef.current) clearTimeout(qrRetiradaTimerRef.current);
-                                          qrRetiradaTimerRef.current = window.setTimeout(() => setQrRetiradaPedidoId(null), 30000);
-                                        }
+                                        // QR Code only on printed receipt, not on screen
                                         const tel = (pb.clienteTelefone || "").replace(/\D/g, "");
                                         if (tel) {
                                           const itensStr = pb.itens.map((it) => `${it.quantidade}x ${it.nome}`).join(", ");
