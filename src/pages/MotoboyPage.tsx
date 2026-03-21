@@ -149,8 +149,8 @@ export default function MotoboyPage() {
   }, [pedidosBalcao, ordem, sessao]);
 
   const entregues = useMemo(() =>
-    pedidosBalcao.filter((p) => p.origem === "delivery" && p.statusBalcao === "entregue"),
-    [pedidosBalcao]
+    pedidosBalcao.filter((p) => p.origem === "delivery" && p.statusBalcao === "entregue" && p.motoboyNome === sessao?.nome),
+    [pedidosBalcao, sessao]
   );
 
   // Keep ordem in sync
