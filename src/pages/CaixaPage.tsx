@@ -1057,82 +1057,82 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
               </div>
 
               {/* ── Windows-style Toolbar ── */}
-              <div className="flex items-center gap-1 border-b px-3 py-1.5 shrink-0" style={{ background: '#f0f0f0', borderColor: '#c0c0c0' }}>
+              <div className="flex items-center gap-1 border-b border-border px-3 py-1.5 shrink-0 bg-secondary">
                 <button
                   onClick={() => setBalcaoOpen(true)}
-                  className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded text-xs hover:bg-blue-100 transition-colors"
-                  style={{ border: '1px solid #c0c0c0', background: 'white', minWidth: 64 }}
+                  className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded text-xs border border-border bg-card text-foreground hover:bg-accent transition-colors"
+                  style={{ minWidth: 64 }}
                 >
-                  <ReceiptText className="h-4 w-4 text-foreground" />
-                  <span className="text-[10px] font-bold text-foreground">Novo pedido</span>
+                  <ReceiptText className="h-4 w-4" />
+                  <span className="text-[10px] font-bold">Novo pedido</span>
                 </button>
                 <button
                   onClick={() => setMovModalOpen(true)}
-                  className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded text-xs hover:bg-blue-100 transition-colors"
-                  style={{ border: '1px solid #c0c0c0', background: 'white', minWidth: 64 }}
+                  className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded text-xs border border-border bg-card text-foreground hover:bg-accent transition-colors"
+                  style={{ minWidth: 64 }}
                 >
-                  <Banknote className="h-4 w-4 text-foreground" />
-                  <span className="text-[10px] font-bold text-foreground">Sangria</span>
+                  <Banknote className="h-4 w-4" />
+                  <span className="text-[10px] font-bold">Sangria</span>
                 </button>
-                <div className="w-px h-8 mx-1" style={{ background: '#c0c0c0' }} />
+                <div className="w-px h-8 mx-1 bg-border" />
                 <button
                   onClick={() => {
                     const w = window.open("", "_blank", "width=400,height=600");
                     if (w) { w.document.write("<p>Impressão</p>"); w.print(); }
                   }}
-                  className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded text-xs hover:bg-blue-100 transition-colors"
-                  style={{ border: '1px solid #c0c0c0', background: 'white', minWidth: 64 }}
+                  className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded text-xs border border-border bg-card text-foreground hover:bg-accent transition-colors"
+                  style={{ minWidth: 64 }}
                 >
-                  <Printer className="h-4 w-4 text-foreground" />
-                  <span className="text-[10px] font-bold text-foreground">Imprimir</span>
+                  <Printer className="h-4 w-4" />
+                  <span className="text-[10px] font-bold">Imprimir</span>
                 </button>
-                <div className="w-px h-8 mx-1" style={{ background: '#c0c0c0' }} />
+                <div className="w-px h-8 mx-1 bg-border" />
                 <button
                   onClick={() => setTurnoReportOpen(true)}
-                  className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded text-xs hover:bg-red-100 transition-colors"
-                  style={{ border: '1px solid #dc2626', background: 'white', minWidth: 64 }}
+                  className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded text-xs border border-destructive/50 bg-card text-destructive hover:bg-destructive/10 transition-colors"
+                  style={{ minWidth: 64 }}
                 >
-                  <LockKeyhole className="h-4 w-4 text-red-600" />
-                  <span className="text-[10px] font-bold text-red-600">Fechar turno</span>
+                  <LockKeyhole className="h-4 w-4" />
+                  <span className="text-[10px] font-bold">Fechar turno</span>
                 </button>
                 <button
                   onClick={() => logout(accessMode)}
-                  className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded text-xs hover:bg-blue-100 transition-colors"
-                  style={{ border: '1px solid #c0c0c0', background: 'white', minWidth: 64 }}
+                  className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded text-xs border border-border bg-card text-foreground hover:bg-accent transition-colors"
+                  style={{ minWidth: 64 }}
                 >
-                  <LogOut className="h-4 w-4 text-foreground" />
-                  <span className="text-[10px] font-bold text-foreground">Sair</span>
+                  <LogOut className="h-4 w-4" />
+                  <span className="text-[10px] font-bold">Sair</span>
                 </button>
               </div>
 
               {/* ── Windows-style Tabs ── */}
-              <div className="flex items-end px-3 pt-1 shrink-0" style={{ background: '#f0f0f0' }}>
+              <div className="flex items-end px-3 pt-1 shrink-0 bg-secondary">
                 <button
                   onClick={() => setCaixaView("mesas")}
-                  className="px-4 py-1.5 text-xs font-bold transition-colors"
-                  style={caixaView === "mesas"
-                    ? { background: 'white', border: '1px solid #c0c0c0', borderBottom: '1px solid white', borderRadius: '4px 4px 0 0', marginBottom: -1, zIndex: 1, position: 'relative' }
-                    : { background: '#e0e0e0', border: '1px solid #c0c0c0', borderRadius: '4px 4px 0 0', marginBottom: -1 }
-                  }
+                  className={`px-4 py-1.5 text-xs font-bold transition-colors border border-border rounded-t -mb-px relative ${
+                    caixaView === "mesas"
+                      ? "bg-card text-foreground border-b-card z-10"
+                      : "bg-muted text-muted-foreground"
+                  }`}
                 >
                   Mesas
                 </button>
                 {sistemaConfig.deliveryAtivo !== false && (
                 <button
                   onClick={() => setCaixaView("delivery")}
-                  className="px-4 py-1.5 text-xs font-bold transition-colors flex items-center gap-1.5"
-                  style={caixaView === "delivery"
-                    ? { background: 'white', border: '1px solid #c0c0c0', borderBottom: '1px solid white', borderRadius: '4px 4px 0 0', marginBottom: -1, zIndex: 1, position: 'relative' }
-                    : { background: '#e0e0e0', border: '1px solid #c0c0c0', borderRadius: '4px 4px 0 0', marginBottom: -1 }
-                  }
+                  className={`px-4 py-1.5 text-xs font-bold transition-colors border border-border rounded-t -mb-px relative flex items-center gap-1.5 ${
+                    caixaView === "delivery"
+                      ? "bg-card text-foreground border-b-card z-10"
+                      : "bg-muted text-muted-foreground"
+                  }`}
                 >
                   Delivery
                   {(pedidosDeliveryAtivos.length + pedidosAguardandoConfirmacao.length) > 0 && (
-                    <span className="rounded-full px-1.5 py-0.5 text-[10px] font-black tabular-nums leading-none bg-red-600 text-white">{pedidosDeliveryAtivos.length + pedidosAguardandoConfirmacao.length}</span>
+                    <span className="rounded-full px-1.5 py-0.5 text-[10px] font-black tabular-nums leading-none bg-destructive text-destructive-foreground">{pedidosDeliveryAtivos.length + pedidosAguardandoConfirmacao.length}</span>
                   )}
                 </button>
                 )}
-                <div className="flex-1" style={{ borderBottom: '1px solid #c0c0c0' }} />
+                <div className="flex-1 border-b border-border" />
               </div>
 
               {/* ── Content Area ── */}

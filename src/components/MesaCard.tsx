@@ -76,7 +76,7 @@ const MesaCard = ({ mesa, onClick, showTotal = true, showIndicators = true, time
         </div>
       )}
 
-      {showTotal && (
+      {showTotal && status !== "livre" && (
         <span className="mt-1 text-sm font-black tabular-nums text-foreground">
           {formatPrice(total)}
         </span>
