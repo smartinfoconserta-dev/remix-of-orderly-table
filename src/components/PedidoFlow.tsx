@@ -130,6 +130,12 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
     dismissChamarGarcom,
   } = useRestaurant();
   const isExternalOrder = modo === "balcao" || modo === "delivery";
+  const customCats = useMemo(() => getCategoriasCustom(), []);
+  const allCategorias: Categoria[] = useMemo(() => [
+    ...categorias,
+    ...customCats.map((c) => ({ id: c.id, nome: c.nome, icone: c.icone })),
+  ], [customCats]);
+  const navigationItems = useMemo(() => [HOME_TAB, ...allCategorias], [allCategorias]);
   const [localCarrinho, setLocalCarrinho] = useState<ItemCarrinho[]>([]);
   const [categoriaAtiva, setCategoriaAtiva] = useState(isExternalOrder ? categorias[0]?.id ?? HOME_TAB_ID : HOME_TAB_ID);
   const [categoriaExibida, setCategoriaExibida] = useState(isExternalOrder ? categorias[0]?.id ?? HOME_TAB_ID : HOME_TAB_ID);
