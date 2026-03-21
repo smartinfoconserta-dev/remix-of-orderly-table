@@ -52,6 +52,13 @@ const MesaCard = ({ mesa, onClick, showTotal = true, showIndicators = true, time
         </span>
       )}
 
+      {hasParaViagem && (
+        <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/40 bg-amber-500/15 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-amber-400">
+          <ShoppingBag className="h-2.5 w-2.5" />
+          Para levar
+        </span>
+      )}
+
       {showIndicators && (
         <div className="mt-1 flex items-center gap-3">
           {carrinho.length > 0 && (
