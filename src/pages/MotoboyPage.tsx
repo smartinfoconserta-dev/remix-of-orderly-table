@@ -67,7 +67,7 @@ export default function MotoboyPage() {
   const handleLogout = () => {
     localStorage.removeItem(SESSAO_KEY);
     setSessao(null);
-    setSelectedMotoboyId("");
+    setNomeInput("");
     setPinInput("");
   };
 
