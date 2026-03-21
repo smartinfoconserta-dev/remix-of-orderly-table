@@ -228,6 +228,10 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
   const [confirmTempoCustom, setConfirmTempoCustom] = useState("");
   const [confirmTaxaEntrega, setConfirmTaxaEntrega] = useState("");
 
+  // Master aviso state
+  const [masterAviso, setMasterAviso] = useState<{ mensagem: string; tipo: string; enviadoEm: string; lido: boolean } | null>(null);
+  const [avisoCanDismiss, setAvisoCanDismiss] = useState(true);
+
   const [isDesktop, setIsDesktop] = useState(() => typeof window !== "undefined" && window.innerWidth >= 768);
   const sistemaConfig = useMemo(() => getSistemaConfig(), []);
   const audioCtxRef = useRef<AudioContext | null>(null);
