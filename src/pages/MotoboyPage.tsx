@@ -87,7 +87,7 @@ export default function MotoboyPage() {
 
   const handleFileSelected = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || !scanningPedidoId) return;
+    if (!file) return;
     try {
       const img = new Image();
       const url = URL.createObjectURL(file);
@@ -103,11 +103,22 @@ export default function MotoboyPage() {
       const code = jsQR(imageData.data, imageData.width, imageData.height);
       if (code?.data?.startsWith("RETIRADA:")) {
         const pedidoId = code.data.replace("RETIRADA:", "");
-        if (pedidoId === scanningPedidoId) {
-          marcarBalcaoSaiu(pedidoId, sessao?.nome || "Motoboy");
-          toast.success("Retirada confirmada! Boa entrega. 🏍️");
-        } else {
-          toast.error("QR Code não corresponde a este pedido");
+        if (generalScan) {
+          // General scan: find any delivery pedido with this id that is "pronto"
+          const found = pedidosBalcao.find((p) => p.id === pedidoId && p.origem === "delivery" && p.statusBalcao === "pronto");
+          if (found) {
+            marcarBalcaoSaiu(pedidoId, sessao?.nome || "Motoboy");
+            toast.success(`Pedido #${found.numeroPedido} retirado! Boa entrega. 🏍️`);
+          } else {
+            toast.error("Pedido não encontrado ou já retirado");
+          }
+        } else if (scanningPedidoId) {
+          if (pedidoId === scanningPedidoId) {
+            marcarBalcaoSaiu(pedidoId, sessao?.nome || "Motoboy");
+            toast.success("Retirada confirmada! Boa entrega. 🏍️");
+          } else {
+            toast.error("QR Code não corresponde a este pedido");
+          }
         }
       } else {
         toast.error("QR Code não reconhecido");
@@ -116,8 +127,9 @@ export default function MotoboyPage() {
       toast.error("Erro ao ler QR Code");
     }
     setScanningPedidoId(null);
+    setGeneralScan(false);
     e.target.value = "";
-  }, [scanningPedidoId, marcarBalcaoSaiu, sessao]);
+  }, [scanningPedidoId, generalScan, marcarBalcaoSaiu, sessao, pedidosBalcao]);
 
   // ── Data ──
   const emRota = useMemo(() => {
