@@ -175,6 +175,7 @@ interface RestaurantContextType {
   marcarPedidoBalcaoPronto: (pedidoId: string) => void;
   marcarBalcaoSaiu: (pedidoId: string, motoboyNome: string) => void;
   marcarBalcaoEntregue: (pedidoId: string) => void;
+  cancelarEntregaMotoboy: (pedidoId: string, motivo?: string) => void;
   fecharContaBalcao: (pedidoId: string, input: FecharContaInput) => void;
   confirmarPedidoBalcao: (pedidoId: string, taxaEntrega?: number) => void;
   rejeitarPedidoBalcao: (pedidoId: string, motivo: string) => void;
@@ -1069,6 +1070,21 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }));
   }, []);
 
+  const cancelarEntregaMotoboy = useCallback((pedidoId: string, motivo?: string) => {
+    setStore((prev) => ({
+      ...prev,
+      pedidosBalcao: prev.pedidosBalcao.map((p) =>
+        p.id === pedidoId ? { ...p, statusBalcao: "pronto" as const, motoboyNome: undefined } : p,
+      ),
+      eventos: appendEvent(prev.eventos, {
+        tipo: "pedido",
+        descricao: `Entrega cancelada pelo motoboy${motivo ? `: ${motivo}` : ""}`,
+        acao: "delivery_cancelado_motoboy",
+        motivo,
+      }),
+    }));
+  }, []);
+
   const fecharContaBalcao = useCallback((pedidoId: string, input: FecharContaInput) => {
     setStore((prev) => {
       const pedido = prev.pedidosBalcao.find((p) => p.id === pedidoId);
@@ -1181,6 +1197,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         marcarPedidoBalcaoPronto,
         marcarBalcaoSaiu,
         marcarBalcaoEntregue,
+        cancelarEntregaMotoboy,
         fecharContaBalcao,
         confirmarPedidoBalcao,
         rejeitarPedidoBalcao,

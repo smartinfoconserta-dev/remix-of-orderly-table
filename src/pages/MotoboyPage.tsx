@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Bike, LogOut, MapPin, Phone, DollarSign, Clock, Map, Navigation, QrCode, GripVertical, CheckCircle2, Package } from "lucide-react";
+import { Bike, LogOut, MapPin, Phone, DollarSign, Clock, Map, Navigation, QrCode, GripVertical, CheckCircle2, Package, XCircle, Camera } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -34,15 +34,18 @@ export default function MotoboyPage() {
   const LOGO = sysConfig.logoBase64 || sysConfig.logoUrl || "";
   const INITIALS = NOME_REST.slice(0, 2).toUpperCase();
 
-  const { pedidosBalcao, marcarBalcaoSaiu, marcarBalcaoEntregue } = useRestaurant();
+  const { pedidosBalcao, marcarBalcaoSaiu, marcarBalcaoEntregue, cancelarEntregaMotoboy } = useRestaurant();
   const [sessao, setSessao] = useState<{ id: string; nome: string } | null>(() => getSessao());
   const [nomeInput, setNomeInput] = useState("");
   const [pinInput, setPinInput] = useState("");
   const [loginError, setLoginError] = useState("");
   const [scanningPedidoId, setScanningPedidoId] = useState<string | null>(null);
+  const [generalScan, setGeneralScan] = useState(false);
   const [activeTab, setActiveTab] = useState<"rota" | "entregues">("rota");
   const [ordem, setOrdem] = useState<string[]>(() => getOrdem());
   const [draggingId, setDraggingId] = useState<string | null>(null);
+  const [cancelingId, setCancelingId] = useState<string | null>(null);
+  const [cancelMotivo, setCancelMotivo] = useState("");
   const dragOverId = useRef<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -71,14 +74,20 @@ export default function MotoboyPage() {
   };
 
   // ── QR scan ──
-  const handleScanQR = (pedidoId: string) => {
-    setScanningPedidoId(pedidoId);
+  const handleScanQR = (pedidoId?: string) => {
+    if (pedidoId) {
+      setScanningPedidoId(pedidoId);
+      setGeneralScan(false);
+    } else {
+      setScanningPedidoId(null);
+      setGeneralScan(true);
+    }
     fileInputRef.current?.click();
   };
 
   const handleFileSelected = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || !scanningPedidoId) return;
+    if (!file) return;
     try {
       const img = new Image();
       const url = URL.createObjectURL(file);
@@ -94,11 +103,22 @@ export default function MotoboyPage() {
       const code = jsQR(imageData.data, imageData.width, imageData.height);
       if (code?.data?.startsWith("RETIRADA:")) {
         const pedidoId = code.data.replace("RETIRADA:", "");
-        if (pedidoId === scanningPedidoId) {
-          marcarBalcaoSaiu(pedidoId, sessao?.nome || "Motoboy");
-          toast.success("Retirada confirmada! Boa entrega. 🏍️");
-        } else {
-          toast.error("QR Code não corresponde a este pedido");
+        if (generalScan) {
+          // General scan: find any delivery pedido with this id that is "pronto"
+          const found = pedidosBalcao.find((p) => p.id === pedidoId && p.origem === "delivery" && p.statusBalcao === "pronto");
+          if (found) {
+            marcarBalcaoSaiu(pedidoId, sessao?.nome || "Motoboy");
+            toast.success(`Pedido #${found.numeroPedido} retirado! Boa entrega. 🏍️`);
+          } else {
+            toast.error("Pedido não encontrado ou já retirado");
+          }
+        } else if (scanningPedidoId) {
+          if (pedidoId === scanningPedidoId) {
+            marcarBalcaoSaiu(pedidoId, sessao?.nome || "Motoboy");
+            toast.success("Retirada confirmada! Boa entrega. 🏍️");
+          } else {
+            toast.error("QR Code não corresponde a este pedido");
+          }
         }
       } else {
         toast.error("QR Code não reconhecido");
@@ -107,15 +127,17 @@ export default function MotoboyPage() {
       toast.error("Erro ao ler QR Code");
     }
     setScanningPedidoId(null);
+    setGeneralScan(false);
     e.target.value = "";
-  }, [scanningPedidoId, marcarBalcaoSaiu, sessao]);
+  }, [scanningPedidoId, generalScan, marcarBalcaoSaiu, sessao, pedidosBalcao]);
 
-  // ── Data ──
+  // ── Data — only show pedidos scanned by this motoboy ──
   const emRota = useMemo(() => {
     const pending = pedidosBalcao.filter(
-      (p) => p.origem === "delivery" && (p.statusBalcao === "pronto" || p.statusBalcao === "saiu" || p.statusBalcao === "aberto" || p.statusBalcao === "aguardando_confirmacao" || !p.statusBalcao)
-    ).filter((p) => p.statusBalcao !== "pago" && p.statusBalcao !== "entregue");
-    // Sort by saved order
+      (p) => p.origem === "delivery" &&
+        p.motoboyNome === sessao?.nome &&
+        (p.statusBalcao === "saiu")
+    );
     const ordemObj: Record<string, number> = {};
     ordem.forEach((id, i) => { ordemObj[id] = i; });
     return [...pending].sort((a, b) => {
@@ -124,11 +146,11 @@ export default function MotoboyPage() {
       if (ia !== ib) return ia - ib;
       return new Date(a.criadoEmIso).getTime() - new Date(b.criadoEmIso).getTime();
     });
-  }, [pedidosBalcao, ordem]);
+  }, [pedidosBalcao, ordem, sessao]);
 
   const entregues = useMemo(() =>
-    pedidosBalcao.filter((p) => p.origem === "delivery" && p.statusBalcao === "entregue"),
-    [pedidosBalcao]
+    pedidosBalcao.filter((p) => p.origem === "delivery" && p.statusBalcao === "entregue" && p.motoboyNome === sessao?.nome),
+    [pedidosBalcao, sessao]
   );
 
   // Keep ordem in sync
@@ -164,6 +186,13 @@ export default function MotoboyPage() {
   const handleEntregue = (pedidoId: string) => {
     marcarBalcaoEntregue(pedidoId);
     toast.success("Entrega confirmada! ✓");
+  };
+
+  const handleCancelar = (pedidoId: string) => {
+    cancelarEntregaMotoboy(pedidoId, cancelMotivo || undefined);
+    toast.info("Entrega devolvida ao caixa");
+    setCancelingId(null);
+    setCancelMotivo("");
   };
 
   // ── Drag and drop (native, touch-friendly) ──
@@ -342,15 +371,22 @@ export default function MotoboyPage() {
       {/* Tab content */}
       {activeTab === "rota" ? (
         <div className="flex-1 overflow-y-auto p-4 space-y-3 pb-24">
+          {/* Top-level scan button */}
+          <Button className="w-full h-12 gap-2 font-bold" variant="outline" onClick={() => handleScanQR()}>
+            <Camera className="w-5 h-5" /> 📷 Escanear pedido
+          </Button>
+
           {emRota.length === 0 ? (
             <div className="text-center py-16 text-muted-foreground">
               <Bike className="w-12 h-12 mx-auto mb-3 opacity-40" />
               <p>Nenhuma entrega no momento</p>
+              <p className="text-xs mt-1">Escaneie o QR da comanda para adicionar</p>
             </div>
           ) : (
             emRota.map((p, idx) => {
               const addr = buildEnderecoCompleto(p);
               const isDragging = draggingId === p.id;
+              const isCanceling = cancelingId === p.id;
               return (
                 <div
                   key={p.id}
@@ -363,13 +399,9 @@ export default function MotoboyPage() {
                   onTouchEnd={handleTouchEnd}
                   className={`transition-all duration-200 ${isDragging ? "opacity-40 scale-95" : ""}`}
                 >
-                  <Card className={
-                    p.statusBalcao === "pronto" ? "border-green-600/50" :
-                    p.statusBalcao === "saiu" ? "border-blue-500/50" : "border-border"
-                  }>
+                  <Card className="border-blue-500/50">
                     <CardContent className="p-0">
                       <div className="flex">
-                        {/* Drag handle */}
                         <div className="flex items-center justify-center w-10 shrink-0 bg-muted/30 cursor-grab active:cursor-grabbing border-r border-border rounded-l-xl">
                           <GripVertical className="w-5 h-5 text-muted-foreground" />
                         </div>
@@ -422,25 +454,27 @@ export default function MotoboyPage() {
                                 <Map className="w-3.5 h-3.5" /> Rota
                               </Button>
                             )}
-                            {p.statusBalcao === "pronto" && (
-                              <Button size="sm" variant="outline" className="gap-1 text-xs" onClick={() => handleScanQR(p.id)}>
-                                📷 Escanear retirada
-                              </Button>
-                            )}
-                            {p.statusBalcao === "pronto" && (
-                              <Button size="sm" className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-xs" onClick={() => marcarBalcaoSaiu(p.id, sessao.nome)}>
-                                Retirar
-                              </Button>
-                            )}
-                            {(p.statusBalcao === "pronto" || p.statusBalcao === "saiu") && (
-                              <Button size="sm" className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold" onClick={() => handleEntregue(p.id)}>
-                                <CheckCircle2 className="w-4 h-4 mr-1" /> Entregue
-                              </Button>
-                            )}
-                            {(!p.statusBalcao || p.statusBalcao === "aberto") && (
-                              <p className="text-xs text-muted-foreground italic">Aguardando preparo…</p>
-                            )}
+                            <Button size="sm" className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold" onClick={() => handleEntregue(p.id)}>
+                              <CheckCircle2 className="w-4 h-4 mr-1" /> Entregue
+                            </Button>
+                            <Button size="sm" variant="outline" className="text-xs text-destructive border-destructive/30" onClick={() => setCancelingId(isCanceling ? null : p.id)}>
+                              <XCircle className="w-4 h-4" />
+                            </Button>
                           </div>
+
+                          {/* Cancel form */}
+                          {isCanceling && (
+                            <div className="space-y-2 pt-2 border-t border-border">
+                              <Input
+                                placeholder="Motivo (opcional): Cliente ausente, endereço errado..."
+                                value={cancelMotivo}
+                                onChange={(e) => setCancelMotivo(e.target.value)}
+                              />
+                              <Button size="sm" variant="destructive" className="w-full text-xs" onClick={() => handleCancelar(p.id)}>
+                                Confirmar cancelamento
+                              </Button>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </CardContent>
