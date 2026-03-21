@@ -1125,6 +1125,12 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                             }`}>
                               {isPronto ? "Pronto" : "Aberto"}
                             </span>
+                            {(pb as any).paraViagem === true && (
+                              <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/40 bg-amber-500/15 px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest text-amber-400">
+                                <ShoppingBag className="h-2.5 w-2.5" />
+                                Para levar
+                              </span>
+                            )}
                             <span className="mt-1 text-sm font-black tabular-nums text-foreground">
                               {formatPrice(pb.total)}
                             </span>
