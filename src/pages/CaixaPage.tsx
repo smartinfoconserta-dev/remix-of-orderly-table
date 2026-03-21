@@ -1106,13 +1106,13 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
               </div>
 
               {/* ── Windows-style Tabs ── */}
-              <div className="flex items-end px-3 pt-1 shrink-0 bg-secondary">
+              <div className="flex items-end px-3 pt-1 shrink-0 bg-gray-100">
                 <button
                   onClick={() => setCaixaView("mesas")}
-                  className={`px-4 py-1.5 text-xs font-bold transition-colors border border-border rounded-t -mb-px relative ${
+                  className={`px-4 py-1.5 text-xs font-bold transition-colors border border-gray-300 rounded-t -mb-px relative ${
                     caixaView === "mesas"
-                      ? "bg-card text-foreground border-b-card z-10"
-                      : "bg-muted text-muted-foreground"
+                      ? "bg-white text-gray-800 border-b-white z-10"
+                      : "bg-gray-200 text-gray-600"
                   }`}
                 >
                   Mesas
@@ -1120,19 +1120,19 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                 {sistemaConfig.deliveryAtivo !== false && (
                 <button
                   onClick={() => setCaixaView("delivery")}
-                  className={`px-4 py-1.5 text-xs font-bold transition-colors border border-border rounded-t -mb-px relative flex items-center gap-1.5 ${
+                  className={`px-4 py-1.5 text-xs font-bold transition-colors border border-gray-300 rounded-t -mb-px relative flex items-center gap-1.5 ${
                     caixaView === "delivery"
-                      ? "bg-card text-foreground border-b-card z-10"
-                      : "bg-muted text-muted-foreground"
+                      ? "bg-white text-gray-800 border-b-white z-10"
+                      : "bg-gray-200 text-gray-600"
                   }`}
                 >
                   Delivery
                   {(pedidosDeliveryAtivos.length + pedidosAguardandoConfirmacao.length) > 0 && (
-                    <span className="rounded-full px-1.5 py-0.5 text-[10px] font-black tabular-nums leading-none bg-destructive text-destructive-foreground">{pedidosDeliveryAtivos.length + pedidosAguardandoConfirmacao.length}</span>
+                    <span className="rounded-full px-1.5 py-0.5 text-[10px] font-black tabular-nums leading-none bg-red-600 text-white">{pedidosDeliveryAtivos.length + pedidosAguardandoConfirmacao.length}</span>
                   )}
                 </button>
                 )}
-                <div className="flex-1 border-b border-border" />
+                <div className="flex-1 border-b border-gray-300" />
               </div>
 
               {/* ── Content Area ── */}
