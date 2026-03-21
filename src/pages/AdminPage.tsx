@@ -991,6 +991,24 @@ const AdminPage = () => {
 
             {/* Toggle delivery ativo */}
             <div className="surface-card max-w-lg rounded-2xl p-6 space-y-3">
+              {/* Toggle cozinha */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-bold text-foreground">{sistemaConfig.cozinhaAtiva !== false ? "Tela da cozinha ativa" : "Tela da cozinha desativada"}</p>
+                  <p className="text-xs text-muted-foreground">Quando desativada, pedidos vão direto para "pronto"</p>
+                </div>
+                <Switch
+                  checked={sistemaConfig.cozinhaAtiva !== false}
+                  onCheckedChange={(v) => {
+                    const next = { ...sistemaConfig, cozinhaAtiva: v };
+                    setSistemaConfig(next);
+                    saveSistemaConfig(next);
+                    toast.success(v ? "Cozinha ativada" : "Cozinha desativada — pedidos vão direto para pronto");
+                  }}
+                />
+              </div>
+
+              {/* Toggle delivery */}
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-bold text-foreground">{sistemaConfig.deliveryAtivo !== false ? "Delivery ativado" : "Delivery desativado"}</p>
