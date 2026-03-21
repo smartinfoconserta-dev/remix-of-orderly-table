@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { getSistemaConfig } from "@/lib/adminStorage";
 import { useRestaurant } from "@/contexts/RestaurantContext";
 import { toast } from "sonner";
@@ -37,7 +36,7 @@ export default function MotoboyPage() {
 
   const { pedidosBalcao, marcarBalcaoSaiu, marcarBalcaoEntregue } = useRestaurant();
   const [sessao, setSessao] = useState<{ id: string; nome: string } | null>(() => getSessao());
-  const [selectedMotoboyId, setSelectedMotoboyId] = useState("");
+  const [nomeInput, setNomeInput] = useState("");
   const [pinInput, setPinInput] = useState("");
   const [loginError, setLoginError] = useState("");
   const [scanningPedidoId, setScanningPedidoId] = useState<string | null>(null);
@@ -52,21 +51,22 @@ export default function MotoboyPage() {
   // ── Login ──
   const handleLogin = useCallback(() => {
     setLoginError("");
-    const motoboy = motoboys.find((m) => m.id === selectedMotoboyId);
-    if (!motoboy) { setLoginError("Selecione um motoboy"); return; }
-    if (pinInput.length < 4) { setLoginError("PIN deve ter 4 dígitos"); return; }
+    const norm = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+    const motoboy = motoboys.find((m) => norm(m.nome) === norm(nomeInput));
+    if (!motoboy) { setLoginError("Nome ou PIN incorreto"); return; }
+    if (pinInput.length < 4) { setLoginError("Nome ou PIN incorreto"); return; }
     const expectedHash = btoa("pin:" + pinInput);
-    if (motoboy.pinHash !== expectedHash) { setLoginError("PIN incorreto"); return; }
+    if (motoboy.pinHash !== expectedHash) { setLoginError("Nome ou PIN incorreto"); return; }
     const s = { id: motoboy.id, nome: motoboy.nome };
     localStorage.setItem(SESSAO_KEY, JSON.stringify(s));
     setSessao(s);
     toast.success(`Bem-vindo, ${motoboy.nome}!`);
-  }, [selectedMotoboyId, pinInput, motoboys]);
+  }, [nomeInput, pinInput, motoboys]);
 
   const handleLogout = () => {
     localStorage.removeItem(SESSAO_KEY);
     setSessao(null);
-    setSelectedMotoboyId("");
+    setNomeInput("");
     setPinInput("");
   };
 
@@ -273,24 +273,25 @@ export default function MotoboyPage() {
           ) : (
             <div className="space-y-3 text-left">
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-muted-foreground">Motoboy</label>
-                <Select value={selectedMotoboyId} onValueChange={setSelectedMotoboyId}>
-                  <SelectTrigger className="rounded-xl"><SelectValue placeholder="Selecione seu nome" /></SelectTrigger>
-                  <SelectContent>
-                    {motoboys.map((m) => (<SelectItem key={m.id} value={m.id}>{m.nome}</SelectItem>))}
-                  </SelectContent>
-                </Select>
+                <label className="text-xs font-bold text-muted-foreground">Seu nome</label>
+                <Input
+                  type="text"
+                  placeholder="Digite seu nome"
+                  value={nomeInput}
+                  onChange={(e) => setNomeInput(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleLogin()}
+                />
               </div>
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-muted-foreground">PIN</label>
-                <Input type="password" inputMode="numeric" maxLength={6} placeholder="••••" value={pinInput}
-                  onChange={(e) => setPinInput(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                <Input type="password" inputMode="numeric" maxLength={4} placeholder="••••" value={pinInput}
+                  onChange={(e) => setPinInput(e.target.value.replace(/\D/g, "").slice(0, 4))}
                   onKeyDown={(e) => e.key === "Enter" && handleLogin()} />
               </div>
               {loginError && (
                 <p className="rounded-xl border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive">{loginError}</p>
               )}
-              <Button className="w-full rounded-xl" onClick={handleLogin} disabled={!selectedMotoboyId || pinInput.length < 4}>
+              <Button className="w-full rounded-xl" onClick={handleLogin} disabled={!nomeInput.trim() || pinInput.length < 4}>
                 <Bike className="w-4 h-4 mr-2" /> Entrar
               </Button>
             </div>
