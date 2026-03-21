@@ -1307,12 +1307,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                                         const taxaFinal = Number.isFinite(taxaVal) && taxaVal > 0 ? taxaVal : 0;
                                         confirmarPedidoBalcao(pb.id, taxaFinal > 0 ? taxaFinal : undefined);
                                         toast.success(`Pedido #${pb.numeroPedido} confirmado!`, { duration: 1600, icon: "✅" });
-                                        // Show QR for motoboy pickup
-                                        if (pb.origem === "delivery") {
-                                          setQrRetiradaPedidoId(pb.id);
-                                          if (qrRetiradaTimerRef.current) clearTimeout(qrRetiradaTimerRef.current);
-                                          qrRetiradaTimerRef.current = window.setTimeout(() => setQrRetiradaPedidoId(null), 30000);
-                                        }
+                                        // QR Code only on printed receipt, not on screen
                                         const tel = (pb.clienteTelefone || "").replace(/\D/g, "");
                                         if (tel) {
                                           const itensStr = pb.itens.map((it) => `${it.quantidade}x ${it.nome}`).join(", ");
@@ -2769,34 +2764,6 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
       </Dialog>
 
       <LicenseBanner blockMode={accessMode === "caixa"} />
-
-      {/* QR Code retirada motoboy */}
-      {qrRetiradaPedidoId && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/70 backdrop-blur-sm">
-          <div className="bg-background rounded-2xl p-8 text-center space-y-4 max-w-sm mx-4 border border-border shadow-2xl">
-            <h3 className="text-lg font-black text-foreground">QR de Retirada</h3>
-            <p className="text-sm text-muted-foreground">Mostre este QR para o motoboy escanear</p>
-            <div className="flex justify-center">
-              <img
-                src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=RETIRADA:${qrRetiradaPedidoId}`}
-                alt="QR Code retirada"
-                className="w-48 h-48 rounded-xl"
-              />
-            </div>
-            <p className="text-xs text-muted-foreground">Fecha automaticamente em 30 segundos</p>
-            <Button
-              variant="outline"
-              className="w-full rounded-xl"
-              onClick={() => {
-                setQrRetiradaPedidoId(null);
-                if (qrRetiradaTimerRef.current) clearTimeout(qrRetiradaTimerRef.current);
-              }}
-            >
-              Fechar
-            </Button>
-          </div>
-        </div>
-      )}
     </>
   );
 };
