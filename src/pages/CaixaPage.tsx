@@ -938,7 +938,26 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                   <User className="h-3.5 w-3.5" />
                   <span>{currentOperator.nome}</span>
                 </div>
-              </div>
+                <div className="ml-auto">
+                  <Button variant="outline" size="sm" onClick={() => {
+                    const tipo = balcaoPedido.origem === "delivery"
+                      ? `Delivery — ${balcaoPedido.clienteNome || ""}`
+                      : `Balcão — ${balcaoPedido.clienteNome || ""}`;
+                    handlePrintComanda({
+                      tipo,
+                      numero: balcaoPedido.numeroPedido,
+                      dataHora: new Date().toLocaleString("pt-BR"),
+                      itens: balcaoPedido.itens.map((it) => ({ quantidade: it.quantidade, nome: it.nome, preco: it.precoUnitario })),
+                      subtotal: balcaoPedido.itens.reduce((s, it) => s + it.precoUnitario * it.quantidade, 0),
+                      taxaEntrega: balcaoPedido.taxaEntrega,
+                      total: balcaoPedido.total,
+                      formaPagamento: balcaoPedido.formaPagamentoDelivery ? getPaymentMethodLabel(balcaoPedido.formaPagamentoDelivery as PaymentMethod) : undefined,
+                    });
+                  }} className="rounded-xl font-bold gap-1.5">
+                    <Printer className="h-3.5 w-3.5" />
+                    Imprimir
+                  </Button>
+                </div>
             </div>
           </div>
         )}
