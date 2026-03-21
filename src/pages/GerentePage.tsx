@@ -191,6 +191,15 @@ const GerentePage = () => {
   const [newEmpRole, setNewEmpRole] = useState<"garcom" | "caixa">("garcom");
   const [empError, setEmpError] = useState<string | null>(null);
 
+  // Motoboy state
+  const MOTOBOY_KEY = "obsidian-motoboys-v1";
+  const getMotoboys = useCallback((): { id: string; nome: string; pinHash: string; ativo: boolean }[] => {
+    try { const raw = localStorage.getItem(MOTOBOY_KEY); return raw ? JSON.parse(raw) : []; } catch { return []; }
+  }, []);
+  const [motoboysList, setMotoboysList] = useState(() => getMotoboys());
+  const [mNome, setMNome] = useState("");
+  const [mPin, setMPin] = useState("");
+  const [mError, setMError] = useState<string | null>(null);
 
   const handleVerificarPin = useCallback(async () => {
     if (!currentGerente) return;
