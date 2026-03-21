@@ -495,6 +495,8 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
     window.print();
     el.style.display = "none";
   }, [sistemaConfig.nomeRestaurante]);
+  const [qrRetiradaPedidoId, setQrRetiradaPedidoId] = useState<string | null>(null);
+  const qrRetiradaTimerRef = useRef<number | null>(null);
 
 
   if (!currentOperator || !hasCaixaAccess) {
