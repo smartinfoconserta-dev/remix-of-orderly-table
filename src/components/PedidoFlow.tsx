@@ -97,8 +97,7 @@ const activeBannerSlides = configBanners.length > 0
 
 const HOME_TAB_ID = "inicio";
 const HOME_TAB: Categoria = { id: HOME_TAB_ID, nome: "Início", icone: "house" };
-// customCats moved inside component via useMemo
-const BASE_NAV_CATEGORIAS = categorias;
+// customCats & navigationItems moved inside component via useMemo
 const CARD_STAGGER_STEP_MS = 50;
 const CARD_ANIMATION_DURATION_MS = 200;
 const PRODUCT_MODAL_OPEN_DELAY_MS = 120;
