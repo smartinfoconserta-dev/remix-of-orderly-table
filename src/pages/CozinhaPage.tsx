@@ -10,6 +10,7 @@ const minutesAgo = (isoDate: string) => {
 const MAX_ELAPSED_MINUTES = 120;
 const formatElapsed = (mins: number) => {
   if (mins > MAX_ELAPSED_MINUTES) return "tempo indisponível";
+  if (mins >= 40) return "Tempo crítico";
   if (mins < 1) return "agora";
   if (mins === 1) return "há 1 min";
   return `há ${mins} min`;
@@ -174,6 +175,8 @@ const CozinhaPage = () => {
         {activePedidos.map((pedido, i) => {
           const mins = minutesAgo(pedido.criadoEmIso);
           const isLate = mins >= 15 && mins <= MAX_ELAPSED_MINUTES;
+          const isCritical = mins >= 40 && mins <= MAX_ELAPSED_MINUTES;
+          const isWarning = mins >= 20 && mins <= MAX_ELAPSED_MINUTES;
           const isBalcaoOrder = pedido.origem === "balcao";
           const isDeliveryOrder = pedido.origem === "delivery";
           const isParaViagem = pedido.paraViagem === true;
@@ -227,7 +230,7 @@ const CozinhaPage = () => {
                   </div>
                 </div>
                 <div className={`flex items-center gap-1.5 rounded-xl px-2.5 py-1 text-xs font-bold ${
-                  isLate ? "bg-destructive/15 text-destructive" : mins >= 8 ? "bg-primary/15 text-primary" : "bg-secondary text-muted-foreground"
+                  isCritical ? "bg-destructive/20 text-destructive animate-pulse" : isWarning ? "bg-destructive/15 text-destructive animate-pulse" : isLate ? "bg-destructive/10 text-destructive" : mins >= 8 ? "bg-primary/15 text-primary" : "bg-secondary text-muted-foreground"
                 }`}>
                   <Clock className="h-3 w-3" />
                   {formatElapsed(mins)}
