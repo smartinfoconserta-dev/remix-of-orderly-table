@@ -193,6 +193,11 @@ const CozinhaPage = () => {
               }`}
               style={{ animationDelay: `${Math.min(i * 30, 300)}ms`, animationFillMode: 'both' }}
             >
+              {isParaViagem && (
+                <div style={{background:'#f59e0b', color:'#000', fontWeight:900, textAlign:'center', padding:'8px', fontSize:'14px', letterSpacing:'0.05em', borderRadius:'1rem 1rem 0 0'}}>
+                  🛍 EMBALAR PARA LEVAR
+                </div>
+              )}
               {/* Origin / viagem badges */}
               {(isBalcaoOrder || isDeliveryOrder || isParaViagem) && (
                 <div className="px-4 pt-3 flex flex-wrap gap-1.5">
