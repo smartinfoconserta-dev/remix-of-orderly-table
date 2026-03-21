@@ -256,8 +256,7 @@ export default function PedidoPage() {
       taxaEntrega,
     });
 
-    // Get the latest pedido number
-    setNumeroPedido(Date.now() % 10000);
+    setNumeroPedido(pedidosBalcao.length + 1);
     setEtapa("sucesso");
     toast.success("Pedido enviado com sucesso!");
   };
