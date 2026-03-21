@@ -28,6 +28,7 @@ import {
   X,
   XCircle,
 } from "lucide-react";
+import { Bell } from "lucide-react";
 import { toast } from "sonner";
 import PedidoFlow from "@/components/PedidoFlow";
 import MesaCard from "@/components/MesaCard";

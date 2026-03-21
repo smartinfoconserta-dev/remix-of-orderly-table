@@ -36,6 +36,7 @@ export interface BannerConfig {
 export interface SistemaConfig {
   nomeRestaurante: string;
   logoUrl: string;
+  logoBase64?: string;
   corPrimaria: string;
   banners?: BannerConfig[];
   instagramUrl?: string;
