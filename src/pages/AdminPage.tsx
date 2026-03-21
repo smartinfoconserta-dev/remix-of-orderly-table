@@ -500,8 +500,30 @@ const AdminPage = () => {
                         <span className="rounded-md bg-secondary px-1.5 py-0.5 text-[9px] font-bold text-muted-foreground">Padrão</span>
                       ) : (
                         <>
-                          <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => { setCatEditando(c); setCatNomeInput(c.nome); setCatDialogOpen(true); }}>
+                          <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => { setCatEditando(c); setCatNomeInput(c.nome); setCatIconeInput(c.icone || "tag"); setCatDialogOpen(true); }}>
                             <Pencil className="h-3 w-3" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => {
+                            const idx = categoriasCustom.findIndex((cc) => cc.id === c.id);
+                            if (idx <= 0) return;
+                            const next = [...categoriasCustom];
+                            [next[idx - 1], next[idx]] = [next[idx], next[idx - 1]];
+                            next.forEach((cc, i) => cc.ordem = i);
+                            saveCategoriasCustom(next);
+                            setCategoriasCustom(next);
+                          }}>
+                            <span className="text-[10px]">▲</span>
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => {
+                            const idx = categoriasCustom.findIndex((cc) => cc.id === c.id);
+                            if (idx < 0 || idx >= categoriasCustom.length - 1) return;
+                            const next = [...categoriasCustom];
+                            [next[idx], next[idx + 1]] = [next[idx + 1], next[idx]];
+                            next.forEach((cc, i) => cc.ordem = i);
+                            saveCategoriasCustom(next);
+                            setCategoriasCustom(next);
+                          }}>
+                            <span className="text-[10px]">▼</span>
                           </Button>
                           <Button variant="ghost" size="icon" className="h-5 w-5 text-destructive hover:bg-destructive/10" onClick={() => {
                             if (count > 0) { toast.error("Remova os produtos desta categoria primeiro"); return; }
