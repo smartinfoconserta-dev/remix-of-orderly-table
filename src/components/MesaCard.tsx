@@ -1,4 +1,4 @@
-import { Bell, Receipt, ShoppingCart } from "lucide-react";
+import { Bell, Receipt, ShoppingBag, ShoppingCart } from "lucide-react";
 import type { Mesa } from "@/contexts/RestaurantContext";
 
 const formatPrice = (v: number) => `R$ ${v.toFixed(2).replace(".", ",")}`;
