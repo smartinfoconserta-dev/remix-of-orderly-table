@@ -87,10 +87,28 @@ const Index = () => {
           onClick={() => navigate("/cozinha")}
         />
         <ModeCard
+          title="Caixa"
+          description="Pagamentos e fechamento"
+          icon={<CircleDollarSign size={28} />}
+          onClick={() => navigate("/caixa")}
+        />
+        <ModeCard
+          title="Gerente"
+          description="Gestão e relatórios"
+          icon={<ShieldCheck size={28} />}
+          onClick={() => navigate("/gerente")}
+        />
+        <ModeCard
           title="Motoboy"
           description="Entregas em andamento"
           icon={<Bike size={28} />}
           onClick={() => navigate("/motoboy")}
+        />
+        <ModeCard
+          title="Admin"
+          description="Configurações do sistema"
+          icon={<Settings size={28} />}
+          onClick={() => navigate("/admin")}
         />
       </div>
 
