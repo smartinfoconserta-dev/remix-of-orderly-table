@@ -445,10 +445,14 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
     const pagHtml = data.formaPagamento
       ? `<div class="print-center">${data.formaPagamento}</div>`
       : "";
+    const paraLevarHtml = data.paraViagem
+      ? `<div class="print-divider"></div><div class="print-center" style="font-size:18px;font-weight:900;letter-spacing:2px">*** PARA LEVAR — EMBALAR ***</div><div class="print-divider"></div>`
+      : "";
     el.innerHTML = `
       <h2>${nomeRest}</h2>
       <div class="print-center">${data.tipo}</div>
       <div class="print-center">Pedido #${data.numero} — ${data.dataHora}</div>
+      ${paraLevarHtml}
       <div class="print-divider"></div>
       ${data.itens.map((it) => `<div class="print-item"><span>${it.quantidade}x ${it.nome}</span><span>R$ ${(it.preco * it.quantidade).toFixed(2).replace(".", ",")}</span></div>`).join("")}
       <div class="print-divider"></div>
