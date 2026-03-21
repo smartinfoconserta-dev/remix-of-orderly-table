@@ -400,6 +400,14 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
     chamarGarcom(mesaId);
     toast.success("Garçom a caminho", { duration: 1000, icon: "🔔" });
     setIsClientIdle(false);
+
+    // Show visual banner
+    if (garcomBannerTimerRef.current) window.clearTimeout(garcomBannerTimerRef.current);
+    setShowGarcomBanner(true);
+    garcomBannerTimerRef.current = window.setTimeout(() => {
+      setShowGarcomBanner(false);
+      garcomBannerTimerRef.current = null;
+    }, 4000);
   }, [chamarGarcom, mesaId]);
 
   // ── Long-press admin gesture ──
