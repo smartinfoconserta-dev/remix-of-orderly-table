@@ -10,6 +10,7 @@ const minutesAgo = (isoDate: string) => {
 const MAX_ELAPSED_MINUTES = 120;
 const formatElapsed = (mins: number) => {
   if (mins > MAX_ELAPSED_MINUTES) return "tempo indisponível";
+  if (mins >= 40) return "Tempo crítico";
   if (mins < 1) return "agora";
   if (mins === 1) return "há 1 min";
   return `há ${mins} min`;
