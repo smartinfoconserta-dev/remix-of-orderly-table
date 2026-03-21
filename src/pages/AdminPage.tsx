@@ -1292,8 +1292,24 @@ const AdminPage = () => {
                       className="flex-1"
                     />
                   </div>
-                  {banner.imagemUrl && (
-                    <img src={banner.imagemUrl} alt="Preview" className="h-20 w-full rounded-xl border border-border object-cover" />
+                  <label className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border bg-secondary/30 px-3 py-3 text-xs font-bold text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground">
+                    <Upload className="h-4 w-4" />
+                    Upload imagem do banner
+                    <input type="file" accept="image/*" className="hidden" onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      if (file.size > 2 * 1024 * 1024) { toast.error("Imagem muito grande (máx 2MB)"); return; }
+                      const reader = new FileReader();
+                      reader.onload = () => setSistemaConfig((c) => ({
+                        ...c,
+                        banners: (c.banners ?? []).map((b) => b.id === banner.id ? { ...b, imagemBase64: reader.result as string } : b),
+                      }));
+                      reader.readAsDataURL(file);
+                      e.target.value = "";
+                    }} />
+                  </label>
+                  {(banner.imagemBase64 || banner.imagemUrl) && (
+                    <img src={banner.imagemBase64 || banner.imagemUrl} alt="Preview" className="h-20 w-full rounded-xl border border-border object-cover" />
                   )}
                 </div>
               ))}
