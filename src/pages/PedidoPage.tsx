@@ -101,6 +101,8 @@ function ConfirmacaoEtapa({ nome, endereco, numero, complemento, bairro, itens, 
 export default function PedidoPage() {
   const { criarPedidoBalcao, pedidosBalcao } = useRestaurant();
 
+  // Check if delivery is active
+  const deliveryAtivo = sysConfig.deliveryAtivo !== false;
   const [etapa, setEtapa] = useState<Etapa>("identificacao");
 
   // Identification
