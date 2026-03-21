@@ -623,7 +623,6 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
       formaPagamentoDelivery: balcaoFormaPag,
       trocoParaQuanto: balcaoFormaPag === "dinheiro" ? parseCurrencyInput(balcaoTroco) || undefined : undefined,
       taxaEntrega: (() => {
-        const normStr = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
         const bairrosDisp = getBairros().filter((b) => b.ativo);
         const match = balcaoBairro.trim() ? bairrosDisp.find((b) => normStr(b.nome) === normStr(balcaoBairro)) : null;
         return match ? match.taxa : 0;
