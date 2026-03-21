@@ -13,6 +13,7 @@ import {
   Users,
   X,
 } from "lucide-react";
+import CategoryIcon from "@/components/CategoryIcon";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -101,6 +102,7 @@ const AdminPage = () => {
   const [catDialogOpen, setCatDialogOpen] = useState(false);
   const [catEditando, setCatEditando] = useState<CategoriaCustom | null>(null);
   const [catNomeInput, setCatNomeInput] = useState("");
+  const [catIconeInput, setCatIconeInput] = useState("tag");
 
   const todasCategorias = useMemo(() => {
     const baseCats = categorias.map((c, i) => ({ ...c, ordem: i, _isDefault: true as const }));
@@ -484,7 +486,7 @@ const AdminPage = () => {
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <h3 className="text-sm font-black text-foreground">Categorias</h3>
-                <Button size="sm" variant="outline" className="rounded-xl font-bold gap-1 text-xs" onClick={() => { setCatEditando(null); setCatNomeInput(""); setCatDialogOpen(true); }}>
+                <Button size="sm" variant="outline" className="rounded-xl font-bold gap-1 text-xs" onClick={() => { setCatEditando(null); setCatNomeInput(""); setCatIconeInput("tag"); setCatDialogOpen(true); }}>
                   <Plus className="h-3.5 w-3.5" /> Nova categoria
                 </Button>
               </div>
@@ -499,8 +501,30 @@ const AdminPage = () => {
                         <span className="rounded-md bg-secondary px-1.5 py-0.5 text-[9px] font-bold text-muted-foreground">Padrão</span>
                       ) : (
                         <>
-                          <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => { setCatEditando(c); setCatNomeInput(c.nome); setCatDialogOpen(true); }}>
+                          <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => { setCatEditando(c); setCatNomeInput(c.nome); setCatIconeInput(c.icone || "tag"); setCatDialogOpen(true); }}>
                             <Pencil className="h-3 w-3" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => {
+                            const idx = categoriasCustom.findIndex((cc) => cc.id === c.id);
+                            if (idx <= 0) return;
+                            const next = [...categoriasCustom];
+                            [next[idx - 1], next[idx]] = [next[idx], next[idx - 1]];
+                            next.forEach((cc, i) => cc.ordem = i);
+                            saveCategoriasCustom(next);
+                            setCategoriasCustom(next);
+                          }}>
+                            <span className="text-[10px]">▲</span>
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => {
+                            const idx = categoriasCustom.findIndex((cc) => cc.id === c.id);
+                            if (idx < 0 || idx >= categoriasCustom.length - 1) return;
+                            const next = [...categoriasCustom];
+                            [next[idx], next[idx + 1]] = [next[idx + 1], next[idx]];
+                            next.forEach((cc, i) => cc.ordem = i);
+                            saveCategoriasCustom(next);
+                            setCategoriasCustom(next);
+                          }}>
+                            <span className="text-[10px]">▼</span>
                           </Button>
                           <Button variant="ghost" size="icon" className="h-5 w-5 text-destructive hover:bg-destructive/10" onClick={() => {
                             if (count > 0) { toast.error("Remova os produtos desta categoria primeiro"); return; }
@@ -747,18 +771,29 @@ const AdminPage = () => {
                     <label className="text-xs font-bold text-muted-foreground">Nome da categoria</label>
                     <Input value={catNomeInput} onChange={(e) => setCatNomeInput(e.target.value)} placeholder="Ex.: Massas" maxLength={40} />
                   </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-muted-foreground">Ícone</label>
+                    <div className="flex flex-wrap gap-1.5">
+                      {["burger", "pizza", "coffee", "beer", "cake", "box", "flame", "star", "leaf", "tag", "beef", "popcorn", "cup-soda"].map((ic) => (
+                        <button key={ic} type="button" onClick={() => setCatIconeInput(ic)}
+                          className={`flex h-9 w-9 items-center justify-center rounded-lg border transition-all ${catIconeInput === ic ? "border-primary bg-primary/15 text-primary" : "border-border bg-card text-muted-foreground hover:bg-secondary"}`}>
+                          <CategoryIcon name={ic} className="h-4 w-4" />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                   <div className="flex gap-3">
                     <Button variant="outline" className="flex-1" onClick={() => setCatDialogOpen(false)}>Cancelar</Button>
                     <Button className="flex-1" disabled={!catNomeInput.trim()} onClick={() => {
                       if (!catNomeInput.trim()) return;
                       if (catEditando) {
-                        const next = categoriasCustom.map((c) => c.id === catEditando.id ? { ...c, nome: catNomeInput.trim() } : c);
+                        const next = categoriasCustom.map((c) => c.id === catEditando.id ? { ...c, nome: catNomeInput.trim(), icone: catIconeInput } : c);
                         saveCategoriasCustom(next);
                         setCategoriasCustom(next);
                         toast.success("Categoria atualizada");
                       } else {
                         const slug = catNomeInput.trim().toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
-                        const nova: CategoriaCustom = { id: `${slug}-${Date.now()}`, nome: catNomeInput.trim(), icone: "tag", ordem: todasCategorias.length };
+                        const nova: CategoriaCustom = { id: `${slug}-${Date.now()}`, nome: catNomeInput.trim(), icone: catIconeInput, ordem: todasCategorias.length };
                         const next = [...categoriasCustom, nova];
                         saveCategoriasCustom(next);
                         setCategoriasCustom(next);
