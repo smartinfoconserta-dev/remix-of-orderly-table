@@ -14,11 +14,15 @@ import { toast } from "sonner";
 
 const normStr = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
 
-const sysConfig = getSistemaConfig();
-const RESTAURANTE_NOME = sysConfig.nomeRestaurante || "Restaurante";
-const RESTAURANTE_LOGO = sysConfig.logoUrl || "";
-const RESTAURANTE_INITIALS = RESTAURANTE_NOME.slice(0, 2).toUpperCase();
-const MODO_ID = sysConfig.modoIdentificacaoDelivery || "visitante";
+const getStaticConfig = () => {
+  const sc = getSistemaConfig();
+  return {
+    nome: sc.nomeRestaurante || "Restaurante",
+    logo: sc.logoUrl || "",
+    initials: (sc.nomeRestaurante || "Restaurante").slice(0, 2).toUpperCase(),
+  };
+};
+const { nome: RESTAURANTE_NOME, logo: RESTAURANTE_LOGO, initials: RESTAURANTE_INITIALS } = getStaticConfig();
 
 // ── Etapas por modo ──
 // Visitante: cardapio → identificacao → confirmacao → sucesso
