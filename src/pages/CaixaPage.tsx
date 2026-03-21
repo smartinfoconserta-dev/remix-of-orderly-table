@@ -418,6 +418,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
   /* ── auth guard ── */
   if (!currentOperator || !hasCaixaAccess) {
     return (
+      <div className="min-h-svh flex flex-col bg-background">
         <header className="flex items-center gap-3 border-b border-border bg-card px-4 py-4 shrink-0 md:px-6">
           <h1 className="text-lg font-bold tracking-tight text-foreground truncate flex-1 md:text-xl">
             {accessMode === "gerente" ? "Gerente" : "Caixa"}
