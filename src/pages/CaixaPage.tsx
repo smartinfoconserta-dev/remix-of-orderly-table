@@ -63,6 +63,7 @@ import type { ItemCarrinho } from "@/contexts/RestaurantContext";
 import { findClienteDelivery, upsertClienteDelivery, getBairros, type ClienteDelivery } from "@/lib/deliveryStorage";
 
 /* ── helpers ── */
+const normStr = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
 const formatPrice = (v: number) => `R$ ${v.toFixed(2).replace(".", ",")}`;
 const toCents = (value: number) => Math.round(value * 100);
 
