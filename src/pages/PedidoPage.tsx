@@ -99,7 +99,7 @@ function ConfirmacaoEtapa({ nome, endereco, numero, complemento, bairro, itens, 
 }
 
 export default function PedidoPage() {
-  const { criarPedidoBalcao } = useRestaurant();
+  const { criarPedidoBalcao, pedidosBalcao } = useRestaurant();
 
   const [etapa, setEtapa] = useState<Etapa>("identificacao");
 
@@ -256,8 +256,7 @@ export default function PedidoPage() {
       taxaEntrega,
     });
 
-    // Get the latest pedido number
-    setNumeroPedido(Date.now() % 10000);
+    setNumeroPedido(pedidosBalcao.length + 1);
     setEtapa("sucesso");
     toast.success("Pedido enviado com sucesso!");
   };
@@ -465,8 +464,8 @@ export default function PedidoPage() {
         {etapa === "sucesso" && (
           <div className="max-w-md mx-auto text-center space-y-6 pt-12">
             <CheckCircle className="w-16 h-16 text-green-500 mx-auto" />
-            <h2 className="text-2xl font-bold">Pedido recebido! 🎉</h2>
-            <p className="text-muted-foreground">Pedido #{numeroPedido}</p>
+            <h2 className="text-3xl font-black">Pedido #{numeroPedido} recebido!</h2>
+            <p className="text-lg text-muted-foreground">🎉 Seu pedido foi registrado com sucesso</p>
             <p className="text-sm text-muted-foreground">Aguarde, seu pedido está sendo preparado</p>
             {sysConfig.telefoneRestaurante && (
               <Button
