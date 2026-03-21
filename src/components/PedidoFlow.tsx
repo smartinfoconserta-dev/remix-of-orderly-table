@@ -141,8 +141,8 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
   const [showExitAlert, setShowExitAlert] = useState(false);
   const [paraViagem, setParaViagem] = useState(modo === "delivery");
   const [isClientIdle, setIsClientIdle] = useState(false);
-  const [showGarcomBanner, setShowGarcomBanner] = useState(false);
-  const garcomBannerTimerRef = useRef<number | null>(null);
+  const [_showGarcomBanner] = useState(false); // kept for hook order stability
+  const garcomBannerTimerRef = useRef<number | null>(null); // kept for hook order stability
 
   // Hidden admin modal state
   const [adminModalOpen, setAdminModalOpen] = useState(false);
@@ -397,18 +397,16 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
   );
 
   const handleChamarGarcom = useCallback(() => {
-    chamarGarcom(mesaId);
-    toast.success("Garçom a caminho", { duration: 1000, icon: "🔔" });
+    if (mesa?.chamarGarcom) {
+      // Already called — dismiss
+      dismissChamarGarcom(mesaId);
+      toast("Chamado cancelado", { duration: 1000, icon: "✕" });
+    } else {
+      chamarGarcom(mesaId);
+      toast.success("Garçom a caminho", { duration: 1000, icon: "🔔" });
+    }
     setIsClientIdle(false);
-
-    // Show visual banner
-    if (garcomBannerTimerRef.current) window.clearTimeout(garcomBannerTimerRef.current);
-    setShowGarcomBanner(true);
-    garcomBannerTimerRef.current = window.setTimeout(() => {
-      setShowGarcomBanner(false);
-      garcomBannerTimerRef.current = null;
-    }, 4000);
-  }, [chamarGarcom, mesaId]);
+  }, [chamarGarcom, dismissChamarGarcom, mesa?.chamarGarcom, mesaId]);
 
   // ── Long-press admin gesture ──
   const handleLogoPointerDown = useCallback(() => {
@@ -671,10 +669,16 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
         {modo === "cliente" && (
           <Button
             onClick={handleChamarGarcom}
-            className="h-auto gap-2 rounded-xl bg-destructive px-5 py-2.5 text-base font-bold text-destructive-foreground hover:bg-destructive/90"
+            className={`h-auto gap-2 rounded-xl px-5 py-2.5 text-base font-bold transition-all duration-300 ${
+              mesa?.chamarGarcom
+                ? "bg-amber-500 text-white hover:bg-amber-600"
+                : "bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            }`}
           >
-            <Bell className="h-5 w-5" />
-            <span className="hidden sm:inline">Chamar Garçom</span>
+            <Bell className={`h-5 w-5 ${mesa?.chamarGarcom ? "animate-pulse" : ""}`} />
+            <span className="hidden sm:inline">
+              {mesa?.chamarGarcom ? "Garçom a caminho ✕" : "Chamar Garçom"}
+            </span>
           </Button>
         )}
       </div>
@@ -956,37 +960,55 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
           </div>
         </div>
         <div className="relative pt-1">
-          <div className="pointer-events-none absolute inset-y-0 right-0 z-10 hidden w-16 bg-gradient-to-l from-background to-transparent md:block" />
-          <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
-            {featuredProducts.map((produto) => (
-              <button
-                key={produto.id}
-                type="button"
-                onClick={() => handleOpenProductModal(produto)}
-                className="group w-[252px] shrink-0 overflow-hidden rounded-[1.75rem] border border-border bg-card text-left shadow-[0_20px_45px_-30px_hsl(var(--foreground)/0.8)] transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/30"
-              >
-                <div className="aspect-[4/3] overflow-hidden">
-                  <img
-                    src={produto.imagem}
-                    alt={produto.nome}
-                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
-                    loading="lazy"
-                  />
-                </div>
-                <div className="space-y-3 p-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <h2 className="line-clamp-1 text-base font-black text-foreground">{produto.nome}</h2>
-                      <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{produto.descricao}</p>
-                    </div>
-                    <span className="shrink-0 rounded-full border border-border bg-secondary px-3 py-1 text-sm font-black text-foreground">
-                      {formatPrice(produto.preco)}
-                    </span>
+          {isGarcomMobile ? (
+            <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
+              {featuredProducts.map((produto) => (
+                <button
+                  key={produto.id}
+                  type="button"
+                  onClick={() => handleOpenProductModal(produto)}
+                  className="group w-[252px] shrink-0 overflow-hidden rounded-[1.75rem] border border-border bg-card text-left shadow-[0_20px_45px_-30px_hsl(var(--foreground)/0.8)] transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/30"
+                >
+                  <div className="aspect-[4/3] overflow-hidden">
+                    <img src={produto.imagem} alt={produto.nome} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]" loading="lazy" />
                   </div>
-                </div>
-              </button>
-            ))}
-          </div>
+                  <div className="space-y-3 p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <h2 className="line-clamp-1 text-base font-black text-foreground">{produto.nome}</h2>
+                        <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{produto.descricao}</p>
+                      </div>
+                      <span className="shrink-0 rounded-full border border-border bg-secondary px-3 py-1 text-sm font-black text-foreground">{formatPrice(produto.preco)}</span>
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
+              {featuredProducts.map((produto) => (
+                <button
+                  key={produto.id}
+                  type="button"
+                  onClick={() => handleOpenProductModal(produto)}
+                  className="group overflow-hidden rounded-[1.75rem] border border-border bg-card text-left shadow-[0_20px_45px_-30px_hsl(var(--foreground)/0.8)] transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/30"
+                >
+                  <div className="aspect-[4/3] overflow-hidden">
+                    <img src={produto.imagem} alt={produto.nome} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]" loading="lazy" />
+                  </div>
+                  <div className="space-y-3 p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <h2 className="line-clamp-1 text-base font-black text-foreground">{produto.nome}</h2>
+                        <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{produto.descricao}</p>
+                      </div>
+                      <span className="shrink-0 rounded-full border border-border bg-secondary px-3 py-1 text-sm font-black text-foreground">{formatPrice(produto.preco)}</span>
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -1039,8 +1061,8 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
   );
 
   const desktopContent = (
-    <div className={`flex flex-1 overflow-hidden transition-all duration-500 ${isClientIdle ? "brightness-[0.2] saturate-50" : "brightness-100 saturate-100"}`}>
-      <aside className="w-[19rem] shrink-0 overflow-y-auto border-r border-border bg-card/95 px-3 py-3 lg:w-[21rem] h-[calc(100vh-73px)] sticky top-[73px]">
+    <div className={`flex flex-1 items-start transition-all duration-500 ${isClientIdle ? "brightness-[0.2] saturate-50" : "brightness-100 saturate-100"}`}>
+      <aside className="w-[19rem] shrink-0 overflow-y-auto border-r border-border bg-card/95 px-3 py-3 lg:w-[21rem] self-start sticky top-[73px] max-h-[calc(100vh-73px)]">
         <div className="sticky top-0 z-10 rounded-[1.5rem] border border-border bg-background/85 px-5 py-5 backdrop-blur-md">
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">{RESTAURANTE.nome}</p>
           <p className="mt-2 text-lg font-black text-foreground">Cardápio</p>
@@ -1074,12 +1096,7 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
     </div>
   );
 
-  const garcomBanner = showGarcomBanner ? (
-    <div className="animate-fade-in px-4 py-3 bg-amber-500/90 backdrop-blur-sm flex items-center gap-3 text-white">
-      <Bell className="h-6 w-6 shrink-0 animate-pulse" />
-      <span className="text-sm font-bold">Garçom chamado! Estamos a caminho.</span>
-    </div>
-  ) : null;
+  const garcomBanner = null;
 
   return (
     <>
