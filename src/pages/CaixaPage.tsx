@@ -1076,11 +1076,22 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                                       onChange={(e) => setConfirmTaxaEntrega(e.target.value)}
                                       className="h-8 text-xs rounded-lg"
                                     />
-                                    {parseCurrencyInput(confirmTaxaEntrega) > 0 && (
-                                      <p className="text-[10px] text-emerald-400 font-bold">
-                                        Taxa: {formatPrice(parseCurrencyInput(confirmTaxaEntrega))}
-                                      </p>
-                                    )}
+                                    {(() => {
+                                      const normStr = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+                                      const bairros = getBairros().filter((b) => b.ativo);
+                                      const bairroPedido = pb.bairro || "";
+                                      const match = bairroPedido ? bairros.find((b) => normStr(b.nome) === normStr(bairroPedido)) : null;
+                                      if (match && parseCurrencyInput(confirmTaxaEntrega) > 0) {
+                                        return <p className="text-[10px] text-emerald-400 font-bold">Taxa automática — {match.nome}: {formatPrice(parseCurrencyInput(confirmTaxaEntrega))}</p>;
+                                      }
+                                      if (parseCurrencyInput(confirmTaxaEntrega) > 0) {
+                                        return <p className="text-[10px] text-emerald-400 font-bold">Taxa: {formatPrice(parseCurrencyInput(confirmTaxaEntrega))}</p>;
+                                      }
+                                      if (!match && bairroPedido) {
+                                        return <p className="text-[10px] text-amber-400 font-bold">Bairro "{bairroPedido}" sem taxa cadastrada</p>;
+                                      }
+                                      return null;
+                                    })()}
                                   </div>
                                   <p className="text-xs font-black text-foreground">Tempo estimado de entrega</p>
                                   <div className="flex flex-wrap gap-1.5">
