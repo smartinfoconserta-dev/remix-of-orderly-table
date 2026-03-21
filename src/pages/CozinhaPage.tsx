@@ -87,6 +87,8 @@ const CozinhaPage = () => {
   const [fadingOut, setFadingOut] = useState<Set<string>>(new Set());
   const audioCtxRef = useRef<AudioContext | null>(null);
   const prevIdsRef = useRef<Set<string> | null>(null);
+  const printedIdsRef = useRef<Set<string> | null>(null);
+  const initialLoadRef = useRef(true);
 
   useEffect(() => {
     const id = setInterval(() => { setTick((t) => t + 1); setClock(formatTime(new Date())); }, 30_000);
