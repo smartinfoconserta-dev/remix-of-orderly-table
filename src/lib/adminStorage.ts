@@ -46,6 +46,7 @@ export interface SistemaConfig {
   tempoEntrega?: string;
   mensagemBoasVindas?: string;
   deliveryAtivo?: boolean;
+  modoIdentificacaoDelivery?: "visitante" | "cadastro";
 }
 
 export interface LicencaConfig {

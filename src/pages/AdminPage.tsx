@@ -837,49 +837,47 @@ const AdminPage = () => {
 
             {/* ── QR Codes das mesas ── */}
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-lg font-black text-foreground">QR Codes das mesas</h3>
-                  <p className="text-xs text-muted-foreground">Cada QR Code direciona para a mesa correspondente</p>
-                </div>
-                <Button
-                  onClick={() => {
-                    const printWindow = window.open("", "_blank");
-                    if (!printWindow) return;
-                    const total = parseInt(mesasInput) || mesasConfig.totalMesas;
-                    const baseUrl = window.location.origin;
-                    let html = `<html><head><title>QR Codes - Mesas</title><style>
-                      body { margin: 0; padding: 20px; font-family: sans-serif; }
-                      .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
-                      .item { text-align: center; page-break-inside: avoid; }
-                      .item img { width: 200px; height: 200px; }
-                      .item p { margin: 8px 0 0; font-size: 18px; font-weight: bold; }
-                      @media print { body { padding: 10mm; } }
-                    </style></head><body><div class="grid">`;
-                    for (let i = 1; i <= total; i++) {
-                      const url = `${baseUrl}/mesa/${i}`;
-                      const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(url)}`;
-                      html += `<div class="item"><img src="${qrUrl}" alt="Mesa ${String(i).padStart(2, "0")}" /><p>Mesa ${String(i).padStart(2, "0")}</p></div>`;
-                    }
-                    html += `</div></body></html>`;
-                    printWindow.document.write(html);
-                    printWindow.document.close();
-                    setTimeout(() => printWindow.print(), 1000);
-                  }}
-                  className="rounded-xl font-bold gap-1.5"
-                >
-                  Imprimir todos os QR Codes
-                </Button>
+              <div>
+                <h3 className="text-lg font-black text-foreground">QR Codes das mesas</h3>
+                <p className="text-xs text-muted-foreground">Cada QR Code direciona para a mesa correspondente. Clique em "Imprimir QR" para imprimir individualmente.</p>
               </div>
               <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
                 {Array.from({ length: parseInt(mesasInput) || mesasConfig.totalMesas }, (_, i) => {
                   const num = i + 1;
                   const url = `${window.location.origin}/mesa/${num}`;
                   const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(url)}`;
+                  const nomeRest = sistemaConfig.nomeRestaurante || "Restaurante";
                   return (
                     <div key={num} className="flex flex-col items-center gap-2 rounded-xl border border-border bg-card p-3">
                       <img src={qrUrl} alt={`Mesa ${String(num).padStart(2, "0")}`} className="w-full aspect-square rounded-lg" loading="lazy" />
                       <span className="text-xs font-black text-foreground">Mesa {String(num).padStart(2, "0")}</span>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="w-full text-[10px] h-7 rounded-lg font-bold gap-1"
+                        onClick={() => {
+                          const printWindow = window.open("", "_blank", "width=400,height=600");
+                          if (!printWindow) return;
+                          const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>QR Mesa ${String(num).padStart(2, "0")}</title><style>
+                            body{margin:0;padding:40px 20px;font-family:Arial,sans-serif;text-align:center;background:#fff;color:#000}
+                            img{width:260px;height:260px;margin:20px auto}
+                            .nome{font-size:18px;font-weight:700;margin-bottom:10px}
+                            .mesa{font-size:32px;font-weight:900;margin-top:16px}
+                            .url{font-size:10px;color:#888;margin-top:8px;word-break:break-all}
+                            @media print{body{padding:20mm 10mm}@page{margin:10mm}}
+                          </style></head><body>
+                            <div class="nome">${nomeRest}</div>
+                            <img src="${qrUrl}" alt="QR Code Mesa ${String(num).padStart(2, "0")}" />
+                            <div class="mesa">Mesa ${String(num).padStart(2, "0")}</div>
+                            <div class="url">${url}</div>
+                          </body></html>`;
+                          printWindow.document.write(html);
+                          printWindow.document.close();
+                          setTimeout(() => printWindow.print(), 800);
+                        }}
+                      >
+                        Imprimir QR
+                      </Button>
                     </div>
                   );
                 })}
@@ -1014,7 +1012,36 @@ const AdminPage = () => {
               </label>
             </div>
 
-            {/* Taxa fixa legado */}
+            {/* Modo de identificação delivery */}
+            <div className="surface-card max-w-lg rounded-2xl p-6 space-y-3">
+              <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">Modo de identificação</p>
+              <label className="flex items-center gap-3 cursor-pointer" onClick={() => {
+                const next = { ...sistemaConfig, modoIdentificacaoDelivery: "visitante" as const };
+                setSistemaConfig(next);
+                saveSistemaConfig(next);
+              }}>
+                <span className={`h-5 w-5 rounded-full border-2 flex items-center justify-center ${(sistemaConfig.modoIdentificacaoDelivery || "visitante") === "visitante" ? "border-primary" : "border-muted-foreground/40"}`}>
+                  {(sistemaConfig.modoIdentificacaoDelivery || "visitante") === "visitante" && <span className="h-2.5 w-2.5 rounded-full bg-primary" />}
+                </span>
+                <div>
+                  <span className={`text-sm font-semibold ${(sistemaConfig.modoIdentificacaoDelivery || "visitante") === "visitante" ? "text-foreground" : "text-muted-foreground"}`}>Modo visitante</span>
+                  <p className="text-[10px] text-muted-foreground">Cliente preenche dados ao finalizar o pedido</p>
+                </div>
+              </label>
+              <label className="flex items-center gap-3 cursor-pointer" onClick={() => {
+                const next = { ...sistemaConfig, modoIdentificacaoDelivery: "cadastro" as const };
+                setSistemaConfig(next);
+                saveSistemaConfig(next);
+              }}>
+                <span className={`h-5 w-5 rounded-full border-2 flex items-center justify-center ${sistemaConfig.modoIdentificacaoDelivery === "cadastro" ? "border-primary" : "border-muted-foreground/40"}`}>
+                  {sistemaConfig.modoIdentificacaoDelivery === "cadastro" && <span className="h-2.5 w-2.5 rounded-full bg-primary" />}
+                </span>
+                <div>
+                  <span className={`text-sm font-semibold ${sistemaConfig.modoIdentificacaoDelivery === "cadastro" ? "text-foreground" : "text-muted-foreground"}`}>Modo cadastro</span>
+                  <p className="text-[10px] text-muted-foreground">Cliente cria conta com telefone e senha</p>
+                </div>
+              </label>
+            </div>
             <div className="surface-card max-w-lg rounded-2xl p-6 space-y-2">
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-muted-foreground">Taxa de entrega padrão (R$)</label>

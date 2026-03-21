@@ -33,6 +33,7 @@ export interface ClienteDelivery {
   referencia: string;
   criadoEm: string;
   ultimoPedido: string;
+  senhaHash?: string;
 }
 
 export function getClientesDelivery(): ClienteDelivery[] {
