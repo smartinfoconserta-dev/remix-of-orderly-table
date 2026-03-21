@@ -1114,6 +1114,92 @@ const GerentePage = () => {
                 </div>
               )}
             </div>
+            </div>
+
+            {/* ── Motoboys ── */}
+            {(() => {
+              const MOTOBOY_KEY = "obsidian-motoboys-v1";
+              const getMotoboys = (): { id: string; nome: string; pinHash: string; ativo: boolean }[] => {
+                try { const raw = localStorage.getItem(MOTOBOY_KEY); return raw ? JSON.parse(raw) : []; } catch { return []; }
+              };
+              const [motoboys, setMotoboysList] = useState(() => getMotoboys());
+              const [mNome, setMNome] = useState("");
+              const [mPin, setMPin] = useState("");
+              const [mError, setMError] = useState<string | null>(null);
+
+              const saveMotoboys = (list: typeof motoboys) => {
+                localStorage.setItem(MOTOBOY_KEY, JSON.stringify(list));
+                setMotoboysList(list);
+              };
+
+              const handleAddMotoboy = () => {
+                setMError(null);
+                if (!mNome.trim()) { setMError("Nome obrigatório"); return; }
+                if (mPin.length < 4) { setMError("PIN deve ter 4-6 dígitos"); return; }
+                if (motoboys.some((m) => m.nome.toLowerCase() === mNome.trim().toLowerCase() && m.ativo)) {
+                  setMError("Já existe motoboy com esse nome"); return;
+                }
+                const novo = {
+                  id: `motoboy-${Date.now()}`,
+                  nome: mNome.trim(),
+                  pinHash: btoa("pin:" + mPin),
+                  ativo: true,
+                };
+                saveMotoboys([...motoboys, novo]);
+                setMNome("");
+                setMPin("");
+                toast.success(`Motoboy "${novo.nome}" cadastrado`);
+              };
+
+              const handleRemoveMotoboy = (id: string) => {
+                saveMotoboys(motoboys.filter((m) => m.id !== id));
+                toast.success("Motoboy removido");
+              };
+
+              const ativosOnly = motoboys.filter((m) => m.ativo);
+
+              return (
+                <div className="surface-card rounded-2xl overflow-hidden">
+                  <div className="px-5 py-3 border-b border-border bg-secondary/50">
+                    <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">
+                      <Bike className="inline h-3.5 w-3.5 mr-1.5" />
+                      Motoboys ({ativosOnly.length})
+                    </p>
+                  </div>
+                  <div className="p-5 space-y-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-bold text-muted-foreground">Nome</label>
+                        <Input value={mNome} onChange={(e) => setMNome(e.target.value)} placeholder="Nome do motoboy" maxLength={40} />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-bold text-muted-foreground">PIN (4-6 dígitos)</label>
+                        <Input value={mPin} onChange={(e) => setMPin(e.target.value.replace(/\D/g, "").slice(0, 6))} placeholder="1234" inputMode="numeric" />
+                      </div>
+                    </div>
+                    {mError && <p className="rounded-xl border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive">{mError}</p>}
+                    <Button onClick={handleAddMotoboy} disabled={!mNome.trim() || mPin.length < 4} className="w-full rounded-xl font-bold gap-1.5">
+                      <Plus className="h-4 w-4" /> Adicionar motoboy
+                    </Button>
+                  </div>
+                  {ativosOnly.length > 0 && (
+                    <div className="divide-y divide-border/50 border-t border-border">
+                      {ativosOnly.map((m) => (
+                        <div key={m.id} className="flex items-center justify-between px-5 py-3">
+                          <div>
+                            <p className="text-sm font-bold text-foreground">{m.nome}</p>
+                            <p className="text-xs text-muted-foreground">PIN: ••••</p>
+                          </div>
+                          <Button variant="ghost" size="sm" onClick={() => handleRemoveMotoboy(m.id)} className="text-destructive hover:bg-destructive/10 text-xs font-bold">
+                            <Trash2 className="h-3.5 w-3.5 mr-1" /> Remover
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
           </div>
           )}
         </TabsContent>
