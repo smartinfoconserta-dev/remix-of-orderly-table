@@ -14,6 +14,7 @@ export interface GrupoPersonalizacao {
   id: string;
   nome: string;
   obrigatorio: boolean;
+  tipo: "escolha" | "adicional" | "retirar";
   opcoes: OpcaoGrupo[];
 }
 

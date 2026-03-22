@@ -720,6 +720,7 @@ const AdminPage = () => {
                           id: `grp-${Date.now()}`,
                           nome: "",
                           obrigatorio: false,
+                          tipo: "adicional",
                           opcoes: [],
                         };
                         setEditProduct((prev) => prev ? { ...prev, grupos: [...(prev.grupos || []), novoGrupo] } : prev);
@@ -755,21 +756,33 @@ const AdminPage = () => {
                             <Trash2 className="h-3.5 w-3.5" />
                           </Button>
                         </div>
-                        <div className="flex items-center gap-4 text-xs">
-                          <div className="flex items-center gap-1.5">
-                            <Switch
-                              checked={grupo.obrigatorio}
-                              onCheckedChange={(v) => {
-                                setEditProduct((prev) => {
-                                  if (!prev) return prev;
-                                  const g = [...(prev.grupos || [])];
-                                  g[gi] = { ...g[gi], obrigatorio: v };
-                                  return { ...prev, grupos: g };
-                                });
-                              }}
-                            />
-                            <span className="text-muted-foreground">Obrigatório</span>
-                          </div>
+                        <div className="flex flex-wrap gap-1.5 text-xs">
+                          {(["escolha", "adicional", "retirar"] as const).map((t) => {
+                            const active = (grupo.tipo || "adicional") === t;
+                            const labels = { escolha: "🔘 Escolha obrigatória", adicional: "➕ Adicional", retirar: "➖ Retirar" };
+                            const colors = {
+                              escolha: active ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground",
+                              adicional: active ? "bg-emerald-600 text-white" : "bg-secondary text-muted-foreground",
+                              retirar: active ? "bg-destructive text-destructive-foreground" : "bg-secondary text-muted-foreground",
+                            };
+                            return (
+                              <button
+                                key={t}
+                                type="button"
+                                onClick={() => {
+                                  setEditProduct((prev) => {
+                                    if (!prev) return prev;
+                                    const g = [...(prev.grupos || [])];
+                                    g[gi] = { ...g[gi], tipo: t, obrigatorio: t === "escolha" };
+                                    return { ...prev, grupos: g };
+                                  });
+                                }}
+                                className={`rounded-lg px-2.5 py-1 font-bold transition-colors ${colors[t]}`}
+                              >
+                                {labels[t]}
+                              </button>
+                            );
+                          })}
                         </div>
                         <div className="space-y-1.5 pl-2">
                           {grupo.opcoes.map((op, oi) => (
@@ -790,27 +803,29 @@ const AdminPage = () => {
                                 placeholder="Nome da opção"
                                 className="text-sm h-7 flex-1"
                               />
-                              <div className="flex items-center gap-1">
-                                <Input
-                                  type="number"
-                                  step="0.01"
-                                  value={op.preco || ""}
-                                  onChange={(e) => {
-                                    const val = parseFloat(e.target.value) || 0;
-                                    setEditProduct((prev) => {
-                                      if (!prev) return prev;
-                                      const g = [...(prev.grupos || [])];
-                                      const ops = [...g[gi].opcoes];
-                                      ops[oi] = { ...ops[oi], preco: val };
-                                      g[gi] = { ...g[gi], opcoes: ops };
-                                      return { ...prev, grupos: g };
-                                    });
-                                  }}
-                                  placeholder="R$"
-                                  className="text-sm h-7 w-20"
-                                />
-                                {op.preco === 0 && <span className="text-[10px] text-muted-foreground whitespace-nowrap">Grátis</span>}
-                              </div>
+                              {(grupo.tipo || "adicional") !== "retirar" && (
+                                <div className="flex items-center gap-1">
+                                  <Input
+                                    type="number"
+                                    step="0.01"
+                                    value={op.preco || ""}
+                                    onChange={(e) => {
+                                      const val = parseFloat(e.target.value) || 0;
+                                      setEditProduct((prev) => {
+                                        if (!prev) return prev;
+                                        const g = [...(prev.grupos || [])];
+                                        const ops = [...g[gi].opcoes];
+                                        ops[oi] = { ...ops[oi], preco: val };
+                                        g[gi] = { ...g[gi], opcoes: ops };
+                                        return { ...prev, grupos: g };
+                                      });
+                                    }}
+                                    placeholder="R$"
+                                    className="text-sm h-7 w-20"
+                                  />
+                                  {op.preco === 0 && <span className="text-[10px] text-muted-foreground whitespace-nowrap">Grátis</span>}
+                                </div>
+                              )}
                               <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => {
                                 setEditProduct((prev) => {
                                   if (!prev) return prev;

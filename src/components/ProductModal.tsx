@@ -372,15 +372,15 @@ const ProductModal = ({ produto, onClose, onAdd, isGarcomMobile = false, skipEmb
     if (!flowSteps.every((step) => validarEtapa(step))) return;
 
     // Build gruposEscolhidos for ItemCarrinho
-    const gruposData: { grupoNome: string; opcoes: { nome: string; preco: number }[] }[] = [];
+    const gruposData: { grupoNome: string; tipo: "escolha" | "adicional" | "retirar"; opcoes: { nome: string; preco: number }[] }[] = [];
     for (const grupo of sortedGrupos) {
       const escolhidos = pedidoAtual.gruposEscolhidos[grupo.id] || [];
       if (escolhidos.length > 0) {
         const opcoes = escolhidos
           .map(id => grupo.opcoes.find(o => o.id === id))
           .filter(Boolean)
-          .map(o => ({ nome: o!.nome, preco: o!.preco }));
-        gruposData.push({ grupoNome: grupo.nome, opcoes });
+          .map(o => ({ nome: o!.nome, preco: grupo.tipo === "retirar" ? 0 : o!.preco }));
+        gruposData.push({ grupoNome: grupo.nome, tipo: grupo.tipo || "adicional", opcoes });
       }
     }
 
@@ -490,9 +490,10 @@ const ProductModal = ({ produto, onClose, onAdd, isGarcomMobile = false, skipEmb
 
   const renderGrupoStep = (grupo: GrupoPersonalizacao) => {
     const escolhidos = pedidoAtual.gruposEscolhidos[grupo.id] || [];
+    const tipo = grupo.tipo || "adicional";
 
-    if (grupo.obrigatorio) {
-      // Radio - single selection
+    if (tipo === "escolha") {
+      // Radio - single selection, required
       return (
         <div className="space-y-4">
           <div>
@@ -500,44 +501,101 @@ const ProductModal = ({ produto, onClose, onAdd, isGarcomMobile = false, skipEmb
             <p className="mt-1 text-sm text-muted-foreground">Escolha uma opção (obrigatório)</p>
           </div>
           <RadioGroup value={escolhidos[0] || ""} onValueChange={(val) => toggleGrupoOpcao(grupo.id, val, true)} className="space-y-3">
-            {grupo.opcoes.map((opcao) => (
-              <label
-                key={opcao.id}
-                className="flex cursor-pointer items-start gap-3 rounded-2xl border border-border bg-card p-4 transition-all hover:border-primary/40 hover:bg-secondary/30"
-              >
-                <RadioGroupItem value={opcao.id} className="mt-0.5" />
-                <div className="flex-1">
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="text-sm font-bold text-foreground">{opcao.nome}</p>
-                    {opcao.preco > 0 && <span className="text-sm font-black text-primary">+ {formatPrice(opcao.preco)}</span>}
-                    {opcao.preco === 0 && <span className="text-xs text-muted-foreground">Grátis</span>}
+            {grupo.opcoes.map((opcao) => {
+              const selected = escolhidos[0] === opcao.id;
+              return (
+                <label
+                  key={opcao.id}
+                  className={`flex cursor-pointer items-start gap-3 rounded-2xl border p-4 transition-all ${
+                    selected
+                      ? "border-amber-500 bg-amber-50 dark:bg-amber-500/10"
+                      : "border-border bg-card hover:border-primary/40 hover:bg-secondary/30"
+                  }`}
+                >
+                  <RadioGroupItem value={opcao.id} className="mt-0.5" />
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="text-sm font-bold text-foreground">{opcao.nome}</p>
+                      {opcao.preco > 0 && <span className="text-sm font-black text-primary">+ {formatPrice(opcao.preco)}</span>}
+                    </div>
                   </div>
-                </div>
-              </label>
-            ))}
+                </label>
+              );
+            })}
           </RadioGroup>
         </div>
       );
     }
 
-    // Checkbox - multiple selection
+    if (tipo === "retirar") {
+      // Checkbox - remove items, red styling
+      return (
+        <div className="space-y-4">
+          <div>
+            <h3 className="text-base font-black text-foreground">{grupo.nome}</h3>
+            <p className="mt-1 text-sm text-muted-foreground">Marque o que deseja retirar (opcional)</p>
+          </div>
+          <div className="space-y-3">
+            {grupo.opcoes.map((opcao) => {
+              const checked = escolhidos.includes(opcao.id);
+              return (
+                <label
+                  key={opcao.id}
+                  className={`flex cursor-pointer items-start gap-3 rounded-2xl border p-4 transition-all ${
+                    checked
+                      ? "border-destructive/50 bg-destructive/10"
+                      : "border-border bg-card hover:border-primary/40 hover:bg-secondary/30"
+                  }`}
+                >
+                  <Checkbox checked={checked} onCheckedChange={() => toggleGrupoOpcao(grupo.id, opcao.id, false)} className="mt-0.5" />
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between gap-3">
+                      <p className={`text-sm font-bold ${checked ? "text-destructive line-through" : "text-foreground"}`}>
+                        {opcao.nome}
+                      </p>
+                      {checked && <span className="text-sm font-black text-destructive">✕</span>}
+                    </div>
+                  </div>
+                </label>
+              );
+            })}
+          </div>
+        </div>
+      );
+    }
+
+    // tipo === "adicional" - Checkbox with green styling
     return (
       <div className="space-y-4">
         <div>
           <h3 className="text-base font-black text-foreground">{grupo.nome}</h3>
-          <p className="mt-1 text-sm text-muted-foreground">Selecione as opções desejadas (opcional)</p>
+          <p className="mt-1 text-sm text-muted-foreground">Selecione os adicionais desejados (opcional)</p>
         </div>
         <div className="space-y-3">
-          {grupo.opcoes.map((opcao) =>
-            renderCheckboxCard({
-              itemKey: opcao.id,
-              checked: escolhidos.includes(opcao.id),
-              onCheckedChange: () => toggleGrupoOpcao(grupo.id, opcao.id, false),
-              title: opcao.nome,
-              subtitle: opcao.preco > 0 ? `Adicional pago` : "Sem custo adicional",
-              price: opcao.preco > 0 ? `+ ${formatPrice(opcao.preco)}` : undefined,
-            }),
-          )}
+          {grupo.opcoes.map((opcao) => {
+            const checked = escolhidos.includes(opcao.id);
+            return (
+              <label
+                key={opcao.id}
+                className={`flex cursor-pointer items-start gap-3 rounded-2xl border p-4 transition-all ${
+                  checked
+                    ? "border-emerald-500/50 bg-emerald-50 dark:bg-emerald-500/10"
+                    : "border-border bg-card hover:border-primary/40 hover:bg-secondary/30"
+                }`}
+              >
+                <Checkbox checked={checked} onCheckedChange={() => toggleGrupoOpcao(grupo.id, opcao.id, false)} className="mt-0.5" />
+                <div className="flex-1">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-sm font-bold text-foreground">{opcao.nome}</p>
+                    <div className="flex items-center gap-2">
+                      {checked && <span className="text-sm font-black text-emerald-600">✓</span>}
+                      {opcao.preco > 0 && <span className="text-sm font-black text-primary">+ {formatPrice(opcao.preco)}</span>}
+                    </div>
+                  </div>
+                </div>
+              </label>
+            );
+          })}
         </div>
       </div>
     );
