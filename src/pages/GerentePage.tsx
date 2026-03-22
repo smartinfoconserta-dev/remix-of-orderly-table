@@ -424,7 +424,7 @@ const GerentePage = () => {
   const horaAtual = now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
 
   return (
-    <div className="flex flex-col h-screen bg-gray-50">
+    <div className="flex flex-col h-screen bg-background">
       {/* Title bar — Windows style */}
       <div className="flex items-center justify-between px-4 py-2 shrink-0" style={{ backgroundColor: "#1e3a5f" }}>
         <span className="text-sm font-bold text-white">Gerente — {nomeRestaurante}</span>
@@ -437,7 +437,7 @@ const GerentePage = () => {
 
       {/* Tabs — Windows classic style */}
       <Tabs defaultValue="fechamento" className="flex flex-col flex-1 min-h-0 overflow-hidden">
-        <div className="shrink-0 border-b border-gray-300 bg-gray-100 px-4 md:px-6 flex">
+        <div className="shrink-0 border-b border-border bg-card px-4 md:px-6 flex">
           {[
             { value: "fechamento", icon: LockKeyhole, label: "Fechamento" },
             { value: "relatorio", icon: BarChart3, label: "Relatório" },
@@ -449,7 +449,7 @@ const GerentePage = () => {
               <TabsTrigger
                 key={t.value}
                 value={t.value}
-                className="relative px-4 py-2 text-xs font-bold text-gray-600 border border-gray-300 border-b-0 -mb-px bg-gray-200 data-[state=active]:bg-white data-[state=active]:text-gray-800 data-[state=active]:border-t-2 data-[state=active]:border-t-blue-600 data-[state=active]:border-b-white rounded-t-sm gap-1.5"
+                className="relative px-4 py-2 text-xs font-bold text-muted-foreground border border-border border-b-0 -mb-px bg-background data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:border-t-2 data-[state=active]:border-t-primary data-[state=active]:border-b-card rounded-t-sm gap-1.5"
               >
                 <Icon className="h-3.5 w-3.5" />
                 {t.label}
@@ -1206,10 +1206,10 @@ const GerentePage = () => {
       </Tabs>
 
       {/* Status bar — Windows style */}
-      <div className="shrink-0 flex items-center gap-0 border-t border-gray-300 bg-gray-100 text-[10px] text-gray-600">
-        <span className="px-3 py-1 border-r border-gray-300">● Online</span>
-        <span className="px-3 py-1 border-r border-gray-300">Operador: {currentGerente.nome}</span>
-        <span className="px-3 py-1 border-r border-gray-300">Fechamentos: {fechamentos.length}</span>
+      <div className="shrink-0 flex items-center gap-0 border-t border-border bg-card text-[10px] text-muted-foreground">
+        <span className="px-3 py-1 border-r border-border">● Online</span>
+        <span className="px-3 py-1 border-r border-border">Operador: {currentGerente.nome}</span>
+        <span className="px-3 py-1 border-r border-border">Fechamentos: {fechamentos.length}</span>
         <span className="px-3 py-1">Mesas ativas: {mesas.filter(m => m.status === "consumo").length}</span>
       </div>
     </div>
