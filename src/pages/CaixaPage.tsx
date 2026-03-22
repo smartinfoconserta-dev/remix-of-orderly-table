@@ -964,6 +964,109 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
     urgente: "bg-destructive/20 border-destructive/50 text-destructive",
   };
 
+  const filtrarPedidos = (lista: typeof pedidosDeliveryAtivos) => {
+    let resultado = lista;
+    if (filtroMotoboy) {
+      resultado = resultado.filter(p => p.motoboyNome === filtroMotoboy);
+    }
+    if (buscaDelivery.trim()) {
+      const q = buscaDelivery.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+      resultado = resultado.filter(p => {
+        const nome = (p.clienteNome || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        const tel = (p.clienteTelefone || "").replace(/\D/g, "");
+        return nome.includes(q) || tel.includes(q) || String(p.numeroPedido).includes(q);
+      });
+    }
+    return resultado;
+  };
+
+  const renderCardDelivery = (pb: typeof pedidosBalcao[0]) => {
+    const isPronto = pb.statusBalcao === "pronto";
+    const isSaiu = pb.statusBalcao === "saiu";
+    const isEntregue = pb.statusBalcao === "entregue";
+    const isPago = pb.statusBalcao === "pago";
+    const isDevolvido = pb.statusBalcao === "devolvido";
+    const borderClass = isDevolvido
+      ? "border-orange-500/60 bg-orange-500/8 ring-1 ring-orange-500/30 animate-pulse"
+      : isPronto
+      ? "border-emerald-500/60 bg-emerald-500/8 animate-pulse"
+      : isSaiu
+      ? "border-blue-500/50 bg-blue-500/8"
+      : isEntregue || isPago
+      ? "border-border/30 bg-card/40"
+      : "border-amber-500/30 bg-amber-500/5";
+    const badgeLabel = isDevolvido ? "⚠ Devolvido"
+      : isPronto ? "Pronto p/ retirar"
+      : isSaiu ? `Em rota — ${pb.motoboyNome || ""}`
+      : isEntregue ? "Entregue"
+      : isPago ? "Pago"
+      : "Aguardando cozinha";
+    const badgeClass = isDevolvido
+      ? "border-orange-500/40 bg-orange-500/15 text-orange-400 font-black"
+      : isPronto
+      ? "border-emerald-500/40 bg-emerald-500/15 text-emerald-400 font-black"
+      : isSaiu
+      ? "border-blue-500/30 bg-blue-500/10 text-blue-400 font-bold"
+      : isEntregue || isPago
+      ? "border-border bg-secondary/50 text-muted-foreground"
+      : "border-amber-500/25 bg-amber-500/10 text-amber-400";
+    return (
+      <div key={pb.id} className={`rounded-2xl border p-4 space-y-3 transition-colors ${borderClass}`}>
+        <div className="flex items-start justify-between">
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-black text-foreground truncate">{pb.clienteNome || "—"}</p>
+            {pb.enderecoCompleto && (
+              <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
+                <MapPin className="h-3 w-3 shrink-0" />
+                <span className="truncate">{pb.enderecoCompleto}{pb.bairro ? ` — ${pb.bairro}` : ""}</span>
+              </p>
+            )}
+            {pb.clienteTelefone && <p className="text-xs text-muted-foreground mt-0.5">{pb.clienteTelefone}</p>}
+            {pb.motoboyNome && (
+              <div className="flex items-center gap-1.5 mt-1">
+                <span className="text-sm">🏍️</span>
+                <span className={`text-xs font-black px-2 py-0.5 rounded-full border ${
+                  isSaiu ? "bg-blue-500/15 text-blue-400 border-blue-500/25" : "bg-secondary text-muted-foreground border-border"
+                }`}>{pb.motoboyNome}</span>
+              </div>
+            )}
+          </div>
+          <span className={`shrink-0 rounded-full border px-3 py-1 text-[10px] uppercase tracking-widest ${badgeClass}`}>
+            {badgeLabel}
+          </span>
+        </div>
+        <div className="text-xs text-muted-foreground space-y-0.5">
+          {pb.itens.slice(0, 3).map((it, idx) => (
+            <p key={idx} className="truncate">{it.quantidade}× {it.nome}</p>
+          ))}
+          {pb.itens.length > 3 && <p className="text-muted-foreground/60">+{pb.itens.length - 3} itens...</p>}
+        </div>
+        <div className="flex items-center justify-between pt-2 border-t border-border">
+          <span className="text-lg font-black tabular-nums text-foreground">{formatPrice(pb.total)}</span>
+          <Button size="sm" variant="outline" onClick={() => handleSelecionarBalcao(pb.id)}
+            className="rounded-xl font-bold gap-1.5 text-xs">
+            <Wallet className="h-3.5 w-3.5" /> Ver comanda / Receber
+          </Button>
+        </div>
+        {isDevolvido && (
+          <div className="rounded-xl border border-orange-500/20 bg-orange-500/5 p-3 space-y-2">
+            <p className="text-xs font-black text-orange-400">⚠ Motoboy não conseguiu entregar</p>
+            <div className="flex gap-2">
+              <Button size="sm" className="flex-1 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white"
+                onClick={() => { marcarBalcaoPronto(pb.id); toast.success("Pedido voltou para fila"); }}>
+                🔄 Reenviar
+              </Button>
+              <Button size="sm" variant="destructive" className="flex-1 rounded-xl text-xs font-bold"
+                onClick={() => { rejeitarPedidoBalcao(pb.id, "Cancelado após devolução"); toast.error(`Pedido #${pb.numeroPedido} cancelado`); }}>
+                ✕ Cancelar
+              </Button>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <>
       <div className="h-svh flex flex-col bg-background overflow-hidden">
