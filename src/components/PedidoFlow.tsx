@@ -1031,7 +1031,7 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
 
   const mobileContent = (
     <>
-      <div className={`${isGarcomMobile ? "sticky top-[81px] z-40 border-b border-border bg-background/95 pt-2 backdrop-blur-md" : "mt-4"}`}>
+      <div className="sticky top-[57px] z-40 border-b border-border bg-background/95 pt-2 backdrop-blur-md">
         <CategoryTabs
           categorias={navigationItems}
           categoriaAtiva={categoriaAtiva}
