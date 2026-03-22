@@ -319,6 +319,17 @@ export default function MotoboyPage() {
                   onChange={(e) => setPinInput(e.target.value.replace(/\D/g, "").slice(0, 4))}
                   onKeyDown={(e) => e.key === "Enter" && handleLogin()} />
               </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-muted-foreground">Troco inicial que você está levando (R$)</label>
+                <Input
+                  type="text"
+                  inputMode="decimal"
+                  placeholder="0,00"
+                  value={fundoInput}
+                  onChange={(e) => setFundoInput(e.target.value.replace(/[^0-9.,]/g, ""))}
+                  onKeyDown={(e) => e.key === "Enter" && handleLogin()}
+                />
+              </div>
               {loginError && (
                 <p className="rounded-xl border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive">{loginError}</p>
               )}
