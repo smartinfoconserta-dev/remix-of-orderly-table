@@ -35,9 +35,10 @@ export default function MotoboyPage() {
   const INITIALS = NOME_REST.slice(0, 2).toUpperCase();
 
   const { pedidosBalcao, marcarBalcaoSaiu, marcarBalcaoEntregue, cancelarEntregaMotoboy } = useRestaurant();
-  const [sessao, setSessao] = useState<{ id: string; nome: string } | null>(() => getSessao());
+  const [sessao, setSessao] = useState<{ id: string; nome: string; fundoTroco: number } | null>(() => getSessao());
   const [nomeInput, setNomeInput] = useState("");
   const [pinInput, setPinInput] = useState("");
+  const [fundoInput, setFundoInput] = useState("");
   const [loginError, setLoginError] = useState("");
   const [scanningPedidoId, setScanningPedidoId] = useState<string | null>(null);
   const [generalScan, setGeneralScan] = useState(false);
