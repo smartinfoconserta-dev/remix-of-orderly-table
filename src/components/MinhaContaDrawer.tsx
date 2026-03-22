@@ -117,35 +117,35 @@ const MinhaContaDrawer = ({ pedidos, total, open, onOpenChange }: MinhaContaDraw
               </div>
               <div className="divide-y divide-border/40">
                 {pedido.itens.map((item) => (
-                  <div key={item.uid} className="flex items-center gap-3 px-3 py-2.5">
-                    <div className="shrink-0 h-11 w-11 rounded-lg overflow-hidden border border-border bg-secondary">
+                  <div key={item.uid} className="flex items-center gap-3 py-2 px-3">
+                    <div className="shrink-0 h-12 w-12 rounded-xl overflow-hidden border border-border bg-secondary">
                       {item.imagemUrl ? (
                         <img src={item.imagemUrl} alt={item.nome} className="h-full w-full object-cover" />
                       ) : (
                         <div className="h-full w-full flex items-center justify-center">
-                          <ShoppingCart className="h-4 w-4 text-muted-foreground/30" />
+                          <Receipt className="h-5 w-5 text-muted-foreground/20" />
                         </div>
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs font-bold text-foreground leading-tight truncate">
+                      <p className="text-sm font-bold text-foreground leading-tight">
                         {item.quantidade}× {item.nome}
                       </p>
                       {item.adicionais.length > 0 && (
-                        <p className="text-[10px] text-primary leading-tight truncate">
+                        <p className="text-xs text-primary mt-0.5 leading-tight">
                           + {item.adicionais.map(a => a.nome).join(", ")}
                         </p>
                       )}
                       {item.removidos.length > 0 && (
-                        <p className="text-[10px] text-destructive leading-tight truncate">
+                        <p className="text-xs text-destructive mt-0.5 leading-tight">
                           Sem {item.removidos.join(", ")}
                         </p>
                       )}
                       {item.observacoes && (
-                        <p className="text-[10px] text-muted-foreground italic leading-tight">"{item.observacoes}"</p>
+                        <p className="text-xs text-muted-foreground italic mt-0.5">"{item.observacoes}"</p>
                       )}
                     </div>
-                    <span className="shrink-0 text-xs font-bold text-muted-foreground tabular-nums">
+                    <span className="shrink-0 text-sm font-black text-foreground tabular-nums">
                       {formatPrice(item.precoUnitario * item.quantidade)}
                     </span>
                   </div>
