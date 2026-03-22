@@ -1399,6 +1399,35 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                       </Button>
                     </div>
 
+                    {/* Fechamentos pendentes de motoboys */}
+                    {fechamentosPendentes.length > 0 && (
+                      <div className="mb-5 rounded-2xl border border-amber-500/40 bg-amber-500/8 p-4 space-y-3">
+                        <h3 className="text-sm font-black text-amber-400 flex items-center gap-2">
+                          <span className="h-2 w-2 rounded-full bg-amber-400 animate-pulse inline-block" />
+                          {fechamentosPendentes.length} motoboy(s) solicitando fechamento
+                        </h3>
+                        <div className="space-y-2">
+                          {fechamentosPendentes.map((f: any) => (
+                            <button key={f.id} onClick={() => { setFechamentoSelecionado(f); setPinConferencia(""); setPinConferenciaErro(""); }}
+                              className="w-full text-left rounded-xl border border-amber-500/25 bg-card p-3 hover:border-amber-500/60 transition-colors active:scale-[0.99]">
+                              <div className="flex items-center justify-between">
+                                <div>
+                                  <p className="text-sm font-black text-foreground">🏍️ {f.motoboyNome}</p>
+                                  <p className="text-xs text-muted-foreground mt-0.5">
+                                    {f.resumo.totalEntregas} entregas · {new Date(f.timestamp).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                                  </p>
+                                </div>
+                                <div className="text-right">
+                                  <p className="text-[10px] text-muted-foreground uppercase tracking-widest">Total a prestar</p>
+                                  <p className="text-xl font-black text-amber-400">R$ {f.resumo.totalAPrestar.toFixed(2)}</p>
+                                </div>
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
                     {/* Campo de busca */}
                     <div className="relative mb-4">
                       <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
