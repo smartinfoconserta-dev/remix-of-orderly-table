@@ -424,7 +424,7 @@ const GerentePage = () => {
   const horaAtual = now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
 
   return (
-    <div className="flex flex-col h-screen bg-gray-50">
+    <div className="flex flex-col h-screen bg-background">
       {/* Title bar — Windows style */}
       <div className="flex items-center justify-between px-4 py-2 shrink-0" style={{ backgroundColor: "#1e3a5f" }}>
         <span className="text-sm font-bold text-white">Gerente — {nomeRestaurante}</span>
