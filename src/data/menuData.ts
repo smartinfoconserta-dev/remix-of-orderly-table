@@ -35,6 +35,7 @@ export interface Produto {
   bebidaOptions?: string[];
   tipoOptions?: string[];
   embalagemOptions?: string[];
+  grupos?: GrupoAdicional[];
 }
 
 export interface Categoria {
