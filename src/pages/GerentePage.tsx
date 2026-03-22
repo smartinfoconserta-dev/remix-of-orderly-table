@@ -437,7 +437,7 @@ const GerentePage = () => {
 
       {/* Tabs — Windows classic style */}
       <Tabs defaultValue="fechamento" className="flex flex-col flex-1 min-h-0 overflow-hidden">
-        <div className="shrink-0 border-b border-gray-300 bg-gray-100 px-4 md:px-6 flex">
+        <div className="shrink-0 border-b border-border bg-card px-4 md:px-6 flex">
           {[
             { value: "fechamento", icon: LockKeyhole, label: "Fechamento" },
             { value: "relatorio", icon: BarChart3, label: "Relatório" },
