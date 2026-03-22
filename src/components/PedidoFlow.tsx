@@ -819,10 +819,14 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
   const visibleProducts = isGarcomMobile && categoriaExibida === HOME_TAB_ID ? produtos : produtosFiltrados;
 
   const productGrid = (
-    <div
-      key={categoryFadeKey}
-      className={`grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4 ${categoryFadeClass}`}
-    >
+    <div>
+      {searchQuery.trim() && (
+        <p className="text-xs text-muted-foreground px-4 pb-2">{produtosFiltrados.length} resultado(s) para "{searchQuery}"</p>
+      )}
+      <div
+        key={categoryFadeKey}
+        className={`grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4 ${categoryFadeClass}`}
+      >
       {visibleProducts.map((produto, index) => {
         const isCardSelected = selectedProductCardId === produto.id;
 
