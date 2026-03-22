@@ -1094,13 +1094,13 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
               </div>
 
               {/* ── Windows-style Tabs ── */}
-              <div className="flex items-end px-3 pt-1 shrink-0 bg-gray-100">
+              <div className="flex items-end px-3 pt-1 shrink-0 bg-card">
                 <button
                   onClick={() => setCaixaView("mesas")}
-                  className={`px-4 py-1.5 text-xs font-bold transition-colors border border-gray-300 rounded-t -mb-px relative ${
+                  className={`px-4 py-1.5 text-xs font-bold transition-colors border border-border rounded-t -mb-px relative ${
                     caixaView === "mesas"
-                      ? "bg-white text-gray-800 border-b-white z-10"
-                      : "bg-gray-200 text-gray-600"
+                      ? "bg-card text-foreground border-b-card z-10"
+                      : "bg-background text-muted-foreground"
                   }`}
                 >
                   Mesas
@@ -1108,10 +1108,10 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                 {sistemaConfig.deliveryAtivo !== false && (
                 <button
                   onClick={() => setCaixaView("delivery")}
-                  className={`px-4 py-1.5 text-xs font-bold transition-colors border border-gray-300 rounded-t -mb-px relative flex items-center gap-1.5 ${
+                  className={`px-4 py-1.5 text-xs font-bold transition-colors border border-border rounded-t -mb-px relative flex items-center gap-1.5 ${
                     caixaView === "delivery"
-                      ? "bg-white text-gray-800 border-b-white z-10"
-                      : "bg-gray-200 text-gray-600"
+                      ? "bg-card text-foreground border-b-card z-10"
+                      : "bg-background text-muted-foreground"
                   }`}
                 >
                   Delivery
@@ -1120,14 +1120,14 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                   )}
                 </button>
                 )}
-                <div className="flex-1 border-b border-gray-300" />
+                <div className="flex-1 border-b border-border" />
               </div>
 
               {/* ── Content Area ── */}
-              <div className="flex flex-1 overflow-hidden border-t border-gray-300">
+              <div className="flex flex-1 overflow-hidden border-t border-border">
 
                 {/* ═══ Full-width content ═══ */}
-                <div className="flex-1 overflow-y-auto p-5 lg:p-6 scrollbar-hide bg-gray-50">
+                <div className="flex-1 overflow-y-auto p-5 lg:p-6 scrollbar-hide bg-background">
                 {caixaView === "mesas" ? (
                   <>
                   <div className="grid gap-3 fade-in" style={{ gridTemplateColumns: "repeat(5, 1fr)" }}>
