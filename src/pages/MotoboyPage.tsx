@@ -53,6 +53,13 @@ export default function MotoboyPage() {
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const dragOverId = useRef<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [fechamentoEnviado, setFechamentoEnviado] = useState(() => {
+    try {
+      const raw = localStorage.getItem(FECHAMENTOS_KEY);
+      const lista = raw ? JSON.parse(raw) : [];
+      return lista.some((f: any) => f.motoboyId === getSessao()?.id && f.status === "aguardando");
+    } catch { return false; }
+  });
 
   const motoboys = getMotoboys().filter((m) => m.ativo);
 
