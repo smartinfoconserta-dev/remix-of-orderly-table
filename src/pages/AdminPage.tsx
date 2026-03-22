@@ -96,7 +96,7 @@ const AdminPage = () => {
   const [overrides, setOverrides] = useState<Record<string, ProdutoOverride>>(getCardapioOverrides);
   const [editProduct, setEditProduct] = useState<ProdutoOverride | null>(null);
   const [isNewProduct, setIsNewProduct] = useState(false);
-  const [editForm, setEditForm] = useState({ nome: "", descricao: "", preco: "", categoria: "", imagem: "", imagemBase64: "" });
+  const [editForm, setEditForm] = useState({ nome: "", descricao: "", preco: "", categoria: "", imagem: "", imagemBase64: "", permiteLevar: true });
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [catFilter, setCatFilter] = useState<string>("todas");
   const [removeTarget, setRemoveTarget] = useState<ProdutoOverride | null>(null);
@@ -163,6 +163,7 @@ const AdminPage = () => {
       categoria: product.categoria,
       imagem: product.imagem,
       imagemBase64: product.imagemBase64 || "",
+      permiteLevar: product.permiteLevar !== false,
     });
   }, []);
 
@@ -179,7 +180,7 @@ const AdminPage = () => {
     };
     setEditProduct(newProduct);
     setIsNewProduct(true);
-    setEditForm({ nome: "", descricao: "", preco: "", categoria: newProduct.categoria, imagem: "", imagemBase64: "" });
+    setEditForm({ nome: "", descricao: "", preco: "", categoria: newProduct.categoria, imagem: "", imagemBase64: "", permiteLevar: true });
   }, []);
 
   const saveEdit = useCallback(() => {
@@ -210,6 +211,7 @@ const AdminPage = () => {
           ativo: existing.ativo ?? true,
           disponivelDelivery: editProduct.disponivelDelivery,
           grupos: editProduct.grupos,
+          permiteLevar: editForm.permiteLevar,
         },
       };
       saveCardapioOverrides(updated);
@@ -711,6 +713,19 @@ const AdminPage = () => {
                     <Switch
                       checked={editProduct?.disponivelDelivery !== false}
                       onCheckedChange={(v) => setEditProduct((prev) => prev ? { ...prev, disponivelDelivery: v } : prev)}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs font-bold text-muted-foreground">Permite "para levar"</p>
+                      <p className="text-[10px] text-muted-foreground leading-tight mt-0.5">
+                        Desative para itens que não fazem sentido embalar
+                        (ex: drinks em taça, açaí, sobremesas servidas na mesa).
+                      </p>
+                    </div>
+                    <Switch
+                      checked={editForm.permiteLevar}
+                      onCheckedChange={(v) => setEditForm(prev => ({ ...prev, permiteLevar: v }))}
                     />
                   </div>
 

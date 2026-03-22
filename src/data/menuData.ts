@@ -34,6 +34,7 @@ export interface Produto {
   tipoOptions?: string[];
   embalagemOptions?: string[];
   grupos?: GrupoPersonalizacao[];
+  permiteLevar?: boolean;
 }
 
 export interface Categoria {
