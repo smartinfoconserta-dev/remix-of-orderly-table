@@ -1045,7 +1045,7 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
         </nav>
       </aside>
       <main ref={desktopMainRef} className="flex-1 overflow-y-auto pb-8 pt-4">
-        {isHomeActive ? homeContent : <div className="max-w-4xl mx-auto px-6">{productGrid}</div>}
+        {isHomeActive ? homeContent : <div className="max-w-5xl mx-auto px-6">{productGrid}</div>}
       </main>
     </div>
   );
