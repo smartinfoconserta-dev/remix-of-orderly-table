@@ -146,6 +146,7 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
   const [contaOpen, setContaOpen] = useState(false);
   const [showExitAlert, setShowExitAlert] = useState(false);
   const [paraViagem, setParaViagem] = useState(modo === "delivery");
+  const [searchQuery, setSearchQuery] = useState("");
   const [isClientIdle, setIsClientIdle] = useState(false);
   const [_showGarcomBanner] = useState(false); // kept for hook order stability
   const garcomBannerTimerRef = useRef<number | null>(null); // kept for hook order stability
