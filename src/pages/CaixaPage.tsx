@@ -219,7 +219,11 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
   const [balcaoPaymentMethod, setBalcaoPaymentMethod] = useState<PaymentMethod>("dinheiro");
   const [balcaoPaymentValue, setBalcaoPaymentValue] = useState("");
   const [balcaoFlowAtivo, setBalcaoFlowAtivo] = useState(false);
-  const [caixaView, setCaixaView] = useState<"mesas" | "delivery">("mesas");
+  const [modoOperacao, setModoOperacao] = useState<"completo" | "somente_mesas" | "somente_delivery">("completo");
+  const [caixaView, setCaixaView] = useState<"mesas" | "delivery">(() => {
+    const savedModo = localStorage.getItem("obsidian-caixa-modo-v1");
+    return savedModo === "somente_delivery" ? "delivery" : "mesas";
+  });
   const [deliveryConfirmOpen, setDeliveryConfirmOpen] = useState(false);
   const [deliveryPendingItens, setDeliveryPendingItens] = useState<ItemCarrinho[]>([]);
   const [deliveryPendingParaViagem, setDeliveryPendingParaViagem] = useState(false);
@@ -248,6 +252,14 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
     : currentCaixa?.role === "caixa" || currentCaixa?.role === "gerente" || currentCaixa?.id === "seed-admin-001";
 
   useRouteLock(accessMode === "gerente" ? "/gerente" : "/caixa");
+
+  // Load saved modo operacao
+  useEffect(() => {
+    const savedModo = localStorage.getItem("obsidian-caixa-modo-v1");
+    if (savedModo === "somente_mesas" || savedModo === "somente_delivery" || savedModo === "completo") {
+      setModoOperacao(savedModo);
+    }
+  }, []);
 
   // Check master aviso every 30s
   useEffect(() => {
@@ -544,6 +556,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
       if (currentOperator && !ops.includes(currentOperator.id)) {
         localStorage.setItem(OPERADORES_KEY, JSON.stringify([...ops, currentOperator.id]));
       }
+      localStorage.setItem("obsidian-caixa-modo-v1", modoOperacao);
       abrirCaixa(valor, currentOperator);
       toast.success("Caixa aberto com sucesso!", { duration: 1200, icon: "✅" });
     };
@@ -592,6 +605,31 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                       className="flex-1 rounded-xl border border-border bg-secondary py-2 text-sm font-bold text-foreground transition-colors hover:bg-secondary/80"
                     >
                       R$ {v}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-bold text-foreground">Modo de operação</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {([
+                    { value: "completo", label: "Completo", icon: "⊞", desc: "Mesas + Delivery" },
+                    { value: "somente_mesas", label: "Só Mesas", icon: "🍽️", desc: "Sem delivery" },
+                    { value: "somente_delivery", label: "Só Delivery", icon: "🛵", desc: "Sem mesas" },
+                  ] as const).map(opt => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => setModoOperacao(opt.value)}
+                      className={`flex flex-col items-center gap-1 rounded-xl border p-3 text-center transition-colors ${
+                        modoOperacao === opt.value
+                          ? "border-primary bg-primary/10 text-primary"
+                          : "border-border bg-secondary text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      <span className="text-xl">{opt.icon}</span>
+                      <span className="text-xs font-black">{opt.label}</span>
+                      <span className="text-[10px] text-muted-foreground">{opt.desc}</span>
                     </button>
                   ))}
                 </div>
@@ -867,6 +905,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
     fecharCaixaDoDia(currentOperator);
     // Clear operator shift tracking
     try { localStorage.removeItem("obsidian-caixa-operadores-v1"); } catch {}
+    try { localStorage.removeItem("obsidian-caixa-modo-v1"); } catch {}
     setTurnoModalOpen(false);
     setIsClosingTurno(false);
     setTurnoManagerName("");
@@ -1100,6 +1139,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
 
               {/* ── Windows-style Tabs ── */}
               <div className="flex items-end px-3 pt-1 shrink-0 bg-card">
+                {modoOperacao !== "somente_delivery" && (
                 <button
                   onClick={() => setCaixaView("mesas")}
                   className={`px-4 py-1.5 text-xs font-bold transition-colors border border-border rounded-t -mb-px relative ${
@@ -1110,7 +1150,8 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                 >
                   Mesas
                 </button>
-                {sistemaConfig.deliveryAtivo !== false && (
+                )}
+                {modoOperacao !== "somente_mesas" && sistemaConfig.deliveryAtivo !== false && (
                 <button
                   onClick={() => setCaixaView("delivery")}
                   className={`px-4 py-1.5 text-xs font-bold transition-colors border border-border rounded-t -mb-px relative flex items-center gap-1.5 ${
@@ -1503,8 +1544,12 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                     Turno: aberto {caixaOpenTime}
                   </span>
                 )}
-                <span className="px-3 py-1.5">Consumo: {mesasConsumo}</span>
-                <span className="px-3 py-1.5">Livres: {mesasLivre}</span>
+                {modoOperacao !== "somente_delivery" && (
+                  <span className="px-3 py-1.5">Consumo: {mesasConsumo}</span>
+                )}
+                {modoOperacao !== "somente_delivery" && (
+                  <span className="px-3 py-1.5">Livres: {mesasLivre}</span>
+                )}
                 <span className="px-3 py-1.5">Fechadas: {fechamentos.length}</span>
                 <span className="px-3 py-1.5">
                   Último: {fechamentos.length > 0 ? (() => {
