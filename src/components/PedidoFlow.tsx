@@ -863,7 +863,7 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
               <div className="aspect-[3/2] overflow-hidden">
                 <img src={produto.imagem} alt={produto.nome} className="h-full w-full object-cover" loading="lazy" />
               </div>
-              <div className="flex min-h-[10.75rem] flex-1 flex-col gap-2 p-4">
+              <div className="flex min-h-[9rem] flex-1 flex-col gap-2 p-4">
                 <h2 className="line-clamp-2 text-[1.05rem] font-black leading-tight text-foreground">{produto.nome}</h2>
                 <p className="line-clamp-3 flex-1 text-sm leading-relaxed text-muted-foreground">{produto.descricao}</p>
                 <div className="mt-1 flex items-end justify-between gap-2">
