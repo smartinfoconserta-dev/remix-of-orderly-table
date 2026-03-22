@@ -793,7 +793,7 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
   const productGrid = (
     <div
       key={categoryFadeKey}
-      className={`flex gap-4 overflow-x-auto pb-2 scrollbar-hide ${categoryFadeClass}`}
+      className={`grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4 ${categoryFadeClass}`}
     >
       {visibleProducts.map((produto, index) => {
         const isCardSelected = selectedProductCardId === produto.id;
@@ -801,7 +801,7 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
         return (
           <article
             key={produto.id}
-            className={`group w-[252px] shrink-0 overflow-hidden rounded-[1.75rem] border border-border bg-card text-left shadow-[0_20px_45px_-30px_hsl(var(--foreground)/0.8)] transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/30 card-fade-up ${
+            className={`group overflow-hidden rounded-[1.75rem] border border-border bg-card text-left shadow-[0_20px_45px_-30px_hsl(var(--foreground)/0.8)] transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/30 card-fade-up ${
               isCardSelected ? "scale-[1.01] shadow-[0_20px_44px_-24px_hsl(var(--foreground)/0.92)]" : ""
             }`}
             style={{

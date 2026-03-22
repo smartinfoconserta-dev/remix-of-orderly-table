@@ -25,7 +25,7 @@ const MinhaContaDrawer = ({ pedidos, total, open, onOpenChange }: MinhaContaDraw
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="flex w-full flex-col border-border bg-card p-0 sm:max-w-md">
+      <SheetContent side="right" className="flex w-full flex-col border-border bg-card p-0 max-w-full sm:max-w-full">
         <SheetHeader className="border-b border-border p-5 pb-4 text-left">
           <SheetTitle className="text-xl font-black text-foreground">Minha Conta</SheetTitle>
           <SheetDescription className="text-sm text-muted-foreground">

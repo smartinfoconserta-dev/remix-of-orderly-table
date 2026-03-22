@@ -508,18 +508,32 @@ const ProductModal = ({ produto, onClose, onAdd, isGarcomMobile = false, skipEmb
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="observacoes-finais" className="text-sm font-bold text-foreground">
-            Observação
-          </Label>
-          <Textarea
-            id="observacoes-finais"
-            value={pedidoAtual.observacao}
-            onChange={(event) => updatePedidoAtual("observacao", event.target.value)}
-            placeholder="Ex.: sem cebola, servir separado, mandar guardanapos..."
-            className="min-h-32 resize-none rounded-2xl border-border bg-card"
-            maxLength={180}
-          />
-          <p className="text-right text-xs text-muted-foreground">{pedidoAtual.observacao.length}/180</p>
+          {!pedidoAtual.observacao && (
+            <button
+              type="button"
+              onClick={() => updatePedidoAtual("observacao", " ")}
+              className="text-sm font-bold text-primary hover:underline"
+            >
+              ➕ Adicionar observação
+            </button>
+          )}
+          {pedidoAtual.observacao && (
+            <>
+              <Label htmlFor="observacoes-finais" className="text-sm font-bold text-foreground">
+                Observação
+              </Label>
+              <Textarea
+                id="observacoes-finais"
+                autoFocus
+                value={pedidoAtual.observacao.trimStart()}
+                onChange={(event) => updatePedidoAtual("observacao", event.target.value)}
+                placeholder="Ex.: sem cebola, servir separado, mandar guardanapos..."
+                className="min-h-24 resize-none rounded-2xl border-border bg-card"
+                maxLength={180}
+              />
+              <p className="text-right text-xs text-muted-foreground">{pedidoAtual.observacao.trim().length}/180</p>
+            </>
+          )}
         </div>
 
         <div className="rounded-3xl border border-border bg-secondary/30 p-4">
