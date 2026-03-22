@@ -41,7 +41,7 @@ export interface PedidoRealizado {
   formaPagamentoDelivery?: string;
   trocoParaQuanto?: number;
   observacaoGeral?: string;
-  statusBalcao?: "aberto" | "pronto" | "pago" | "saiu" | "entregue" | "aguardando_confirmacao";
+  statusBalcao?: "aberto" | "pronto" | "pago" | "saiu" | "entregue" | "aguardando_confirmacao" | "devolvido";
   motoboyNome?: string;
 }
 
@@ -177,6 +177,7 @@ interface RestaurantContextType {
   marcarBalcaoSaiu: (pedidoId: string, motoboyNome: string) => void;
   marcarBalcaoEntregue: (pedidoId: string) => void;
   cancelarEntregaMotoboy: (pedidoId: string, motivo?: string) => void;
+  marcarBalcaoPronto: (pedidoId: string) => void;
   fecharContaBalcao: (pedidoId: string, input: FecharContaInput) => void;
   confirmarPedidoBalcao: (pedidoId: string, taxaEntrega?: number) => void;
   rejeitarPedidoBalcao: (pedidoId: string, motivo: string) => void;
@@ -1075,7 +1076,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     setStore((prev) => ({
       ...prev,
       pedidosBalcao: prev.pedidosBalcao.map((p) =>
-        p.id === pedidoId ? { ...p, statusBalcao: "pronto" as const, motoboyNome: undefined } : p,
+        p.id === pedidoId ? { ...p, statusBalcao: "devolvido" as const, motoboyNome: undefined } : p,
       ),
       eventos: appendEvent(prev.eventos, {
         tipo: "pedido",
@@ -1083,6 +1084,15 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         acao: "delivery_cancelado_motoboy",
         motivo,
       }),
+    }));
+  }, []);
+
+  const marcarBalcaoPronto = useCallback((pedidoId: string) => {
+    setStore((prev) => ({
+      ...prev,
+      pedidosBalcao: prev.pedidosBalcao.map((p) =>
+        p.id === pedidoId ? { ...p, statusBalcao: "pronto" as const, motoboyNome: undefined } : p,
+      ),
     }));
   }, []);
 
@@ -1199,6 +1209,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         marcarBalcaoSaiu,
         marcarBalcaoEntregue,
         cancelarEntregaMotoboy,
+        marcarBalcaoPronto,
         fecharContaBalcao,
         confirmarPedidoBalcao,
         rejeitarPedidoBalcao,
