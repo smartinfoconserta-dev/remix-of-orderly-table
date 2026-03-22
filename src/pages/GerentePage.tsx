@@ -634,6 +634,15 @@ const GerentePage = () => {
                   <h2>Produtos Mais Vendidos</h2>
                   <table><thead><tr><th>Produto</th><th style="text-align:center">Qtd</th><th style="text-align:right">Total R$</th><th style="text-align:right">% Faturamento</th></tr></thead><tbody>${prodRows || "<tr><td colspan=4 style='text-align:center;color:#999'>Sem dados</td></tr>"}</tbody></table>
                   ${topProducts.length > 5 ? `<h2>Produtos Menos Vendidos</h2><table><thead><tr><th>Produto</th><th style="text-align:center">Qtd</th><th style="text-align:right">Total R$</th><th style="text-align:right">% Faturamento</th></tr></thead><tbody>${bottomProducts}</tbody></table>` : ""}
+                  <h2>Origem das Vendas</h2>
+                  <table>
+                    <thead><tr><th>Origem</th><th style="text-align:right">Total</th><th style="text-align:right">%</th></tr></thead>
+                    <tbody>
+                      <tr><td>🍽️ Mesas</td><td style="text-align:right">${formatPrice(totalMesas)}</td><td style="text-align:right">${relTotalFaturado > 0 ? ((totalMesas/relTotalFaturado)*100).toFixed(1) : "0.0"}%</td></tr>
+                      <tr><td>🛵 Delivery (caixa)</td><td style="text-align:right">${formatPrice(totalDelivery)}</td><td style="text-align:right">${relTotalFaturado > 0 ? ((totalDelivery/relTotalFaturado)*100).toFixed(1) : "0.0"}%</td></tr>
+                      <tr><td>🏍️ Motoboys conferidos</td><td style="text-align:right">${formatPrice(totalMotoboys)}</td><td style="text-align:right">${relTotalFaturado > 0 ? ((totalMotoboys/relTotalFaturado)*100).toFixed(1) : "0.0"}%</td></tr>
+                    </tbody>
+                  </table>
                   <h2>Formas de Pagamento</h2>
                   <table><thead><tr><th>Forma</th><th style="text-align:right">Total R$</th><th style="text-align:right">%</th></tr></thead><tbody>${pgtoRows}</tbody></table>
                   ${pedidosPorGarcom.length > 0 ? `<h2>Desempenho da Equipe</h2><table><thead><tr><th>Garçom</th><th style="text-align:center">Pedidos</th><th style="text-align:center">Mesas atendidas</th></tr></thead><tbody>${garcomRows}</tbody></table>` : ""}
