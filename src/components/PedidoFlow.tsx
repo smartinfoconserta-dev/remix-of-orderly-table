@@ -1040,7 +1040,7 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
         />
       </div>
       <div ref={mobileListTopRef} />
-      <main className="flex-1 pt-3 pb-24 px-4">
+      <main className={`pt-3 pb-24 px-4 ${isClientIdle ? "brightness-[0.2] saturate-50" : "brightness-100 saturate-100"}`}>
         <div>{isGarcomMobile ? productGrid : isHomeActive ? homeContent : productGrid}</div>
       </main>
     </>
