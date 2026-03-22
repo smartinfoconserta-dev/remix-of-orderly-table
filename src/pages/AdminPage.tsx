@@ -211,6 +211,7 @@ const AdminPage = () => {
           ativo: existing.ativo ?? true,
           disponivelDelivery: editProduct.disponivelDelivery,
           grupos: editProduct.grupos,
+          permiteLevar: editForm.permiteLevar,
         },
       };
       saveCardapioOverrides(updated);
