@@ -29,7 +29,7 @@ const MesaCard = ({ mesa, onClick, showTotal = true, showIndicators = true, time
   return (
     <button
       onClick={onClick}
-      className={`relative flex min-h-[136px] flex-col items-center justify-center gap-2 rounded-xl border p-5 text-center mesa-card-interactive ${toneClass}`}
+      className={`relative flex min-h-[140px] w-full flex-col items-center justify-center gap-1.5 rounded-xl border p-4 text-center mesa-card-interactive ${toneClass}`}
     >
       {chamarGarcom && (
         <span className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-destructive/90 text-destructive-foreground">
