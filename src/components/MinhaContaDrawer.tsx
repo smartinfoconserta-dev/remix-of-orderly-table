@@ -38,36 +38,40 @@ const MinhaContaDrawer = ({ pedidos, total, open, onOpenChange }: MinhaContaDraw
         </button>
       </div>
 
-      {/* Barra de total + dividir — compacta, numa linha só */}
-      <div className="border-b border-border px-4 py-3 shrink-0">
-        <div className="flex items-center justify-between gap-4">
+      <div className="border-b border-border px-4 py-3 shrink-0 bg-secondary/30">
+        <div className="flex items-center justify-between gap-3">
+          {/* Total */}
           <div className="min-w-0">
             <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Total acumulado</p>
             <p className="text-2xl font-black text-foreground tabular-nums">{formatPrice(total)}</p>
           </div>
-          <div className="flex items-center gap-2 shrink-0">
-            <span className="text-xs font-bold text-muted-foreground">Dividir:</span>
-            <button
-              onClick={() => setNumeroDePessoas(prev => Math.max(1, prev - 1))}
-              className="h-8 w-8 flex items-center justify-center rounded-lg border border-border bg-card text-foreground active:scale-95 transition-transform"
-            >
-              <Minus className="h-3.5 w-3.5" />
-            </button>
-            <span className="min-w-[2rem] text-center text-base font-black text-foreground tabular-nums">
-              {numeroDePessoas}
-            </span>
-            <button
-              onClick={() => setNumeroDePessoas(prev => prev + 1)}
-              className="h-8 w-8 flex items-center justify-center rounded-lg border border-border bg-card text-foreground active:scale-95 transition-transform"
-            >
-              <Plus className="h-3.5 w-3.5" />
-            </button>
-            {numeroDePessoas > 1 && (
-              <div className="ml-2 text-right">
-                <p className="text-[10px] text-muted-foreground">Cada um</p>
-                <p className="text-sm font-black text-primary tabular-nums">{formatPrice(valorPorPessoa)}</p>
-              </div>
-            )}
+          {/* Dividir conta — layout fixo, não se move */}
+          <div className="shrink-0 flex items-center gap-3">
+            <span className="text-xs font-bold text-muted-foreground whitespace-nowrap">Dividir conta</span>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setNumeroDePessoas(prev => Math.max(1, prev - 1))}
+                className="h-8 w-8 flex items-center justify-center rounded-lg border border-border bg-card text-foreground active:scale-95 transition-transform"
+              >
+                <Minus className="h-3.5 w-3.5" />
+              </button>
+              <span className="w-6 text-center text-base font-black text-foreground tabular-nums">
+                {numeroDePessoas}
+              </span>
+              <button
+                onClick={() => setNumeroDePessoas(prev => prev + 1)}
+                className="h-8 w-8 flex items-center justify-center rounded-lg border border-border bg-card text-foreground active:scale-95 transition-transform"
+              >
+                <Plus className="h-3.5 w-3.5" />
+              </button>
+            </div>
+            {/* Cada um — espaço SEMPRE reservado, valor muda mas layout não move */}
+            <div className="w-20 text-right">
+              <p className="text-[10px] text-muted-foreground">Cada um</p>
+              <p className={`text-sm font-black tabular-nums transition-colors ${numeroDePessoas > 1 ? "text-primary" : "text-muted-foreground/30"}`}>
+                {formatPrice(valorPorPessoa)}
+              </p>
+            </div>
           </div>
         </div>
       </div>
