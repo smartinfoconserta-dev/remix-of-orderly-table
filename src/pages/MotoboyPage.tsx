@@ -19,7 +19,7 @@ const getMotoboys = (): Motoboy[] => {
   try { const raw = localStorage.getItem(MOTOBOY_LIST_KEY); return raw ? JSON.parse(raw) : []; } catch { return []; }
 };
 
-const getSessao = (): { id: string; nome: string } | null => {
+const getSessao = (): { id: string; nome: string; fundoTroco: number } | null => {
   try { const raw = localStorage.getItem(SESSAO_KEY); return raw ? JSON.parse(raw) : null; } catch { return null; }
 };
 
@@ -35,9 +35,10 @@ export default function MotoboyPage() {
   const INITIALS = NOME_REST.slice(0, 2).toUpperCase();
 
   const { pedidosBalcao, marcarBalcaoSaiu, marcarBalcaoEntregue, cancelarEntregaMotoboy } = useRestaurant();
-  const [sessao, setSessao] = useState<{ id: string; nome: string } | null>(() => getSessao());
+  const [sessao, setSessao] = useState<{ id: string; nome: string; fundoTroco: number } | null>(() => getSessao());
   const [nomeInput, setNomeInput] = useState("");
   const [pinInput, setPinInput] = useState("");
+  const [fundoInput, setFundoInput] = useState("");
   const [loginError, setLoginError] = useState("");
   const [scanningPedidoId, setScanningPedidoId] = useState<string | null>(null);
   const [generalScan, setGeneralScan] = useState(false);
@@ -60,11 +61,12 @@ export default function MotoboyPage() {
     if (pinInput.length < 4) { setLoginError("Nome ou PIN incorreto"); return; }
     const expectedHash = btoa("pin:" + pinInput);
     if (motoboy.pinHash !== expectedHash) { setLoginError("Nome ou PIN incorreto"); return; }
-    const s = { id: motoboy.id, nome: motoboy.nome };
+    const fundoTroco = parseFloat(fundoInput.replace(",", ".")) || 0;
+    const s = { id: motoboy.id, nome: motoboy.nome, fundoTroco };
     localStorage.setItem(SESSAO_KEY, JSON.stringify(s));
     setSessao(s);
     toast.success(`Bem-vindo, ${motoboy.nome}!`);
-  }, [nomeInput, pinInput, motoboys]);
+  }, [nomeInput, pinInput, fundoInput, motoboys]);
 
   const handleLogout = () => {
     localStorage.removeItem(SESSAO_KEY);
@@ -317,6 +319,17 @@ export default function MotoboyPage() {
                   onChange={(e) => setPinInput(e.target.value.replace(/\D/g, "").slice(0, 4))}
                   onKeyDown={(e) => e.key === "Enter" && handleLogin()} />
               </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-muted-foreground">Troco inicial que você está levando (R$)</label>
+                <Input
+                  type="text"
+                  inputMode="decimal"
+                  placeholder="0,00"
+                  value={fundoInput}
+                  onChange={(e) => setFundoInput(e.target.value.replace(/[^0-9.,]/g, ""))}
+                  onKeyDown={(e) => e.key === "Enter" && handleLogin()}
+                />
+              </div>
               {loginError && (
                 <p className="rounded-xl border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive">{loginError}</p>
               )}
@@ -538,6 +551,10 @@ export default function MotoboyPage() {
                   <span className="text-right font-semibold text-destructive">- R$ {resumo.trocoTotal.toFixed(2)}</span>
                   <span className="text-muted-foreground font-bold">Líquido dinheiro</span>
                   <span className="text-right font-bold text-amber-500">R$ {resumo.liquidoDinheiro.toFixed(2)}</span>
+                  <span className="text-muted-foreground">Fundo de troco inicial</span>
+                  <span className="text-right font-semibold">R$ {(sessao?.fundoTroco || 0).toFixed(2)}</span>
+                  <span className="font-bold text-orange-400">Deve devolver ao caixa</span>
+                  <span className="text-right font-bold text-orange-400">R$ {(resumo.liquidoDinheiro + (sessao?.fundoTroco || 0)).toFixed(2)}</span>
                   <span className="text-muted-foreground">PIX</span>
                   <span className="text-right font-semibold">R$ {resumo.pix.toFixed(2)}</span>
                   <span className="text-muted-foreground">Crédito</span>
@@ -546,8 +563,8 @@ export default function MotoboyPage() {
                   <span className="text-right font-semibold">R$ {resumo.debito.toFixed(2)}</span>
                 </div>
                 <div className="border-t border-border pt-2 flex items-center justify-between">
-                  <span className="font-black">Total geral</span>
-                  <span className="font-black text-lg">R$ {resumo.total.toFixed(2)}</span>
+                  <span className="font-black">Total a prestar ao caixa</span>
+                  <span className="font-black text-lg text-primary">R$ {(resumo.liquidoDinheiro + (sessao?.fundoTroco || 0) + resumo.pix + resumo.credito + resumo.debito).toFixed(2)}</span>
                 </div>
                 <Button className="w-full mt-2 font-bold" variant="outline" onClick={() => {
                   toast.success("Caixa fechado! Entregue o valor ao responsável.");
