@@ -176,38 +176,7 @@ const CartDrawer = ({
           </button>
         ) : null}
 
-        {showConfirmEnvio && !showSubmittingOverlay && !showSuccessFeedback ? (
-          <div className="flex flex-1 flex-col items-center justify-center gap-6 p-8 text-center">
-            <div className="space-y-2">
-              <h3 className="text-2xl font-black text-foreground">Tudo certo no seu pedido?</h3>
-              <p className="text-base text-muted-foreground">Quer adicionar mais alguma coisa antes de enviar?</p>
-            </div>
-            <div className="flex gap-3 w-full max-w-xs">
-              <Button
-                type="button"
-                variant="outline"
-                className="flex-1 h-12 rounded-2xl font-bold"
-                onClick={() => {
-                  setShowConfirmEnvio(false);
-                  onContinueOrdering?.();
-                  onOpenChange?.(false);
-                }}
-              >
-                ＋ Adicionar mais itens
-              </Button>
-              <Button
-                type="button"
-                className="flex-1 h-12 rounded-2xl font-black bg-emerald-600 hover:bg-emerald-700 text-white"
-                onClick={() => {
-                  setShowConfirmEnvio(false);
-                  handleConfirmar();
-                }}
-              >
-                Enviar para a cozinha
-              </Button>
-            </div>
-          </div>
-        ) : showSubmittingOverlay ? (
+        {showSubmittingOverlay ? (
           <div className="flex flex-1 flex-col items-center justify-center gap-6 p-8 text-center">
             <div className="relative flex h-24 w-24 items-center justify-center rounded-full bg-primary/10">
               <div className="absolute inset-0 rounded-full border-4 border-primary/20 border-t-primary animate-spin" />
@@ -318,64 +287,58 @@ const CartDrawer = ({
                   ))}
                 </div>
 
-                <div className="absolute inset-x-0 bottom-0 border-t border-border bg-card p-4 animate-fade-in">
-                  <div className="space-y-3">
-                    {showParaViagem && (
-                      <div className="flex gap-2">
-                        <button
-                          type="button"
-                          onClick={() => onParaViagemChange?.(false)}
-                          className={`flex-1 flex items-center justify-center gap-2 rounded-xl border-2 py-2.5 text-sm font-black transition-colors ${
-                            !paraViagem
-                              ? "border-primary bg-primary/10 text-primary"
-                              : "border-border bg-card text-muted-foreground"
-                          }`}
-                        >
-                          <Utensils className="h-4 w-4" />
-                          Comer aqui
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => onParaViagemChange?.(true)}
-                          className={`flex-1 flex items-center justify-center gap-2 rounded-xl border-2 py-2.5 text-sm font-black transition-colors ${
-                            paraViagem
-                              ? "border-amber-500 bg-amber-500/10 text-amber-500"
-                              : "border-border bg-card text-muted-foreground"
-                          }`}
-                        >
-                          <ShoppingBag className="h-4 w-4" />
-                          Para viagem
-                        </button>
+                <div className="absolute inset-x-0 bottom-0 border-t border-border bg-card/98 backdrop-blur-sm p-4 animate-fade-in">
+                  {!showConfirmEnvio ? (
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium text-muted-foreground">Subtotal</span>
+                        <span className="text-lg font-black text-foreground tabular-nums">{formatPrice(subtotal)}</span>
                       </div>
-                    )}
-                    <div className="flex items-center justify-between">
-                      <span className="text-base font-medium text-muted-foreground">Subtotal</span>
-                      <span className="text-xl font-black text-foreground">{formatPrice(subtotal)}</span>
+                      <div className="grid grid-cols-2 gap-3">
+                        <Button type="button" variant="outline"
+                          disabled={isSubmitting || showSubmittingOverlay}
+                          onClick={() => { onContinueOrdering?.(); onOpenChange?.(false); }}
+                          className="h-12 rounded-2xl font-bold text-sm">
+                          + Adicionar itens
+                        </Button>
+                        <Button type="button"
+                          disabled={isSubmitting || isLocked || showSubmittingOverlay}
+                          onClick={() => setShowConfirmEnvio(true)}
+                          className="h-12 rounded-2xl font-black text-sm">
+                          {labelConfirmar}
+                        </Button>
+                      </div>
                     </div>
-
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        disabled={isSubmitting || showSubmittingOverlay}
-                        onClick={() => {
-                          onContinueOrdering?.();
-                          onOpenChange?.(false);
-                        }}
-                        className="h-12 rounded-2xl font-bold"
-                      >
-                        Adicionar mais itens
-                      </Button>
-                      <Button
-                        type="button"
-                        onClick={() => setShowConfirmEnvio(true)}
-                        disabled={isSubmitting || isLocked || showSubmittingOverlay}
-                        className="h-12 rounded-2xl font-black"
-                      >
-                        Enviar pedido
-                      </Button>
+                  ) : (
+                    <div className="space-y-3">
+                      <div className="text-center py-1">
+                        <p className="text-base font-black text-foreground">Tudo certo no pedido?</p>
+                        <p className="text-sm text-muted-foreground">Quer adicionar mais alguma coisa?</p>
+                      </div>
+                      <div className="flex items-center justify-between px-1">
+                        <span className="text-sm text-muted-foreground">Total</span>
+                        <span className="text-lg font-black text-foreground tabular-nums">{formatPrice(subtotal)}</span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <Button type="button" variant="outline"
+                          onClick={() => setShowConfirmEnvio(false)}
+                          className="h-12 rounded-2xl font-bold text-sm">
+                          + Adicionar mais
+                        </Button>
+                        <Button type="button"
+                          onClick={() => { setShowConfirmEnvio(false); handleConfirmar(); }}
+                          disabled={isSubmitting || isLocked || showSubmittingOverlay}
+                          className="h-12 rounded-2xl font-black text-sm bg-emerald-600 hover:bg-emerald-700 text-white">
+                          {isSubmitting ? (
+                            <span className="inline-flex items-center gap-2">
+                              <LoaderCircle className="h-4 w-4 animate-spin" />
+                              Enviando...
+                            </span>
+                          ) : labelConfirmarFinal}
+                        </Button>
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
               </>
             )}
