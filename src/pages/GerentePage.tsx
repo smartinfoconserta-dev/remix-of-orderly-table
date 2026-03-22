@@ -1210,7 +1210,7 @@ const GerentePage = () => {
         <span className="px-3 py-1 border-r border-gray-300">● Online</span>
         <span className="px-3 py-1 border-r border-gray-300">Operador: {currentGerente.nome}</span>
         <span className="px-3 py-1 border-r border-gray-300">Fechamentos: {fechamentos.length}</span>
-        <span className="px-3 py-1">Mesas ativas: {mesas.filter(m => m.status === "consumindo").length}</span>
+        <span className="px-3 py-1">Mesas ativas: {mesas.filter(m => m.status === "consumo").length}</span>
       </div>
     </div>
   );
