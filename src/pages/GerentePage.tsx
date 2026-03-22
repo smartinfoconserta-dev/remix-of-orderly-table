@@ -437,7 +437,7 @@ const GerentePage = () => {
 
       {/* Tabs — Windows classic style */}
       <Tabs defaultValue="fechamento" className="flex flex-col flex-1 min-h-0 overflow-hidden">
-        <div className="shrink-0 border-b border-border bg-card px-4 md:px-6 flex">
+        <TabsList className="shrink-0 border-b border-border bg-card px-4 md:px-6 flex h-auto rounded-none p-0">
           {[
             { value: "fechamento", icon: LockKeyhole, label: "Fechamento" },
             { value: "relatorio", icon: BarChart3, label: "Relatório" },
@@ -456,7 +456,7 @@ const GerentePage = () => {
               </TabsTrigger>
             );
           })}
-        </div>
+        </TabsList>
 
         {/* ═══ TAB 1: Fechamento do Turno ═══ */}
         <TabsContent value="fechamento" className="flex-1 overflow-y-auto p-4 md:p-6 mt-0">
