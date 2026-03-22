@@ -346,7 +346,11 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
   /* ── active balcão orders for grid ── */
   const pedidosBalcaoAtivos = useMemo(() => pedidosBalcao.filter((p) => p.statusBalcao !== "pago"), [pedidosBalcao]);
   const pedidosDeliveryAtivos = useMemo(() => pedidosBalcaoAtivos.filter((p) => p.origem === "delivery" && p.statusBalcao !== "aguardando_confirmacao"), [pedidosBalcaoAtivos]);
-  const pedidosAguardandoConfirmacao = useMemo(() => pedidosBalcao.filter((p) => p.origem === "delivery" && p.statusBalcao === "aguardando_confirmacao"), [pedidosBalcao]);
+  const pedidosAguardandoConfirmacao = useMemo(() =>
+    [...pedidosBalcao.filter((p) => p.origem === "delivery" && p.statusBalcao === "aguardando_confirmacao")]
+      .sort((a, b) => new Date(a.criadoEmIso).getTime() - new Date(b.criadoEmIso).getTime()),
+    [pedidosBalcao]
+  );
   const pedidosBalcaoSoAtivos = useMemo(() => pedidosBalcaoAtivos.filter((p) => p.origem === "balcao"), [pedidosBalcaoAtivos]);
 
   /* ── callbacks ── */
@@ -1221,6 +1225,16 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                                   </p>
                                 )}
                                 {pb.clienteTelefone && <p className="text-xs text-muted-foreground mt-0.5">{pb.clienteTelefone}</p>}
+                                {(() => {
+                                  const mins = Math.floor((Date.now() - new Date(pb.criadoEmIso).getTime()) / 60000);
+                                  const cor = mins >= 15 ? "text-red-500 font-black animate-pulse" : mins >= 8 ? "text-amber-400 font-bold" : "text-muted-foreground";
+                                  return (
+                                    <p className={`text-xs flex items-center gap-1 mt-0.5 ${cor}`}>
+                                      <Clock className="h-3 w-3 shrink-0" />
+                                      Aguardando há {mins < 1 ? "menos de 1 min" : `${mins} min`}
+                                    </p>
+                                  );
+                                })()}
                               </div>
                               <div className="text-xs text-muted-foreground space-y-0.5">
                                 {pb.itens.slice(0, 4).map((it, idx) => (
