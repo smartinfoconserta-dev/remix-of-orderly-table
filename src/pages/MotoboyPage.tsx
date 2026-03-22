@@ -422,7 +422,6 @@ export default function MotoboyPage() {
             emRota.map((p, idx) => {
               const addr = buildEnderecoCompleto(p);
               const isDragging = draggingId === p.id;
-              const isCanceling = cancelingId === p.id;
               return (
                 <div
                   key={p.id}
