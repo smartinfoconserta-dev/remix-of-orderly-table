@@ -1654,6 +1654,7 @@ const AdminPage = () => {
           </div>
         )}
       </main>
+      </div>
     </div>
   );
 };
