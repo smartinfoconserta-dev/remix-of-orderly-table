@@ -265,6 +265,30 @@ const GerentePage = () => {
   const relComandasFechadas = fechFiltrados.length;
   const relTicketMedio = relComandasFechadas > 0 ? relTotalFaturado / relComandasFechadas : 0;
 
+  const fechMesas = useMemo(() =>
+    fechFiltrados.filter(f =>
+      !String(f.mesaId || "").startsWith("balcao-") &&
+      !String(f.mesaId || "").startsWith("delivery-motoboy-")
+    ),
+    [fechFiltrados]
+  );
+  const fechDelivery = useMemo(() =>
+    fechFiltrados.filter(f =>
+      String(f.mesaId || "").startsWith("balcao-") &&
+      !String(f.mesaId || "").startsWith("delivery-motoboy-")
+    ),
+    [fechFiltrados]
+  );
+  const fechMotoboys = useMemo(() =>
+    fechFiltrados.filter(f =>
+      String(f.mesaId || "").startsWith("delivery-motoboy-")
+    ),
+    [fechFiltrados]
+  );
+  const totalMesas = useMemo(() => fechMesas.reduce((a, f) => a + f.total, 0), [fechMesas]);
+  const totalDelivery = useMemo(() => fechDelivery.reduce((a, f) => a + f.total, 0), [fechDelivery]);
+  const totalMotoboys = useMemo(() => fechMotoboys.reduce((a, f) => a + f.total, 0), [fechMotoboys]);
+
   const relPedidosRealizados = allEventos.filter((e) => {
     const d = new Date(e.criadoEmIso);
     return d >= dateRange.start && d <= dateRange.end && (e.acao === "pedido_cliente" || e.acao === "lancar_pedido");
@@ -610,6 +634,15 @@ const GerentePage = () => {
                   <h2>Produtos Mais Vendidos</h2>
                   <table><thead><tr><th>Produto</th><th style="text-align:center">Qtd</th><th style="text-align:right">Total R$</th><th style="text-align:right">% Faturamento</th></tr></thead><tbody>${prodRows || "<tr><td colspan=4 style='text-align:center;color:#999'>Sem dados</td></tr>"}</tbody></table>
                   ${topProducts.length > 5 ? `<h2>Produtos Menos Vendidos</h2><table><thead><tr><th>Produto</th><th style="text-align:center">Qtd</th><th style="text-align:right">Total R$</th><th style="text-align:right">% Faturamento</th></tr></thead><tbody>${bottomProducts}</tbody></table>` : ""}
+                  <h2>Origem das Vendas</h2>
+                  <table>
+                    <thead><tr><th>Origem</th><th style="text-align:right">Total</th><th style="text-align:right">%</th></tr></thead>
+                    <tbody>
+                      <tr><td>🍽️ Mesas</td><td style="text-align:right">${formatPrice(totalMesas)}</td><td style="text-align:right">${relTotalFaturado > 0 ? ((totalMesas/relTotalFaturado)*100).toFixed(1) : "0.0"}%</td></tr>
+                      <tr><td>🛵 Delivery (caixa)</td><td style="text-align:right">${formatPrice(totalDelivery)}</td><td style="text-align:right">${relTotalFaturado > 0 ? ((totalDelivery/relTotalFaturado)*100).toFixed(1) : "0.0"}%</td></tr>
+                      <tr><td>🏍️ Motoboys conferidos</td><td style="text-align:right">${formatPrice(totalMotoboys)}</td><td style="text-align:right">${relTotalFaturado > 0 ? ((totalMotoboys/relTotalFaturado)*100).toFixed(1) : "0.0"}%</td></tr>
+                    </tbody>
+                  </table>
                   <h2>Formas de Pagamento</h2>
                   <table><thead><tr><th>Forma</th><th style="text-align:right">Total R$</th><th style="text-align:right">%</th></tr></thead><tbody>${pgtoRows}</tbody></table>
                   ${pedidosPorGarcom.length > 0 ? `<h2>Desempenho da Equipe</h2><table><thead><tr><th>Garçom</th><th style="text-align:center">Pedidos</th><th style="text-align:center">Mesas atendidas</th></tr></thead><tbody>${garcomRows}</tbody></table>` : ""}
@@ -669,10 +702,32 @@ const GerentePage = () => {
 
             {/* ── KPI Cards ── */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div className="col-span-2 rounded-2xl border border-border bg-card p-4 space-y-3">
+                <div className="flex items-center gap-2">
+                  <TrendingUp className="h-4 w-4 text-primary" />
+                  <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Total faturado no período</p>
+                </div>
+                <p className="text-3xl font-black tabular-nums text-primary">{formatPrice(relTotalFaturado)}</p>
+                <div className="grid grid-cols-3 gap-3 pt-2 border-t border-border">
+                  <div className="space-y-0.5">
+                    <p className="text-[10px] font-bold uppercase text-muted-foreground">🍽️ Mesas</p>
+                    <p className="text-lg font-black tabular-nums text-foreground">{formatPrice(totalMesas)}</p>
+                    <p className="text-xs text-muted-foreground">{fechMesas.length} comandas</p>
+                  </div>
+                  <div className="space-y-0.5">
+                    <p className="text-[10px] font-bold uppercase text-muted-foreground">🛵 Delivery</p>
+                    <p className="text-lg font-black tabular-nums text-foreground">{formatPrice(totalDelivery)}</p>
+                    <p className="text-xs text-muted-foreground">{fechDelivery.length} pedidos</p>
+                  </div>
+                  <div className="space-y-0.5">
+                    <p className="text-[10px] font-bold uppercase text-muted-foreground">🏍️ Motoboys</p>
+                    <p className="text-lg font-black tabular-nums text-foreground">{formatPrice(totalMotoboys)}</p>
+                    <p className="text-xs text-muted-foreground">{fechMotoboys.length} fechamentos</p>
+                  </div>
+                </div>
+              </div>
               {[
-                { label: "Total faturado", value: formatPrice(relTotalFaturado), icon: TrendingUp, color: "text-primary" },
                 { label: "Ticket médio", value: formatPrice(relTicketMedio), icon: BarChart3, color: "text-amber-400" },
-                { label: "Comandas fechadas", value: String(relComandasFechadas), icon: ClipboardList, color: "text-emerald-400" },
                 { label: "Pedidos realizados", value: String(relPedidosRealizados), icon: ClipboardList, color: "text-purple-400" },
               ].map((kpi) => {
                 const Icon = kpi.icon;

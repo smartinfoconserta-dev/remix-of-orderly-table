@@ -210,8 +210,8 @@ const CartDrawer = ({
               <h2 className="text-xl font-black text-foreground">Carrinho do pedido</h2>
               <p className="text-sm text-muted-foreground">
                 {carrinho.length > 0
-                  ? "Os itens abaixo ainda não foram enviados para a cozinha."
-                  : "Seu carrinho está vazio no momento. Adicione itens para montar o pedido."}
+                  ? "Revise e envie quando estiver pronto."
+                  : "Nenhum item adicionado ainda."}
               </p>
             </div>
 
@@ -223,12 +223,6 @@ const CartDrawer = ({
               </div>
             ) : (
               <>
-                <div className="border-b border-border px-4 pb-4 pt-4 animate-fade-in">
-                  <div className="rounded-2xl border border-primary/20 bg-primary/10 px-4 py-3">
-                    <p className="text-[11px] font-black uppercase tracking-[0.22em] text-primary">Itens pendentes</p>
-                    <p className="mt-1 text-sm text-foreground">Revise os itens com calma antes de enviar o pedido para a cozinha.</p>
-                  </div>
-                </div>
 
                 <div className="flex-1 space-y-3 overflow-y-auto p-4 pb-40">
                   {carrinho.map((item, index) => (
