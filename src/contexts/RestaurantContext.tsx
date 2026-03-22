@@ -1109,6 +1109,86 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }));
   }, []);
 
+  const registrarFechamentoMotoboy = useCallback((input: {
+    motoboyNome: string;
+    motoboyId: string;
+    dinheiro: number;
+    troco: number;
+    fundoTroco: number;
+    pix: number;
+    credito: number;
+    debito: number;
+    totalEntregas: number;
+    pedidosIds: string[];
+    conferidoPor: string;
+  }) => {
+    setStore((prev) => {
+      const now = new Date();
+      const liquidoDinheiro = input.dinheiro - input.troco;
+      const totalGeral = liquidoDinheiro + input.fundoTroco + input.pix + input.credito + input.debito;
+
+      const pagamentos: SplitPayment[] = [];
+      if (liquidoDinheiro + input.fundoTroco > 0) pagamentos.push({
+        id: `pag-din-${now.getTime()}`,
+        formaPagamento: "dinheiro",
+        valor: liquidoDinheiro + input.fundoTroco,
+      });
+      if (input.pix > 0) pagamentos.push({
+        id: `pag-pix-${now.getTime()}`,
+        formaPagamento: "pix",
+        valor: input.pix,
+      });
+      if (input.credito > 0) pagamentos.push({
+        id: `pag-cred-${now.getTime()}`,
+        formaPagamento: "credito",
+        valor: input.credito,
+      });
+      if (input.debito > 0) pagamentos.push({
+        id: `pag-deb-${now.getTime()}`,
+        formaPagamento: "debito",
+        valor: input.debito,
+      });
+
+      const itensMotoboy: ItemCarrinho[] = [];
+      prev.pedidosBalcao
+        .filter(p => input.pedidosIds.includes(p.id))
+        .forEach(p => p.itens.forEach(it => {
+          const existente = itensMotoboy.find(i => i.nome === it.nome);
+          if (existente) {
+            existente.quantidade += it.quantidade;
+          } else {
+            itensMotoboy.push({ ...it });
+          }
+        }));
+
+      const fechamento: FechamentoConta = {
+        id: `fechamento-motoboy-${now.getTime()}-${input.motoboyId}`,
+        mesaId: `delivery-motoboy-${input.motoboyId}`,
+        mesaNumero: 0,
+        total: totalGeral,
+        formaPagamento: pagamentos[0]?.formaPagamento ?? "dinheiro",
+        pagamentos: pagamentos.length > 0 ? pagamentos : [{ id: `pag-${now.getTime()}`, formaPagamento: "dinheiro", valor: totalGeral }],
+        itens: itensMotoboy,
+        criadoEm: formatDateTime(now),
+        criadoEmIso: now.toISOString(),
+        caixaId: input.motoboyId,
+        caixaNome: `Motoboy: ${input.motoboyNome}`,
+      };
+
+      return {
+        ...prev,
+        fechamentos: [fechamento, ...prev.fechamentos],
+        eventos: appendEvent(prev.eventos, {
+          tipo: "caixa",
+          descricao: `Fechamento do motoboy ${input.motoboyNome} conferido por ${input.conferidoPor} — ${input.totalEntregas} entregas — Total R$ ${totalGeral.toFixed(2)}`,
+          usuarioNome: input.conferidoPor,
+          acao: "fechar_turno",
+          valor: totalGeral,
+        }),
+      };
+    });
+  }, []);
+
   const fecharContaBalcao = useCallback((pedidoId: string, input: FecharContaInput) => {
     setStore((prev) => {
       const pedido = prev.pedidosBalcao.find((p) => p.id === pedidoId);
