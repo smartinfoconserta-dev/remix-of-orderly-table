@@ -827,7 +827,7 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
         qrUrl: sysConfig.senhaWifi
           ? `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(`WIFI:T:WPA;S:${RESTAURANTE.nome};P:${sysConfig.senhaWifi};;`)}`
           : qrWifiFallback,
-        bgImage: sysConfig.wifiBg || undefined,
+        bgImage: sysConfig.wifiBg || bgWifiDefault,
       },
     ];
   }, []);
