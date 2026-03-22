@@ -395,10 +395,20 @@ export default function MotoboyPage() {
       {/* Tab content */}
       {activeTab === "rota" ? (
         <div className="flex-1 overflow-y-auto p-4 space-y-3 pb-24">
-          {/* Top-level scan button */}
-          <Button className="w-full h-12 gap-2 font-bold" variant="outline" onClick={() => handleScanQR()}>
-            <Camera className="w-5 h-5" /> 📷 Escanear pedido
-          </Button>
+          {/* Top-level scan + manual pick buttons */}
+          <div className="flex gap-2">
+            <Button className="flex-1 h-12 gap-2 font-bold" variant="outline" onClick={() => handleScanQR()}>
+              <Camera className="w-5 h-5" /> Escanear QR
+            </Button>
+            <Button
+              className="flex-1 h-12 gap-2 font-bold"
+              variant="outline"
+              onClick={() => setShowManualPick(true)}
+              disabled={pedidosDisponiveis.length === 0}
+            >
+              📋 Retirar ({pedidosDisponiveis.length})
+            </Button>
+          </div>
 
           {emRota.length === 0 ? (
             <div className="text-center py-16 text-muted-foreground">
