@@ -10,13 +10,10 @@ export interface OpcaoGrupo {
   preco: number; // 0 = grátis
 }
 
-export interface GrupoAdicional {
+export interface GrupoPersonalizacao {
   id: string;
   nome: string;
   obrigatorio: boolean;
-  tipo: "unico" | "multiplo"; // radio ou checkbox
-  min: number; // mínimo de escolhas (0 = opcional)
-  max: number; // máximo de escolhas (0 = sem limite)
   opcoes: OpcaoGrupo[];
 }
 
