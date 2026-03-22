@@ -4,6 +4,22 @@ export interface Adicional {
   preco: number;
 }
 
+export interface OpcaoGrupo {
+  id: string;
+  nome: string;
+  preco: number; // 0 = grátis
+}
+
+export interface GrupoAdicional {
+  id: string;
+  nome: string;
+  obrigatorio: boolean;
+  tipo: "unico" | "multiplo"; // radio ou checkbox
+  min: number; // mínimo de escolhas (0 = opcional)
+  max: number; // máximo de escolhas (0 = sem limite)
+  opcoes: OpcaoGrupo[];
+}
+
 export type ProductStep = "adicionais" | "bebida" | "remover" | "tipo" | "embalagem" | "quantidade";
 
 export interface Produto {
