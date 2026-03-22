@@ -816,7 +816,7 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
         qrUrl: sysConfig.instagramUrl
           ? `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(sysConfig.instagramUrl)}`
           : qrInstagramFallback,
-        bgImage: sysConfig.instagramBg || undefined,
+        bgImage: sysConfig.instagramBg || bgInstagramDefault,
       },
       {
         id: "wifi",
