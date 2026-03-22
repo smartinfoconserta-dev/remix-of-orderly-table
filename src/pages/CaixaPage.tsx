@@ -270,7 +270,21 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
     }
   }, []);
 
-  // Check master aviso every 30s
+  // Poll motoboy fechamentos every 5s
+  useEffect(() => {
+    const ler = () => {
+      try {
+        const raw = localStorage.getItem(FECHAMENTOS_MOTOBOY_KEY);
+        const lista = raw ? JSON.parse(raw) : [];
+        setFechamentosPendentes(lista.filter((f: any) => f.status === "aguardando"));
+      } catch {}
+    };
+    ler();
+    const id = setInterval(ler, 5000);
+    return () => clearInterval(id);
+  }, []);
+
+
   useEffect(() => {
     const checkAviso = () => {
       try {
