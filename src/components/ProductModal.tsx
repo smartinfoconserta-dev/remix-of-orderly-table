@@ -678,13 +678,43 @@ const ProductModal = ({ produto, onClose, onAdd, isGarcomMobile = false, skipEmb
     }
 
     if (step === "embalagem") {
-      return renderRadioStep({
-        value: pedidoAtual.viagem ?? "",
-        onChange: (value) => updatePedidoAtual("viagem", value),
-        options: embalagemOptions,
-        title: "Viagem ou consumo local",
-        description: "Informe como este item será servido para evitar erros de entrega.",
-      });
+      const querLevar = Boolean(pedidoAtual.viagem && pedidoAtual.viagem !== "");
+      return (
+        <div className="space-y-5">
+          <div>
+            <h3 className="text-base font-black text-foreground">Vai levar para viagem?</h3>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Deixe desmarcado se for consumir aqui no restaurante.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => updatePedidoAtual("viagem", querLevar ? "" : "Para viagem")}
+            className={`w-full flex items-center gap-4 rounded-2xl border-2 p-5 text-left transition-all active:scale-[0.99] ${
+              querLevar
+                ? "border-amber-500 bg-amber-500/10"
+                : "border-border bg-card hover:border-primary/30"
+            }`}
+          >
+            <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-2 transition-all ${
+              querLevar ? "border-amber-500 bg-amber-500" : "border-border bg-background"
+            }`}>
+              {querLevar && <span className="text-white text-sm font-black">✓</span>}
+            </div>
+            <div className="min-w-0">
+              <p className={`text-base font-black ${querLevar ? "text-amber-400" : "text-foreground"}`}>
+                🛍️ Embalar para viagem
+              </p>
+              <p className="text-sm text-muted-foreground mt-0.5">
+                {querLevar ? "Será embalado para levar" : "Toque para solicitar embalagem"}
+              </p>
+            </div>
+          </button>
+          <p className="text-xs text-muted-foreground text-center">
+            Pode pular se for comer aqui mesmo.
+          </p>
+        </div>
+      );
     }
 
     return (
