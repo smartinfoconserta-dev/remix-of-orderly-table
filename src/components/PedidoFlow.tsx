@@ -793,7 +793,7 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
   const productGrid = (
     <div
       key={categoryFadeKey}
-      className={`flex gap-4 overflow-x-auto pb-2 scrollbar-hide ${categoryFadeClass}`}
+      className={`grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4 ${categoryFadeClass}`}
     >
       {visibleProducts.map((produto, index) => {
         const isCardSelected = selectedProductCardId === produto.id;
@@ -801,7 +801,7 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
         return (
           <article
             key={produto.id}
-            className={`group w-[252px] shrink-0 overflow-hidden rounded-[1.75rem] border border-border bg-card text-left shadow-[0_20px_45px_-30px_hsl(var(--foreground)/0.8)] transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/30 card-fade-up ${
+            className={`group overflow-hidden rounded-[1.75rem] border border-border bg-card text-left shadow-[0_20px_45px_-30px_hsl(var(--foreground)/0.8)] transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/30 card-fade-up ${
               isCardSelected ? "scale-[1.01] shadow-[0_20px_44px_-24px_hsl(var(--foreground)/0.92)]" : ""
             }`}
             style={{
@@ -1015,12 +1015,12 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
 
   const desktopContent = (
     <div className={`flex flex-1 items-start transition-all duration-500 ${isClientIdle ? "brightness-[0.2] saturate-50" : "brightness-100 saturate-100"}`}>
-      <aside className="w-[19rem] shrink-0 overflow-y-auto border-r border-border bg-card/95 px-3 py-3 lg:w-[21rem] self-start sticky top-[73px] max-h-[calc(100vh-73px)]">
-        <div className="sticky top-0 z-10 rounded-[1.5rem] border border-border bg-background/85 px-5 py-5 backdrop-blur-md">
+      <aside className="w-[15rem] shrink-0 overflow-y-auto border-r border-border bg-card/95 px-3 py-3 lg:w-[17rem] self-start sticky top-[73px] max-h-[calc(100vh-73px)]">
+        <div className="sticky top-0 z-10 rounded-[1.5rem] border border-border bg-background/85 px-4 py-4 backdrop-blur-md">
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">{RESTAURANTE.nome}</p>
-          <p className="mt-2 text-lg font-black text-foreground">Cardápio</p>
+          <p className="mt-1 text-base font-black text-foreground">Cardápio</p>
         </div>
-        <nav className="mt-4 flex flex-col gap-2">
+        <nav className="mt-3 flex flex-col gap-2">
           {[HOME_TAB, ...categorias].map((cat) => {
             const selected = categoriaAtiva === cat.id;
 
@@ -1028,14 +1028,14 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
               <button
                 key={cat.id}
                 onClick={() => handleSelectCategoria(cat.id)}
-                className={`flex items-center gap-3 rounded-[1.15rem] border px-4 py-4 text-left text-sm font-semibold transition-all duration-300 ease-out ${
+                className={`flex items-center gap-3 rounded-[1.15rem] border px-3 py-2 text-left text-sm font-semibold transition-all duration-300 ease-out ${
                   selected
                     ? "border-primary/35 bg-secondary text-foreground shadow-[0_18px_40px_-28px_hsl(var(--primary)/0.9),inset_0_0_0_1px_hsl(var(--primary)/0.28)]"
                     : "border-transparent bg-transparent text-muted-foreground hover:border-border hover:bg-secondary/45 hover:text-foreground"
                 }`}
               >
-                <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border ${selected ? "border-primary/35 bg-primary/10 text-primary" : "border-border bg-secondary/55 text-foreground"}`}>
-                  <CategoryIcon name={cat.icone} className="h-4.5 w-4.5" />
+                <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-xl border ${selected ? "border-primary/35 bg-primary/10 text-primary" : "border-border bg-secondary/55 text-foreground"}`}>
+                  <CategoryIcon name={cat.icone} className="h-3.5 w-3.5" />
                 </div>
                 <span className="truncate">{cat.nome}</span>
               </button>

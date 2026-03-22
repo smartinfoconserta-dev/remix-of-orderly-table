@@ -155,7 +155,7 @@ const CartDrawer = ({
         className="absolute inset-0 bg-foreground/45 backdrop-blur-[2px]"
       />
 
-      <aside className={`absolute inset-y-0 right-0 flex h-full w-full max-w-md flex-col border-l border-border bg-card shadow-2xl ${isClosing ? "drawer-slide-out" : "animate-slide-in-right"}`}>
+      <aside className={`absolute inset-y-0 right-0 flex h-full w-full flex-col border-l border-border bg-card shadow-2xl ${isClosing ? "drawer-slide-out" : "animate-slide-in-right"}`}>
         {!showSuccessFeedback && !showSubmittingOverlay ? (
           <button
             type="button"
