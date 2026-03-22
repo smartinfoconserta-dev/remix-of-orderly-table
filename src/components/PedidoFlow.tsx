@@ -619,6 +619,23 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
         {restaurantIdentity}
       </div>
       <div className="flex shrink-0 items-center gap-2">
+        {(modo === "delivery" || modo === "cliente") && (
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+            <input
+              type="text"
+              placeholder="Buscar..."
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              className="h-9 w-36 rounded-xl border border-border bg-secondary pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:w-48 transition-all"
+            />
+            {searchQuery && (
+              <button onClick={() => setSearchQuery("")} className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                <X className="h-3.5 w-3.5" />
+              </button>
+            )}
+          </div>
+        )}
         {isGarcomMobile ? (
           <Button
             type="button"
