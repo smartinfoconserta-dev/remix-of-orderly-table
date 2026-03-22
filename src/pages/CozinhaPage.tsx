@@ -172,8 +172,15 @@ const CozinhaPage = () => {
         if (it.removidos.length > 0) line += `<div class="c-rem">- Sem ${it.removidos.join(", ")}</div>`;
         if (it.gruposEscolhidos?.length) {
           for (const g of it.gruposEscolhidos) {
-            const opcNomes = g.opcoes.map(o => o.preco > 0 ? `+ ${o.nome}` : o.nome);
-            line += `<div class="c-add">${g.grupoNome}: ${opcNomes.join(", ")}</div>`;
+            const t = (g as any).tipo || "adicional";
+            if (t === "retirar") {
+              line += `<div class="c-rem">SEM ${g.opcoes.map(o => o.nome).join(" • SEM ")}</div>`;
+            } else if (t === "adicional") {
+              const opcNomes = g.opcoes.map(o => `+ ${o.nome}${o.preco > 0 ? ` (${formatCurrency(o.preco)})` : ""}`);
+              line += `<div class="c-add">${opcNomes.join(" • ")}</div>`;
+            } else {
+              line += `<div class="c-add">${g.grupoNome}: ${g.opcoes.map(o => o.nome).join(", ")}</div>`;
+            }
           }
         }
         if (it.observacoes) line += `<div class="c-obs">${it.observacoes}</div>`;
