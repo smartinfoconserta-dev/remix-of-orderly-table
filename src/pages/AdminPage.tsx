@@ -429,20 +429,23 @@ const AdminPage = () => {
     );
   }
 
+  const nomeRestaurante = getSistemaConfig().nomeRestaurante || "Restaurante";
+
   return (
-    <div className="flex min-h-screen bg-background">
+    <div className="flex flex-col min-h-screen bg-gray-50">
+      {/* Title bar — Windows style */}
+      <div className="flex items-center justify-between px-4 py-2 shrink-0" style={{ backgroundColor: "#1e3a5f" }}>
+        <h1 className="text-sm font-bold text-white">Admin — {nomeRestaurante}</h1>
+        <Button variant="ghost" size="sm" className="h-7 px-2 text-white/80 hover:text-white hover:bg-white/10 text-xs gap-1" onClick={() => { setAuthenticated(false); setAuthName(""); setAuthPin(""); setAuthError(null); }}>
+          <LogOut className="h-3.5 w-3.5" />
+          Sair
+        </Button>
+      </div>
+
+      <div className="flex flex-1 min-h-0">
       {/* Sidebar */}
-      <aside className="flex w-[220px] shrink-0 flex-col border-r border-border bg-card">
-        <div className="flex items-center justify-between border-b border-border px-5 py-5">
-          <div>
-            <h1 className="text-lg font-black text-foreground">Admin</h1>
-            <p className="text-xs text-muted-foreground">Painel de controle</p>
-          </div>
-          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => { setAuthenticated(false); setAuthName(""); setAuthPin(""); setAuthError(null); }} title="Sair">
-            <LogOut className="h-4 w-4" />
-          </Button>
-        </div>
-        <nav className="flex-1 space-y-1 p-3">
+      <aside className="flex w-[200px] shrink-0 flex-col border-r border-gray-300 bg-gray-50">
+        <nav className="flex-1 py-2">
           {sidebarSections.map((s) => {
             const Icon = s.icon;
             const active = tab === s.id;
@@ -451,10 +454,10 @@ const AdminPage = () => {
                 key={s.id}
                 type="button"
                 onClick={() => setTab(s.id)}
-                className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-colors ${
+                className={`flex w-full items-center gap-3 px-4 py-2 text-sm font-semibold transition-colors ${
                   active
-                    ? "bg-primary/15 text-primary"
-                    : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                    ? "bg-blue-100 text-blue-800 border-l-2 border-blue-600"
+                    : "text-gray-700 hover:bg-blue-50"
                 }`}
               >
                 <Icon className="h-4 w-4" />
@@ -466,7 +469,7 @@ const AdminPage = () => {
       </aside>
 
       {/* Content */}
-      <main className="flex-1 overflow-y-auto p-6 md:p-8" key={tab}>
+      <main className="flex-1 overflow-y-auto p-6 md:p-8 bg-gray-50" key={tab}>
         {/* ═══ CARDÁPIO ═══ */}
         {tab === "cardapio" && (
           <div className="space-y-5 fade-in">
@@ -638,12 +641,12 @@ const AdminPage = () => {
 
             {/* Edit / New modal */}
             <Dialog open={!!editProduct} onOpenChange={(open) => !open && setEditProduct(null)}>
-              <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+              <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-visible">
                 <DialogHeader>
                   <DialogTitle>{isNewProduct ? "Novo produto" : "Editar produto"}</DialogTitle>
                   <DialogDescription>{isNewProduct ? "Preencha os campos para adicionar um produto." : "Altere os campos desejados e salve."}</DialogDescription>
                 </DialogHeader>
-                <div className="space-y-4 pt-2">
+                <div className="overflow-y-auto max-h-[calc(90vh-80px)] pr-1 space-y-4 pt-2">
                   <div className="space-y-1.5">
                     <label className="text-xs font-bold text-muted-foreground">Nome</label>
                     <Input value={editForm.nome} onChange={(e) => setEditForm((f) => ({ ...f, nome: e.target.value }))} />
@@ -660,7 +663,7 @@ const AdminPage = () => {
                     <label className="text-xs font-bold text-muted-foreground">Categoria</label>
                     <Select value={editForm.categoria} onValueChange={(v) => setEditForm((f) => ({ ...f, categoria: v }))}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>
+                      <SelectContent position="popper" sideOffset={4}>
                         {todasCategorias.map((c) => (
                           <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>
                         ))}
@@ -1651,6 +1654,7 @@ const AdminPage = () => {
           </div>
         )}
       </main>
+      </div>
     </div>
   );
 };
