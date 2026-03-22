@@ -41,7 +41,7 @@ export interface PedidoRealizado {
   formaPagamentoDelivery?: string;
   trocoParaQuanto?: number;
   observacaoGeral?: string;
-  statusBalcao?: "aberto" | "pronto" | "pago" | "saiu" | "entregue" | "aguardando_confirmacao";
+  statusBalcao?: "aberto" | "pronto" | "pago" | "saiu" | "entregue" | "aguardando_confirmacao" | "devolvido";
   motoboyNome?: string;
 }
 
