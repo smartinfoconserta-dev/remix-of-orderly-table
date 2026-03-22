@@ -210,8 +210,8 @@ const CartDrawer = ({
               <h2 className="text-xl font-black text-foreground">Carrinho do pedido</h2>
               <p className="text-sm text-muted-foreground">
                 {carrinho.length > 0
-                  ? "Os itens abaixo ainda não foram enviados para a cozinha."
-                  : "Seu carrinho está vazio no momento. Adicione itens para montar o pedido."}
+                  ? "Revise e envie quando estiver pronto."
+                  : "Nenhum item adicionado ainda."}
               </p>
             </div>
 
