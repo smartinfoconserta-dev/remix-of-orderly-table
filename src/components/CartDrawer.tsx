@@ -187,7 +187,7 @@ const CartDrawer = ({
               <h3 className="text-2xl font-black text-foreground">Pedido enviado com sucesso</h3>
               <p className="text-sm text-muted-foreground">Seu pedido foi recebido e o sistema voltou para um estado seguro de operação.</p>
             </div>
-            <Button type="button" onClick={handleSuccessOk} className="h-12 w-full rounded-2xl font-black">
+            <Button type="button" onClick={handleSuccessOk} className="mx-auto h-12 px-8 rounded-2xl font-black">
               OK
             </Button>
           </div>
