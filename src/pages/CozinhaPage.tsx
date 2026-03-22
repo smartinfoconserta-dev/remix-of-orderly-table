@@ -176,7 +176,7 @@ const CozinhaPage = () => {
             if (t === "retirar") {
               line += `<div class="c-rem">SEM ${g.opcoes.map(o => o.nome).join(" • SEM ")}</div>`;
             } else if (t === "adicional") {
-              const opcNomes = g.opcoes.map(o => `+ ${o.nome}${o.preco > 0 ? ` (${formatCurrency(o.preco)})` : ""}`);
+              const opcNomes = g.opcoes.map(o => `+ ${o.nome}${o.preco > 0 ? ` (R$ ${o.preco.toFixed(2).replace(".", ",")})` : ""}`);
               line += `<div class="c-add">${opcNomes.join(" • ")}</div>`;
             } else {
               line += `<div class="c-add">${g.grupoNome}: ${g.opcoes.map(o => o.nome).join(", ")}</div>`;
