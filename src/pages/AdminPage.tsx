@@ -432,7 +432,7 @@ const AdminPage = () => {
   const nomeRestaurante = getSistemaConfig().nomeRestaurante || "Restaurante";
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50">
+    <div className="flex flex-col min-h-screen bg-background">
       {/* Title bar — Windows style */}
       <div className="flex items-center justify-between px-4 py-2 shrink-0" style={{ backgroundColor: "#1e3a5f" }}>
         <h1 className="text-sm font-bold text-white">Admin — {nomeRestaurante}</h1>
@@ -444,7 +444,7 @@ const AdminPage = () => {
 
       <div className="flex flex-1 min-h-0">
       {/* Sidebar */}
-      <aside className="flex w-[200px] shrink-0 flex-col border-r border-gray-300 bg-gray-50">
+      <aside className="flex w-[200px] shrink-0 flex-col border-r border-border bg-card">
         <nav className="flex-1 py-2">
           {sidebarSections.map((s) => {
             const Icon = s.icon;
@@ -456,8 +456,8 @@ const AdminPage = () => {
                 onClick={() => setTab(s.id)}
                 className={`flex w-full items-center gap-3 px-4 py-2 text-sm font-semibold transition-colors ${
                   active
-                    ? "bg-blue-100 text-blue-800 border-l-2 border-blue-600"
-                    : "text-gray-700 hover:bg-blue-50"
+                    ? "bg-primary/15 text-primary border-l-2 border-primary"
+                    : "text-muted-foreground hover:bg-secondary"
                 }`}
               >
                 <Icon className="h-4 w-4" />
@@ -469,7 +469,7 @@ const AdminPage = () => {
       </aside>
 
       {/* Content */}
-      <main className="flex-1 overflow-y-auto p-6 md:p-8 bg-gray-50" key={tab}>
+      <main className="flex-1 overflow-y-auto p-6 md:p-8 bg-background" key={tab}>
         {/* ═══ CARDÁPIO ═══ */}
         {tab === "cardapio" && (
           <div className="space-y-5 fade-in">
