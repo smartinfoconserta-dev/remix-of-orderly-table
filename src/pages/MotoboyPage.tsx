@@ -42,6 +42,7 @@ export default function MotoboyPage() {
   const [loginError, setLoginError] = useState("");
   const [scanningPedidoId, setScanningPedidoId] = useState<string | null>(null);
   const [generalScan, setGeneralScan] = useState(false);
+  const [showManualPick, setShowManualPick] = useState(false);
   const [activeTab, setActiveTab] = useState<"rota" | "entregues">("rota");
   const [ordem, setOrdem] = useState<string[]>(() => getOrdem());
   const [draggingId, setDraggingId] = useState<string | null>(null);
