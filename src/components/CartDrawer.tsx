@@ -44,6 +44,7 @@ const CartDrawer = ({
   const [showSuccessFeedback, setShowSuccessFeedback] = useState(false);
   const [showSubmittingOverlay, setShowSubmittingOverlay] = useState(false);
   const [countdown, setCountdown] = useState(10);
+  const [showConfirmEnvio, setShowConfirmEnvio] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
   const lockTimerRef = useRef<number | null>(null);
 
@@ -168,7 +169,7 @@ const CartDrawer = ({
       />
 
       <aside className={`absolute inset-y-0 right-0 flex h-full w-full flex-col border-l border-border bg-card shadow-2xl ${isClosing ? "drawer-slide-out" : "animate-slide-in-right"}`}>
-        {!showSuccessFeedback && !showSubmittingOverlay ? (
+        {!showSuccessFeedback && !showSubmittingOverlay && !showConfirmEnvio ? (
           <button
             type="button"
             onClick={handleClose}
@@ -179,7 +180,38 @@ const CartDrawer = ({
           </button>
         ) : null}
 
-        {showSubmittingOverlay ? (
+        {showConfirmEnvio && !showSubmittingOverlay && !showSuccessFeedback ? (
+          <div className="flex flex-1 flex-col items-center justify-center gap-6 p-8 text-center">
+            <div className="space-y-2">
+              <h3 className="text-2xl font-black text-foreground">Tudo certo no seu pedido?</h3>
+              <p className="text-base text-muted-foreground">Quer adicionar mais alguma coisa antes de enviar?</p>
+            </div>
+            <div className="flex gap-3 w-full max-w-xs">
+              <Button
+                type="button"
+                variant="outline"
+                className="flex-1 h-12 rounded-2xl font-bold"
+                onClick={() => {
+                  setShowConfirmEnvio(false);
+                  onContinueOrdering?.();
+                  onOpenChange?.(false);
+                }}
+              >
+                ＋ Adicionar mais itens
+              </Button>
+              <Button
+                type="button"
+                className="flex-1 h-12 rounded-2xl font-black bg-emerald-600 hover:bg-emerald-700 text-white"
+                onClick={() => {
+                  setShowConfirmEnvio(false);
+                  handleConfirmar();
+                }}
+              >
+                Enviar para a cozinha
+              </Button>
+            </div>
+          </div>
+        ) : showSubmittingOverlay ? (
           <div className="flex flex-1 flex-col items-center justify-center gap-6 p-8 text-center">
             <div className="relative flex h-24 w-24 items-center justify-center rounded-full bg-primary/10">
               <div className="absolute inset-0 rounded-full border-4 border-primary/20 border-t-primary animate-spin" />
@@ -340,20 +372,11 @@ const CartDrawer = ({
                       </Button>
                       <Button
                         type="button"
-                        onClick={handleConfirmar}
+                        onClick={() => setShowConfirmEnvio(true)}
                         disabled={isSubmitting || isLocked || showSubmittingOverlay}
                         className="h-12 rounded-2xl font-black"
                       >
-                        {isSubmitting || showSubmittingOverlay ? (
-                          <span className="inline-flex items-center gap-2">
-                            <LoaderCircle className="h-4 w-4 animate-spin" />
-                            Enviando...
-                          </span>
-                        ) : isLocked ? (
-                          "Aguarde 2s"
-                        ) : (
-                          "Enviar pedido"
-                        )}
+                        Enviar pedido
                       </Button>
                     </div>
                   </div>
