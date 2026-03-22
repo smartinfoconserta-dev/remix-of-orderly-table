@@ -76,7 +76,7 @@ const MinhaContaDrawer = ({ pedidos, total, open, onOpenChange }: MinhaContaDraw
               </div>
               <div className="w-20 text-right">
                 <p className="text-[10px] text-muted-foreground">Cada um</p>
-                <p className={`text-sm font-black tabular-nums transition-colors ${
+                <p className={`text-base font-black tabular-nums transition-colors ${
                   numeroDePessoas > 1 ? "text-primary" : "text-muted-foreground/25"
                 }`}>
                   {formatPrice(valorPorPessoa)}

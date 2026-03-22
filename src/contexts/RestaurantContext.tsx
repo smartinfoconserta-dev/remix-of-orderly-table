@@ -296,6 +296,8 @@ const normalizeItem = (item: Partial<ItemCarrinho>, index = 0): ItemCarrinho => 
   embalagem: item.embalagem ?? null,
   observacoes: item.observacoes ?? "",
   precoUnitario: Number(item.precoUnitario ?? item.precoBase ?? 0),
+  imagemUrl: item.imagemUrl ?? undefined,
+  gruposEscolhidos: Array.isArray(item.gruposEscolhidos) ? item.gruposEscolhidos : undefined,
 });
 
 const normalizePedido = (pedido: Partial<PedidoRealizado>, mesaId: string, index = 0): PedidoRealizado => {
