@@ -43,11 +43,13 @@ export default function MotoboyPage() {
   const [scanningPedidoId, setScanningPedidoId] = useState<string | null>(null);
   const [generalScan, setGeneralScan] = useState(false);
   const [showManualPick, setShowManualPick] = useState(false);
+  const [confirmandoPedido, setConfirmandoPedido] = useState<typeof pedidosBalcao[0] | null>(null);
+  const [confirmandoEntregue, setConfirmandoEntregue] = useState<typeof pedidosBalcao[0] | null>(null);
+  const [confirmandoDevolvido, setConfirmandoDevolvido] = useState<typeof pedidosBalcao[0] | null>(null);
+  const [motivoDevolucao, setMotivoDevolucao] = useState("");
   const [activeTab, setActiveTab] = useState<"rota" | "entregues">("rota");
   const [ordem, setOrdem] = useState<string[]>(() => getOrdem());
   const [draggingId, setDraggingId] = useState<string | null>(null);
-  const [cancelingId, setCancelingId] = useState<string | null>(null);
-  const [cancelMotivo, setCancelMotivo] = useState("");
   const dragOverId = useRef<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
