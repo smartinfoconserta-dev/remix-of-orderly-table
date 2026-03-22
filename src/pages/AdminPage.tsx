@@ -179,7 +179,7 @@ const AdminPage = () => {
     };
     setEditProduct(newProduct);
     setIsNewProduct(true);
-    setEditForm({ nome: "", descricao: "", preco: "", categoria: newProduct.categoria, imagem: "", imagemBase64: "", tipoOptionsStr: "", embalagemOptionsStr: "" });
+    setEditForm({ nome: "", descricao: "", preco: "", categoria: newProduct.categoria, imagem: "", imagemBase64: "" });
   }, []);
 
   const saveEdit = useCallback(() => {
