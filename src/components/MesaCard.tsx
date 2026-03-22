@@ -17,14 +17,14 @@ const MesaCard = ({ mesa, onClick, showTotal = true, showIndicators = true, time
   const hasParaViagem = pedidos.some((p) => p.paraViagem === true);
 
   const toneClass = chamarGarcom
-    ? "border-red-400 bg-red-50"
+    ? "border-destructive/50 bg-destructive/8"
     : status === "pendente"
-      ? "border-red-400 bg-red-50 animate-[pulse_2s_ease-in-out_infinite]"
+      ? "border-status-pendente/50 bg-status-pendente/8 animate-[pulse_2s_ease-in-out_infinite]"
       : status === "consumo"
-        ? "border-green-400 bg-green-50"
+        ? "border-status-consumo/50 bg-status-consumo/8"
         : subtle
-          ? "border-gray-200 bg-white opacity-60"
-          : "border-gray-200 bg-white";
+          ? "border-border bg-card opacity-60"
+          : "border-border bg-card";
 
   return (
     <button
