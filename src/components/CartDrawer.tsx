@@ -180,28 +180,31 @@ const CartDrawer = ({
         ) : null}
 
         {showSubmittingOverlay ? (
-          <div className="flex flex-1 flex-col items-center justify-center gap-6 bg-card/95 p-6 text-center animate-enter">
-            <div className="relative flex h-24 w-24 items-center justify-center rounded-full border border-primary/20 bg-primary/10 text-primary shadow-[0_0_40px_hsl(var(--primary)/0.2)]">
-              <span className="absolute inset-0 rounded-full border border-primary/25 pulse" />
-              <LoaderCircle className="relative z-10 h-11 w-11 animate-spin" />
+          <div className="flex flex-1 flex-col items-center justify-center gap-6 p-8 text-center">
+            <div className="relative flex h-24 w-24 items-center justify-center rounded-full bg-primary/10">
+              <div className="absolute inset-0 rounded-full border-4 border-primary/20 border-t-primary animate-spin" />
+              <ShoppingCart className="h-10 w-10 text-primary" />
             </div>
             <div className="space-y-2">
               <h3 className="text-2xl font-black text-foreground">Enviando pedido...</h3>
-              <p className="text-sm text-muted-foreground">Estamos confirmando os itens e registrando o pedido com segurança.</p>
+              <p className="text-sm text-muted-foreground">Aguarde, estamos registrando seus itens.</p>
             </div>
           </div>
         ) : showSuccessFeedback ? (
-          <div className="flex flex-1 flex-col items-center justify-center gap-5 p-6 text-center animate-enter">
-            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-primary/10 text-primary shadow-[0_0_36px_hsl(var(--primary)/0.18)]">
-              <CheckCircle2 className="h-10 w-10" />
+          <div className="flex flex-1 flex-col items-center justify-center gap-6 p-8 text-center">
+            <div className="relative flex h-24 w-24 items-center justify-center rounded-full bg-emerald-500/15">
+              <div className="absolute inset-0 rounded-full bg-emerald-500/10 animate-ping" />
+              <CheckCircle2 className="h-12 w-12 text-emerald-500 relative z-10" />
             </div>
             <div className="space-y-2">
-              <h3 className="text-2xl font-black text-foreground">Pedido enviado com sucesso</h3>
-              <p className="text-sm text-muted-foreground">Seu pedido foi recebido e o sistema voltou para um estado seguro de operação.</p>
+              <h3 className="text-3xl font-black text-foreground">Pedido enviado!</h3>
+              <p className="text-base text-muted-foreground">A cozinha já recebeu seu pedido.</p>
             </div>
-            <Button type="button" onClick={handleSuccessOk} className="mx-auto h-12 px-8 rounded-2xl font-black">
-              OK
+            <Button type="button" onClick={handleSuccessOk} className="h-14 px-10 rounded-2xl font-black text-base gap-2 bg-emerald-600 hover:bg-emerald-700 text-white">
+              <CheckCircle2 className="h-5 w-5" />
+              OK, obrigado!
             </Button>
+            <p className="text-sm text-muted-foreground">Voltando ao cardápio em {countdown}s...</p>
           </div>
         ) : (
           <>
