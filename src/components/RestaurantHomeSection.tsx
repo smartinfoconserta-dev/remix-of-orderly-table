@@ -29,7 +29,7 @@ const RestaurantHomeSection = ({ config, featuredProducts, onOpenProduct }: Prop
       qrLabel: "QR Code do Instagram do restaurante",
       dataValue: sistemaConfig.instagramUrl,
       fallbackQr: qrInstagramFallback,
-      bgImage: sistemaConfig.instagramBg,
+      bgImage: sistemaConfig.instagramBg || bgInstagramDefault,
     },
     {
       id: "wifi",
