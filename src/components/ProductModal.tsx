@@ -329,7 +329,7 @@ const ProductModal = ({ produto, onClose, onAdd, isGarcomMobile = false, skipEmb
       const meta = getStepMeta(stepId);
       if (meta.optional) return true;
       if (stepId === "tipo") return Boolean(pedidoAtual.tipo);
-      if (stepId === "embalagem") return Boolean(pedidoAtual.viagem);
+      if (stepId === "embalagem") return true;
       if (stepId === "quantidade") return pedidoAtual.quantidade >= 1;
       // Grupo obrigatório
       if (stepId.startsWith("grupo-")) {
