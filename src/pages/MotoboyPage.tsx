@@ -12,6 +12,7 @@ import jsQR from "jsqr";
 const SESSAO_KEY = "obsidian-motoboy-sessao-v1";
 const MOTOBOY_LIST_KEY = "obsidian-motoboys-v1";
 const ORDEM_KEY = "obsidian-motoboy-ordem-v1";
+const FECHAMENTOS_KEY = "obsidian-motoboy-fechamentos-v1";
 
 type Motoboy = { id: string; nome: string; pinHash: string; ativo: boolean };
 
