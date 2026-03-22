@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { AlertTriangle, ArrowLeft, Bell, Instagram, LockKeyhole, Plus, RefreshCw, Search, ShoppingBag, ShoppingCart, Unlink, Wallet, Wifi, X } from "lucide-react";
 import qrInstagramFallback from "@/assets/qr-instagram-premium.png";
 import qrWifiFallback from "@/assets/qr-wifi-premium.png";
+import bgInstagramDefault from "@/assets/bg-instagram-card.jpg";
+import bgWifiDefault from "@/assets/bg-wifi-card.jpg";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import CategoryTabs from "@/components/CategoryTabs";
