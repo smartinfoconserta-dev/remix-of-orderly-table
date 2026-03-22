@@ -693,10 +693,32 @@ const GerentePage = () => {
 
             {/* ── KPI Cards ── */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div className="col-span-2 rounded-2xl border border-border bg-card p-4 space-y-3">
+                <div className="flex items-center gap-2">
+                  <TrendingUp className="h-4 w-4 text-primary" />
+                  <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Total faturado no período</p>
+                </div>
+                <p className="text-3xl font-black tabular-nums text-primary">{formatPrice(relTotalFaturado)}</p>
+                <div className="grid grid-cols-3 gap-3 pt-2 border-t border-border">
+                  <div className="space-y-0.5">
+                    <p className="text-[10px] font-bold uppercase text-muted-foreground">🍽️ Mesas</p>
+                    <p className="text-lg font-black tabular-nums text-foreground">{formatPrice(totalMesas)}</p>
+                    <p className="text-xs text-muted-foreground">{fechMesas.length} comandas</p>
+                  </div>
+                  <div className="space-y-0.5">
+                    <p className="text-[10px] font-bold uppercase text-muted-foreground">🛵 Delivery</p>
+                    <p className="text-lg font-black tabular-nums text-foreground">{formatPrice(totalDelivery)}</p>
+                    <p className="text-xs text-muted-foreground">{fechDelivery.length} pedidos</p>
+                  </div>
+                  <div className="space-y-0.5">
+                    <p className="text-[10px] font-bold uppercase text-muted-foreground">🏍️ Motoboys</p>
+                    <p className="text-lg font-black tabular-nums text-foreground">{formatPrice(totalMotoboys)}</p>
+                    <p className="text-xs text-muted-foreground">{fechMotoboys.length} fechamentos</p>
+                  </div>
+                </div>
+              </div>
               {[
-                { label: "Total faturado", value: formatPrice(relTotalFaturado), icon: TrendingUp, color: "text-primary" },
                 { label: "Ticket médio", value: formatPrice(relTicketMedio), icon: BarChart3, color: "text-amber-400" },
-                { label: "Comandas fechadas", value: String(relComandasFechadas), icon: ClipboardList, color: "text-emerald-400" },
                 { label: "Pedidos realizados", value: String(relPedidosRealizados), icon: ClipboardList, color: "text-purple-400" },
               ].map((kpi) => {
                 const Icon = kpi.icon;
