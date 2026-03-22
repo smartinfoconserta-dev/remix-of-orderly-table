@@ -19,7 +19,7 @@ const getMotoboys = (): Motoboy[] => {
   try { const raw = localStorage.getItem(MOTOBOY_LIST_KEY); return raw ? JSON.parse(raw) : []; } catch { return []; }
 };
 
-const getSessao = (): { id: string; nome: string } | null => {
+const getSessao = (): { id: string; nome: string; fundoTroco: number } | null => {
   try { const raw = localStorage.getItem(SESSAO_KEY); return raw ? JSON.parse(raw) : null; } catch { return null; }
 };
 
