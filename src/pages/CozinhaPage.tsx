@@ -170,6 +170,12 @@ const CozinhaPage = () => {
         let line = `<div class="c-item"><span class="c-qty">${it.quantidade}x</span> ${it.nome}</div>`;
         if (it.adicionais.length > 0) line += `<div class="c-add">+ ${it.adicionais.map((a) => a.nome).join(", ")}</div>`;
         if (it.removidos.length > 0) line += `<div class="c-rem">- Sem ${it.removidos.join(", ")}</div>`;
+        if (it.gruposEscolhidos?.length) {
+          for (const g of it.gruposEscolhidos) {
+            const opcNomes = g.opcoes.map(o => o.preco > 0 ? `+ ${o.nome}` : o.nome);
+            line += `<div class="c-add">${g.grupoNome}: ${opcNomes.join(", ")}</div>`;
+          }
+        }
         if (it.observacoes) line += `<div class="c-obs">${it.observacoes}</div>`;
         return line;
       }).join("");
@@ -370,6 +376,11 @@ ${pedido.observacaoGeral ? `<div class="c-obs">Obs: ${pedido.observacaoGeral}</d
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-bold text-foreground leading-snug">{item.nome}</p>
                       {item.adicionais.length > 0 && <p className="text-xs text-primary mt-0.5">+ {item.adicionais.map((a) => a.nome).join(", ")}</p>}
+                      {item.gruposEscolhidos?.map((g, gi) => (
+                        <p key={gi} className="text-xs text-primary mt-0.5">
+                          {g.grupoNome}: {g.opcoes.map(o => o.preco > 0 ? `+ ${o.nome}` : o.nome).join(", ")}
+                        </p>
+                      ))}
                       {item.removidos.length > 0 && <p className="text-xs text-destructive mt-0.5">Sem {item.removidos.join(", ")}</p>}
                       {item.observacoes && <p className="text-xs text-muted-foreground italic mt-0.5">{item.observacoes}</p>}
                     </div>
