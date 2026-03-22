@@ -372,15 +372,15 @@ const ProductModal = ({ produto, onClose, onAdd, isGarcomMobile = false, skipEmb
     if (!flowSteps.every((step) => validarEtapa(step))) return;
 
     // Build gruposEscolhidos for ItemCarrinho
-    const gruposData: { grupoNome: string; opcoes: { nome: string; preco: number }[] }[] = [];
+    const gruposData: { grupoNome: string; tipo: "escolha" | "adicional" | "retirar"; opcoes: { nome: string; preco: number }[] }[] = [];
     for (const grupo of sortedGrupos) {
       const escolhidos = pedidoAtual.gruposEscolhidos[grupo.id] || [];
       if (escolhidos.length > 0) {
         const opcoes = escolhidos
           .map(id => grupo.opcoes.find(o => o.id === id))
           .filter(Boolean)
-          .map(o => ({ nome: o!.nome, preco: o!.preco }));
-        gruposData.push({ grupoNome: grupo.nome, opcoes });
+          .map(o => ({ nome: o!.nome, preco: grupo.tipo === "retirar" ? 0 : o!.preco }));
+        gruposData.push({ grupoNome: grupo.nome, tipo: grupo.tipo || "adicional", opcoes });
       }
     }
 
