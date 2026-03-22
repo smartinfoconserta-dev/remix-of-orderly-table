@@ -265,6 +265,30 @@ const GerentePage = () => {
   const relComandasFechadas = fechFiltrados.length;
   const relTicketMedio = relComandasFechadas > 0 ? relTotalFaturado / relComandasFechadas : 0;
 
+  const fechMesas = useMemo(() =>
+    fechFiltrados.filter(f =>
+      !String(f.mesaId || "").startsWith("balcao-") &&
+      !String(f.mesaId || "").startsWith("delivery-motoboy-")
+    ),
+    [fechFiltrados]
+  );
+  const fechDelivery = useMemo(() =>
+    fechFiltrados.filter(f =>
+      String(f.mesaId || "").startsWith("balcao-") &&
+      !String(f.mesaId || "").startsWith("delivery-motoboy-")
+    ),
+    [fechFiltrados]
+  );
+  const fechMotoboys = useMemo(() =>
+    fechFiltrados.filter(f =>
+      String(f.mesaId || "").startsWith("delivery-motoboy-")
+    ),
+    [fechFiltrados]
+  );
+  const totalMesas = useMemo(() => fechMesas.reduce((a, f) => a + f.total, 0), [fechMesas]);
+  const totalDelivery = useMemo(() => fechDelivery.reduce((a, f) => a + f.total, 0), [fechDelivery]);
+  const totalMotoboys = useMemo(() => fechMotoboys.reduce((a, f) => a + f.total, 0), [fechMotoboys]);
+
   const relPedidosRealizados = allEventos.filter((e) => {
     const d = new Date(e.criadoEmIso);
     return d >= dateRange.start && d <= dateRange.end && (e.acao === "pedido_cliente" || e.acao === "lancar_pedido");
