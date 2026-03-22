@@ -43,46 +43,38 @@ const MinhaContaDrawer = ({ pedidos, total, open, onOpenChange }: MinhaContaDraw
       </div>
 
       {/* Total + dividir — linha única, layout FIXO */}
-      <div className="border-b border-border px-4 py-3 shrink-0 bg-secondary/30">
-        <div className="flex items-center justify-between gap-3">
-
-          {/* Total — lado esquerdo */}
+      <div className="shrink-0 px-4 py-3 border-b border-border">
+        <div className="flex items-center justify-between gap-2">
+          {/* Total esquerda */}
           <div className="min-w-0">
             <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Total</p>
             <p className="text-2xl font-black text-foreground tabular-nums">{fmt(total)}</p>
           </div>
-
-          {/* Dividir conta — lado direito, tamanho FIXO, não move */}
-          <div className="shrink-0 space-y-1.5">
-            <div className="flex items-center gap-1.5 text-muted-foreground">
-              <Users className="h-3.5 w-3.5" />
-              <span className="text-xs font-bold">Dividir</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => setN(prev => Math.max(1, prev - 1))}
-                disabled={n <= 1}
-                className="h-8 w-8 shrink-0 flex items-center justify-center rounded-full border border-border bg-secondary text-foreground disabled:opacity-30"
-              >
-                <Minus className="h-3.5 w-3.5" />
-              </button>
-              <span className="w-6 text-center text-base font-black text-foreground tabular-nums">{n}</span>
-              <button
-                onClick={() => setN(prev => prev + 1)}
-                className="h-8 w-8 shrink-0 flex items-center justify-center rounded-full border border-border bg-secondary text-foreground"
-              >
-                <Plus className="h-3.5 w-3.5" />
-              </button>
-            </div>
-            {/* Cada um — SEMPRE ocupa este espaço, só muda a cor */}
-            <div className="w-24 text-center">
-              <p className="text-[10px] text-muted-foreground">Cada um</p>
-              <p className={`text-base font-black tabular-nums transition-colors ${n > 1 ? "text-primary" : "text-muted-foreground/20"}`}>
+          {/* Dividir + controles + cada um — tudo numa linha horizontal */}
+          <div className="shrink-0 flex items-center gap-2">
+            <Users className="h-4 w-4 text-muted-foreground shrink-0" />
+            <span className="text-xs font-bold text-muted-foreground whitespace-nowrap">Dividir</span>
+            <button
+              onClick={() => setN(prev => Math.max(1, prev - 1))}
+              disabled={n <= 1}
+              className="h-8 w-8 shrink-0 flex items-center justify-center rounded-full border border-border bg-secondary text-foreground disabled:opacity-30 active:scale-90 transition-transform"
+            >
+              <Minus className="h-3.5 w-3.5" />
+            </button>
+            <span className="w-6 text-center text-base font-black text-foreground tabular-nums shrink-0">{n}</span>
+            <button
+              onClick={() => setN(prev => prev + 1)}
+              className="h-8 w-8 shrink-0 flex items-center justify-center rounded-full border border-border bg-secondary text-foreground active:scale-90 transition-transform"
+            >
+              <Plus className="h-3.5 w-3.5" />
+            </button>
+            <div className="w-16 shrink-0 text-right">
+              <p className="text-[10px] text-muted-foreground leading-tight">Cada um</p>
+              <p className={`text-sm font-black tabular-nums leading-tight ${n > 1 ? "text-primary" : "text-muted-foreground/25"}`}>
                 {fmt(porPessoa)}
               </p>
             </div>
           </div>
-
         </div>
       </div>
 
