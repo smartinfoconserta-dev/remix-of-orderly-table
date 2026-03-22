@@ -349,7 +349,7 @@ export default function PedidoPage() {
   // ── Cardápio (full screen PedidoFlow) ──
   if (etapa === "cardapio") {
     return (
-      <div className="fixed inset-0 z-50 bg-background">
+      <div className="min-h-screen bg-background">
         <PedidoFlow
           modo="delivery"
           clienteNome={nome || loggedClient?.nome || ""}
