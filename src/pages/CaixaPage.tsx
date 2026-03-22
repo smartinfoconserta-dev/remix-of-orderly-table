@@ -556,6 +556,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
       if (currentOperator && !ops.includes(currentOperator.id)) {
         localStorage.setItem(OPERADORES_KEY, JSON.stringify([...ops, currentOperator.id]));
       }
+      localStorage.setItem("obsidian-caixa-modo-v1", modoOperacao);
       abrirCaixa(valor, currentOperator);
       toast.success("Caixa aberto com sucesso!", { duration: 1200, icon: "✅" });
     };
