@@ -163,8 +163,6 @@ const AdminPage = () => {
       categoria: product.categoria,
       imagem: product.imagem,
       imagemBase64: product.imagemBase64 || "",
-      tipoOptionsStr: product.tipoOptions?.join(", ") ?? "",
-      embalagemOptionsStr: product.embalagemOptions?.join(", ") ?? "",
     });
   }, []);
 
