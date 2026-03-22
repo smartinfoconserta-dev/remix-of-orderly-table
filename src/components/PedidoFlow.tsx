@@ -939,55 +939,29 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
           </div>
         </div>
         <div className="relative pt-1">
-          {isGarcomMobile ? (
-            <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
-              {featuredProducts.map((produto) => (
-                <button
-                  key={produto.id}
-                  type="button"
-                  onClick={() => handleOpenProductModal(produto)}
-                  className="group w-[252px] shrink-0 overflow-hidden rounded-[1.75rem] border border-border bg-card text-left shadow-[0_20px_45px_-30px_hsl(var(--foreground)/0.8)] transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/30"
-                >
-                  <div className="aspect-[4/3] overflow-hidden">
-                    <img src={produto.imagem} alt={produto.nome} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]" loading="lazy" />
-                  </div>
-                  <div className="space-y-3 p-4">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <h2 className="line-clamp-1 text-base font-black text-foreground">{produto.nome}</h2>
-                        <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{produto.descricao}</p>
-                      </div>
-                      <span className="shrink-0 rounded-full border border-border bg-secondary px-3 py-1 text-sm font-black text-foreground">{formatPrice(produto.preco)}</span>
+          <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
+            {featuredProducts.map((produto) => (
+              <button
+                key={produto.id}
+                type="button"
+                onClick={() => handleOpenProductModal(produto)}
+                className="group w-[252px] shrink-0 overflow-hidden rounded-[1.75rem] border border-border bg-card text-left shadow-[0_20px_45px_-30px_hsl(var(--foreground)/0.8)] transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/30"
+              >
+                <div className="aspect-[4/3] overflow-hidden">
+                  <img src={produto.imagem} alt={produto.nome} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]" loading="lazy" />
+                </div>
+                <div className="space-y-3 p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <h2 className="line-clamp-1 text-base font-black text-foreground">{produto.nome}</h2>
+                      <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{produto.descricao}</p>
                     </div>
+                    <span className="shrink-0 rounded-full border border-border bg-secondary px-3 py-1 text-sm font-black text-foreground">{formatPrice(produto.preco)}</span>
                   </div>
-                </button>
-              ))}
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
-              {featuredProducts.map((produto) => (
-                <button
-                  key={produto.id}
-                  type="button"
-                  onClick={() => handleOpenProductModal(produto)}
-                  className="group overflow-hidden rounded-[1.75rem] border border-border bg-card text-left shadow-[0_20px_45px_-30px_hsl(var(--foreground)/0.8)] transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/30"
-                >
-                  <div className="aspect-[4/3] overflow-hidden">
-                    <img src={produto.imagem} alt={produto.nome} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]" loading="lazy" />
-                  </div>
-                  <div className="space-y-3 p-4">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <h2 className="line-clamp-1 text-base font-black text-foreground">{produto.nome}</h2>
-                        <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{produto.descricao}</p>
-                      </div>
-                      <span className="shrink-0 rounded-full border border-border bg-secondary px-3 py-1 text-sm font-black text-foreground">{formatPrice(produto.preco)}</span>
-                    </div>
-                  </div>
-                </button>
-              ))}
-            </div>
-          )}
+                </div>
+              </button>
+            ))}
+          </div>
         </div>
       </div>
     </div>
