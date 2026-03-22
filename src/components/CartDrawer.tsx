@@ -341,20 +341,11 @@ const CartDrawer = ({
                       </Button>
                       <Button
                         type="button"
-                        onClick={handleConfirmar}
+                        onClick={() => setShowConfirmEnvio(true)}
                         disabled={isSubmitting || isLocked || showSubmittingOverlay}
                         className="h-12 rounded-2xl font-black"
                       >
-                        {isSubmitting || showSubmittingOverlay ? (
-                          <span className="inline-flex items-center gap-2">
-                            <LoaderCircle className="h-4 w-4 animate-spin" />
-                            Enviando...
-                          </span>
-                        ) : isLocked ? (
-                          "Aguarde 2s"
-                        ) : (
-                          "Enviar pedido"
-                        )}
+                        Enviar pedido
                       </Button>
                     </div>
                   </div>
