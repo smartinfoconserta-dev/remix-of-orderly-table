@@ -43,11 +43,13 @@ export default function MotoboyPage() {
   const [scanningPedidoId, setScanningPedidoId] = useState<string | null>(null);
   const [generalScan, setGeneralScan] = useState(false);
   const [showManualPick, setShowManualPick] = useState(false);
+  const [confirmandoPedido, setConfirmandoPedido] = useState<typeof pedidosBalcao[0] | null>(null);
+  const [confirmandoEntregue, setConfirmandoEntregue] = useState<typeof pedidosBalcao[0] | null>(null);
+  const [confirmandoDevolvido, setConfirmandoDevolvido] = useState<typeof pedidosBalcao[0] | null>(null);
+  const [motivoDevolucao, setMotivoDevolucao] = useState("");
   const [activeTab, setActiveTab] = useState<"rota" | "entregues">("rota");
   const [ordem, setOrdem] = useState<string[]>(() => getOrdem());
   const [draggingId, setDraggingId] = useState<string | null>(null);
-  const [cancelingId, setCancelingId] = useState<string | null>(null);
-  const [cancelMotivo, setCancelMotivo] = useState("");
   const dragOverId = useRef<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -201,12 +203,8 @@ export default function MotoboyPage() {
     toast.success("Entrega confirmada! ✓");
   };
 
-  const handleCancelar = (pedidoId: string) => {
-    cancelarEntregaMotoboy(pedidoId, cancelMotivo || undefined);
-    toast.info("Entrega devolvida ao caixa");
-    setCancelingId(null);
-    setCancelMotivo("");
-  };
+
+
 
   // ── Drag and drop (native, touch-friendly) ──
   const handleDragStart = (id: string) => setDraggingId(id);
@@ -420,7 +418,6 @@ export default function MotoboyPage() {
             emRota.map((p, idx) => {
               const addr = buildEnderecoCompleto(p);
               const isDragging = draggingId === p.id;
-              const isCanceling = cancelingId === p.id;
               return (
                 <div
                   key={p.id}
@@ -488,27 +485,15 @@ export default function MotoboyPage() {
                                 <Map className="w-3.5 h-3.5" /> Rota
                               </Button>
                             )}
-                            <Button size="sm" className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold" onClick={() => handleEntregue(p.id)}>
+                            <Button size="sm" className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold"
+                              onClick={() => setConfirmandoEntregue(p)}>
                               <CheckCircle2 className="w-4 h-4 mr-1" /> Entregue
                             </Button>
-                            <Button size="sm" variant="outline" className="text-xs text-destructive border-destructive/30" onClick={() => setCancelingId(isCanceling ? null : p.id)}>
+                            <Button size="sm" variant="outline" className="text-xs text-destructive border-destructive/30"
+                              onClick={() => { setMotivoDevolucao(""); setConfirmandoDevolvido(p); }}>
                               <XCircle className="w-4 h-4" />
                             </Button>
                           </div>
-
-                          {/* Cancel form */}
-                          {isCanceling && (
-                            <div className="space-y-2 pt-2 border-t border-border">
-                              <Input
-                                placeholder="Motivo (opcional): Cliente ausente, endereço errado..."
-                                value={cancelMotivo}
-                                onChange={(e) => setCancelMotivo(e.target.value)}
-                              />
-                              <Button size="sm" variant="destructive" className="w-full text-xs" onClick={() => handleCancelar(p.id)}>
-                                Confirmar cancelamento
-                              </Button>
-                            </div>
-                          )}
                         </div>
                       </div>
                     </CardContent>
@@ -598,18 +583,16 @@ export default function MotoboyPage() {
         </div>
       )}
 
-      {/* Manual pick modal */}
-      {showManualPick && (
-        <div className="fixed inset-0 z-50 bg-background/90 backdrop-blur-sm flex flex-col">
-          <div className="flex items-center justify-between px-4 py-4 border-b border-border">
+      {/* MODAL 1 — Lista de pedidos para retirada manual */}
+      {showManualPick && !confirmandoPedido && (
+        <div className="fixed inset-0 z-50 bg-background/95 backdrop-blur-sm flex flex-col">
+          <div className="flex items-center justify-between px-4 py-4 border-b border-border shrink-0">
             <div>
-              <p className="font-black text-lg">Selecionar pedido</p>
-              <p className="text-xs text-muted-foreground">Toque no pedido para vincular a você</p>
+              <p className="font-black text-lg text-foreground">Pedidos para retirar</p>
+              <p className="text-xs text-muted-foreground">Toque no pedido que você vai entregar</p>
             </div>
-            <button
-              onClick={() => setShowManualPick(false)}
-              className="h-10 w-10 flex items-center justify-center rounded-full border border-border"
-            >
+            <button onClick={() => setShowManualPick(false)}
+              className="h-10 w-10 flex items-center justify-center rounded-full border border-border bg-card">
               <X className="w-5 h-5" />
             </button>
           </div>
@@ -620,36 +603,136 @@ export default function MotoboyPage() {
               </div>
             ) : (
               pedidosDisponiveis.map(p => (
-                <button
-                  key={p.id}
-                  onClick={() => {
-                    marcarBalcaoSaiu(p.id, sessao?.nome || "Motoboy");
-                    toast.success(`Pedido #${p.numeroPedido} vinculado a você!`);
-                    setShowManualPick(false);
-                  }}
-                  className="w-full text-left rounded-2xl border border-border bg-card p-4 space-y-2 active:scale-[0.98] transition-transform"
-                >
-                  <div className="flex items-center justify-between">
-                    <p className="font-bold text-sm">{p.clienteNome || "Cliente"}</p>
-                    <span className="text-3xl font-black text-amber-500">#{p.numeroPedido}</span>
+                <button key={p.id} onClick={() => setConfirmandoPedido(p)}
+                  className="w-full text-left rounded-2xl border border-amber-500/30 bg-card p-4 space-y-2 active:scale-[0.98] transition-transform">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="font-bold text-sm text-foreground truncate">{p.clienteNome || "Cliente"}</p>
+                      {p.bairro && <span className="text-[10px] font-bold bg-orange-600 text-white rounded-full px-2 py-0.5 mt-1 inline-block">{p.bairro}</span>}
+                    </div>
+                    <span className="text-3xl font-black text-amber-500 shrink-0">#{p.numeroPedido}</span>
                   </div>
                   {p.enderecoCompleto && (
                     <p className="text-xs text-muted-foreground flex items-center gap-1">
                       <MapPin className="w-3 h-3 shrink-0" />
-                      {p.enderecoCompleto}{p.bairro ? ` — ${p.bairro}` : ""}
+                      <span className="truncate">{p.enderecoCompleto}{p.bairro ? ` — ${p.bairro}` : ""}</span>
                     </p>
                   )}
-                  <div className="flex items-center justify-between pt-1 border-t border-border">
+                  <div className="flex items-center justify-between pt-2 border-t border-border">
                     <span className="text-sm font-black">R$ {p.total.toFixed(2)}</span>
                     {p.formaPagamentoDelivery && (
-                      <span className="text-xs text-muted-foreground border border-border rounded-full px-2 py-0.5">
-                        {p.formaPagamentoDelivery}
-                      </span>
+                      <span className="text-xs text-muted-foreground border border-border rounded-full px-2 py-0.5">{p.formaPagamentoDelivery}</span>
                     )}
                   </div>
                 </button>
               ))
             )}
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 2 — Confirmação de retirada */}
+      {confirmandoPedido && (
+        <div className="fixed inset-0 z-[60] bg-background/95 backdrop-blur-sm flex items-center justify-center p-6">
+          <div className="w-full max-w-sm rounded-2xl border border-border bg-card p-6 space-y-5">
+            <div className="text-center space-y-1">
+              <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Confirmar retirada</p>
+              <span className="text-5xl font-black text-amber-500 block">#{confirmandoPedido.numeroPedido}</span>
+              <p className="text-lg font-black text-foreground">{confirmandoPedido.clienteNome || "Cliente"}</p>
+              {confirmandoPedido.enderecoCompleto && (
+                <p className="text-sm text-muted-foreground">{confirmandoPedido.enderecoCompleto}</p>
+              )}
+              <p className="text-xl font-black text-foreground pt-1">R$ {confirmandoPedido.total.toFixed(2)}</p>
+            </div>
+            <p className="text-center text-sm text-muted-foreground bg-secondary rounded-xl p-3">
+              Você está retirando este pedido para entrega. Tem certeza?
+            </p>
+            <div className="flex gap-3">
+              <Button variant="outline" className="flex-1 h-12 rounded-xl font-bold"
+                onClick={() => setConfirmandoPedido(null)}>
+                Não
+              </Button>
+              <Button className="flex-1 h-12 rounded-xl font-black bg-emerald-600 hover:bg-emerald-700 text-white"
+                onClick={() => {
+                  marcarBalcaoSaiu(confirmandoPedido.id, sessao?.nome || "Motoboy");
+                  toast.success(`Pedido #${confirmandoPedido.numeroPedido} retirado! Boa entrega 🏍️`);
+                  setConfirmandoPedido(null);
+                  setShowManualPick(false);
+                }}>
+                Sim, retirei
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 3 — Confirmação de entrega */}
+      {confirmandoEntregue && (
+        <div className="fixed inset-0 z-[60] bg-background/95 backdrop-blur-sm flex items-center justify-center p-6">
+          <div className="w-full max-w-sm rounded-2xl border border-border bg-card p-6 space-y-5">
+            <div className="text-center space-y-1">
+              <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Confirmar entrega</p>
+              <span className="text-5xl font-black text-emerald-500 block">#{confirmandoEntregue.numeroPedido}</span>
+              <p className="text-lg font-black text-foreground">{confirmandoEntregue.clienteNome || "Cliente"}</p>
+              <p className="text-xl font-black text-foreground pt-1">R$ {confirmandoEntregue.total.toFixed(2)}</p>
+            </div>
+            <p className="text-center text-sm text-muted-foreground bg-secondary rounded-xl p-3">
+              O pedido foi entregue ao cliente? Esta ação não pode ser desfeita.
+            </p>
+            <div className="flex gap-3">
+              <Button variant="outline" className="flex-1 h-12 rounded-xl font-bold"
+                onClick={() => setConfirmandoEntregue(null)}>
+                Não
+              </Button>
+              <Button className="flex-1 h-12 rounded-xl font-black bg-emerald-600 hover:bg-emerald-700 text-white"
+                onClick={() => {
+                  marcarBalcaoEntregue(confirmandoEntregue.id);
+                  toast.success(`Pedido #${confirmandoEntregue.numeroPedido} entregue! ✓`);
+                  setConfirmandoEntregue(null);
+                }}>
+                Sim, entregue!
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 4 — Não entregue com motivo */}
+      {confirmandoDevolvido && (
+        <div className="fixed inset-0 z-[60] bg-background/95 backdrop-blur-sm flex items-center justify-center p-6">
+          <div className="w-full max-w-sm rounded-2xl border border-border bg-card p-6 space-y-5">
+            <div className="text-center space-y-1">
+              <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Não conseguiu entregar?</p>
+              <span className="text-5xl font-black text-orange-500 block">#{confirmandoDevolvido.numeroPedido}</span>
+              <p className="text-lg font-black text-foreground">{confirmandoDevolvido.clienteNome || "Cliente"}</p>
+            </div>
+            <div className="space-y-2">
+              <p className="text-sm font-bold text-foreground">Motivo (opcional)</p>
+              <Input
+                placeholder="Ex: Cliente não estava, endereço errado..."
+                value={motivoDevolucao}
+                onChange={(e) => setMotivoDevolucao(e.target.value)}
+                className="rounded-xl"
+              />
+            </div>
+            <p className="text-center text-xs text-muted-foreground bg-secondary rounded-xl p-3">
+              O pedido voltará para o caixa resolver.
+            </p>
+            <div className="flex gap-3">
+              <Button variant="outline" className="flex-1 h-12 rounded-xl font-bold"
+                onClick={() => { setConfirmandoDevolvido(null); setMotivoDevolucao(""); }}>
+                Cancelar
+              </Button>
+              <Button variant="destructive" className="flex-1 h-12 rounded-xl font-black"
+                onClick={() => {
+                  cancelarEntregaMotoboy(confirmandoDevolvido.id, motivoDevolucao || undefined);
+                  toast.info(`Pedido #${confirmandoDevolvido.numeroPedido} devolvido ao caixa`);
+                  setConfirmandoDevolvido(null);
+                  setMotivoDevolucao("");
+                }}>
+                Confirmar
+              </Button>
+            </div>
           </div>
         </div>
       )}
