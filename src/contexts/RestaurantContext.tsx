@@ -15,6 +15,7 @@ export interface ItemCarrinho {
   embalagem?: string | null;
   observacoes?: string;
   precoUnitario: number;
+  gruposEscolhidos?: { grupoNome: string; opcoes: { nome: string; preco: number }[] }[];
 }
 
 export interface PedidoRealizado {
