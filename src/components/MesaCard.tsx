@@ -17,19 +17,19 @@ const MesaCard = ({ mesa, onClick, showTotal = true, showIndicators = true, time
   const hasParaViagem = pedidos.some((p) => p.paraViagem === true);
 
   const toneClass = chamarGarcom
-    ? "border-red-400 bg-red-50"
+    ? "border-destructive/50 bg-destructive/8"
     : status === "pendente"
-      ? "border-red-400 bg-red-50 animate-[pulse_2s_ease-in-out_infinite]"
+      ? "border-status-pendente/50 bg-status-pendente/8 animate-[pulse_2s_ease-in-out_infinite]"
       : status === "consumo"
-        ? "border-green-400 bg-green-50"
+        ? "border-status-consumo/50 bg-status-consumo/8"
         : subtle
-          ? "border-gray-200 bg-white opacity-60"
-          : "border-gray-200 bg-white";
+          ? "border-border bg-card opacity-60"
+          : "border-border bg-card";
 
   return (
     <button
       onClick={onClick}
-      className={`relative flex min-h-[136px] flex-col items-center justify-center gap-2 rounded-xl border p-5 text-center mesa-card-interactive ${toneClass}`}
+      className={`relative flex min-h-[140px] w-full flex-col items-center justify-center gap-1.5 rounded-xl border p-4 text-center mesa-card-interactive ${toneClass}`}
     >
       {chamarGarcom && (
         <span className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-destructive/90 text-destructive-foreground">
@@ -37,10 +37,10 @@ const MesaCard = ({ mesa, onClick, showTotal = true, showIndicators = true, time
         </span>
       )}
 
-      <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-500">
+      <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
         Mesa
       </span>
-      <span className="text-3xl font-black tabular-nums text-gray-800 md:text-4xl">
+      <span className="text-3xl font-black tabular-nums text-foreground md:text-4xl">
         {String(mesa.numero).padStart(2, "0")}
       </span>
 
