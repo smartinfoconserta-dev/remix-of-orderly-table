@@ -551,6 +551,10 @@ export default function MotoboyPage() {
                   <span className="text-right font-semibold text-destructive">- R$ {resumo.trocoTotal.toFixed(2)}</span>
                   <span className="text-muted-foreground font-bold">Líquido dinheiro</span>
                   <span className="text-right font-bold text-amber-500">R$ {resumo.liquidoDinheiro.toFixed(2)}</span>
+                  <span className="text-muted-foreground">Fundo de troco inicial</span>
+                  <span className="text-right font-semibold">R$ {(sessao?.fundoTroco || 0).toFixed(2)}</span>
+                  <span className="font-bold text-orange-400">Deve devolver ao caixa</span>
+                  <span className="text-right font-bold text-orange-400">R$ {(resumo.liquidoDinheiro + (sessao?.fundoTroco || 0)).toFixed(2)}</span>
                   <span className="text-muted-foreground">PIX</span>
                   <span className="text-right font-semibold">R$ {resumo.pix.toFixed(2)}</span>
                   <span className="text-muted-foreground">Crédito</span>
@@ -559,8 +563,8 @@ export default function MotoboyPage() {
                   <span className="text-right font-semibold">R$ {resumo.debito.toFixed(2)}</span>
                 </div>
                 <div className="border-t border-border pt-2 flex items-center justify-between">
-                  <span className="font-black">Total geral</span>
-                  <span className="font-black text-lg">R$ {resumo.total.toFixed(2)}</span>
+                  <span className="font-black">Total a prestar ao caixa</span>
+                  <span className="font-black text-lg text-primary">R$ {(resumo.liquidoDinheiro + (sessao?.fundoTroco || 0) + resumo.pix + resumo.credito + resumo.debito).toFixed(2)}</span>
                 </div>
                 <Button className="w-full mt-2 font-bold" variant="outline" onClick={() => {
                   toast.success("Caixa fechado! Entregue o valor ao responsável.");
