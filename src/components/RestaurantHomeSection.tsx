@@ -2,6 +2,8 @@ import { ArrowUpRight, Instagram, Wifi } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import qrInstagramFallback from "@/assets/qr-instagram-premium.png";
 import qrWifiFallback from "@/assets/qr-wifi-premium.png";
+import bgInstagramDefault from "@/assets/bg-instagram-card.jpg";
+import bgWifiDefault from "@/assets/bg-wifi-card.jpg";
 import { getSistemaConfig } from "@/lib/adminStorage";
 import type { Produto } from "@/data/menuData";
 import type { HomeShowcaseConfig } from "@/data/homeShowcaseData";
@@ -27,7 +29,7 @@ const RestaurantHomeSection = ({ config, featuredProducts, onOpenProduct }: Prop
       qrLabel: "QR Code do Instagram do restaurante",
       dataValue: sistemaConfig.instagramUrl,
       fallbackQr: qrInstagramFallback,
-      bgImage: sistemaConfig.instagramBg,
+      bgImage: sistemaConfig.instagramBg || bgInstagramDefault,
     },
     {
       id: "wifi",
@@ -38,7 +40,7 @@ const RestaurantHomeSection = ({ config, featuredProducts, onOpenProduct }: Prop
       qrLabel: "QR Code do Wi‑Fi do restaurante",
       dataValue: sistemaConfig.senhaWifi,
       fallbackQr: qrWifiFallback,
-      bgImage: sistemaConfig.wifiBg,
+      bgImage: sistemaConfig.wifiBg || bgWifiDefault,
     },
   ];
 

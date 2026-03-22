@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { AlertTriangle, ArrowLeft, Bell, Instagram, LockKeyhole, Plus, RefreshCw, Search, ShoppingBag, ShoppingCart, Unlink, Wallet, Wifi, X } from "lucide-react";
 import qrInstagramFallback from "@/assets/qr-instagram-premium.png";
 import qrWifiFallback from "@/assets/qr-wifi-premium.png";
+import bgInstagramDefault from "@/assets/bg-instagram-card.jpg";
+import bgWifiDefault from "@/assets/bg-wifi-card.jpg";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import CategoryTabs from "@/components/CategoryTabs";
@@ -814,7 +816,7 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
         qrUrl: sysConfig.instagramUrl
           ? `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(sysConfig.instagramUrl)}`
           : qrInstagramFallback,
-        bgImage: sysConfig.instagramBg || undefined,
+        bgImage: sysConfig.instagramBg || bgInstagramDefault,
       },
       {
         id: "wifi",
@@ -825,7 +827,7 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
         qrUrl: sysConfig.senhaWifi
           ? `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(`WIFI:T:WPA;S:${RESTAURANTE.nome};P:${sysConfig.senhaWifi};;`)}`
           : qrWifiFallback,
-        bgImage: sysConfig.wifiBg || undefined,
+        bgImage: sysConfig.wifiBg || bgWifiDefault,
       },
     ];
   }, []);
