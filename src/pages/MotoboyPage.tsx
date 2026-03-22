@@ -489,27 +489,15 @@ export default function MotoboyPage() {
                                 <Map className="w-3.5 h-3.5" /> Rota
                               </Button>
                             )}
-                            <Button size="sm" className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold" onClick={() => handleEntregue(p.id)}>
+                            <Button size="sm" className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold"
+                              onClick={() => setConfirmandoEntregue(p)}>
                               <CheckCircle2 className="w-4 h-4 mr-1" /> Entregue
                             </Button>
-                            <Button size="sm" variant="outline" className="text-xs text-destructive border-destructive/30" onClick={() => setCancelingId(isCanceling ? null : p.id)}>
+                            <Button size="sm" variant="outline" className="text-xs text-destructive border-destructive/30"
+                              onClick={() => { setMotivoDevolucao(""); setConfirmandoDevolvido(p); }}>
                               <XCircle className="w-4 h-4" />
                             </Button>
                           </div>
-
-                          {/* Cancel form */}
-                          {isCanceling && (
-                            <div className="space-y-2 pt-2 border-t border-border">
-                              <Input
-                                placeholder="Motivo (opcional): Cliente ausente, endereço errado..."
-                                value={cancelMotivo}
-                                onChange={(e) => setCancelMotivo(e.target.value)}
-                              />
-                              <Button size="sm" variant="destructive" className="w-full text-xs" onClick={() => handleCancelar(p.id)}>
-                                Confirmar cancelamento
-                              </Button>
-                            </div>
-                          )}
                         </div>
                       </div>
                     </CardContent>
