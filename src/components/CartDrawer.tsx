@@ -61,10 +61,10 @@ const CartDrawer = ({
   }, []);
 
   useEffect(() => {
-    if (!showSuccessFeedback) { setCountdown(4); return; }
+    if (!showSuccessFeedback) { setCountdown(10); return; }
     const interval = setInterval(() => {
       setCountdown(prev => {
-        if (prev <= 1) { clearInterval(interval); handleSuccessOk(); return 4; }
+        if (prev <= 1) { clearInterval(interval); handleSuccessOk(); return 10; }
         return prev - 1;
       });
     }, 1000);
