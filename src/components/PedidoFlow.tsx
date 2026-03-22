@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { AlertTriangle, ArrowLeft, Bell, Instagram, LockKeyhole, Plus, RefreshCw, ShoppingBag, ShoppingCart, Unlink, Wallet, Wifi } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Bell, Instagram, LockKeyhole, Plus, RefreshCw, Search, ShoppingBag, ShoppingCart, Unlink, Wallet, Wifi, X } from "lucide-react";
 import qrInstagramFallback from "@/assets/qr-instagram-premium.svg";
 import qrWifiFallback from "@/assets/qr-wifi-premium.svg";
 import { Button } from "@/components/ui/button";
@@ -146,6 +146,7 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
   const [contaOpen, setContaOpen] = useState(false);
   const [showExitAlert, setShowExitAlert] = useState(false);
   const [paraViagem, setParaViagem] = useState(modo === "delivery");
+  const [searchQuery, setSearchQuery] = useState("");
   const [isClientIdle, setIsClientIdle] = useState(false);
   const [_showGarcomBanner] = useState(false); // kept for hook order stability
   const garcomBannerTimerRef = useRef<number | null>(null); // kept for hook order stability
@@ -191,10 +192,19 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
     [carrinho],
   );
   const cartItemCount = useMemo(() => carrinho.reduce((acc, item) => acc + item.quantidade, 0), [carrinho]);
-  const produtosFiltrados = useMemo(
+  const produtosDaCategoria = useMemo(
     () => produtosDisponiveis.filter((p) => p.categoria === categoriaExibida),
     [categoriaExibida, produtosDisponiveis],
   );
+  const produtosFiltrados = useMemo(() => {
+    if (!searchQuery.trim()) return produtosDaCategoria;
+    const q = searchQuery.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    return produtosDisponiveis.filter(p => {
+      const nome = p.nome.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+      const desc = (p.descricao || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+      return nome.includes(q) || desc.includes(q);
+    });
+  }, [searchQuery, produtosDaCategoria, produtosDisponiveis]);
   const featuredProducts = useMemo(
     () => ["c1", "l2", "pr1"].map((id) => produtos.find((produto) => produto.id === id)).filter(Boolean) as Produto[],
     [],
@@ -609,6 +619,23 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
         {restaurantIdentity}
       </div>
       <div className="flex shrink-0 items-center gap-2">
+        {(modo === "delivery" || modo === "cliente") && (
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+            <input
+              type="text"
+              placeholder="Buscar..."
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              className="h-9 w-36 rounded-xl border border-border bg-secondary pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:w-48 transition-all"
+            />
+            {searchQuery && (
+              <button onClick={() => setSearchQuery("")} className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                <X className="h-3.5 w-3.5" />
+              </button>
+            )}
+          </div>
+        )}
         {isGarcomMobile ? (
           <Button
             type="button"
@@ -792,10 +819,14 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
   const visibleProducts = isGarcomMobile && categoriaExibida === HOME_TAB_ID ? produtos : produtosFiltrados;
 
   const productGrid = (
-    <div
-      key={categoryFadeKey}
-      className={`grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4 ${categoryFadeClass}`}
-    >
+    <div>
+      {searchQuery.trim() && (
+        <p className="text-xs text-muted-foreground px-4 pb-2">{produtosFiltrados.length} resultado(s) para "{searchQuery}"</p>
+      )}
+      <div
+        key={categoryFadeKey}
+        className={`grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4 ${categoryFadeClass}`}
+      >
       {visibleProducts.map((produto, index) => {
         const isCardSelected = selectedProductCardId === produto.id;
 
@@ -838,6 +869,7 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
           </article>
         );
       })}
+      </div>
     </div>
   );
 
@@ -1008,8 +1040,8 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
         />
       </div>
       <div ref={mobileListTopRef} />
-      <main className={`flex-1 pt-3 transition-all duration-500 ${isGarcomMobile ? "pb-6" : "pb-6"} ${isClientIdle ? "brightness-[0.2] saturate-50" : "brightness-100 saturate-100"}`}>
-        <div className="px-4">{isGarcomMobile ? productGrid : isHomeActive ? homeContent : productGrid}</div>
+      <main className="flex-1 pt-3 pb-24 px-4">
+        <div>{isGarcomMobile ? productGrid : isHomeActive ? homeContent : productGrid}</div>
       </main>
     </>
   );
@@ -1054,7 +1086,7 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
 
   return (
     <>
-      <div className="flex min-h-screen flex-col bg-background">
+      <div className="flex flex-col bg-background" style={{ minHeight: '100dvh' }}>
         {header}
         {garcomBanner}
         {(isMobile || modo === "garcom" || modo === "delivery") ? mobileContent : desktopContent}
