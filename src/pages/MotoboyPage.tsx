@@ -580,11 +580,62 @@ export default function MotoboyPage() {
                   <span className="font-black">Total a prestar ao caixa</span>
                   <span className="font-black text-lg text-primary">R$ {(resumo.liquidoDinheiro + (sessao?.fundoTroco || 0) + resumo.pix + resumo.credito + resumo.debito).toFixed(2)}</span>
                 </div>
-                <Button className="w-full mt-2 font-bold" variant="outline" onClick={() => {
-                  toast.success("Caixa fechado! Entregue o valor ao responsável.");
-                }}>
-                  Fechar meu caixa
-                </Button>
+                {fechamentoEnviado ? (
+                  <div className="w-full mt-2 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-center space-y-2">
+                    <p className="text-sm font-black text-amber-400">⏳ Aguardando conferência do caixa</p>
+                    <p className="text-xs text-muted-foreground">Entregue o dinheiro ao operador e aguarde confirmação.</p>
+                    <div className="text-xs text-muted-foreground space-y-1 pt-2 border-t border-amber-500/20 text-left">
+                      <div className="flex justify-between">
+                        <span>Deve entregar em dinheiro:</span>
+                        <span className="font-black text-amber-400">R$ {(resumo.liquidoDinheiro + (sessao?.fundoTroco || 0)).toFixed(2)}</span>
+                      </div>
+                      {resumo.pix > 0 && <div className="flex justify-between"><span>PIX (já liquidado):</span><span className="font-bold">R$ {resumo.pix.toFixed(2)}</span></div>}
+                      {resumo.credito > 0 && <div className="flex justify-between"><span>Crédito:</span><span className="font-bold">R$ {resumo.credito.toFixed(2)}</span></div>}
+                      {resumo.debito > 0 && <div className="flex justify-between"><span>Débito:</span><span className="font-bold">R$ {resumo.debito.toFixed(2)}</span></div>}
+                      <div className="flex justify-between border-t border-amber-500/20 pt-1">
+                        <span className="font-black">Total a prestar:</span>
+                        <span className="font-black text-primary">R$ {(resumo.liquidoDinheiro + (sessao?.fundoTroco || 0) + resumo.pix + resumo.credito + resumo.debito).toFixed(2)}</span>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <Button
+                    className="w-full mt-2 font-black h-12 bg-primary hover:bg-primary/90"
+                    onClick={() => {
+                      if (entregues.length === 0) { toast.error("Nenhuma entrega para fechar."); return; }
+                      const fechamento = {
+                        id: `fechamento-${Date.now()}`,
+                        motoboyId: sessao?.id || "",
+                        motoboyNome: sessao?.nome || "",
+                        timestamp: new Date().toISOString(),
+                        status: "aguardando",
+                        resumo: {
+                          totalEntregas: resumo.count,
+                          dinheiroRecebido: resumo.dinheiroRecebido,
+                          trocoTotal: resumo.trocoTotal,
+                          liquidoDinheiro: resumo.liquidoDinheiro,
+                          fundoTroco: sessao?.fundoTroco || 0,
+                          deveDevolver: resumo.liquidoDinheiro + (sessao?.fundoTroco || 0),
+                          pix: resumo.pix,
+                          credito: resumo.credito,
+                          debito: resumo.debito,
+                          totalAPrestar: resumo.liquidoDinheiro + (sessao?.fundoTroco || 0) + resumo.pix + resumo.credito + resumo.debito,
+                        },
+                        pedidosIds: entregues.map(p => p.id),
+                      };
+                      try {
+                        const raw = localStorage.getItem(FECHAMENTOS_KEY);
+                        const lista = raw ? JSON.parse(raw) : [];
+                        lista.push(fechamento);
+                        localStorage.setItem(FECHAMENTOS_KEY, JSON.stringify(lista));
+                      } catch {}
+                      setFechamentoEnviado(true);
+                      toast.success("Fechamento solicitado! Aguarde o caixa conferir.", { duration: 3000 });
+                    }}
+                  >
+                    Solicitar fechamento de caixa
+                  </Button>
+                )}
               </div>
             </div>
           )}
