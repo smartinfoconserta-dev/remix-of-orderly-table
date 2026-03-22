@@ -234,6 +234,9 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
   const [confirmTempo, setConfirmTempo] = useState("");
   const [confirmTempoCustom, setConfirmTempoCustom] = useState("");
   const [confirmTaxaEntrega, setConfirmTaxaEntrega] = useState("");
+  const [buscaDelivery, setBuscaDelivery] = useState("");
+  const [mostrarEntregues, setMostrarEntregues] = useState(false);
+  const [filtroMotoboy, setFiltroMotoboy] = useState<string | null>(null);
 
   // Master aviso state
   const [masterAviso, setMasterAviso] = useState<{ mensagem: string; tipo: string; enviadoEm: string; lido: boolean } | null>(null);
