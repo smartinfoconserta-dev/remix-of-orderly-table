@@ -170,6 +170,12 @@ const CozinhaPage = () => {
         let line = `<div class="c-item"><span class="c-qty">${it.quantidade}x</span> ${it.nome}</div>`;
         if (it.adicionais.length > 0) line += `<div class="c-add">+ ${it.adicionais.map((a) => a.nome).join(", ")}</div>`;
         if (it.removidos.length > 0) line += `<div class="c-rem">- Sem ${it.removidos.join(", ")}</div>`;
+        if (it.gruposEscolhidos?.length) {
+          for (const g of it.gruposEscolhidos) {
+            const opcNomes = g.opcoes.map(o => o.preco > 0 ? `+ ${o.nome}` : o.nome);
+            line += `<div class="c-add">${g.grupoNome}: ${opcNomes.join(", ")}</div>`;
+          }
+        }
         if (it.observacoes) line += `<div class="c-obs">${it.observacoes}</div>`;
         return line;
       }).join("");
