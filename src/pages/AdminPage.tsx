@@ -803,27 +803,29 @@ const AdminPage = () => {
                                 placeholder="Nome da opção"
                                 className="text-sm h-7 flex-1"
                               />
-                              <div className="flex items-center gap-1">
-                                <Input
-                                  type="number"
-                                  step="0.01"
-                                  value={op.preco || ""}
-                                  onChange={(e) => {
-                                    const val = parseFloat(e.target.value) || 0;
-                                    setEditProduct((prev) => {
-                                      if (!prev) return prev;
-                                      const g = [...(prev.grupos || [])];
-                                      const ops = [...g[gi].opcoes];
-                                      ops[oi] = { ...ops[oi], preco: val };
-                                      g[gi] = { ...g[gi], opcoes: ops };
-                                      return { ...prev, grupos: g };
-                                    });
-                                  }}
-                                  placeholder="R$"
-                                  className="text-sm h-7 w-20"
-                                />
-                                {op.preco === 0 && <span className="text-[10px] text-muted-foreground whitespace-nowrap">Grátis</span>}
-                              </div>
+                              {(grupo.tipo || "adicional") !== "retirar" && (
+                                <div className="flex items-center gap-1">
+                                  <Input
+                                    type="number"
+                                    step="0.01"
+                                    value={op.preco || ""}
+                                    onChange={(e) => {
+                                      const val = parseFloat(e.target.value) || 0;
+                                      setEditProduct((prev) => {
+                                        if (!prev) return prev;
+                                        const g = [...(prev.grupos || [])];
+                                        const ops = [...g[gi].opcoes];
+                                        ops[oi] = { ...ops[oi], preco: val };
+                                        g[gi] = { ...g[gi], opcoes: ops };
+                                        return { ...prev, grupos: g };
+                                      });
+                                    }}
+                                    placeholder="R$"
+                                    className="text-sm h-7 w-20"
+                                  />
+                                  {op.preco === 0 && <span className="text-[10px] text-muted-foreground whitespace-nowrap">Grátis</span>}
+                                </div>
+                              )}
                               <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => {
                                 setEditProduct((prev) => {
                                   if (!prev) return prev;

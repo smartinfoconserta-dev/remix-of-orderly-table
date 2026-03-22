@@ -383,11 +383,16 @@ ${pedido.observacaoGeral ? `<div class="c-obs">Obs: ${pedido.observacaoGeral}</d
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-bold text-foreground leading-snug">{item.nome}</p>
                       {item.adicionais.length > 0 && <p className="text-xs text-primary mt-0.5">+ {item.adicionais.map((a) => a.nome).join(", ")}</p>}
-                      {item.gruposEscolhidos?.map((g, gi) => (
-                        <p key={gi} className="text-xs text-primary mt-0.5">
-                          {g.grupoNome}: {g.opcoes.map(o => o.preco > 0 ? `+ ${o.nome}` : o.nome).join(", ")}
-                        </p>
-                      ))}
+                      {item.gruposEscolhidos?.map((g, gi) => {
+                        const t = (g as any).tipo || "adicional";
+                        if (t === "retirar") {
+                          return <p key={gi} className="text-xs text-destructive mt-0.5 font-bold">SEM {g.opcoes.map(o => o.nome).join(" • SEM ")}</p>;
+                        }
+                        if (t === "adicional") {
+                          return <p key={gi} className="text-xs mt-0.5" style={{ color: "#16a34a" }}>+ {g.opcoes.map(o => o.nome).join(", ")}</p>;
+                        }
+                        return <p key={gi} className="text-xs text-foreground mt-0.5">{g.grupoNome}: {g.opcoes.map(o => o.nome).join(", ")}</p>;
+                      })}
                       {item.removidos.length > 0 && <p className="text-xs text-destructive mt-0.5">Sem {item.removidos.join(", ")}</p>}
                       {item.observacoes && <p className="text-xs text-muted-foreground italic mt-0.5">{item.observacoes}</p>}
                     </div>
