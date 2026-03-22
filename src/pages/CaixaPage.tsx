@@ -65,6 +65,7 @@ import { findClienteDelivery, upsertClienteDelivery, getBairros, type ClienteDel
 /* ── helpers ── */
 const normStr = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
 const formatPrice = (v: number) => `R$ ${v.toFixed(2).replace(".", ",")}`;
+const FECHAMENTOS_MOTOBOY_KEY = "obsidian-motoboy-fechamentos-v1";
 const toCents = (value: number) => Math.round(value * 100);
 
 const parseCurrencyInput = (value: string) => {
@@ -159,6 +160,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
     confirmarPedidoBalcao,
     rejeitarPedidoBalcao,
     marcarBalcaoPronto,
+    registrarFechamentoMotoboy,
   } = useRestaurant();
   const { currentCaixa, currentGerente, logout, verifyManagerAccess } = useAuth();
 
@@ -237,6 +239,10 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
   const [buscaDelivery, setBuscaDelivery] = useState("");
   const [mostrarEntregues, setMostrarEntregues] = useState(false);
   const [filtroMotoboy, setFiltroMotoboy] = useState<string | null>(null);
+  const [fechamentosPendentes, setFechamentosPendentes] = useState<any[]>([]);
+  const [fechamentoSelecionado, setFechamentoSelecionado] = useState<any | null>(null);
+  const [pinConferencia, setPinConferencia] = useState("");
+  const [pinConferenciaErro, setPinConferenciaErro] = useState("");
 
   // Master aviso state
   const [masterAviso, setMasterAviso] = useState<{ mensagem: string; tipo: string; enviadoEm: string; lido: boolean } | null>(null);
@@ -264,7 +270,21 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
     }
   }, []);
 
-  // Check master aviso every 30s
+  // Poll motoboy fechamentos every 5s
+  useEffect(() => {
+    const ler = () => {
+      try {
+        const raw = localStorage.getItem(FECHAMENTOS_MOTOBOY_KEY);
+        const lista = raw ? JSON.parse(raw) : [];
+        setFechamentosPendentes(lista.filter((f: any) => f.status === "aguardando"));
+      } catch {}
+    };
+    ler();
+    const id = setInterval(ler, 5000);
+    return () => clearInterval(id);
+  }, []);
+
+
   useEffect(() => {
     const checkAviso = () => {
       try {
@@ -937,6 +957,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
     // Clear operator shift tracking
     try { localStorage.removeItem("obsidian-caixa-operadores-v1"); } catch {}
     try { localStorage.removeItem("obsidian-caixa-modo-v1"); } catch {}
+    try { localStorage.removeItem(FECHAMENTOS_MOTOBOY_KEY); } catch {}
     setTurnoModalOpen(false);
     setIsClosingTurno(false);
     setTurnoManagerName("");
@@ -1378,6 +1399,35 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                         Novo delivery
                       </Button>
                     </div>
+
+                    {/* Fechamentos pendentes de motoboys */}
+                    {fechamentosPendentes.length > 0 && (
+                      <div className="mb-5 rounded-2xl border border-amber-500/40 bg-amber-500/8 p-4 space-y-3">
+                        <h3 className="text-sm font-black text-amber-400 flex items-center gap-2">
+                          <span className="h-2 w-2 rounded-full bg-amber-400 animate-pulse inline-block" />
+                          {fechamentosPendentes.length} motoboy(s) solicitando fechamento
+                        </h3>
+                        <div className="space-y-2">
+                          {fechamentosPendentes.map((f: any) => (
+                            <button key={f.id} onClick={() => { setFechamentoSelecionado(f); setPinConferencia(""); setPinConferenciaErro(""); }}
+                              className="w-full text-left rounded-xl border border-amber-500/25 bg-card p-3 hover:border-amber-500/60 transition-colors active:scale-[0.99]">
+                              <div className="flex items-center justify-between">
+                                <div>
+                                  <p className="text-sm font-black text-foreground">🏍️ {f.motoboyNome}</p>
+                                  <p className="text-xs text-muted-foreground mt-0.5">
+                                    {f.resumo.totalEntregas} entregas · {new Date(f.timestamp).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                                  </p>
+                                </div>
+                                <div className="text-right">
+                                  <p className="text-[10px] text-muted-foreground uppercase tracking-widest">Total a prestar</p>
+                                  <p className="text-xl font-black text-amber-400">R$ {f.resumo.totalAPrestar.toFixed(2)}</p>
+                                </div>
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
 
                     {/* Campo de busca */}
                     <div className="relative mb-4">
@@ -2922,6 +2972,126 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Modal de conferência de fechamento de motoboy */}
+      {fechamentoSelecionado && (
+        <div className="fixed inset-0 z-[70] bg-background/95 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="w-full max-w-md rounded-2xl border border-border bg-card overflow-hidden shadow-2xl">
+            <div className="px-5 py-4 border-b border-border bg-secondary/50">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Conferência de fechamento</p>
+              <p className="text-xl font-black text-foreground mt-1">🏍️ {fechamentoSelecionado.motoboyNome}</p>
+              <p className="text-xs text-muted-foreground">
+                {fechamentoSelecionado.resumo.totalEntregas} entregas · {new Date(fechamentoSelecionado.timestamp).toLocaleString("pt-BR")}
+              </p>
+            </div>
+            <div className="px-5 py-4 space-y-3 max-h-[55vh] overflow-y-auto">
+              <div className="rounded-xl bg-secondary/60 p-3 space-y-2">
+                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">💵 Dinheiro físico</p>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Recebido dos clientes</span>
+                  <span className="font-bold tabular-nums">R$ {fechamentoSelecionado.resumo.dinheiroRecebido.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Troco devolvido</span>
+                  <span className="font-bold tabular-nums text-destructive">- R$ {fechamentoSelecionado.resumo.trocoTotal.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-sm border-t border-border/50 pt-2">
+                  <span className="font-bold">Líquido dinheiro</span>
+                  <span className="font-black tabular-nums">R$ {fechamentoSelecionado.resumo.liquidoDinheiro.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">+ Fundo de troco inicial</span>
+                  <span className="font-bold tabular-nums">R$ {fechamentoSelecionado.resumo.fundoTroco.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-sm border-t border-border/50 pt-2">
+                  <span className="font-black text-amber-400">Deve entregar em dinheiro</span>
+                  <span className="font-black tabular-nums text-amber-400 text-base">R$ {fechamentoSelecionado.resumo.deveDevolver.toFixed(2)}</span>
+                </div>
+              </div>
+              <div className="rounded-xl bg-secondary/60 p-3 space-y-2">
+                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">📱 Pagamentos digitais</p>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">PIX</span>
+                  <span className="font-bold tabular-nums text-emerald-400">R$ {fechamentoSelecionado.resumo.pix.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Cartão de crédito</span>
+                  <span className="font-bold tabular-nums text-blue-400">R$ {fechamentoSelecionado.resumo.credito.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Cartão de débito</span>
+                  <span className="font-bold tabular-nums text-blue-400">R$ {fechamentoSelecionado.resumo.debito.toFixed(2)}</span>
+                </div>
+              </div>
+              <div className="rounded-xl border border-primary/30 bg-primary/8 p-3">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Total geral a prestar</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">Dinheiro + confirmação dos digitais</p>
+                  </div>
+                  <span className="text-2xl font-black tabular-nums text-primary">R$ {fechamentoSelecionado.resumo.totalAPrestar.toFixed(2)}</span>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <p className="text-sm font-bold text-foreground">PIN do gerente para confirmar:</p>
+                <Input
+                  type="password"
+                  inputMode="numeric"
+                  maxLength={6}
+                  placeholder="••••"
+                  value={pinConferencia}
+                  onChange={e => { setPinConferencia(e.target.value.replace(/\D/g, "").slice(0, 6)); setPinConferenciaErro(""); }}
+                  className="text-center text-xl font-black h-12 rounded-xl tracking-widest"
+                />
+                {pinConferenciaErro && <p className="text-xs text-destructive font-bold text-center">{pinConferenciaErro}</p>}
+              </div>
+            </div>
+            <div className="px-5 py-4 border-t border-border flex gap-3">
+              <Button variant="outline" className="flex-1 h-11 rounded-xl font-bold"
+                onClick={() => { setFechamentoSelecionado(null); setPinConferencia(""); setPinConferenciaErro(""); }}>
+                Cancelar
+              </Button>
+              <Button className="flex-1 h-11 rounded-xl font-black bg-emerald-600 hover:bg-emerald-700 text-white"
+                onClick={async () => {
+                  if (pinConferencia.length < 4) { setPinConferenciaErro("PIN inválido"); return; }
+                  const nomeGerente = currentOperator?.nome || "";
+                  const result = await verifyManagerAccess(nomeGerente, pinConferencia);
+                  if (!result.ok) { setPinConferenciaErro("PIN incorreto ou sem permissão"); return; }
+
+                  const f = fechamentoSelecionado;
+                  registrarFechamentoMotoboy({
+                    motoboyNome: f.motoboyNome,
+                    motoboyId: f.motoboyId,
+                    dinheiro: f.resumo.dinheiroRecebido,
+                    troco: f.resumo.trocoTotal,
+                    fundoTroco: f.resumo.fundoTroco,
+                    pix: f.resumo.pix,
+                    credito: f.resumo.credito,
+                    debito: f.resumo.debito,
+                    totalEntregas: f.resumo.totalEntregas,
+                    pedidosIds: f.pedidosIds || [],
+                    conferidoPor: nomeGerente,
+                  });
+
+                  // Mark as confirmed in localStorage
+                  try {
+                    const raw = localStorage.getItem(FECHAMENTOS_MOTOBOY_KEY);
+                    const lista = raw ? JSON.parse(raw) : [];
+                    const updated = lista.map((item: any) => item.id === f.id ? { ...item, status: "conferido" } : item);
+                    localStorage.setItem(FECHAMENTOS_MOTOBOY_KEY, JSON.stringify(updated));
+                    setFechamentosPendentes(updated.filter((item: any) => item.status === "aguardando"));
+                  } catch {}
+
+                  setFechamentoSelecionado(null);
+                  setPinConferencia("");
+                  toast.success(`Fechamento de ${f.motoboyNome} conferido! ✓`, { duration: 3000 });
+                }}>
+                ✓ Confirmar fechamento
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <LicenseBanner blockMode={accessMode === "caixa"} />
     </>
