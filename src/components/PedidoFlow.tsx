@@ -813,7 +813,7 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
             }}
           >
             <button type="button" onClick={() => handleOpenProductModal(produto)} className="flex w-full flex-col text-left">
-              <div className="aspect-[4/3] overflow-hidden">
+              <div className="aspect-[3/2] overflow-hidden">
                 <img src={produto.imagem} alt={produto.nome} className="h-full w-full object-cover" loading="lazy" />
               </div>
               <div className="flex min-h-[10.75rem] flex-1 flex-col gap-2 p-4">
