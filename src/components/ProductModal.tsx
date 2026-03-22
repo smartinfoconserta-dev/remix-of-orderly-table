@@ -86,6 +86,7 @@ const isBaseStepAvailable = (produto: Produto | null, step: ProductStep, skipEmb
       if (!isDefault) return true;
     }
     if (skipEmbalagemDefault) return false;
+    if (produto.permiteLevar === false) return false;
     return categoriasComEmbalagem.includes(produto.categoria);
   }
   if (step === "quantidade") return true;

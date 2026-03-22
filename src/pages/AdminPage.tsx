@@ -715,6 +715,19 @@ const AdminPage = () => {
                       onCheckedChange={(v) => setEditProduct((prev) => prev ? { ...prev, disponivelDelivery: v } : prev)}
                     />
                   </div>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs font-bold text-muted-foreground">Permite "para levar"</p>
+                      <p className="text-[10px] text-muted-foreground leading-tight mt-0.5">
+                        Desative para itens que não fazem sentido embalar
+                        (ex: drinks em taça, açaí, sobremesas servidas na mesa).
+                      </p>
+                    </div>
+                    <Switch
+                      checked={editForm.permiteLevar}
+                      onCheckedChange={(v) => setEditForm(prev => ({ ...prev, permiteLevar: v }))}
+                    />
+                  </div>
 
                   {/* Personalização do produto */}
                   <div className="space-y-3 border-t border-border pt-4">
