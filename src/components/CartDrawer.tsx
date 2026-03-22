@@ -200,8 +200,7 @@ const CartDrawer = ({
               <h3 className="text-3xl font-black text-foreground">Pedido enviado!</h3>
               <p className="text-base text-muted-foreground">A cozinha já recebeu seu pedido.</p>
             </div>
-            <Button type="button" onClick={handleSuccessOk} className="h-14 px-10 rounded-2xl font-black text-base gap-2 bg-emerald-600 hover:bg-emerald-700 text-white">
-              <CheckCircle2 className="h-5 w-5" />
+            <Button type="button" onClick={handleSuccessOk} className="h-14 px-10 rounded-2xl font-black text-base bg-emerald-600 hover:bg-emerald-700 text-white mx-auto">
               OK, obrigado!
             </Button>
             <p className="text-sm text-muted-foreground">Voltando ao cardápio em {countdown}s...</p>

@@ -864,6 +864,45 @@ const GerentePage = () => {
                 </div>
               );
             })()}
+            {/* ── Prestação de contas — Motoboys ── */}
+            {(() => {
+              const entregasPorMotoboy = new Map<string, { entregas: number; total: number }>();
+              pedidosBalcao.forEach(p => {
+                if (p.origem !== "delivery" || !p.motoboyNome) return;
+                const d = new Date(p.criadoEmIso);
+                if (d < dateRange.start || d > dateRange.end) return;
+                if (p.statusBalcao !== "entregue" && p.statusBalcao !== "pago") return;
+                const atual = entregasPorMotoboy.get(p.motoboyNome) || { entregas: 0, total: 0 };
+                entregasPorMotoboy.set(p.motoboyNome, {
+                  entregas: atual.entregas + 1,
+                  total: atual.total + p.total,
+                });
+              });
+              if (entregasPorMotoboy.size === 0) return null;
+              return (
+                <div className="space-y-3">
+                  <h2 className="text-sm font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                    🏍️ Prestação de contas — Motoboys
+                  </h2>
+                  <div className="rounded-2xl border border-border bg-card overflow-hidden">
+                    <div className="grid grid-cols-[1fr_auto_auto_auto] gap-x-4 px-4 py-2.5 border-b border-border bg-secondary/50">
+                      <span className="text-xs font-black uppercase tracking-wider text-muted-foreground">Motoboy</span>
+                      <span className="text-xs font-black uppercase tracking-wider text-muted-foreground text-right">Entregas</span>
+                      <span className="text-xs font-black uppercase tracking-wider text-muted-foreground text-right">Total</span>
+                      <span className="text-xs font-black uppercase tracking-wider text-muted-foreground text-right">A prestar</span>
+                    </div>
+                    {[...entregasPorMotoboy.entries()].map(([nome, dados], i) => (
+                      <div key={nome} className={`grid grid-cols-[1fr_auto_auto_auto] gap-x-4 px-4 py-3 ${i > 0 ? "border-t border-border/50" : ""}`}>
+                        <span className="text-sm font-bold text-foreground">{nome}</span>
+                        <span className="text-sm tabular-nums text-muted-foreground text-right">{dados.entregas}</span>
+                        <span className="text-sm tabular-nums font-bold text-foreground text-right">{formatPrice(dados.total)}</span>
+                        <span className="text-sm tabular-nums font-black text-primary text-right">{formatPrice(dados.total)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <h2 className="text-sm font-black uppercase tracking-widest text-muted-foreground">Comandas fechadas no período</h2>
