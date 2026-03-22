@@ -45,7 +45,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useAuth } from "@/contexts/AuthContext";
-import { produtos as baseProdutos, categorias, type GrupoAdicional, type OpcaoGrupo } from "@/data/menuData";
+import { produtos as baseProdutos, categorias, type GrupoPersonalizacao, type OpcaoGrupo } from "@/data/menuData";
 import {
   getCardapioOverrides,
   saveCardapioOverrides,
