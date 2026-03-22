@@ -61,6 +61,17 @@ const CartDrawer = ({
   }, []);
 
   useEffect(() => {
+    if (!showSuccessFeedback) { setCountdown(4); return; }
+    const interval = setInterval(() => {
+      setCountdown(prev => {
+        if (prev <= 1) { clearInterval(interval); handleSuccessOk(); return 4; }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [showSuccessFeedback]);
+
+  useEffect(() => {
     if (!open) {
       clearTimers();
       setIsSubmitting(false);
