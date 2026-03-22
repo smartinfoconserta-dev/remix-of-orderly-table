@@ -239,6 +239,10 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
   const [buscaDelivery, setBuscaDelivery] = useState("");
   const [mostrarEntregues, setMostrarEntregues] = useState(false);
   const [filtroMotoboy, setFiltroMotoboy] = useState<string | null>(null);
+  const [fechamentosPendentes, setFechamentosPendentes] = useState<any[]>([]);
+  const [fechamentoSelecionado, setFechamentoSelecionado] = useState<any | null>(null);
+  const [pinConferencia, setPinConferencia] = useState("");
+  const [pinConferenciaErro, setPinConferenciaErro] = useState("");
 
   // Master aviso state
   const [masterAviso, setMasterAviso] = useState<{ mensagem: string; tipo: string; enviadoEm: string; lido: boolean } | null>(null);
