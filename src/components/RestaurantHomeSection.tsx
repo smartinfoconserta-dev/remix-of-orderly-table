@@ -40,7 +40,7 @@ const RestaurantHomeSection = ({ config, featuredProducts, onOpenProduct }: Prop
       qrLabel: "QR Code do Wi‑Fi do restaurante",
       dataValue: sistemaConfig.senhaWifi,
       fallbackQr: qrWifiFallback,
-      bgImage: sistemaConfig.wifiBg,
+      bgImage: sistemaConfig.wifiBg || bgWifiDefault,
     },
   ];
 
