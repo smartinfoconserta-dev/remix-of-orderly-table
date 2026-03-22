@@ -219,7 +219,11 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
   const [balcaoPaymentMethod, setBalcaoPaymentMethod] = useState<PaymentMethod>("dinheiro");
   const [balcaoPaymentValue, setBalcaoPaymentValue] = useState("");
   const [balcaoFlowAtivo, setBalcaoFlowAtivo] = useState(false);
-  const [caixaView, setCaixaView] = useState<"mesas" | "delivery">("mesas");
+  const [modoOperacao, setModoOperacao] = useState<"completo" | "somente_mesas" | "somente_delivery">("completo");
+  const [caixaView, setCaixaView] = useState<"mesas" | "delivery">(() => {
+    const savedModo = localStorage.getItem("obsidian-caixa-modo-v1");
+    return savedModo === "somente_delivery" ? "delivery" : "mesas";
+  });
   const [deliveryConfirmOpen, setDeliveryConfirmOpen] = useState(false);
   const [deliveryPendingItens, setDeliveryPendingItens] = useState<ItemCarrinho[]>([]);
   const [deliveryPendingParaViagem, setDeliveryPendingParaViagem] = useState(false);
