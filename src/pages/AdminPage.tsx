@@ -732,6 +732,151 @@ const AdminPage = () => {
                       onCheckedChange={(v) => setEditProduct((prev) => prev ? { ...prev, disponivelDelivery: v } : prev)}
                     />
                   </div>
+
+                  {/* Grupos de adicionais */}
+                  <div className="space-y-3 border-t border-border pt-4">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-bold text-muted-foreground">Grupos de adicionais</label>
+                      <Button size="sm" variant="outline" className="text-xs gap-1 h-7" onClick={() => {
+                        const novoGrupo: GrupoAdicional = {
+                          id: `grp-${Date.now()}`,
+                          nome: "",
+                          obrigatorio: false,
+                          tipo: "unico",
+                          min: 0,
+                          max: 1,
+                          opcoes: [],
+                        };
+                        setEditProduct((prev) => prev ? { ...prev, grupos: [...(prev.grupos || []), novoGrupo] } : prev);
+                      }}>
+                        <Plus className="h-3 w-3" /> Adicionar grupo
+                      </Button>
+                    </div>
+                    {(editProduct?.grupos || []).map((grupo, gi) => (
+                      <div key={grupo.id} className="rounded-lg border border-border bg-secondary/30 p-3 space-y-2">
+                        <div className="flex items-center gap-2">
+                          <Input
+                            value={grupo.nome}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              setEditProduct((prev) => {
+                                if (!prev) return prev;
+                                const g = [...(prev.grupos || [])];
+                                g[gi] = { ...g[gi], nome: val };
+                                return { ...prev, grupos: g };
+                              });
+                            }}
+                            placeholder="Nome do grupo (ex: Ponto da carne)"
+                            className="text-sm h-8 flex-1"
+                          />
+                          <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => {
+                            setEditProduct((prev) => {
+                              if (!prev) return prev;
+                              const g = [...(prev.grupos || [])];
+                              g.splice(gi, 1);
+                              return { ...prev, grupos: g };
+                            });
+                          }}>
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                        <div className="flex items-center gap-4 text-xs">
+                          <div className="flex items-center gap-1.5">
+                            <Switch
+                              checked={grupo.obrigatorio}
+                              onCheckedChange={(v) => {
+                                setEditProduct((prev) => {
+                                  if (!prev) return prev;
+                                  const g = [...(prev.grupos || [])];
+                                  g[gi] = { ...g[gi], obrigatorio: v, min: v ? Math.max(1, g[gi].min) : 0 };
+                                  return { ...prev, grupos: g };
+                                });
+                              }}
+                            />
+                            <span className="text-muted-foreground">Obrigatório</span>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <Switch
+                              checked={grupo.tipo === "multiplo"}
+                              onCheckedChange={(v) => {
+                                setEditProduct((prev) => {
+                                  if (!prev) return prev;
+                                  const g = [...(prev.grupos || [])];
+                                  g[gi] = { ...g[gi], tipo: v ? "multiplo" : "unico", max: v ? 0 : 1 };
+                                  return { ...prev, grupos: g };
+                                });
+                              }}
+                            />
+                            <span className="text-muted-foreground">{grupo.tipo === "multiplo" ? "Múltiplo" : "Único"}</span>
+                          </div>
+                        </div>
+                        <div className="space-y-1.5 pl-2">
+                          {grupo.opcoes.map((op, oi) => (
+                            <div key={op.id} className="flex items-center gap-2">
+                              <Input
+                                value={op.nome}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  setEditProduct((prev) => {
+                                    if (!prev) return prev;
+                                    const g = [...(prev.grupos || [])];
+                                    const ops = [...g[gi].opcoes];
+                                    ops[oi] = { ...ops[oi], nome: val };
+                                    g[gi] = { ...g[gi], opcoes: ops };
+                                    return { ...prev, grupos: g };
+                                  });
+                                }}
+                                placeholder="Nome da opção"
+                                className="text-sm h-7 flex-1"
+                              />
+                              <Input
+                                type="number"
+                                step="0.01"
+                                value={op.preco || ""}
+                                onChange={(e) => {
+                                  const val = parseFloat(e.target.value) || 0;
+                                  setEditProduct((prev) => {
+                                    if (!prev) return prev;
+                                    const g = [...(prev.grupos || [])];
+                                    const ops = [...g[gi].opcoes];
+                                    ops[oi] = { ...ops[oi], preco: val };
+                                    g[gi] = { ...g[gi], opcoes: ops };
+                                    return { ...prev, grupos: g };
+                                  });
+                                }}
+                                placeholder="R$"
+                                className="text-sm h-7 w-20"
+                              />
+                              <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => {
+                                setEditProduct((prev) => {
+                                  if (!prev) return prev;
+                                  const g = [...(prev.grupos || [])];
+                                  const ops = [...g[gi].opcoes];
+                                  ops.splice(oi, 1);
+                                  g[gi] = { ...g[gi], opcoes: ops };
+                                  return { ...prev, grupos: g };
+                                });
+                              }}>
+                                <X className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          ))}
+                          <Button size="sm" variant="ghost" className="text-xs h-6 gap-1 text-primary" onClick={() => {
+                            const novaOp: OpcaoGrupo = { id: `op-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`, nome: "", preco: 0 };
+                            setEditProduct((prev) => {
+                              if (!prev) return prev;
+                              const g = [...(prev.grupos || [])];
+                              g[gi] = { ...g[gi], opcoes: [...g[gi].opcoes, novaOp] };
+                              return { ...prev, grupos: g };
+                            });
+                          }}>
+                            <Plus className="h-3 w-3" /> Adicionar opção
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
                   <div className="flex gap-3 pt-2">
                     <Button variant="outline" className="flex-1" onClick={() => setEditProduct(null)}>
                       <X className="mr-1 h-4 w-4" /> Cancelar
