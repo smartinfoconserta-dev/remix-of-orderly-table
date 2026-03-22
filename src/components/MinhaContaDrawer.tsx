@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Minus, Plus, Receipt, ShoppingCart, Users, X } from "lucide-react";
+import { Minus, Plus, Receipt, Users, X } from "lucide-react";
 import type { PedidoRealizado } from "@/contexts/RestaurantContext";
 
 interface MinhaContaDrawerProps {
