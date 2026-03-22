@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { CheckCircle2, LoaderCircle, Minus, Plus, ShoppingBag, ShoppingCart, Trash2, Utensils, X } from "lucide-react";
+import { CheckCircle2, LoaderCircle, Minus, Plus, ShoppingCart, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { ItemCarrinho } from "@/contexts/RestaurantContext";
 
