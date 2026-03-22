@@ -793,58 +793,16 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
   const productGrid = (
     <div
       key={categoryFadeKey}
-      className={`${isGarcomMobile ? "grid grid-cols-2 gap-3" : "grid grid-cols-2 gap-3 md:grid-cols-2 md:gap-4 lg:grid-cols-3"} ${categoryFadeClass}`}
+      className={`flex gap-4 overflow-x-auto pb-2 scrollbar-hide ${categoryFadeClass}`}
     >
       {visibleProducts.map((produto, index) => {
         const isCardSelected = selectedProductCardId === produto.id;
 
-        if (isGarcomMobile) {
-          return (
-            <article
-              key={produto.id}
-              className={`surface-card overflow-hidden rounded-[1.65rem] border border-border/80 bg-card shadow-[0_18px_40px_-30px_hsl(var(--foreground)/0.95)] card-fade-up ${
-                isCardSelected ? "scale-[1.01] shadow-[0_20px_44px_-24px_hsl(var(--foreground)/0.92)]" : ""
-              }`}
-              style={{
-                animationDelay: `${index * 30}ms`,
-                transitionProperty: "transform, box-shadow",
-                transitionDuration: `${CARD_ANIMATION_DURATION_MS}ms`,
-                transitionTimingFunction: "ease-out",
-              }}
-            >
-              <button type="button" onClick={() => handleOpenProductModal(produto)} className="flex w-full flex-col text-left">
-                <div className="aspect-[0.98] overflow-hidden">
-                  <img src={produto.imagem} alt={produto.nome} className="h-full w-full object-cover" loading="lazy" />
-                </div>
-                <div className="flex min-h-[10.75rem] flex-1 flex-col gap-2 p-4">
-                  <h2 className="line-clamp-2 text-[1.05rem] font-black leading-tight text-foreground">{produto.nome}</h2>
-                  <p className="line-clamp-3 flex-1 text-sm leading-relaxed text-muted-foreground">{produto.descricao}</p>
-                  <div className="mt-1 flex items-end justify-between gap-2">
-                    <p className="text-[1.05rem] font-black tracking-tight text-foreground">{formatPrice(produto.preco)}</p>
-                    <button
-                      type="button"
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        handleOpenProductModal(produto);
-                      }}
-                      className="flex h-11 w-11 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-[0_18px_32px_-22px_hsl(var(--primary)/0.95)] transition-transform active:scale-95"
-                      aria-label={`Adicionar ${produto.nome}`}
-                    >
-                      <Plus className="h-5 w-5" />
-                    </button>
-                  </div>
-                </div>
-              </button>
-            </article>
-          );
-        }
-
         return (
-          <button
+          <article
             key={produto.id}
-            onClick={() => handleOpenProductModal(produto)}
-            className={`surface-card flex flex-col overflow-hidden text-left will-change-transform active:scale-[0.97] card-fade-up ${
-              isCardSelected ? "shadow-[0_16px_36px_-14px_hsl(var(--foreground)/0.34)]" : ""
+            className={`group w-[252px] shrink-0 overflow-hidden rounded-[1.75rem] border border-border bg-card text-left shadow-[0_20px_45px_-30px_hsl(var(--foreground)/0.8)] transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/30 card-fade-up ${
+              isCardSelected ? "scale-[1.01] shadow-[0_20px_44px_-24px_hsl(var(--foreground)/0.92)]" : ""
             }`}
             style={{
               animationDelay: `${index * 30}ms`,
@@ -853,15 +811,30 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
               transitionTimingFunction: "ease-out",
             }}
           >
-            <div className="aspect-[4/3] overflow-hidden">
-              <img src={produto.imagem} alt={produto.nome} className="h-full w-full object-cover" loading="lazy" />
-            </div>
-            <div className="flex flex-1 flex-col gap-1 p-3 md:p-4">
-              <h2 className="line-clamp-1 text-sm font-bold text-foreground md:text-base">{produto.nome}</h2>
-              <p className="line-clamp-2 flex-1 text-xs text-muted-foreground md:text-sm">{produto.descricao}</p>
-              <p className="mt-1 text-lg font-black text-foreground md:text-xl">{formatPrice(produto.preco)}</p>
-            </div>
-          </button>
+            <button type="button" onClick={() => handleOpenProductModal(produto)} className="flex w-full flex-col text-left">
+              <div className="aspect-[4/3] overflow-hidden">
+                <img src={produto.imagem} alt={produto.nome} className="h-full w-full object-cover" loading="lazy" />
+              </div>
+              <div className="flex min-h-[10.75rem] flex-1 flex-col gap-2 p-4">
+                <h2 className="line-clamp-2 text-[1.05rem] font-black leading-tight text-foreground">{produto.nome}</h2>
+                <p className="line-clamp-3 flex-1 text-sm leading-relaxed text-muted-foreground">{produto.descricao}</p>
+                <div className="mt-1 flex items-end justify-between gap-2">
+                  <p className="text-[1.05rem] font-black tracking-tight text-foreground">{formatPrice(produto.preco)}</p>
+                  <button
+                    type="button"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      handleOpenProductModal(produto);
+                    }}
+                    className="flex h-11 w-11 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-[0_18px_32px_-22px_hsl(var(--primary)/0.95)] transition-transform active:scale-95"
+                    aria-label={`Adicionar ${produto.nome}`}
+                  >
+                    <Plus className="h-5 w-5" />
+                  </button>
+                </div>
+              </div>
+            </button>
+          </article>
         );
       })}
     </div>
