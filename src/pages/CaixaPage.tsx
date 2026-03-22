@@ -369,6 +369,34 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
   );
   const pedidosBalcaoSoAtivos = useMemo(() => pedidosBalcaoAtivos.filter((p) => p.origem === "balcao"), [pedidosBalcaoAtivos]);
 
+  const pedidosParaRetirar = useMemo(() =>
+    pedidosDeliveryAtivos.filter(p => p.statusBalcao === "pronto" && !p.motoboyNome),
+    [pedidosDeliveryAtivos]
+  );
+  const pedidosEmRota = useMemo(() =>
+    pedidosDeliveryAtivos.filter(p => p.statusBalcao === "saiu"),
+    [pedidosDeliveryAtivos]
+  );
+  const pedidosDevolvidos = useMemo(() =>
+    pedidosDeliveryAtivos.filter(p => p.statusBalcao === "devolvido"),
+    [pedidosDeliveryAtivos]
+  );
+  const pedidosEntregues = useMemo(() =>
+    pedidosDeliveryAtivos.filter(p => p.statusBalcao === "entregue" || p.statusBalcao === "pago"),
+    [pedidosDeliveryAtivos]
+  );
+  const motoboyAtivos = useMemo(() => {
+    const map = new Map<string, { emRota: number; entregues: number }>();
+    pedidosDeliveryAtivos.forEach(p => {
+      if (!p.motoboyNome) return;
+      const atual = map.get(p.motoboyNome) || { emRota: 0, entregues: 0 };
+      if (p.statusBalcao === "saiu") atual.emRota++;
+      if (p.statusBalcao === "entregue" || p.statusBalcao === "pago") atual.entregues++;
+      map.set(p.motoboyNome, atual);
+    });
+    return [...map.entries()].map(([nome, dados]) => ({ nome, ...dados }));
+  }, [pedidosDeliveryAtivos]);
+
   /* ── callbacks ── */
   const resetCloseAccountState = useCallback(() => {
     setClosingPayments([]);
