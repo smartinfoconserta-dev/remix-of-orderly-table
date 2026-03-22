@@ -134,6 +134,16 @@ export default function MotoboyPage() {
     e.target.value = "";
   }, [scanningPedidoId, generalScan, marcarBalcaoSaiu, sessao, pedidosBalcao]);
 
+  // ── Pedidos disponíveis para retirada manual ──
+  const pedidosDisponiveis = useMemo(() =>
+    pedidosBalcao.filter(p =>
+      p.origem === "delivery" &&
+      p.statusBalcao === "pronto" &&
+      !p.motoboyNome
+    ),
+    [pedidosBalcao]
+  );
+
   // ── Data — only show pedidos scanned by this motoboy ──
   const emRota = useMemo(() => {
     const pending = pedidosBalcao.filter(
