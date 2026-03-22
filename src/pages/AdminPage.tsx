@@ -720,6 +720,7 @@ const AdminPage = () => {
                           id: `grp-${Date.now()}`,
                           nome: "",
                           obrigatorio: false,
+                          tipo: "adicional",
                           opcoes: [],
                         };
                         setEditProduct((prev) => prev ? { ...prev, grupos: [...(prev.grupos || []), novoGrupo] } : prev);
