@@ -253,6 +253,14 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
 
   useRouteLock(accessMode === "gerente" ? "/gerente" : "/caixa");
 
+  // Load saved modo operacao
+  useEffect(() => {
+    const savedModo = localStorage.getItem("obsidian-caixa-modo-v1");
+    if (savedModo === "somente_mesas" || savedModo === "somente_delivery" || savedModo === "completo") {
+      setModoOperacao(savedModo);
+    }
+  }, []);
+
   // Check master aviso every 30s
   useEffect(() => {
     const checkAviso = () => {
