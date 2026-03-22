@@ -192,10 +192,19 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
     [carrinho],
   );
   const cartItemCount = useMemo(() => carrinho.reduce((acc, item) => acc + item.quantidade, 0), [carrinho]);
-  const produtosFiltrados = useMemo(
+  const produtosDaCategoria = useMemo(
     () => produtosDisponiveis.filter((p) => p.categoria === categoriaExibida),
     [categoriaExibida, produtosDisponiveis],
   );
+  const produtosFiltrados = useMemo(() => {
+    if (!searchQuery.trim()) return produtosDaCategoria;
+    const q = searchQuery.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    return produtosDisponiveis.filter(p => {
+      const nome = p.nome.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+      const desc = (p.descricao || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+      return nome.includes(q) || desc.includes(q);
+    });
+  }, [searchQuery, produtosDaCategoria, produtosDisponiveis]);
   const featuredProducts = useMemo(
     () => ["c1", "l2", "pr1"].map((id) => produtos.find((produto) => produto.id === id)).filter(Boolean) as Produto[],
     [],
