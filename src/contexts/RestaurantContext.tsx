@@ -181,6 +181,19 @@ interface RestaurantContextType {
   fecharContaBalcao: (pedidoId: string, input: FecharContaInput) => void;
   confirmarPedidoBalcao: (pedidoId: string, taxaEntrega?: number) => void;
   rejeitarPedidoBalcao: (pedidoId: string, motivo: string) => void;
+  registrarFechamentoMotoboy: (input: {
+    motoboyNome: string;
+    motoboyId: string;
+    dinheiro: number;
+    troco: number;
+    fundoTroco: number;
+    pix: number;
+    credito: number;
+    debito: number;
+    totalEntregas: number;
+    pedidosIds: string[];
+    conferidoPor: string;
+  }) => void;
 }
 
 const _global = globalThis as unknown as { __restaurantCtx?: React.Context<RestaurantContextType | null> };
