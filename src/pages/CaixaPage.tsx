@@ -1057,10 +1057,10 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
               </div>
 
               {/* ── Windows-style Toolbar ── */}
-              <div className="flex items-center gap-1 border-b border-gray-300 px-3 py-1.5 shrink-0 bg-gray-100">
+              <div className="flex items-center gap-1 border-b border-border px-3 py-1.5 shrink-0 bg-card">
                 <button
                   onClick={() => setBalcaoOpen(true)}
-                  className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded text-xs border border-gray-300 bg-white text-gray-700 hover:bg-blue-50 transition-colors"
+                  className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded text-xs border border-border bg-secondary text-foreground hover:bg-primary/15 transition-colors"
                   style={{ minWidth: 64 }}
                 >
                   <ReceiptText className="h-4 w-4" />
@@ -1068,28 +1068,16 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                 </button>
                 <button
                   onClick={() => setMovModalOpen(true)}
-                  className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded text-xs border border-gray-300 bg-white text-gray-700 hover:bg-blue-50 transition-colors"
+                  className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded text-xs border border-border bg-secondary text-foreground hover:bg-primary/15 transition-colors"
                   style={{ minWidth: 64 }}
                 >
                   <Banknote className="h-4 w-4" />
                   <span className="text-[10px] font-bold">Sangria</span>
                 </button>
-                <div className="w-px h-8 mx-1 bg-gray-300" />
-                <button
-                  onClick={() => {
-                    const w = window.open("", "_blank", "width=400,height=600");
-                    if (w) { w.document.write("<p>Impressão</p>"); w.print(); }
-                  }}
-                  className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded text-xs border border-gray-300 bg-white text-gray-700 hover:bg-blue-50 transition-colors"
-                  style={{ minWidth: 64 }}
-                >
-                  <Printer className="h-4 w-4" />
-                  <span className="text-[10px] font-bold">Imprimir</span>
-                </button>
-                <div className="w-px h-8 mx-1 bg-gray-300" />
+                <div className="w-px h-8 mx-1 bg-border" />
                 <button
                   onClick={() => setTurnoReportOpen(true)}
-                  className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded text-xs border border-red-400 bg-white text-red-600 hover:bg-red-50 transition-colors"
+                  className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded text-xs border border-destructive/50 bg-secondary text-destructive hover:bg-destructive/15 transition-colors"
                   style={{ minWidth: 64 }}
                 >
                   <LockKeyhole className="h-4 w-4" />
@@ -1097,7 +1085,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                 </button>
                 <button
                   onClick={() => logout(accessMode)}
-                  className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded text-xs border border-gray-300 bg-white text-gray-700 hover:bg-blue-50 transition-colors"
+                  className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded text-xs border border-border bg-secondary text-foreground hover:bg-primary/15 transition-colors"
                   style={{ minWidth: 64 }}
                 >
                   <LogOut className="h-4 w-4" />
