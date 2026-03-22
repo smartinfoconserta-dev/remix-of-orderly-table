@@ -40,6 +40,8 @@ const CartDrawer = ({
   const [showSuccessFeedback, setShowSuccessFeedback] = useState(false);
   const [showSubmittingOverlay, setShowSubmittingOverlay] = useState(false);
   const [countdown, setCountdown] = useState(10);
+  const labelConfirmar = modo === "delivery" ? "Confirmar pedido" : "Enviar pedido";
+  const labelConfirmarFinal = modo === "delivery" ? "Confirmar agora" : "Enviar agora";
   const [showConfirmEnvio, setShowConfirmEnvio] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
   const lockTimerRef = useRef<number | null>(null);
