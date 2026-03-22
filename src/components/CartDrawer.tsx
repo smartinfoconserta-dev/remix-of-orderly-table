@@ -14,9 +14,7 @@ interface Props {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   hideTrigger?: boolean;
-  showParaViagem?: boolean;
-  paraViagem?: boolean;
-  onParaViagemChange?: (value: boolean) => void;
+  modo?: "cliente" | "garcom" | "caixa" | "balcao" | "delivery";
 }
 
 const formatPrice = (v: number) => `R$ ${v.toFixed(2).replace(".", ",")}`;
