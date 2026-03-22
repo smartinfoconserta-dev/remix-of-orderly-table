@@ -65,6 +65,8 @@ import { findClienteDelivery, upsertClienteDelivery, getBairros, type ClienteDel
 /* ── helpers ── */
 const normStr = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
 const formatPrice = (v: number) => `R$ ${v.toFixed(2).replace(".", ",")}`;
+const FECHAMENTOS_MOTOBOY_KEY = "obsidian-motoboy-fechamentos-v1";
+const formatPrice = (v: number) => `R$ ${v.toFixed(2).replace(".", ",")}`;
 const toCents = (value: number) => Math.round(value * 100);
 
 const parseCurrencyInput = (value: string) => {
