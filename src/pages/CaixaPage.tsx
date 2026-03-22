@@ -957,6 +957,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
     // Clear operator shift tracking
     try { localStorage.removeItem("obsidian-caixa-operadores-v1"); } catch {}
     try { localStorage.removeItem("obsidian-caixa-modo-v1"); } catch {}
+    try { localStorage.removeItem(FECHAMENTOS_MOTOBOY_KEY); } catch {}
     setTurnoModalOpen(false);
     setIsClosingTurno(false);
     setTurnoManagerName("");
