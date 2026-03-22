@@ -23,8 +23,9 @@ const CategoryTabs = ({
   }, [categoriaAtiva]);
 
   return (
-    <div className="relative w-full overflow-visible">
-      <div className="pointer-events-none absolute bottom-0 right-0 top-0 z-10 w-12 bg-gradient-to-l from-background to-transparent" />
+    <div className="relative w-full overflow-hidden">
+      <div className="pointer-events-none absolute bottom-0 left-0 top-0 z-10 w-8 bg-gradient-to-r from-background to-transparent" />
+      <div className="pointer-events-none absolute bottom-0 right-0 top-0 z-10 w-8 bg-gradient-to-l from-background to-transparent" />
       <div
         ref={scrollRef}
         className={`scrollbar-hide flex w-full touch-pan-x flex-row flex-nowrap items-center gap-3 overflow-x-auto overflow-y-hidden whitespace-nowrap scroll-smooth ${paddingClassName}`}
