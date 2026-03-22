@@ -167,16 +167,8 @@ const CartDrawer = ({
       />
 
       <aside className={`absolute inset-y-0 right-0 flex h-full w-full flex-col border-l border-border bg-card shadow-2xl ${isClosing ? "drawer-slide-out" : "animate-slide-in-right"}`}>
-        {!showSuccessFeedback && !showSubmittingOverlay && !showConfirmEnvio ? (
-          <button
-            type="button"
-            onClick={handleClose}
-            className="absolute right-4 top-4 z-10 flex h-9 w-9 items-center justify-center rounded-full border border-border bg-background text-foreground transition-transform active:scale-95"
-            aria-label="Fechar carrinho"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        ) : null}
+
+
 
         {showSubmittingOverlay ? (
           <div className="flex flex-1 flex-col items-center justify-center gap-6 p-8 text-center">
