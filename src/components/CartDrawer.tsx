@@ -43,7 +43,7 @@ const CartDrawer = ({
   const [isLocked, setIsLocked] = useState(false);
   const [showSuccessFeedback, setShowSuccessFeedback] = useState(false);
   const [showSubmittingOverlay, setShowSubmittingOverlay] = useState(false);
-  const [countdown, setCountdown] = useState(4);
+  const [countdown, setCountdown] = useState(10);
   const [isClosing, setIsClosing] = useState(false);
   const lockTimerRef = useRef<number | null>(null);
 
@@ -61,10 +61,10 @@ const CartDrawer = ({
   }, []);
 
   useEffect(() => {
-    if (!showSuccessFeedback) { setCountdown(4); return; }
+    if (!showSuccessFeedback) { setCountdown(10); return; }
     const interval = setInterval(() => {
       setCountdown(prev => {
-        if (prev <= 1) { clearInterval(interval); handleSuccessOk(); return 4; }
+        if (prev <= 1) { clearInterval(interval); handleSuccessOk(); return 10; }
         return prev - 1;
       });
     }, 1000);
@@ -200,8 +200,7 @@ const CartDrawer = ({
               <h3 className="text-3xl font-black text-foreground">Pedido enviado!</h3>
               <p className="text-base text-muted-foreground">A cozinha já recebeu seu pedido.</p>
             </div>
-            <Button type="button" onClick={handleSuccessOk} className="h-14 px-10 rounded-2xl font-black text-base gap-2 bg-emerald-600 hover:bg-emerald-700 text-white">
-              <CheckCircle2 className="h-5 w-5" />
+            <Button type="button" onClick={handleSuccessOk} className="h-14 px-10 rounded-2xl font-black text-base bg-emerald-600 hover:bg-emerald-700 text-white mx-auto">
               OK, obrigado!
             </Button>
             <p className="text-sm text-muted-foreground">Voltando ao cardápio em {countdown}s...</p>
