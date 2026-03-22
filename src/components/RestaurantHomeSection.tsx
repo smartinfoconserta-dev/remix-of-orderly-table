@@ -1,7 +1,7 @@
 import { ArrowUpRight, Instagram, Wifi } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import qrInstagramFallback from "@/assets/qr-instagram-premium.svg";
-import qrWifiFallback from "@/assets/qr-wifi-premium.svg";
+import qrInstagramFallback from "@/assets/qr-instagram-premium.png";
+import qrWifiFallback from "@/assets/qr-wifi-premium.png";
 import { getSistemaConfig } from "@/lib/adminStorage";
 import type { Produto } from "@/data/menuData";
 import type { HomeShowcaseConfig } from "@/data/homeShowcaseData";
