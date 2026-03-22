@@ -565,10 +565,26 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
     );
   }
 
-  const restaurantIdentity = isGarcomMobile ? (
+  const restaurantIdentity = modo === "delivery" ? (
+    <div className="flex min-w-0 items-center gap-2">
+      <Avatar className="h-8 w-8 rounded-lg border border-border bg-secondary shadow-sm select-none touch-none"
+        onPointerDown={handleLogoPointerDown}
+        onPointerUp={handleLogoPointerUp}
+        onPointerLeave={handleLogoPointerUp}
+      >
+        {RESTAURANTE.logoUrl ? (
+          <img src={RESTAURANTE.logoUrl} alt={RESTAURANTE.nome} className="h-full w-full rounded-lg object-cover" />
+        ) : (
+          <AvatarFallback className="rounded-lg bg-secondary text-[10px] font-extrabold tracking-widest text-foreground">
+            {RESTAURANTE.logoFallback}
+          </AvatarFallback>
+        )}
+      </Avatar>
+      <p className="truncate text-sm font-extrabold tracking-tight text-foreground">{RESTAURANTE.nome}</p>
+    </div>
+  ) : modo === "garcom" ? (
     <div className="min-w-0">
-      <p className="truncate text-[1.95rem] font-black tracking-tight text-foreground">{mesaLabel}</p>
-      <p className="truncate text-sm font-medium text-muted-foreground">{formatPrice(cartTotal)}</p>
+      <p className="truncate text-xl font-black tracking-tight text-foreground">{mesaLabel}</p>
     </div>
   ) : (
     <div className="flex min-w-0 items-center gap-3">
