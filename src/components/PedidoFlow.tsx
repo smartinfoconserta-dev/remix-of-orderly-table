@@ -351,9 +351,10 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
       }
 
       if (isMobile) {
-        mobileListTopRef.current?.scrollIntoView({ behavior: isGarcomMobile ? "auto" : "smooth", block: "start" });
+        mobileListTopRef.current?.scrollIntoView({ behavior: isGarcomMobile ? "auto" : "auto", block: "start" });
       } else {
-        desktopMainRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+        desktopMainRef.current?.scrollTo({ top: 0, behavior: "auto" });
+        window.scrollTo({ top: 0, behavior: "auto" });
       }
     },
     [categoriaAtiva, isGarcomMobile, isMobile],
@@ -1044,7 +1045,7 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
         </nav>
       </aside>
       <main ref={desktopMainRef} className="flex-1 overflow-y-auto pb-8 pt-4">
-        {isHomeActive ? homeContent : <div className="px-6">{productGrid}</div>}
+        {isHomeActive ? homeContent : <div className="max-w-4xl mx-auto px-6">{productGrid}</div>}
       </main>
     </div>
   );
