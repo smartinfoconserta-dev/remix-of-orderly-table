@@ -419,44 +419,43 @@ const GerentePage = () => {
     </div>
   );
 
-  return (
-    <div className="flex flex-col h-screen bg-background">
-      {/* Header */}
-      <header className="flex items-center gap-3 border-b border-border bg-card px-4 py-3 shrink-0 md:px-6">
-        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/15 text-primary">
-          <ShieldCheck className="h-4 w-4" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <h1 className="text-lg font-black tracking-tight text-foreground truncate">Painel do Gerente</h1>
-          <p className="text-xs text-muted-foreground truncate">Operador: {currentGerente.nome}</p>
-        </div>
-        <Button variant="outline" onClick={() => logout("gerente")} className="gap-2 rounded-xl font-bold h-9 px-3 text-sm">
-          <LogOut className="h-4 w-4" />
-          <span className="hidden sm:inline">Sair</span>
-        </Button>
-      </header>
+  const nomeRestaurante = getSistemaConfig().nomeRestaurante || "Restaurante";
+  const now = new Date();
+  const horaAtual = now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
 
-      {/* Tabs */}
+  return (
+    <div className="flex flex-col h-screen bg-gray-50">
+      {/* Title bar — Windows style */}
+      <div className="flex items-center justify-between px-4 py-2 shrink-0" style={{ backgroundColor: "#1e3a5f" }}>
+        <span className="text-sm font-bold text-white">Gerente — {nomeRestaurante}</span>
+        <span className="text-xs text-white/70">Operador: {currentGerente.nome} • {horaAtual}</span>
+        <Button variant="ghost" size="sm" className="h-7 px-2 text-white/80 hover:text-white hover:bg-white/10 text-xs gap-1" onClick={() => logout("gerente")}>
+          <LogOut className="h-3.5 w-3.5" />
+          Sair
+        </Button>
+      </div>
+
+      {/* Tabs — Windows classic style */}
       <Tabs defaultValue="fechamento" className="flex flex-col flex-1 min-h-0 overflow-hidden">
-        <div className="shrink-0 border-b border-border bg-card/80 px-4 md:px-6">
-          <TabsList className="bg-transparent h-auto p-0 gap-1">
-            <TabsTrigger value="fechamento" className="rounded-xl data-[state=active]:bg-primary/15 data-[state=active]:text-primary font-bold text-xs px-3 py-2 gap-1.5">
-              <LockKeyhole className="h-3.5 w-3.5" />
-              Fechamento
-            </TabsTrigger>
-            <TabsTrigger value="relatorio" className="rounded-xl data-[state=active]:bg-primary/15 data-[state=active]:text-primary font-bold text-xs px-3 py-2 gap-1.5">
-              <BarChart3 className="h-3.5 w-3.5" />
-              Relatório
-            </TabsTrigger>
-            <TabsTrigger value="logs" className="rounded-xl data-[state=active]:bg-primary/15 data-[state=active]:text-primary font-bold text-xs px-3 py-2 gap-1.5">
-              <ScrollText className="h-3.5 w-3.5" />
-              Logs
-            </TabsTrigger>
-            <TabsTrigger value="equipe" className="rounded-xl data-[state=active]:bg-primary/15 data-[state=active]:text-primary font-bold text-xs px-3 py-2 gap-1.5">
-              <Users className="h-3.5 w-3.5" />
-              Equipe
-            </TabsTrigger>
-          </TabsList>
+        <div className="shrink-0 border-b border-gray-300 bg-gray-100 px-4 md:px-6 flex">
+          {[
+            { value: "fechamento", icon: LockKeyhole, label: "Fechamento" },
+            { value: "relatorio", icon: BarChart3, label: "Relatório" },
+            { value: "logs", icon: ScrollText, label: "Logs" },
+            { value: "equipe", icon: Users, label: "Equipe" },
+          ].map((t) => {
+            const Icon = t.icon;
+            return (
+              <TabsTrigger
+                key={t.value}
+                value={t.value}
+                className="relative px-4 py-2 text-xs font-bold text-gray-600 border border-gray-300 border-b-0 -mb-px bg-gray-200 data-[state=active]:bg-white data-[state=active]:text-gray-800 data-[state=active]:border-t-2 data-[state=active]:border-t-blue-600 data-[state=active]:border-b-white rounded-t-sm gap-1.5"
+              >
+                <Icon className="h-3.5 w-3.5" />
+                {t.label}
+              </TabsTrigger>
+            );
+          })}
         </div>
 
         {/* ═══ TAB 1: Fechamento do Turno ═══ */}
