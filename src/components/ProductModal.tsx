@@ -398,6 +398,7 @@ const ProductModal = ({ produto, onClose, onAdd, isGarcomMobile = false, skipEmb
       embalagem: flowSteps.includes("embalagem") ? pedidoAtual.viagem : undefined,
       observacoes: pedidoAtual.observacao.trim(),
       precoUnitario,
+      imagemUrl: produto.imagem || undefined,
       gruposEscolhidos: gruposData.length > 0 ? gruposData : undefined,
     };
 

@@ -167,16 +167,8 @@ const CartDrawer = ({
       />
 
       <aside className={`absolute inset-y-0 right-0 flex h-full w-full flex-col border-l border-border bg-card shadow-2xl ${isClosing ? "drawer-slide-out" : "animate-slide-in-right"}`}>
-        {!showSuccessFeedback && !showSubmittingOverlay && !showConfirmEnvio ? (
-          <button
-            type="button"
-            onClick={handleClose}
-            className="absolute right-4 top-4 z-10 flex h-9 w-9 items-center justify-center rounded-full border border-border bg-background text-foreground transition-transform active:scale-95"
-            aria-label="Fechar carrinho"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        ) : null}
+
+
 
         {showSubmittingOverlay ? (
           <div className="flex flex-1 flex-col items-center justify-center gap-6 p-8 text-center">
@@ -206,96 +198,112 @@ const CartDrawer = ({
           </div>
         ) : (
           <>
-            <div className="border-b border-border p-5 pb-4 pr-16 text-left animate-fade-in">
-              <h2 className="text-xl font-black text-foreground">Carrinho do pedido</h2>
-              <p className="text-sm text-muted-foreground">
-                {carrinho.length > 0
-                  ? "Revise e envie quando estiver pronto."
-                  : "Nenhum item adicionado ainda."}
-              </p>
+            {/* Header simples */}
+            <div className="shrink-0 flex items-center justify-between px-5 py-4 border-b border-border">
+              <h2 className="text-lg font-black text-foreground">Carrinho</h2>
+              <button type="button" onClick={handleClose}
+                className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-background text-muted-foreground hover:text-foreground">
+                <X className="h-4 w-4" />
+              </button>
             </div>
 
             {carrinho.length === 0 ? (
-              <div className="flex flex-1 flex-col items-center justify-center gap-3 p-6 text-center animate-fade-in">
-                <ShoppingCart className="h-16 w-16 text-muted-foreground/30" />
-                <p className="text-base font-medium text-muted-foreground">Carrinho vazio</p>
-                <p className="text-sm text-muted-foreground">Abra um produto, personalize e adicione ao pedido para continuar.</p>
+              <div className="flex flex-1 flex-col items-center justify-center gap-3 p-6 text-center">
+                <ShoppingCart className="h-14 w-14 text-muted-foreground/20" />
+                <p className="text-base font-bold text-muted-foreground">Carrinho vazio</p>
+                <p className="text-sm text-muted-foreground">Adicione itens para começar.</p>
               </div>
             ) : (
               <>
+                {/* Lista de itens com foto */}
+                <div className="flex-1 overflow-y-auto">
+                  {/* Cabeçalho da tabela */}
+                  <div className="grid grid-cols-[1fr_auto_auto] gap-4 px-4 py-2 border-b border-border/50 bg-secondary/30">
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Item</span>
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground text-center">Qtd</span>
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground text-right">Subtotal</span>
+                  </div>
+                  <div className="divide-y divide-border/40 pb-36">
+                    {carrinho.map((item) => (
+                      <div key={item.uid} className="flex items-center gap-3 px-4 py-3">
+                        {/* Foto do produto */}
+                        <div className="shrink-0 h-14 w-14 rounded-xl overflow-hidden border border-border bg-secondary">
+                          {item.imagemUrl ? (
+                            <img src={item.imagemUrl} alt={item.nome}
+                              className="h-full w-full object-cover" />
+                          ) : (
+                            <div className="h-full w-full flex items-center justify-center text-muted-foreground/30">
+                              <ShoppingCart className="h-6 w-6" />
+                            </div>
+                          )}
+                        </div>
 
-                <div className="flex-1 space-y-3 overflow-y-auto p-4 pb-40">
-                  {carrinho.map((item, index) => (
-                    <div
-                      key={item.uid}
-                      className="space-y-3 rounded-2xl border border-primary/20 bg-secondary p-4 shadow-sm transition-colors animate-fade-in"
-                      style={{ animationDelay: `${Math.min(index, 4) * 60}ms` }}
-                    >
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="flex-1">
-                          <span className="inline-flex rounded-full border border-primary/25 bg-primary/10 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-primary">
-                            Pendente
+                        {/* Nome e personalizações */}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-bold text-foreground leading-tight truncate">{item.nome}</p>
+                          {item.adicionais.length > 0 && (
+                            <p className="text-xs text-primary leading-tight truncate">
+                              + {item.adicionais.map(a => a.nome).join(", ")}
+                            </p>
+                          )}
+                          {item.removidos.length > 0 && (
+                            <p className="text-xs text-destructive leading-tight truncate">
+                              Sem {item.removidos.join(", ")}
+                            </p>
+                          )}
+                          {item.bebida && (
+                            <p className="text-xs text-muted-foreground leading-tight">{item.bebida}</p>
+                          )}
+                          {item.embalagem && item.embalagem !== "Consumir na mesa" && (
+                            <p className="text-xs text-amber-400 leading-tight">🛍️ Para viagem</p>
+                          )}
+                          {item.observacoes && (
+                            <p className="text-xs text-muted-foreground leading-tight italic">"{item.observacoes}"</p>
+                          )}
+                        </div>
+
+                        {/* Quantidade */}
+                        <div className="shrink-0 flex items-center gap-1.5">
+                          <button type="button"
+                            onClick={() => item.quantidade <= 1 ? onRemove(item.uid) : onUpdateQty(item.uid, -1)}
+                            className="flex h-7 w-7 items-center justify-center rounded-lg bg-secondary text-foreground active:scale-90 transition-transform">
+                            {item.quantidade <= 1
+                              ? <Trash2 className="h-3 w-3 text-destructive" />
+                              : <Minus className="h-3 w-3" />}
+                          </button>
+                          <span className="w-5 text-center text-sm font-black text-foreground tabular-nums">
+                            {item.quantidade}
                           </span>
-                          <h4 className="mt-2 text-sm font-bold text-foreground">{item.nome}</h4>
-                          {item.adicionais.length > 0 && <p className="mt-0.5 text-xs text-primary">+ {item.adicionais.map((a) => a.nome).join(", ")}</p>}
-                          {item.removidos.length > 0 && <p className="mt-0.5 text-xs text-destructive">Sem {item.removidos.join(", ")}</p>}
-                          {item.bebida && <p className="mt-0.5 text-xs text-muted-foreground">Bebida: {item.bebida}</p>}
-                          {item.tipo && <p className="mt-0.5 text-xs text-muted-foreground">Tipo: {item.tipo}</p>}
-                          {item.embalagem && item.embalagem !== "Consumir na mesa" && item.embalagem !== "Para viagem" && <p className="mt-0.5 text-xs text-muted-foreground">Embalagem: {item.embalagem}</p>}
-                          {item.observacoes && <p className="mt-0.5 text-xs text-muted-foreground">Obs.: {item.observacoes}</p>}
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => onRemove(item.uid)}
-                          className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-destructive"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </div>
-
-                      <div className="flex items-center justify-between gap-3">
-                        <div className="flex items-center gap-3">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              if (item.quantidade <= 1) {
-                                onRemove(item.uid);
-                              } else {
-                                onUpdateQty(item.uid, -1);
-                              }
-                            }}
-                            className="flex h-9 w-9 items-center justify-center rounded-xl bg-background text-foreground transition-transform active:scale-90"
-                          >
-                            {item.quantidade <= 1 ? <Trash2 className="h-4 w-4 text-destructive" /> : <Minus className="h-4 w-4" />}
-                          </button>
-                          <span className="min-w-[2ch] text-center text-base font-bold text-foreground">{item.quantidade}</span>
-                          <button
-                            type="button"
+                          <button type="button"
                             onClick={() => onUpdateQty(item.uid, 1)}
-                            className="flex h-9 w-9 items-center justify-center rounded-xl bg-background text-foreground transition-transform active:scale-90"
-                          >
-                            <Plus className="h-4 w-4" />
+                            className="flex h-7 w-7 items-center justify-center rounded-lg bg-secondary text-foreground active:scale-90 transition-transform">
+                            <Plus className="h-3 w-3" />
                           </button>
                         </div>
-                        <span className="text-base font-black text-foreground">{formatPrice(item.precoUnitario * item.quantidade)}</span>
+
+                        {/* Subtotal */}
+                        <span className="shrink-0 text-sm font-black text-foreground tabular-nums w-16 text-right">
+                          {formatPrice(item.precoUnitario * item.quantidade)}
+                        </span>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
 
-                <div className="absolute inset-x-0 bottom-0 border-t border-border bg-card/98 backdrop-blur-sm p-4 animate-fade-in">
+                {/* Rodapé fixo */}
+                <div className="absolute inset-x-0 bottom-0 border-t border-border bg-card/98 backdrop-blur-sm px-4 pt-3 pb-[calc(1rem+env(safe-area-inset-bottom))]">
                   {!showConfirmEnvio ? (
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-muted-foreground">Subtotal</span>
-                        <span className="text-lg font-black text-foreground tabular-nums">{formatPrice(subtotal)}</span>
+                        <span className="text-base font-bold text-muted-foreground">Valor a pagar</span>
+                        <span className="text-xl font-black text-foreground tabular-nums">{formatPrice(subtotal)}</span>
                       </div>
                       <div className="grid grid-cols-2 gap-3">
                         <Button type="button" variant="outline"
                           disabled={isSubmitting || showSubmittingOverlay}
                           onClick={() => { onContinueOrdering?.(); onOpenChange?.(false); }}
                           className="h-12 rounded-2xl font-bold text-sm">
-                          + Adicionar itens
+                          Adicionar mais itens
                         </Button>
                         <Button type="button"
                           disabled={isSubmitting || isLocked || showSubmittingOverlay}
@@ -307,19 +315,16 @@ const CartDrawer = ({
                     </div>
                   ) : (
                     <div className="space-y-3">
-                      <div className="text-center py-1">
+                      <div className="flex items-center justify-between">
                         <p className="text-base font-black text-foreground">Tudo certo no pedido?</p>
-                        <p className="text-sm text-muted-foreground">Quer adicionar mais alguma coisa?</p>
+                        <span className="text-xl font-black text-foreground tabular-nums">{formatPrice(subtotal)}</span>
                       </div>
-                      <div className="flex items-center justify-between px-1">
-                        <span className="text-sm text-muted-foreground">Total</span>
-                        <span className="text-lg font-black text-foreground tabular-nums">{formatPrice(subtotal)}</span>
-                      </div>
+                      <p className="text-sm text-muted-foreground">Quer adicionar mais alguma coisa?</p>
                       <div className="grid grid-cols-2 gap-3">
                         <Button type="button" variant="outline"
                           onClick={() => setShowConfirmEnvio(false)}
                           className="h-12 rounded-2xl font-bold text-sm">
-                          + Adicionar mais
+                          Não, adicionar mais
                         </Button>
                         <Button type="button"
                           onClick={() => { setShowConfirmEnvio(false); handleConfirmar(); }}
@@ -330,7 +335,7 @@ const CartDrawer = ({
                               <LoaderCircle className="h-4 w-4 animate-spin" />
                               Enviando...
                             </span>
-                          ) : labelConfirmarFinal}
+                          ) : "Sim, enviar!"}
                         </Button>
                       </div>
                     </div>

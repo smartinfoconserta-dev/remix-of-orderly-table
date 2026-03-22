@@ -15,6 +15,7 @@ export interface ItemCarrinho {
   embalagem?: string | null;
   observacoes?: string;
   precoUnitario: number;
+  imagemUrl?: string;
   gruposEscolhidos?: { grupoNome: string; tipo: "escolha" | "adicional" | "retirar"; opcoes: { nome: string; preco: number }[] }[];
 }
 
