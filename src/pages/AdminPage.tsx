@@ -711,23 +711,20 @@ const AdminPage = () => {
                     />
                   </div>
 
-                  {/* Grupos de adicionais */}
+                  {/* Personalização do produto */}
                   <div className="space-y-3 border-t border-border pt-4">
                     <div className="flex items-center justify-between">
-                      <label className="text-xs font-bold text-muted-foreground">Grupos de adicionais</label>
+                      <label className="text-xs font-bold text-muted-foreground">Personalização do produto</label>
                       <Button size="sm" variant="outline" className="text-xs gap-1 h-7" onClick={() => {
-                        const novoGrupo: GrupoAdicional = {
+                        const novoGrupo: GrupoPersonalizacao = {
                           id: `grp-${Date.now()}`,
                           nome: "",
                           obrigatorio: false,
-                          tipo: "unico",
-                          min: 0,
-                          max: 1,
                           opcoes: [],
                         };
                         setEditProduct((prev) => prev ? { ...prev, grupos: [...(prev.grupos || []), novoGrupo] } : prev);
                       }}>
-                        <Plus className="h-3 w-3" /> Adicionar grupo
+                        <Plus className="h-3 w-3" /> Criar grupo
                       </Button>
                     </div>
                     {(editProduct?.grupos || []).map((grupo, gi) => (
@@ -766,26 +763,12 @@ const AdminPage = () => {
                                 setEditProduct((prev) => {
                                   if (!prev) return prev;
                                   const g = [...(prev.grupos || [])];
-                                  g[gi] = { ...g[gi], obrigatorio: v, min: v ? Math.max(1, g[gi].min) : 0 };
+                                  g[gi] = { ...g[gi], obrigatorio: v };
                                   return { ...prev, grupos: g };
                                 });
                               }}
                             />
                             <span className="text-muted-foreground">Obrigatório</span>
-                          </div>
-                          <div className="flex items-center gap-1.5">
-                            <Switch
-                              checked={grupo.tipo === "multiplo"}
-                              onCheckedChange={(v) => {
-                                setEditProduct((prev) => {
-                                  if (!prev) return prev;
-                                  const g = [...(prev.grupos || [])];
-                                  g[gi] = { ...g[gi], tipo: v ? "multiplo" : "unico", max: v ? 0 : 1 };
-                                  return { ...prev, grupos: g };
-                                });
-                              }}
-                            />
-                            <span className="text-muted-foreground">{grupo.tipo === "multiplo" ? "Múltiplo" : "Único"}</span>
                           </div>
                         </div>
                         <div className="space-y-1.5 pl-2">
@@ -807,24 +790,27 @@ const AdminPage = () => {
                                 placeholder="Nome da opção"
                                 className="text-sm h-7 flex-1"
                               />
-                              <Input
-                                type="number"
-                                step="0.01"
-                                value={op.preco || ""}
-                                onChange={(e) => {
-                                  const val = parseFloat(e.target.value) || 0;
-                                  setEditProduct((prev) => {
-                                    if (!prev) return prev;
-                                    const g = [...(prev.grupos || [])];
-                                    const ops = [...g[gi].opcoes];
-                                    ops[oi] = { ...ops[oi], preco: val };
-                                    g[gi] = { ...g[gi], opcoes: ops };
-                                    return { ...prev, grupos: g };
-                                  });
-                                }}
-                                placeholder="R$"
-                                className="text-sm h-7 w-20"
-                              />
+                              <div className="flex items-center gap-1">
+                                <Input
+                                  type="number"
+                                  step="0.01"
+                                  value={op.preco || ""}
+                                  onChange={(e) => {
+                                    const val = parseFloat(e.target.value) || 0;
+                                    setEditProduct((prev) => {
+                                      if (!prev) return prev;
+                                      const g = [...(prev.grupos || [])];
+                                      const ops = [...g[gi].opcoes];
+                                      ops[oi] = { ...ops[oi], preco: val };
+                                      g[gi] = { ...g[gi], opcoes: ops };
+                                      return { ...prev, grupos: g };
+                                    });
+                                  }}
+                                  placeholder="R$"
+                                  className="text-sm h-7 w-20"
+                                />
+                                {op.preco === 0 && <span className="text-[10px] text-muted-foreground whitespace-nowrap">Grátis</span>}
+                              </div>
                               <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => {
                                 setEditProduct((prev) => {
                                   if (!prev) return prev;
