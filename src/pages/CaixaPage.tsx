@@ -234,6 +234,9 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
   const [confirmTempo, setConfirmTempo] = useState("");
   const [confirmTempoCustom, setConfirmTempoCustom] = useState("");
   const [confirmTaxaEntrega, setConfirmTaxaEntrega] = useState("");
+  const [buscaDelivery, setBuscaDelivery] = useState("");
+  const [mostrarEntregues, setMostrarEntregues] = useState(false);
+  const [filtroMotoboy, setFiltroMotoboy] = useState<string | null>(null);
 
   // Master aviso state
   const [masterAviso, setMasterAviso] = useState<{ mensagem: string; tipo: string; enviadoEm: string; lido: boolean } | null>(null);
@@ -365,6 +368,34 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
     [pedidosBalcao]
   );
   const pedidosBalcaoSoAtivos = useMemo(() => pedidosBalcaoAtivos.filter((p) => p.origem === "balcao"), [pedidosBalcaoAtivos]);
+
+  const pedidosParaRetirar = useMemo(() =>
+    pedidosDeliveryAtivos.filter(p => p.statusBalcao === "pronto" && !p.motoboyNome),
+    [pedidosDeliveryAtivos]
+  );
+  const pedidosEmRota = useMemo(() =>
+    pedidosDeliveryAtivos.filter(p => p.statusBalcao === "saiu"),
+    [pedidosDeliveryAtivos]
+  );
+  const pedidosDevolvidos = useMemo(() =>
+    pedidosDeliveryAtivos.filter(p => p.statusBalcao === "devolvido"),
+    [pedidosDeliveryAtivos]
+  );
+  const pedidosEntregues = useMemo(() =>
+    pedidosDeliveryAtivos.filter(p => p.statusBalcao === "entregue" || p.statusBalcao === "pago"),
+    [pedidosDeliveryAtivos]
+  );
+  const motoboyAtivos = useMemo(() => {
+    const map = new Map<string, { emRota: number; entregues: number }>();
+    pedidosDeliveryAtivos.forEach(p => {
+      if (!p.motoboyNome) return;
+      const atual = map.get(p.motoboyNome) || { emRota: 0, entregues: 0 };
+      if (p.statusBalcao === "saiu") atual.emRota++;
+      if (p.statusBalcao === "entregue" || p.statusBalcao === "pago") atual.entregues++;
+      map.set(p.motoboyNome, atual);
+    });
+    return [...map.entries()].map(([nome, dados]) => ({ nome, ...dados }));
+  }, [pedidosDeliveryAtivos]);
 
   /* ── callbacks ── */
   const resetCloseAccountState = useCallback(() => {
@@ -933,6 +964,109 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
     urgente: "bg-destructive/20 border-destructive/50 text-destructive",
   };
 
+  const filtrarPedidos = (lista: typeof pedidosDeliveryAtivos) => {
+    let resultado = lista;
+    if (filtroMotoboy) {
+      resultado = resultado.filter(p => p.motoboyNome === filtroMotoboy);
+    }
+    if (buscaDelivery.trim()) {
+      const q = buscaDelivery.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+      resultado = resultado.filter(p => {
+        const nome = (p.clienteNome || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        const tel = (p.clienteTelefone || "").replace(/\D/g, "");
+        return nome.includes(q) || tel.includes(q) || String(p.numeroPedido).includes(q);
+      });
+    }
+    return resultado;
+  };
+
+  const renderCardDelivery = (pb: typeof pedidosBalcao[0]) => {
+    const isPronto = pb.statusBalcao === "pronto";
+    const isSaiu = pb.statusBalcao === "saiu";
+    const isEntregue = pb.statusBalcao === "entregue";
+    const isPago = pb.statusBalcao === "pago";
+    const isDevolvido = pb.statusBalcao === "devolvido";
+    const borderClass = isDevolvido
+      ? "border-orange-500/60 bg-orange-500/8 ring-1 ring-orange-500/30 animate-pulse"
+      : isPronto
+      ? "border-emerald-500/60 bg-emerald-500/8 animate-pulse"
+      : isSaiu
+      ? "border-blue-500/50 bg-blue-500/8"
+      : isEntregue || isPago
+      ? "border-border/30 bg-card/40"
+      : "border-amber-500/30 bg-amber-500/5";
+    const badgeLabel = isDevolvido ? "⚠ Devolvido"
+      : isPronto ? "Pronto p/ retirar"
+      : isSaiu ? `Em rota — ${pb.motoboyNome || ""}`
+      : isEntregue ? "Entregue"
+      : isPago ? "Pago"
+      : "Aguardando cozinha";
+    const badgeClass = isDevolvido
+      ? "border-orange-500/40 bg-orange-500/15 text-orange-400 font-black"
+      : isPronto
+      ? "border-emerald-500/40 bg-emerald-500/15 text-emerald-400 font-black"
+      : isSaiu
+      ? "border-blue-500/30 bg-blue-500/10 text-blue-400 font-bold"
+      : isEntregue || isPago
+      ? "border-border bg-secondary/50 text-muted-foreground"
+      : "border-amber-500/25 bg-amber-500/10 text-amber-400";
+    return (
+      <div key={pb.id} className={`rounded-2xl border p-4 space-y-3 transition-colors ${borderClass}`}>
+        <div className="flex items-start justify-between">
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-black text-foreground truncate">{pb.clienteNome || "—"}</p>
+            {pb.enderecoCompleto && (
+              <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
+                <MapPin className="h-3 w-3 shrink-0" />
+                <span className="truncate">{pb.enderecoCompleto}{pb.bairro ? ` — ${pb.bairro}` : ""}</span>
+              </p>
+            )}
+            {pb.clienteTelefone && <p className="text-xs text-muted-foreground mt-0.5">{pb.clienteTelefone}</p>}
+            {pb.motoboyNome && (
+              <div className="flex items-center gap-1.5 mt-1">
+                <span className="text-sm">🏍️</span>
+                <span className={`text-xs font-black px-2 py-0.5 rounded-full border ${
+                  isSaiu ? "bg-blue-500/15 text-blue-400 border-blue-500/25" : "bg-secondary text-muted-foreground border-border"
+                }`}>{pb.motoboyNome}</span>
+              </div>
+            )}
+          </div>
+          <span className={`shrink-0 rounded-full border px-3 py-1 text-[10px] uppercase tracking-widest ${badgeClass}`}>
+            {badgeLabel}
+          </span>
+        </div>
+        <div className="text-xs text-muted-foreground space-y-0.5">
+          {pb.itens.slice(0, 3).map((it, idx) => (
+            <p key={idx} className="truncate">{it.quantidade}× {it.nome}</p>
+          ))}
+          {pb.itens.length > 3 && <p className="text-muted-foreground/60">+{pb.itens.length - 3} itens...</p>}
+        </div>
+        <div className="flex items-center justify-between pt-2 border-t border-border">
+          <span className="text-lg font-black tabular-nums text-foreground">{formatPrice(pb.total)}</span>
+          <Button size="sm" variant="outline" onClick={() => handleSelecionarBalcao(pb.id)}
+            className="rounded-xl font-bold gap-1.5 text-xs">
+            <Wallet className="h-3.5 w-3.5" /> Ver comanda / Receber
+          </Button>
+        </div>
+        {isDevolvido && (
+          <div className="rounded-xl border border-orange-500/20 bg-orange-500/5 p-3 space-y-2">
+            <p className="text-xs font-black text-orange-400">⚠ Motoboy não conseguiu entregar</p>
+            <div className="flex gap-2">
+              <Button size="sm" className="flex-1 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white"
+                onClick={() => { marcarBalcaoPronto(pb.id); toast.success("Pedido voltou para fila"); }}>
+                🔄 Reenviar
+              </Button>
+              <Button size="sm" variant="destructive" className="flex-1 rounded-xl text-xs font-bold"
+                onClick={() => { rejeitarPedidoBalcao(pb.id, "Cancelado após devolução"); toast.error(`Pedido #${pb.numeroPedido} cancelado`); }}>
+                ✕ Cancelar
+              </Button>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <>
       <div className="h-svh flex flex-col bg-background overflow-hidden">
@@ -1245,11 +1379,74 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                       </Button>
                     </div>
 
-                    {/* ── Aguardando confirmação ── */}
+                    {/* Campo de busca */}
+                    <div className="relative mb-4">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+                      <input
+                        type="text"
+                        placeholder="Buscar por nome, telefone ou nº do pedido..."
+                        value={buscaDelivery}
+                        onChange={e => setBuscaDelivery(e.target.value)}
+                        className="w-full h-10 pl-9 pr-9 rounded-xl border border-border bg-card text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                      />
+                      {buscaDelivery && (
+                        <button onClick={() => setBuscaDelivery("")}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                          <X className="h-4 w-4" />
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Painel de motoboys ativos */}
+                    {motoboyAtivos.length > 0 && (
+                      <div className="mb-4 flex flex-wrap gap-2 items-center">
+                        <span className="text-xs font-black uppercase tracking-widest text-muted-foreground mr-1">🏍️ Motoboys:</span>
+                        {filtroMotoboy && (
+                          <button onClick={() => setFiltroMotoboy(null)}
+                            className="flex items-center gap-1 rounded-full border border-border bg-secondary px-3 py-1 text-xs font-bold text-muted-foreground hover:text-foreground">
+                            <X className="h-3 w-3" /> Todos
+                          </button>
+                        )}
+                        {motoboyAtivos.map(m => (
+                          <button
+                            key={m.nome}
+                            onClick={() => setFiltroMotoboy(filtroMotoboy === m.nome ? null : m.nome)}
+                            className={`flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-bold transition-colors ${
+                              filtroMotoboy === m.nome
+                                ? "border-blue-500/50 bg-blue-500/15 text-blue-400"
+                                : "border-border bg-card text-foreground hover:border-blue-500/30"
+                            }`}
+                          >
+                            <span>{m.nome}</span>
+                            {m.emRota > 0 && (
+                              <span className="rounded-full bg-blue-500/20 text-blue-400 px-1.5 text-[10px] font-black">{m.emRota} rota</span>
+                            )}
+                            {m.entregues > 0 && (
+                              <span className="rounded-full bg-emerald-500/20 text-emerald-400 px-1.5 text-[10px] font-black">{m.entregues} ✓</span>
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* SEÇÃO 1: Devolvidos — ação urgente */}
+                    {filtrarPedidos(pedidosDevolvidos).length > 0 && (
+                      <div className="space-y-3 mb-5">
+                        <h3 className="text-xs font-black uppercase tracking-widest text-orange-400 flex items-center gap-2">
+                          <span className="h-2 w-2 rounded-full bg-orange-400 animate-pulse inline-block" />
+                          ⚠ Devolvidos — resolver agora ({filtrarPedidos(pedidosDevolvidos).length})
+                        </h3>
+                        <div className="grid gap-3 grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
+                          {filtrarPedidos(pedidosDevolvidos).map(pb => renderCardDelivery(pb))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* SEÇÃO 2: Aguardando confirmação */}
                     {pedidosAguardandoConfirmacao.length > 0 && (
-                      <div className="space-y-3">
+                      <div className="space-y-3 mb-5">
                         <h3 className="text-xs font-black uppercase tracking-widest text-amber-400 flex items-center gap-2">
-                          <span className="h-2 w-2 rounded-full bg-amber-400 animate-pulse" />
+                          <span className="h-2 w-2 rounded-full bg-amber-400 animate-pulse inline-block" />
                           Aguardando confirmação ({pedidosAguardandoConfirmacao.length})
                         </h3>
                         <div className="grid gap-3 grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
@@ -1289,7 +1486,6 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                               </div>
                               {confirmTempoId === pb.id ? (
                                 <div className="space-y-2 p-3 rounded-xl border border-emerald-500/30 bg-emerald-500/5">
-                                  {/* Taxa de entrega */}
                                   <div className="space-y-1">
                                     <p className="text-xs font-black text-foreground">Taxa de entrega (R$)</p>
                                     <Input
@@ -1344,7 +1540,6 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                                         const taxaFinal = Number.isFinite(taxaVal) && taxaVal > 0 ? taxaVal : 0;
                                         confirmarPedidoBalcao(pb.id, taxaFinal > 0 ? taxaFinal : undefined);
                                         toast.success(`Pedido #${pb.numeroPedido} confirmado!`, { duration: 1600, icon: "✅" });
-                                        // QR Code only on printed receipt, not on screen
                                         const tel = (pb.clienteTelefone || "").replace(/\D/g, "");
                                         if (tel) {
                                           const itensStr = pb.itens.map((it) => `${it.quantidade}x ${it.nome}`).join(", ");
@@ -1377,7 +1572,6 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                                       setConfirmTempoId(pb.id);
                                       setConfirmTempo("");
                                       setConfirmTempoCustom("");
-                                      // Auto-fill taxa from bairros
                                       const bairros = getBairros().filter((b) => b.ativo);
                                       const bairroPedido = pb.bairro || "";
                                       const match = bairroPedido ? bairros.find((b) => normStr(b.nome) === normStr(bairroPedido)) : null;
@@ -1403,128 +1597,60 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                       </div>
                     )}
 
-                    {pedidosDeliveryAtivos.length === 0 && pedidosAguardandoConfirmacao.length === 0 ? (
+                    {/* SEÇÃO 3: Prontos para retirar */}
+                    {filtrarPedidos(pedidosParaRetirar).length > 0 && (
+                      <div className="space-y-3 mb-5">
+                        <h3 className="text-xs font-black uppercase tracking-widest text-emerald-400 flex items-center gap-2">
+                          <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse inline-block" />
+                          Prontos p/ retirar ({filtrarPedidos(pedidosParaRetirar).length})
+                        </h3>
+                        <div className="grid gap-3 grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
+                          {filtrarPedidos(pedidosParaRetirar).map(pb => renderCardDelivery(pb))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* SEÇÃO 4: Em rota */}
+                    {filtrarPedidos(pedidosEmRota).length > 0 && (
+                      <div className="space-y-3 mb-5">
+                        <h3 className="text-xs font-black uppercase tracking-widest text-blue-400 flex items-center gap-2">
+                          <span className="h-2 w-2 rounded-full bg-blue-400 inline-block" />
+                          Em rota ({filtrarPedidos(pedidosEmRota).length})
+                        </h3>
+                        <div className="grid gap-3 grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
+                          {filtrarPedidos(pedidosEmRota).map(pb => renderCardDelivery(pb))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* SEÇÃO 5: Entregues — colapsável */}
+                    {pedidosEntregues.length > 0 && (
+                      <div className="space-y-3">
+                        <button
+                          onClick={() => setMostrarEntregues(prev => !prev)}
+                          className="w-full flex items-center justify-between rounded-xl border border-border bg-card/50 px-4 py-2.5 text-xs font-bold text-muted-foreground hover:text-foreground transition-colors"
+                        >
+                          <span className="flex items-center gap-2">
+                            <span className="h-2 w-2 rounded-full bg-muted-foreground/40 inline-block" />
+                            Entregues hoje ({pedidosEntregues.length})
+                          </span>
+                          <span>{mostrarEntregues ? "▲ Ocultar" : "▼ Ver histórico"}</span>
+                        </button>
+                        {mostrarEntregues && (
+                          <div className="grid gap-3 grid-cols-1 md:grid-cols-2 xl:grid-cols-3 opacity-60">
+                            {filtrarPedidos(pedidosEntregues).map(pb => renderCardDelivery(pb))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Estado vazio */}
+                    {pedidosDeliveryAtivos.length === 0 && pedidosAguardandoConfirmacao.length === 0 && (
                       <div className="flex flex-col items-center justify-center gap-3 py-20 text-muted-foreground">
                         <Truck className="h-12 w-12 opacity-20" />
                         <p className="text-sm font-semibold">Nenhum delivery ativo no momento</p>
                       </div>
-                    ) : pedidosDeliveryAtivos.length > 0 ? (
-                      <div className="space-y-3">
-                        <h3 className="text-xs font-black uppercase tracking-widest text-foreground/70 flex items-center gap-2">
-                          Em andamento ({pedidosDeliveryAtivos.length})
-                        </h3>
-                        <div className="grid gap-3 grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
-                        {pedidosDeliveryAtivos.map((pb) => {
-                          const isPronto = pb.statusBalcao === "pronto";
-                          const isSaiu = pb.statusBalcao === "saiu";
-                          const isEntregue = pb.statusBalcao === "entregue";
-                          const isPago = pb.statusBalcao === "pago";
-                          const isDevolvido = pb.statusBalcao === "devolvido";
-                          const borderClass = isDevolvido
-                            ? "border-orange-500/60 bg-orange-500/10 ring-1 ring-orange-500/30"
-                            : isPronto
-                            ? "border-status-consumo/40 bg-status-consumo/5 animate-pulse"
-                            : isSaiu
-                            ? "border-blue-500/40 bg-blue-500/5"
-                            : isEntregue
-                            ? "border-muted bg-muted/20"
-                            : isPago
-                            ? "border-purple-500/40 bg-purple-500/5"
-                            : "border-amber-500/30 bg-amber-500/5";
-                          const badgeClass = isDevolvido
-                            ? "border-orange-500/40 bg-orange-500/15 text-orange-400 font-black animate-pulse"
-                            : isPronto
-                            ? "border-status-consumo/25 bg-status-consumo/10 text-status-consumo"
-                            : isSaiu
-                            ? "border-blue-500/25 bg-blue-500/10 text-blue-400"
-                            : isEntregue
-                            ? "border-muted bg-muted/30 text-muted-foreground"
-                            : isPago
-                            ? "border-purple-500/25 bg-purple-500/10 text-purple-400"
-                            : "border-amber-500/25 bg-amber-500/10 text-amber-400";
-                          const badgeLabel = isDevolvido ? "⚠ Devolvido — não entregue"
-                            : isPronto ? "Pronto p/ retirar"
-                            : isSaiu ? `Saiu — ${pb.motoboyNome || ""}`
-                            : isEntregue ? "Entregue"
-                            : isPago ? "Pago"
-                            : "Aguardando cozinha";
-                          return (
-                            <div
-                              key={pb.id}
-                              className={`rounded-2xl border p-4 space-y-3 transition-colors ${borderClass}`}
-                            >
-                              <div className="flex items-start justify-between">
-                                <div className="min-w-0 flex-1">
-                                  <p className="text-sm font-black text-foreground truncate">{pb.clienteNome || "—"}</p>
-                                  {pb.enderecoCompleto && (
-                                    <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
-                                      <MapPin className="h-3 w-3 shrink-0" />
-                                      <span className="truncate">{pb.enderecoCompleto}{pb.bairro ? ` — ${pb.bairro}` : ""}</span>
-                                    </p>
-                                  )}
-                                  {pb.clienteTelefone && (
-                                    <p className="text-xs text-muted-foreground mt-0.5">{pb.clienteTelefone}</p>
-                                  )}
-                                  {pb.motoboyNome && (
-                                    <p className="text-xs text-blue-400 mt-0.5 font-semibold">🏍️ {pb.motoboyNome}</p>
-                                  )}
-                                </div>
-                                <span className={`shrink-0 rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-widest ${badgeClass}`}>
-                                  {badgeLabel}
-                                </span>
-                              </div>
-                              {isDevolvido && (
-                                <div className="rounded-xl border border-orange-500/20 bg-orange-500/5 px-3 py-2 space-y-2">
-                                  <p className="text-xs font-black text-orange-400">Motoboy não conseguiu entregar</p>
-                                  <div className="flex gap-2">
-                                    <Button
-                                      size="sm"
-                                      className="flex-1 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white"
-                                      onClick={() => {
-                                        marcarBalcaoPronto(pb.id);
-                                        toast.success("Pedido voltou para fila — aguardando motoboy");
-                                      }}
-                                    >
-                                      🔄 Reenviar
-                                    </Button>
-                                    <Button
-                                      size="sm"
-                                      variant="destructive"
-                                      className="flex-1 rounded-xl text-xs font-bold"
-                                      onClick={() => {
-                                        rejeitarPedidoBalcao(pb.id, "Cancelado após devolução do motoboy");
-                                        toast.error(`Pedido #${pb.numeroPedido} cancelado`);
-                                      }}
-                                    >
-                                      ✕ Cancelar pedido
-                                    </Button>
-                                  </div>
-                                </div>
-                              )}
-                              <div className="text-xs text-muted-foreground space-y-0.5">
-                                {pb.itens.slice(0, 4).map((it, idx) => (
-                                  <p key={idx} className="truncate">{it.quantidade}× {it.nome}</p>
-                                ))}
-                                {pb.itens.length > 4 && <p className="text-muted-foreground/60">+{pb.itens.length - 4} itens...</p>}
-                              </div>
-                              <div className="flex items-center justify-between pt-2 border-t border-border">
-                                <span className="text-lg font-black tabular-nums text-foreground">{formatPrice(pb.total)}</span>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => handleSelecionarBalcao(pb.id)}
-                                  className="rounded-xl font-bold gap-1.5 text-xs"
-                                >
-                                  <Wallet className="h-3.5 w-3.5" />
-                                  Ver comanda / Receber
-                                </Button>
-                              </div>
-                            </div>
-                          );
-                        })}
-                       </div>
-                      </div>
-                    ) : null}
+                    )}
                   </div>
                 )}
                 </div>
