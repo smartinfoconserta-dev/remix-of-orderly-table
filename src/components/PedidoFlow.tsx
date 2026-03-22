@@ -601,7 +601,7 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
       }`}
     >
       <div className="flex min-w-0 flex-1 items-center gap-3">
-        {modo !== "cliente" && (
+        {modo !== "cliente" && modo !== "delivery" && (
           <button
             type="button"
             onClick={handleBack}
