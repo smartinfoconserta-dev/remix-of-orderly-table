@@ -1378,7 +1378,10 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                           const isSaiu = pb.statusBalcao === "saiu";
                           const isEntregue = pb.statusBalcao === "entregue";
                           const isPago = pb.statusBalcao === "pago";
-                          const borderClass = isPronto
+                          const isDevolvido = pb.statusBalcao === "devolvido";
+                          const borderClass = isDevolvido
+                            ? "border-orange-500/60 bg-orange-500/10 ring-1 ring-orange-500/30"
+                            : isPronto
                             ? "border-status-consumo/40 bg-status-consumo/5 animate-pulse"
                             : isSaiu
                             ? "border-blue-500/40 bg-blue-500/5"
@@ -1387,7 +1390,9 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                             : isPago
                             ? "border-purple-500/40 bg-purple-500/5"
                             : "border-amber-500/30 bg-amber-500/5";
-                          const badgeClass = isPronto
+                          const badgeClass = isDevolvido
+                            ? "border-orange-500/40 bg-orange-500/15 text-orange-400 font-black animate-pulse"
+                            : isPronto
                             ? "border-status-consumo/25 bg-status-consumo/10 text-status-consumo"
                             : isSaiu
                             ? "border-blue-500/25 bg-blue-500/10 text-blue-400"
@@ -1396,7 +1401,8 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                             : isPago
                             ? "border-purple-500/25 bg-purple-500/10 text-purple-400"
                             : "border-amber-500/25 bg-amber-500/10 text-amber-400";
-                          const badgeLabel = isPronto ? "Pronto p/ retirar"
+                          const badgeLabel = isDevolvido ? "⚠ Devolvido — não entregue"
+                            : isPronto ? "Pronto p/ retirar"
                             : isSaiu ? `Saiu — ${pb.motoboyNome || ""}`
                             : isEntregue ? "Entregue"
                             : isPago ? "Pago"
@@ -1426,6 +1432,34 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                                   {badgeLabel}
                                 </span>
                               </div>
+                              {isDevolvido && (
+                                <div className="rounded-xl border border-orange-500/20 bg-orange-500/5 px-3 py-2 space-y-2">
+                                  <p className="text-xs font-black text-orange-400">Motoboy não conseguiu entregar</p>
+                                  <div className="flex gap-2">
+                                    <Button
+                                      size="sm"
+                                      className="flex-1 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white"
+                                      onClick={() => {
+                                        marcarBalcaoPronto(pb.id);
+                                        toast.success("Pedido voltou para fila — aguardando motoboy");
+                                      }}
+                                    >
+                                      🔄 Reenviar
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="destructive"
+                                      className="flex-1 rounded-xl text-xs font-bold"
+                                      onClick={() => {
+                                        rejeitarPedidoBalcao(pb.id, "Cancelado após devolução do motoboy");
+                                        toast.error(`Pedido #${pb.numeroPedido} cancelado`);
+                                      }}
+                                    >
+                                      ✕ Cancelar pedido
+                                    </Button>
+                                  </div>
+                                </div>
+                              )}
                               <div className="text-xs text-muted-foreground space-y-0.5">
                                 {pb.itens.slice(0, 4).map((it, idx) => (
                                   <p key={idx} className="truncate">{it.quantidade}× {it.nome}</p>
