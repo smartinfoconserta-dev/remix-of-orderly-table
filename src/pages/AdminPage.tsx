@@ -154,7 +154,7 @@ const AdminPage = () => {
   }, []);
 
   const openEdit = useCallback((product: ProdutoOverride) => {
-    setEditProduct(product);
+    setEditProduct({ ...product });
     setIsNewProduct(false);
     setEditForm({
       nome: product.nome,
