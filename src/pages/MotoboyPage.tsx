@@ -61,11 +61,12 @@ export default function MotoboyPage() {
     if (pinInput.length < 4) { setLoginError("Nome ou PIN incorreto"); return; }
     const expectedHash = btoa("pin:" + pinInput);
     if (motoboy.pinHash !== expectedHash) { setLoginError("Nome ou PIN incorreto"); return; }
-    const s = { id: motoboy.id, nome: motoboy.nome };
+    const fundoTroco = parseFloat(fundoInput.replace(",", ".")) || 0;
+    const s = { id: motoboy.id, nome: motoboy.nome, fundoTroco };
     localStorage.setItem(SESSAO_KEY, JSON.stringify(s));
     setSessao(s);
     toast.success(`Bem-vindo, ${motoboy.nome}!`);
-  }, [nomeInput, pinInput, motoboys]);
+  }, [nomeInput, pinInput, fundoInput, motoboys]);
 
   const handleLogout = () => {
     localStorage.removeItem(SESSAO_KEY);
