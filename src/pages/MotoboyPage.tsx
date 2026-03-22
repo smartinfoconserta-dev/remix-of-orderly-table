@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Bike, LogOut, MapPin, Phone, DollarSign, Clock, Map, Navigation, QrCode, GripVertical, CheckCircle2, Package, XCircle, Camera } from "lucide-react";
+import { Bike, LogOut, MapPin, Phone, DollarSign, Clock, Map, Navigation, QrCode, GripVertical, CheckCircle2, Package, XCircle, Camera, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -42,6 +42,7 @@ export default function MotoboyPage() {
   const [loginError, setLoginError] = useState("");
   const [scanningPedidoId, setScanningPedidoId] = useState<string | null>(null);
   const [generalScan, setGeneralScan] = useState(false);
+  const [showManualPick, setShowManualPick] = useState(false);
   const [activeTab, setActiveTab] = useState<"rota" | "entregues">("rota");
   const [ordem, setOrdem] = useState<string[]>(() => getOrdem());
   const [draggingId, setDraggingId] = useState<string | null>(null);
@@ -132,6 +133,16 @@ export default function MotoboyPage() {
     setGeneralScan(false);
     e.target.value = "";
   }, [scanningPedidoId, generalScan, marcarBalcaoSaiu, sessao, pedidosBalcao]);
+
+  // ── Pedidos disponíveis para retirada manual ──
+  const pedidosDisponiveis = useMemo(() =>
+    pedidosBalcao.filter(p =>
+      p.origem === "delivery" &&
+      p.statusBalcao === "pronto" &&
+      !p.motoboyNome
+    ),
+    [pedidosBalcao]
+  );
 
   // ── Data — only show pedidos scanned by this motoboy ──
   const emRota = useMemo(() => {
@@ -384,10 +395,20 @@ export default function MotoboyPage() {
       {/* Tab content */}
       {activeTab === "rota" ? (
         <div className="flex-1 overflow-y-auto p-4 space-y-3 pb-24">
-          {/* Top-level scan button */}
-          <Button className="w-full h-12 gap-2 font-bold" variant="outline" onClick={() => handleScanQR()}>
-            <Camera className="w-5 h-5" /> 📷 Escanear pedido
-          </Button>
+          {/* Top-level scan + manual pick buttons */}
+          <div className="flex gap-2">
+            <Button className="flex-1 h-12 gap-2 font-bold" variant="outline" onClick={() => handleScanQR()}>
+              <Camera className="w-5 h-5" /> Escanear QR
+            </Button>
+            <Button
+              className="flex-1 h-12 gap-2 font-bold"
+              variant="outline"
+              onClick={() => setShowManualPick(true)}
+              disabled={pedidosDisponiveis.length === 0}
+            >
+              📋 Retirar ({pedidosDisponiveis.length})
+            </Button>
+          </div>
 
           {emRota.length === 0 ? (
             <div className="text-center py-16 text-muted-foreground">
@@ -574,6 +595,62 @@ export default function MotoboyPage() {
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Manual pick modal */}
+      {showManualPick && (
+        <div className="fixed inset-0 z-50 bg-background/90 backdrop-blur-sm flex flex-col">
+          <div className="flex items-center justify-between px-4 py-4 border-b border-border">
+            <div>
+              <p className="font-black text-lg">Selecionar pedido</p>
+              <p className="text-xs text-muted-foreground">Toque no pedido para vincular a você</p>
+            </div>
+            <button
+              onClick={() => setShowManualPick(false)}
+              className="h-10 w-10 flex items-center justify-center rounded-full border border-border"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+          <div className="flex-1 overflow-y-auto p-4 space-y-3">
+            {pedidosDisponiveis.length === 0 ? (
+              <div className="text-center py-16 text-muted-foreground">
+                <p>Nenhum pedido disponível para retirada</p>
+              </div>
+            ) : (
+              pedidosDisponiveis.map(p => (
+                <button
+                  key={p.id}
+                  onClick={() => {
+                    marcarBalcaoSaiu(p.id, sessao?.nome || "Motoboy");
+                    toast.success(`Pedido #${p.numeroPedido} vinculado a você!`);
+                    setShowManualPick(false);
+                  }}
+                  className="w-full text-left rounded-2xl border border-border bg-card p-4 space-y-2 active:scale-[0.98] transition-transform"
+                >
+                  <div className="flex items-center justify-between">
+                    <p className="font-bold text-sm">{p.clienteNome || "Cliente"}</p>
+                    <span className="text-3xl font-black text-amber-500">#{p.numeroPedido}</span>
+                  </div>
+                  {p.enderecoCompleto && (
+                    <p className="text-xs text-muted-foreground flex items-center gap-1">
+                      <MapPin className="w-3 h-3 shrink-0" />
+                      {p.enderecoCompleto}{p.bairro ? ` — ${p.bairro}` : ""}
+                    </p>
+                  )}
+                  <div className="flex items-center justify-between pt-1 border-t border-border">
+                    <span className="text-sm font-black">R$ {p.total.toFixed(2)}</span>
+                    {p.formaPagamentoDelivery && (
+                      <span className="text-xs text-muted-foreground border border-border rounded-full px-2 py-0.5">
+                        {p.formaPagamentoDelivery}
+                      </span>
+                    )}
+                  </div>
+                </button>
+              ))
+            )}
+          </div>
         </div>
       )}
     </div>
