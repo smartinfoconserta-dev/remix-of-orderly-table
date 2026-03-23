@@ -2157,7 +2157,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                                 setValorEntregue("");
                               }
                             }}
-                            className={`flex items-center justify-center gap-2 rounded-2xl border-2 py-3 px-4 transition-colors ${
+                            className={`flex items-center justify-center gap-2 rounded-xl border-2 py-2.5 px-3 transition-colors ${
                               isSelected
                                 ? `border-white ${opt.bgColor}`
                                 : `${opt.idleBorder} ${opt.idleBg} opacity-50`
