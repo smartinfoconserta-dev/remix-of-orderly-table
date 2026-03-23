@@ -97,6 +97,7 @@ const AdminPage = () => {
   const [authLoading, setAuthLoading] = useState(false);
 
   const [tab, setTab] = useState<AdminTab>("dashboard");
+  const [configSection, setConfigSection] = useState<"inicio" | "identidade" | "delivery" | "salao" | "operacao" | "sistema">("inicio");
 
   // --- Cardápio state ---
   const [overrides, setOverrides] = useState<Record<string, ProdutoOverride>>(getCardapioOverrides);
@@ -463,7 +464,7 @@ const AdminPage = () => {
               <button
                 key={s.id}
                 type="button"
-                onClick={() => setTab(s.id)}
+                onClick={() => { setTab(s.id); setConfigSection("inicio"); }}
                 className={`flex w-full items-center gap-3 px-4 py-2 text-sm font-semibold transition-colors ${
                   active
                     ? "bg-primary/15 text-primary border-l-2 border-primary"
@@ -1061,715 +1062,752 @@ const AdminPage = () => {
 
         {/* ═══ CONFIGURAÇÕES ═══ */}
         {tab === "configuracoes" && (
-          <div className="space-y-8 fade-in">
-            {/* ── Seção 1: Identidade Visual ── */}
-            <div>
-              <h2 className="text-2xl font-black text-foreground">Configurações</h2>
-              <p className="text-sm text-muted-foreground">Personalize o visual e funcionamento do restaurante</p>
-            </div>
-
-            <div>
-              <h3 className="text-lg font-black text-foreground flex items-center gap-2">🎨 Identidade Visual</h3>
-              <p className="text-xs text-muted-foreground mb-3">Logo, nome e cores do restaurante</p>
-            </div>
-            <div className="surface-card max-w-lg space-y-5 rounded-2xl p-6">
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-muted-foreground">Nome do restaurante</label>
-                <Input
-                  value={sistemaConfig.nomeRestaurante}
-                  onChange={(e) => setSistemaConfig((c) => ({ ...c, nomeRestaurante: e.target.value }))}
-                  placeholder="Nome do restaurante"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-muted-foreground">Logo do restaurante</label>
-                {(sistemaConfig.logoBase64 || sistemaConfig.logoUrl) && (
-                  <div className="flex items-center gap-3">
-                    <img src={sistemaConfig.logoBase64 || sistemaConfig.logoUrl} alt="Logo" className="h-12 w-12 rounded-xl border border-border object-cover" />
-                    {sistemaConfig.logoBase64 && (
-                      <button type="button" onClick={() => setSistemaConfig((c) => ({ ...c, logoBase64: "" }))} className="text-xs text-destructive hover:underline">Remover foto</button>
-                    )}
-                  </div>
-                )}
-                <label className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border bg-secondary/30 px-4 py-4 text-sm font-bold text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground">
-                  <Upload className="h-5 w-5" />
-                  Fazer upload da logo
-                  <input type="file" accept="image/*" className="hidden" onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (!file) return;
-                    if (file.size > 2 * 1024 * 1024) { toast.error("Imagem muito grande (máx 2MB)"); return; }
-                    const reader = new FileReader();
-                    reader.onload = () => setSistemaConfig((c) => ({ ...c, logoBase64: reader.result as string }));
-                    reader.readAsDataURL(file);
-                    e.target.value = "";
-                  }} />
-                </label>
-                <p className="text-[10px] font-bold text-muted-foreground pt-1">Ou cole uma URL</p>
-                <Input
-                  value={sistemaConfig.logoUrl}
-                  onChange={(e) => setSistemaConfig((c) => ({ ...c, logoUrl: e.target.value }))}
-                  placeholder="https://..."
-                />
-              </div>
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-muted-foreground">Cor primária</label>
-                <div className="flex items-center gap-3">
-                  <input
-                    type="color"
-                    value={sistemaConfig.corPrimaria || "#f97316"}
-                    onChange={(e) => setSistemaConfig((c) => ({ ...c, corPrimaria: e.target.value }))}
-                    className="h-10 w-14 cursor-pointer rounded-lg border border-border bg-transparent"
-                  />
-                  <span className="text-sm text-muted-foreground font-mono">{sistemaConfig.corPrimaria || "#f97316"}</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="max-w-lg border-t border-border" />
-
-            {/* ── Seção 2: WhatsApp ── */}
-            <div>
-              <h3 className="text-lg font-black text-foreground flex items-center gap-2">📱 WhatsApp</h3>
-              <p className="text-xs text-muted-foreground mb-3">Número e mensagens para delivery</p>
-            </div>
-            <div className="surface-card max-w-lg space-y-5 rounded-2xl p-6">
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-muted-foreground">Telefone WhatsApp do restaurante</label>
-                <Input
-                  value={sistemaConfig.telefoneRestaurante || ""}
-                  onChange={(e) => setSistemaConfig((c) => ({ ...c, telefoneRestaurante: e.target.value.replace(/\D/g, "") }))}
-                  placeholder="11999999999 (só números com DDD)"
-                  inputMode="tel"
-                />
-              </div>
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-muted-foreground">Mensagem de boas-vindas WhatsApp</label>
-                <Textarea
-                  value={sistemaConfig.mensagemBoasVindas ?? `Olá! Bem-vindo ao ${sistemaConfig.nomeRestaurante}! 😊 Clique para fazer seu pedido:`}
-                  onChange={(e) => setSistemaConfig((c) => ({ ...c, mensagemBoasVindas: e.target.value }))}
-                  rows={3}
-                />
-              </div>
-            </div>
-
-            <div className="max-w-lg border-t border-border" />
-
-            {/* ── Seção 3: Delivery ── */}
-            <div>
-              <h3 className="text-lg font-black text-foreground flex items-center gap-2">🛵 Delivery</h3>
-              <p className="text-xs text-muted-foreground mb-3">Modo de entrega e taxas por bairro</p>
-            </div>
-
-            {/* Toggle delivery ativo */}
-            <div className="surface-card max-w-lg rounded-2xl p-6 space-y-3">
-              {/* Toggle cozinha */}
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-bold text-foreground">{sistemaConfig.cozinhaAtiva !== false ? "Tela da cozinha ativa" : "Tela da cozinha desativada"}</p>
-                  <p className="text-xs text-muted-foreground">Quando desativada, pedidos vão direto para "pronto"</p>
-                </div>
-                <Switch
-                  checked={sistemaConfig.cozinhaAtiva !== false}
-                  onCheckedChange={(v) => {
-                    const next = { ...sistemaConfig, cozinhaAtiva: v };
-                    setSistemaConfig(next);
-                    saveSistemaConfig(next);
-                    toast.success(v ? "Cozinha ativada" : "Cozinha desativada — pedidos vão direto para pronto");
-                  }}
-                />
-              </div>
-
-              {/* Couvert / Taxa de serviço */}
-              <div className="rounded-xl border border-border bg-secondary/40 p-4 space-y-3">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-black text-foreground">Couvert / Taxa de serviço</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">Cobrado por pessoa ao fechar a conta</p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setSistemaConfig(c => ({ ...c, couvertAtivo: !c.couvertAtivo }))}
-                    className={`relative h-6 w-11 rounded-full transition-colors ${sistemaConfig.couvertAtivo ? "bg-primary" : "bg-border"}`}
-                  >
-                    <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${sistemaConfig.couvertAtivo ? "translate-x-5" : "translate-x-0.5"}`} />
-                  </button>
-                </div>
-                {sistemaConfig.couvertAtivo && (
-                  <>
-                    <div className="space-y-1">
-                      <label className="text-xs font-bold text-muted-foreground">Valor por pessoa (R$)</label>
-                      <Input
-                        value={sistemaConfig.couvertValor ? sistemaConfig.couvertValor.toFixed(2).replace(".", ",") : ""}
-                        onChange={e => {
-                          const val = parseFloat(e.target.value.replace(",", ".")) || 0;
-                          setSistemaConfig(c => ({ ...c, couvertValor: Number.isFinite(val) ? val : 0 }));
-                        }}
-                        placeholder="Ex.: 5,00"
-                        inputMode="decimal"
-                        className="h-10 rounded-xl text-sm max-w-[160px]"
-                      />
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-xs font-bold text-foreground">Obrigatório</p>
-                        <p className="text-xs text-muted-foreground">Se desligado, operador pode dispensar</p>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => setSistemaConfig(c => ({ ...c, couvertObrigatorio: !c.couvertObrigatorio }))}
-                        className={`relative h-6 w-11 rounded-full transition-colors ${sistemaConfig.couvertObrigatorio ? "bg-primary" : "bg-border"}`}
-                      >
-                        <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${sistemaConfig.couvertObrigatorio ? "translate-x-5" : "translate-x-0.5"}`} />
-                      </button>
-                    </div>
-                  </>
-                )}
-              </div>
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-bold text-foreground">{sistemaConfig.deliveryAtivo !== false ? "Delivery ativado" : "Delivery desativado"}</p>
-                  <p className="text-xs text-muted-foreground">Controle se o link de delivery aceita pedidos</p>
-                </div>
-                <Switch
-                  checked={sistemaConfig.deliveryAtivo !== false}
-                  onCheckedChange={(v) => {
-                    const next = { ...sistemaConfig, deliveryAtivo: v };
-                    setSistemaConfig(next);
-                    saveSistemaConfig(next);
-                    toast.success(v ? "Delivery ativado" : "Delivery desativado");
-                  }}
-                />
-              </div>
-              {sistemaConfig.deliveryAtivo === false && (
-                <p className="text-xs font-semibold text-destructive rounded-lg bg-destructive/10 px-3 py-2">
-                  ⚠ Clientes não conseguem fazer pedidos pelo link de delivery
-                </p>
+          <div className="space-y-5 fade-in">
+            {/* Cabeçalho */}
+            <div className="flex items-center gap-3">
+              {configSection !== "inicio" && (
+                <button onClick={() => setConfigSection("inicio")}
+                  className="flex items-center gap-1.5 text-sm font-bold text-muted-foreground hover:text-foreground transition-colors">
+                  ← Voltar
+                </button>
               )}
+              <div>
+                <h2 className="text-2xl font-black text-foreground">
+                  {configSection === "inicio" && "Configurações"}
+                  {configSection === "identidade" && "🎨 Identidade Visual"}
+                  {configSection === "delivery" && "🛵 Delivery"}
+                  {configSection === "salao" && "🍽️ Salão & Mesas"}
+                  {configSection === "operacao" && "⚙️ Operação"}
+                  {configSection === "sistema" && "💾 Sistema"}
+                </h2>
+                {configSection === "inicio" && (
+                  <p className="text-sm text-muted-foreground">Toque em um bloco para configurar</p>
+                )}
+              </div>
             </div>
 
-            {/* Horário de funcionamento */}
-            {(() => {
-              const DIAS: { key: keyof HorariosSemana; label: string }[] = [
-                { key: "seg", label: "Segunda" },
-                { key: "ter", label: "Terça" },
-                { key: "qua", label: "Quarta" },
-                { key: "qui", label: "Quinta" },
-                { key: "sex", label: "Sexta" },
-                { key: "sab", label: "Sábado" },
-                { key: "dom", label: "Domingo" },
-              ];
-              const horarios = getHorariosFuncionamento();
-              const setHorarios = (h: HorariosSemana) => saveHorariosFuncionamento(h);
-              const updateDia = (dia: keyof HorariosSemana, patch: Partial<HorarioFuncionamento>) => {
-                const next = { ...horarios, [dia]: { ...horarios[dia], ...patch } };
-                setHorarios(next);
-              };
-              return (
-                <div className="surface-card max-w-lg rounded-2xl p-6 space-y-4">
-                  <div>
-                    <p className="text-sm font-black text-foreground flex items-center gap-2">🕐 Horário de funcionamento</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">Define quando o delivery aceita pedidos</p>
+            {/* Grade de cards */}
+            {configSection === "inicio" && (
+              <div className="grid grid-cols-2 gap-3 max-w-xl">
+                {[
+                  { id: "identidade", icon: "🎨", label: "Identidade Visual", desc: "Logo, nome, cor, banners" },
+                  { id: "delivery", icon: "🛵", label: "Delivery", desc: "Horários, bairros, taxas" },
+                  { id: "salao", icon: "🍽️", label: "Salão & Mesas", desc: "Número de mesas, QR Codes" },
+                  { id: "operacao", icon: "⚙️", label: "Operação", desc: "Cozinha, couvert, modos" },
+                  { id: "sistema", icon: "💾", label: "Sistema", desc: "Backup e restauração" },
+                ].map(card => (
+                  <button key={card.id} onClick={() => setConfigSection(card.id as any)}
+                    className="flex items-start gap-4 rounded-2xl border border-border bg-card p-5 text-left hover:border-primary/40 hover:bg-primary/5 transition-colors">
+                    <span className="text-3xl">{card.icon}</span>
+                    <div>
+                      <p className="text-sm font-black text-foreground">{card.label}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">{card.desc}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* IDENTIDADE VISUAL */}
+            {configSection === "identidade" && (
+              <div className="space-y-4 max-w-lg">
+                <div className="surface-card space-y-5 rounded-2xl p-6">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-muted-foreground">Nome do restaurante</label>
+                    <Input
+                      value={sistemaConfig.nomeRestaurante}
+                      onChange={(e) => setSistemaConfig((c) => ({ ...c, nomeRestaurante: e.target.value }))}
+                      placeholder="Nome do restaurante"
+                    />
                   </div>
                   <div className="space-y-2">
-                    {DIAS.map(({ key, label }) => {
-                      const dia = horarios[key];
-                      return (
-                        <div key={key} className={`flex items-center gap-3 rounded-xl border p-3 transition-colors ${dia.ativo ? "border-border bg-card" : "border-border/50 bg-secondary/30 opacity-60"}`}>
-                          <button
-                            type="button"
-                            onClick={() => { updateDia(key, { ativo: !dia.ativo }); }}
-                            className={`relative h-5 w-9 rounded-full transition-colors shrink-0 ${dia.ativo ? "bg-primary" : "bg-border"}`}
-                          >
-                            <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform ${dia.ativo ? "translate-x-4" : "translate-x-0.5"}`} />
-                          </button>
-                          <span className="text-sm font-bold text-foreground w-20 shrink-0">{label}</span>
-                          {dia.ativo && (
-                            <div className="flex items-center gap-2 flex-1">
-                              <Input
-                                type="time"
-                                value={dia.abertura}
-                                onChange={(e) => updateDia(key, { abertura: e.target.value })}
-                                className="h-8 rounded-lg text-xs font-bold w-24"
-                              />
-                              <span className="text-xs text-muted-foreground">até</span>
-                              <Input
-                                type="time"
-                                value={dia.fechamento}
-                                onChange={(e) => updateDia(key, { fechamento: e.target.value })}
-                                className="h-8 rounded-lg text-xs font-bold w-24"
-                              />
+                    <label className="text-xs font-bold text-muted-foreground">Logo do restaurante</label>
+                    {(sistemaConfig.logoBase64 || sistemaConfig.logoUrl) && (
+                      <div className="flex items-center gap-3">
+                        <img src={sistemaConfig.logoBase64 || sistemaConfig.logoUrl} alt="Logo" className="h-12 w-12 rounded-xl border border-border object-cover" />
+                        {sistemaConfig.logoBase64 && (
+                          <button type="button" onClick={() => setSistemaConfig((c) => ({ ...c, logoBase64: "" }))} className="text-xs text-destructive hover:underline">Remover foto</button>
+                        )}
+                      </div>
+                    )}
+                    <label className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border bg-secondary/30 px-4 py-4 text-sm font-bold text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground">
+                      <Upload className="h-5 w-5" />
+                      Fazer upload da logo
+                      <input type="file" accept="image/*" className="hidden" onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        if (file.size > 2 * 1024 * 1024) { toast.error("Imagem muito grande (máx 2MB)"); return; }
+                        const reader = new FileReader();
+                        reader.onload = () => setSistemaConfig((c) => ({ ...c, logoBase64: reader.result as string }));
+                        reader.readAsDataURL(file);
+                        e.target.value = "";
+                      }} />
+                    </label>
+                    <p className="text-[10px] font-bold text-muted-foreground pt-1">Ou cole uma URL</p>
+                    <Input
+                      value={sistemaConfig.logoUrl}
+                      onChange={(e) => setSistemaConfig((c) => ({ ...c, logoUrl: e.target.value }))}
+                      placeholder="https://..."
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-muted-foreground">Cor primária</label>
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="color"
+                        value={sistemaConfig.corPrimaria || "#f97316"}
+                        onChange={(e) => setSistemaConfig((c) => ({ ...c, corPrimaria: e.target.value }))}
+                        className="h-10 w-14 cursor-pointer rounded-lg border border-border bg-transparent"
+                      />
+                      <span className="text-sm text-muted-foreground font-mono">{sistemaConfig.corPrimaria || "#f97316"}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* WhatsApp */}
+                <div className="surface-card space-y-5 rounded-2xl p-6">
+                  <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">📱 WhatsApp</p>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-muted-foreground">Telefone WhatsApp do restaurante</label>
+                    <Input
+                      value={sistemaConfig.telefoneRestaurante || ""}
+                      onChange={(e) => setSistemaConfig((c) => ({ ...c, telefoneRestaurante: e.target.value.replace(/\D/g, "") }))}
+                      placeholder="11999999999 (só números com DDD)"
+                      inputMode="tel"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-muted-foreground">Mensagem de boas-vindas WhatsApp</label>
+                    <Textarea
+                      value={sistemaConfig.mensagemBoasVindas ?? `Olá! Bem-vindo ao ${sistemaConfig.nomeRestaurante}! 😊 Clique para fazer seu pedido:`}
+                      onChange={(e) => setSistemaConfig((c) => ({ ...c, mensagemBoasVindas: e.target.value }))}
+                      rows={3}
+                    />
+                  </div>
+                </div>
+
+                {/* QR Codes Instagram / Wi-Fi */}
+                <div className="surface-card space-y-5 rounded-2xl p-6">
+                  <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">📲 QR Codes</p>
+                  {/* Instagram */}
+                  <div className="space-y-3 rounded-xl border border-border p-4">
+                    <p className="text-xs font-black uppercase tracking-wider text-muted-foreground">Instagram</p>
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold text-muted-foreground">URL do Instagram</label>
+                      <Input
+                        value={sistemaConfig.instagramUrl || ""}
+                        onChange={(e) => setSistemaConfig((c) => ({ ...c, instagramUrl: e.target.value }))}
+                        placeholder="https://instagram.com/seurestaurante"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold text-muted-foreground">Imagem de fundo</label>
+                      <div className="flex items-center gap-3">
+                        {sistemaConfig.instagramBg && (
+                          <img src={sistemaConfig.instagramBg} alt="bg instagram" className="h-12 w-20 rounded-lg border border-border object-cover" />
+                        )}
+                        <label className="cursor-pointer rounded-lg border border-dashed border-border px-3 py-1.5 text-xs font-semibold text-muted-foreground hover:bg-accent/40">
+                          {sistemaConfig.instagramBg ? "Trocar" : "Upload"}
+                          <input type="file" accept="image/*" className="hidden" onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+                            const reader = new FileReader();
+                            reader.onload = () => setSistemaConfig((c) => ({ ...c, instagramBg: reader.result as string }));
+                            reader.readAsDataURL(file);
+                          }} />
+                        </label>
+                        {sistemaConfig.instagramBg && (
+                          <Button variant="ghost" size="sm" className="h-7 px-2 text-xs text-destructive" onClick={() => setSistemaConfig((c) => ({ ...c, instagramBg: "" }))}>
+                            <Trash2 className="mr-1 h-3 w-3" /> Remover
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                    {sistemaConfig.instagramUrl && (
+                      <div className="text-center space-y-1">
+                        <img
+                          src={`https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(sistemaConfig.instagramUrl)}`}
+                          alt="QR Instagram"
+                          className="h-16 w-16 rounded-lg border border-border"
+                        />
+                      </div>
+                    )}
+                  </div>
+                  {/* Wi-Fi */}
+                  <div className="space-y-3 rounded-xl border border-border p-4">
+                    <p className="text-xs font-black uppercase tracking-wider text-muted-foreground">Wi-Fi</p>
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold text-muted-foreground">Senha do Wi-Fi</label>
+                      <Input
+                        value={sistemaConfig.senhaWifi || ""}
+                        onChange={(e) => setSistemaConfig((c) => ({ ...c, senhaWifi: e.target.value }))}
+                        placeholder="Senha da rede Wi-Fi"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold text-muted-foreground">Imagem de fundo</label>
+                      <div className="flex items-center gap-3">
+                        {sistemaConfig.wifiBg && (
+                          <img src={sistemaConfig.wifiBg} alt="bg wifi" className="h-12 w-20 rounded-lg border border-border object-cover" />
+                        )}
+                        <label className="cursor-pointer rounded-lg border border-dashed border-border px-3 py-1.5 text-xs font-semibold text-muted-foreground hover:bg-accent/40">
+                          {sistemaConfig.wifiBg ? "Trocar" : "Upload"}
+                          <input type="file" accept="image/*" className="hidden" onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+                            const reader = new FileReader();
+                            reader.onload = () => setSistemaConfig((c) => ({ ...c, wifiBg: reader.result as string }));
+                            reader.readAsDataURL(file);
+                          }} />
+                        </label>
+                        {sistemaConfig.wifiBg && (
+                          <Button variant="ghost" size="sm" className="h-7 px-2 text-xs text-destructive" onClick={() => setSistemaConfig((c) => ({ ...c, wifiBg: "" }))}>
+                            <Trash2 className="mr-1 h-3 w-3" /> Remover
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                    {sistemaConfig.senhaWifi && (
+                      <div className="text-center space-y-1">
+                        <img
+                          src={`https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(`WIFI:T:WPA;S:${sistemaConfig.nomeRestaurante};P:${sistemaConfig.senhaWifi};;`)}`}
+                          alt="QR Wi-Fi"
+                          className="h-16 w-16 rounded-lg border border-border"
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Banners */}
+                <div className="space-y-3">
+                  <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">🖼️ Banners</p>
+                  {(sistemaConfig.banners ?? []).map((banner, idx) => (
+                    <div key={banner.id} className="surface-card rounded-2xl p-4 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-black text-muted-foreground">Banner {idx + 1}</span>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="text-destructive hover:bg-destructive/10"
+                          onClick={() => setSistemaConfig((c) => ({ ...c, banners: (c.banners ?? []).filter((b) => b.id !== banner.id) }))}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      <Input
+                        value={banner.titulo}
+                        onChange={(e) => setSistemaConfig((c) => ({
+                          ...c,
+                          banners: (c.banners ?? []).map((b) => b.id === banner.id ? { ...b, titulo: e.target.value } : b),
+                        }))}
+                        placeholder="Título"
+                      />
+                      <Input
+                        value={banner.subtitulo}
+                        onChange={(e) => setSistemaConfig((c) => ({
+                          ...c,
+                          banners: (c.banners ?? []).map((b) => b.id === banner.id ? { ...b, subtitulo: e.target.value } : b),
+                        }))}
+                        placeholder="Subtítulo"
+                      />
+                      <div className="flex gap-2">
+                        <Input
+                          value={banner.preco}
+                          onChange={(e) => setSistemaConfig((c) => ({
+                            ...c,
+                            banners: (c.banners ?? []).map((b) => b.id === banner.id ? { ...b, preco: e.target.value } : b),
+                          }))}
+                          placeholder="Preço (opcional)"
+                          className="w-1/2"
+                        />
+                        <Input
+                          value={banner.imagemUrl}
+                          onChange={(e) => setSistemaConfig((c) => ({
+                            ...c,
+                            banners: (c.banners ?? []).map((b) => b.id === banner.id ? { ...b, imagemUrl: e.target.value } : b),
+                          }))}
+                          placeholder="URL da imagem"
+                          className="flex-1"
+                        />
+                      </div>
+                      <label className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border bg-secondary/30 px-3 py-3 text-xs font-bold text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground">
+                        <Upload className="h-4 w-4" />
+                        Upload imagem do banner
+                        <input type="file" accept="image/*" className="hidden" onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+                          if (file.size > 2 * 1024 * 1024) { toast.error("Imagem muito grande (máx 2MB)"); return; }
+                          const reader = new FileReader();
+                          reader.onload = () => setSistemaConfig((c) => ({
+                            ...c,
+                            banners: (c.banners ?? []).map((b) => b.id === banner.id ? { ...b, imagemBase64: reader.result as string } : b),
+                          }));
+                          reader.readAsDataURL(file);
+                          e.target.value = "";
+                        }} />
+                      </label>
+                      {(banner.imagemBase64 || banner.imagemUrl) && (
+                        <img src={banner.imagemBase64 || banner.imagemUrl} alt="Preview" className="h-20 w-full rounded-xl border border-border object-cover" />
+                      )}
+                    </div>
+                  ))}
+                  {(sistemaConfig.banners ?? []).length < 5 && (
+                    <Button
+                      variant="outline"
+                      className="w-full rounded-xl"
+                      onClick={() => setSistemaConfig((c) => ({
+                        ...c,
+                        banners: [...(c.banners ?? []), { id: `banner-${Date.now()}`, titulo: "", subtitulo: "", preco: "", imagemUrl: "" }],
+                      }))}
+                    >
+                      <Plus className="h-4 w-4 mr-1" /> Adicionar banner
+                    </Button>
+                  )}
+                </div>
+
+                <Button onClick={saveSistema} className="rounded-xl font-black w-full mt-4">
+                  <Save className="mr-1 h-4 w-4" /> Salvar
+                </Button>
+              </div>
+            )}
+
+            {/* DELIVERY */}
+            {configSection === "delivery" && (
+              <div className="space-y-4 max-w-lg">
+                {/* Toggle delivery */}
+                <div className="surface-card rounded-2xl p-6 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-bold text-foreground">{sistemaConfig.deliveryAtivo !== false ? "Delivery ativado" : "Delivery desativado"}</p>
+                      <p className="text-xs text-muted-foreground">Controle se o link de delivery aceita pedidos</p>
+                    </div>
+                    <Switch
+                      checked={sistemaConfig.deliveryAtivo !== false}
+                      onCheckedChange={(v) => {
+                        const next = { ...sistemaConfig, deliveryAtivo: v };
+                        setSistemaConfig(next);
+                        saveSistemaConfig(next);
+                        toast.success(v ? "Delivery ativado" : "Delivery desativado");
+                      }}
+                    />
+                  </div>
+                  {sistemaConfig.deliveryAtivo === false && (
+                    <p className="text-xs font-semibold text-destructive rounded-lg bg-destructive/10 px-3 py-2">
+                      ⚠ Clientes não conseguem fazer pedidos pelo link de delivery
+                    </p>
+                  )}
+                </div>
+
+                {/* Horário de funcionamento */}
+                {(() => {
+                  const DIAS: { key: keyof HorariosSemana; label: string }[] = [
+                    { key: "seg", label: "Segunda" },
+                    { key: "ter", label: "Terça" },
+                    { key: "qua", label: "Quarta" },
+                    { key: "qui", label: "Quinta" },
+                    { key: "sex", label: "Sexta" },
+                    { key: "sab", label: "Sábado" },
+                    { key: "dom", label: "Domingo" },
+                  ];
+                  const horarios = getHorariosFuncionamento();
+                  const setHorarios = (h: HorariosSemana) => saveHorariosFuncionamento(h);
+                  const updateDia = (dia: keyof HorariosSemana, patch: Partial<HorarioFuncionamento>) => {
+                    const next = { ...horarios, [dia]: { ...horarios[dia], ...patch } };
+                    setHorarios(next);
+                  };
+                  return (
+                    <div className="surface-card rounded-2xl p-6 space-y-4">
+                      <div>
+                        <p className="text-sm font-black text-foreground flex items-center gap-2">🕐 Horário de funcionamento</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">Define quando o delivery aceita pedidos</p>
+                      </div>
+                      <div className="space-y-2">
+                        {DIAS.map(({ key, label }) => {
+                          const dia = horarios[key];
+                          return (
+                            <div key={key} className={`flex items-center gap-3 rounded-xl border p-3 transition-colors ${dia.ativo ? "border-border bg-card" : "border-border/50 bg-secondary/30 opacity-60"}`}>
+                              <button
+                                type="button"
+                                onClick={() => { updateDia(key, { ativo: !dia.ativo }); }}
+                                className={`relative h-5 w-9 rounded-full transition-colors shrink-0 ${dia.ativo ? "bg-primary" : "bg-border"}`}
+                              >
+                                <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform ${dia.ativo ? "translate-x-4" : "translate-x-0.5"}`} />
+                              </button>
+                              <span className="text-sm font-bold text-foreground w-20 shrink-0">{label}</span>
+                              {dia.ativo && (
+                                <div className="flex items-center gap-2 flex-1">
+                                  <Input
+                                    type="time"
+                                    value={dia.abertura}
+                                    onChange={(e) => updateDia(key, { abertura: e.target.value })}
+                                    className="h-8 rounded-lg text-xs font-bold w-24"
+                                  />
+                                  <span className="text-xs text-muted-foreground">até</span>
+                                  <Input
+                                    type="time"
+                                    value={dia.fechamento}
+                                    onChange={(e) => updateDia(key, { fechamento: e.target.value })}
+                                    className="h-8 rounded-lg text-xs font-bold w-24"
+                                  />
+                                </div>
+                              )}
+                              {!dia.ativo && <span className="text-xs text-muted-foreground italic">Fechado</span>}
                             </div>
-                          )}
-                          {!dia.ativo && <span className="text-xs text-muted-foreground italic">Fechado</span>}
+                          );
+                        })}
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-bold text-muted-foreground">Mensagem quando fechado (opcional)</label>
+                        <Input
+                          value={sistemaConfig.mensagemFechado || ""}
+                          onChange={(e) => setSistemaConfig(c => ({ ...c, mensagemFechado: e.target.value }))}
+                          placeholder="Ex.: Voltamos amanhã!"
+                        />
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {/* Modo de entrega */}
+                <div className="surface-card rounded-2xl p-6 space-y-3">
+                  <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">Modo de entrega</p>
+                  <label className="flex items-center gap-3 cursor-pointer" onClick={() => { setDeliveryModo("todos"); localStorage.setItem("obsidian-delivery-modo-v1", "todos"); }}>
+                    <span className={`h-5 w-5 rounded-full border-2 flex items-center justify-center ${deliveryModo === "todos" ? "border-primary" : "border-muted-foreground/40"}`}>
+                      {deliveryModo === "todos" && <span className="h-2.5 w-2.5 rounded-full bg-primary" />}
+                    </span>
+                    <span className={`text-sm font-semibold ${deliveryModo === "todos" ? "text-foreground" : "text-muted-foreground"}`}>Atender todos os bairros</span>
+                  </label>
+                  <label className="flex items-center gap-3 cursor-pointer" onClick={() => { setDeliveryModo("cadastrados"); localStorage.setItem("obsidian-delivery-modo-v1", "cadastrados"); }}>
+                    <span className={`h-5 w-5 rounded-full border-2 flex items-center justify-center ${deliveryModo === "cadastrados" ? "border-primary" : "border-muted-foreground/40"}`}>
+                      {deliveryModo === "cadastrados" && <span className="h-2.5 w-2.5 rounded-full bg-primary" />}
+                    </span>
+                    <span className={`text-sm font-semibold ${deliveryModo === "cadastrados" ? "text-foreground" : "text-muted-foreground"}`}>Somente bairros cadastrados</span>
+                  </label>
+                </div>
+
+                {/* Taxa padrão */}
+                <div className="surface-card rounded-2xl p-6 space-y-2">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-muted-foreground">Taxa de entrega padrão (R$)</label>
+                    <Input
+                      type="number"
+                      min="0"
+                      step="0.5"
+                      value={sistemaConfig.taxaEntrega ?? ""}
+                      onChange={(e) => setSistemaConfig((c) => ({ ...c, taxaEntrega: e.target.value ? parseFloat(e.target.value) : undefined }))}
+                      placeholder="0.00"
+                    />
+                    <p className="text-[10px] text-amber-400 font-semibold">⚠️ Taxa legada — usada quando nenhum bairro está cadastrado</p>
+                  </div>
+                </div>
+
+                {/* Taxa por bairro */}
+                <div className="surface-card space-y-4 rounded-2xl p-6">
+                  <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">Taxas por bairro</p>
+                  <div className="flex gap-2 items-end">
+                    <div className="flex-1 space-y-1.5">
+                      <label className="text-xs font-bold text-muted-foreground">Nome do bairro</label>
+                      <Input value={novoBairroNome} onChange={(e) => setNovoBairroNome(e.target.value)} placeholder="Ex.: Centro" />
+                    </div>
+                    <div className="w-28 space-y-1.5">
+                      <label className="text-xs font-bold text-muted-foreground">Taxa (R$)</label>
+                      <Input type="number" min="0" step="0.5" value={novoBairroTaxa} onChange={(e) => setNovoBairroTaxa(e.target.value)} placeholder="5.00" />
+                    </div>
+                    <Button
+                      className="rounded-xl font-bold gap-1 shrink-0"
+                      disabled={!novoBairroNome.trim() || !novoBairroTaxa}
+                      onClick={() => {
+                        const taxa = parseFloat(novoBairroTaxa);
+                        if (isNaN(taxa) || taxa < 0) { toast.error("Taxa inválida"); return; }
+                        const novo: Bairro = { id: `bairro-${Date.now()}`, nome: novoBairroNome.trim(), taxa, ativo: true };
+                        const next = [...bairros, novo];
+                        saveBairros(next);
+                        setBairros(next);
+                        setNovoBairroNome("");
+                        setNovoBairroTaxa("");
+                        toast.success(`Bairro "${novo.nome}" adicionado`);
+                      }}
+                    >
+                      <Plus className="h-4 w-4" /> Adicionar
+                    </Button>
+                  </div>
+                  {bairros.length === 0 ? (
+                    <p className="text-sm text-muted-foreground text-center py-4">Nenhum bairro cadastrado. A taxa padrão será usada.</p>
+                  ) : (
+                    <div className="divide-y divide-border/50 rounded-xl border border-border overflow-hidden">
+                      {bairros.map((b) => (
+                        <div key={b.id} className="flex items-center justify-between px-4 py-3 bg-card">
+                          <div className="flex items-center gap-3">
+                            <Switch checked={b.ativo} onCheckedChange={(v) => {
+                              const next = bairros.map((x) => x.id === b.id ? { ...x, ativo: v } : x);
+                              saveBairros(next);
+                              setBairros(next);
+                            }} />
+                            <span className={`text-sm font-semibold ${b.ativo ? "text-foreground" : "text-muted-foreground line-through"}`}>{b.nome}</span>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <span className="text-sm font-bold text-foreground">R$ {b.taxa.toFixed(2).replace(".", ",")}</span>
+                            <Button variant="ghost" size="icon" className="text-destructive hover:bg-destructive/10 h-8 w-8" onClick={() => {
+                              const next = bairros.filter((x) => x.id !== b.id);
+                              saveBairros(next);
+                              setBairros(next);
+                              toast.success(`Bairro "${b.nome}" removido`);
+                            }}>
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <Button onClick={saveSistema} className="rounded-xl font-black w-full mt-4">
+                  <Save className="mr-1 h-4 w-4" /> Salvar
+                </Button>
+              </div>
+            )}
+
+            {/* SALÃO & MESAS */}
+            {configSection === "salao" && (
+              <div className="space-y-4 max-w-lg">
+                <div className="surface-card inline-flex items-center gap-6 rounded-2xl p-6">
+                  <span className="text-sm font-bold text-muted-foreground">Número de mesas</span>
+                  <Input
+                    type="number"
+                    min={1}
+                    max={50}
+                    value={mesasInput}
+                    onChange={(e) => setMesasInput(e.target.value)}
+                    className="w-24 text-center text-xl font-black"
+                  />
+                  <Button onClick={handleMesasApply} className="rounded-xl font-bold">
+                    Aplicar
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  As alterações serão aplicadas ao reabrir o caixa do dia. Mínimo 1, máximo 50.
+                </p>
+
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="text-lg font-black text-foreground">QR Codes das mesas</h3>
+                    <p className="text-xs text-muted-foreground">Cada QR Code direciona para a mesa correspondente.</p>
+                  </div>
+                  <div className="grid grid-cols-3 md:grid-cols-4 gap-4">
+                    {Array.from({ length: parseInt(mesasInput) || mesasConfig.totalMesas }, (_, i) => {
+                      const num = i + 1;
+                      const url = `${window.location.origin}/mesa/${num}`;
+                      const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(url)}`;
+                      const nomeRest = sistemaConfig.nomeRestaurante || "Restaurante";
+                      return (
+                        <div key={num} className="flex flex-col items-center gap-2 rounded-xl border border-border bg-card p-3">
+                          <img src={qrUrl} alt={`Mesa ${String(num).padStart(2, "0")}`} className="w-full aspect-square rounded-lg" loading="lazy" />
+                          <span className="text-xs font-black text-foreground">Mesa {String(num).padStart(2, "0")}</span>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="w-full text-[10px] h-7 rounded-lg font-bold gap-1"
+                            onClick={() => {
+                              const printWindow = window.open("", "_blank", "width=400,height=600");
+                              if (!printWindow) return;
+                              const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>QR Mesa ${String(num).padStart(2, "0")}</title><style>
+                                body{margin:0;padding:40px 20px;font-family:Arial,sans-serif;text-align:center;background:#fff;color:#000}
+                                img{width:260px;height:260px;margin:20px auto}
+                                .nome{font-size:18px;font-weight:700;margin-bottom:10px}
+                                .mesa{font-size:32px;font-weight:900;margin-top:16px}
+                                .url{font-size:10px;color:#888;margin-top:8px;word-break:break-all}
+                                @media print{body{padding:20mm 10mm}@page{margin:10mm}}
+                              </style></head><body>
+                                <div class="nome">${nomeRest}</div>
+                                <img src="${qrUrl}" alt="QR Code Mesa ${String(num).padStart(2, "0")}" />
+                                <div class="mesa">Mesa ${String(num).padStart(2, "0")}</div>
+                                <div class="url">${url}</div>
+                              </body></html>`;
+                              printWindow.document.write(html);
+                              printWindow.document.close();
+                              setTimeout(() => printWindow.print(), 800);
+                            }}
+                          >
+                            Imprimir QR
+                          </Button>
                         </div>
                       );
                     })}
                   </div>
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-muted-foreground">Mensagem quando fechado (opcional)</label>
-                    <Input
-                      value={sistemaConfig.mensagemFechado || ""}
-                      onChange={(e) => setSistemaConfig(c => ({ ...c, mensagemFechado: e.target.value }))}
-                      placeholder="Ex.: Voltamos amanhã!"
-                    />
-                  </div>
                 </div>
-              );
-            })()}
-
-            {/* Modo de entrega */}
-            <div className="surface-card max-w-lg rounded-2xl p-6 space-y-3">
-              <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">Modo de entrega</p>
-              <label className="flex items-center gap-3 cursor-pointer" onClick={() => { setDeliveryModo("todos"); localStorage.setItem("obsidian-delivery-modo-v1", "todos"); }}>
-                <span className={`h-5 w-5 rounded-full border-2 flex items-center justify-center ${deliveryModo === "todos" ? "border-primary" : "border-muted-foreground/40"}`}>
-                  {deliveryModo === "todos" && <span className="h-2.5 w-2.5 rounded-full bg-primary" />}
-                </span>
-                <span className={`text-sm font-semibold ${deliveryModo === "todos" ? "text-foreground" : "text-muted-foreground"}`}>Atender todos os bairros</span>
-              </label>
-              <label className="flex items-center gap-3 cursor-pointer" onClick={() => { setDeliveryModo("cadastrados"); localStorage.setItem("obsidian-delivery-modo-v1", "cadastrados"); }}>
-                <span className={`h-5 w-5 rounded-full border-2 flex items-center justify-center ${deliveryModo === "cadastrados" ? "border-primary" : "border-muted-foreground/40"}`}>
-                  {deliveryModo === "cadastrados" && <span className="h-2.5 w-2.5 rounded-full bg-primary" />}
-                </span>
-                <span className={`text-sm font-semibold ${deliveryModo === "cadastrados" ? "text-foreground" : "text-muted-foreground"}`}>Somente bairros cadastrados</span>
-              </label>
-            </div>
-
-            {/* Modo de identificação delivery */}
-            <div className="surface-card max-w-lg rounded-2xl p-6 space-y-3">
-              <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">Modo de identificação</p>
-              <label className="flex items-center gap-3 cursor-pointer" onClick={() => {
-                const next = { ...sistemaConfig, modoIdentificacaoDelivery: "visitante" as const };
-                setSistemaConfig(next);
-                saveSistemaConfig(next);
-              }}>
-                <span className={`h-5 w-5 rounded-full border-2 flex items-center justify-center ${(sistemaConfig.modoIdentificacaoDelivery || "visitante") === "visitante" ? "border-primary" : "border-muted-foreground/40"}`}>
-                  {(sistemaConfig.modoIdentificacaoDelivery || "visitante") === "visitante" && <span className="h-2.5 w-2.5 rounded-full bg-primary" />}
-                </span>
-                <div>
-                  <span className={`text-sm font-semibold ${(sistemaConfig.modoIdentificacaoDelivery || "visitante") === "visitante" ? "text-foreground" : "text-muted-foreground"}`}>Modo visitante</span>
-                  <p className="text-[10px] text-muted-foreground">Cliente preenche dados ao finalizar o pedido</p>
-                </div>
-              </label>
-              <label className="flex items-center gap-3 cursor-pointer" onClick={() => {
-                const next = { ...sistemaConfig, modoIdentificacaoDelivery: "cadastro" as const };
-                setSistemaConfig(next);
-                saveSistemaConfig(next);
-              }}>
-                <span className={`h-5 w-5 rounded-full border-2 flex items-center justify-center ${sistemaConfig.modoIdentificacaoDelivery === "cadastro" ? "border-primary" : "border-muted-foreground/40"}`}>
-                  {sistemaConfig.modoIdentificacaoDelivery === "cadastro" && <span className="h-2.5 w-2.5 rounded-full bg-primary" />}
-                </span>
-                <div>
-                  <span className={`text-sm font-semibold ${sistemaConfig.modoIdentificacaoDelivery === "cadastro" ? "text-foreground" : "text-muted-foreground"}`}>Modo cadastro</span>
-                  <p className="text-[10px] text-muted-foreground">Cliente cria conta com telefone e senha</p>
-                </div>
-              </label>
-            </div>
-            <div className="surface-card max-w-lg rounded-2xl p-6 space-y-2">
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-muted-foreground">Taxa de entrega padrão (R$)</label>
-                <Input
-                  type="number"
-                  min="0"
-                  step="0.5"
-                  value={sistemaConfig.taxaEntrega ?? ""}
-                  onChange={(e) => setSistemaConfig((c) => ({ ...c, taxaEntrega: e.target.value ? parseFloat(e.target.value) : undefined }))}
-                  placeholder="0.00"
-                />
-                <p className="text-[10px] text-amber-400 font-semibold">⚠️ Taxa legada — usada quando nenhum bairro está cadastrado</p>
               </div>
-            </div>
+            )}
 
-            {/* Taxa por bairro */}
-            <div className="surface-card max-w-lg space-y-4 rounded-2xl p-6">
-              <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">Taxas por bairro</p>
-              <div className="flex gap-2 items-end">
-                <div className="flex-1 space-y-1.5">
-                  <label className="text-xs font-bold text-muted-foreground">Nome do bairro</label>
-                  <Input value={novoBairroNome} onChange={(e) => setNovoBairroNome(e.target.value)} placeholder="Ex.: Centro" />
-                </div>
-                <div className="w-28 space-y-1.5">
-                  <label className="text-xs font-bold text-muted-foreground">Taxa (R$)</label>
-                  <Input type="number" min="0" step="0.5" value={novoBairroTaxa} onChange={(e) => setNovoBairroTaxa(e.target.value)} placeholder="5.00" />
-                </div>
-                <Button
-                  className="rounded-xl font-bold gap-1 shrink-0"
-                  disabled={!novoBairroNome.trim() || !novoBairroTaxa}
-                  onClick={() => {
-                    const taxa = parseFloat(novoBairroTaxa);
-                    if (isNaN(taxa) || taxa < 0) { toast.error("Taxa inválida"); return; }
-                    const novo: Bairro = { id: `bairro-${Date.now()}`, nome: novoBairroNome.trim(), taxa, ativo: true };
-                    const next = [...bairros, novo];
-                    saveBairros(next);
-                    setBairros(next);
-                    setNovoBairroNome("");
-                    setNovoBairroTaxa("");
-                    toast.success(`Bairro "${novo.nome}" adicionado`);
-                  }}
-                >
-                  <Plus className="h-4 w-4" /> Adicionar
-                </Button>
-              </div>
-              {bairros.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-4">Nenhum bairro cadastrado. A taxa padrão será usada.</p>
-              ) : (
-                <div className="divide-y divide-border/50 rounded-xl border border-border overflow-hidden">
-                  {bairros.map((b) => (
-                    <div key={b.id} className="flex items-center justify-between px-4 py-3 bg-card">
-                      <div className="flex items-center gap-3">
-                        <Switch checked={b.ativo} onCheckedChange={(v) => {
-                          const next = bairros.map((x) => x.id === b.id ? { ...x, ativo: v } : x);
-                          saveBairros(next);
-                          setBairros(next);
-                        }} />
-                        <span className={`text-sm font-semibold ${b.ativo ? "text-foreground" : "text-muted-foreground line-through"}`}>{b.nome}</span>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <span className="text-sm font-bold text-foreground">R$ {b.taxa.toFixed(2).replace(".", ",")}</span>
-                        <Button variant="ghost" size="icon" className="text-destructive hover:bg-destructive/10 h-8 w-8" onClick={() => {
-                          const next = bairros.filter((x) => x.id !== b.id);
-                          saveBairros(next);
-                          setBairros(next);
-                          toast.success(`Bairro "${b.nome}" removido`);
-                        }}>
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <div className="max-w-lg border-t border-border" />
-
-            {/* ── Seção 4: QR Codes ── */}
-            <div>
-              <h3 className="text-lg font-black text-foreground flex items-center gap-2">📲 QR Codes</h3>
-              <p className="text-xs text-muted-foreground mb-3">Instagram e Wi-Fi exibidos na tela inicial do cliente</p>
-            </div>
-            <div className="surface-card max-w-lg space-y-5 rounded-2xl p-6">
-              {/* Instagram */}
-              <div className="space-y-3 rounded-xl border border-border p-4">
-                <p className="text-xs font-black uppercase tracking-wider text-muted-foreground">Instagram</p>
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-muted-foreground">URL do Instagram</label>
-                  <Input
-                    value={sistemaConfig.instagramUrl || ""}
-                    onChange={(e) => setSistemaConfig((c) => ({ ...c, instagramUrl: e.target.value }))}
-                    placeholder="https://instagram.com/seurestaurante"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-muted-foreground">Imagem de fundo</label>
-                  <div className="flex items-center gap-3">
-                    {sistemaConfig.instagramBg && (
-                      <img src={sistemaConfig.instagramBg} alt="bg instagram" className="h-12 w-20 rounded-lg border border-border object-cover" />
-                    )}
-                    <label className="cursor-pointer rounded-lg border border-dashed border-border px-3 py-1.5 text-xs font-semibold text-muted-foreground hover:bg-accent/40">
-                      {sistemaConfig.instagramBg ? "Trocar" : "Upload"}
-                      <input type="file" accept="image/*" className="hidden" onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (!file) return;
-                        const reader = new FileReader();
-                        reader.onload = () => setSistemaConfig((c) => ({ ...c, instagramBg: reader.result as string }));
-                        reader.readAsDataURL(file);
-                      }} />
-                    </label>
-                    {sistemaConfig.instagramBg && (
-                      <Button variant="ghost" size="sm" className="h-7 px-2 text-xs text-destructive" onClick={() => setSistemaConfig((c) => ({ ...c, instagramBg: "" }))}>
-                        <Trash2 className="mr-1 h-3 w-3" /> Remover
-                      </Button>
-                    )}
-                  </div>
-                </div>
-                {sistemaConfig.instagramUrl && (
-                  <div className="text-center space-y-1">
-                    <img
-                      src={`https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(sistemaConfig.instagramUrl)}`}
-                      alt="QR Instagram"
-                      className="h-16 w-16 rounded-lg border border-border"
-                    />
-                  </div>
-                )}
-              </div>
-
-              {/* Wi-Fi */}
-              <div className="space-y-3 rounded-xl border border-border p-4">
-                <p className="text-xs font-black uppercase tracking-wider text-muted-foreground">Wi-Fi</p>
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-muted-foreground">Senha do Wi-Fi</label>
-                  <Input
-                    value={sistemaConfig.senhaWifi || ""}
-                    onChange={(e) => setSistemaConfig((c) => ({ ...c, senhaWifi: e.target.value }))}
-                    placeholder="Senha da rede Wi-Fi"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-muted-foreground">Imagem de fundo</label>
-                  <div className="flex items-center gap-3">
-                    {sistemaConfig.wifiBg && (
-                      <img src={sistemaConfig.wifiBg} alt="bg wifi" className="h-12 w-20 rounded-lg border border-border object-cover" />
-                    )}
-                    <label className="cursor-pointer rounded-lg border border-dashed border-border px-3 py-1.5 text-xs font-semibold text-muted-foreground hover:bg-accent/40">
-                      {sistemaConfig.wifiBg ? "Trocar" : "Upload"}
-                      <input type="file" accept="image/*" className="hidden" onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (!file) return;
-                        const reader = new FileReader();
-                        reader.onload = () => setSistemaConfig((c) => ({ ...c, wifiBg: reader.result as string }));
-                        reader.readAsDataURL(file);
-                      }} />
-                    </label>
-                    {sistemaConfig.wifiBg && (
-                      <Button variant="ghost" size="sm" className="h-7 px-2 text-xs text-destructive" onClick={() => setSistemaConfig((c) => ({ ...c, wifiBg: "" }))}>
-                        <Trash2 className="mr-1 h-3 w-3" /> Remover
-                      </Button>
-                    )}
-                  </div>
-                </div>
-                {sistemaConfig.senhaWifi && (
-                  <div className="text-center space-y-1">
-                    <img
-                      src={`https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(`WIFI:T:WPA;S:${sistemaConfig.nomeRestaurante};P:${sistemaConfig.senhaWifi};;`)}`}
-                      alt="QR Wi-Fi"
-                      className="h-16 w-16 rounded-lg border border-border"
-                    />
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="max-w-lg border-t border-border" />
-
-            {/* ── Seção 5: Banners ── */}
-            <div>
-              <h3 className="text-lg font-black text-foreground flex items-center gap-2">🖼️ Banners</h3>
-              <p className="text-xs text-muted-foreground mb-3">Até 5 banners exibidos na tela inicial do cliente</p>
-            </div>
-            <div className="space-y-3 max-w-lg">
-              {(sistemaConfig.banners ?? []).map((banner, idx) => (
-                <div key={banner.id} className="surface-card rounded-2xl p-4 space-y-3">
+            {/* OPERAÇÃO */}
+            {configSection === "operacao" && (
+              <div className="space-y-4 max-w-lg">
+                {/* Toggle cozinha */}
+                <div className="surface-card rounded-2xl p-6 space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-black text-muted-foreground">Banner {idx + 1}</span>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="text-destructive hover:bg-destructive/10"
-                      onClick={() => setSistemaConfig((c) => ({ ...c, banners: (c.banners ?? []).filter((b) => b.id !== banner.id) }))}
+                    <div>
+                      <p className="text-sm font-bold text-foreground">{sistemaConfig.cozinhaAtiva !== false ? "Tela da cozinha ativa" : "Tela da cozinha desativada"}</p>
+                      <p className="text-xs text-muted-foreground">Quando desativada, pedidos vão direto para "pronto"</p>
+                    </div>
+                    <Switch
+                      checked={sistemaConfig.cozinhaAtiva !== false}
+                      onCheckedChange={(v) => {
+                        const next = { ...sistemaConfig, cozinhaAtiva: v };
+                        setSistemaConfig(next);
+                        saveSistemaConfig(next);
+                        toast.success(v ? "Cozinha ativada" : "Cozinha desativada — pedidos vão direto para pronto");
+                      }}
+                    />
+                  </div>
+                </div>
+
+                {/* Couvert */}
+                <div className="surface-card rounded-2xl p-6 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-black text-foreground">Couvert / Taxa de serviço</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">Cobrado por pessoa ao fechar a conta</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setSistemaConfig(c => ({ ...c, couvertAtivo: !c.couvertAtivo }))}
+                      className={`relative h-6 w-11 rounded-full transition-colors ${sistemaConfig.couvertAtivo ? "bg-primary" : "bg-border"}`}
                     >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                      <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${sistemaConfig.couvertAtivo ? "translate-x-5" : "translate-x-0.5"}`} />
+                    </button>
                   </div>
-                  <Input
-                    value={banner.titulo}
-                    onChange={(e) => setSistemaConfig((c) => ({
-                      ...c,
-                      banners: (c.banners ?? []).map((b) => b.id === banner.id ? { ...b, titulo: e.target.value } : b),
-                    }))}
-                    placeholder="Título"
-                  />
-                  <Input
-                    value={banner.subtitulo}
-                    onChange={(e) => setSistemaConfig((c) => ({
-                      ...c,
-                      banners: (c.banners ?? []).map((b) => b.id === banner.id ? { ...b, subtitulo: e.target.value } : b),
-                    }))}
-                    placeholder="Subtítulo"
-                  />
-                  <div className="flex gap-2">
-                    <Input
-                      value={banner.preco}
-                      onChange={(e) => setSistemaConfig((c) => ({
-                        ...c,
-                        banners: (c.banners ?? []).map((b) => b.id === banner.id ? { ...b, preco: e.target.value } : b),
-                      }))}
-                      placeholder="Preço (opcional)"
-                      className="w-1/2"
-                    />
-                    <Input
-                      value={banner.imagemUrl}
-                      onChange={(e) => setSistemaConfig((c) => ({
-                        ...c,
-                        banners: (c.banners ?? []).map((b) => b.id === banner.id ? { ...b, imagemUrl: e.target.value } : b),
-                      }))}
-                      placeholder="URL da imagem"
-                      className="flex-1"
-                    />
-                  </div>
-                  <label className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border bg-secondary/30 px-3 py-3 text-xs font-bold text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground">
-                    <Upload className="h-4 w-4" />
-                    Upload imagem do banner
-                    <input type="file" accept="image/*" className="hidden" onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (!file) return;
-                      if (file.size > 2 * 1024 * 1024) { toast.error("Imagem muito grande (máx 2MB)"); return; }
-                      const reader = new FileReader();
-                      reader.onload = () => setSistemaConfig((c) => ({
-                        ...c,
-                        banners: (c.banners ?? []).map((b) => b.id === banner.id ? { ...b, imagemBase64: reader.result as string } : b),
-                      }));
-                      reader.readAsDataURL(file);
-                      e.target.value = "";
-                    }} />
-                  </label>
-                  {(banner.imagemBase64 || banner.imagemUrl) && (
-                    <img src={banner.imagemBase64 || banner.imagemUrl} alt="Preview" className="h-20 w-full rounded-xl border border-border object-cover" />
+                  {sistemaConfig.couvertAtivo && (
+                    <>
+                      <div className="space-y-1">
+                        <label className="text-xs font-bold text-muted-foreground">Valor por pessoa (R$)</label>
+                        <Input
+                          value={sistemaConfig.couvertValor ? sistemaConfig.couvertValor.toFixed(2).replace(".", ",") : ""}
+                          onChange={e => {
+                            const val = parseFloat(e.target.value.replace(",", ".")) || 0;
+                            setSistemaConfig(c => ({ ...c, couvertValor: Number.isFinite(val) ? val : 0 }));
+                          }}
+                          placeholder="Ex.: 5,00"
+                          inputMode="decimal"
+                          className="h-10 rounded-xl text-sm max-w-[160px]"
+                        />
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-xs font-bold text-foreground">Obrigatório</p>
+                          <p className="text-xs text-muted-foreground">Se desligado, operador pode dispensar</p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setSistemaConfig(c => ({ ...c, couvertObrigatorio: !c.couvertObrigatorio }))}
+                          className={`relative h-6 w-11 rounded-full transition-colors ${sistemaConfig.couvertObrigatorio ? "bg-primary" : "bg-border"}`}
+                        >
+                          <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${sistemaConfig.couvertObrigatorio ? "translate-x-5" : "translate-x-0.5"}`} />
+                        </button>
+                      </div>
+                    </>
                   )}
                 </div>
-              ))}
-              {(sistemaConfig.banners ?? []).length < 5 && (
-                <Button
-                  variant="outline"
-                  className="w-full rounded-xl"
-                  onClick={() => setSistemaConfig((c) => ({
-                    ...c,
-                    banners: [...(c.banners ?? []), { id: `banner-${Date.now()}`, titulo: "", subtitulo: "", preco: "", imagemUrl: "" }],
-                  }))}
-                >
-                  <Plus className="h-4 w-4 mr-1" /> Adicionar banner
-                </Button>
-              )}
-            </div>
 
-            {/* ── Mesas e QR Codes ── */}
-            <div>
-              <h3 className="text-lg font-black text-foreground flex items-center gap-2">🪑 Mesas</h3>
-              <p className="text-xs text-muted-foreground mb-3">Configure a quantidade de mesas do restaurante (1-50)</p>
-            </div>
-            <div className="surface-card inline-flex items-center gap-6 rounded-2xl p-6">
-              <span className="text-sm font-bold text-muted-foreground">Número de mesas</span>
-              <Input
-                type="number"
-                min={1}
-                max={50}
-                value={mesasInput}
-                onChange={(e) => setMesasInput(e.target.value)}
-                className="w-24 text-center text-xl font-black"
-              />
-              <Button onClick={handleMesasApply} className="rounded-xl font-bold">
-                Aplicar
-              </Button>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              As alterações serão aplicadas ao reabrir o caixa do dia. Mínimo 1, máximo 50.
-            </p>
-
-            <div className="space-y-4">
-              <div>
-                <h3 className="text-lg font-black text-foreground">QR Codes das mesas</h3>
-                <p className="text-xs text-muted-foreground">Cada QR Code direciona para a mesa correspondente.</p>
-              </div>
-              <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                {Array.from({ length: parseInt(mesasInput) || mesasConfig.totalMesas }, (_, i) => {
-                  const num = i + 1;
-                  const url = `${window.location.origin}/mesa/${num}`;
-                  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(url)}`;
-                  const nomeRest = sistemaConfig.nomeRestaurante || "Restaurante";
-                  return (
-                    <div key={num} className="flex flex-col items-center gap-2 rounded-xl border border-border bg-card p-3">
-                      <img src={qrUrl} alt={`Mesa ${String(num).padStart(2, "0")}`} className="w-full aspect-square rounded-lg" loading="lazy" />
-                      <span className="text-xs font-black text-foreground">Mesa {String(num).padStart(2, "0")}</span>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="w-full text-[10px] h-7 rounded-lg font-bold gap-1"
-                        onClick={() => {
-                          const printWindow = window.open("", "_blank", "width=400,height=600");
-                          if (!printWindow) return;
-                          const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>QR Mesa ${String(num).padStart(2, "0")}</title><style>
-                            body{margin:0;padding:40px 20px;font-family:Arial,sans-serif;text-align:center;background:#fff;color:#000}
-                            img{width:260px;height:260px;margin:20px auto}
-                            .nome{font-size:18px;font-weight:700;margin-bottom:10px}
-                            .mesa{font-size:32px;font-weight:900;margin-top:16px}
-                            .url{font-size:10px;color:#888;margin-top:8px;word-break:break-all}
-                            @media print{body{padding:20mm 10mm}@page{margin:10mm}}
-                          </style></head><body>
-                            <div class="nome">${nomeRest}</div>
-                            <img src="${qrUrl}" alt="QR Code Mesa ${String(num).padStart(2, "0")}" />
-                            <div class="mesa">Mesa ${String(num).padStart(2, "0")}</div>
-                            <div class="url">${url}</div>
-                          </body></html>`;
-                          printWindow.document.write(html);
-                          printWindow.document.close();
-                          setTimeout(() => printWindow.print(), 800);
-                        }}
-                      >
-                        Imprimir QR
-                      </Button>
+                {/* Modo identificação delivery */}
+                <div className="surface-card rounded-2xl p-6 space-y-3">
+                  <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">Modo de identificação</p>
+                  <label className="flex items-center gap-3 cursor-pointer" onClick={() => {
+                    const next = { ...sistemaConfig, modoIdentificacaoDelivery: "visitante" as const };
+                    setSistemaConfig(next);
+                    saveSistemaConfig(next);
+                  }}>
+                    <span className={`h-5 w-5 rounded-full border-2 flex items-center justify-center ${(sistemaConfig.modoIdentificacaoDelivery || "visitante") === "visitante" ? "border-primary" : "border-muted-foreground/40"}`}>
+                      {(sistemaConfig.modoIdentificacaoDelivery || "visitante") === "visitante" && <span className="h-2.5 w-2.5 rounded-full bg-primary" />}
+                    </span>
+                    <div>
+                      <span className={`text-sm font-semibold ${(sistemaConfig.modoIdentificacaoDelivery || "visitante") === "visitante" ? "text-foreground" : "text-muted-foreground"}`}>Modo visitante</span>
+                      <p className="text-[10px] text-muted-foreground">Cliente preenche dados ao finalizar o pedido</p>
                     </div>
-                  );
-                })}
+                  </label>
+                  <label className="flex items-center gap-3 cursor-pointer" onClick={() => {
+                    const next = { ...sistemaConfig, modoIdentificacaoDelivery: "cadastro" as const };
+                    setSistemaConfig(next);
+                    saveSistemaConfig(next);
+                  }}>
+                    <span className={`h-5 w-5 rounded-full border-2 flex items-center justify-center ${sistemaConfig.modoIdentificacaoDelivery === "cadastro" ? "border-primary" : "border-muted-foreground/40"}`}>
+                      {sistemaConfig.modoIdentificacaoDelivery === "cadastro" && <span className="h-2.5 w-2.5 rounded-full bg-primary" />}
+                    </span>
+                    <div>
+                      <span className={`text-sm font-semibold ${sistemaConfig.modoIdentificacaoDelivery === "cadastro" ? "text-foreground" : "text-muted-foreground"}`}>Modo cadastro</span>
+                      <p className="text-[10px] text-muted-foreground">Cliente cria conta com telefone e senha</p>
+                    </div>
+                  </label>
+                </div>
+
+                <Button onClick={saveSistema} className="rounded-xl font-black w-full mt-4">
+                  <Save className="mr-1 h-4 w-4" /> Salvar
+                </Button>
               </div>
-            </div>
+            )}
 
-            <Button onClick={saveSistema} className="w-full max-w-lg">
-              <Save className="mr-1 h-4 w-4" /> Salvar configurações
-            </Button>
-
-            <div className="max-w-lg border-t border-border" />
-
-            {/* ── Seção 6: Backup e Restauração ── */}
-            <div>
-              <h3 className="text-lg font-black text-foreground flex items-center gap-2">💾 Backup e Restauração</h3>
-              <p className="text-xs text-muted-foreground mb-3">Exporte ou importe todos os dados do sistema</p>
-            </div>
-            <div className="surface-card max-w-lg space-y-4 rounded-2xl p-6">
-              <Button
-                variant="outline"
-                className="w-full rounded-xl font-bold gap-2"
-                onClick={() => {
-                  const data: Record<string, unknown> = {};
-                  for (let i = 0; i < localStorage.length; i++) {
-                    const key = localStorage.key(i);
-                    if (key && (key.startsWith("obsidian-") || key.startsWith("orderly-"))) {
-                      try { data[key] = JSON.parse(localStorage.getItem(key)!); } catch { data[key] = localStorage.getItem(key); }
-                    }
-                  }
-                  const blob = new Blob([JSON.stringify({ _backupDate: new Date().toISOString(), _version: 1, data }, null, 2)], { type: "application/json" });
-                  const url = URL.createObjectURL(blob);
-                  const a = document.createElement("a");
-                  a.href = url;
-                  a.download = `backup-orderly-${new Date().toISOString().slice(0, 10)}.json`;
-                  a.click();
-                  URL.revokeObjectURL(url);
-                  toast.success("Backup exportado com sucesso!");
-                }}
-              >
-                <Download className="h-4 w-4" /> Exportar backup
-              </Button>
-
-              <div className="space-y-2">
-                <label className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border bg-secondary/30 px-4 py-4 text-sm font-bold text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground">
-                  <Upload className="h-5 w-5" />
-                  Importar backup (.json)
-                  <input type="file" accept=".json" className="hidden" onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (!file) return;
-                    const reader = new FileReader();
-                    reader.onload = () => {
-                      try {
-                        const parsed = JSON.parse(reader.result as string);
-                        const backupData = parsed.data || parsed;
-                        if (typeof backupData !== "object") throw new Error("Formato inválido");
-                        if (!window.confirm("Isso vai substituir todos os dados atuais. Confirmar?")) return;
-                        Object.entries(backupData).forEach(([key, value]) => {
-                          if (key.startsWith("obsidian-") || key.startsWith("orderly-")) {
-                            localStorage.setItem(key, typeof value === "string" ? value : JSON.stringify(value));
-                          }
-                        });
-                        toast.success("Backup restaurado! Recarregando...");
-                        setTimeout(() => window.location.reload(), 800);
-                      } catch {
-                        toast.error("Arquivo de backup inválido");
+            {/* SISTEMA */}
+            {configSection === "sistema" && (
+              <div className="space-y-4 max-w-lg">
+                <div className="surface-card space-y-4 rounded-2xl p-6">
+                  <Button
+                    variant="outline"
+                    className="w-full rounded-xl font-bold gap-2"
+                    onClick={() => {
+                      const data: Record<string, unknown> = {};
+                      for (let i = 0; i < localStorage.length; i++) {
+                        const key = localStorage.key(i);
+                        if (key && (key.startsWith("obsidian-") || key.startsWith("orderly-"))) {
+                          try { data[key] = JSON.parse(localStorage.getItem(key)!); } catch { data[key] = localStorage.getItem(key); }
+                        }
                       }
-                    };
-                    reader.readAsText(file);
-                    e.target.value = "";
-                  }} />
-                </label>
-                <p className="text-[10px] text-muted-foreground text-center">Selecione um arquivo .json exportado anteriormente</p>
+                      const blob = new Blob([JSON.stringify({ _backupDate: new Date().toISOString(), _version: 1, data }, null, 2)], { type: "application/json" });
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement("a");
+                      a.href = url;
+                      a.download = `backup-orderly-${new Date().toISOString().slice(0, 10)}.json`;
+                      a.click();
+                      URL.revokeObjectURL(url);
+                      toast.success("Backup exportado com sucesso!");
+                    }}
+                  >
+                    <Download className="h-4 w-4" /> Exportar backup
+                  </Button>
+
+                  <div className="space-y-2">
+                    <label className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border bg-secondary/30 px-4 py-4 text-sm font-bold text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground">
+                      <Upload className="h-5 w-5" />
+                      Importar backup (.json)
+                      <input type="file" accept=".json" className="hidden" onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        const reader = new FileReader();
+                        reader.onload = () => {
+                          try {
+                            const parsed = JSON.parse(reader.result as string);
+                            const backupData = parsed.data || parsed;
+                            if (typeof backupData !== "object") throw new Error("Formato inválido");
+                            if (!window.confirm("Isso vai substituir todos os dados atuais. Confirmar?")) return;
+                            Object.entries(backupData).forEach(([key, value]) => {
+                              if (key.startsWith("obsidian-") || key.startsWith("orderly-")) {
+                                localStorage.setItem(key, typeof value === "string" ? value : JSON.stringify(value));
+                              }
+                            });
+                            toast.success("Backup restaurado! Recarregando...");
+                            setTimeout(() => window.location.reload(), 800);
+                          } catch {
+                            toast.error("Arquivo de backup inválido");
+                          }
+                        };
+                        reader.readAsText(file);
+                        e.target.value = "";
+                      }} />
+                    </label>
+                    <p className="text-[10px] text-muted-foreground text-center">Selecione um arquivo .json exportado anteriormente</p>
+                  </div>
+                </div>
               </div>
-            </div>
+            )}
           </div>
         )}
 
