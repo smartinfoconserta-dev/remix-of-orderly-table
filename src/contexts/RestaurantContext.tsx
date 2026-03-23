@@ -801,6 +801,40 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     });
   }, []);
 
+  const estornarFechamento = useCallback((
+    fechamentoId: string,
+    motivo: string,
+    operador: OperationalUser
+  ) => {
+    setStore(prev => {
+      const fechamento = prev.fechamentos.find(f => f.id === fechamentoId);
+      if (!fechamento) return prev;
+      return {
+        ...prev,
+        fechamentos: prev.fechamentos.map(f =>
+          f.id === fechamentoId
+            ? {
+                ...f,
+                cancelado: true,
+                canceladoEm: new Date().toISOString(),
+                canceladoMotivo: motivo,
+                canceladoPor: operador.nome,
+              }
+            : f
+        ),
+        eventos: appendEvent(prev.eventos, {
+          tipo: "caixa",
+          descricao: `Estorno do fechamento da Mesa ${String(fechamento.mesaNumero).padStart(2, "0")} — ${motivo}`,
+          mesaId: fechamento.mesaId,
+          usuarioId: operador.id,
+          usuarioNome: operador.nome,
+          acao: "cancelar_pedido",
+          valor: fechamento.total,
+        }),
+      };
+    });
+  }, []);
+
   const zerarMesa = useCallback((mesaId: string, audit?: ActionAuditInput) => {
     setStore((prev) => {
       let eventInput: Omit<EventoOperacional, "id" | "criadoEm" | "criadoEmIso"> | null = null;
