@@ -389,7 +389,7 @@ const AdminPage = () => {
                   handleCreateGerente();
                   if (newGerenteName.trim() && /^\d{4,6}$/.test(newGerentePin)) {
                     setAuthenticated(true);
-                    setTab("usuarios");
+                    setTab("equipe");
                   }
                 }}
                 disabled={!newGerenteName.trim() || !/^\d{4,6}$/.test(newGerentePin)}
