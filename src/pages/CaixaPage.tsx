@@ -423,6 +423,23 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
     [fechamentos, mesa]
   );
 
+  const resultadosBusca = useMemo(() => {
+    const q = buscaComanda.trim();
+    if (!q) return [];
+    return fechamentos
+      .filter(f => {
+        const numStr = String(f.numeroComanda ?? "").padStart(4, "0");
+        const mesaStr = String(f.mesaNumero ?? "").padStart(2, "0");
+        return (
+          numStr.includes(q.replace("#", "")) ||
+          mesaStr.includes(q) ||
+          (f.caixaNome ?? "").toLowerCase().includes(q.toLowerCase())
+        );
+      })
+      .sort((a, b) => new Date(b.criadoEmIso).getTime() - new Date(a.criadoEmIso).getTime())
+      .slice(0, 20);
+  }, [buscaComanda, fechamentos]);
+
   /* ── payment math (mesa) ── */
   const totalConta = Math.max((mesa?.total ?? 0) - descontoAplicado, 0);
   const totalContaCents = toCents(totalConta);
