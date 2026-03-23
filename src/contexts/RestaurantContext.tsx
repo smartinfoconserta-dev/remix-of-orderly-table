@@ -770,6 +770,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
             criadoEmIso: now.toISOString(),
             caixaId: input.usuario.id,
             caixaNome: input.usuario.nome,
+            troco: input.troco ?? 0,
           };
 
           eventInput = {
