@@ -2329,6 +2329,8 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                     <p className="text-center text-xs text-muted-foreground">O fechamento só será liberado quando o total pago for exatamente igual ao total da conta.</p>
                   )}
                 </div>
+                </>
+                )}
               </div>
 
             </div>
