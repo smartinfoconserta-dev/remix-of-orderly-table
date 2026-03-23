@@ -167,11 +167,12 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
 
   const [mesaSelecionada, setMesaSelecionada] = useState<string | null>(null);
   const [comandaOpen, setComandaOpen] = useState(false);
-  const [mesaTab, setMesaTab] = useState("comanda");
+  const [mesaTab, setMesaTab] = useState<"comanda" | "pagamento" | "historico">("comanda");
   const [closingPayments, setClosingPayments] = useState<SplitPayment[]>([]);
   const [closingPaymentMethod, setClosingPaymentMethod] = useState<PaymentMethod>("dinheiro");
   const [closingPaymentValue, setClosingPaymentValue] = useState("");
   const [valorEntregue, setValorEntregue] = useState("");
+  const [trocoRegistrado, setTrocoRegistrado] = useState(0);
   const [financeUnlocked, setFinanceUnlocked] = useState(accessMode === "gerente");
   const [financeManagerName, setFinanceManagerName] = useState("");
   const [financeManagerPin, setFinanceManagerPin] = useState("");
