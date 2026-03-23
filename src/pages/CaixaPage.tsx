@@ -278,6 +278,8 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
   const [mostrarEntregues, setMostrarEntregues] = useState(false);
   const [filtroMotoboy, setFiltroMotoboy] = useState<string | null>(null);
   const [fechamentosPendentes, setFechamentosPendentes] = useState<any[]>([]);
+  const [buscaComanda, setBuscaComanda] = useState("");
+  const [buscaComandaOpen, setBuscaComandaOpen] = useState(false);
   const [fechamentoSelecionado, setFechamentoSelecionado] = useState<any | null>(null);
   const [pinConferencia, setPinConferencia] = useState("");
   const [pinConferenciaErro, setPinConferenciaErro] = useState("");
@@ -420,6 +422,23 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
       .slice(0, 20),
     [fechamentos, mesa]
   );
+
+  const resultadosBusca = useMemo(() => {
+    const q = buscaComanda.trim();
+    if (!q) return [];
+    return fechamentos
+      .filter(f => {
+        const numStr = String(f.numeroComanda ?? "").padStart(4, "0");
+        const mesaStr = String(f.mesaNumero ?? "").padStart(2, "0");
+        return (
+          numStr.includes(q.replace("#", "")) ||
+          mesaStr.includes(q) ||
+          (f.caixaNome ?? "").toLowerCase().includes(q.toLowerCase())
+        );
+      })
+      .sort((a, b) => new Date(b.criadoEmIso).getTime() - new Date(a.criadoEmIso).getTime())
+      .slice(0, 20);
+  }, [buscaComanda, fechamentos]);
 
   /* ── payment math (mesa) ── */
   const totalConta = Math.max((mesa?.total ?? 0) - descontoAplicado, 0);
@@ -1473,6 +1492,14 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                 >
                   <LockKeyhole className="h-4 w-4" />
                   <span className="text-[10px] font-bold">Fechar turno</span>
+                </button>
+                <button
+                  onClick={() => setBuscaComandaOpen(true)}
+                  className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded text-xs border border-border bg-secondary text-foreground hover:bg-primary/15 transition-colors"
+                  style={{ minWidth: 64 }}
+                >
+                  <Search className="h-4 w-4" />
+                  <span className="text-[10px] font-bold">Buscar</span>
                 </button>
                 <button
                   onClick={() => logout(accessMode)}
@@ -3816,6 +3843,102 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                 Confirmar estorno
               </Button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── BUSCA COMANDA MODAL ── */}
+      {buscaComandaOpen && (
+        <div className="fixed inset-0 z-[80] bg-background/95 backdrop-blur-sm flex flex-col">
+          <div className="border-b border-border bg-card px-4 py-3 flex items-center gap-3">
+            <Search className="h-4 w-4 text-muted-foreground shrink-0" />
+            <input
+              autoFocus
+              type="text"
+              value={buscaComanda}
+              onChange={e => setBuscaComanda(e.target.value)}
+              placeholder="Buscar por #0001, mesa 02, nome do operador..."
+              className="flex-1 bg-transparent text-base font-medium text-foreground placeholder:text-muted-foreground outline-none"
+            />
+            <button
+              onClick={() => { setBuscaComandaOpen(false); setBuscaComanda(""); }}
+              className="text-xs font-bold text-muted-foreground hover:text-foreground px-2 py-1 rounded-lg border border-border"
+            >
+              Fechar
+            </button>
+          </div>
+          <div className="flex-1 overflow-y-auto p-4 space-y-3">
+            {buscaComanda.trim() === "" ? (
+              <div className="flex flex-col items-center justify-center gap-2 py-16 text-center text-muted-foreground">
+                <Search className="h-10 w-10 opacity-20" />
+                <p className="text-sm font-bold">Digite o número da comanda</p>
+                <p className="text-xs">Ex: #0001, mesa 02, nome do operador</p>
+              </div>
+            ) : resultadosBusca.length === 0 ? (
+              <div className="flex flex-col items-center justify-center gap-2 py-16 text-center text-muted-foreground">
+                <p className="text-sm font-bold">Nenhum resultado para &quot;{buscaComanda}&quot;</p>
+              </div>
+            ) : (
+              resultadosBusca.map(f => (
+                <div key={f.id} className={`rounded-xl border bg-card p-4 space-y-2 ${
+                  f.cancelado ? "opacity-50 border-destructive/20" : "border-border"
+                }`}>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      {f.numeroComanda && (
+                        <span className="text-sm font-black text-primary bg-primary/10 border border-primary/20 rounded-lg px-2 py-0.5">
+                          #{String(f.numeroComanda).padStart(4, "0")}
+                        </span>
+                      )}
+                      <span className="text-sm font-bold text-foreground">
+                        {f.mesaNumero === 0 ? "Balcão" : `Mesa ${String(f.mesaNumero).padStart(2, "0")}`}
+                      </span>
+                      <span className="text-xs text-muted-foreground">{f.criadoEm}</span>
+                      <span className="text-xs text-muted-foreground">· {f.caixaNome}</span>
+                      {f.cancelado && (
+                        <span className="text-xs font-black text-destructive">↩️ Estornado</span>
+                      )}
+                    </div>
+                    <span className="text-lg font-black tabular-nums text-primary">
+                      {formatPrice(f.total)}
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {(f.pagamentos?.length
+                      ? f.pagamentos
+                      : [{ id: f.id, formaPagamento: f.formaPagamento, valor: f.total }]
+                    ).map((p: SplitPayment, i: number) => {
+                      const style = getPaymentMethodStyle(p.formaPagamento);
+                      const Icon = style.icon;
+                      return (
+                        <div key={i} className={`flex items-center gap-1.5 rounded-lg border px-2 py-1 ${style.bgColor} ${style.borderColor}`}>
+                          <Icon className={`h-3 w-3 ${style.color}`} />
+                          <span className={`text-xs font-bold tabular-nums ${style.color}`}>{formatPrice(p.valor)}</span>
+                        </div>
+                      );
+                    })}
+                    {f.troco != null && f.troco > 0 && (
+                      <div className="flex items-center gap-1.5 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-2 py-1">
+                        <span className="text-xs font-bold text-emerald-400">💵 Troco: {formatPrice(f.troco)}</span>
+                      </div>
+                    )}
+                    {f.desconto != null && f.desconto > 0 && (
+                      <div className="flex items-center gap-1.5 rounded-lg border border-primary/20 bg-primary/10 px-2 py-1">
+                        <span className="text-xs font-bold text-primary">🎁 Desconto: -{formatPrice(f.desconto)}</span>
+                      </div>
+                    )}
+                  </div>
+                  {f.itens && f.itens.length > 0 && (
+                    <div className="text-xs text-muted-foreground border-t border-border/50 pt-2">
+                      {f.itens.slice(0, 3).map((it, i) => (
+                        <span key={i}>{it.quantidade}× {it.nome}{i < Math.min(f.itens!.length, 3) - 1 ? ", " : ""}</span>
+                      ))}
+                      {f.itens.length > 3 && <span> +{f.itens.length - 3} itens</span>}
+                    </div>
+                  )}
+                </div>
+              ))
+            )}
           </div>
         </div>
       )}
