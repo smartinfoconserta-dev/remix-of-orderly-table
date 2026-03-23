@@ -868,6 +868,25 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
     setClosingPayments((prev) => prev.filter((p) => p.id !== paymentId));
   };
 
+  const handleAplicarDesconto = async () => {
+    if (!descontoMotivo.trim()) { setDescontoError("Informe o motivo"); return; }
+    if (!descontoManagerName.trim()) { setDescontoError("Informe o nome do gerente"); return; }
+    if (!/^\d{4,6}$/.test(descontoManagerPin)) { setDescontoError("PIN inválido"); return; }
+    const result = await verifyManagerAccess(descontoManagerName, descontoManagerPin);
+    if (!result.ok) { setDescontoError(result.error ?? "PIN incorreto"); return; }
+    const val = parseCurrencyInput(descontoInput);
+    if (!Number.isFinite(val) || val <= 0) { setDescontoError("Valor inválido"); return; }
+    const totalOriginal = mesa?.total ?? 0;
+    const desconto = descontoTipo === "percentual"
+      ? totalOriginal * (val / 100)
+      : Math.min(val, totalOriginal);
+    setDescontoAplicado(desconto);
+    setDescontoModalOpen(false);
+    setDescontoInput(""); setDescontoMotivo("");
+    setDescontoManagerName(""); setDescontoManagerPin(""); setDescontoError(null);
+    toast.success(`Desconto de ${formatPrice(desconto)} aplicado`, { duration: 2000, icon: "🎁" });
+  };
+
   const handleFechar = () => {
     if (!mesaSelecionada || !mesa) return;
     if (!fechamentoPronto) {
