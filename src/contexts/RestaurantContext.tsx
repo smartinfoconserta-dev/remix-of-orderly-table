@@ -1282,6 +1282,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         caixaId: input.usuario.id,
         caixaNome: input.usuario.nome,
         troco: input.troco ?? 0,
+        desconto: input.desconto ?? 0,
       };
 
       return {
