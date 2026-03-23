@@ -224,3 +224,78 @@ export function getProdutosDelivery(): ProdutoOverride[] {
     (p) => p.ativo === true && p.removido !== true && p.disponivelDelivery !== false,
   );
 }
+
+// --- Horários de Funcionamento ---
+const HORARIOS_KEY = "orderly-horarios-v1";
+
+const defaultHorario: HorarioFuncionamento = { ativo: true, abertura: "18:00", fechamento: "23:00" };
+
+export const defaultHorariosSemana: HorariosSemana = {
+  dom: { ...defaultHorario, ativo: false },
+  seg: { ...defaultHorario },
+  ter: { ...defaultHorario },
+  qua: { ...defaultHorario },
+  qui: { ...defaultHorario },
+  sex: { ...defaultHorario },
+  sab: { ...defaultHorario },
+};
+
+export function getHorariosFuncionamento(): HorariosSemana {
+  try {
+    const raw = localStorage.getItem(HORARIOS_KEY);
+    return raw ? { ...defaultHorariosSemana, ...JSON.parse(raw) } : { ...defaultHorariosSemana };
+  } catch { return { ...defaultHorariosSemana }; }
+}
+
+export function saveHorariosFuncionamento(h: HorariosSemana) {
+  localStorage.setItem(HORARIOS_KEY, JSON.stringify(h));
+}
+
+export function isDeliveryAberto(): { aberto: boolean; mensagem: string; proximoHorario: string } {
+  const horarios = getHorariosFuncionamento();
+  const agora = new Date();
+  const diasSemana: (keyof HorariosSemana)[] = ["dom", "seg", "ter", "qua", "qui", "sex", "sab"];
+  const diaAtual = diasSemana[agora.getDay()];
+  const horarioDia = horarios[diaAtual];
+
+  const nomes = ["domingo", "segunda", "terça", "quarta", "quinta", "sexta", "sábado"];
+
+  const buscarProximoDia = () => {
+    for (let i = 1; i <= 7; i++) {
+      const proximoDia = diasSemana[(agora.getDay() + i) % 7];
+      const h = horarios[proximoDia];
+      if (h.ativo) {
+        return `Abrimos ${nomes[(agora.getDay() + i) % 7]} às ${h.abertura}`;
+      }
+    }
+    return "";
+  };
+
+  if (!horarioDia.ativo) {
+    return {
+      aberto: false,
+      mensagem: "Fechados hoje",
+      proximoHorario: buscarProximoDia(),
+    };
+  }
+
+  const [hAb, mAb] = horarioDia.abertura.split(":").map(Number);
+  const [hFe, mFe] = horarioDia.fechamento.split(":").map(Number);
+  const minutosAgora = agora.getHours() * 60 + agora.getMinutes();
+  const minutosAbertura = hAb * 60 + mAb;
+  const minutesFechamento = hFe * 60 + mFe;
+
+  if (minutosAgora < minutosAbertura) {
+    return { aberto: false, mensagem: "Ainda não abrimos", proximoHorario: `Abrimos às ${horarioDia.abertura}` };
+  }
+
+  if (minutosAgora >= minutesFechamento) {
+    return {
+      aberto: false,
+      mensagem: "Já encerramos por hoje",
+      proximoHorario: buscarProximoDia(),
+    };
+  }
+
+  return { aberto: true, mensagem: `Aberto até ${horarioDia.fechamento}`, proximoHorario: "" };
+}

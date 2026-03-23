@@ -1224,6 +1224,76 @@ const AdminPage = () => {
               )}
             </div>
 
+            {/* Horário de funcionamento */}
+            {(() => {
+              const DIAS: { key: keyof HorariosSemana; label: string }[] = [
+                { key: "seg", label: "Segunda" },
+                { key: "ter", label: "Terça" },
+                { key: "qua", label: "Quarta" },
+                { key: "qui", label: "Quinta" },
+                { key: "sex", label: "Sexta" },
+                { key: "sab", label: "Sábado" },
+                { key: "dom", label: "Domingo" },
+              ];
+              const horarios = getHorariosFuncionamento();
+              const setHorarios = (h: HorariosSemana) => saveHorariosFuncionamento(h);
+              const updateDia = (dia: keyof HorariosSemana, patch: Partial<HorarioFuncionamento>) => {
+                const next = { ...horarios, [dia]: { ...horarios[dia], ...patch } };
+                setHorarios(next);
+              };
+              return (
+                <div className="surface-card max-w-lg rounded-2xl p-6 space-y-4">
+                  <div>
+                    <p className="text-sm font-black text-foreground flex items-center gap-2">🕐 Horário de funcionamento</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">Define quando o delivery aceita pedidos</p>
+                  </div>
+                  <div className="space-y-2">
+                    {DIAS.map(({ key, label }) => {
+                      const dia = horarios[key];
+                      return (
+                        <div key={key} className={`flex items-center gap-3 rounded-xl border p-3 transition-colors ${dia.ativo ? "border-border bg-card" : "border-border/50 bg-secondary/30 opacity-60"}`}>
+                          <button
+                            type="button"
+                            onClick={() => { updateDia(key, { ativo: !dia.ativo }); }}
+                            className={`relative h-5 w-9 rounded-full transition-colors shrink-0 ${dia.ativo ? "bg-primary" : "bg-border"}`}
+                          >
+                            <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform ${dia.ativo ? "translate-x-4" : "translate-x-0.5"}`} />
+                          </button>
+                          <span className="text-sm font-bold text-foreground w-20 shrink-0">{label}</span>
+                          {dia.ativo && (
+                            <div className="flex items-center gap-2 flex-1">
+                              <Input
+                                type="time"
+                                value={dia.abertura}
+                                onChange={(e) => updateDia(key, { abertura: e.target.value })}
+                                className="h-8 rounded-lg text-xs font-bold w-24"
+                              />
+                              <span className="text-xs text-muted-foreground">até</span>
+                              <Input
+                                type="time"
+                                value={dia.fechamento}
+                                onChange={(e) => updateDia(key, { fechamento: e.target.value })}
+                                className="h-8 rounded-lg text-xs font-bold w-24"
+                              />
+                            </div>
+                          )}
+                          {!dia.ativo && <span className="text-xs text-muted-foreground italic">Fechado</span>}
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-muted-foreground">Mensagem quando fechado (opcional)</label>
+                    <Input
+                      value={sistemaConfig.mensagemFechado || ""}
+                      onChange={(e) => setSistemaConfig(c => ({ ...c, mensagemFechado: e.target.value }))}
+                      placeholder="Ex.: Voltamos amanhã!"
+                    />
+                  </div>
+                </div>
+              );
+            })()}
+
             {/* Modo de entrega */}
             <div className="surface-card max-w-lg rounded-2xl p-6 space-y-3">
               <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">Modo de entrega</p>

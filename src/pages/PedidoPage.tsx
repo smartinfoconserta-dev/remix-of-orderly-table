@@ -346,6 +346,25 @@ export default function PedidoPage() {
     );
   }
 
+  // ── Fora do horário de funcionamento ──
+  const statusHorario = isDeliveryAberto();
+  if (!statusHorario.aberto) {
+    return (
+      <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center p-6 text-center space-y-4">
+        <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center text-3xl">🕐</div>
+        <h1 className="text-2xl font-black text-foreground">{sysConfig.mensagemFechado || statusHorario.mensagem}</h1>
+        {statusHorario.proximoHorario && (
+          <p className="text-muted-foreground">{statusHorario.proximoHorario}</p>
+        )}
+        {sysConfig.telefoneRestaurante && (
+          <Button variant="outline" onClick={() => window.open(`https://wa.me/55${sysConfig.telefoneRestaurante}`, "_blank")}>
+            📲 Falar no WhatsApp
+          </Button>
+        )}
+      </div>
+    );
+  }
+
   // ── Cardápio (full screen PedidoFlow) ──
   if (etapa === "cardapio") {
     return (
