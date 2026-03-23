@@ -232,6 +232,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
   const [balcaoPayments, setBalcaoPayments] = useState<SplitPayment[]>([]);
   const [balcaoPaymentMethod, setBalcaoPaymentMethod] = useState<PaymentMethod>("dinheiro");
   const [balcaoPaymentValue, setBalcaoPaymentValue] = useState("");
+  const [balcaoValorEntregue, setBalcaoValorEntregue] = useState("");
   const [balcaoFlowAtivo, setBalcaoFlowAtivo] = useState(false);
   const [modoOperacao, setModoOperacao] = useState<"completo" | "somente_mesas" | "somente_delivery">("completo");
   const [caixaView, setCaixaView] = useState<"mesas" | "delivery">(() => {
