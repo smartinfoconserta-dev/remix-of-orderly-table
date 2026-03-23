@@ -218,6 +218,12 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
   const [descontoManagerPin, setDescontoManagerPin] = useState("");
   const [descontoError, setDescontoError] = useState<string | null>(null);
   const [descontoAplicado, setDescontoAplicado] = useState(0);
+  const [estornoModalOpen, setEstornoModalOpen] = useState(false);
+  const [estornoFechamentoId, setEstornoFechamentoId] = useState<string | null>(null);
+  const [estornoMotivo, setEstornoMotivo] = useState("");
+  const [estornoPin, setEstornoPin] = useState("");
+  const [estornoNome, setEstornoNome] = useState("");
+  const [estornoError, setEstornoError] = useState<string | null>(null);
 
   /* ── Balcão/Delivery state ── */
   const [balcaoOpen, setBalcaoOpen] = useState(false);
