@@ -88,6 +88,8 @@ export interface FechamentoConta {
   caixaNome: string;
   troco?: number;
   desconto?: number;
+  couvert?: number;
+  numeroPessoas?: number;
   cancelado?: boolean;
   canceladoEm?: string;
   canceladoMotivo?: string;
