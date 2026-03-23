@@ -667,13 +667,16 @@ const AdminPage = () => {
                   setCatFilter("todas");
                   document.querySelector("[data-admin-product-table]")?.scrollTo({ top: 0, behavior: "smooth" });
                 }}
-                className={`rounded-xl px-4 py-2 text-xs font-bold transition-colors ${
+                className={`flex items-center gap-2 rounded-xl border px-4 py-2 text-sm font-bold transition-colors ${
                   catFilter === "todas"
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-secondary text-muted-foreground hover:text-foreground"
+                    ? "border-primary bg-primary/10 text-primary"
+                    : "border-border bg-secondary text-muted-foreground hover:text-foreground hover:border-primary/30"
                 }`}
               >
-                Todas ({allProducts.length})
+                Todas
+                <span className="text-xs bg-primary/10 text-primary rounded-md px-1.5 py-0.5 font-black">
+                  {allProducts.length}
+                </span>
               </button>
               {todasCategorias.map((c) => {
                 const count = allProducts.filter((p) => p.categoria === c.id).length;
@@ -685,13 +688,16 @@ const AdminPage = () => {
                       setCatFilter(c.id);
                       document.querySelector("[data-admin-product-table]")?.scrollTo({ top: 0, behavior: "smooth" });
                     }}
-                    className={`rounded-xl px-4 py-2 text-xs font-bold transition-colors ${
+                    className={`flex items-center gap-2 rounded-xl border px-4 py-2 text-sm font-bold transition-colors ${
                       catFilter === c.id
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-secondary text-muted-foreground hover:text-foreground"
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "border-border bg-secondary text-muted-foreground hover:text-foreground hover:border-primary/30"
                     }`}
                   >
-                    {c.nome} ({count})
+                    {c.nome}
+                    <span className="text-xs bg-primary/10 text-primary rounded-md px-1.5 py-0.5 font-black">
+                      {count}
+                    </span>
                   </button>
                 );
               })}
