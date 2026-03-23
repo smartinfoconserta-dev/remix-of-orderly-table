@@ -2107,13 +2107,28 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                       </div>
                     ) : (
                       fechamentosDaMesa.map(f => (
-                        <div key={f.id} className="rounded-xl border border-border bg-card p-4 space-y-3">
+                        <div key={f.id} className={`rounded-xl border bg-card p-4 space-y-3 transition-opacity ${
+                          f.cancelado ? "opacity-50 border-destructive/20" : "border-border"
+                        }`}>
                           <div className="flex items-center justify-between">
                             <div>
                               <p className="text-sm font-black text-foreground">{f.criadoEm}</p>
                               <p className="text-xs text-muted-foreground">por {f.caixaNome}</p>
                             </div>
-                            <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-2">
+                              {!f.cancelado ? (
+                                <button
+                                  onClick={() => {
+                                    setEstornoFechamentoId(f.id);
+                                    setEstornoModalOpen(true);
+                                  }}
+                                  className="flex items-center gap-1 text-xs font-bold text-muted-foreground hover:text-destructive transition-colors"
+                                >
+                                  ↩️ Estornar
+                                </button>
+                              ) : (
+                                <span className="text-xs font-bold text-destructive/50">↩️ Estornado</span>
+                              )}
                               <button
                                 type="button"
                                 onClick={() => {
