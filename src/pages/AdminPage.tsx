@@ -997,15 +997,16 @@ const AdminPage = () => {
                       </div>
                     ))}
                   </div>
-
-                  <div className="flex gap-3 pt-2">
-                    <Button variant="outline" className="flex-1" onClick={() => setEditProduct(null)}>
-                      <X className="mr-1 h-4 w-4" /> Cancelar
-                    </Button>
-                    <Button className="flex-1" onClick={saveEdit}>
-                      <Save className="mr-1 h-4 w-4" /> Salvar
-                    </Button>
-                  </div>
+                  </div>{/* end right column */}
+                  </div>{/* end grid */}
+                </div>{/* end scrollable */}
+                <div className="flex justify-end gap-3 pt-3 border-t border-border mt-2">
+                  <Button variant="outline" className="rounded-xl" onClick={() => setEditProduct(null)}>
+                    Cancelar
+                  </Button>
+                  <Button className="rounded-xl font-black px-8" onClick={saveEdit}>
+                    {isNewProduct ? "Criar produto" : "Salvar alterações"}
+                  </Button>
                 </div>
               </DialogContent>
             </Dialog>
