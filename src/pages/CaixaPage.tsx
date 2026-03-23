@@ -2111,9 +2111,16 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                           f.cancelado ? "opacity-50 border-destructive/20" : "border-border"
                         }`}>
                           <div className="flex items-center justify-between">
-                            <div>
-                              <p className="text-sm font-black text-foreground">{f.criadoEm}</p>
-                              <p className="text-xs text-muted-foreground">por {f.caixaNome}</p>
+                            <div className="flex items-center gap-2">
+                              {f.numeroComanda && (
+                                <span className="text-xs font-black text-primary bg-primary/10 border border-primary/20 rounded-lg px-2 py-0.5">
+                                  #{String(f.numeroComanda).padStart(4, "0")}
+                                </span>
+                              )}
+                              <div>
+                                <p className="text-sm font-black text-foreground">{f.criadoEm}</p>
+                                <p className="text-xs text-muted-foreground">por {f.caixaNome}</p>
+                              </div>
                             </div>
                             <div className="flex items-center gap-2">
                               {!f.cancelado ? (
