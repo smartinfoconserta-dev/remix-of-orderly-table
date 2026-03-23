@@ -272,6 +272,9 @@ const AdminPage = () => {
   // --- Configurações state ---
   const [sistemaConfig, setSistemaConfig] = useState<SistemaConfig>(getSistemaConfig);
 
+  // --- Horários state ---
+  const [horariosFuncionamento, setHorariosFuncionamento] = useState<HorariosSemana>(getHorariosFuncionamento);
+
   // --- Bairros state ---
   const [bairros, setBairros] = useState<Bairro[]>(getBairros);
   const [novoBairroNome, setNovoBairroNome] = useState("");
@@ -1460,11 +1463,11 @@ const AdminPage = () => {
                     { key: "sab", label: "Sábado" },
                     { key: "dom", label: "Domingo" },
                   ];
-                  const horarios = getHorariosFuncionamento();
-                  const setHorarios = (h: HorariosSemana) => saveHorariosFuncionamento(h);
+                  const horarios = horariosFuncionamento;
                   const updateDia = (dia: keyof HorariosSemana, patch: Partial<HorarioFuncionamento>) => {
                     const next = { ...horarios, [dia]: { ...horarios[dia], ...patch } };
-                    setHorarios(next);
+                    saveHorariosFuncionamento(next);
+                    setHorariosFuncionamento(next);
                   };
                   return (
                     <div className="surface-card rounded-2xl p-6 space-y-4">
