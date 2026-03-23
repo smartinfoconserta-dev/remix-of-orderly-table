@@ -97,6 +97,7 @@ const AdminPage = () => {
   const [authLoading, setAuthLoading] = useState(false);
 
   const [tab, setTab] = useState<AdminTab>("dashboard");
+  const [configSection, setConfigSection] = useState<"inicio" | "identidade" | "delivery" | "salao" | "operacao" | "sistema">("inicio");
 
   // --- Cardápio state ---
   const [overrides, setOverrides] = useState<Record<string, ProdutoOverride>>(getCardapioOverrides);
