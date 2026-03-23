@@ -2003,9 +2003,70 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                 </div>
               </div>
 
-              {/* ═══ RIGHT: PAGAMENTO ═══ */}
+              {/* ═══ RIGHT: PAGAMENTO or HISTÓRICO ═══ */}
               <div className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card">
-                <div className="flex-1 overflow-y-auto p-5 space-y-5 scrollbar-hide">
+                {mesaTab === "historico" ? (
+                  <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                    <div className="flex items-center justify-between pb-2 border-b border-border">
+                      <h3 className="text-base font-black text-foreground">Histórico de fechamentos</h3>
+                      <Button variant="outline" size="sm" onClick={() => setMesaTab("comanda")} className="rounded-xl font-bold text-xs">
+                        Voltar
+                      </Button>
+                    </div>
+                    {fechamentosDaMesa.length === 0 ? (
+                      <div className="flex flex-col items-center justify-center gap-3 py-16 text-muted-foreground">
+                        <ReceiptText className="h-10 w-10 opacity-30" />
+                        <p className="text-sm">Nenhum fechamento anterior para esta mesa.</p>
+                      </div>
+                    ) : (
+                      fechamentosDaMesa.map(f => (
+                        <div key={f.id} className="rounded-xl border border-border bg-card p-4 space-y-3">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-sm font-black text-foreground">{f.criadoEm}</p>
+                              <p className="text-xs text-muted-foreground">por {f.caixaNome}</p>
+                            </div>
+                            <p className="text-xl font-black tabular-nums text-primary">{formatPrice(f.total)}</p>
+                          </div>
+                          <div className="space-y-1">
+                            {(f.pagamentos?.length ? f.pagamentos : [{ id: f.id, formaPagamento: f.formaPagamento, valor: f.total }])
+                              .map((p: SplitPayment, i: number) => {
+                                const style = getPaymentMethodStyle(p.formaPagamento);
+                                const Icon = style.icon;
+                                return (
+                                  <div key={i} className="flex items-center gap-2">
+                                    <div className={`h-6 w-6 flex items-center justify-center rounded-lg ${style.bgColor} ${style.color}`}>
+                                      <Icon className="h-3 w-3" />
+                                    </div>
+                                    <span className="text-sm text-muted-foreground flex-1">{getPaymentMethodLabel(p.formaPagamento)}</span>
+                                    <span className={`text-sm font-black tabular-nums ${style.color}`}>{formatPrice(p.valor)}</span>
+                                  </div>
+                                );
+                              })
+                            }
+                          </div>
+                          {f.troco != null && f.troco > 0 && (
+                            <div className="flex items-center justify-between rounded-lg bg-emerald-500/10 border border-emerald-500/20 px-3 py-2">
+                              <span className="text-xs font-bold text-emerald-400">💵 Troco dado ao cliente</span>
+                              <span className="text-sm font-black tabular-nums text-emerald-400">{formatPrice(f.troco)}</span>
+                            </div>
+                          )}
+                          {f.itens && f.itens.length > 0 && (
+                            <div className="space-y-1 border-t border-border pt-2">
+                              {f.itens.map((item, i) => (
+                                <div key={i} className="flex justify-between text-xs text-muted-foreground">
+                                  <span>{item.quantidade}× {item.nome}</span>
+                                  <span className="tabular-nums">{formatPrice(item.precoUnitario * item.quantidade)}</span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      ))
+                    )}
+                  </div>
+                ) : (
+                <><div className="flex-1 overflow-y-auto p-5 space-y-5 scrollbar-hide">
 
                   {/* Summary row */}
                   <div className="space-y-3">
