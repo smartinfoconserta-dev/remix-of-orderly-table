@@ -2038,7 +2038,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                                 type="button"
                                 onClick={() => {
                                   const trocoStr = f.troco && f.troco > 0
-                                    ? `<div class="print-item"><span>Troco</span><span>R$ ${f.troco.toFixed(2).replace(".", ",")}</span></div>`
+                                    ? `<div class="print-item"><span>💵 Troco devolvido</span><span>R$ ${f.troco.toFixed(2).replace(".", ",")}</span></div>`
                                     : "";
                                   const pagStr = (f.pagamentos?.length
                                     ? f.pagamentos
