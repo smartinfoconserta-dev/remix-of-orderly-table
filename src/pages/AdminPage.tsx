@@ -1722,15 +1722,15 @@ const AdminPage = () => {
           </div>
         )}
 
-        {/* ═══ USUÁRIOS ═══ */}
-        {tab === "usuarios" && (
+        {/* ═══ EQUIPE ═══ */}
+        {tab === "equipe" && (
           <div className="space-y-6 fade-in">
             <div>
-              <h2 className="text-2xl font-black text-foreground">Gerentes</h2>
-              <p className="text-sm text-muted-foreground">Crie e gerencie contas de gerentes do sistema</p>
+              <h2 className="text-2xl font-black text-foreground">Equipe</h2>
+              <p className="text-sm text-muted-foreground">Gerencie garçons, caixas, motoboys e gerentes</p>
             </div>
 
-            {/* Create form */}
+            {/* Gerentes — Create form */}
             <div className="surface-card max-w-lg space-y-4 rounded-2xl p-6">
               <p className="text-sm font-black text-foreground">Novo gerente</p>
               <div className="space-y-3">
@@ -1759,7 +1759,7 @@ const AdminPage = () => {
               </div>
             </div>
 
-            {/* List */}
+            {/* Gerentes — List */}
             <div className="surface-card max-w-lg rounded-2xl overflow-hidden">
               <div className="px-5 py-3 border-b border-border bg-secondary/50">
                 <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">Gerentes cadastrados ({gerentes.length})</p>
@@ -1784,6 +1784,58 @@ const AdminPage = () => {
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Garçons */}
+            <div className="surface-card max-w-lg rounded-2xl overflow-hidden">
+              <div className="px-5 py-3 border-b border-border bg-secondary/50 flex items-center justify-between">
+                <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">
+                  Garçons ({garcons.length})
+                </p>
+              </div>
+              {garcons.length === 0 ? (
+                <p className="px-5 py-6 text-sm text-muted-foreground text-center">
+                  Nenhum garçom cadastrado. Acesse /gerente para cadastrar.
+                </p>
+              ) : (
+                <div className="divide-y divide-border/50">
+                  {garcons.map((g) => (
+                    <div key={g.id} className="flex items-center justify-between px-5 py-3">
+                      <div>
+                        <p className="text-sm font-bold text-foreground">{g.nome}</p>
+                        <p className="text-xs text-muted-foreground">Garçom</p>
+                      </div>
+                      <span className="text-xs font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded-lg px-2 py-0.5">Ativo</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Caixas */}
+            <div className="surface-card max-w-lg rounded-2xl overflow-hidden">
+              <div className="px-5 py-3 border-b border-border bg-secondary/50">
+                <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">
+                  Caixas ({caixas.length})
+                </p>
+              </div>
+              {caixas.length === 0 ? (
+                <p className="px-5 py-6 text-sm text-muted-foreground text-center">
+                  Nenhum caixa cadastrado. Acesse /gerente para cadastrar.
+                </p>
+              ) : (
+                <div className="divide-y divide-border/50">
+                  {caixas.map((c) => (
+                    <div key={c.id} className="flex items-center justify-between px-5 py-3">
+                      <div>
+                        <p className="text-sm font-bold text-foreground">{c.nome}</p>
+                        <p className="text-xs text-muted-foreground">Caixa</p>
+                      </div>
+                      <span className="text-xs font-bold text-blue-400 bg-blue-500/10 border border-blue-500/20 rounded-lg px-2 py-0.5">Ativo</span>
                     </div>
                   ))}
                 </div>
