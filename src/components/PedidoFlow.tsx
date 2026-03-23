@@ -654,7 +654,7 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
             )}
           </div>
         )}
-        {isGarcomMobile ? (
+        {isGarcomMobile && modo !== "delivery" ? (
           <Button
             type="button"
             onClick={() => handleCartOpenChange(true)}
@@ -668,6 +668,19 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
               </span>
             ) : null}
           </Button>
+        ) : modo === "delivery" ? (
+          <button
+            type="button"
+            onClick={() => handleCartOpenChange(true)}
+            className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground active:scale-95 transition-transform"
+          >
+            <ShoppingCart className="h-5 w-5" />
+            {cartItemCount > 0 && (
+              <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-primary border-2 border-background text-[11px] font-black text-primary-foreground">
+                {cartItemCount}
+              </span>
+            )}
+          </button>
         ) : (
           <>
             {modo !== "cliente" ? (
