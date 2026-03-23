@@ -1033,6 +1033,28 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
     const diff = Number.isFinite(contadoFinal) ? contadoFinal - esperado : 0;
     const diffLabel = diff === 0 ? "caixa conferido" : diff > 0 ? `sobra de ${formatPrice(diff)}` : `falta de ${formatPrice(Math.abs(diff))}`;
 
+    // Save cash difference to history
+    if (Number.isFinite(diff) && diff !== 0) {
+      try {
+        const raw = localStorage.getItem(DIFERENCAS_CAIXA_KEY);
+        const lista = raw ? JSON.parse(raw) : [];
+        lista.push({
+          id: `diff-${Date.now()}`,
+          data: new Date().toISOString(),
+          dataFormatada: new Date().toLocaleString("pt-BR"),
+          operador: currentOperator?.nome ?? "Caixa",
+          gerente: turnoManagerName,
+          esperado,
+          contado: contadoFinal,
+          diferenca: diff,
+          motivo: motivoDiferenca.trim() || "Não informado",
+          tipo: diff > 0 ? "sobra" : "quebra",
+        });
+        const limitada = lista.slice(-200);
+        localStorage.setItem(DIFERENCAS_CAIXA_KEY, JSON.stringify(limitada));
+      } catch {}
+    }
+
     fecharCaixaDoDia(currentOperator);
     // Clear operator shift tracking
     try { localStorage.removeItem("obsidian-caixa-operadores-v1"); } catch {}
