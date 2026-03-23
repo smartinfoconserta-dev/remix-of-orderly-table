@@ -883,12 +883,15 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
       toast.error("O total pago deve ser igual ao total da conta", { duration: 1600 });
       return;
     }
-    fecharContaBalcao(balcaoPedidoSelecionado, { usuario: currentOperator, pagamentos: balcaoPayments });
+    fecharContaBalcao(balcaoPedidoSelecionado, { usuario: currentOperator, pagamentos: balcaoPayments, troco: trocoRegistrado });
+    const trocoFinal = trocoRegistrado;
     toast.success(
-      balcaoPayments.length > 1
-        ? "Conta fechada com múltiplas formas de pagamento"
-        : `Conta fechada em ${getPaymentMethodLabel(balcaoPayments[0].formaPagamento)}`,
-      { duration: 1400, icon: "✅" },
+      trocoFinal > 0
+        ? `Conta fechada — Troco: ${formatPrice(trocoFinal)}`
+        : balcaoPayments.length > 1
+          ? "Conta fechada com múltiplas formas de pagamento"
+          : `Conta fechada em ${getPaymentMethodLabel(balcaoPayments[0].formaPagamento)}`,
+      { duration: 2500, icon: "✅" },
     );
     handleVoltar();
   };
