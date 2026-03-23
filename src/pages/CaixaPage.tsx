@@ -209,6 +209,14 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
   const [turnoReportOpen, setTurnoReportOpen] = useState(false);
   const [dinheiroContado, setDinheiroContado] = useState("");
   const [motivoDiferenca, setMotivoDiferenca] = useState("");
+  const [descontoModalOpen, setDescontoModalOpen] = useState(false);
+  const [descontoTipo, setDescontoTipo] = useState<"percentual" | "valor">("percentual");
+  const [descontoInput, setDescontoInput] = useState("");
+  const [descontoMotivo, setDescontoMotivo] = useState("");
+  const [descontoManagerName, setDescontoManagerName] = useState("");
+  const [descontoManagerPin, setDescontoManagerPin] = useState("");
+  const [descontoError, setDescontoError] = useState<string | null>(null);
+  const [descontoAplicado, setDescontoAplicado] = useState(0);
 
   /* ── Balcão/Delivery state ── */
   const [balcaoOpen, setBalcaoOpen] = useState(false);
@@ -399,7 +407,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
   );
 
   /* ── payment math (mesa) ── */
-  const totalConta = mesa?.total ?? 0;
+  const totalConta = Math.max((mesa?.total ?? 0) - descontoAplicado, 0);
   const totalContaCents = toCents(totalConta);
   const totalPago = useMemo(() => closingPayments.reduce((acc, p) => acc + p.valor, 0), [closingPayments]);
   const totalPagoCents = toCents(totalPago);
@@ -469,6 +477,12 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
     setClosingPaymentValue("");
     setValorEntregue("");
     setTrocoRegistrado(0);
+    setDescontoAplicado(0);
+    setDescontoInput("");
+    setDescontoMotivo("");
+    setDescontoManagerName("");
+    setDescontoManagerPin("");
+    setDescontoError(null);
   }, []);
 
   const handleVoltar = useCallback(() => {
@@ -852,6 +866,25 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
 
   const handleRemovePayment = (paymentId: string) => {
     setClosingPayments((prev) => prev.filter((p) => p.id !== paymentId));
+  };
+
+  const handleAplicarDesconto = async () => {
+    if (!descontoMotivo.trim()) { setDescontoError("Informe o motivo"); return; }
+    if (!descontoManagerName.trim()) { setDescontoError("Informe o nome do gerente"); return; }
+    if (!/^\d{4,6}$/.test(descontoManagerPin)) { setDescontoError("PIN inválido"); return; }
+    const result = await verifyManagerAccess(descontoManagerName, descontoManagerPin);
+    if (!result.ok) { setDescontoError(result.error ?? "PIN incorreto"); return; }
+    const val = parseCurrencyInput(descontoInput);
+    if (!Number.isFinite(val) || val <= 0) { setDescontoError("Valor inválido"); return; }
+    const totalOriginal = mesa?.total ?? 0;
+    const desconto = descontoTipo === "percentual"
+      ? totalOriginal * (val / 100)
+      : Math.min(val, totalOriginal);
+    setDescontoAplicado(desconto);
+    setDescontoModalOpen(false);
+    setDescontoInput(""); setDescontoMotivo("");
+    setDescontoManagerName(""); setDescontoManagerPin(""); setDescontoError(null);
+    toast.success(`Desconto de ${formatPrice(desconto)} aplicado`, { duration: 2000, icon: "🎁" });
   };
 
   const handleFechar = () => {
@@ -2164,6 +2197,31 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                     <div className="flex items-center gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-2.5">
                       <ShoppingBag className="h-4 w-4 text-amber-400 shrink-0" />
                       <p className="text-xs font-bold text-amber-400">Lembrar: pedido para levar — verifique a embalagem</p>
+                    </div>
+                  )}
+
+                  {!descontoAplicado && closingPayments.length === 0 && totalConta > 0 && (
+                    <button onClick={() => setDescontoModalOpen(true)}
+                      className="flex items-center gap-1.5 text-xs font-bold text-muted-foreground hover:text-primary transition-colors w-fit">
+                      <span>🎁</span> Aplicar desconto
+                    </button>
+                  )}
+
+                  {descontoAplicado > 0 && (
+                    <div className="flex items-center justify-between rounded-xl bg-primary/10 border border-primary/20 px-3 py-2">
+                      <div className="flex items-center gap-2">
+                        <span>🎁</span>
+                        <div>
+                          <p className="text-xs font-bold text-primary">Desconto aplicado</p>
+                          <p className="text-[10px] text-muted-foreground">Original: {formatPrice(mesa?.total ?? 0)} → Com desconto: {formatPrice(totalConta)}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className="text-sm font-black text-primary tabular-nums">- {formatPrice(descontoAplicado)}</span>
+                        {closingPayments.length === 0 && (
+                          <button onClick={() => setDescontoAplicado(0)} className="text-xs text-destructive hover:underline">remover</button>
+                        )}
+                      </div>
                     </div>
                   )}
 
@@ -3548,6 +3606,64 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                 }}>
                 ✓ Confirmar fechamento
               </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {descontoModalOpen && (
+        <div className="fixed inset-0 z-[90] bg-background/95 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="w-full max-w-sm rounded-2xl border border-border bg-card shadow-2xl overflow-hidden">
+            <div className="px-5 py-4 border-b border-border">
+              <p className="text-base font-black">🎁 Aplicar desconto</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Requer autorização do gerente</p>
+            </div>
+            <div className="px-5 py-4 space-y-3">
+              <div className="grid grid-cols-2 gap-2">
+                {(["percentual", "valor"] as const).map(t => (
+                  <button key={t} onClick={() => setDescontoTipo(t)}
+                    className={`rounded-xl border py-2.5 text-sm font-black transition-colors ${descontoTipo === t ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground"}`}>
+                    {t === "percentual" ? "% Percentual" : "R$ Valor fixo"}
+                  </button>
+                ))}
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-muted-foreground">
+                  {descontoTipo === "percentual" ? "Percentual (%)" : "Valor (R$)"}
+                </label>
+                <Input value={descontoInput} onChange={e => setDescontoInput(e.target.value)}
+                  placeholder={descontoTipo === "percentual" ? "Ex.: 10" : "Ex.: 15,00"}
+                  inputMode="decimal" className="h-11 rounded-xl font-bold text-lg" />
+                {descontoTipo === "percentual" && (() => {
+                  const pct = parseCurrencyInput(descontoInput);
+                  if (!Number.isFinite(pct) || pct <= 0) return null;
+                  return <p className="text-xs text-primary font-bold">= {formatPrice((mesa?.total ?? 0) * (pct / 100))} de desconto</p>;
+                })()}
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-muted-foreground">Motivo (obrigatório)</label>
+                <Input value={descontoMotivo} onChange={e => setDescontoMotivo(e.target.value)}
+                  placeholder="Ex.: cliente VIP, cortesia, erro no pedido" className="h-11 rounded-xl" />
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-muted-foreground">Nome do gerente</label>
+                  <Input value={descontoManagerName} onChange={e => setDescontoManagerName(e.target.value)}
+                    placeholder="Nome" className="h-10 rounded-xl text-sm" />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-muted-foreground">PIN</label>
+                  <Input value={descontoManagerPin} onChange={e => setDescontoManagerPin(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                    type="password" inputMode="numeric" placeholder="••••"
+                    className="h-10 rounded-xl text-sm text-center tracking-widest font-black" />
+                </div>
+              </div>
+              {descontoError && <p className="text-xs text-destructive font-bold">{descontoError}</p>}
+            </div>
+            <div className="px-5 py-4 border-t border-border flex gap-3">
+              <Button variant="outline" className="flex-1 rounded-xl font-bold"
+                onClick={() => { setDescontoModalOpen(false); setDescontoError(null); }}>Cancelar</Button>
+              <Button className="flex-1 rounded-xl font-black" onClick={handleAplicarDesconto}>Aplicar desconto</Button>
             </div>
           </div>
         </div>
