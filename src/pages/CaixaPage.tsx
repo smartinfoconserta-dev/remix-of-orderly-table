@@ -2211,6 +2211,17 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                               <span className="text-base font-black tabular-nums text-emerald-400">{formatPrice(f.troco)}</span>
                             </div>
                           )}
+                          {f.desconto != null && f.desconto > 0 && (
+                            <div className="flex items-center justify-between rounded-xl bg-primary/10 border border-primary/20 px-3 py-2">
+                              <div className="flex items-center gap-2">
+                                <span>🎁</span>
+                                <span className="text-sm font-bold text-primary">Desconto aplicado</span>
+                              </div>
+                              <span className="text-base font-black tabular-nums text-primary">
+                                - {formatPrice(f.desconto)}
+                              </span>
+                            </div>
+                          )}
                           {f.itens && f.itens.length > 0 && (
                             <div className="space-y-1 border-t border-border pt-2">
                               {f.itens.map((item, i) => (
