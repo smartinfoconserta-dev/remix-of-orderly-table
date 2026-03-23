@@ -1256,8 +1256,18 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         ? pagamentos[0].formaPagamento
         : `${pagamentos.length} formas de pagamento`;
 
+      const proximoNumeroBalcao = (() => {
+        try {
+          const atual = parseInt(localStorage.getItem("obsidian-contador-comanda-v1") ?? "0", 10);
+          const proximo = (isNaN(atual) ? 0 : atual) + 1;
+          localStorage.setItem("obsidian-contador-comanda-v1", String(proximo));
+          return proximo;
+        } catch { return 0; }
+      })();
+
       const fechamento: FechamentoConta = {
         id: `fechamento-${now.getTime()}-${pedido.id}`,
+        numeroComanda: proximoNumeroBalcao,
         mesaId: pedido.mesaId,
         mesaNumero: 0,
         total: pedido.total,
