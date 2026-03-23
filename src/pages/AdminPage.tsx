@@ -583,8 +583,7 @@ const AdminPage = () => {
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-2xl font-black text-foreground">Cardápio</h2>
-                <p className="text-sm text-muted-foreground">Gerencie os produtos do cardápio</p>
-                <div className="flex items-center gap-4 text-xs text-muted-foreground mt-1">
+                <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
                   <span>{allProducts.length} produtos</span>
                   <span>·</span>
                   <span>{allProducts.filter(p => p.ativo !== false).length} disponíveis</span>
@@ -727,9 +726,9 @@ const AdminPage = () => {
                         <tr key={p.id} className={`slide-up border-b border-border/50 last:border-0 ${!p.ativo ? "opacity-40" : ""}`} style={{ animationDelay: `${Math.min(idx * 30, 300)}ms`, animationFillMode: 'both' }}>
                           <td className="px-4 py-2">
                             {(p.imagemBase64 || p.imagem) ? (
-                              <img src={p.imagemBase64 || p.imagem} alt={p.nome} className="h-10 w-10 rounded-lg object-cover" />
+                              <img src={p.imagemBase64 || p.imagem} alt={p.nome} className="h-10 w-10 rounded-lg object-cover border border-border shrink-0" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
                             ) : (
-                              <div className="h-10 w-10 rounded-lg bg-secondary border border-border flex items-center justify-center text-muted-foreground shrink-0"><span className="text-lg">🍽️</span></div>
+                              <div className="h-10 w-10 rounded-lg bg-secondary border border-border flex items-center justify-center shrink-0"><span className="text-lg">🍽️</span></div>
                             )}
                           </td>
                           <td className="px-4 py-3 font-semibold text-foreground">{p.nome}</td>
