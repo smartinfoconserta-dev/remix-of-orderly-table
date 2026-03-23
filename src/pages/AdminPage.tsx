@@ -58,12 +58,17 @@ import {
   applyCustomPrimaryColor,
   getCategoriasCustom,
   saveCategoriasCustom,
+  getHorariosFuncionamento,
+  saveHorariosFuncionamento,
+  defaultHorariosSemana,
   type ProdutoOverride,
   type MesasConfig,
   type SistemaConfig,
   type LicencaConfig,
   type BannerConfig,
   type CategoriaCustom,
+  type HorariosSemana,
+  type HorarioFuncionamento,
 } from "@/lib/adminStorage";
 import { getBairros, saveBairros, type Bairro } from "@/lib/deliveryStorage";
 import { toast } from "sonner";
