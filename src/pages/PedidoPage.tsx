@@ -372,7 +372,6 @@ export default function PedidoPage() {
       )}
     </div>
   );
-  );
 
   // ── Cardápio (full screen PedidoFlow) ──
   if (etapa === "cardapio") {
