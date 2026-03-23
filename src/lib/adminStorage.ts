@@ -276,9 +276,8 @@ export function isDeliveryAberto(): { aberto: boolean; mensagem: string; proximo
       if (h.ativo) {
         const horas = calcularHorasAte(h.abertura, i);
         const nomeDia = nomes[(agora.getDay() + i) % 7];
-        const textoHoras = horas > 0 ? ` (em ~${horas}h)` : "";
         return {
-          texto: `Abrimos ${nomeDia} às ${h.abertura}${textoHoras}`,
+          texto: `Abrimos ${nomeDia} às ${h.abertura}`,
           horas,
         };
       }
@@ -304,11 +303,10 @@ export function isDeliveryAberto(): { aberto: boolean; mensagem: string; proximo
 
   if (minutosAgora < minutosAbertura) {
     const horas = calcularHorasAte(horarioDia.abertura);
-    const textoHoras = horas > 0 ? ` (em ~${horas}h)` : "";
     return {
       aberto: false,
       mensagem: "Ainda não abrimos",
-      proximoHorario: `Abrimos às ${horarioDia.abertura}${textoHoras}`,
+      proximoHorario: `Abrimos às ${horarioDia.abertura}`,
       horasRestantes: horas,
     };
   }
