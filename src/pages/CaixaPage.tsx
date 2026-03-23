@@ -519,6 +519,8 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
     setDescontoManagerName("");
     setDescontoManagerPin("");
     setDescontoError(null);
+    setCouvertPessoas(0);
+    setCouvertDispensado(false);
   }, []);
 
   const handleVoltar = useCallback(() => {
