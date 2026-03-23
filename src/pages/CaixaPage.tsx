@@ -284,6 +284,20 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
     return () => clearInterval(id);
   }, []);
 
+  const resumoDeliveryTurno = useMemo(() => {
+    try {
+      const raw = localStorage.getItem(FECHAMENTOS_MOTOBOY_KEY);
+      const todos = raw ? JSON.parse(raw) : [];
+      const doTurno = todos;
+      const conferidos = doTurno.filter((f: any) => f.status === "conferido");
+      const pendentes = doTurno.filter((f: any) => f.status === "aguardando");
+      const totalConferido = conferidos.reduce((s: number, f: any) => s + (f.resumo?.totalAPrestar || 0), 0);
+      const totalEntregas = conferidos.reduce((s: number, f: any) => s + (f.resumo?.totalEntregas || 0), 0);
+      const motoboyNomes = [...new Set(doTurno.map((f: any) => f.motoboyNome))] as string[];
+      return { conferidos: conferidos.length, pendentes: pendentes.length, totalConferido, totalEntregas, motoboyNomes };
+    } catch { return { conferidos: 0, pendentes: 0, totalConferido: 0, totalEntregas: 0, motoboyNomes: [] as string[] }; }
+  }, [caixaAberto, fechamentosPendentes]);
+
 
   useEffect(() => {
     const checkAviso = () => {
@@ -2396,6 +2410,39 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                     </div>
                   );
                 })()}
+                {resumoDeliveryTurno.totalEntregas > 0 && (
+                  <div className="rounded-xl border border-blue-500/20 bg-blue-500/5 p-6 space-y-3">
+                    <p className="text-sm font-black text-blue-400 flex items-center gap-1.5">
+                      🏍️ Fechamentos de motoboys
+                    </p>
+                    <div className="space-y-1.5 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Entregas realizadas</span>
+                        <span className="font-bold">{resumoDeliveryTurno.totalEntregas}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Fechamentos conferidos</span>
+                        <span className="font-bold text-emerald-400">{resumoDeliveryTurno.conferidos}</span>
+                      </div>
+                      {resumoDeliveryTurno.pendentes > 0 && (
+                        <div className="flex justify-between">
+                          <span className="text-amber-400 font-bold">⚠ Aguardando conferência</span>
+                          <span className="font-black text-amber-400">{resumoDeliveryTurno.pendentes}</span>
+                        </div>
+                      )}
+                      <div className="flex justify-between border-t border-blue-500/20 pt-1.5">
+                        <span className="font-bold text-foreground">Total delivery conferido</span>
+                        <span className="font-black tabular-nums text-blue-400">{formatPrice(resumoDeliveryTurno.totalConferido)}</span>
+                      </div>
+                      {resumoDeliveryTurno.motoboyNomes.length > 0 && (
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Motoboys ativos</span>
+                          <span className="font-bold text-right">{resumoDeliveryTurno.motoboyNomes.join(", ")}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
                 <div className="flex justify-between text-xs text-muted-foreground">
                   <span>Aberto: {caixaOpenTime || "—"}</span>
                   <span>Agora: {clockStr}</span>
@@ -2502,6 +2549,39 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                   </div>
                 );
               })()}
+              {resumoDeliveryTurno.totalEntregas > 0 && (
+                <div className="rounded-xl border border-blue-500/20 bg-blue-500/5 p-4 space-y-2">
+                  <p className="text-xs font-black text-blue-400 flex items-center gap-1.5">
+                    🏍️ Fechamentos de motoboys
+                  </p>
+                  <div className="space-y-1 text-xs">
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Entregas realizadas</span>
+                      <span className="font-bold">{resumoDeliveryTurno.totalEntregas}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Fechamentos conferidos</span>
+                      <span className="font-bold text-emerald-400">{resumoDeliveryTurno.conferidos}</span>
+                    </div>
+                    {resumoDeliveryTurno.pendentes > 0 && (
+                      <div className="flex justify-between">
+                        <span className="text-amber-400 font-bold">⚠ Aguardando conferência</span>
+                        <span className="font-black text-amber-400">{resumoDeliveryTurno.pendentes}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between border-t border-blue-500/20 pt-1">
+                      <span className="font-bold text-foreground">Total delivery conferido</span>
+                      <span className="font-black tabular-nums text-blue-400">{formatPrice(resumoDeliveryTurno.totalConferido)}</span>
+                    </div>
+                    {resumoDeliveryTurno.motoboyNomes.length > 0 && (
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Motoboys ativos</span>
+                        <span className="font-bold text-right">{resumoDeliveryTurno.motoboyNomes.join(", ")}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
               <div className="flex justify-between text-xs text-muted-foreground">
                 <span>Aberto: {caixaOpenTime || "—"}</span>
                 <span>Agora: {clockStr}</span>
