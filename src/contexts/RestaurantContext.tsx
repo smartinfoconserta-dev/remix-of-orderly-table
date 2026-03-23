@@ -128,6 +128,8 @@ export interface FecharContaInput {
   pagamentos: SplitPayment[];
   troco?: number;
   desconto?: number;
+  couvert?: number;
+  numeroPessoas?: number;
 }
 
 interface RestaurantStore {
