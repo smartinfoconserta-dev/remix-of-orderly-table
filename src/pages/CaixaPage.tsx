@@ -2173,9 +2173,9 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
 
                   {/* Input + quick values */}
                   {!fechamentoPronto && totalConta > 0 && (
-                    <div className="space-y-3">
+                    <div className="space-y-2">
                       {closingPaymentMethod === "dinheiro" ? (
-                        <div className="space-y-3">
+                        <div className="space-y-2">
                           <div className="flex items-end gap-3">
                             <div className="flex-1 space-y-1">
                               <label className="text-xs font-semibold text-muted-foreground">
