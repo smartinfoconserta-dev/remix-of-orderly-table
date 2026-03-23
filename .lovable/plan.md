@@ -1,30 +1,49 @@
 
 
-## Plano: Toggle de estilo da logo (quadrada vs circular) no Admin + exibição no cliente
+## Plano: Logo quadrada maior na sidebar do tablet
 
-### O que será feito
+### Problema
+No modo "quadrada", a logo aparece pequena (40x40px) no header. O usuário quer que, no tablet (sidebar visível), a logo quadrada ocupe a largura da sidebar (~11rem), acompanhando o tamanho dos botões de categoria.
 
-1. **Admin (`adminStorage.ts`)**: Adicionar campo `logoEstilo?: "quadrada" | "circular"` na interface `SistemaConfig` com default `"quadrada"`.
+### Mudança
 
-2. **Admin (`AdminPage.tsx`)**: Na sub-seção Identidade Visual, adicionar um seletor visual (dois botões lado a lado) para escolher entre "Quadrada" e "Circular", logo abaixo do upload da logo.
+**Arquivo: `src/components/PedidoFlow.tsx`**
 
-3. **Cliente (`PedidoFlow.tsx`)**: 
-   - Corrigir o bug da logo: usar `sysConfig.logoBase64 || sysConfig.logoUrl` (já identificado antes).
-   - Ler `logoEstilo` do config e aplicar:
-     - **Quadrada**: `rounded-xl` (como está hoje, acompanha o design dos chips de categoria)
-     - **Circular**: `rounded-full` (logo dentro de um círculo)
-   - Aplicar nos 2 locais onde a logo aparece (modo delivery e modo padrão).
+Na `aside` da sidebar (linha ~1092), adicionar a logo como bloco grande no topo, antes da `nav` de categorias:
 
-### Arquivos alterados
+```tsx
+{RESTAURANTE.logoUrl && logoEstilo === "quadrada" && (
+  <div className="mb-3 px-1">
+    <img
+      src={RESTAURANTE.logoUrl}
+      alt={RESTAURANTE.nome}
+      className="w-full aspect-square rounded-2xl object-cover border border-border shadow-sm"
+    />
+  </div>
+)}
+{RESTAURANTE.logoUrl && logoEstilo === "circular" && (
+  <div className="mb-3 flex justify-center">
+    <img
+      src={RESTAURANTE.logoUrl}
+      alt={RESTAURANTE.nome}
+      className="h-20 w-20 rounded-full object-cover border border-border shadow-sm"
+    />
+  </div>
+)}
+{!RESTAURANTE.logoUrl && (
+  <div className="mb-3 flex justify-center">
+    <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-secondary border border-border">
+      <span className="text-lg font-black text-foreground">{RESTAURANTE.logoFallback}</span>
+    </div>
+  </div>
+)}
+```
 
-| Arquivo | Mudança |
-|---|---|
-| `src/lib/adminStorage.ts` | +1 campo `logoEstilo` na interface + default |
-| `src/pages/AdminPage.tsx` | Seletor quadrada/circular na Identidade Visual |
-| `src/components/PedidoFlow.tsx` | Fix logoBase64 + aplicar `rounded-xl` ou `rounded-full` conforme config |
+A logo quadrada ocupa a largura total da sidebar (~11rem/13rem) como um bloco quadrado com `aspect-square`, acompanhando visualmente a lista de categorias abaixo. No modo circular, aparece centralizada como avatar grande. Sem logo, mostra iniciais.
 
-### Resultado esperado
-- Admin → Identidade Visual → botão toggle "Quadrada / Circular"
-- Cliente vê a logo no formato escolhido
-- Default: quadrada (comportamento atual mantido)
+### Resultado
+- Modo quadrado: logo grande quadrada na largura da sidebar, acima das categorias
+- Modo circular: logo circular centralizada (80px)
+- Sem logo: iniciais em bloco
+- Header continua com a logo pequena normalmente
 
