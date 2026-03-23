@@ -85,6 +85,7 @@ export interface FechamentoConta {
   criadoEmIso: string;
   caixaId: string;
   caixaNome: string;
+  troco?: number;
 }
 
 export interface Mesa {
@@ -119,6 +120,7 @@ interface ActionAuditInput {
 export interface FecharContaInput {
   usuario: OperationalUser;
   pagamentos: SplitPayment[];
+  troco?: number;
 }
 
 interface RestaurantStore {
@@ -768,6 +770,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
             criadoEmIso: now.toISOString(),
             caixaId: input.usuario.id,
             caixaNome: input.usuario.nome,
+            troco: input.troco ?? 0,
           };
 
           eventInput = {
@@ -1215,6 +1218,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         criadoEmIso: now.toISOString(),
         caixaId: input.usuario.id,
         caixaNome: input.usuario.nome,
+        troco: input.troco ?? 0,
       };
 
       return {
