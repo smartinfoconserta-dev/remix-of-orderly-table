@@ -2189,12 +2189,31 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                             className="h-11 rounded-xl text-base font-bold"
                           />
                         </div>
-                        <Button
-                          onClick={handleAddPayment}
-                          className="rounded-xl font-black h-11 px-5"
-                        >
-                          <Plus className="h-4 w-4 mr-1" /> Adicionar
-                        </Button>
+                        {(() => {
+                          const entregou = parseCurrencyInput(closingPaymentValue);
+                          const temTroco = closingPaymentMethod === "dinheiro" &&
+                            Number.isFinite(entregou) && entregou > valorRestante;
+                          const troco = temTroco ? entregou - valorRestante : 0;
+                          return (
+                            <Button
+                              onClick={handleAddPayment}
+                              className={`rounded-xl font-black h-11 px-4 shrink-0 transition-all ${
+                                temTroco
+                                  ? "bg-emerald-600 hover:bg-emerald-700 text-white min-w-[160px]"
+                                  : ""
+                              }`}
+                            >
+                              {temTroco ? (
+                                <span className="flex flex-col items-center leading-tight">
+                                  <span className="text-xs font-bold opacity-80">Troco: {formatPrice(troco)}</span>
+                                  <span className="text-sm font-black">✓ Confirmar</span>
+                                </span>
+                              ) : (
+                                <><Plus className="h-4 w-4 mr-1" /> Adicionar</>
+                              )}
+                            </Button>
+                          );
+                        })()}
                       </div>
                       {/* Botões rápidos */}
                       <div className="flex items-center gap-1.5">
