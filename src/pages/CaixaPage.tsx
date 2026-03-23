@@ -634,6 +634,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
       }
       localStorage.setItem("obsidian-caixa-modo-v1", modoOperacao);
       abrirCaixa(valor, currentOperator);
+      localStorage.removeItem(FUNDO_PROXIMO_KEY);
       toast.success("Caixa aberto com sucesso!", { duration: 1200, icon: "✅" });
     };
 
