@@ -75,6 +75,7 @@ export interface MovimentacaoCaixa {
 
 export interface FechamentoConta {
   id: string;
+  numeroComanda?: number;
   mesaId: string;
   mesaNumero: number;
   total: number;
