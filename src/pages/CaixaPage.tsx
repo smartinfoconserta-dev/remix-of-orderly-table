@@ -3928,14 +3928,62 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                       </div>
                     )}
                   </div>
-                  {f.itens && f.itens.length > 0 && (
-                    <div className="text-xs text-muted-foreground border-t border-border/50 pt-2">
-                      {f.itens.slice(0, 3).map((it, i) => (
-                        <span key={i}>{it.quantidade}× {it.nome}{i < Math.min(f.itens!.length, 3) - 1 ? ", " : ""}</span>
-                      ))}
-                      {f.itens.length > 3 && <span> +{f.itens.length - 3} itens</span>}
+                  <div className="flex items-center justify-between pt-2 border-t border-border/50">
+                    <div className="flex items-center gap-2 flex-wrap text-xs text-muted-foreground">
+                      {f.itens && f.itens.length > 0 && (
+                        <span>
+                          {f.itens.slice(0, 2).map((it, i) => (
+                            <span key={i}>{it.quantidade}× {it.nome}{i < Math.min(f.itens!.length, 2) - 1 ? ", " : ""}</span>
+                          ))}
+                          {f.itens.length > 2 && <span> +{f.itens.length - 2} itens</span>}
+                        </span>
+                      )}
                     </div>
-                  )}
+                    <div className="flex items-center gap-2 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const trocoStr = f.troco && f.troco > 0
+                            ? `<div class="print-item"><span>💵 Troco devolvido</span><span>R$ ${f.troco.toFixed(2).replace(".", ",")}</span></div>`
+                            : "";
+                          const descontoStr = f.desconto && f.desconto > 0
+                            ? `<div class="print-item" style="color:#c85b0a"><span>🎁 Desconto</span><span>- R$ ${f.desconto.toFixed(2).replace(".", ",")}</span></div>`
+                            : "";
+                          const pagStr = (f.pagamentos?.length
+                            ? f.pagamentos
+                            : [{ formaPagamento: f.formaPagamento, valor: f.total }]
+                          ).map((p: any) => `<div class="print-item"><span>${getPaymentMethodLabel(p.formaPagamento as PaymentMethod)}</span><span>R$ ${p.valor.toFixed(2).replace(".", ",")}</span></div>`).join("");
+                          const itensStr = (f.itens || []).map((it: any) =>
+                            `<div class="print-item"><span>${it.quantidade}x ${it.nome}</span><span>R$ ${(it.precoUnitario * it.quantidade).toFixed(2).replace(".", ",")}</span></div>`
+                          ).join("");
+                          const w = window.open("", "_blank", "width=400,height=600");
+                          if (!w) return;
+                          w.document.write(`<!DOCTYPE html><html><head><style>body{font-family:monospace;font-size:13px;padding:16px;max-width:300px;margin:0 auto}h2{text-align:center;font-size:15px;margin-bottom:4px}.sub{text-align:center;color:#666;font-size:11px;margin-bottom:12px}hr{border:none;border-top:1px dashed #999;margin:8px 0}.print-item{display:flex;justify-content:space-between;margin:3px 0}.total{font-weight:bold;font-size:15px;display:flex;justify-content:space-between;margin-top:8px}.center{text-align:center;margin-top:12px;font-size:11px;color:#666}</style></head><body><h2>${f.mesaNumero === 0 ? "Balcão" : `Mesa ${String(f.mesaNumero).padStart(2,"0")}`}${f.numeroComanda ? ` — Comanda #${String(f.numeroComanda).padStart(4,"0")}` : ""}</h2><div class="sub">${f.criadoEm} • ${f.caixaNome}</div><hr/>${itensStr}<hr/>${descontoStr}${pagStr}${trocoStr}<hr/><div class="total"><span>TOTAL</span><span>R$ ${f.total.toFixed(2).replace(".",",")}</span></div><div class="center">Obrigado pela visita!</div></body></html>`);
+                          w.document.close();
+                          w.focus();
+                          setTimeout(() => { w.print(); w.close(); }, 400);
+                        }}
+                        className="flex items-center gap-1.5 rounded-xl border border-border bg-secondary px-3 py-1.5 text-xs font-bold text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        <Printer className="h-3 w-3" /> Reimprimir
+                      </button>
+                      {!f.cancelado && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEstornoFechamentoId(f.id);
+                            setEstornoModalOpen(true);
+                          }}
+                          className="flex items-center gap-1.5 rounded-xl border border-destructive/30 px-3 py-1.5 text-xs font-bold text-destructive/70 hover:text-destructive hover:border-destructive transition-colors"
+                        >
+                          ↩️ Estornar
+                        </button>
+                      )}
+                      {f.cancelado && (
+                        <span className="text-xs font-bold text-destructive/50 px-2">↩️ Estornado</span>
+                      )}
+                    </div>
+                  </div>
                 </div>
               ))
             )}
