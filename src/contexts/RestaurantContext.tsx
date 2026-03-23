@@ -126,6 +126,7 @@ export interface FecharContaInput {
   usuario: OperationalUser;
   pagamentos: SplitPayment[];
   troco?: number;
+  desconto?: number;
 }
 
 interface RestaurantStore {
@@ -778,7 +779,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
             numeroComanda: proximoNumeroMesa,
             mesaId,
             mesaNumero: mesa.numero,
-            total: mesa.total,
+            total: Math.max(mesa.total - (input?.desconto ?? 0), 0),
             formaPagamento: pagamentos[0].formaPagamento,
             pagamentos,
             itens: mesa.pedidos.flatMap((p) => p.itens.map(cloneItem)),
@@ -1270,7 +1271,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         numeroComanda: proximoNumeroBalcao,
         mesaId: pedido.mesaId,
         mesaNumero: 0,
-        total: pedido.total,
+        total: Math.max(pedido.total - (input.desconto ?? 0), 0),
         formaPagamento: pagamentos[0].formaPagamento,
         pagamentos,
         itens: pedido.itens.map(cloneItem),
