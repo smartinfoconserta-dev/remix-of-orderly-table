@@ -406,10 +406,10 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
   const fechamentoPronto = totalContaCents > 0 && totalPagoCents === totalContaCents;
   const paymentProgress = totalContaCents > 0 ? Math.min(totalPagoCents / totalContaCents, 1) : 0;
   const valorEntregueNum = parseCurrencyInput(valorEntregue);
+  const valorEntregueValido = Number.isFinite(valorEntregueNum) && valorEntregueNum > 0;
   const trocoCalculado = closingPaymentMethod === "dinheiro" && Number.isFinite(valorEntregueNum) && valorEntregueNum > valorRestante
     ? valorEntregueNum - valorRestante : 0;
-  const valorEntregueValido = closingPaymentMethod === "dinheiro"
-    ? Number.isFinite(valorEntregueNum) && valorEntregueNum >= valorRestante : true;
+  const valorDinheiroARegistrar = Number.isFinite(valorEntregueNum) ? Math.min(valorEntregueNum, valorRestante) : 0;
 
   /* ── payment math (balcão) ── */
   const balcaoTotalConta = balcaoPedido?.total ?? 0;
@@ -2099,36 +2099,26 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                     )}
                   </div>
                 ) : (
-                <><div className="flex-1 overflow-y-auto p-5 space-y-5 scrollbar-hide">
+                <><div className="flex-1 overflow-y-auto p-3 space-y-3 scrollbar-hide">
 
-                  {/* Summary row */}
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-bold text-muted-foreground">Total da conta</span>
-                      <span className="text-2xl font-black text-foreground tabular-nums">{formatPrice(totalConta)}</span>
+                  {/* Compact summary */}
+                  <div className="flex items-center justify-between rounded-xl border border-border px-4 py-3">
+                    <div className="space-y-0.5">
+                      <p className="text-xs text-muted-foreground font-bold">Total da conta</p>
+                      <p className="text-xl font-black text-foreground tabular-nums">{formatPrice(totalConta)}</p>
                     </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-bold text-muted-foreground">Total pago</span>
-                      <span className={`text-2xl font-black tabular-nums ${fechamentoPronto ? "text-status-consumo" : totalPago > 0 ? "text-primary" : "text-foreground"}`}>
-                        {formatPrice(totalPago)}
-                      </span>
-                    </div>
-                    <div className={`flex items-center justify-between rounded-2xl p-4 ${fechamentoPronto ? "bg-status-consumo/10" : "bg-destructive/5"}`}>
-                      <span className={`text-base font-black ${fechamentoPronto ? "text-status-consumo" : "text-destructive"}`}>Restante</span>
-                      <span className={`text-3xl font-black tabular-nums ${fechamentoPronto ? "text-status-consumo" : "text-destructive"}`}>
-                        {fechamentoPronto ? (
-                          <span className="flex items-center gap-2">
-                            <Check className="h-6 w-6" /> Quitado
-                          </span>
-                        ) : (
-                          formatPrice(valorRestante)
-                        )}
-                      </span>
+                    <div className="text-right space-y-0.5">
+                      <p className="text-xs text-muted-foreground font-bold">
+                        {fechamentoPronto ? "Quitado ✓" : "Restante"}
+                      </p>
+                      <p className={`text-xl font-black tabular-nums ${fechamentoPronto ? "text-emerald-400" : "text-destructive"}`}>
+                        {fechamentoPronto ? formatPrice(0) : formatPrice(valorRestante)}
+                      </p>
                     </div>
                   </div>
 
-                  {/* Progress bar — red → green */}
-                  <div className="relative rounded-full bg-secondary h-3 overflow-hidden">
+                  {/* Progress bar */}
+                  <div className="relative rounded-full bg-secondary h-1.5 overflow-hidden">
                     <div
                       className="h-full rounded-full transition-all duration-700 ease-out"
                       style={{
@@ -2141,11 +2131,6 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                         boxShadow: fechamentoPronto ? "0 0 12px hsl(var(--status-consumo) / 0.5)" : "none",
                       }}
                     />
-                    {fechamentoPronto && (
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <Check className="h-2.5 w-2.5 text-white" />
-                      </div>
-                    )}
                   </div>
 
                   {mesa.pedidos.some((p) => p.paraViagem) && !fechamentoPronto && totalConta > 0 && (
@@ -2155,9 +2140,8 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                     </div>
                   )}
 
-                  {/* Payment method large buttons */}
                   {!fechamentoPronto && totalConta > 0 && (
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-2 gap-2">
                       {paymentMethodOptions.map((opt) => {
                         const Icon = opt.icon;
                         const isSelected = closingPaymentMethod === opt.value;
@@ -2173,7 +2157,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                                 setValorEntregue("");
                               }
                             }}
-                            className={`flex items-center justify-center gap-2 rounded-2xl border-2 py-3 px-4 transition-colors ${
+                            className={`flex items-center justify-center gap-2 rounded-xl border-2 py-2.5 px-3 transition-colors ${
                               isSelected
                                 ? `border-white ${opt.bgColor}`
                                 : `${opt.idleBorder} ${opt.idleBg} opacity-50`
@@ -2189,9 +2173,9 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
 
                   {/* Input + quick values */}
                   {!fechamentoPronto && totalConta > 0 && (
-                    <div className="space-y-3">
+                    <div className="space-y-2">
                       {closingPaymentMethod === "dinheiro" ? (
-                        <div className="space-y-3">
+                        <div className="space-y-2">
                           <div className="flex items-end gap-3">
                             <div className="flex-1 space-y-1">
                               <label className="text-xs font-semibold text-muted-foreground">
@@ -2231,35 +2215,35 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                           </div>
                           {/* Troco em destaque */}
                           {Number.isFinite(valorEntregueNum) && valorEntregueNum > 0 && (
-                            <div className={`rounded-2xl p-4 flex items-center justify-between ${
+                            <div className={`rounded-xl p-3 flex items-center justify-between border ${
                               trocoCalculado > 0
-                                ? "bg-emerald-500/10 border border-emerald-500/30"
-                                : valorEntregueNum < valorRestante
-                                ? "bg-destructive/10 border border-destructive/30"
-                                : "bg-emerald-500/10 border border-emerald-500/30"
+                                ? "bg-emerald-500/10 border-emerald-500/30"
+                                : valorEntregueNum === valorRestante
+                                ? "bg-emerald-500/10 border-emerald-500/30"
+                                : "bg-amber-500/10 border-amber-500/30"
                             }`}>
-                              <span className={`text-base font-black ${
+                              <span className={`text-sm font-black ${
                                 trocoCalculado > 0 ? "text-emerald-400"
-                                : valorEntregueNum < valorRestante ? "text-destructive"
-                                : "text-emerald-400"
+                                : valorEntregueNum === valorRestante ? "text-emerald-400"
+                                : "text-amber-400"
                               }`}>
                                 {trocoCalculado > 0
                                   ? "💵 Troco para o cliente"
-                                  : valorEntregueNum < valorRestante
-                                  ? "⚠ Valor insuficiente"
-                                  : "✓ Valor exato"}
+                                  : valorEntregueNum === valorRestante
+                                  ? "✓ Valor exato"
+                                  : `↓ Faltam ${formatPrice(valorRestante - valorEntregueNum)}`}
                               </span>
-                              <span className={`text-3xl font-black tabular-nums ${
+                              <span className={`text-xl font-black tabular-nums ${
                                 trocoCalculado > 0 ? "text-emerald-400"
-                                : valorEntregueNum < valorRestante ? "text-destructive"
-                                : "text-emerald-400"
+                                : valorEntregueNum === valorRestante ? "text-emerald-400"
+                                : "text-amber-400"
                               }`}>
-                                {trocoCalculado > 0 ? formatPrice(trocoCalculado) : "R$ 0,00"}
+                                {trocoCalculado > 0 ? formatPrice(trocoCalculado) : formatPrice(valorEntregueNum)}
                               </span>
                             </div>
                           )}
                           {/* Botão confirmar dinheiro */}
-                          {valorEntregueValido && valorEntregueNum > 0 && (
+                          {valorEntregueValido && (
                             <Button
                               onClick={() => {
                                 setTrocoRegistrado(trocoCalculado);
@@ -2268,14 +2252,18 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                                   {
                                     id: `pag-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
                                     formaPagamento: "dinheiro" as PaymentMethod,
-                                    valor: Number(valorRestante.toFixed(2))
+                                    valor: Number(valorDinheiroARegistrar.toFixed(2))
                                   }
                                 ]);
                                 setValorEntregue("");
                               }}
-                              className="w-full h-12 rounded-2xl font-black bg-emerald-600 hover:bg-emerald-700 text-white"
+                              className="w-full h-11 rounded-xl font-black bg-emerald-600 hover:bg-emerald-700 text-white"
                             >
-                              Confirmar — Troco: {formatPrice(trocoCalculado)}
+                              {trocoCalculado > 0
+                                ? `Confirmar — Troco: ${formatPrice(trocoCalculado)}`
+                                : valorEntregueNum < valorRestante
+                                ? `Registrar ${formatPrice(valorEntregueNum)} em dinheiro`
+                                : "Confirmar pagamento"}
                             </Button>
                           )}
                         </div>
@@ -2323,18 +2311,18 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
 
                   {/* Payment list */}
                   {closingPayments.length > 0 && (
-                    <div className="space-y-2">
+                    <div className="space-y-1.5">
                       {closingPayments.map((payment) => {
                         const style = getPaymentMethodStyle(payment.formaPagamento);
                         const Icon = style.icon;
                         return (
-                          <div key={payment.id} className={`flex items-center gap-3 rounded-2xl border ${style.borderColor} ${style.bgColor} px-4 py-3`}>
-                            <div className={`flex h-9 w-9 items-center justify-center rounded-xl ${style.bgColor} ${style.color}`}>
-                              <Icon className="h-4 w-4" />
+                          <div key={payment.id} className={`flex items-center gap-2 rounded-xl border ${style.borderColor} ${style.bgColor} px-3 py-2`}>
+                            <div className={`flex h-7 w-7 items-center justify-center rounded-lg ${style.bgColor} ${style.color}`}>
+                              <Icon className="h-3.5 w-3.5" />
                             </div>
                             <p className="flex-1 text-sm font-bold text-foreground">{getPaymentMethodLabel(payment.formaPagamento)}</p>
-                            <span className={`text-base font-black tabular-nums ${style.color}`}>{formatPrice(payment.valor)}</span>
-                            <Button size="icon" variant="outline" className="h-7 w-7 rounded-lg text-destructive border-destructive/20 hover:bg-destructive/10" onClick={() => handleRemovePayment(payment.id)}>
+                            <span className={`text-sm font-black tabular-nums ${style.color}`}>{formatPrice(payment.valor)}</span>
+                            <Button size="icon" variant="outline" className="h-6 w-6 rounded-lg text-destructive border-destructive/20 hover:bg-destructive/10" onClick={() => handleRemovePayment(payment.id)}>
                               <Trash2 className="h-3 w-3" />
                             </Button>
                           </div>
@@ -2345,7 +2333,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                 </div>
 
                 {/* Sticky bottom: confirm */}
-                <div className="border-t border-border p-5 bg-card space-y-2">
+                <div className="border-t border-border p-3 bg-card space-y-2">
                   <Button
                     onClick={handleFechar}
                     disabled={!fechamentoPronto || closingPayments.length === 0}
