@@ -354,7 +354,10 @@ export default function PedidoPage() {
         <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center text-3xl">🕐</div>
         <h1 className="text-2xl font-black text-foreground">{sysConfig.mensagemFechado || statusHorario.mensagem}</h1>
         {statusHorario.proximoHorario && (
-          <p className="text-muted-foreground">{statusHorario.proximoHorario}</p>
+          <p className="text-muted-foreground text-base">{statusHorario.proximoHorario}</p>
+        )}
+        {statusHorario.horasRestantes != null && statusHorario.horasRestantes > 0 && statusHorario.horasRestantes <= 2 && (
+          <p className="text-sm text-primary font-bold">Falta pouco! ⏳</p>
         )}
         {sysConfig.telefoneRestaurante && (
           <Button variant="outline" onClick={() => window.open(`https://wa.me/55${sysConfig.telefoneRestaurante}`, "_blank")}>
