@@ -54,9 +54,12 @@ interface PedidoFlowProps {
 }
 
 const sysConfig = getSistemaConfig();
+const logoEstilo = sysConfig.logoEstilo || "quadrada";
+const logoRadius = logoEstilo === "circular" ? "rounded-full" : "rounded-xl";
+const logoRadiusSm = logoEstilo === "circular" ? "rounded-full" : "rounded-lg";
 const RESTAURANTE = {
   nome: sysConfig.nomeRestaurante || "Restaurante",
-  logoUrl: sysConfig.logoUrl || "",
+  logoUrl: sysConfig.logoBase64 || sysConfig.logoUrl || "",
   logoFallback: (sysConfig.nomeRestaurante || "Restaurante").slice(0, 2).toUpperCase(),
 };
 
@@ -569,15 +572,15 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
 
   const restaurantIdentity = modo === "delivery" ? (
     <div className="flex min-w-0 items-center gap-2">
-      <Avatar className="h-8 w-8 rounded-lg border border-border bg-secondary shadow-sm select-none touch-none"
+      <Avatar className={`h-8 w-8 ${logoRadiusSm} border border-border bg-secondary shadow-sm select-none touch-none`}
         onPointerDown={handleLogoPointerDown}
         onPointerUp={handleLogoPointerUp}
         onPointerLeave={handleLogoPointerUp}
       >
         {RESTAURANTE.logoUrl ? (
-          <img src={RESTAURANTE.logoUrl} alt={RESTAURANTE.nome} className="h-full w-full rounded-lg object-cover" />
+          <img src={RESTAURANTE.logoUrl} alt={RESTAURANTE.nome} className={`h-full w-full ${logoRadiusSm} object-cover`} />
         ) : (
-          <AvatarFallback className="rounded-lg bg-secondary text-[10px] font-extrabold tracking-widest text-foreground">
+          <AvatarFallback className={`${logoRadiusSm} bg-secondary text-[10px] font-extrabold tracking-widest text-foreground`}>
             {RESTAURANTE.logoFallback}
           </AvatarFallback>
         )}
@@ -591,16 +594,16 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
   ) : (
     <div className="flex min-w-0 items-center gap-3">
       <Avatar
-        className="h-10 w-10 rounded-xl border border-border bg-secondary shadow-sm select-none touch-none"
+        className={`h-10 w-10 ${logoRadius} border border-border bg-secondary shadow-sm select-none touch-none`}
         onPointerDown={handleLogoPointerDown}
         onPointerUp={handleLogoPointerUp}
         onPointerLeave={handleLogoPointerUp}
         onContextMenu={(e) => modo === "cliente" && e.preventDefault()}
       >
         {RESTAURANTE.logoUrl ? (
-          <img src={RESTAURANTE.logoUrl} alt={RESTAURANTE.nome} className="h-full w-full rounded-xl object-cover" />
+          <img src={RESTAURANTE.logoUrl} alt={RESTAURANTE.nome} className={`h-full w-full ${logoRadius} object-cover`} />
         ) : (
-          <AvatarFallback className="rounded-xl bg-secondary text-xs font-extrabold tracking-[0.18em] text-foreground">
+          <AvatarFallback className={`${logoRadius} bg-secondary text-xs font-extrabold tracking-[0.18em] text-foreground`}>
             {RESTAURANTE.logoFallback}
           </AvatarFallback>
         )}

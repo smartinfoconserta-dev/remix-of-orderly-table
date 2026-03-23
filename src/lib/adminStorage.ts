@@ -71,6 +71,7 @@ export interface SistemaConfig {
   couvertObrigatorio?: boolean;
   horarioFuncionamento?: HorariosSemana;
   mensagemFechado?: string;
+  logoEstilo?: "quadrada" | "circular";
 }
 
 export interface LicencaConfig {
