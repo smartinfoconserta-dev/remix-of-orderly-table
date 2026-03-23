@@ -828,6 +828,10 @@ const AdminPage = () => {
                     <p className="text-[10px] font-bold text-muted-foreground pt-1">Ou cole uma URL</p>
                     <Input value={editForm.imagem} onChange={(e) => setEditForm((f) => ({ ...f, imagem: e.target.value }))} placeholder="https://..." />
                   </div>
+                  </div>{/* end left column */}
+
+                  {/* Coluna direita */}
+                  <div className="col-span-1 space-y-4">
                   <div className="flex items-center justify-between">
                     <label className="text-xs font-bold text-muted-foreground">Disponível no delivery</label>
                     <Switch
