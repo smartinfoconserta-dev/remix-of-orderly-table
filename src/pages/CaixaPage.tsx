@@ -2182,6 +2182,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                             )}
                           </div>
                         </>
+                      )}
                     </div>
                   )}
 
