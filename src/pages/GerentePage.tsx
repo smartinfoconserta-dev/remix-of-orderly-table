@@ -304,6 +304,45 @@ const GerentePage = () => {
   const totalDelivery = useMemo(() => fechDelivery.reduce((a, f) => a + f.total, 0), [fechDelivery]);
   const totalMotoboys = useMemo(() => fechMotoboys.reduce((a, f) => a + f.total, 0), [fechMotoboys]);
 
+  const fechMotoboyPeriodo = useMemo(() => {
+    return fechamentosMotoboy.filter(f => {
+      const d = new Date(f.timestamp);
+      return d >= dateRange.start && d <= dateRange.end;
+    });
+  }, [fechamentosMotoboy, dateRange]);
+
+  const resumoPorMotoboy = useMemo(() => {
+    const map = new Map<string, {
+      nome: string;
+      totalEntregas: number;
+      totalDinheiro: number;
+      totalPix: number;
+      totalCredito: number;
+      totalDebito: number;
+      totalGeral: number;
+      conferidos: number;
+      pendentes: number;
+    }>();
+    fechMotoboyPeriodo.forEach(f => {
+      const existing = map.get(f.motoboyNome) || {
+        nome: f.motoboyNome,
+        totalEntregas: 0, totalDinheiro: 0, totalPix: 0,
+        totalCredito: 0, totalDebito: 0, totalGeral: 0,
+        conferidos: 0, pendentes: 0,
+      };
+      existing.totalEntregas += f.resumo.totalEntregas || 0;
+      existing.totalDinheiro += f.resumo.deveDevolver || 0;
+      existing.totalPix += f.resumo.pix || 0;
+      existing.totalCredito += f.resumo.credito || 0;
+      existing.totalDebito += f.resumo.debito || 0;
+      existing.totalGeral += f.resumo.totalAPrestar || 0;
+      if (f.status === "conferido") existing.conferidos++;
+      else existing.pendentes++;
+      map.set(f.motoboyNome, existing);
+    });
+    return [...map.values()].sort((a, b) => b.totalGeral - a.totalGeral);
+  }, [fechMotoboyPeriodo]);
+
   const relPedidosRealizados = allEventos.filter((e) => {
     const d = new Date(e.criadoEmIso);
     return d >= dateRange.start && d <= dateRange.end && (e.acao === "pedido_cliente" || e.acao === "lancar_pedido");
