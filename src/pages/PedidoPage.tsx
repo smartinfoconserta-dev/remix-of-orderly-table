@@ -359,18 +359,26 @@ export default function PedidoPage() {
   // ── Horário de funcionamento ──
   const statusHorario = isDeliveryAberto();
 
+  const bannerFechado = !statusHorario.aberto && (
+    <div className="bg-card border-b border-border px-4 py-4 text-center space-y-1.5">
+      <p className="text-sm font-black text-foreground">{RESTAURANTE_NOME}</p>
+      <span className="inline-block rounded-full bg-destructive/15 border border-destructive/30 px-3 py-1 text-xs font-bold text-destructive">
+        Fechado agora
+      </span>
+      {statusHorario.proximoHorario && (
+        <div className="space-y-0.5">
+          <p className="text-xs text-muted-foreground">Próximo horário</p>
+          <p className="text-sm font-bold text-primary">{statusHorario.proximoHorario}{statusHorario.horasRestantes != null && statusHorario.horasRestantes > 0 ? ` · Em ~${statusHorario.horasRestantes}h` : ""}</p>
+        </div>
+      )}
+    </div>
+  );
+
   // ── Cardápio (full screen PedidoFlow) ──
   if (etapa === "cardapio") {
     return (
       <div className="min-h-screen bg-background">
-        {!statusHorario.aberto && (
-          <div className="bg-destructive/10 border-b border-destructive/20 px-4 py-2 text-center">
-            <p className="text-sm font-bold text-destructive">{statusHorario.mensagem}</p>
-            {statusHorario.proximoHorario && (
-              <p className="text-xs text-muted-foreground">{statusHorario.proximoHorario}</p>
-            )}
-          </div>
-        )}
+        {bannerFechado}
         <PedidoFlow
           modo="delivery"
           clienteNome={nome || loggedClient?.nome || ""}
@@ -383,6 +391,7 @@ export default function PedidoPage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
+      {bannerFechado}
       {/* Header */}
       <div className="shrink-0 flex items-center gap-3 px-4 py-3 border-b border-border">
         {RESTAURANTE_LOGO ? (
