@@ -45,12 +45,12 @@ const RestaurantHomeSection = ({ config, featuredProducts, onOpenProduct }: Prop
   ];
 
   // Hide cards that have no data value configured
-  const visibleCards = cards;
+  const visibleCards = cards.filter(card => card.dataValue && card.dataValue.trim() !== "");
 
   return (
     <section className="space-y-6">
       {visibleCards.length > 0 && (
-        <div className="grid grid-cols-2 gap-4">
+        <div className={`grid gap-4 ${visibleCards.length === 1 ? "grid-cols-1 max-w-lg" : "grid-cols-2"}`}>
           {visibleCards.map((card) => {
             const Icon = card.icon;
             const qrSrc = card.dataValue

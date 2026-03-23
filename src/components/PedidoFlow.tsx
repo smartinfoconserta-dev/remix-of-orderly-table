@@ -1089,7 +1089,11 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
       <aside className="w-[11rem] shrink-0 overflow-y-auto border-r border-border bg-card/95 px-3 py-3 lg:w-[13rem] self-start sticky top-[73px] max-h-[calc(100vh-73px)]">
         <div className="sticky top-0 z-10 rounded-[1.5rem] border border-border bg-background/85 px-3 py-3 backdrop-blur-md">
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">{RESTAURANTE.nome}</p>
-          <p className="mt-1 text-base font-black text-foreground">Cardápio</p>
+          {categoriaAtiva !== HOME_TAB_ID && (
+            <p className="mt-1 text-xs text-muted-foreground truncate">
+              {categorias.find(c => c.id === categoriaAtiva)?.nome ?? ""}
+            </p>
+          )}
         </div>
         <nav className="mt-3 flex flex-col gap-2">
           {[HOME_TAB, ...categorias].map((cat) => {
