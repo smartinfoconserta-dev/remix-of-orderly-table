@@ -396,6 +396,11 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
   const valorRestante = Math.max((totalContaCents - totalPagoCents) / 100, 0);
   const fechamentoPronto = totalContaCents > 0 && totalPagoCents === totalContaCents;
   const paymentProgress = totalContaCents > 0 ? Math.min(totalPagoCents / totalContaCents, 1) : 0;
+  const valorEntregueNum = parseCurrencyInput(valorEntregue);
+  const trocoCalculado = closingPaymentMethod === "dinheiro" && Number.isFinite(valorEntregueNum) && valorEntregueNum > valorRestante
+    ? valorEntregueNum - valorRestante : 0;
+  const valorEntregueValido = closingPaymentMethod === "dinheiro"
+    ? Number.isFinite(valorEntregueNum) && valorEntregueNum >= valorRestante : true;
 
   /* ── payment math (balcão) ── */
   const balcaoTotalConta = balcaoPedido?.total ?? 0;
