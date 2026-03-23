@@ -85,6 +85,7 @@ export interface FechamentoConta {
   criadoEmIso: string;
   caixaId: string;
   caixaNome: string;
+  troco?: number;
 }
 
 export interface Mesa {
