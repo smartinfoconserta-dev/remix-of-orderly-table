@@ -360,17 +360,27 @@ export default function PedidoPage() {
   const statusHorario = isDeliveryAberto();
 
   const bannerFechado = !statusHorario.aberto && (
-    <div className="bg-card border-b border-border px-4 py-4 text-center space-y-1.5">
-      <p className="text-sm font-black text-foreground">{RESTAURANTE_NOME}</p>
-      <span className="inline-block rounded-full bg-destructive/15 border border-destructive/30 px-3 py-1 text-xs font-bold text-destructive">
-        Fechado agora
-      </span>
-      {statusHorario.proximoHorario && (
-        <div className="space-y-0.5">
-          <p className="text-xs text-muted-foreground">Próximo horário</p>
-          <p className="text-sm font-bold text-primary">{statusHorario.proximoHorario}{statusHorario.horasRestantes != null && statusHorario.horasRestantes > 0 ? ` · Em ~${statusHorario.horasRestantes}h` : ""}</p>
+    <div className="bg-card border-b border-border px-4 py-4 flex items-center justify-center gap-4">
+      {RESTAURANTE_LOGO ? (
+        <img src={RESTAURANTE_LOGO} alt={RESTAURANTE_NOME} className="w-10 h-10 rounded-xl object-cover border border-border shrink-0" />
+      ) : (
+        <div className="w-10 h-10 rounded-xl bg-secondary border border-border flex items-center justify-center shrink-0">
+          <span className="text-sm font-black text-foreground">{RESTAURANTE_INITIALS}</span>
         </div>
       )}
+      <div className="text-left space-y-0.5">
+        <div className="flex items-center gap-2">
+          <p className="text-sm font-black text-foreground">{RESTAURANTE_NOME}</p>
+          <span className="rounded-full bg-destructive/15 border border-destructive/30 px-2 py-0.5 text-[10px] font-bold text-destructive">
+            Fechado agora
+          </span>
+        </div>
+        {statusHorario.proximoHorario && (
+          <p className="text-xs text-muted-foreground">
+            Próximo horário: <span className="font-bold text-primary">{statusHorario.proximoHorario}{statusHorario.horasRestantes != null && statusHorario.horasRestantes > 0 ? ` · Em ~${statusHorario.horasRestantes}h` : ""}</span>
+          </p>
+        )}
+      </div>
     </div>
   );
 
