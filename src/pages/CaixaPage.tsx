@@ -171,6 +171,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
   const [closingPayments, setClosingPayments] = useState<SplitPayment[]>([]);
   const [closingPaymentMethod, setClosingPaymentMethod] = useState<PaymentMethod>("dinheiro");
   const [closingPaymentValue, setClosingPaymentValue] = useState("");
+  const [valorEntregue, setValorEntregue] = useState("");
   const [financeUnlocked, setFinanceUnlocked] = useState(accessMode === "gerente");
   const [financeManagerName, setFinanceManagerName] = useState("");
   const [financeManagerPin, setFinanceManagerPin] = useState("");
