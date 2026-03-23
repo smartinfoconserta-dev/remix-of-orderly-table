@@ -389,6 +389,14 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
 
   const mesaLogs = useMemo(() => (mesa ? eventos.filter((e) => e.mesaId === mesa.id) : []), [eventos, mesa]);
 
+  const fechamentosDaMesa = useMemo(() =>
+    fechamentos
+      .filter(f => f.mesaId === mesa?.id || f.mesaNumero === mesa?.numero)
+      .sort((a, b) => new Date(b.criadoEmIso).getTime() - new Date(a.criadoEmIso).getTime())
+      .slice(0, 20),
+    [fechamentos, mesa]
+  );
+
   /* ── payment math (mesa) ── */
   const totalConta = mesa?.total ?? 0;
   const totalContaCents = toCents(totalConta);
