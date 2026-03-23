@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { getSistemaConfig } from "@/lib/adminStorage";
+import { getSistemaConfig, isDeliveryAberto } from "@/lib/adminStorage";
 import { findClienteDelivery, upsertClienteDelivery, getBairros, getClientesDelivery, saveClientesDelivery, type ClienteDelivery, type Bairro } from "@/lib/deliveryStorage";
 import { useRestaurant, type ItemCarrinho } from "@/contexts/RestaurantContext";
 import PedidoFlow from "@/components/PedidoFlow";
