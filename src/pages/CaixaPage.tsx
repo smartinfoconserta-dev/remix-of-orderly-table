@@ -443,7 +443,11 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
   }, [buscaComanda, fechamentos]);
 
   /* ── payment math (mesa) ── */
-  const totalConta = Math.max((mesa?.total ?? 0) - descontoAplicado, 0);
+  const couvertValorUnit = sistemaConfig.couvertAtivo && !couvertDispensado && couvertPessoas > 0
+    ? (sistemaConfig.couvertValor ?? 0)
+    : 0;
+  const couvertTotal = couvertValorUnit * couvertPessoas;
+  const totalConta = Math.max((mesa?.total ?? 0) - descontoAplicado + couvertTotal, 0);
   const totalContaCents = toCents(totalConta);
   const totalPago = useMemo(() => closingPayments.reduce((acc, p) => acc + p.valor, 0), [closingPayments]);
   const totalPagoCents = toCents(totalPago);
