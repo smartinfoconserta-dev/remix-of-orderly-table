@@ -284,6 +284,23 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
     return () => clearInterval(id);
   }, []);
 
+  const resumoDeliveryTurno = useMemo(() => {
+    try {
+      const raw = localStorage.getItem(FECHAMENTOS_MOTOBOY_KEY);
+      const todos = raw ? JSON.parse(raw) : [];
+      const doTurno = todos.filter((f: any) => {
+        if (!caixaAberto?.abertoEm) return true;
+        return new Date(f.timestamp) >= new Date(caixaAberto.abertoEm);
+      });
+      const conferidos = doTurno.filter((f: any) => f.status === "conferido");
+      const pendentes = doTurno.filter((f: any) => f.status === "aguardando");
+      const totalConferido = conferidos.reduce((s: number, f: any) => s + (f.resumo?.totalAPrestar || 0), 0);
+      const totalEntregas = conferidos.reduce((s: number, f: any) => s + (f.resumo?.totalEntregas || 0), 0);
+      const motoboyNomes = [...new Set(doTurno.map((f: any) => f.motoboyNome))] as string[];
+      return { conferidos: conferidos.length, pendentes: pendentes.length, totalConferido, totalEntregas, motoboyNomes };
+    } catch { return { conferidos: 0, pendentes: 0, totalConferido: 0, totalEntregas: 0, motoboyNomes: [] as string[] }; }
+  }, [caixaAberto, fechamentosPendentes]);
+
 
   useEffect(() => {
     const checkAviso = () => {
