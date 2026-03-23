@@ -2508,52 +2508,61 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                             </Button>
                           </div>
                           {Number.isFinite(balcaoValorEntregueNum) && balcaoValorEntregueNum > 0 && (
-                            <div className={`rounded-2xl p-4 flex items-center justify-between ${
+                            <div className={`rounded-xl p-3 flex items-center justify-between border ${
                               balcaoTrocoCalculado > 0
-                                ? "bg-emerald-500/10 border border-emerald-500/30"
-                                : balcaoValorEntregueNum < balcaoValorRestante
-                                ? "bg-destructive/10 border border-destructive/30"
-                                : "bg-emerald-500/10 border border-emerald-500/30"
+                                ? "bg-emerald-500/10 border-emerald-500/30"
+                                : balcaoValorEntregueNum === balcaoValorRestante
+                                ? "bg-emerald-500/10 border-emerald-500/30"
+                                : "bg-amber-500/10 border-amber-500/30"
                             }`}>
-                              <span className={`text-base font-black ${
-                                balcaoTrocoCalculado > 0 ? "text-emerald-400"
-                                : balcaoValorEntregueNum < balcaoValorRestante ? "text-destructive"
-                                : "text-emerald-400"
+                              <span className={`text-sm font-black ${
+                                balcaoTrocoCalculado > 0 || balcaoValorEntregueNum === balcaoValorRestante
+                                  ? "text-emerald-400" : "text-amber-400"
                               }`}>
                                 {balcaoTrocoCalculado > 0
                                   ? "💵 Troco para o cliente"
-                                  : balcaoValorEntregueNum < balcaoValorRestante
-                                  ? "⚠ Valor insuficiente"
-                                  : "✓ Valor exato"}
+                                  : balcaoValorEntregueNum === balcaoValorRestante
+                                  ? "✓ Valor exato"
+                                  : `↓ Faltam ${formatPrice(balcaoValorRestante - balcaoValorEntregueNum)}`}
                               </span>
-                              <span className={`text-3xl font-black tabular-nums ${
-                                balcaoTrocoCalculado > 0 ? "text-emerald-400"
-                                : balcaoValorEntregueNum < balcaoValorRestante ? "text-destructive"
-                                : "text-emerald-400"
+                              <span className={`text-xl font-black tabular-nums ${
+                                balcaoTrocoCalculado > 0 || balcaoValorEntregueNum === balcaoValorRestante
+                                  ? "text-emerald-400" : "text-amber-400"
                               }`}>
-                                {balcaoTrocoCalculado > 0 ? formatPrice(balcaoTrocoCalculado) : "R$ 0,00"}
+                                {balcaoTrocoCalculado > 0 ? formatPrice(balcaoTrocoCalculado) : formatPrice(balcaoValorEntregueNum)}
                               </span>
                             </div>
                           )}
-                          {Number.isFinite(balcaoValorEntregueNum) && balcaoValorEntregueNum >= balcaoValorRestante && balcaoValorEntregueNum > 0 && (
-                            <Button
-                              onClick={() => {
-                                setTrocoRegistrado(balcaoTrocoCalculado);
-                                setBalcaoPayments(prev => [
-                                  ...prev,
-                                  {
-                                    id: `pag-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-                                    formaPagamento: "dinheiro" as PaymentMethod,
-                                    valor: Number(balcaoValorRestante.toFixed(2))
-                                  }
-                                ]);
-                                setBalcaoValorEntregue("");
-                              }}
-                              className="w-full h-12 rounded-2xl font-black bg-emerald-600 hover:bg-emerald-700 text-white"
-                            >
-                              Confirmar — Troco: {formatPrice(balcaoTrocoCalculado)}
-                            </Button>
-                          )}
+                          {/* Botão adicionar dinheiro — sempre visível */}
+                          <Button
+                            className={`w-full h-11 rounded-xl font-black text-sm ${
+                              balcaoTrocoCalculado > 0 || balcaoValorEntregueNum === balcaoValorRestante
+                                ? "bg-emerald-600 hover:bg-emerald-700 text-white"
+                                : balcaoValorEntregueNum > 0 && balcaoValorEntregueNum < balcaoValorRestante
+                                ? "bg-amber-600 hover:bg-amber-700 text-white"
+                                : ""
+                            }`}
+                            variant={balcaoValorEntregueNum > 0 ? "default" : "outline"}
+                            disabled={!Number.isFinite(balcaoValorEntregueNum) || balcaoValorEntregueNum <= 0}
+                            onClick={() => {
+                              const balcaoValorDinheiroARegistrar = Math.min(balcaoValorEntregueNum, balcaoValorRestante);
+                              setTrocoRegistrado(balcaoTrocoCalculado);
+                              setBalcaoPayments(prev => [...prev, {
+                                id: `pag-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+                                formaPagamento: "dinheiro" as PaymentMethod,
+                                valor: Number(balcaoValorDinheiroARegistrar.toFixed(2))
+                              }]);
+                              setBalcaoValorEntregue("");
+                            }}
+                          >
+                            {!Number.isFinite(balcaoValorEntregueNum) || balcaoValorEntregueNum <= 0
+                              ? "Digite o valor entregue"
+                              : balcaoTrocoCalculado > 0
+                              ? `+ Dinheiro — Troco: ${formatPrice(balcaoTrocoCalculado)}`
+                              : balcaoValorEntregueNum < balcaoValorRestante
+                              ? `+ Registrar ${formatPrice(balcaoValorEntregueNum)} em dinheiro`
+                              : `+ Adicionar dinheiro exato`}
+                          </Button>
                         </div>
                       ) : (
                         <>
