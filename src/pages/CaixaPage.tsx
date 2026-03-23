@@ -825,18 +825,26 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
   /* ── payment handlers ── */
   const handleAddPayment = () => {
     if (!mesa) return;
-    const valor = parseCurrencyInput(closingPaymentValue);
-    if (!Number.isFinite(valor) || valor <= 0) {
-      toast.error("Informe um valor válido para adicionar o pagamento", { duration: 1400 });
+    const entregou = parseCurrencyInput(closingPaymentValue);
+    if (!Number.isFinite(entregou) || entregou <= 0) {
+      toast.error("Informe um valor válido", { duration: 1400 });
       return;
     }
-    if (toCents(valor) > toCents(valorRestante)) {
+    // Para dinheiro: registra o restante (não o valor entregue) se entregou mais
+    const valorARegistrar = closingPaymentMethod === "dinheiro" && entregou > valorRestante
+      ? valorRestante
+      : Math.min(entregou, valorRestante);
+    const troco = closingPaymentMethod === "dinheiro" && entregou > valorRestante
+      ? entregou - valorRestante
+      : 0;
+    if (closingPaymentMethod !== "dinheiro" && toCents(entregou) > toCents(valorRestante)) {
       toast.error("O valor informado ultrapassa o restante da conta", { duration: 1400 });
       return;
     }
+    if (troco > 0) setTrocoRegistrado(troco);
     setClosingPayments((prev) => [
       ...prev,
-      { id: `pag-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, formaPagamento: closingPaymentMethod, valor: Number(valor.toFixed(2)) },
+      { id: `pag-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, formaPagamento: closingPaymentMethod, valor: Number(valorARegistrar.toFixed(2)) },
     ]);
     setClosingPaymentValue("");
   };
@@ -2164,128 +2172,57 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                     </div>
                   )}
 
-                  {/* Input + quick values */}
+                  {/* Input + quick values — unificado para todos os métodos */}
                   {!fechamentoPronto && totalConta > 0 && (
                     <div className="space-y-2">
-                      {closingPaymentMethod === "dinheiro" ? (
-                        <>
-                          {/* Campo especial para dinheiro com troco */}
-                          <div className="space-y-1">
-                            <label className="text-xs font-semibold text-muted-foreground">
-                              Cliente entregou (R$)
-                            </label>
-                            <Input
-                              value={valorEntregue}
-                              onChange={(e) => setValorEntregue(e.target.value)}
-                              placeholder="Ex.: 50,00"
-                              inputMode="decimal"
-                              autoComplete="off"
-                              className="h-11 rounded-xl text-base font-bold"
-                            />
-                          </div>
-                          {/* Botões rápidos */}
-                          <div className="flex items-center gap-1.5">
-                            {[20, 50, 100, 200].map((qv) => (
-                              <Button key={qv} type="button" variant="outline"
-                                className="rounded-xl font-bold tabular-nums flex-1 h-9 text-sm"
-                                onClick={() => setValorEntregue(qv.toFixed(2).replace(".", ","))}>
-                                R$ {qv}
-                              </Button>
-                            ))}
-                            <Button type="button" variant="outline"
-                              className="rounded-xl font-bold flex-1 h-9 text-sm border-primary/30 text-primary hover:bg-primary/10"
-                              onClick={() => setValorEntregue(valorRestante.toFixed(2).replace(".", ","))}>
-                              Exato
-                            </Button>
-                          </div>
-                          {/* Feedback: troco / parcial / exato */}
-                          {Number.isFinite(valorEntregueNum) && valorEntregueNum > 0 && (
-                            <div className={`rounded-xl p-3 flex items-center justify-between border ${
-                              trocoCalculado > 0
-                                ? "bg-emerald-500/10 border-emerald-500/30"
-                                : valorEntregueNum === valorRestante
-                                ? "bg-emerald-500/10 border-emerald-500/30"
-                                : "bg-amber-500/10 border-amber-500/30"
-                            }`}>
-                              <span className={`text-sm font-black ${
-                                trocoCalculado > 0 || valorEntregueNum === valorRestante
-                                  ? "text-emerald-400" : "text-amber-400"
-                              }`}>
-                                {trocoCalculado > 0
-                                  ? "💵 Troco para o cliente"
-                                  : valorEntregueNum === valorRestante
-                                  ? "✓ Valor exato"
-                                  : `↓ Faltam ${formatPrice(valorRestante - valorEntregueNum)}`}
-                              </span>
-                              <span className={`text-xl font-black tabular-nums ${
-                                trocoCalculado > 0 || valorEntregueNum === valorRestante
-                                  ? "text-emerald-400" : "text-amber-400"
-                              }`}>
-                                {trocoCalculado > 0 ? formatPrice(trocoCalculado) : formatPrice(valorEntregueNum)}
-                              </span>
-                            </div>
-                          )}
-                          {/* Botão adicionar dinheiro — sempre visível */}
-                          <Button
-                            className={`w-full h-11 rounded-xl font-black text-sm ${
-                              trocoCalculado > 0 || valorEntregueNum === valorRestante
-                                ? "bg-emerald-600 hover:bg-emerald-700 text-white"
-                                : valorEntregueNum > 0 && valorEntregueNum < valorRestante
-                                ? "bg-amber-600 hover:bg-amber-700 text-white"
-                                : ""
-                            }`}
-                            variant={valorEntregueNum > 0 ? "default" : "outline"}
-                            disabled={!Number.isFinite(valorEntregueNum) || valorEntregueNum <= 0}
-                            onClick={() => {
-                              setTrocoRegistrado(trocoCalculado);
-                              setClosingPayments(prev => [...prev, {
-                                id: `pag-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-                                formaPagamento: "dinheiro" as PaymentMethod,
-                                valor: Number(valorDinheiroARegistrar.toFixed(2))
-                              }]);
-                              setValorEntregue("");
-                            }}
-                          >
-                            {!Number.isFinite(valorEntregueNum) || valorEntregueNum <= 0
-                              ? "Digite o valor entregue"
-                              : trocoCalculado > 0
-                              ? `+ Dinheiro — Troco: ${formatPrice(trocoCalculado)}`
-                              : valorEntregueNum < valorRestante
-                              ? `+ Registrar ${formatPrice(valorDinheiroARegistrar)} em dinheiro`
-                              : `+ Adicionar dinheiro exato`}
+                      <div className="flex items-end gap-2">
+                        <div className="flex-1 space-y-1">
+                          <label className="text-xs font-semibold text-muted-foreground">
+                            {closingPaymentMethod === "dinheiro" ? "Valor entregue (R$)" : "Valor"}
+                          </label>
+                          <Input
+                            value={closingPaymentValue}
+                            onChange={(e) => setClosingPaymentValue(e.target.value)}
+                            placeholder={closingPaymentMethod === "dinheiro" ? "Ex.: 50,00" : "Ex.: 25,00"}
+                            inputMode="decimal"
+                            autoComplete="off"
+                            className="h-11 rounded-xl text-base font-bold"
+                          />
+                        </div>
+                        <Button
+                          onClick={handleAddPayment}
+                          className="rounded-xl font-black h-11 px-5"
+                        >
+                          <Plus className="h-4 w-4 mr-1" /> Adicionar
+                        </Button>
+                      </div>
+                      {/* Botões rápidos */}
+                      <div className="flex items-center gap-1.5">
+                        {(closingPaymentMethod === "dinheiro" ? [20, 50, 100, 200] : QUICK_VALUES).map((qv) => (
+                          <Button key={qv} type="button" variant="outline"
+                            className="rounded-xl font-bold tabular-nums flex-1 h-9 text-sm"
+                            onClick={() => setClosingPaymentValue(qv.toFixed(2).replace(".", ","))}>
+                            {closingPaymentMethod === "dinheiro" ? `R$ ${qv}` : `+R$ ${qv}`}
                           </Button>
-                        </>
-                      ) : (
-                        <>
-                          {/* Outros métodos: PIX, crédito, débito */}
-                          <div className="flex items-end gap-2">
-                            <div className="flex-1 space-y-1">
-                              <label className="text-xs font-semibold text-muted-foreground">Valor</label>
-                              <Input value={closingPaymentValue} onChange={(e) => setClosingPaymentValue(e.target.value)} placeholder="Ex.: 25,00" inputMode="decimal" autoComplete="off" className="h-11 rounded-xl text-base font-bold" />
-                            </div>
-                            <Button onClick={handleAddPayment} className="rounded-xl font-black h-11 px-5">
-                              <Plus className="h-4 w-4 mr-1" /> Adicionar
-                            </Button>
+                        ))}
+                        <Button type="button" variant="outline"
+                          className="rounded-xl font-bold flex-1 h-9 text-sm border-primary/30 text-primary hover:bg-primary/10"
+                          onClick={() => setClosingPaymentValue(valorRestante.toFixed(2).replace(".", ","))}>
+                          {closingPaymentMethod === "dinheiro" ? "Exato" : "Restante"}
+                        </Button>
+                      </div>
+                      {/* Troco — só aparece quando dinheiro e valor > restante */}
+                      {closingPaymentMethod === "dinheiro" && (() => {
+                        const entregou = parseCurrencyInput(closingPaymentValue);
+                        if (!Number.isFinite(entregou) || entregou <= valorRestante) return null;
+                        const troco = entregou - valorRestante;
+                        return (
+                          <div className="flex items-center justify-between rounded-xl bg-emerald-500/10 border border-emerald-500/30 px-3 py-2">
+                            <span className="text-sm font-black text-emerald-400">💵 Troco para o cliente</span>
+                            <span className="text-lg font-black tabular-nums text-emerald-400">{formatPrice(troco)}</span>
                           </div>
-                          <div className="flex items-center gap-1.5">
-                            {QUICK_VALUES.map((qv) => (
-                              <Button key={qv} type="button" variant="outline"
-                                className="rounded-xl font-bold tabular-nums flex-1 h-9 text-sm"
-                                disabled={qv > valorRestante}
-                                onClick={() => setClosingPaymentValue(qv.toFixed(2).replace(".", ","))}>
-                                +R$ {qv}
-                              </Button>
-                            ))}
-                            {valorRestante > 0 && (
-                              <Button type="button" variant="outline"
-                                className="rounded-xl font-bold tabular-nums flex-1 h-9 text-sm border-primary/30 text-primary hover:bg-primary/10"
-                                onClick={() => setClosingPaymentValue(valorRestante.toFixed(2).replace(".", ","))}>
-                                Restante
-                              </Button>
-                            )}
-                          </div>
-                        </>
-                      )}
+                        );
+                      })()}
                     </div>
                   )}
 
