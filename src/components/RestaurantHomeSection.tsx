@@ -45,7 +45,7 @@ const RestaurantHomeSection = ({ config, featuredProducts, onOpenProduct }: Prop
   ];
 
   // Hide cards that have no data value configured
-  const visibleCards = cards;
+  const visibleCards = cards.filter(card => card.dataValue && card.dataValue.trim() !== "");
 
   return (
     <section className="space-y-6">
