@@ -1090,6 +1090,31 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
   const desktopContent = (
     <div className={`flex flex-1 items-start transition-all duration-500 ${isClientIdle ? "brightness-[0.2] saturate-50" : "brightness-100 saturate-100"}`}>
       <aside className="w-[11rem] shrink-0 overflow-y-auto border-r border-border bg-card/95 px-3 py-3 lg:w-[13rem] self-start sticky top-[73px] max-h-[calc(100vh-73px)]">
+        {RESTAURANTE.logoUrl && logoEstilo === "quadrada" && (
+          <div className="mb-3 px-1">
+            <img
+              src={RESTAURANTE.logoUrl}
+              alt={RESTAURANTE.nome}
+              className="w-full aspect-square rounded-2xl object-cover border border-border shadow-sm"
+            />
+          </div>
+        )}
+        {RESTAURANTE.logoUrl && logoEstilo === "circular" && (
+          <div className="mb-3 flex justify-center">
+            <img
+              src={RESTAURANTE.logoUrl}
+              alt={RESTAURANTE.nome}
+              className="h-20 w-20 rounded-full object-cover border border-border shadow-sm"
+            />
+          </div>
+        )}
+        {!RESTAURANTE.logoUrl && (
+          <div className="mb-3 flex justify-center">
+            <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-secondary border border-border">
+              <span className="text-lg font-black text-foreground">{RESTAURANTE.logoFallback}</span>
+            </div>
+          </div>
+        )}
         <nav className="mt-1 flex flex-col gap-2">
           {[HOME_TAB, ...categorias].map((cat) => {
             const selected = categoriaAtiva === cat.id;
