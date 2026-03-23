@@ -74,14 +74,14 @@ import {
 import { getBairros, saveBairros, type Bairro } from "@/lib/deliveryStorage";
 import { toast } from "sonner";
 
-type AdminTab = "cardapio" | "mesas" | "configuracoes" | "licenca" | "usuarios";
+type AdminTab = "dashboard" | "cardapio" | "equipe" | "configuracoes" | "licenca";
 
 const sidebarSections = [
+  { id: "dashboard" as const, label: "Início", icon: LayoutDashboard },
   { id: "cardapio" as const, label: "Cardápio", icon: ClipboardList },
-  { id: "mesas" as const, label: "Mesas", icon: Grid3X3 },
-  { id: "usuarios" as const, label: "Usuários", icon: Users },
+  { id: "equipe" as const, label: "Equipe", icon: Users },
   { id: "configuracoes" as const, label: "Configurações", icon: Settings },
-  { id: "licenca" as const, label: "Licença", icon: Shield },
+  { id: "licenca" as const, label: "Meu Plano", icon: Shield },
 ];
 
 const formatPrice = (v: number) => `R$ ${v.toFixed(2).replace(".", ",")}`;
