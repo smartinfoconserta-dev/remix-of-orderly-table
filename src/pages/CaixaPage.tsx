@@ -278,6 +278,8 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
   const [mostrarEntregues, setMostrarEntregues] = useState(false);
   const [filtroMotoboy, setFiltroMotoboy] = useState<string | null>(null);
   const [fechamentosPendentes, setFechamentosPendentes] = useState<any[]>([]);
+  const [buscaComanda, setBuscaComanda] = useState("");
+  const [buscaComandaOpen, setBuscaComandaOpen] = useState(false);
   const [fechamentoSelecionado, setFechamentoSelecionado] = useState<any | null>(null);
   const [pinConferencia, setPinConferencia] = useState("");
   const [pinConferenciaErro, setPinConferenciaErro] = useState("");
