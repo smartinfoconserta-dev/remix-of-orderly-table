@@ -163,6 +163,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
     rejeitarPedidoBalcao,
     marcarBalcaoPronto,
     registrarFechamentoMotoboy,
+    estornarFechamento,
   } = useRestaurant();
   const { currentCaixa, currentGerente, logout, verifyManagerAccess } = useAuth();
 
