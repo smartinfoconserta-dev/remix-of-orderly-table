@@ -2193,6 +2193,17 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                               ))}
                             </div>
                           )}
+                          {f.cancelado && (
+                            <div className="flex items-center gap-2 rounded-lg bg-destructive/10 border border-destructive/20 px-3 py-2">
+                              <span className="text-xs">↩️</span>
+                              <div>
+                                <p className="text-xs font-black text-destructive">Fechamento estornado</p>
+                                <p className="text-xs text-muted-foreground">
+                                  {new Date(f.canceladoEm!).toLocaleString("pt-BR")} por {f.canceladoPor} — {f.canceladoMotivo}
+                                </p>
+                              </div>
+                            </div>
+                          )}
                         </div>
                       ))
                     )}
