@@ -1170,6 +1170,36 @@ const AdminPage = () => {
                       placeholder="https://..."
                     />
                   </div>
+                  {/* Estilo da logo */}
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-muted-foreground">Formato da logo</label>
+                    <div className="flex gap-2">
+                      {([
+                        { id: "quadrada" as const, label: "Quadrada", preview: "rounded-xl" },
+                        { id: "circular" as const, label: "Circular", preview: "rounded-full" },
+                      ]).map(opt => (
+                        <button
+                          key={opt.id}
+                          type="button"
+                          onClick={() => setSistemaConfig(c => ({ ...c, logoEstilo: opt.id }))}
+                          className={`flex items-center gap-3 rounded-xl border px-4 py-3 text-left transition-colors flex-1 ${
+                            (sistemaConfig.logoEstilo || "quadrada") === opt.id
+                              ? "border-primary bg-primary/10 text-primary"
+                              : "border-border bg-secondary text-muted-foreground hover:border-primary/30"
+                          }`}
+                        >
+                          <div className={`h-8 w-8 ${opt.preview} border border-border bg-card flex items-center justify-center shrink-0 overflow-hidden`}>
+                            {(sistemaConfig.logoBase64 || sistemaConfig.logoUrl) ? (
+                              <img src={sistemaConfig.logoBase64 || sistemaConfig.logoUrl} alt="" className={`h-full w-full ${opt.preview} object-cover`} />
+                            ) : (
+                              <span className="text-[8px] font-black text-muted-foreground">AB</span>
+                            )}
+                          </div>
+                          <span className="text-sm font-bold">{opt.label}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                   <div className="space-y-1.5">
                     <label className="text-xs font-bold text-muted-foreground">Cor primária</label>
                     <div className="flex items-center gap-3">
