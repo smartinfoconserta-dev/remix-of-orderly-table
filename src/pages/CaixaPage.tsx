@@ -182,7 +182,16 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
   const [criticalReason, setCriticalReason] = useState("");
   const [criticalError, setCriticalError] = useState<string | null>(null);
   const [isAuthorizingCriticalAction, setIsAuthorizingCriticalAction] = useState(false);
-  const [fundoTrocoInput, setFundoTrocoInput] = useState("");
+  const [fundoTrocoInput, setFundoTrocoInput] = useState(() => {
+    try {
+      const saved = localStorage.getItem(FUNDO_PROXIMO_KEY);
+      if (saved) {
+        const val = parseFloat(saved);
+        return Number.isFinite(val) ? val.toFixed(2).replace(".", ",") : "";
+      }
+    } catch {}
+    return "";
+  });
   const [turnoModalOpen, setTurnoModalOpen] = useState(false);
   const [turnoManagerName, setTurnoManagerName] = useState("");
   const [turnoManagerPin, setTurnoManagerPin] = useState("");
