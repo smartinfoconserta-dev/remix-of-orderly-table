@@ -2267,6 +2267,20 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                           </div>
                         );
                       })}
+                      {trocoRegistrado > 0 && (
+                        <div className="flex items-center justify-between rounded-2xl border-2 border-emerald-500/40 bg-emerald-500/10 px-4 py-3">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xl">💵</span>
+                            <div>
+                              <p className="text-xs font-bold text-emerald-400/70 uppercase tracking-widest">Troco</p>
+                              <p className="text-sm font-bold text-emerald-400">Devolver ao cliente</p>
+                            </div>
+                          </div>
+                          <span className="text-2xl font-black tabular-nums text-emerald-400">
+                            {formatPrice(trocoRegistrado)}
+                          </span>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
