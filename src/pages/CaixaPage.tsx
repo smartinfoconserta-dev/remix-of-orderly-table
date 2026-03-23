@@ -2225,6 +2225,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                     </div>
                   )}
 
+                  {!fechamentoPronto && totalConta > 0 && (
                     <div className="grid grid-cols-2 gap-2">
                       {paymentMethodOptions.map((opt) => {
                         const Icon = opt.icon;
