@@ -2,6 +2,7 @@ import { useCallback, useMemo, useRef, useState } from "react";
 import {
   ClipboardList,
   Download,
+  LayoutDashboard,
   Upload,
   Grid3X3,
   ImagePlus,
@@ -73,20 +74,20 @@ import {
 import { getBairros, saveBairros, type Bairro } from "@/lib/deliveryStorage";
 import { toast } from "sonner";
 
-type AdminTab = "cardapio" | "mesas" | "configuracoes" | "licenca" | "usuarios";
+type AdminTab = "dashboard" | "cardapio" | "equipe" | "configuracoes" | "licenca";
 
 const sidebarSections = [
+  { id: "dashboard" as const, label: "Início", icon: LayoutDashboard },
   { id: "cardapio" as const, label: "Cardápio", icon: ClipboardList },
-  { id: "mesas" as const, label: "Mesas", icon: Grid3X3 },
-  { id: "usuarios" as const, label: "Usuários", icon: Users },
+  { id: "equipe" as const, label: "Equipe", icon: Users },
   { id: "configuracoes" as const, label: "Configurações", icon: Settings },
-  { id: "licenca" as const, label: "Licença", icon: Shield },
+  { id: "licenca" as const, label: "Meu Plano", icon: Shield },
 ];
 
 const formatPrice = (v: number) => `R$ ${v.toFixed(2).replace(".", ",")}`;
 
 const AdminPage = () => {
-  const { verifyManagerAccess, verifyEmployeeAccess, getProfilesByRole, createUser, removeUser } = useAuth();
+  const { verifyManagerAccess, verifyEmployeeAccess, getProfilesByRole, getActiveProfilesByRole, createUser, removeUser } = useAuth();
 
   // Auth gate state
   const [authenticated, setAuthenticated] = useState(false);
@@ -95,7 +96,7 @@ const AdminPage = () => {
   const [authError, setAuthError] = useState<string | null>(null);
   const [authLoading, setAuthLoading] = useState(false);
 
-  const [tab, setTab] = useState<AdminTab>("cardapio");
+  const [tab, setTab] = useState<AdminTab>("dashboard");
 
   // --- Cardápio state ---
   const [overrides, setOverrides] = useState<Record<string, ProdutoOverride>>(getCardapioOverrides);
@@ -297,6 +298,8 @@ const AdminPage = () => {
 
   // --- Usuários (gerentes) state ---
   const gerentes = useMemo(() => getProfilesByRole("gerente"), [getProfilesByRole]);
+  const garcons = useMemo(() => getActiveProfilesByRole("garcom"), [getActiveProfilesByRole]);
+  const caixas = useMemo(() => getActiveProfilesByRole("caixa"), [getActiveProfilesByRole]);
   const [newGerenteName, setNewGerenteName] = useState("");
   const [newGerentePin, setNewGerentePin] = useState("");
   const [userError, setUserError] = useState<string | null>(null);
@@ -386,7 +389,7 @@ const AdminPage = () => {
                   handleCreateGerente();
                   if (newGerenteName.trim() && /^\d{4,6}$/.test(newGerentePin)) {
                     setAuthenticated(true);
-                    setTab("usuarios");
+                    setTab("equipe");
                   }
                 }}
                 disabled={!newGerenteName.trim() || !/^\d{4,6}$/.test(newGerentePin)}
@@ -477,6 +480,102 @@ const AdminPage = () => {
 
       {/* Content */}
       <main className="flex-1 overflow-y-auto p-6 md:p-8 bg-background" key={tab}>
+        {/* ═══ DASHBOARD ═══ */}
+        {tab === "dashboard" && (
+          <div className="space-y-6 fade-in">
+            <div>
+              <h2 className="text-2xl font-black text-foreground">
+                Olá! Bem-vindo ao painel 👋
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                {new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" })}
+              </p>
+            </div>
+
+            {/* Cards de status */}
+            <div className="grid grid-cols-2 gap-3 max-w-2xl">
+              <div className="surface-card rounded-2xl p-5 space-y-1">
+                <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Produtos</p>
+                <p className="text-3xl font-black text-foreground">{allProducts.length}</p>
+                <p className="text-xs text-muted-foreground">no cardápio</p>
+              </div>
+              <div className="surface-card rounded-2xl p-5 space-y-1">
+                <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Mesas</p>
+                <p className="text-3xl font-black text-foreground">{mesasConfig.totalMesas}</p>
+                <p className="text-xs text-muted-foreground">configuradas</p>
+              </div>
+              <div className="surface-card rounded-2xl p-5 space-y-1">
+                <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Delivery</p>
+                <p className={`text-xl font-black ${sistemaConfig.deliveryAtivo !== false ? "text-emerald-400" : "text-destructive"}`}>
+                  {sistemaConfig.deliveryAtivo !== false ? "✓ Ativo" : "✗ Inativo"}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {sistemaConfig.deliveryAtivo !== false ? "Aceitando pedidos" : "Pausado"}
+                </p>
+              </div>
+              <div className="surface-card rounded-2xl p-5 space-y-1">
+                <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Equipe</p>
+                <p className="text-3xl font-black text-foreground">{garcons.length + caixas.length}</p>
+                <p className="text-xs text-muted-foreground">{garcons.length} garçon(s) · {caixas.length} caixa(s)</p>
+              </div>
+            </div>
+
+            {/* Ações rápidas */}
+            <div>
+              <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-3">Ações rápidas</p>
+              <div className="grid grid-cols-1 gap-2 max-w-sm">
+                <button onClick={() => { setTab("cardapio"); openNewProduct(); }}
+                  className="flex items-center gap-3 rounded-2xl border border-border bg-card px-5 py-4 text-left hover:border-primary/40 hover:bg-primary/5 transition-colors">
+                  <span className="text-2xl">➕</span>
+                  <div>
+                    <p className="text-sm font-black text-foreground">Adicionar produto</p>
+                    <p className="text-xs text-muted-foreground">Cadastrar novo item no cardápio</p>
+                  </div>
+                </button>
+                <button onClick={() => setTab("configuracoes")}
+                  className="flex items-center gap-3 rounded-2xl border border-border bg-card px-5 py-4 text-left hover:border-primary/40 hover:bg-primary/5 transition-colors">
+                  <span className="text-2xl">⚙️</span>
+                  <div>
+                    <p className="text-sm font-black text-foreground">Configurar sistema</p>
+                    <p className="text-xs text-muted-foreground">Delivery, horários, aparência</p>
+                  </div>
+                </button>
+                <button onClick={() => setTab("equipe")}
+                  className="flex items-center gap-3 rounded-2xl border border-border bg-card px-5 py-4 text-left hover:border-primary/40 hover:bg-primary/5 transition-colors">
+                  <span className="text-2xl">👥</span>
+                  <div>
+                    <p className="text-sm font-black text-foreground">Ver equipe</p>
+                    <p className="text-xs text-muted-foreground">Garçons, caixas e gerentes</p>
+                  </div>
+                </button>
+              </div>
+            </div>
+
+            {/* Alerta de licença */}
+            {(() => {
+              try {
+                const raw = localStorage.getItem("orderly-licenca-v1");
+                if (!raw) return null;
+                const lic = JSON.parse(raw);
+                if (!lic.dataVencimento) return null;
+                const dias = Math.ceil((new Date(lic.dataVencimento).getTime() - Date.now()) / 86400000);
+                if (dias > 14) return null;
+                return (
+                  <div className={`max-w-2xl rounded-2xl border px-5 py-4 flex items-center gap-3 ${dias <= 3 ? "border-destructive/40 bg-destructive/5" : "border-amber-500/40 bg-amber-500/5"}`}>
+                    <span className="text-2xl">{dias <= 3 ? "🚨" : "⚠️"}</span>
+                    <div>
+                      <p className={`text-sm font-black ${dias <= 3 ? "text-destructive" : "text-amber-400"}`}>
+                        {dias <= 0 ? "Licença vencida!" : `Licença vence em ${dias} dia(s)`}
+                      </p>
+                      <p className="text-xs text-muted-foreground">Entre em contato para renovar</p>
+                    </div>
+                  </div>
+                );
+              } catch { return null; }
+            })()}
+          </div>
+        )}
+
         {/* ═══ CARDÁPIO ═══ */}
         {tab === "cardapio" && (
           <div className="space-y-5 fade-in">
@@ -957,82 +1056,6 @@ const AdminPage = () => {
                 </div>
               </DialogContent>
             </Dialog>
-          </div>
-        )}
-
-        {/* ═══ MESAS ═══ */}
-        {tab === "mesas" && (
-          <div className="space-y-6">
-            <div>
-              <h2 className="text-2xl font-black text-foreground">Mesas</h2>
-              <p className="text-sm text-muted-foreground">Configure a quantidade de mesas do restaurante (1-50)</p>
-            </div>
-            <div className="surface-card inline-flex items-center gap-6 rounded-2xl p-6">
-              <span className="text-sm font-bold text-muted-foreground">Número de mesas</span>
-              <Input
-                type="number"
-                min={1}
-                max={50}
-                value={mesasInput}
-                onChange={(e) => setMesasInput(e.target.value)}
-                className="w-24 text-center text-xl font-black"
-              />
-              <Button onClick={handleMesasApply} className="rounded-xl font-bold">
-                Aplicar
-              </Button>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              As alterações serão aplicadas ao reabrir o caixa do dia. Mínimo 1, máximo 50.
-            </p>
-
-            {/* ── QR Codes das mesas ── */}
-            <div className="space-y-4">
-              <div>
-                <h3 className="text-lg font-black text-foreground">QR Codes das mesas</h3>
-                <p className="text-xs text-muted-foreground">Cada QR Code direciona para a mesa correspondente. Clique em "Imprimir QR" para imprimir individualmente.</p>
-              </div>
-              <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                {Array.from({ length: parseInt(mesasInput) || mesasConfig.totalMesas }, (_, i) => {
-                  const num = i + 1;
-                  const url = `${window.location.origin}/mesa/${num}`;
-                  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(url)}`;
-                  const nomeRest = sistemaConfig.nomeRestaurante || "Restaurante";
-                  return (
-                    <div key={num} className="flex flex-col items-center gap-2 rounded-xl border border-border bg-card p-3">
-                      <img src={qrUrl} alt={`Mesa ${String(num).padStart(2, "0")}`} className="w-full aspect-square rounded-lg" loading="lazy" />
-                      <span className="text-xs font-black text-foreground">Mesa {String(num).padStart(2, "0")}</span>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="w-full text-[10px] h-7 rounded-lg font-bold gap-1"
-                        onClick={() => {
-                          const printWindow = window.open("", "_blank", "width=400,height=600");
-                          if (!printWindow) return;
-                          const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>QR Mesa ${String(num).padStart(2, "0")}</title><style>
-                            body{margin:0;padding:40px 20px;font-family:Arial,sans-serif;text-align:center;background:#fff;color:#000}
-                            img{width:260px;height:260px;margin:20px auto}
-                            .nome{font-size:18px;font-weight:700;margin-bottom:10px}
-                            .mesa{font-size:32px;font-weight:900;margin-top:16px}
-                            .url{font-size:10px;color:#888;margin-top:8px;word-break:break-all}
-                            @media print{body{padding:20mm 10mm}@page{margin:10mm}}
-                          </style></head><body>
-                            <div class="nome">${nomeRest}</div>
-                            <img src="${qrUrl}" alt="QR Code Mesa ${String(num).padStart(2, "0")}" />
-                            <div class="mesa">Mesa ${String(num).padStart(2, "0")}</div>
-                            <div class="url">${url}</div>
-                          </body></html>`;
-                          printWindow.document.write(html);
-                          printWindow.document.close();
-                          setTimeout(() => printWindow.print(), 800);
-                        }}
-                      >
-                        Imprimir QR
-                      </Button>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
           </div>
         )}
 
@@ -1608,6 +1631,77 @@ const AdminPage = () => {
               )}
             </div>
 
+            {/* ── Mesas e QR Codes ── */}
+            <div>
+              <h3 className="text-lg font-black text-foreground flex items-center gap-2">🪑 Mesas</h3>
+              <p className="text-xs text-muted-foreground mb-3">Configure a quantidade de mesas do restaurante (1-50)</p>
+            </div>
+            <div className="surface-card inline-flex items-center gap-6 rounded-2xl p-6">
+              <span className="text-sm font-bold text-muted-foreground">Número de mesas</span>
+              <Input
+                type="number"
+                min={1}
+                max={50}
+                value={mesasInput}
+                onChange={(e) => setMesasInput(e.target.value)}
+                className="w-24 text-center text-xl font-black"
+              />
+              <Button onClick={handleMesasApply} className="rounded-xl font-bold">
+                Aplicar
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              As alterações serão aplicadas ao reabrir o caixa do dia. Mínimo 1, máximo 50.
+            </p>
+
+            <div className="space-y-4">
+              <div>
+                <h3 className="text-lg font-black text-foreground">QR Codes das mesas</h3>
+                <p className="text-xs text-muted-foreground">Cada QR Code direciona para a mesa correspondente.</p>
+              </div>
+              <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                {Array.from({ length: parseInt(mesasInput) || mesasConfig.totalMesas }, (_, i) => {
+                  const num = i + 1;
+                  const url = `${window.location.origin}/mesa/${num}`;
+                  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(url)}`;
+                  const nomeRest = sistemaConfig.nomeRestaurante || "Restaurante";
+                  return (
+                    <div key={num} className="flex flex-col items-center gap-2 rounded-xl border border-border bg-card p-3">
+                      <img src={qrUrl} alt={`Mesa ${String(num).padStart(2, "0")}`} className="w-full aspect-square rounded-lg" loading="lazy" />
+                      <span className="text-xs font-black text-foreground">Mesa {String(num).padStart(2, "0")}</span>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="w-full text-[10px] h-7 rounded-lg font-bold gap-1"
+                        onClick={() => {
+                          const printWindow = window.open("", "_blank", "width=400,height=600");
+                          if (!printWindow) return;
+                          const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>QR Mesa ${String(num).padStart(2, "0")}</title><style>
+                            body{margin:0;padding:40px 20px;font-family:Arial,sans-serif;text-align:center;background:#fff;color:#000}
+                            img{width:260px;height:260px;margin:20px auto}
+                            .nome{font-size:18px;font-weight:700;margin-bottom:10px}
+                            .mesa{font-size:32px;font-weight:900;margin-top:16px}
+                            .url{font-size:10px;color:#888;margin-top:8px;word-break:break-all}
+                            @media print{body{padding:20mm 10mm}@page{margin:10mm}}
+                          </style></head><body>
+                            <div class="nome">${nomeRest}</div>
+                            <img src="${qrUrl}" alt="QR Code Mesa ${String(num).padStart(2, "0")}" />
+                            <div class="mesa">Mesa ${String(num).padStart(2, "0")}</div>
+                            <div class="url">${url}</div>
+                          </body></html>`;
+                          printWindow.document.write(html);
+                          printWindow.document.close();
+                          setTimeout(() => printWindow.print(), 800);
+                        }}
+                      >
+                        Imprimir QR
+                      </Button>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
             <Button onClick={saveSistema} className="w-full max-w-lg">
               <Save className="mr-1 h-4 w-4" /> Salvar configurações
             </Button>
@@ -1719,15 +1813,15 @@ const AdminPage = () => {
           </div>
         )}
 
-        {/* ═══ USUÁRIOS ═══ */}
-        {tab === "usuarios" && (
+        {/* ═══ EQUIPE ═══ */}
+        {tab === "equipe" && (
           <div className="space-y-6 fade-in">
             <div>
-              <h2 className="text-2xl font-black text-foreground">Gerentes</h2>
-              <p className="text-sm text-muted-foreground">Crie e gerencie contas de gerentes do sistema</p>
+              <h2 className="text-2xl font-black text-foreground">Equipe</h2>
+              <p className="text-sm text-muted-foreground">Gerencie garçons, caixas, motoboys e gerentes</p>
             </div>
 
-            {/* Create form */}
+            {/* Gerentes — Create form */}
             <div className="surface-card max-w-lg space-y-4 rounded-2xl p-6">
               <p className="text-sm font-black text-foreground">Novo gerente</p>
               <div className="space-y-3">
@@ -1756,7 +1850,7 @@ const AdminPage = () => {
               </div>
             </div>
 
-            {/* List */}
+            {/* Gerentes — List */}
             <div className="surface-card max-w-lg rounded-2xl overflow-hidden">
               <div className="px-5 py-3 border-b border-border bg-secondary/50">
                 <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">Gerentes cadastrados ({gerentes.length})</p>
@@ -1781,6 +1875,58 @@ const AdminPage = () => {
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Garçons */}
+            <div className="surface-card max-w-lg rounded-2xl overflow-hidden">
+              <div className="px-5 py-3 border-b border-border bg-secondary/50 flex items-center justify-between">
+                <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">
+                  Garçons ({garcons.length})
+                </p>
+              </div>
+              {garcons.length === 0 ? (
+                <p className="px-5 py-6 text-sm text-muted-foreground text-center">
+                  Nenhum garçom cadastrado. Acesse /gerente para cadastrar.
+                </p>
+              ) : (
+                <div className="divide-y divide-border/50">
+                  {garcons.map((g) => (
+                    <div key={g.id} className="flex items-center justify-between px-5 py-3">
+                      <div>
+                        <p className="text-sm font-bold text-foreground">{g.nome}</p>
+                        <p className="text-xs text-muted-foreground">Garçom</p>
+                      </div>
+                      <span className="text-xs font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded-lg px-2 py-0.5">Ativo</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Caixas */}
+            <div className="surface-card max-w-lg rounded-2xl overflow-hidden">
+              <div className="px-5 py-3 border-b border-border bg-secondary/50">
+                <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">
+                  Caixas ({caixas.length})
+                </p>
+              </div>
+              {caixas.length === 0 ? (
+                <p className="px-5 py-6 text-sm text-muted-foreground text-center">
+                  Nenhum caixa cadastrado. Acesse /gerente para cadastrar.
+                </p>
+              ) : (
+                <div className="divide-y divide-border/50">
+                  {caixas.map((c) => (
+                    <div key={c.id} className="flex items-center justify-between px-5 py-3">
+                      <div>
+                        <p className="text-sm font-bold text-foreground">{c.nome}</p>
+                        <p className="text-xs text-muted-foreground">Caixa</p>
+                      </div>
+                      <span className="text-xs font-bold text-blue-400 bg-blue-500/10 border border-blue-500/20 rounded-lg px-2 py-0.5">Ativo</span>
                     </div>
                   ))}
                 </div>
