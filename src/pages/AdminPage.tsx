@@ -729,7 +729,7 @@ const AdminPage = () => {
                             {(p.imagemBase64 || p.imagem) ? (
                               <img src={p.imagemBase64 || p.imagem} alt={p.nome} className="h-10 w-10 rounded-lg object-cover" />
                             ) : (
-                              <div className="h-10 w-10 rounded-lg bg-secondary flex items-center justify-center text-muted-foreground text-[10px]">?</div>
+                              <div className="h-10 w-10 rounded-lg bg-secondary border border-border flex items-center justify-center text-muted-foreground shrink-0"><span className="text-lg">🍽️</span></div>
                             )}
                           </td>
                           <td className="px-4 py-3 font-semibold text-foreground">{p.nome}</td>
