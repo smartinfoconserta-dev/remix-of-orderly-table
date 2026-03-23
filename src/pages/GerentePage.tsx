@@ -315,6 +315,24 @@ const GerentePage = () => {
   const totalDelivery = useMemo(() => fechDelivery.reduce((a, f) => a + f.total, 0), [fechDelivery]);
   const totalMotoboys = useMemo(() => fechMotoboys.reduce((a, f) => a + f.total, 0), [fechMotoboys]);
 
+  const diferencasFiltradas = useMemo(() =>
+    diferencasCaixa.filter(d => {
+      const dt = new Date(d.data);
+      return dt >= dateRange.start && dt <= dateRange.end;
+    }).sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime()),
+    [diferencasCaixa, dateRange]
+  );
+
+  const totalSobras = useMemo(() =>
+    diferencasFiltradas.filter(d => d.tipo === "sobra").reduce((s, d) => s + d.diferenca, 0),
+    [diferencasFiltradas]
+  );
+
+  const totalQuebras = useMemo(() =>
+    diferencasFiltradas.filter(d => d.tipo === "quebra").reduce((s, d) => s + Math.abs(d.diferenca), 0),
+    [diferencasFiltradas]
+  );
+
   const fechMotoboyPeriodo = useMemo(() => {
     return fechamentosMotoboy.filter(f => {
       const d = new Date(f.timestamp);
