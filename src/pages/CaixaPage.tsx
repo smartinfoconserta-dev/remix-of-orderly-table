@@ -1817,11 +1817,21 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
 
               {/* ═══ LEFT: COMANDA (read-only feel) ═══ */}
               <div className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card">
-                <div className="border-b border-border px-5 py-4">
-                  <h2 className="text-base font-black text-foreground flex items-center gap-2">
-                    <ReceiptText className="h-4.5 w-4.5 text-primary" />
-                    Comanda
-                  </h2>
+                <div className="border-b border-border px-5 py-4 space-y-1">
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-lg font-black text-foreground">Mesa {String(mesa.numero).padStart(2, "0")}</h2>
+                    <span className={`rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-widest ${
+                      mesa.status === "consumo" ? "border-status-consumo/30 bg-status-consumo/10 text-status-consumo"
+                      : mesa.status === "pendente" ? "border-status-pendente/30 bg-status-pendente/10 text-status-pendente"
+                      : "border-border bg-secondary text-muted-foreground"
+                    }`}>
+                      {mesa.status === "livre" ? "LIVRE" : mesa.status === "pendente" ? "PENDENTE" : "EM CONSUMO"}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <p className="text-3xl font-black text-foreground tabular-nums">{formatPrice(totalConta)}</p>
+                    <p className="text-xs text-muted-foreground">Operador: {currentOperator.nome}</p>
+                  </div>
                 </div>
 
                 {mesa.pedidos.some((p) => p.paraViagem) && (
