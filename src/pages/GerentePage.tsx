@@ -201,6 +201,21 @@ const GerentePage = () => {
   const [mPin, setMPin] = useState("");
   const [mError, setMError] = useState<string | null>(null);
 
+  // Fechamentos motoboy
+  const FECHAMENTOS_KEY = "obsidian-motoboy-fechamentos-v1";
+  const [fechamentosMotoboy, setFechamentosMotoboy] = useState<any[]>(() => {
+    try {
+      const raw = localStorage.getItem(FECHAMENTOS_KEY);
+      return raw ? JSON.parse(raw) : [];
+    } catch { return []; }
+  });
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(FECHAMENTOS_KEY);
+      setFechamentosMotoboy(raw ? JSON.parse(raw) : []);
+    } catch {}
+  }, []);
+
   const handleVerificarPin = useCallback(async () => {
     if (!currentGerente) return;
     setPinError("");
