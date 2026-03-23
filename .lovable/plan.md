@@ -1,39 +1,43 @@
 
+Diagnóstico provável: sim, o Select de categoria está muito provavelmente abrindo por trás do modal.
 
-## Problema
+O que encontrei:
+- Em `src/pages/AdminPage.tsx`, o campo de categoria usa `Select` normalmente dentro do modal de produto.
+- O modal usa `DialogContent` com `z-[60]`.
+- Em `src/components/ui/select.tsx`, o `SelectContent` está com `z-50`.
+- Como o dropdown do Radix é renderizado em portal, ele pode ficar abaixo do `DialogContent`, dando a sensação de que “não muda de jeito nenhum” porque a lista não fica visível/clicável.
 
-O `ProtectedRoute` redireciona para `/` quando existe sessão de garçom (nível 1) e o usuário tenta acessar `/caixa` (nível 2). Isso impede que o caixa faça login no mesmo dispositivo.
+Plano de correção:
+1. Ajustar o `z-index` do `SelectContent` em `src/components/ui/select.tsx` para ficar acima do modal.
+   - Trocar o `z-50` por algo acima do dialog, como `z-[80]` ou `z-[90]`.
+   - Isso corrige não só esse modal, mas qualquer `Select` dentro de `Dialog/Sheet`.
 
-## Correção
+2. Manter o modal de produto com `overflow-visible`.
+   - O modal já está com `overflow-visible`, então o problema principal não parece ser corte de layout, e sim empilhamento visual.
 
-Tornar o `ProtectedRoute` pass-through — sempre renderiza os children. A proteção de hierarquia fica exclusivamente no `loginWithPin` (garçom não consegue LOGAR no slot caixa porque o allowedRoles bloqueia).
+3. Validar especificamente o fluxo do produto novo.
+   - Abrir `Novo produto`
+   - Clicar em `Categoria`
+   - Confirmar que a lista aparece na frente do modal
+   - Selecionar outra categoria e verificar que o valor do trigger muda imediatamente
 
-### Arquivo: `src/components/ProtectedRoute.tsx`
+4. Revisar impacto colateral.
+   - Conferir se outros selects do admin continuam normais
+   - Garantir que o dropdown continue acima do overlay e do conteúdo do modal, sem quebrar foco/acessibilidade
 
-```typescript
-import { useAuth } from "@/contexts/AuthContext";
-import type { UserRole } from "@/types/operations";
-
-interface ProtectedRouteProps {
-  children: React.ReactNode;
-  requiredSession: UserRole;
-}
-
-export const ProtectedRoute = ({ children, requiredSession }: ProtectedRouteProps) => {
-  // Proteção de hierarquia é feita pelo loginWithPin
-  // ProtectedRoute apenas marca a rota como protegida para documentação
-  return <>{children}</>;
-};
+Detalhe técnico:
+- Hoje a hierarquia está invertida:
+```text
+DialogContent: z-[60]
+SelectContent: z-50
+```
+- O correto é o dropdown ficar acima:
+```text
+DialogContent: z-[60]
+SelectContent: z-[80] ou z-[90]
 ```
 
-Isso resolve: qualquer pessoa pode acessar `/caixa`, `/garcom`, `/gerente` pela URL e ver o formulário de login. O `loginWithPin` impede que um garçom logue no slot do caixa (retorna "Acesso negado").
-
-### Resultado
-
-| Cenário | Resultado |
-|---------|-----------|
-| Garçom logado, acessa /caixa | Vê formulário de login do caixa |
-| Garçom tenta LOGAR em /caixa | loginWithPin bloqueia: "Acesso negado" |
-| Caixa digita credenciais em /caixa | Loga normalmente |
-| Ninguém logado, acessa /gerente | Vê formulário de login |
-
+Resultado esperado após implementar:
+- O dropdown de categoria fica visível na frente do modal
+- Dá para clicar nas categorias normalmente
+- O valor selecionado passa a atualizar no formulário de criação do item
