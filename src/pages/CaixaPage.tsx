@@ -226,6 +226,8 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
   const [descontoManagerPin, setDescontoManagerPin] = useState("");
   const [descontoError, setDescontoError] = useState<string | null>(null);
   const [descontoAplicado, setDescontoAplicado] = useState(0);
+  const [couvertPessoas, setCouvertPessoas] = useState(0);
+  const [couvertDispensado, setCouvertDispensado] = useState(false);
   const [estornoModalOpen, setEstornoModalOpen] = useState(false);
   const [estornoFechamentoId, setEstornoFechamentoId] = useState<string | null>(null);
   const [estornoMotivo, setEstornoMotivo] = useState("");
