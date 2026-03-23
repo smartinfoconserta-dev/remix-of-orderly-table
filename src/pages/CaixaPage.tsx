@@ -209,6 +209,14 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
   const [turnoReportOpen, setTurnoReportOpen] = useState(false);
   const [dinheiroContado, setDinheiroContado] = useState("");
   const [motivoDiferenca, setMotivoDiferenca] = useState("");
+  const [descontoModalOpen, setDescontoModalOpen] = useState(false);
+  const [descontoTipo, setDescontoTipo] = useState<"percentual" | "valor">("percentual");
+  const [descontoInput, setDescontoInput] = useState("");
+  const [descontoMotivo, setDescontoMotivo] = useState("");
+  const [descontoManagerName, setDescontoManagerName] = useState("");
+  const [descontoManagerPin, setDescontoManagerPin] = useState("");
+  const [descontoError, setDescontoError] = useState<string | null>(null);
+  const [descontoAplicado, setDescontoAplicado] = useState(0);
 
   /* ── Balcão/Delivery state ── */
   const [balcaoOpen, setBalcaoOpen] = useState(false);
