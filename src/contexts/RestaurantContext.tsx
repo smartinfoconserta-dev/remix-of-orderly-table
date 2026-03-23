@@ -1302,6 +1302,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         chamarGarcom: chamarGarcomFn,
         dismissChamarGarcom,
         fecharConta,
+        estornarFechamento,
         zerarMesa,
         ajustarItemPedido,
         cancelarPedido,
