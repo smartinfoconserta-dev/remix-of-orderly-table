@@ -2565,11 +2565,24 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                         <span className="font-black tabular-nums">{formatPrice(esperado)}</span>
                       </div>
                       <div className={`flex justify-between items-center rounded-lg p-2 ${diff === 0 ? "bg-emerald-500/10" : diff > 0 ? "bg-emerald-500/10" : "bg-destructive/10"}`}>
-                        <span className="text-sm font-black">{diff === 0 ? "Caixa conferido ✓" : diff > 0 ? "Sobra de caixa" : "Falta de caixa"}</span>
+                        <span className="text-sm font-black">{diff === 0 ? "✓ Caixa bateu — sem diferença" : diff > 0 ? `↑ Sobra de ${formatPrice(diff)} — registrar motivo` : `↓ Falta de ${formatPrice(Math.abs(diff))} — registrar motivo`}</span>
                         <span className={`text-sm font-black tabular-nums ${diff === 0 ? "text-emerald-400" : diff > 0 ? "text-emerald-400" : "text-destructive"}`}>
                           {diff === 0 ? "R$ 0,00" : diff > 0 ? `+${formatPrice(diff)}` : formatPrice(diff)}
                         </span>
                       </div>
+                      {diff !== 0 && (
+                        <div className="space-y-1 mt-2">
+                          <label className="text-xs font-bold text-muted-foreground">
+                            Motivo da diferença (opcional)
+                          </label>
+                          <Input
+                            value={motivoDiferenca}
+                            onChange={e => setMotivoDiferenca(e.target.value)}
+                            placeholder={diff > 0 ? "Ex: troco esquecido na gaveta" : "Ex: troco devolvido a menos"}
+                            className="h-9 rounded-xl text-sm"
+                          />
+                        </div>
+                      )}
                     </div>
                   );
                 })()}
