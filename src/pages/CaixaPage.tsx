@@ -469,6 +469,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
     setBalcaoPayments([]);
     setBalcaoPaymentMethod("dinheiro");
     setBalcaoPaymentValue("");
+    setBalcaoValorEntregue("");
   }, [resetCloseAccountState]);
 
   const handleSelecionarMesa = useCallback(
