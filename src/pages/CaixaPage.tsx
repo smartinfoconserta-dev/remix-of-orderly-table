@@ -2059,7 +2059,14 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                           <button
                             key={opt.value}
                             type="button"
-                            onClick={() => setClosingPaymentMethod(opt.value)}
+                            onClick={() => {
+                              setClosingPaymentMethod(opt.value);
+                              if (opt.value !== "dinheiro") {
+                                setClosingPaymentValue(valorRestante.toFixed(2).replace(".", ","));
+                              } else {
+                                setValorEntregue("");
+                              }
+                            }}
                             className={`flex items-center justify-center gap-2 rounded-2xl border-2 py-3 px-4 transition-colors ${
                               isSelected
                                 ? `border-white ${opt.bgColor}`
