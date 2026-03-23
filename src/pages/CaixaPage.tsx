@@ -407,7 +407,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
   );
 
   /* ── payment math (mesa) ── */
-  const totalConta = mesa?.total ?? 0;
+  const totalConta = Math.max((mesa?.total ?? 0) - descontoAplicado, 0);
   const totalContaCents = toCents(totalConta);
   const totalPago = useMemo(() => closingPayments.reduce((acc, p) => acc + p.valor, 0), [closingPayments]);
   const totalPagoCents = toCents(totalPago);
