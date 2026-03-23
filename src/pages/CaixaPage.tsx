@@ -1477,6 +1477,14 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                   <span className="text-[10px] font-bold">Fechar turno</span>
                 </button>
                 <button
+                  onClick={() => setBuscaComandaOpen(true)}
+                  className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded text-xs border border-border bg-secondary text-foreground hover:bg-primary/15 transition-colors"
+                  style={{ minWidth: 64 }}
+                >
+                  <Search className="h-4 w-4" />
+                  <span className="text-[10px] font-bold">Buscar</span>
+                </button>
+                <button
                   onClick={() => logout(accessMode)}
                   className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded text-xs border border-border bg-secondary text-foreground hover:bg-primary/15 transition-colors"
                   style={{ minWidth: 64 }}
