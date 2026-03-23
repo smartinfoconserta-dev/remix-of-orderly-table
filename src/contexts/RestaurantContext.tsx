@@ -86,6 +86,10 @@ export interface FechamentoConta {
   caixaId: string;
   caixaNome: string;
   troco?: number;
+  cancelado?: boolean;
+  canceladoEm?: string;
+  canceladoMotivo?: string;
+  canceladoPor?: string;
 }
 
 export interface Mesa {
