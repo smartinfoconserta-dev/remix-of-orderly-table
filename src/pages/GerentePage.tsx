@@ -203,9 +203,16 @@ const GerentePage = () => {
 
   // Fechamentos motoboy
   const FECHAMENTOS_KEY = "obsidian-motoboy-fechamentos-v1";
+  const DIFERENCAS_CAIXA_KEY = "obsidian-diferencas-caixa-v1";
   const [fechamentosMotoboy, setFechamentosMotoboy] = useState<any[]>(() => {
     try {
       const raw = localStorage.getItem(FECHAMENTOS_KEY);
+      return raw ? JSON.parse(raw) : [];
+    } catch { return []; }
+  });
+  const [diferencasCaixa, setDiferencasCaixa] = useState<any[]>(() => {
+    try {
+      const raw = localStorage.getItem(DIFERENCAS_CAIXA_KEY);
       return raw ? JSON.parse(raw) : [];
     } catch { return []; }
   });
@@ -213,6 +220,10 @@ const GerentePage = () => {
     try {
       const raw = localStorage.getItem(FECHAMENTOS_KEY);
       setFechamentosMotoboy(raw ? JSON.parse(raw) : []);
+    } catch {}
+    try {
+      const raw2 = localStorage.getItem(DIFERENCAS_CAIXA_KEY);
+      setDiferencasCaixa(raw2 ? JSON.parse(raw2) : []);
     } catch {}
   }, []);
 
