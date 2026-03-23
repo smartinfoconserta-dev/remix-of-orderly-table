@@ -464,7 +464,7 @@ const AdminPage = () => {
               <button
                 key={s.id}
                 type="button"
-                onClick={() => setTab(s.id)}
+                onClick={() => { setTab(s.id); setConfigSection("inicio"); }}
                 className={`flex w-full items-center gap-3 px-4 py-2 text-sm font-semibold transition-colors ${
                   active
                     ? "bg-primary/15 text-primary border-l-2 border-primary"
