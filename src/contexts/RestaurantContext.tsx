@@ -1271,7 +1271,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         numeroComanda: proximoNumeroBalcao,
         mesaId: pedido.mesaId,
         mesaNumero: 0,
-        total: pedido.total,
+        total: Math.max(pedido.total - (input.desconto ?? 0), 0),
         formaPagamento: pagamentos[0].formaPagamento,
         pagamentos,
         itens: pedido.itens.map(cloneItem),
