@@ -120,6 +120,7 @@ interface ActionAuditInput {
 export interface FecharContaInput {
   usuario: OperationalUser;
   pagamentos: SplitPayment[];
+  troco?: number;
 }
 
 interface RestaurantStore {
