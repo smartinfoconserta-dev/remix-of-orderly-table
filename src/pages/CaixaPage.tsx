@@ -2099,36 +2099,26 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                     )}
                   </div>
                 ) : (
-                <><div className="flex-1 overflow-y-auto p-5 space-y-5 scrollbar-hide">
+                <><div className="flex-1 overflow-y-auto p-3 space-y-3 scrollbar-hide">
 
-                  {/* Summary row */}
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-bold text-muted-foreground">Total da conta</span>
-                      <span className="text-2xl font-black text-foreground tabular-nums">{formatPrice(totalConta)}</span>
+                  {/* Compact summary */}
+                  <div className="flex items-center justify-between rounded-xl border border-border px-4 py-3">
+                    <div className="space-y-0.5">
+                      <p className="text-xs text-muted-foreground font-bold">Total da conta</p>
+                      <p className="text-xl font-black text-foreground tabular-nums">{formatPrice(totalConta)}</p>
                     </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-bold text-muted-foreground">Total pago</span>
-                      <span className={`text-2xl font-black tabular-nums ${fechamentoPronto ? "text-status-consumo" : totalPago > 0 ? "text-primary" : "text-foreground"}`}>
-                        {formatPrice(totalPago)}
-                      </span>
-                    </div>
-                    <div className={`flex items-center justify-between rounded-2xl p-4 ${fechamentoPronto ? "bg-status-consumo/10" : "bg-destructive/5"}`}>
-                      <span className={`text-base font-black ${fechamentoPronto ? "text-status-consumo" : "text-destructive"}`}>Restante</span>
-                      <span className={`text-3xl font-black tabular-nums ${fechamentoPronto ? "text-status-consumo" : "text-destructive"}`}>
-                        {fechamentoPronto ? (
-                          <span className="flex items-center gap-2">
-                            <Check className="h-6 w-6" /> Quitado
-                          </span>
-                        ) : (
-                          formatPrice(valorRestante)
-                        )}
-                      </span>
+                    <div className="text-right space-y-0.5">
+                      <p className="text-xs text-muted-foreground font-bold">
+                        {fechamentoPronto ? "Quitado ✓" : "Restante"}
+                      </p>
+                      <p className={`text-xl font-black tabular-nums ${fechamentoPronto ? "text-emerald-400" : "text-destructive"}`}>
+                        {fechamentoPronto ? formatPrice(0) : formatPrice(valorRestante)}
+                      </p>
                     </div>
                   </div>
 
-                  {/* Progress bar — red → green */}
-                  <div className="relative rounded-full bg-secondary h-3 overflow-hidden">
+                  {/* Progress bar */}
+                  <div className="relative rounded-full bg-secondary h-1.5 overflow-hidden">
                     <div
                       className="h-full rounded-full transition-all duration-700 ease-out"
                       style={{
@@ -2141,11 +2131,6 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                         boxShadow: fechamentoPronto ? "0 0 12px hsl(var(--status-consumo) / 0.5)" : "none",
                       }}
                     />
-                    {fechamentoPronto && (
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <Check className="h-2.5 w-2.5 text-white" />
-                      </div>
-                    )}
                   </div>
 
                   {mesa.pedidos.some((p) => p.paraViagem) && !fechamentoPronto && totalConta > 0 && (
