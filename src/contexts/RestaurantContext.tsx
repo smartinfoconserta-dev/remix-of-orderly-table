@@ -779,7 +779,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
             numeroComanda: proximoNumeroMesa,
             mesaId,
             mesaNumero: mesa.numero,
-            total: mesa.total,
+            total: Math.max(mesa.total - (input?.desconto ?? 0), 0),
             formaPagamento: pagamentos[0].formaPagamento,
             pagamentos,
             itens: mesa.pedidos.flatMap((p) => p.itens.map(cloneItem)),
