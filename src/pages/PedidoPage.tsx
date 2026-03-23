@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { getSistemaConfig } from "@/lib/adminStorage";
+import { getSistemaConfig, isDeliveryAberto } from "@/lib/adminStorage";
 import { findClienteDelivery, upsertClienteDelivery, getBairros, getClientesDelivery, saveClientesDelivery, type ClienteDelivery, type Bairro } from "@/lib/deliveryStorage";
 import { useRestaurant, type ItemCarrinho } from "@/contexts/RestaurantContext";
 import PedidoFlow from "@/components/PedidoFlow";
@@ -337,6 +337,25 @@ export default function PedidoPage() {
         <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center text-3xl">🛵</div>
         <h1 className="text-2xl font-black text-foreground">Delivery indisponível no momento</h1>
         <p className="text-muted-foreground">Entre em contato pelo WhatsApp para mais informações</p>
+        {sysConfig.telefoneRestaurante && (
+          <Button variant="outline" onClick={() => window.open(`https://wa.me/55${sysConfig.telefoneRestaurante}`, "_blank")}>
+            📲 Falar no WhatsApp
+          </Button>
+        )}
+      </div>
+    );
+  }
+
+  // ── Fora do horário de funcionamento ──
+  const statusHorario = isDeliveryAberto();
+  if (!statusHorario.aberto) {
+    return (
+      <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center p-6 text-center space-y-4">
+        <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center text-3xl">🕐</div>
+        <h1 className="text-2xl font-black text-foreground">{sysConfig.mensagemFechado || statusHorario.mensagem}</h1>
+        {statusHorario.proximoHorario && (
+          <p className="text-muted-foreground">{statusHorario.proximoHorario}</p>
+        )}
         {sysConfig.telefoneRestaurante && (
           <Button variant="outline" onClick={() => window.open(`https://wa.me/55${sysConfig.telefoneRestaurante}`, "_blank")}>
             📲 Falar no WhatsApp
