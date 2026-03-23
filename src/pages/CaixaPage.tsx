@@ -410,6 +410,9 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
   const balcaoValorRestante = Math.max((balcaoTotalContaCents - balcaoTotalPagoCents) / 100, 0);
   const balcaoFechamentoPronto = balcaoTotalContaCents > 0 && balcaoTotalPagoCents === balcaoTotalContaCents;
   const balcaoPaymentProgress = balcaoTotalContaCents > 0 ? Math.min(balcaoTotalPagoCents / balcaoTotalContaCents, 1) : 0;
+  const balcaoValorEntregueNum = parseCurrencyInput(balcaoValorEntregue);
+  const balcaoTrocoCalculado = balcaoPaymentMethod === "dinheiro" && Number.isFinite(balcaoValorEntregueNum) && balcaoValorEntregueNum > balcaoValorRestante
+    ? balcaoValorEntregueNum - balcaoValorRestante : 0;
 
   /* ── active balcão orders for grid ── */
   const pedidosBalcaoAtivos = useMemo(() => pedidosBalcao.filter((p) => p.statusBalcao !== "pago"), [pedidosBalcao]);
