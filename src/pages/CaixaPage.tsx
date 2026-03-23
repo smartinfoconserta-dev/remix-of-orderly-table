@@ -205,6 +205,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
   const [movConfirmStep, setMovConfirmStep] = useState(false);
   const [turnoReportOpen, setTurnoReportOpen] = useState(false);
   const [dinheiroContado, setDinheiroContado] = useState("");
+  const [motivoDiferenca, setMotivoDiferenca] = useState("");
 
   /* ── Balcão/Delivery state ── */
   const [balcaoOpen, setBalcaoOpen] = useState(false);
