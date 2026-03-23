@@ -2236,9 +2236,12 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                         if (!Number.isFinite(entregou) || entregou <= valorRestante) return null;
                         const troco = entregou - valorRestante;
                         return (
-                          <div className="flex items-center justify-between rounded-xl bg-emerald-500/10 border border-emerald-500/30 px-3 py-2">
-                            <span className="text-sm font-black text-emerald-400">💵 Troco para o cliente</span>
-                            <span className="text-lg font-black tabular-nums text-emerald-400">{formatPrice(troco)}</span>
+                          <div className="flex items-center justify-between rounded-xl bg-emerald-500/10 border-2 border-emerald-500/50 px-4 py-3">
+                            <div>
+                              <p className="text-xs font-bold text-emerald-400/70 uppercase tracking-widest">Troco para o cliente</p>
+                              <p className="text-sm font-bold text-emerald-400">Devolver ao cliente</p>
+                            </div>
+                            <span className="text-3xl font-black tabular-nums text-emerald-400">{formatPrice(troco)}</span>
                           </div>
                         );
                       })()}
