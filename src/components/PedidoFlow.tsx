@@ -54,9 +54,12 @@ interface PedidoFlowProps {
 }
 
 const sysConfig = getSistemaConfig();
+const logoEstilo = sysConfig.logoEstilo || "quadrada";
+const logoRadius = logoEstilo === "circular" ? "rounded-full" : "rounded-xl";
+const logoRadiusSm = logoEstilo === "circular" ? "rounded-full" : "rounded-lg";
 const RESTAURANTE = {
   nome: sysConfig.nomeRestaurante || "Restaurante",
-  logoUrl: sysConfig.logoUrl || "",
+  logoUrl: sysConfig.logoBase64 || sysConfig.logoUrl || "",
   logoFallback: (sysConfig.nomeRestaurante || "Restaurante").slice(0, 2).toUpperCase(),
 };
 
