@@ -86,6 +86,10 @@ export interface FechamentoConta {
   caixaId: string;
   caixaNome: string;
   troco?: number;
+  cancelado?: boolean;
+  canceladoEm?: string;
+  canceladoMotivo?: string;
+  canceladoPor?: string;
 }
 
 export interface Mesa {
@@ -168,6 +172,7 @@ interface RestaurantContextType {
   chamarGarcom: (mesaId: string) => void;
   dismissChamarGarcom: (mesaId: string) => void;
   fecharConta: (mesaId: string, input?: FecharContaInput) => void;
+  estornarFechamento: (fechamentoId: string, motivo: string, operador: OperationalUser) => void;
   zerarMesa: (mesaId: string, audit?: ActionAuditInput) => void;
   ajustarItemPedido: (mesaId: string, pedidoId: string, itemUid: string, delta: number, audit: ActionAuditInput) => void;
   cancelarPedido: (mesaId: string, pedidoId: string, audit: ActionAuditInput) => void;
@@ -796,6 +801,40 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     });
   }, []);
 
+  const estornarFechamento = useCallback((
+    fechamentoId: string,
+    motivo: string,
+    operador: OperationalUser
+  ) => {
+    setStore(prev => {
+      const fechamento = prev.fechamentos.find(f => f.id === fechamentoId);
+      if (!fechamento) return prev;
+      return {
+        ...prev,
+        fechamentos: prev.fechamentos.map(f =>
+          f.id === fechamentoId
+            ? {
+                ...f,
+                cancelado: true,
+                canceladoEm: new Date().toISOString(),
+                canceladoMotivo: motivo,
+                canceladoPor: operador.nome,
+              }
+            : f
+        ),
+        eventos: appendEvent(prev.eventos, {
+          tipo: "caixa",
+          descricao: `Estorno do fechamento da Mesa ${String(fechamento.mesaNumero).padStart(2, "0")} — ${motivo}`,
+          mesaId: fechamento.mesaId,
+          usuarioId: operador.id,
+          usuarioNome: operador.nome,
+          acao: "cancelar_pedido",
+          valor: fechamento.total,
+        }),
+      };
+    });
+  }, []);
+
   const zerarMesa = useCallback((mesaId: string, audit?: ActionAuditInput) => {
     setStore((prev) => {
       let eventInput: Omit<EventoOperacional, "id" | "criadoEm" | "criadoEmIso"> | null = null;
@@ -1297,6 +1336,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         chamarGarcom: chamarGarcomFn,
         dismissChamarGarcom,
         fecharConta,
+        estornarFechamento,
         zerarMesa,
         ajustarItemPedido,
         cancelarPedido,

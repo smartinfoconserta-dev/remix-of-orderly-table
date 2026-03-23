@@ -163,6 +163,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
     rejeitarPedidoBalcao,
     marcarBalcaoPronto,
     registrarFechamentoMotoboy,
+    estornarFechamento,
   } = useRestaurant();
   const { currentCaixa, currentGerente, logout, verifyManagerAccess } = useAuth();
 
@@ -217,6 +218,12 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
   const [descontoManagerPin, setDescontoManagerPin] = useState("");
   const [descontoError, setDescontoError] = useState<string | null>(null);
   const [descontoAplicado, setDescontoAplicado] = useState(0);
+  const [estornoModalOpen, setEstornoModalOpen] = useState(false);
+  const [estornoFechamentoId, setEstornoFechamentoId] = useState<string | null>(null);
+  const [estornoMotivo, setEstornoMotivo] = useState("");
+  const [estornoPin, setEstornoPin] = useState("");
+  const [estornoNome, setEstornoNome] = useState("");
+  const [estornoError, setEstornoError] = useState<string | null>(null);
 
   /* ── Balcão/Delivery state ── */
   const [balcaoOpen, setBalcaoOpen] = useState(false);
@@ -885,6 +892,23 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
     setDescontoInput(""); setDescontoMotivo("");
     setDescontoManagerName(""); setDescontoManagerPin(""); setDescontoError(null);
     toast.success(`Desconto de ${formatPrice(desconto)} aplicado`, { duration: 2000, icon: "🎁" });
+  };
+
+  const handleEstornar = async () => {
+    if (!estornoMotivo.trim()) { setEstornoError("Informe o motivo do estorno"); return; }
+    if (!estornoNome.trim()) { setEstornoError("Informe o nome do gerente"); return; }
+    if (!/^\d{4,6}$/.test(estornoPin)) { setEstornoError("PIN inválido"); return; }
+    const result = await verifyManagerAccess(estornoNome, estornoPin);
+    if (!result.ok) { setEstornoError(result.error ?? "PIN incorreto"); return; }
+    if (!estornoFechamentoId) return;
+    estornarFechamento(estornoFechamentoId, estornoMotivo, currentOperator);
+    setEstornoModalOpen(false);
+    setEstornoFechamentoId(null);
+    setEstornoMotivo("");
+    setEstornoPin("");
+    setEstornoNome("");
+    setEstornoError(null);
+    toast.success("Fechamento estornado — registrado no log", { duration: 2500, icon: "↩️" });
   };
 
   const handleFechar = () => {
@@ -2083,13 +2107,28 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                       </div>
                     ) : (
                       fechamentosDaMesa.map(f => (
-                        <div key={f.id} className="rounded-xl border border-border bg-card p-4 space-y-3">
+                        <div key={f.id} className={`rounded-xl border bg-card p-4 space-y-3 transition-opacity ${
+                          f.cancelado ? "opacity-50 border-destructive/20" : "border-border"
+                        }`}>
                           <div className="flex items-center justify-between">
                             <div>
                               <p className="text-sm font-black text-foreground">{f.criadoEm}</p>
                               <p className="text-xs text-muted-foreground">por {f.caixaNome}</p>
                             </div>
-                            <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-2">
+                              {!f.cancelado ? (
+                                <button
+                                  onClick={() => {
+                                    setEstornoFechamentoId(f.id);
+                                    setEstornoModalOpen(true);
+                                  }}
+                                  className="flex items-center gap-1 text-xs font-bold text-muted-foreground hover:text-destructive transition-colors"
+                                >
+                                  ↩️ Estornar
+                                </button>
+                              ) : (
+                                <span className="text-xs font-bold text-destructive/50">↩️ Estornado</span>
+                              )}
                               <button
                                 type="button"
                                 onClick={() => {
@@ -2152,6 +2191,17 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                                   <span className="tabular-nums">{formatPrice(item.precoUnitario * item.quantidade)}</span>
                                 </div>
                               ))}
+                            </div>
+                          )}
+                          {f.cancelado && (
+                            <div className="flex items-center gap-2 rounded-lg bg-destructive/10 border border-destructive/20 px-3 py-2">
+                              <span className="text-xs">↩️</span>
+                              <div>
+                                <p className="text-xs font-black text-destructive">Fechamento estornado</p>
+                                <p className="text-xs text-muted-foreground">
+                                  {new Date(f.canceladoEm!).toLocaleString("pt-BR")} por {f.canceladoPor} — {f.canceladoMotivo}
+                                </p>
+                              </div>
                             </div>
                           )}
                         </div>
@@ -3664,6 +3714,65 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
               <Button variant="outline" className="flex-1 rounded-xl font-bold"
                 onClick={() => { setDescontoModalOpen(false); setDescontoError(null); }}>Cancelar</Button>
               <Button className="flex-1 rounded-xl font-black" onClick={handleAplicarDesconto}>Aplicar desconto</Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {estornoModalOpen && (
+        <div className="fixed inset-0 z-[90] bg-background/95 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="w-full max-w-sm rounded-2xl border border-border bg-card shadow-2xl overflow-hidden">
+            <div className="px-5 py-4 border-b border-border bg-destructive/5">
+              <p className="text-base font-black text-destructive">↩️ Estornar fechamento</p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                O fechamento é marcado como cancelado e registrado no log. Não remove o valor do caixa.
+              </p>
+            </div>
+            <div className="px-5 py-4 space-y-3">
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-muted-foreground">Motivo do estorno (obrigatório)</label>
+                <Input
+                  value={estornoMotivo}
+                  onChange={e => setEstornoMotivo(e.target.value)}
+                  placeholder="Ex.: pagamento incorreto, cliente reclamou..."
+                  className="h-11 rounded-xl"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-muted-foreground">Nome do gerente</label>
+                  <Input
+                    value={estornoNome}
+                    onChange={e => setEstornoNome(e.target.value)}
+                    placeholder="Nome"
+                    className="h-10 rounded-xl text-sm"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-muted-foreground">PIN</label>
+                  <Input
+                    value={estornoPin}
+                    onChange={e => setEstornoPin(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                    type="password"
+                    inputMode="numeric"
+                    placeholder="••••"
+                    className="h-10 rounded-xl text-sm text-center tracking-widest font-black"
+                  />
+                </div>
+              </div>
+              {estornoError && (
+                <p className="text-xs text-destructive font-bold">{estornoError}</p>
+              )}
+            </div>
+            <div className="px-5 py-4 border-t border-border flex gap-3">
+              <Button variant="outline" className="flex-1 rounded-xl font-bold"
+                onClick={() => { setEstornoModalOpen(false); setEstornoError(null); }}>
+                Cancelar
+              </Button>
+              <Button variant="destructive" className="flex-1 rounded-xl font-black"
+                onClick={handleEstornar}>
+                Confirmar estorno
+              </Button>
             </div>
           </div>
         </div>
