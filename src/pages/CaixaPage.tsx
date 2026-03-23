@@ -985,6 +985,18 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
     setTurnoError(null);
     const result = await verifyManagerAccess(turnoManagerName, turnoManagerPin);
     if (!result.ok) { setTurnoError(result.error ?? "Não autorizado"); setIsClosingTurno(false); return; }
+
+    // Save counted cash as next shift's fund
+    const contadoFinal = parseCurrencyInput(dinheiroContado);
+    if (Number.isFinite(contadoFinal) && contadoFinal > 0) {
+      localStorage.setItem(FUNDO_PROXIMO_KEY, String(contadoFinal));
+    }
+
+    // Calculate and log diff
+    const esperado = fundoTroco + resumoFinanceiro.dinheiro + resumoFinanceiro.entradasExtras - resumoFinanceiro.saidas;
+    const diff = Number.isFinite(contadoFinal) ? contadoFinal - esperado : 0;
+    const diffLabel = diff === 0 ? "caixa conferido" : diff > 0 ? `sobra de ${formatPrice(diff)}` : `falta de ${formatPrice(Math.abs(diff))}`;
+
     fecharCaixaDoDia(currentOperator);
     // Clear operator shift tracking
     try { localStorage.removeItem("obsidian-caixa-operadores-v1"); } catch {}
@@ -994,7 +1006,16 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
     setIsClosingTurno(false);
     setTurnoManagerName("");
     setTurnoManagerPin("");
-    toast.success("Turno fechado com sucesso!", { duration: 1400, icon: "🔒" });
+    setMotivoDiferenca("");
+
+    if (diff !== 0) {
+      toast[diff > 0 ? "success" : "error"](
+        `Fechamento registrado com ${diffLabel}. Registrado no log.`,
+        { duration: 3000 }
+      );
+    } else {
+      toast.success("Turno fechado com sucesso!", { duration: 1400, icon: "🔒" });
+    }
   };
 
   const clockStr = currentTime.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
