@@ -1977,7 +1977,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                     <span className="text-xl font-black text-foreground tabular-nums">{formatPrice(totalConta)}</span>
                   </div>
                   <div className="flex items-center justify-between text-xs pt-1 border-t border-border text-muted-foreground">
-                    <span className="uppercase tracking-wider font-bold">{mesa.status === "livre" ? "LIVRE" : mesa.status === "pendente" ? "PENDENTE" : "EM CONSUMO"}</span>
+                    <span className="uppercase tracking-wider font-bold">{mesa.pedidos.length} pedido(s)</span>
                     <span className="tabular-nums font-bold text-foreground">{formatPrice(totalConta)}</span>
                   </div>
                 </div>
