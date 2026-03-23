@@ -584,6 +584,13 @@ const AdminPage = () => {
               <div>
                 <h2 className="text-2xl font-black text-foreground">Cardápio</h2>
                 <p className="text-sm text-muted-foreground">Gerencie os produtos do cardápio</p>
+                <div className="flex items-center gap-4 text-xs text-muted-foreground mt-1">
+                  <span>{allProducts.length} produtos</span>
+                  <span>·</span>
+                  <span>{allProducts.filter(p => p.ativo !== false).length} disponíveis</span>
+                  <span>·</span>
+                  <span>{todasCategorias.length} categorias</span>
+                </div>
               </div>
               <Button onClick={openNewProduct} className="rounded-xl font-bold gap-1.5">
                 <Plus className="h-4 w-4" />
