@@ -457,6 +457,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
     setClosingPayments([]);
     setClosingPaymentMethod("dinheiro");
     setClosingPaymentValue("");
+    setValorEntregue("");
   }, []);
 
   const handleVoltar = useCallback(() => {
