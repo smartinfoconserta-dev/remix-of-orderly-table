@@ -272,6 +272,9 @@ const AdminPage = () => {
   // --- Configurações state ---
   const [sistemaConfig, setSistemaConfig] = useState<SistemaConfig>(getSistemaConfig);
 
+  // --- Horários state ---
+  const [horariosFuncionamento, setHorariosFuncionamento] = useState<HorariosSemana>(getHorariosFuncionamento);
+
   // --- Bairros state ---
   const [bairros, setBairros] = useState<Bairro[]>(getBairros);
   const [novoBairroNome, setNovoBairroNome] = useState("");
