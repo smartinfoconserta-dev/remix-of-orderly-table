@@ -2038,7 +2038,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                                 type="button"
                                 onClick={() => {
                                   const trocoStr = f.troco && f.troco > 0
-                                    ? `<div class="print-item"><span>Troco</span><span>R$ ${f.troco.toFixed(2).replace(".", ",")}</span></div>`
+                                    ? `<div class="print-item"><span>💵 Troco devolvido</span><span>R$ ${f.troco.toFixed(2).replace(".", ",")}</span></div>`
                                     : "";
                                   const pagStr = (f.pagamentos?.length
                                     ? f.pagamentos
@@ -2080,9 +2080,12 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                             }
                           </div>
                           {f.troco != null && f.troco > 0 && (
-                            <div className="flex items-center justify-between rounded-lg bg-emerald-500/10 border border-emerald-500/20 px-3 py-2">
-                              <span className="text-xs font-bold text-emerald-400">💵 Troco dado ao cliente</span>
-                              <span className="text-sm font-black tabular-nums text-emerald-400">{formatPrice(f.troco)}</span>
+                            <div className="flex items-center justify-between rounded-xl bg-emerald-500/10 border border-emerald-500/30 px-3 py-2 mt-1">
+                              <div className="flex items-center gap-2">
+                                <span>💵</span>
+                                <span className="text-sm font-bold text-emerald-400">Troco devolvido</span>
+                              </div>
+                              <span className="text-base font-black tabular-nums text-emerald-400">{formatPrice(f.troco)}</span>
                             </div>
                           )}
                           {f.itens && f.itens.length > 0 && (
@@ -2267,6 +2270,20 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                           </div>
                         );
                       })}
+                      {trocoRegistrado > 0 && (
+                        <div className="flex items-center justify-between rounded-2xl border-2 border-emerald-500/40 bg-emerald-500/10 px-4 py-3">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xl">💵</span>
+                            <div>
+                              <p className="text-xs font-bold text-emerald-400/70 uppercase tracking-widest">Troco</p>
+                              <p className="text-sm font-bold text-emerald-400">Devolver ao cliente</p>
+                            </div>
+                          </div>
+                          <span className="text-2xl font-black tabular-nums text-emerald-400">
+                            {formatPrice(trocoRegistrado)}
+                          </span>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
