@@ -2,6 +2,7 @@ import { useCallback, useMemo, useRef, useState } from "react";
 import {
   ClipboardList,
   Download,
+  LayoutDashboard,
   Upload,
   Grid3X3,
   ImagePlus,
