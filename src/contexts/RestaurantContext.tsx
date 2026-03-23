@@ -126,6 +126,7 @@ export interface FecharContaInput {
   usuario: OperationalUser;
   pagamentos: SplitPayment[];
   troco?: number;
+  desconto?: number;
 }
 
 interface RestaurantStore {
