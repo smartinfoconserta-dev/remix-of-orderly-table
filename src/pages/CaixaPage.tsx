@@ -825,18 +825,26 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
   /* ── payment handlers ── */
   const handleAddPayment = () => {
     if (!mesa) return;
-    const valor = parseCurrencyInput(closingPaymentValue);
-    if (!Number.isFinite(valor) || valor <= 0) {
-      toast.error("Informe um valor válido para adicionar o pagamento", { duration: 1400 });
+    const entregou = parseCurrencyInput(closingPaymentValue);
+    if (!Number.isFinite(entregou) || entregou <= 0) {
+      toast.error("Informe um valor válido", { duration: 1400 });
       return;
     }
-    if (toCents(valor) > toCents(valorRestante)) {
+    // Para dinheiro: registra o restante (não o valor entregue) se entregou mais
+    const valorARegistrar = closingPaymentMethod === "dinheiro" && entregou > valorRestante
+      ? valorRestante
+      : Math.min(entregou, valorRestante);
+    const troco = closingPaymentMethod === "dinheiro" && entregou > valorRestante
+      ? entregou - valorRestante
+      : 0;
+    if (closingPaymentMethod !== "dinheiro" && toCents(entregou) > toCents(valorRestante)) {
       toast.error("O valor informado ultrapassa o restante da conta", { duration: 1400 });
       return;
     }
+    if (troco > 0) setTrocoRegistrado(troco);
     setClosingPayments((prev) => [
       ...prev,
-      { id: `pag-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, formaPagamento: closingPaymentMethod, valor: Number(valor.toFixed(2)) },
+      { id: `pag-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, formaPagamento: closingPaymentMethod, valor: Number(valorARegistrar.toFixed(2)) },
     ]);
     setClosingPaymentValue("");
   };
