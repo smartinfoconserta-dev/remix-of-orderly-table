@@ -477,6 +477,12 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
     setClosingPaymentValue("");
     setValorEntregue("");
     setTrocoRegistrado(0);
+    setDescontoAplicado(0);
+    setDescontoInput("");
+    setDescontoMotivo("");
+    setDescontoManagerName("");
+    setDescontoManagerPin("");
+    setDescontoError(null);
   }, []);
 
   const handleVoltar = useCallback(() => {
