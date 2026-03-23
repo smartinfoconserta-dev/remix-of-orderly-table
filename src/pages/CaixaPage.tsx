@@ -2189,12 +2189,31 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                             className="h-11 rounded-xl text-base font-bold"
                           />
                         </div>
-                        <Button
-                          onClick={handleAddPayment}
-                          className="rounded-xl font-black h-11 px-5"
-                        >
-                          <Plus className="h-4 w-4 mr-1" /> Adicionar
-                        </Button>
+                        {(() => {
+                          const entregou = parseCurrencyInput(closingPaymentValue);
+                          const temTroco = closingPaymentMethod === "dinheiro" &&
+                            Number.isFinite(entregou) && entregou > valorRestante;
+                          const troco = temTroco ? entregou - valorRestante : 0;
+                          return (
+                            <Button
+                              onClick={handleAddPayment}
+                              className={`rounded-xl font-black h-11 px-4 shrink-0 transition-all ${
+                                temTroco
+                                  ? "bg-emerald-600 hover:bg-emerald-700 text-white min-w-[160px]"
+                                  : ""
+                              }`}
+                            >
+                              {temTroco ? (
+                                <span className="flex flex-col items-center leading-tight">
+                                  <span className="text-xs font-bold opacity-80">Troco: {formatPrice(troco)}</span>
+                                  <span className="text-sm font-black">✓ Confirmar</span>
+                                </span>
+                              ) : (
+                                <><Plus className="h-4 w-4 mr-1" /> Adicionar</>
+                              )}
+                            </Button>
+                          );
+                        })()}
                       </div>
                       {/* Botões rápidos */}
                       <div className="flex items-center gap-1.5">
@@ -2217,9 +2236,12 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                         if (!Number.isFinite(entregou) || entregou <= valorRestante) return null;
                         const troco = entregou - valorRestante;
                         return (
-                          <div className="flex items-center justify-between rounded-xl bg-emerald-500/10 border border-emerald-500/30 px-3 py-2">
-                            <span className="text-sm font-black text-emerald-400">💵 Troco para o cliente</span>
-                            <span className="text-lg font-black tabular-nums text-emerald-400">{formatPrice(troco)}</span>
+                          <div className="flex items-center justify-between rounded-xl bg-emerald-500/10 border-2 border-emerald-500/50 px-4 py-3">
+                            <div>
+                              <p className="text-xs font-bold text-emerald-400/70 uppercase tracking-widest">Troco para o cliente</p>
+                              <p className="text-sm font-bold text-emerald-400">Devolver ao cliente</p>
+                            </div>
+                            <span className="text-3xl font-black tabular-nums text-emerald-400">{formatPrice(troco)}</span>
                           </div>
                         );
                       })()}
