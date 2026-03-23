@@ -1856,53 +1856,55 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                               Cancelar
                             </Button>
                           </div>
-                          <div className="rounded-xl border border-border overflow-hidden">
-                            <table className="w-full text-sm">
-                              <thead>
-                                <tr className="border-b border-border bg-secondary/50">
-                                  <th className="py-2 px-3 text-left text-[10px] font-bold uppercase tracking-wider text-muted-foreground w-16">Qtd</th>
-                                  <th className="py-2 px-3 text-left text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Item</th>
-                                  <th className="py-2 px-3 text-right text-[10px] font-bold uppercase tracking-wider text-muted-foreground w-24">Preço</th>
-                                  <th className="py-2 px-3 text-right w-24"></th>
-                                </tr>
-                              </thead>
-                              <tbody className="divide-y divide-border">
-                                {pedido.itens.map((item) => (
-                                  <tr key={item.uid} className="hover:bg-secondary/30 transition-colors">
-                                    <td className="py-2.5 px-3 tabular-nums text-muted-foreground font-semibold">{item.quantidade}</td>
-                                    <td className="py-2.5 px-3">
-                                      <p className="font-semibold text-foreground">{item.nome}</p>
-                                      {item.adicionais.length > 0 && <p className="text-xs text-primary mt-0.5">+ {item.adicionais.map((a) => a.nome).join(", ")}</p>}
-                                      {item.removidos.length > 0 && <p className="text-xs text-destructive mt-0.5">Sem {item.removidos.join(", ")}</p>}
-                                    </td>
-                                    <td className="py-2.5 px-3 text-right tabular-nums font-bold text-foreground">{formatPrice(item.precoUnitario * item.quantidade)}</td>
-                                    <td className="py-2.5 px-3 text-right">
-                                      <div className="flex items-center justify-end gap-1">
-                                        <Button
-                                          size="icon" variant="ghost" className="h-6 w-6 rounded-md"
-                                          onClick={() =>
-                                            item.quantidade === 1
-                                              ? openCriticalAction({ type: "remover_item_pedido", mesaId: mesa.id, mesaNumero: mesa.numero, pedidoId: pedido.id, pedidoNumero: pedido.numeroPedido, itemUid: item.uid, itemNome: item.nome, quantidade: item.quantidade })
-                                              : ajustarItemPedido(mesa.id, pedido.id, item.uid, -1, { usuario: currentOperator })
-                                          }
-                                        >
-                                          <Minus className="h-3 w-3" />
-                                        </Button>
-                                        <Button size="icon" variant="ghost" className="h-6 w-6 rounded-md" onClick={() => ajustarItemPedido(mesa.id, pedido.id, item.uid, 1, { usuario: currentOperator })}>
-                                          <Plus className="h-3 w-3" />
-                                        </Button>
-                                        <Button
-                                          size="icon" variant="ghost" className="h-6 w-6 rounded-md text-destructive hover:bg-destructive/10"
-                                          onClick={() => openCriticalAction({ type: "remover_item_pedido", mesaId: mesa.id, mesaNumero: mesa.numero, pedidoId: pedido.id, pedidoNumero: pedido.numeroPedido, itemUid: item.uid, itemNome: item.nome, quantidade: item.quantidade })}
-                                        >
-                                          <Trash2 className="h-3 w-3" />
-                                        </Button>
-                                      </div>
-                                    </td>
-                                  </tr>
-                                ))}
-                              </tbody>
-                            </table>
+                          <div className="rounded-xl border border-border overflow-hidden divide-y divide-border/50">
+                            {pedido.itens.map((item) => (
+                              <div key={item.uid} className="flex items-center gap-3 px-3 py-2.5 hover:bg-secondary/30 transition-colors">
+                                <div className="shrink-0 h-11 w-11 rounded-lg overflow-hidden border border-border bg-secondary">
+                                  {item.imagemUrl ? (
+                                    <img src={item.imagemUrl} alt={item.nome} className="h-full w-full object-cover" />
+                                  ) : (
+                                    <div className="h-full w-full flex items-center justify-center text-muted-foreground/30">
+                                      <ReceiptText className="h-4 w-4" />
+                                    </div>
+                                  )}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-baseline gap-2">
+                                    <span className="text-xs font-black text-muted-foreground tabular-nums shrink-0">{item.quantidade}×</span>
+                                    <p className="text-sm font-bold text-foreground truncate">{item.nome}</p>
+                                  </div>
+                                  {item.adicionais.length > 0 && (
+                                    <p className="text-xs text-primary mt-0.5 truncate">+ {item.adicionais.map(a => a.nome).join(", ")}</p>
+                                  )}
+                                  {item.removidos.length > 0 && (
+                                    <p className="text-xs text-destructive mt-0.5 truncate">Sem {item.removidos.join(", ")}</p>
+                                  )}
+                                  {item.observacoes && (
+                                    <p className="text-xs text-muted-foreground italic mt-0.5 truncate">"{item.observacoes}"</p>
+                                  )}
+                                </div>
+                                <span className="shrink-0 text-sm font-black tabular-nums text-foreground">
+                                  {formatPrice(item.precoUnitario * item.quantidade)}
+                                </span>
+                                <div className="shrink-0 flex items-center gap-0.5">
+                                  <Button size="icon" variant="ghost" className="h-7 w-7 rounded-lg"
+                                    onClick={() => item.quantidade === 1
+                                      ? openCriticalAction({ type: "remover_item_pedido", mesaId: mesa.id, mesaNumero: mesa.numero, pedidoId: pedido.id, pedidoNumero: pedido.numeroPedido, itemUid: item.uid, itemNome: item.nome, quantidade: item.quantidade })
+                                      : ajustarItemPedido(mesa.id, pedido.id, item.uid, -1, { usuario: currentOperator })
+                                    }>
+                                    <Minus className="h-3 w-3" />
+                                  </Button>
+                                  <Button size="icon" variant="ghost" className="h-7 w-7 rounded-lg"
+                                    onClick={() => ajustarItemPedido(mesa.id, pedido.id, item.uid, 1, { usuario: currentOperator })}>
+                                    <Plus className="h-3 w-3" />
+                                  </Button>
+                                  <Button size="icon" variant="ghost" className="h-7 w-7 rounded-lg text-destructive hover:bg-destructive/10"
+                                    onClick={() => openCriticalAction({ type: "remover_item_pedido", mesaId: mesa.id, mesaNumero: mesa.numero, pedidoId: pedido.id, pedidoNumero: pedido.numeroPedido, itemUid: item.uid, itemNome: item.nome, quantidade: item.quantidade })}>
+                                    <Trash2 className="h-3 w-3" />
+                                  </Button>
+                                </div>
+                              </div>
+                            ))}
                           </div>
                         </div>
                       ))}
