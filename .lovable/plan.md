@@ -1,49 +1,49 @@
 
 
-## Plano: Logo quadrada maior na sidebar do tablet
+## Plano: Permitir navegar no cardápio fora do horário, bloquear apenas o envio
 
-### Problema
-No modo "quadrada", a logo aparece pequena (40x40px) no header. O usuário quer que, no tablet (sidebar visível), a logo quadrada ocupe a largura da sidebar (~11rem), acompanhando o tamanho dos botões de categoria.
+### Problema atual
+Quando o delivery está fora do horário, a página inteira é substituída pela tela "Ainda não abrimos" (linha 351-368 de PedidoPage.tsx). O cliente não consegue nem ver o cardápio.
 
 ### Mudança
 
-**Arquivo: `src/components/PedidoFlow.tsx`**
+**Arquivo: `src/pages/PedidoPage.tsx`**
 
-Na `aside` da sidebar (linha ~1092), adicionar a logo como bloco grande no topo, antes da `nav` de categorias:
+1. **Remover o bloqueio total da página** — Tirar o `if (!statusHorario.aberto) { return (...) }` que bloqueia tudo (linhas 350-369).
 
-```tsx
-{RESTAURANTE.logoUrl && logoEstilo === "quadrada" && (
-  <div className="mb-3 px-1">
-    <img
-      src={RESTAURANTE.logoUrl}
-      alt={RESTAURANTE.nome}
-      className="w-full aspect-square rounded-2xl object-cover border border-border shadow-sm"
-    />
-  </div>
-)}
-{RESTAURANTE.logoUrl && logoEstilo === "circular" && (
-  <div className="mb-3 flex justify-center">
-    <img
-      src={RESTAURANTE.logoUrl}
-      alt={RESTAURANTE.nome}
-      className="h-20 w-20 rounded-full object-cover border border-border shadow-sm"
-    />
-  </div>
-)}
-{!RESTAURANTE.logoUrl && (
-  <div className="mb-3 flex justify-center">
-    <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-secondary border border-border">
-      <span className="text-lg font-black text-foreground">{RESTAURANTE.logoFallback}</span>
-    </div>
-  </div>
-)}
-```
+2. **Mover `statusHorario` para antes do render do cardápio** — Manter a variável disponível mas sem bloquear.
 
-A logo quadrada ocupa a largura total da sidebar (~11rem/13rem) como um bloco quadrado com `aspect-square`, acompanhando visualmente a lista de categorias abaixo. No modo circular, aparece centralizada como avatar grande. Sem logo, mostra iniciais.
+3. **Bloquear o envio do pedido** — Em `handleConfirmarPedido` (linha 301), adicionar verificação no início:
+   ```tsx
+   const statusAgora = isDeliveryAberto();
+   if (!statusAgora.aberto) {
+     toast.error(statusAgora.mensagem + (statusAgora.proximoHorario ? `. ${statusAgora.proximoHorario}` : ""));
+     return;
+   }
+   ```
+
+4. **Bloquear também em `handlePedidoConfirmado`** (quando sai do cardápio para identificação/confirmação):
+   ```tsx
+   const statusAgora = isDeliveryAberto();
+   if (!statusAgora.aberto) {
+     toast.error(`${statusAgora.mensagem}. ${statusAgora.proximoHorario || ""}`);
+     return;
+   }
+   ```
+
+5. **Adicionar banner informativo no topo do cardápio** quando fora do horário — Um aviso discreto (não bloqueante) no header ou acima do PedidoFlow:
+   ```tsx
+   {!statusHorario.aberto && etapa === "cardapio" && (
+     <div className="bg-destructive/10 border-b border-destructive/20 px-4 py-2 text-center">
+       <p className="text-sm font-bold text-destructive">{statusHorario.mensagem}</p>
+       <p className="text-xs text-muted-foreground">{statusHorario.proximoHorario}</p>
+     </div>
+   )}
+   ```
 
 ### Resultado
-- Modo quadrado: logo grande quadrada na largura da sidebar, acima das categorias
-- Modo circular: logo circular centralizada (80px)
-- Sem logo: iniciais em bloco
-- Header continua com a logo pequena normalmente
+- Cliente acessa `/pedido` → vê o cardápio normalmente, pode navegar
+- Banner no topo avisa "Ainda não abrimos — Abrimos às 18:00 (em ~8h)"
+- Ao tentar enviar o pedido → toast de erro com a mensagem de horário
+- Quando dentro do horário → tudo funciona igual a hoje
 
