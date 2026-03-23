@@ -480,6 +480,102 @@ const AdminPage = () => {
 
       {/* Content */}
       <main className="flex-1 overflow-y-auto p-6 md:p-8 bg-background" key={tab}>
+        {/* ═══ DASHBOARD ═══ */}
+        {tab === "dashboard" && (
+          <div className="space-y-6 fade-in">
+            <div>
+              <h2 className="text-2xl font-black text-foreground">
+                Olá! Bem-vindo ao painel 👋
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                {new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" })}
+              </p>
+            </div>
+
+            {/* Cards de status */}
+            <div className="grid grid-cols-2 gap-3 max-w-2xl">
+              <div className="surface-card rounded-2xl p-5 space-y-1">
+                <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Produtos</p>
+                <p className="text-3xl font-black text-foreground">{allProducts.length}</p>
+                <p className="text-xs text-muted-foreground">no cardápio</p>
+              </div>
+              <div className="surface-card rounded-2xl p-5 space-y-1">
+                <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Mesas</p>
+                <p className="text-3xl font-black text-foreground">{mesasConfig.totalMesas}</p>
+                <p className="text-xs text-muted-foreground">configuradas</p>
+              </div>
+              <div className="surface-card rounded-2xl p-5 space-y-1">
+                <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Delivery</p>
+                <p className={`text-xl font-black ${sistemaConfig.deliveryAtivo !== false ? "text-emerald-400" : "text-destructive"}`}>
+                  {sistemaConfig.deliveryAtivo !== false ? "✓ Ativo" : "✗ Inativo"}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {sistemaConfig.deliveryAtivo !== false ? "Aceitando pedidos" : "Pausado"}
+                </p>
+              </div>
+              <div className="surface-card rounded-2xl p-5 space-y-1">
+                <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Equipe</p>
+                <p className="text-3xl font-black text-foreground">{garcons.length + caixas.length}</p>
+                <p className="text-xs text-muted-foreground">{garcons.length} garçon(s) · {caixas.length} caixa(s)</p>
+              </div>
+            </div>
+
+            {/* Ações rápidas */}
+            <div>
+              <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-3">Ações rápidas</p>
+              <div className="grid grid-cols-1 gap-2 max-w-sm">
+                <button onClick={() => { setTab("cardapio"); openNewProduct(); }}
+                  className="flex items-center gap-3 rounded-2xl border border-border bg-card px-5 py-4 text-left hover:border-primary/40 hover:bg-primary/5 transition-colors">
+                  <span className="text-2xl">➕</span>
+                  <div>
+                    <p className="text-sm font-black text-foreground">Adicionar produto</p>
+                    <p className="text-xs text-muted-foreground">Cadastrar novo item no cardápio</p>
+                  </div>
+                </button>
+                <button onClick={() => setTab("configuracoes")}
+                  className="flex items-center gap-3 rounded-2xl border border-border bg-card px-5 py-4 text-left hover:border-primary/40 hover:bg-primary/5 transition-colors">
+                  <span className="text-2xl">⚙️</span>
+                  <div>
+                    <p className="text-sm font-black text-foreground">Configurar sistema</p>
+                    <p className="text-xs text-muted-foreground">Delivery, horários, aparência</p>
+                  </div>
+                </button>
+                <button onClick={() => setTab("equipe")}
+                  className="flex items-center gap-3 rounded-2xl border border-border bg-card px-5 py-4 text-left hover:border-primary/40 hover:bg-primary/5 transition-colors">
+                  <span className="text-2xl">👥</span>
+                  <div>
+                    <p className="text-sm font-black text-foreground">Ver equipe</p>
+                    <p className="text-xs text-muted-foreground">Garçons, caixas e gerentes</p>
+                  </div>
+                </button>
+              </div>
+            </div>
+
+            {/* Alerta de licença */}
+            {(() => {
+              try {
+                const raw = localStorage.getItem("orderly-licenca-v1");
+                if (!raw) return null;
+                const lic = JSON.parse(raw);
+                if (!lic.dataVencimento) return null;
+                const dias = Math.ceil((new Date(lic.dataVencimento).getTime() - Date.now()) / 86400000);
+                if (dias > 14) return null;
+                return (
+                  <div className={`max-w-2xl rounded-2xl border px-5 py-4 flex items-center gap-3 ${dias <= 3 ? "border-destructive/40 bg-destructive/5" : "border-amber-500/40 bg-amber-500/5"}`}>
+                    <span className="text-2xl">{dias <= 3 ? "🚨" : "⚠️"}</span>
+                    <div>
+                      <p className={`text-sm font-black ${dias <= 3 ? "text-destructive" : "text-amber-400"}`}>
+                        {dias <= 0 ? "Licença vencida!" : `Licença vence em ${dias} dia(s)`}
+                      </p>
+                      <p className="text-xs text-muted-foreground">Entre em contato para renovar</p>
+                    </div>
+                  </div>
+                );
+              } catch { return null; }
+            })()}
+          </div>
+        )}
+
         {/* ═══ CARDÁPIO ═══ */}
         {tab === "cardapio" && (
           <div className="space-y-5 fade-in">
