@@ -2225,31 +2225,35 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                               </span>
                             </div>
                           )}
-                          {/* Botão adicionar dinheiro */}
-                          {Number.isFinite(valorEntregueNum) && valorEntregueNum > 0 && (
-                            <Button
-                              className={`w-full h-11 rounded-xl font-black text-sm ${
-                                trocoCalculado > 0 || valorEntregueNum === valorRestante
-                                  ? "bg-emerald-600 hover:bg-emerald-700 text-white"
-                                  : "bg-amber-600 hover:bg-amber-700 text-white"
-                              }`}
-                              onClick={() => {
-                                setTrocoRegistrado(trocoCalculado);
-                                setClosingPayments(prev => [...prev, {
-                                  id: `pag-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-                                  formaPagamento: "dinheiro" as PaymentMethod,
-                                  valor: Number(valorDinheiroARegistrar.toFixed(2))
-                                }]);
-                                setValorEntregue("");
-                              }}
-                            >
-                              {trocoCalculado > 0
-                                ? `+ Dinheiro — Troco: ${formatPrice(trocoCalculado)}`
-                                : valorEntregueNum < valorRestante
-                                ? `+ Registrar ${formatPrice(valorDinheiroARegistrar)} em dinheiro`
-                                : `+ Adicionar dinheiro exato`}
-                            </Button>
-                          )}
+                          {/* Botão adicionar dinheiro — sempre visível */}
+                          <Button
+                            className={`w-full h-11 rounded-xl font-black text-sm ${
+                              trocoCalculado > 0 || valorEntregueNum === valorRestante
+                                ? "bg-emerald-600 hover:bg-emerald-700 text-white"
+                                : valorEntregueNum > 0 && valorEntregueNum < valorRestante
+                                ? "bg-amber-600 hover:bg-amber-700 text-white"
+                                : ""
+                            }`}
+                            variant={valorEntregueNum > 0 ? "default" : "outline"}
+                            disabled={!Number.isFinite(valorEntregueNum) || valorEntregueNum <= 0}
+                            onClick={() => {
+                              setTrocoRegistrado(trocoCalculado);
+                              setClosingPayments(prev => [...prev, {
+                                id: `pag-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+                                formaPagamento: "dinheiro" as PaymentMethod,
+                                valor: Number(valorDinheiroARegistrar.toFixed(2))
+                              }]);
+                              setValorEntregue("");
+                            }}
+                          >
+                            {!Number.isFinite(valorEntregueNum) || valorEntregueNum <= 0
+                              ? "Digite o valor entregue"
+                              : trocoCalculado > 0
+                              ? `+ Dinheiro — Troco: ${formatPrice(trocoCalculado)}`
+                              : valorEntregueNum < valorRestante
+                              ? `+ Registrar ${formatPrice(valorDinheiroARegistrar)} em dinheiro`
+                              : `+ Adicionar dinheiro exato`}
+                          </Button>
                         </>
                       ) : (
                         <>
