@@ -2111,9 +2111,16 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                           f.cancelado ? "opacity-50 border-destructive/20" : "border-border"
                         }`}>
                           <div className="flex items-center justify-between">
-                            <div>
-                              <p className="text-sm font-black text-foreground">{f.criadoEm}</p>
-                              <p className="text-xs text-muted-foreground">por {f.caixaNome}</p>
+                            <div className="flex items-center gap-2">
+                              {f.numeroComanda && (
+                                <span className="text-xs font-black text-primary bg-primary/10 border border-primary/20 rounded-lg px-2 py-0.5">
+                                  #{String(f.numeroComanda).padStart(4, "0")}
+                                </span>
+                              )}
+                              <div>
+                                <p className="text-sm font-black text-foreground">{f.criadoEm}</p>
+                                <p className="text-xs text-muted-foreground">por {f.caixaNome}</p>
+                              </div>
                             </div>
                             <div className="flex items-center gap-2">
                               {!f.cancelado ? (
@@ -2144,7 +2151,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                                   ).join("");
                                   const w = window.open("", "_blank", "width=400,height=600");
                                   if (!w) return;
-                                  w.document.write(`<!DOCTYPE html><html><head><style>body{font-family:monospace;font-size:13px;padding:16px;max-width:300px;margin:0 auto}h2{text-align:center;font-size:15px;margin-bottom:4px}.sub{text-align:center;color:#666;font-size:11px;margin-bottom:12px}hr{border:none;border-top:1px dashed #999;margin:8px 0}.print-item{display:flex;justify-content:space-between;margin:3px 0}.total{font-weight:bold;font-size:15px;display:flex;justify-content:space-between;margin-top:8px}.center{text-align:center;margin-top:12px;font-size:11px;color:#666}</style></head><body><h2>Mesa ${String(mesa?.numero ?? "").padStart(2, "0")}</h2><div class="sub">${f.criadoEm} • ${f.caixaNome}</div><hr/>${itensStr}<hr/>${pagStr}${trocoStr}<hr/><div class="total"><span>TOTAL</span><span>R$ ${f.total.toFixed(2).replace(".", ",")}</span></div><div class="center">Obrigado pela visita!</div></body></html>`);
+                                  w.document.write(`<!DOCTYPE html><html><head><style>body{font-family:monospace;font-size:13px;padding:16px;max-width:300px;margin:0 auto}h2{text-align:center;font-size:15px;margin-bottom:4px}.sub{text-align:center;color:#666;font-size:11px;margin-bottom:12px}hr{border:none;border-top:1px dashed #999;margin:8px 0}.print-item{display:flex;justify-content:space-between;margin:3px 0}.total{font-weight:bold;font-size:15px;display:flex;justify-content:space-between;margin-top:8px}.center{text-align:center;margin-top:12px;font-size:11px;color:#666}</style></head><body><h2>Mesa ${String(mesa?.numero ?? "").padStart(2, "0")}${f.numeroComanda ? ` — Comanda #${String(f.numeroComanda).padStart(4, "0")}` : ""}</h2><div class="sub">${f.criadoEm} • ${f.caixaNome}</div><hr/>${itensStr}<hr/>${pagStr}${trocoStr}<hr/><div class="total"><span>TOTAL</span><span>R$ ${f.total.toFixed(2).replace(".", ",")}</span></div><div class="center">Obrigado pela visita!</div></body></html>`);
                                   w.document.close();
                                   w.focus();
                                   setTimeout(() => { w.print(); w.close(); }, 400);
