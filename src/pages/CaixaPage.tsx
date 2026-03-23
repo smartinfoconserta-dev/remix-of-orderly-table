@@ -288,10 +288,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
     try {
       const raw = localStorage.getItem(FECHAMENTOS_MOTOBOY_KEY);
       const todos = raw ? JSON.parse(raw) : [];
-      const doTurno = todos.filter((f: any) => {
-        if (!caixaAberto?.abertoEm) return true;
-        return new Date(f.timestamp) >= new Date(caixaAberto.abertoEm);
-      });
+      const doTurno = todos;
       const conferidos = doTurno.filter((f: any) => f.status === "conferido");
       const pendentes = doTurno.filter((f: any) => f.status === "aguardando");
       const totalConferido = conferidos.reduce((s: number, f: any) => s + (f.resumo?.totalAPrestar || 0), 0);
