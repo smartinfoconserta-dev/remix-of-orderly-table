@@ -1292,50 +1292,62 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
 
             {/* Mesa detail top bar */}
             <div className="border-b border-border bg-card/80 backdrop-blur-sm px-4 py-3 md:px-6">
-              <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-x-5 gap-y-2">
+              <div className="mx-auto flex max-w-5xl items-center justify-between gap-3">
+                {/* Info da mesa */}
                 <div className="flex items-center gap-3">
                   <span className="text-2xl font-black tabular-nums text-foreground">{formatPrice(mesa.total)}</span>
                   <StatusBadge status={mesa.status} />
+                  <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                    <User className="h-3.5 w-3.5" />
+                    {currentOperator.nome}
+                  </div>
                 </div>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <User className="h-3.5 w-3.5" />
-                  <span>{currentOperator.nome}</span>
-                </div>
-                <div className="ml-auto flex flex-wrap items-center gap-2">
-                  {mesa.pedidos.length > 0 && (
-                    <Button variant="outline" size="sm" onClick={() => {
-                      const allItens = mesa.pedidos.flatMap((p) => p.itens);
-                      handlePrintComanda({
-                        tipo: `Mesa ${String(mesa.numero).padStart(2, "0")}`,
-                        numero: mesa.pedidos[mesa.pedidos.length - 1].numeroPedido,
-                        dataHora: new Date().toLocaleString("pt-BR"),
-                        itens: allItens.map((it) => ({ quantidade: it.quantidade, nome: it.nome, preco: it.precoUnitario })),
-                        subtotal: mesa.total,
-                        total: mesa.total,
-                        paraViagem: mesa.pedidos.some((p) => p.paraViagem),
-                      });
-                    }} className="rounded-xl font-bold gap-1.5">
-                      <Printer className="h-3.5 w-3.5" />
-                      Imprimir
-                    </Button>
-                  )}
-                  <Button variant="outline" size="sm" onClick={() => setComandaOpen(true)} className="rounded-xl font-bold gap-1.5">
-                    <ShoppingCart className="h-3.5 w-3.5" />
-                    Abrir comanda
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={() => openCriticalAction({ type: "zerar_mesa", mesaId: mesa.id, mesaNumero: mesa.numero })} className="rounded-xl font-bold gap-1.5">
-                    <RotateCcw className="h-3.5 w-3.5" />
-                    Zerar mesa
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={() => setMesaTab("historico")} className="rounded-xl font-bold gap-1.5">
-                    <ReceiptText className="h-3.5 w-3.5" />
-                    Histórico
-                  </Button>
+
+                {/* Ações secundárias — menu recolhido */}
+                <div className="flex items-center gap-2">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" size="sm" className="rounded-xl font-bold gap-1.5">
+                        <MoreHorizontal className="h-4 w-4" />
+                        Opções
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-48">
+                      {mesa.pedidos.length > 0 && (
+                        <DropdownMenuItem onClick={() => {
+                          const allItens = mesa.pedidos.flatMap((p) => p.itens);
+                          handlePrintComanda({
+                            tipo: `Mesa ${String(mesa.numero).padStart(2, "0")}`,
+                            numero: mesa.pedidos[mesa.pedidos.length - 1].numeroPedido,
+                            dataHora: new Date().toLocaleString("pt-BR"),
+                            itens: allItens.map((it) => ({ quantidade: it.quantidade, nome: it.nome, preco: it.precoUnitario })),
+                            subtotal: mesa.total,
+                            total: mesa.total,
+                            paraViagem: mesa.pedidos.some((p) => p.paraViagem),
+                          });
+                        }}>
+                          <Printer className="h-4 w-4 mr-2" /> Imprimir comanda
+                        </DropdownMenuItem>
+                      )}
+                      <DropdownMenuItem onClick={() => setComandaOpen(true)}>
+                        <ShoppingCart className="h-4 w-4 mr-2" /> Adicionar itens
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setMesaTab("historico")}>
+                        <ReceiptText className="h-4 w-4 mr-2" /> Ver histórico
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => openCriticalAction({ type: "zerar_mesa", mesaId: mesa.id, mesaNumero: mesa.numero })}>
+                        <RotateCcw className="h-4 w-4 mr-2" /> Zerar mesa
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+
+                  {/* Botão principal */}
                   <Button
                     size="sm"
                     disabled={!hasSomethingToClose}
                     onClick={() => setMesaTab("pagamento")}
-                    className="rounded-xl font-black gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90"
+                    className="rounded-xl font-black gap-1.5"
                   >
                     <Wallet className="h-3.5 w-3.5" />
                     Fechar conta
