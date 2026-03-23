@@ -2080,9 +2080,12 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                             }
                           </div>
                           {f.troco != null && f.troco > 0 && (
-                            <div className="flex items-center justify-between rounded-lg bg-emerald-500/10 border border-emerald-500/20 px-3 py-2">
-                              <span className="text-xs font-bold text-emerald-400">💵 Troco dado ao cliente</span>
-                              <span className="text-sm font-black tabular-nums text-emerald-400">{formatPrice(f.troco)}</span>
+                            <div className="flex items-center justify-between rounded-xl bg-emerald-500/10 border border-emerald-500/30 px-3 py-2 mt-1">
+                              <div className="flex items-center gap-2">
+                                <span>💵</span>
+                                <span className="text-sm font-bold text-emerald-400">Troco devolvido</span>
+                              </div>
+                              <span className="text-base font-black tabular-nums text-emerald-400">{formatPrice(f.troco)}</span>
                             </div>
                           )}
                           {f.itens && f.itens.length > 0 && (
