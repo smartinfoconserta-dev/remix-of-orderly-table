@@ -2215,35 +2215,35 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                           </div>
                           {/* Troco em destaque */}
                           {Number.isFinite(valorEntregueNum) && valorEntregueNum > 0 && (
-                            <div className={`rounded-2xl p-4 flex items-center justify-between ${
+                            <div className={`rounded-xl p-3 flex items-center justify-between border ${
                               trocoCalculado > 0
-                                ? "bg-emerald-500/10 border border-emerald-500/30"
-                                : valorEntregueNum < valorRestante
-                                ? "bg-destructive/10 border border-destructive/30"
-                                : "bg-emerald-500/10 border border-emerald-500/30"
+                                ? "bg-emerald-500/10 border-emerald-500/30"
+                                : valorEntregueNum === valorRestante
+                                ? "bg-emerald-500/10 border-emerald-500/30"
+                                : "bg-amber-500/10 border-amber-500/30"
                             }`}>
-                              <span className={`text-base font-black ${
+                              <span className={`text-sm font-black ${
                                 trocoCalculado > 0 ? "text-emerald-400"
-                                : valorEntregueNum < valorRestante ? "text-destructive"
-                                : "text-emerald-400"
+                                : valorEntregueNum === valorRestante ? "text-emerald-400"
+                                : "text-amber-400"
                               }`}>
                                 {trocoCalculado > 0
                                   ? "💵 Troco para o cliente"
-                                  : valorEntregueNum < valorRestante
-                                  ? "⚠ Valor insuficiente"
-                                  : "✓ Valor exato"}
+                                  : valorEntregueNum === valorRestante
+                                  ? "✓ Valor exato"
+                                  : `↓ Faltam ${formatPrice(valorRestante - valorEntregueNum)}`}
                               </span>
-                              <span className={`text-3xl font-black tabular-nums ${
+                              <span className={`text-xl font-black tabular-nums ${
                                 trocoCalculado > 0 ? "text-emerald-400"
-                                : valorEntregueNum < valorRestante ? "text-destructive"
-                                : "text-emerald-400"
+                                : valorEntregueNum === valorRestante ? "text-emerald-400"
+                                : "text-amber-400"
                               }`}>
-                                {trocoCalculado > 0 ? formatPrice(trocoCalculado) : "R$ 0,00"}
+                                {trocoCalculado > 0 ? formatPrice(trocoCalculado) : formatPrice(valorEntregueNum)}
                               </span>
                             </div>
                           )}
                           {/* Botão confirmar dinheiro */}
-                          {valorEntregueValido && valorEntregueNum > 0 && (
+                          {valorEntregueValido && (
                             <Button
                               onClick={() => {
                                 setTrocoRegistrado(trocoCalculado);
@@ -2252,14 +2252,18 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                                   {
                                     id: `pag-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
                                     formaPagamento: "dinheiro" as PaymentMethod,
-                                    valor: Number(valorRestante.toFixed(2))
+                                    valor: Number(valorDinheiroARegistrar.toFixed(2))
                                   }
                                 ]);
                                 setValorEntregue("");
                               }}
-                              className="w-full h-12 rounded-2xl font-black bg-emerald-600 hover:bg-emerald-700 text-white"
+                              className="w-full h-11 rounded-xl font-black bg-emerald-600 hover:bg-emerald-700 text-white"
                             >
-                              Confirmar — Troco: {formatPrice(trocoCalculado)}
+                              {trocoCalculado > 0
+                                ? `Confirmar — Troco: ${formatPrice(trocoCalculado)}`
+                                : valorEntregueNum < valorRestante
+                                ? `Registrar ${formatPrice(valorEntregueNum)} em dinheiro`
+                                : "Confirmar pagamento"}
                             </Button>
                           )}
                         </div>
