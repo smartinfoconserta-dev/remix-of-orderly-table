@@ -1100,6 +1100,54 @@ const GerentePage = () => {
                 )}
               </div>
             )}
+            {/* ── Diferenças de caixa ── */}
+            {diferencasFiltradas.length > 0 && (
+              <div className="rounded-2xl border border-border bg-card p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-black text-foreground flex items-center gap-2">
+                    ⚖️ Diferenças de caixa
+                    <span className="text-xs font-normal text-muted-foreground">
+                      {diferencasFiltradas.length} ocorrência(s)
+                    </span>
+                  </h3>
+                  <div className="flex items-center gap-3 text-xs">
+                    {totalSobras > 0 && (
+                      <span className="text-emerald-400 font-bold">↑ Sobras: {formatPrice(totalSobras)}</span>
+                    )}
+                    {totalQuebras > 0 && (
+                      <span className="text-destructive font-bold">↓ Quebras: {formatPrice(totalQuebras)}</span>
+                    )}
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  {diferencasFiltradas.map(d => (
+                    <div key={d.id} className={`rounded-xl border p-3 space-y-1 ${
+                      d.tipo === "sobra"
+                        ? "border-emerald-500/20 bg-emerald-500/5"
+                        : "border-destructive/20 bg-destructive/5"
+                    }`}>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-xs font-black text-foreground">{d.dataFormatada}</p>
+                          <p className="text-xs text-muted-foreground">
+                            Operador: {d.operador} · Gerente: {d.gerente}
+                          </p>
+                        </div>
+                        <span className={`text-base font-black tabular-nums ${
+                          d.tipo === "sobra" ? "text-emerald-400" : "text-destructive"
+                        }`}>
+                          {d.tipo === "sobra" ? "+" : "-"}{formatPrice(Math.abs(d.diferenca))}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between text-xs text-muted-foreground pt-1 border-t border-border/30">
+                        <span>Esperado: {formatPrice(d.esperado)} · Contado: {formatPrice(d.contado)}</span>
+                        <span className="italic">{d.motivo}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <h2 className="text-sm font-black uppercase tracking-widest text-muted-foreground">Comandas fechadas no período</h2>
