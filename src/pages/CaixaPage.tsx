@@ -851,13 +851,19 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
       toast.error("O fechamento só pode ser confirmado quando o total pago for igual ao total da conta", { duration: 1600 });
       return;
     }
-    const trocoFinal = trocoRegistrado;
+    const pagamentoDinheiro = closingPayments
+      .filter(p => p.formaPagamento === "dinheiro")
+      .reduce((s, p) => s + p.valor, 0);
+    const veNum = parseCurrencyInput(valorEntregue);
+    const trocoFinal = pagamentoDinheiro > 0 && Number.isFinite(veNum)
+      ? Math.max(0, veNum - pagamentoDinheiro)
+      : trocoRegistrado;
     fecharConta(mesaSelecionada, { usuario: currentOperator, pagamentos: closingPayments, troco: trocoFinal });
     toast.success(
       trocoFinal > 0
         ? `Conta fechada — Troco: ${formatPrice(trocoFinal)}`
         : closingPayments.length > 1
-          ? "Conta fechada com múltiplas formas de pagamento"
+          ? "Conta fechada — múltiplas formas de pagamento"
           : `Conta fechada em ${getPaymentMethodLabel(closingPayments[0].formaPagamento)}`,
       { duration: 2500, icon: "✅" },
     );
@@ -2026,7 +2032,34 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                               <p className="text-sm font-black text-foreground">{f.criadoEm}</p>
                               <p className="text-xs text-muted-foreground">por {f.caixaNome}</p>
                             </div>
-                            <p className="text-xl font-black tabular-nums text-primary">{formatPrice(f.total)}</p>
+                            <div className="flex items-center gap-3">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const trocoStr = f.troco && f.troco > 0
+                                    ? `<div class="print-item"><span>Troco</span><span>R$ ${f.troco.toFixed(2).replace(".", ",")}</span></div>`
+                                    : "";
+                                  const pagStr = (f.pagamentos?.length
+                                    ? f.pagamentos
+                                    : [{ formaPagamento: f.formaPagamento, valor: f.total }]
+                                  ).map((p: any) => `<div class="print-item"><span>${getPaymentMethodLabel(p.formaPagamento as PaymentMethod)}</span><span>R$ ${p.valor.toFixed(2).replace(".", ",")}</span></div>`).join("");
+                                  const itensStr = (f.itens || []).map((it: any) =>
+                                    `<div class="print-item"><span>${it.quantidade}x ${it.nome}</span><span>R$ ${(it.precoUnitario * it.quantidade).toFixed(2).replace(".", ",")}</span></div>`
+                                  ).join("");
+                                  const w = window.open("", "_blank", "width=400,height=600");
+                                  if (!w) return;
+                                  w.document.write(`<!DOCTYPE html><html><head><style>body{font-family:monospace;font-size:13px;padding:16px;max-width:300px;margin:0 auto}h2{text-align:center;font-size:15px;margin-bottom:4px}.sub{text-align:center;color:#666;font-size:11px;margin-bottom:12px}hr{border:none;border-top:1px dashed #999;margin:8px 0}.print-item{display:flex;justify-content:space-between;margin:3px 0}.total{font-weight:bold;font-size:15px;display:flex;justify-content:space-between;margin-top:8px}.center{text-align:center;margin-top:12px;font-size:11px;color:#666}</style></head><body><h2>Mesa ${String(mesa?.numero ?? "").padStart(2, "0")}</h2><div class="sub">${f.criadoEm} • ${f.caixaNome}</div><hr/>${itensStr}<hr/>${pagStr}${trocoStr}<hr/><div class="total"><span>TOTAL</span><span>R$ ${f.total.toFixed(2).replace(".", ",")}</span></div><div class="center">Obrigado pela visita!</div></body></html>`);
+                                  w.document.close();
+                                  w.focus();
+                                  setTimeout(() => { w.print(); w.close(); }, 400);
+                                }}
+                                className="flex items-center gap-1.5 rounded-xl border border-border bg-secondary px-3 py-1.5 text-xs font-bold text-muted-foreground hover:text-foreground hover:border-primary/30 transition-colors"
+                              >
+                                <Printer className="h-3.5 w-3.5" />
+                                Imprimir
+                              </button>
+                              <p className="text-xl font-black tabular-nums text-primary">{formatPrice(f.total)}</p>
+                            </div>
                           </div>
                           <div className="space-y-1">
                             {(f.pagamentos?.length ? f.pagamentos : [{ id: f.id, formaPagamento: f.formaPagamento, valor: f.total }])
