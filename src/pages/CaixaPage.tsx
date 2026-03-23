@@ -1240,6 +1240,10 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                     <RotateCcw className="h-3.5 w-3.5" />
                     Zerar mesa
                   </Button>
+                  <Button variant="outline" size="sm" onClick={() => setMesaTab("historico")} className="rounded-xl font-bold gap-1.5">
+                    <ReceiptText className="h-3.5 w-3.5" />
+                    Histórico
+                  </Button>
                   <Button
                     size="sm"
                     disabled={!hasSomethingToClose}
