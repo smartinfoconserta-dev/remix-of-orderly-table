@@ -96,7 +96,7 @@ const AdminPage = () => {
   const [authError, setAuthError] = useState<string | null>(null);
   const [authLoading, setAuthLoading] = useState(false);
 
-  const [tab, setTab] = useState<AdminTab>("cardapio");
+  const [tab, setTab] = useState<AdminTab>("dashboard");
 
   // --- Cardápio state ---
   const [overrides, setOverrides] = useState<Record<string, ProdutoOverride>>(getCardapioOverrides);
