@@ -2333,7 +2333,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                 </div>
 
                 {/* Sticky bottom: confirm */}
-                <div className="border-t border-border p-5 bg-card space-y-2">
+                <div className="border-t border-border p-3 bg-card space-y-2">
                   <Button
                     onClick={handleFechar}
                     disabled={!fechamentoPronto || closingPayments.length === 0}
