@@ -303,11 +303,10 @@ export function isDeliveryAberto(): { aberto: boolean; mensagem: string; proximo
 
   if (minutosAgora < minutosAbertura) {
     const horas = calcularHorasAte(horarioDia.abertura);
-    const textoHoras = horas > 0 ? ` (em ~${horas}h)` : "";
     return {
       aberto: false,
       mensagem: "Ainda não abrimos",
-      proximoHorario: `Abrimos às ${horarioDia.abertura}${textoHoras}`,
+      proximoHorario: `Abrimos às ${horarioDia.abertura}`,
       horasRestantes: horas,
     };
   }
