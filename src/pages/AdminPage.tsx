@@ -181,7 +181,7 @@ const AdminPage = () => {
       nome: "",
       descricao: "",
       preco: 0,
-      categoria: categorias[0]?.id ?? "lanches",
+      categoria: todasCategorias[0]?.id ?? categorias[0]?.id ?? "lanches",
       imagem: "",
       ativo: true,
     };
@@ -760,12 +760,15 @@ const AdminPage = () => {
 
             {/* Edit / New modal */}
             <Dialog open={!!editProduct} onOpenChange={(open) => !open && setEditProduct(null)}>
-              <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-visible">
+              <DialogContent className="sm:max-w-3xl max-h-[92vh] overflow-hidden flex flex-col">
                 <DialogHeader>
                   <DialogTitle>{isNewProduct ? "Novo produto" : "Editar produto"}</DialogTitle>
                   <DialogDescription>{isNewProduct ? "Preencha os campos para adicionar um produto." : "Altere os campos desejados e salve."}</DialogDescription>
                 </DialogHeader>
-                <div className="overflow-y-auto max-h-[calc(90vh-80px)] pr-1 space-y-4 pt-2">
+                <div className="overflow-y-auto flex-1 pr-1 pt-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
+                  {/* Coluna esquerda */}
+                  <div className="col-span-1 space-y-4">
                   <div className="space-y-1.5">
                     <label className="text-xs font-bold text-muted-foreground">Nome</label>
                     <Input value={editForm.nome} onChange={(e) => setEditForm((f) => ({ ...f, nome: e.target.value }))} />
@@ -825,6 +828,10 @@ const AdminPage = () => {
                     <p className="text-[10px] font-bold text-muted-foreground pt-1">Ou cole uma URL</p>
                     <Input value={editForm.imagem} onChange={(e) => setEditForm((f) => ({ ...f, imagem: e.target.value }))} placeholder="https://..." />
                   </div>
+                  </div>{/* end left column */}
+
+                  {/* Coluna direita */}
+                  <div className="col-span-1 space-y-4">
                   <div className="flex items-center justify-between">
                     <label className="text-xs font-bold text-muted-foreground">Disponível no delivery</label>
                     <Switch
@@ -990,15 +997,16 @@ const AdminPage = () => {
                       </div>
                     ))}
                   </div>
-
-                  <div className="flex gap-3 pt-2">
-                    <Button variant="outline" className="flex-1" onClick={() => setEditProduct(null)}>
-                      <X className="mr-1 h-4 w-4" /> Cancelar
-                    </Button>
-                    <Button className="flex-1" onClick={saveEdit}>
-                      <Save className="mr-1 h-4 w-4" /> Salvar
-                    </Button>
-                  </div>
+                  </div>{/* end right column */}
+                  </div>{/* end grid */}
+                </div>{/* end scrollable */}
+                <div className="flex justify-end gap-3 pt-3 border-t border-border mt-2">
+                  <Button variant="outline" className="rounded-xl" onClick={() => setEditProduct(null)}>
+                    Cancelar
+                  </Button>
+                  <Button className="rounded-xl font-black px-8" onClick={saveEdit}>
+                    {isNewProduct ? "Criar produto" : "Salvar alterações"}
+                  </Button>
                 </div>
               </DialogContent>
             </Dialog>
