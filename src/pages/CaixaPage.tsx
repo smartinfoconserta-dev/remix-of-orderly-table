@@ -2462,6 +2462,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                           {Number.isFinite(balcaoValorEntregueNum) && balcaoValorEntregueNum >= balcaoValorRestante && balcaoValorEntregueNum > 0 && (
                             <Button
                               onClick={() => {
+                                setTrocoRegistrado(balcaoTrocoCalculado);
                                 setBalcaoPayments(prev => [
                                   ...prev,
                                   {
