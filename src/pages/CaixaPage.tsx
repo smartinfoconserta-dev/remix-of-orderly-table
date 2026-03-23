@@ -67,6 +67,7 @@ const normStr = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, ""
 const formatPrice = (v: number) => `R$ ${v.toFixed(2).replace(".", ",")}`;
 const FECHAMENTOS_MOTOBOY_KEY = "obsidian-motoboy-fechamentos-v1";
 const FUNDO_PROXIMO_KEY = "obsidian-caixa-fundo-proximo-v1";
+const DIFERENCAS_CAIXA_KEY = "obsidian-diferencas-caixa-v1";
 const toCents = (value: number) => Math.round(value * 100);
 
 const parseCurrencyInput = (value: string) => {
