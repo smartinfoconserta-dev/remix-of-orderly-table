@@ -66,6 +66,7 @@ import { findClienteDelivery, upsertClienteDelivery, getBairros, type ClienteDel
 const normStr = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
 const formatPrice = (v: number) => `R$ ${v.toFixed(2).replace(".", ",")}`;
 const FECHAMENTOS_MOTOBOY_KEY = "obsidian-motoboy-fechamentos-v1";
+const FUNDO_PROXIMO_KEY = "obsidian-caixa-fundo-proximo-v1";
 const toCents = (value: number) => Math.round(value * 100);
 
 const parseCurrencyInput = (value: string) => {
@@ -181,7 +182,16 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
   const [criticalReason, setCriticalReason] = useState("");
   const [criticalError, setCriticalError] = useState<string | null>(null);
   const [isAuthorizingCriticalAction, setIsAuthorizingCriticalAction] = useState(false);
-  const [fundoTrocoInput, setFundoTrocoInput] = useState("");
+  const [fundoTrocoInput, setFundoTrocoInput] = useState(() => {
+    try {
+      const saved = localStorage.getItem(FUNDO_PROXIMO_KEY);
+      if (saved) {
+        const val = parseFloat(saved);
+        return Number.isFinite(val) ? val.toFixed(2).replace(".", ",") : "";
+      }
+    } catch {}
+    return "";
+  });
   const [turnoModalOpen, setTurnoModalOpen] = useState(false);
   const [turnoManagerName, setTurnoManagerName] = useState("");
   const [turnoManagerPin, setTurnoManagerPin] = useState("");
@@ -195,6 +205,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
   const [movConfirmStep, setMovConfirmStep] = useState(false);
   const [turnoReportOpen, setTurnoReportOpen] = useState(false);
   const [dinheiroContado, setDinheiroContado] = useState("");
+  const [motivoDiferenca, setMotivoDiferenca] = useState("");
 
   /* ── Balcão/Delivery state ── */
   const [balcaoOpen, setBalcaoOpen] = useState(false);
@@ -623,6 +634,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
       }
       localStorage.setItem("obsidian-caixa-modo-v1", modoOperacao);
       abrirCaixa(valor, currentOperator);
+      localStorage.removeItem(FUNDO_PROXIMO_KEY);
       toast.success("Caixa aberto com sucesso!", { duration: 1200, icon: "✅" });
     };
 
@@ -646,9 +658,15 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                   <Wallet className="h-8 w-8" />
                 </div>
                 <h2 className="text-2xl font-black text-foreground">Abertura de Caixa</h2>
-                <p className="text-sm text-muted-foreground">
-                  Olá, <span className="font-bold text-foreground">{currentOperator.nome}</span>. Informe o valor do fundo de troco para iniciar o turno.
-                </p>
+                {fundoTrocoInput ? (
+                  <p className="text-sm text-muted-foreground">
+                    Olá, <span className="font-bold text-foreground">{currentOperator.nome}</span>. Valor do último fechamento carregado automaticamente. Corrija se necessário.
+                  </p>
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    Olá, <span className="font-bold text-foreground">{currentOperator.nome}</span>. Conte o dinheiro na gaveta e informe o valor inicial do caixa.
+                  </p>
+                )}
               </div>
               <div className="space-y-3">
                 <label className="text-sm font-bold text-foreground">Fundo de troco (R$)</label>
@@ -967,6 +985,18 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
     setTurnoError(null);
     const result = await verifyManagerAccess(turnoManagerName, turnoManagerPin);
     if (!result.ok) { setTurnoError(result.error ?? "Não autorizado"); setIsClosingTurno(false); return; }
+
+    // Save counted cash as next shift's fund
+    const contadoFinal = parseCurrencyInput(dinheiroContado);
+    if (Number.isFinite(contadoFinal) && contadoFinal > 0) {
+      localStorage.setItem(FUNDO_PROXIMO_KEY, String(contadoFinal));
+    }
+
+    // Calculate and log diff
+    const esperado = fundoTroco + resumoFinanceiro.dinheiro + resumoFinanceiro.entradasExtras - resumoFinanceiro.saidas;
+    const diff = Number.isFinite(contadoFinal) ? contadoFinal - esperado : 0;
+    const diffLabel = diff === 0 ? "caixa conferido" : diff > 0 ? `sobra de ${formatPrice(diff)}` : `falta de ${formatPrice(Math.abs(diff))}`;
+
     fecharCaixaDoDia(currentOperator);
     // Clear operator shift tracking
     try { localStorage.removeItem("obsidian-caixa-operadores-v1"); } catch {}
@@ -976,7 +1006,16 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
     setIsClosingTurno(false);
     setTurnoManagerName("");
     setTurnoManagerPin("");
-    toast.success("Turno fechado com sucesso!", { duration: 1400, icon: "🔒" });
+    setMotivoDiferenca("");
+
+    if (diff !== 0) {
+      toast[diff > 0 ? "success" : "error"](
+        `Fechamento registrado com ${diffLabel}. Registrado no log.`,
+        { duration: 3000 }
+      );
+    } else {
+      toast.success("Turno fechado com sucesso!", { duration: 1400, icon: "🔒" });
+    }
   };
 
   const clockStr = currentTime.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
@@ -2373,11 +2412,24 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                           <span className="font-black tabular-nums">{formatPrice(esperado)}</span>
                         </div>
                         <div className={`flex justify-between items-center rounded-lg p-3 ${diff === 0 ? "bg-emerald-500/10" : diff > 0 ? "bg-emerald-500/10" : "bg-destructive/10"}`}>
-                          <span className="text-sm font-black">{diff === 0 ? "Caixa conferido ✓" : diff > 0 ? "Sobra de caixa" : "Falta de caixa"}</span>
+                          <span className="text-sm font-black">{diff === 0 ? "✓ Caixa bateu — sem diferença" : diff > 0 ? `↑ Sobra de ${formatPrice(diff)} — registrar motivo` : `↓ Falta de ${formatPrice(Math.abs(diff))} — registrar motivo`}</span>
                           <span className={`text-sm font-black tabular-nums ${diff === 0 ? "text-emerald-400" : diff > 0 ? "text-emerald-400" : "text-destructive"}`}>
                             {diff === 0 ? "R$ 0,00" : diff > 0 ? `+${formatPrice(diff)}` : formatPrice(diff)}
                           </span>
                         </div>
+                        {diff !== 0 && (
+                          <div className="space-y-1 mt-2">
+                            <label className="text-xs font-bold text-muted-foreground">
+                              Motivo da diferença (opcional)
+                            </label>
+                            <Input
+                              value={motivoDiferenca}
+                              onChange={e => setMotivoDiferenca(e.target.value)}
+                              placeholder={diff > 0 ? "Ex: troco esquecido na gaveta" : "Ex: troco devolvido a menos"}
+                              className="h-9 rounded-xl text-sm"
+                            />
+                          </div>
+                        )}
                       </div>
                     );
                   })()}
@@ -2513,11 +2565,24 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                         <span className="font-black tabular-nums">{formatPrice(esperado)}</span>
                       </div>
                       <div className={`flex justify-between items-center rounded-lg p-2 ${diff === 0 ? "bg-emerald-500/10" : diff > 0 ? "bg-emerald-500/10" : "bg-destructive/10"}`}>
-                        <span className="text-sm font-black">{diff === 0 ? "Caixa conferido ✓" : diff > 0 ? "Sobra de caixa" : "Falta de caixa"}</span>
+                        <span className="text-sm font-black">{diff === 0 ? "✓ Caixa bateu — sem diferença" : diff > 0 ? `↑ Sobra de ${formatPrice(diff)} — registrar motivo` : `↓ Falta de ${formatPrice(Math.abs(diff))} — registrar motivo`}</span>
                         <span className={`text-sm font-black tabular-nums ${diff === 0 ? "text-emerald-400" : diff > 0 ? "text-emerald-400" : "text-destructive"}`}>
                           {diff === 0 ? "R$ 0,00" : diff > 0 ? `+${formatPrice(diff)}` : formatPrice(diff)}
                         </span>
                       </div>
+                      {diff !== 0 && (
+                        <div className="space-y-1 mt-2">
+                          <label className="text-xs font-bold text-muted-foreground">
+                            Motivo da diferença (opcional)
+                          </label>
+                          <Input
+                            value={motivoDiferenca}
+                            onChange={e => setMotivoDiferenca(e.target.value)}
+                            placeholder={diff > 0 ? "Ex: troco esquecido na gaveta" : "Ex: troco devolvido a menos"}
+                            className="h-9 rounded-xl text-sm"
+                          />
+                        </div>
+                      )}
                     </div>
                   );
                 })()}
