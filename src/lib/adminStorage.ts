@@ -33,6 +33,22 @@ export interface BannerConfig {
   imagemBase64?: string;
 }
 
+export interface HorarioFuncionamento {
+  ativo: boolean;
+  abertura: string; // "HH:MM"
+  fechamento: string; // "HH:MM"
+}
+
+export interface HorariosSemana {
+  dom: HorarioFuncionamento;
+  seg: HorarioFuncionamento;
+  ter: HorarioFuncionamento;
+  qua: HorarioFuncionamento;
+  qui: HorarioFuncionamento;
+  sex: HorarioFuncionamento;
+  sab: HorarioFuncionamento;
+}
+
 export interface SistemaConfig {
   nomeRestaurante: string;
   logoUrl: string;
@@ -53,6 +69,8 @@ export interface SistemaConfig {
   couvertAtivo?: boolean;
   couvertValor?: number;
   couvertObrigatorio?: boolean;
+  horarioFuncionamento?: HorariosSemana;
+  mensagemFechado?: string;
 }
 
 export interface LicencaConfig {
