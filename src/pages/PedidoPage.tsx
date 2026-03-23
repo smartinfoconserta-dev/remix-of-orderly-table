@@ -359,19 +359,54 @@ export default function PedidoPage() {
   // ── Horário de funcionamento ──
   const statusHorario = isDeliveryAberto();
 
-  const bannerFechado = !statusHorario.aberto && (
-    <div className="bg-card border-b border-border px-4 py-3 flex items-center justify-center gap-3">
-      <div className="flex items-center gap-2">
-        <p className="text-sm font-black text-foreground">{RESTAURANTE_NOME}</p>
-        <span className="rounded-full bg-destructive/15 border border-destructive/30 px-2 py-0.5 text-[10px] font-bold text-destructive">
-          Fechado agora
-        </span>
+  if (!statusHorario.aberto) {
+    const horarios = getHorariosFuncionamento();
+    const diaAtual = (["dom","seg","ter","qua","qui","sex","sab"] as const)[new Date().getDay()];
+    const horarioDia = horarios[diaAtual];
+    const horarioDiaTexto = horarioDia.ativo ? `${horarioDia.abertura} — ${horarioDia.fechamento}` : "";
+
+    return (
+      <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center p-6 text-center space-y-6">
+        {RESTAURANTE_LOGO ? (
+          <img src={RESTAURANTE_LOGO} alt={RESTAURANTE_NOME}
+            className="w-20 h-20 rounded-2xl object-cover border border-border" />
+        ) : (
+          <div className="w-20 h-20 rounded-2xl bg-secondary border border-border flex items-center justify-center text-2xl font-black">
+            {RESTAURANTE_INITIALS}
+          </div>
+        )}
+        <div className="space-y-2">
+          <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">{RESTAURANTE_NOME}</p>
+          <h1 className="text-3xl font-black">{statusHorario.mensagem}</h1>
+          {statusHorario.proximoHorario && (
+            <p className="text-sm text-muted-foreground">{statusHorario.proximoHorario}</p>
+          )}
+        </div>
+        {horarioDiaTexto && statusHorario.horasRestantes && statusHorario.horasRestantes > 0 && (
+          <div className="rounded-2xl border border-border bg-card px-8 py-5 space-y-1">
+            <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Horário de hoje</p>
+            <p className="text-2xl font-black">{horarioDiaTexto}</p>
+            <p className="text-xs text-primary font-bold">Em aproximadamente {statusHorario.horasRestantes}h</p>
+          </div>
+        )}
+        {sysConfig.telefoneRestaurante && (
+          <button
+            onClick={() => window.open(`https://wa.me/55${sysConfig.telefoneRestaurante}`, "_blank")}
+            className="flex items-center gap-3 rounded-2xl bg-[#25D366] px-6 py-3.5 text-white font-black text-base active:scale-95 transition-transform"
+          >
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
+              <path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.554 4.11 1.522 5.836L.057 23.99l6.304-1.654A11.954 11.954 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 01-5.002-1.366l-.358-.213-3.722.976.994-3.636-.234-.373A9.818 9.818 0 1112 21.818z"/>
+            </svg>
+            Falar no WhatsApp
+          </button>
+        )}
+        <p className="text-xs text-muted-foreground/60">
+          Delivery indisponível fora do horário de funcionamento
+        </p>
       </div>
-      {statusHorario.proximoHorario && (
-        <p className="text-xs text-foreground">{statusHorario.proximoHorario}</p>
-      )}
-    </div>
-  );
+    );
+  }
 
   // ── Cardápio (full screen PedidoFlow) ──
   if (etapa === "cardapio") {
