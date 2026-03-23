@@ -2156,6 +2156,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                           {valorEntregueValido && valorEntregueNum > 0 && (
                             <Button
                               onClick={() => {
+                                setTrocoRegistrado(trocoCalculado);
                                 setClosingPayments(prev => [
                                   ...prev,
                                   {
