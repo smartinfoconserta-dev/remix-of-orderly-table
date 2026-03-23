@@ -2200,7 +2200,31 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                     </div>
                   )}
 
-                  {!fechamentoPronto && totalConta > 0 && (
+                  {!descontoAplicado && closingPayments.length === 0 && totalConta > 0 && (
+                    <button onClick={() => setDescontoModalOpen(true)}
+                      className="flex items-center gap-1.5 text-xs font-bold text-muted-foreground hover:text-primary transition-colors w-fit">
+                      <span>🎁</span> Aplicar desconto
+                    </button>
+                  )}
+
+                  {descontoAplicado > 0 && (
+                    <div className="flex items-center justify-between rounded-xl bg-primary/10 border border-primary/20 px-3 py-2">
+                      <div className="flex items-center gap-2">
+                        <span>🎁</span>
+                        <div>
+                          <p className="text-xs font-bold text-primary">Desconto aplicado</p>
+                          <p className="text-[10px] text-muted-foreground">Original: {formatPrice(mesa?.total ?? 0)} → Com desconto: {formatPrice(totalConta)}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className="text-sm font-black text-primary tabular-nums">- {formatPrice(descontoAplicado)}</span>
+                        {closingPayments.length === 0 && (
+                          <button onClick={() => setDescontoAplicado(0)} className="text-xs text-destructive hover:underline">remover</button>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
                     <div className="grid grid-cols-2 gap-2">
                       {paymentMethodOptions.map((opt) => {
                         const Icon = opt.icon;
