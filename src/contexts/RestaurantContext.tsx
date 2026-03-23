@@ -88,6 +88,8 @@ export interface FechamentoConta {
   caixaNome: string;
   troco?: number;
   desconto?: number;
+  couvert?: number;
+  numeroPessoas?: number;
   cancelado?: boolean;
   canceladoEm?: string;
   canceladoMotivo?: string;
@@ -128,6 +130,8 @@ export interface FecharContaInput {
   pagamentos: SplitPayment[];
   troco?: number;
   desconto?: number;
+  couvert?: number;
+  numeroPessoas?: number;
 }
 
 interface RestaurantStore {
@@ -790,6 +794,8 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
             caixaNome: input.usuario.nome,
             troco: input.troco ?? 0,
             desconto: input?.desconto ?? 0,
+            couvert: input?.couvert ?? 0,
+            numeroPessoas: input?.numeroPessoas ?? 0,
           };
 
           eventInput = {
@@ -1283,6 +1289,8 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         caixaNome: input.usuario.nome,
         troco: input.troco ?? 0,
         desconto: input.desconto ?? 0,
+        couvert: input.couvert ?? 0,
+        numeroPessoas: input.numeroPessoas ?? 0,
       };
 
       return {

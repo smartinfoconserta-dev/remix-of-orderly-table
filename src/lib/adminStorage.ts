@@ -50,6 +50,9 @@ export interface SistemaConfig {
   deliveryAtivo?: boolean;
   modoIdentificacaoDelivery?: "visitante" | "cadastro";
   cozinhaAtiva?: boolean;
+  couvertAtivo?: boolean;
+  couvertValor?: number;
+  couvertObrigatorio?: boolean;
 }
 
 export interface LicencaConfig {
@@ -95,6 +98,9 @@ const defaultSistemaConfig: SistemaConfig = {
   instagramUrl: "",
   senhaWifi: "",
   cozinhaAtiva: false,
+  couvertAtivo: false,
+  couvertValor: 0,
+  couvertObrigatorio: false,
 };
 
 export function getSistemaConfig(): SistemaConfig {

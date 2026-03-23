@@ -1151,7 +1151,52 @@ const AdminPage = () => {
                 />
               </div>
 
-              {/* Toggle delivery */}
+              {/* Couvert / Taxa de serviço */}
+              <div className="rounded-xl border border-border bg-secondary/40 p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-black text-foreground">Couvert / Taxa de serviço</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">Cobrado por pessoa ao fechar a conta</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setSistemaConfig(c => ({ ...c, couvertAtivo: !c.couvertAtivo }))}
+                    className={`relative h-6 w-11 rounded-full transition-colors ${sistemaConfig.couvertAtivo ? "bg-primary" : "bg-border"}`}
+                  >
+                    <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${sistemaConfig.couvertAtivo ? "translate-x-5" : "translate-x-0.5"}`} />
+                  </button>
+                </div>
+                {sistemaConfig.couvertAtivo && (
+                  <>
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold text-muted-foreground">Valor por pessoa (R$)</label>
+                      <Input
+                        value={sistemaConfig.couvertValor ? sistemaConfig.couvertValor.toFixed(2).replace(".", ",") : ""}
+                        onChange={e => {
+                          const val = parseFloat(e.target.value.replace(",", ".")) || 0;
+                          setSistemaConfig(c => ({ ...c, couvertValor: Number.isFinite(val) ? val : 0 }));
+                        }}
+                        placeholder="Ex.: 5,00"
+                        inputMode="decimal"
+                        className="h-10 rounded-xl text-sm max-w-[160px]"
+                      />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-xs font-bold text-foreground">Obrigatório</p>
+                        <p className="text-xs text-muted-foreground">Se desligado, operador pode dispensar</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setSistemaConfig(c => ({ ...c, couvertObrigatorio: !c.couvertObrigatorio }))}
+                        className={`relative h-6 w-11 rounded-full transition-colors ${sistemaConfig.couvertObrigatorio ? "bg-primary" : "bg-border"}`}
+                      >
+                        <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${sistemaConfig.couvertObrigatorio ? "translate-x-5" : "translate-x-0.5"}`} />
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-bold text-foreground">{sistemaConfig.deliveryAtivo !== false ? "Delivery ativado" : "Delivery desativado"}</p>

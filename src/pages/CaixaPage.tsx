@@ -226,6 +226,8 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
   const [descontoManagerPin, setDescontoManagerPin] = useState("");
   const [descontoError, setDescontoError] = useState<string | null>(null);
   const [descontoAplicado, setDescontoAplicado] = useState(0);
+  const [couvertPessoas, setCouvertPessoas] = useState(0);
+  const [couvertDispensado, setCouvertDispensado] = useState(false);
   const [estornoModalOpen, setEstornoModalOpen] = useState(false);
   const [estornoFechamentoId, setEstornoFechamentoId] = useState<string | null>(null);
   const [estornoMotivo, setEstornoMotivo] = useState("");
@@ -441,7 +443,11 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
   }, [buscaComanda, fechamentos]);
 
   /* ── payment math (mesa) ── */
-  const totalConta = Math.max((mesa?.total ?? 0) - descontoAplicado, 0);
+  const couvertValorUnit = sistemaConfig.couvertAtivo && !couvertDispensado && couvertPessoas > 0
+    ? (sistemaConfig.couvertValor ?? 0)
+    : 0;
+  const couvertTotal = couvertValorUnit * couvertPessoas;
+  const totalConta = Math.max((mesa?.total ?? 0) - descontoAplicado + couvertTotal, 0);
   const totalContaCents = toCents(totalConta);
   const totalPago = useMemo(() => closingPayments.reduce((acc, p) => acc + p.valor, 0), [closingPayments]);
   const totalPagoCents = toCents(totalPago);
@@ -517,6 +523,8 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
     setDescontoManagerName("");
     setDescontoManagerPin("");
     setDescontoError(null);
+    setCouvertPessoas(0);
+    setCouvertDispensado(false);
   }, []);
 
   const handleVoltar = useCallback(() => {
@@ -944,7 +952,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
       toast.error("O fechamento só pode ser confirmado quando o total pago for igual ao total da conta", { duration: 1600 });
       return;
     }
-    fecharConta(mesaSelecionada, { usuario: currentOperator, pagamentos: closingPayments, troco: trocoRegistrado, desconto: descontoAplicado });
+    fecharConta(mesaSelecionada, { usuario: currentOperator, pagamentos: closingPayments, troco: trocoRegistrado, desconto: descontoAplicado, couvert: couvertTotal, numeroPessoas: couvertPessoas });
     toast.success(
       trocoRegistrado > 0
         ? `Conta fechada — Troco: ${formatPrice(trocoRegistrado)}`
@@ -2341,6 +2349,59 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                           <button onClick={() => setDescontoAplicado(0)} className="text-xs text-destructive hover:underline">remover</button>
                         )}
                       </div>
+                    </div>
+                  )}
+
+                  {/* Couvert */}
+                  {sistemaConfig.couvertAtivo && !couvertDispensado && mesa && !mesa.pedidos.every(p => p.paraViagem) && (
+                    <div className="rounded-xl border border-border bg-secondary/40 p-3 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <p className="text-xs font-black text-foreground flex items-center gap-1.5">
+                          🍽️ Couvert
+                          <span className="text-muted-foreground font-normal">
+                            {formatPrice(sistemaConfig.couvertValor ?? 0)}/pessoa
+                          </span>
+                        </p>
+                        {!sistemaConfig.couvertObrigatorio && (
+                          <button
+                            onClick={() => setCouvertDispensado(true)}
+                            className="text-xs text-destructive/70 hover:text-destructive font-bold"
+                          >
+                            Dispensar
+                          </button>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <button
+                          onClick={() => setCouvertPessoas(p => Math.max(0, p - 1))}
+                          className="h-8 w-8 flex items-center justify-center rounded-lg border border-border bg-card text-foreground"
+                        >
+                          <Minus className="h-3.5 w-3.5" />
+                        </button>
+                        <span className="min-w-[3rem] text-center text-base font-black tabular-nums">
+                          {couvertPessoas} {couvertPessoas === 1 ? "pessoa" : "pessoas"}
+                        </span>
+                        <button
+                          onClick={() => setCouvertPessoas(p => p + 1)}
+                          className="h-8 w-8 flex items-center justify-center rounded-lg border border-border bg-card text-foreground"
+                        >
+                          <Plus className="h-3.5 w-3.5" />
+                        </button>
+                        {couvertPessoas > 0 && (
+                          <span className="ml-auto text-sm font-black tabular-nums text-primary">
+                            + {formatPrice(couvertTotal)}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {couvertDispensado && (
+                    <div className="flex items-center justify-between rounded-xl bg-secondary/40 border border-border px-3 py-2">
+                      <span className="text-xs text-muted-foreground">🍽️ Couvert dispensado</span>
+                      <button onClick={() => setCouvertDispensado(false)} className="text-xs text-primary font-bold">
+                        Reverter
+                      </button>
                     </div>
                   )}
 
