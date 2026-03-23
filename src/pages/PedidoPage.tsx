@@ -412,7 +412,7 @@ export default function PedidoPage() {
   if (etapa === "cardapio") {
     return (
       <div className="min-h-screen bg-background">
-        {bannerFechado}
+        
         <PedidoFlow
           modo="delivery"
           clienteNome={nome || loggedClient?.nome || ""}
