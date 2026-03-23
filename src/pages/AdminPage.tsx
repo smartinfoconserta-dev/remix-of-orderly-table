@@ -767,6 +767,8 @@ const AdminPage = () => {
                 </DialogHeader>
                 <div className="overflow-y-auto flex-1 pr-1 pt-2">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
+                  {/* Coluna esquerda */}
+                  <div className="col-span-1 space-y-4">
                   <div className="space-y-1.5">
                     <label className="text-xs font-bold text-muted-foreground">Nome</label>
                     <Input value={editForm.nome} onChange={(e) => setEditForm((f) => ({ ...f, nome: e.target.value }))} />
