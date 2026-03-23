@@ -851,13 +851,19 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
       toast.error("O fechamento só pode ser confirmado quando o total pago for igual ao total da conta", { duration: 1600 });
       return;
     }
-    const trocoFinal = trocoRegistrado;
+    const pagamentoDinheiro = closingPayments
+      .filter(p => p.formaPagamento === "dinheiro")
+      .reduce((s, p) => s + p.valor, 0);
+    const veNum = parseCurrencyInput(valorEntregue);
+    const trocoFinal = pagamentoDinheiro > 0 && Number.isFinite(veNum)
+      ? Math.max(0, veNum - pagamentoDinheiro)
+      : trocoRegistrado;
     fecharConta(mesaSelecionada, { usuario: currentOperator, pagamentos: closingPayments, troco: trocoFinal });
     toast.success(
       trocoFinal > 0
         ? `Conta fechada — Troco: ${formatPrice(trocoFinal)}`
         : closingPayments.length > 1
-          ? "Conta fechada com múltiplas formas de pagamento"
+          ? "Conta fechada — múltiplas formas de pagamento"
           : `Conta fechada em ${getPaymentMethodLabel(closingPayments[0].formaPagamento)}`,
       { duration: 2500, icon: "✅" },
     );
