@@ -1606,6 +1606,7 @@ const AdminPage = () => {
               </div>
             </div>
 
+            <Button onClick={saveSistema} className="w-full max-w-lg">
               <Save className="mr-1 h-4 w-4" /> Salvar configurações
             </Button>
 
