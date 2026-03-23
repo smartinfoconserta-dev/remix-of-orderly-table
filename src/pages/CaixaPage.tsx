@@ -459,6 +459,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
     setClosingPaymentMethod("dinheiro");
     setClosingPaymentValue("");
     setValorEntregue("");
+    setTrocoRegistrado(0);
   }, []);
 
   const handleVoltar = useCallback(() => {
