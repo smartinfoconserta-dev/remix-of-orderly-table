@@ -287,6 +287,11 @@ export default function PedidoPage() {
   };
 
   const handlePedidoConfirmado = (itensPedido: ItemCarrinho[], pv: boolean) => {
+    const statusAgora = isDeliveryAberto();
+    if (!statusAgora.aberto) {
+      toast.error(`${statusAgora.mensagem}. ${statusAgora.proximoHorario || ""}`);
+      return;
+    }
     setItens(itensPedido); setParaViagem(pv);
     if (isCadastro) { setEtapa("confirmacao"); }
     else { setEtapa("identificacao"); }
