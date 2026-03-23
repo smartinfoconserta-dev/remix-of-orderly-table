@@ -2370,7 +2370,14 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                           <button
                             key={opt.value}
                             type="button"
-                            onClick={() => setBalcaoPaymentMethod(opt.value)}
+                            onClick={() => {
+                              setBalcaoPaymentMethod(opt.value);
+                              if (opt.value !== "dinheiro") {
+                                setBalcaoPaymentValue(balcaoValorRestante.toFixed(2).replace(".", ","));
+                              } else {
+                                setBalcaoValorEntregue("");
+                              }
+                            }}
                             className={`flex items-center justify-center gap-2 rounded-2xl border-2 py-3 px-4 transition-colors ${
                               isSelected ? `border-white ${opt.bgColor}` : `${opt.idleBorder} ${opt.idleBg} opacity-50`
                             }`}
