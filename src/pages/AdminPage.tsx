@@ -584,6 +584,13 @@ const AdminPage = () => {
               <div>
                 <h2 className="text-2xl font-black text-foreground">Cardápio</h2>
                 <p className="text-sm text-muted-foreground">Gerencie os produtos do cardápio</p>
+                <div className="flex items-center gap-4 text-xs text-muted-foreground mt-1">
+                  <span>{allProducts.length} produtos</span>
+                  <span>·</span>
+                  <span>{allProducts.filter(p => p.ativo !== false).length} disponíveis</span>
+                  <span>·</span>
+                  <span>{todasCategorias.length} categorias</span>
+                </div>
               </div>
               <Button onClick={openNewProduct} className="rounded-xl font-bold gap-1.5">
                 <Plus className="h-4 w-4" />
@@ -660,13 +667,16 @@ const AdminPage = () => {
                   setCatFilter("todas");
                   document.querySelector("[data-admin-product-table]")?.scrollTo({ top: 0, behavior: "smooth" });
                 }}
-                className={`rounded-xl px-4 py-2 text-xs font-bold transition-colors ${
+                className={`flex items-center gap-2 rounded-xl border px-4 py-2 text-sm font-bold transition-colors ${
                   catFilter === "todas"
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-secondary text-muted-foreground hover:text-foreground"
+                    ? "border-primary bg-primary/10 text-primary"
+                    : "border-border bg-secondary text-muted-foreground hover:text-foreground hover:border-primary/30"
                 }`}
               >
-                Todas ({allProducts.length})
+                Todas
+                <span className="text-xs bg-primary/10 text-primary rounded-md px-1.5 py-0.5 font-black">
+                  {allProducts.length}
+                </span>
               </button>
               {todasCategorias.map((c) => {
                 const count = allProducts.filter((p) => p.categoria === c.id).length;
@@ -678,13 +688,16 @@ const AdminPage = () => {
                       setCatFilter(c.id);
                       document.querySelector("[data-admin-product-table]")?.scrollTo({ top: 0, behavior: "smooth" });
                     }}
-                    className={`rounded-xl px-4 py-2 text-xs font-bold transition-colors ${
+                    className={`flex items-center gap-2 rounded-xl border px-4 py-2 text-sm font-bold transition-colors ${
                       catFilter === c.id
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-secondary text-muted-foreground hover:text-foreground"
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "border-border bg-secondary text-muted-foreground hover:text-foreground hover:border-primary/30"
                     }`}
                   >
-                    {c.nome} ({count})
+                    {c.nome}
+                    <span className="text-xs bg-primary/10 text-primary rounded-md px-1.5 py-0.5 font-black">
+                      {count}
+                    </span>
                   </button>
                 );
               })}
@@ -716,7 +729,7 @@ const AdminPage = () => {
                             {(p.imagemBase64 || p.imagem) ? (
                               <img src={p.imagemBase64 || p.imagem} alt={p.nome} className="h-10 w-10 rounded-lg object-cover" />
                             ) : (
-                              <div className="h-10 w-10 rounded-lg bg-secondary flex items-center justify-center text-muted-foreground text-[10px]">?</div>
+                              <div className="h-10 w-10 rounded-lg bg-secondary border border-border flex items-center justify-center text-muted-foreground shrink-0"><span className="text-lg">🍽️</span></div>
                             )}
                           </td>
                           <td className="px-4 py-3 font-semibold text-foreground">{p.nome}</td>
@@ -730,8 +743,8 @@ const AdminPage = () => {
                           </td>
                           <td className="px-4 py-3 text-center">
                             <div className="flex items-center justify-center gap-1">
-                              <Button variant="ghost" size="icon" onClick={() => openEdit(p)}>
-                                <Pencil className="h-4 w-4" />
+                              <Button variant="outline" size="sm" onClick={() => openEdit(p)} className="rounded-xl font-bold gap-1.5 text-xs">
+                                <Pencil className="h-3 w-3" /> Editar
                               </Button>
                               <Button variant="ghost" size="icon" onClick={() => setRemoveTarget(p)} className="text-destructive hover:bg-destructive/10">
                                 <Trash2 className="h-4 w-4" />
