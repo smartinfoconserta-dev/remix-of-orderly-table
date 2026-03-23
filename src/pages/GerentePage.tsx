@@ -1,4 +1,4 @@
-import { useMemo, useState, useCallback } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { Bike } from "lucide-react";
 import {
   AlertTriangle,
@@ -201,6 +201,21 @@ const GerentePage = () => {
   const [mPin, setMPin] = useState("");
   const [mError, setMError] = useState<string | null>(null);
 
+  // Fechamentos motoboy
+  const FECHAMENTOS_KEY = "obsidian-motoboy-fechamentos-v1";
+  const [fechamentosMotoboy, setFechamentosMotoboy] = useState<any[]>(() => {
+    try {
+      const raw = localStorage.getItem(FECHAMENTOS_KEY);
+      return raw ? JSON.parse(raw) : [];
+    } catch { return []; }
+  });
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(FECHAMENTOS_KEY);
+      setFechamentosMotoboy(raw ? JSON.parse(raw) : []);
+    } catch {}
+  }, []);
+
   const handleVerificarPin = useCallback(async () => {
     if (!currentGerente) return;
     setPinError("");
@@ -288,6 +303,45 @@ const GerentePage = () => {
   const totalMesas = useMemo(() => fechMesas.reduce((a, f) => a + f.total, 0), [fechMesas]);
   const totalDelivery = useMemo(() => fechDelivery.reduce((a, f) => a + f.total, 0), [fechDelivery]);
   const totalMotoboys = useMemo(() => fechMotoboys.reduce((a, f) => a + f.total, 0), [fechMotoboys]);
+
+  const fechMotoboyPeriodo = useMemo(() => {
+    return fechamentosMotoboy.filter(f => {
+      const d = new Date(f.timestamp);
+      return d >= dateRange.start && d <= dateRange.end;
+    });
+  }, [fechamentosMotoboy, dateRange]);
+
+  const resumoPorMotoboy = useMemo(() => {
+    const map = new Map<string, {
+      nome: string;
+      totalEntregas: number;
+      totalDinheiro: number;
+      totalPix: number;
+      totalCredito: number;
+      totalDebito: number;
+      totalGeral: number;
+      conferidos: number;
+      pendentes: number;
+    }>();
+    fechMotoboyPeriodo.forEach(f => {
+      const existing = map.get(f.motoboyNome) || {
+        nome: f.motoboyNome,
+        totalEntregas: 0, totalDinheiro: 0, totalPix: 0,
+        totalCredito: 0, totalDebito: 0, totalGeral: 0,
+        conferidos: 0, pendentes: 0,
+      };
+      existing.totalEntregas += f.resumo.totalEntregas || 0;
+      existing.totalDinheiro += f.resumo.deveDevolver || 0;
+      existing.totalPix += f.resumo.pix || 0;
+      existing.totalCredito += f.resumo.credito || 0;
+      existing.totalDebito += f.resumo.debito || 0;
+      existing.totalGeral += f.resumo.totalAPrestar || 0;
+      if (f.status === "conferido") existing.conferidos++;
+      else existing.pendentes++;
+      map.set(f.motoboyNome, existing);
+    });
+    return [...map.values()].sort((a, b) => b.totalGeral - a.totalGeral);
+  }, [fechMotoboyPeriodo]);
 
   const relPedidosRealizados = allEventos.filter((e) => {
     const d = new Date(e.criadoEmIso);
@@ -958,6 +1012,65 @@ const GerentePage = () => {
                 </div>
               );
             })()}
+            {/* ── Desempenho dos Motoboys (fechamentos) ── */}
+            {resumoPorMotoboy.length > 0 && (
+              <div className="rounded-2xl border border-border bg-card p-4 space-y-4">
+                <h3 className="text-sm font-black text-foreground flex items-center gap-2">
+                  🏍️ Desempenho dos Motoboys
+                  <span className="text-xs font-normal text-muted-foreground">
+                    {fechMotoboyPeriodo.length} fechamento(s) no período
+                  </span>
+                </h3>
+                <div className="space-y-3">
+                  {resumoPorMotoboy.map(m => (
+                    <div key={m.nome} className="rounded-xl border border-border bg-secondary/40 p-3 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-black text-foreground">{m.nome}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {m.totalEntregas} entregas ·
+                            {m.conferidos > 0 && <span className="text-emerald-400"> {m.conferidos} conferido(s)</span>}
+                            {m.pendentes > 0 && <span className="text-amber-400"> {m.pendentes} pendente(s)</span>}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-xs text-muted-foreground">Total prestado</p>
+                          <p className="text-base font-black text-foreground tabular-nums">
+                            {formatPrice(m.totalGeral)}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-4 gap-2 pt-2 border-t border-border/50">
+                        <div className="text-center">
+                          <p className="text-[10px] text-muted-foreground">💵 Dinheiro</p>
+                          <p className="text-xs font-black tabular-nums text-amber-400">{formatPrice(m.totalDinheiro)}</p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-[10px] text-muted-foreground">📱 PIX</p>
+                          <p className="text-xs font-black tabular-nums text-emerald-400">{formatPrice(m.totalPix)}</p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-[10px] text-muted-foreground">💳 Crédito</p>
+                          <p className="text-xs font-black tabular-nums text-blue-400">{formatPrice(m.totalCredito)}</p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-[10px] text-muted-foreground">💳 Débito</p>
+                          <p className="text-xs font-black tabular-nums text-blue-400">{formatPrice(m.totalDebito)}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                {resumoPorMotoboy.length > 0 && (
+                  <div className="flex items-center justify-between pt-2 border-t border-border">
+                    <span className="text-sm font-bold text-muted-foreground">Total delivery no período</span>
+                    <span className="text-lg font-black text-primary tabular-nums">
+                      {formatPrice(resumoPorMotoboy.reduce((s, m) => s + m.totalGeral, 0))}
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <h2 className="text-sm font-black uppercase tracking-widest text-muted-foreground">Comandas fechadas no período</h2>
