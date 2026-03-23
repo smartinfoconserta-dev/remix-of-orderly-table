@@ -2311,18 +2311,18 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
 
                   {/* Payment list */}
                   {closingPayments.length > 0 && (
-                    <div className="space-y-2">
+                    <div className="space-y-1.5">
                       {closingPayments.map((payment) => {
                         const style = getPaymentMethodStyle(payment.formaPagamento);
                         const Icon = style.icon;
                         return (
-                          <div key={payment.id} className={`flex items-center gap-3 rounded-2xl border ${style.borderColor} ${style.bgColor} px-4 py-3`}>
-                            <div className={`flex h-9 w-9 items-center justify-center rounded-xl ${style.bgColor} ${style.color}`}>
-                              <Icon className="h-4 w-4" />
+                          <div key={payment.id} className={`flex items-center gap-2 rounded-xl border ${style.borderColor} ${style.bgColor} px-3 py-2`}>
+                            <div className={`flex h-7 w-7 items-center justify-center rounded-lg ${style.bgColor} ${style.color}`}>
+                              <Icon className="h-3.5 w-3.5" />
                             </div>
                             <p className="flex-1 text-sm font-bold text-foreground">{getPaymentMethodLabel(payment.formaPagamento)}</p>
-                            <span className={`text-base font-black tabular-nums ${style.color}`}>{formatPrice(payment.valor)}</span>
-                            <Button size="icon" variant="outline" className="h-7 w-7 rounded-lg text-destructive border-destructive/20 hover:bg-destructive/10" onClick={() => handleRemovePayment(payment.id)}>
+                            <span className={`text-sm font-black tabular-nums ${style.color}`}>{formatPrice(payment.valor)}</span>
+                            <Button size="icon" variant="outline" className="h-6 w-6 rounded-lg text-destructive border-destructive/20 hover:bg-destructive/10" onClick={() => handleRemovePayment(payment.id)}>
                               <Trash2 className="h-3 w-3" />
                             </Button>
                           </div>
