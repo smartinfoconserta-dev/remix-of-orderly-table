@@ -2357,27 +2357,116 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
 
                   {!balcaoFechamentoPronto && balcaoTotalConta > 0 && (
                     <div className="space-y-3">
-                      <div className="flex items-end gap-3">
-                        <div className="flex-1 space-y-1">
-                          <label className="text-xs font-semibold text-muted-foreground">Valor</label>
-                          <Input value={balcaoPaymentValue} onChange={(e) => setBalcaoPaymentValue(e.target.value)} placeholder="Ex.: 25,00" inputMode="decimal" autoComplete="off" className="h-12 rounded-xl text-lg font-bold" />
+                      {balcaoPaymentMethod === "dinheiro" ? (
+                        <div className="space-y-3">
+                          <div className="flex items-end gap-3">
+                            <div className="flex-1 space-y-1">
+                              <label className="text-xs font-semibold text-muted-foreground">
+                                Cliente entregou (R$)
+                              </label>
+                              <Input
+                                value={balcaoValorEntregue}
+                                onChange={(e) => setBalcaoValorEntregue(e.target.value)}
+                                placeholder="Ex.: 50,00"
+                                inputMode="decimal"
+                                autoComplete="off"
+                                className="h-12 rounded-xl text-lg font-bold"
+                              />
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            {[20, 50, 100, 200].map((qv) => (
+                              <Button
+                                key={qv}
+                                type="button"
+                                variant="outline"
+                                className="rounded-xl font-bold tabular-nums flex-1 h-10"
+                                onClick={() => setBalcaoValorEntregue(qv.toFixed(2).replace(".", ","))}
+                              >
+                                R$ {qv}
+                              </Button>
+                            ))}
+                            <Button
+                              type="button"
+                              variant="outline"
+                              className="rounded-xl font-bold tabular-nums flex-1 h-10 border-primary/30 text-primary hover:bg-primary/10"
+                              onClick={() => setBalcaoValorEntregue(balcaoValorRestante.toFixed(2).replace(".", ","))}
+                            >
+                              Exato
+                            </Button>
+                          </div>
+                          {Number.isFinite(balcaoValorEntregueNum) && balcaoValorEntregueNum > 0 && (
+                            <div className={`rounded-2xl p-4 flex items-center justify-between ${
+                              balcaoTrocoCalculado > 0
+                                ? "bg-emerald-500/10 border border-emerald-500/30"
+                                : balcaoValorEntregueNum < balcaoValorRestante
+                                ? "bg-destructive/10 border border-destructive/30"
+                                : "bg-emerald-500/10 border border-emerald-500/30"
+                            }`}>
+                              <span className={`text-base font-black ${
+                                balcaoTrocoCalculado > 0 ? "text-emerald-400"
+                                : balcaoValorEntregueNum < balcaoValorRestante ? "text-destructive"
+                                : "text-emerald-400"
+                              }`}>
+                                {balcaoTrocoCalculado > 0
+                                  ? "💵 Troco para o cliente"
+                                  : balcaoValorEntregueNum < balcaoValorRestante
+                                  ? "⚠ Valor insuficiente"
+                                  : "✓ Valor exato"}
+                              </span>
+                              <span className={`text-3xl font-black tabular-nums ${
+                                balcaoTrocoCalculado > 0 ? "text-emerald-400"
+                                : balcaoValorEntregueNum < balcaoValorRestante ? "text-destructive"
+                                : "text-emerald-400"
+                              }`}>
+                                {balcaoTrocoCalculado > 0 ? formatPrice(balcaoTrocoCalculado) : "R$ 0,00"}
+                              </span>
+                            </div>
+                          )}
+                          {Number.isFinite(balcaoValorEntregueNum) && balcaoValorEntregueNum >= balcaoValorRestante && balcaoValorEntregueNum > 0 && (
+                            <Button
+                              onClick={() => {
+                                setBalcaoPayments(prev => [
+                                  ...prev,
+                                  {
+                                    id: `pag-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+                                    formaPagamento: "dinheiro" as PaymentMethod,
+                                    valor: Number(balcaoValorRestante.toFixed(2))
+                                  }
+                                ]);
+                                setBalcaoValorEntregue("");
+                              }}
+                              className="w-full h-12 rounded-2xl font-black bg-emerald-600 hover:bg-emerald-700 text-white"
+                            >
+                              Confirmar — Troco: {formatPrice(balcaoTrocoCalculado)}
+                            </Button>
+                          )}
                         </div>
-                        <Button onClick={handleAddBalcaoPayment} className="rounded-xl font-black h-12 px-6 text-base">
-                          <Plus className="h-5 w-5" /> Adicionar
-                        </Button>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {QUICK_VALUES.map((qv) => (
-                          <Button key={qv} type="button" variant="outline" className="rounded-xl font-bold tabular-nums flex-1 h-10" disabled={qv > balcaoValorRestante} onClick={() => setBalcaoPaymentValue(qv.toFixed(2).replace(".", ","))}>
-                            +R$ {qv}
-                          </Button>
-                        ))}
-                        {balcaoValorRestante > 0 && !QUICK_VALUES.includes(Math.round(balcaoValorRestante * 100) / 100) && (
-                          <Button type="button" variant="outline" className="rounded-xl font-bold tabular-nums flex-1 h-10 border-primary/30 text-primary hover:bg-primary/10" onClick={() => setBalcaoPaymentValue(balcaoValorRestante.toFixed(2).replace(".", ","))}>
-                            Restante
-                          </Button>
-                        )}
-                      </div>
+                      ) : (
+                        <>
+                          <div className="flex items-end gap-3">
+                            <div className="flex-1 space-y-1">
+                              <label className="text-xs font-semibold text-muted-foreground">Valor</label>
+                              <Input value={balcaoPaymentValue} onChange={(e) => setBalcaoPaymentValue(e.target.value)} placeholder="Ex.: 25,00" inputMode="decimal" autoComplete="off" className="h-12 rounded-xl text-lg font-bold" />
+                            </div>
+                            <Button onClick={handleAddBalcaoPayment} className="rounded-xl font-black h-12 px-6 text-base">
+                              <Plus className="h-5 w-5" /> Adicionar
+                            </Button>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {QUICK_VALUES.map((qv) => (
+                              <Button key={qv} type="button" variant="outline" className="rounded-xl font-bold tabular-nums flex-1 h-10" disabled={qv > balcaoValorRestante} onClick={() => setBalcaoPaymentValue(qv.toFixed(2).replace(".", ","))}>
+                                +R$ {qv}
+                              </Button>
+                            ))}
+                            {balcaoValorRestante > 0 && !QUICK_VALUES.includes(Math.round(balcaoValorRestante * 100) / 100) && (
+                              <Button type="button" variant="outline" className="rounded-xl font-bold tabular-nums flex-1 h-10 border-primary/30 text-primary hover:bg-primary/10" onClick={() => setBalcaoPaymentValue(balcaoValorRestante.toFixed(2).replace(".", ","))}>
+                                Restante
+                              </Button>
+                            )}
+                          </div>
+                        </>
+                      )}
                     </div>
                   )}
 
