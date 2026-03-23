@@ -252,7 +252,7 @@ export function saveHorariosFuncionamento(h: HorariosSemana) {
   localStorage.setItem(HORARIOS_KEY, JSON.stringify(h));
 }
 
-export function isDeliveryAberto(): { aberto: boolean; mensagem: string; proximoHorario: string } {
+export function isDeliveryAberto(): { aberto: boolean; mensagem: string; proximoHorario: string; horasRestantes?: number } {
   const horarios = getHorariosFuncionamento();
   const agora = new Date();
   const diasSemana: (keyof HorariosSemana)[] = ["dom", "seg", "ter", "qua", "qui", "sex", "sab"];
@@ -261,22 +261,38 @@ export function isDeliveryAberto(): { aberto: boolean; mensagem: string; proximo
 
   const nomes = ["domingo", "segunda", "terça", "quarta", "quinta", "sexta", "sábado"];
 
-  const buscarProximoDia = () => {
+  const calcularHorasAte = (targetHora: string, diasAdiante: number = 0): number => {
+    const [h, m] = targetHora.split(":").map(Number);
+    const target = new Date(agora);
+    target.setDate(target.getDate() + diasAdiante);
+    target.setHours(h, m, 0, 0);
+    return Math.max(0, Math.round((target.getTime() - agora.getTime()) / 3600000));
+  };
+
+  const buscarProximoDia = (): { texto: string; horas: number } => {
     for (let i = 1; i <= 7; i++) {
       const proximoDia = diasSemana[(agora.getDay() + i) % 7];
       const h = horarios[proximoDia];
       if (h.ativo) {
-        return `Abrimos ${nomes[(agora.getDay() + i) % 7]} às ${h.abertura}`;
+        const horas = calcularHorasAte(h.abertura, i);
+        const nomeDia = nomes[(agora.getDay() + i) % 7];
+        const textoHoras = horas > 0 ? ` (em ~${horas}h)` : "";
+        return {
+          texto: `Abrimos ${nomeDia} às ${h.abertura}${textoHoras}`,
+          horas,
+        };
       }
     }
-    return "";
+    return { texto: "", horas: 0 };
   };
 
   if (!horarioDia.ativo) {
+    const proximo = buscarProximoDia();
     return {
       aberto: false,
       mensagem: "Fechados hoje",
-      proximoHorario: buscarProximoDia(),
+      proximoHorario: proximo.texto,
+      horasRestantes: proximo.horas,
     };
   }
 
@@ -287,16 +303,25 @@ export function isDeliveryAberto(): { aberto: boolean; mensagem: string; proximo
   const minutesFechamento = hFe * 60 + mFe;
 
   if (minutosAgora < minutosAbertura) {
-    return { aberto: false, mensagem: "Ainda não abrimos", proximoHorario: `Abrimos às ${horarioDia.abertura}` };
-  }
-
-  if (minutosAgora >= minutesFechamento) {
+    const horas = calcularHorasAte(horarioDia.abertura);
+    const textoHoras = horas > 0 ? ` (em ~${horas}h)` : "";
     return {
       aberto: false,
-      mensagem: "Já encerramos por hoje",
-      proximoHorario: buscarProximoDia(),
+      mensagem: "Ainda não abrimos",
+      proximoHorario: `Abrimos às ${horarioDia.abertura}${textoHoras}`,
+      horasRestantes: horas,
     };
   }
 
-  return { aberto: true, mensagem: `Aberto até ${horarioDia.fechamento}`, proximoHorario: "" };
+  if (minutosAgora >= minutesFechamento) {
+    const proximo = buscarProximoDia();
+    return {
+      aberto: false,
+      mensagem: "Já encerramos por hoje",
+      proximoHorario: proximo.texto,
+      horasRestantes: proximo.horas,
+    };
+  }
+
+  return { aberto: true, mensagem: `Aberto até ${horarioDia.fechamento}`, proximoHorario: "", horasRestantes: 0 };
 }
