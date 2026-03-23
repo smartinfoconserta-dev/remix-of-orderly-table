@@ -658,9 +658,15 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                   <Wallet className="h-8 w-8" />
                 </div>
                 <h2 className="text-2xl font-black text-foreground">Abertura de Caixa</h2>
-                <p className="text-sm text-muted-foreground">
-                  Olá, <span className="font-bold text-foreground">{currentOperator.nome}</span>. Informe o valor do fundo de troco para iniciar o turno.
-                </p>
+                {fundoTrocoInput ? (
+                  <p className="text-sm text-muted-foreground">
+                    Olá, <span className="font-bold text-foreground">{currentOperator.nome}</span>. Valor do último fechamento carregado automaticamente. Corrija se necessário.
+                  </p>
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    Olá, <span className="font-bold text-foreground">{currentOperator.nome}</span>. Conte o dinheiro na gaveta e informe o valor inicial do caixa.
+                  </p>
+                )}
               </div>
               <div className="space-y-3">
                 <label className="text-sm font-bold text-foreground">Fundo de troco (R$)</label>
