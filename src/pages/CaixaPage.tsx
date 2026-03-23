@@ -894,6 +894,23 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
     toast.success(`Desconto de ${formatPrice(desconto)} aplicado`, { duration: 2000, icon: "🎁" });
   };
 
+  const handleEstornar = async () => {
+    if (!estornoMotivo.trim()) { setEstornoError("Informe o motivo do estorno"); return; }
+    if (!estornoNome.trim()) { setEstornoError("Informe o nome do gerente"); return; }
+    if (!/^\d{4,6}$/.test(estornoPin)) { setEstornoError("PIN inválido"); return; }
+    const result = await verifyManagerAccess(estornoNome, estornoPin);
+    if (!result.ok) { setEstornoError(result.error ?? "PIN incorreto"); return; }
+    if (!estornoFechamentoId) return;
+    estornarFechamento(estornoFechamentoId, estornoMotivo, currentOperator);
+    setEstornoModalOpen(false);
+    setEstornoFechamentoId(null);
+    setEstornoMotivo("");
+    setEstornoPin("");
+    setEstornoNome("");
+    setEstornoError(null);
+    toast.success("Fechamento estornado — registrado no log", { duration: 2500, icon: "↩️" });
+  };
+
   const handleFechar = () => {
     if (!mesaSelecionada || !mesa) return;
     if (!fechamentoPronto) {
