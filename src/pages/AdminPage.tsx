@@ -760,7 +760,7 @@ const AdminPage = () => {
 
             {/* Edit / New modal */}
             <Dialog open={!!editProduct} onOpenChange={(open) => !open && setEditProduct(null)}>
-              <DialogContent className="sm:max-w-3xl max-h-[92vh] overflow-hidden flex flex-col">
+              <DialogContent className="sm:max-w-3xl max-h-[92vh] overflow-visible flex flex-col">
                 <DialogHeader>
                   <DialogTitle>{isNewProduct ? "Novo produto" : "Editar produto"}</DialogTitle>
                   <DialogDescription>{isNewProduct ? "Preencha os campos para adicionar um produto." : "Altere os campos desejados e salve."}</DialogDescription>
