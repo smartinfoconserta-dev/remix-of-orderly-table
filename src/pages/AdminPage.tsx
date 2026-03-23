@@ -181,7 +181,7 @@ const AdminPage = () => {
       nome: "",
       descricao: "",
       preco: 0,
-      categoria: categorias[0]?.id ?? "lanches",
+      categoria: todasCategorias[0]?.id ?? categorias[0]?.id ?? "lanches",
       imagem: "",
       ativo: true,
     };
