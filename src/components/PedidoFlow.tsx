@@ -571,22 +571,19 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
   }
 
   const restaurantIdentity = modo === "delivery" ? (
-    <div className="flex min-w-0 items-center gap-2">
-      <Avatar className={`h-8 w-8 ${logoRadiusSm} border border-border bg-secondary shadow-sm select-none touch-none`}
-        onPointerDown={handleLogoPointerDown}
-        onPointerUp={handleLogoPointerUp}
-        onPointerLeave={handleLogoPointerUp}
-      >
-        {RESTAURANTE.logoUrl ? (
-          <img src={RESTAURANTE.logoUrl} alt={RESTAURANTE.nome} className={`h-full w-full ${logoRadiusSm} object-cover`} />
-        ) : (
-          <AvatarFallback className={`${logoRadiusSm} bg-secondary text-[10px] font-extrabold tracking-widest text-foreground`}>
-            {RESTAURANTE.logoFallback}
-          </AvatarFallback>
-        )}
-      </Avatar>
-      <p className="truncate text-sm font-extrabold tracking-tight text-foreground">{RESTAURANTE.nome}</p>
-    </div>
+    <Avatar className={`h-8 w-8 shrink-0 ${logoRadiusSm} border border-border bg-secondary shadow-sm select-none touch-none`}
+      onPointerDown={handleLogoPointerDown}
+      onPointerUp={handleLogoPointerUp}
+      onPointerLeave={handleLogoPointerUp}
+    >
+      {RESTAURANTE.logoUrl ? (
+        <img src={RESTAURANTE.logoUrl} alt={RESTAURANTE.nome} className={`h-full w-full ${logoRadiusSm} object-cover`} />
+      ) : (
+        <AvatarFallback className={`${logoRadiusSm} bg-secondary text-[10px] font-extrabold tracking-widest text-foreground`}>
+          {RESTAURANTE.logoFallback}
+        </AvatarFallback>
+      )}
+    </Avatar>
   ) : modo === "garcom" ? (
     <div className="min-w-0">
       <p className="truncate text-xl font-black tracking-tight text-foreground">{mesaLabel}</p>
