@@ -304,6 +304,11 @@ export default function PedidoPage() {
   const totalPedido = itens.reduce((s, i) => s + i.precoUnitario * i.quantidade, 0) + taxaEntrega;
 
   const handleConfirmarPedido = () => {
+    const statusAgora = isDeliveryAberto();
+    if (!statusAgora.aberto) {
+      toast.error(statusAgora.mensagem + (statusAgora.proximoHorario ? `. ${statusAgora.proximoHorario}` : ""));
+      return;
+    }
     const cliente = upsertClienteDelivery({
       nome: nome.trim(), cpf: cpf.trim(), telefone: telefone.trim(),
       endereco: endereco.trim(), numero: numero.trim(), bairro: bairro.trim(),
