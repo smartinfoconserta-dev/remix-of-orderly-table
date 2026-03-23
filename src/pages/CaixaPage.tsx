@@ -2151,11 +2151,11 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                             key={opt.value}
                             type="button"
                             onClick={() => {
-                              setClosingPaymentMethod(opt.value);
-                              if (opt.value !== "dinheiro") {
-                                setClosingPaymentValue(valorRestante.toFixed(2).replace(".", ","));
+                              setClosingPaymentMethod(opt.value as PaymentMethod);
+                              if (opt.value === "dinheiro") {
+                                setClosingPaymentValue("");
                               } else {
-                                setValorEntregue("");
+                                setClosingPaymentValue(valorRestante.toFixed(2).replace(".", ","));
                               }
                             }}
                             className={`flex items-center justify-center gap-2 rounded-xl border-2 py-2.5 px-3 transition-colors ${
