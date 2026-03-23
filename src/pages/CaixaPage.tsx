@@ -2140,9 +2140,8 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                     </div>
                   )}
 
-                  {/* Payment method large buttons */}
                   {!fechamentoPronto && totalConta > 0 && (
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-2 gap-2">
                       {paymentMethodOptions.map((opt) => {
                         const Icon = opt.icon;
                         const isSelected = closingPaymentMethod === opt.value;
