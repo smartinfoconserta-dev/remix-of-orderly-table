@@ -760,12 +760,13 @@ const AdminPage = () => {
 
             {/* Edit / New modal */}
             <Dialog open={!!editProduct} onOpenChange={(open) => !open && setEditProduct(null)}>
-              <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-visible">
+              <DialogContent className="sm:max-w-3xl max-h-[92vh] overflow-hidden flex flex-col">
                 <DialogHeader>
                   <DialogTitle>{isNewProduct ? "Novo produto" : "Editar produto"}</DialogTitle>
                   <DialogDescription>{isNewProduct ? "Preencha os campos para adicionar um produto." : "Altere os campos desejados e salve."}</DialogDescription>
                 </DialogHeader>
-                <div className="overflow-y-auto max-h-[calc(90vh-80px)] pr-1 space-y-4 pt-2">
+                <div className="overflow-y-auto flex-1 pr-1 pt-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
                   <div className="space-y-1.5">
                     <label className="text-xs font-bold text-muted-foreground">Nome</label>
                     <Input value={editForm.nome} onChange={(e) => setEditForm((f) => ({ ...f, nome: e.target.value }))} />
