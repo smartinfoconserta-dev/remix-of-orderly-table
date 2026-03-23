@@ -743,8 +743,8 @@ const AdminPage = () => {
                           </td>
                           <td className="px-4 py-3 text-center">
                             <div className="flex items-center justify-center gap-1">
-                              <Button variant="ghost" size="icon" onClick={() => openEdit(p)}>
-                                <Pencil className="h-4 w-4" />
+                              <Button variant="outline" size="sm" onClick={() => openEdit(p)} className="rounded-xl font-bold gap-1.5 text-xs">
+                                <Pencil className="h-3 w-3" /> Editar
                               </Button>
                               <Button variant="ghost" size="icon" onClick={() => setRemoveTarget(p)} className="text-destructive hover:bg-destructive/10">
                                 <Trash2 className="h-4 w-4" />
