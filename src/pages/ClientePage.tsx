@@ -191,17 +191,38 @@ const ClientePage = () => {
 
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4 lg:grid-cols-5">
           {mesasOrdenadas.map((mesa) => (
-            <Button
+            <button
               key={mesa.id}
               type="button"
-              variant="outline"
               onClick={() => handleSelectMesa(mesa.id)}
-              className="flex h-auto min-h-24 flex-col items-start gap-2 rounded-2xl border-border bg-card px-4 py-4 text-left hover:bg-secondary"
+              className={`flex h-auto min-h-24 w-full flex-col items-center justify-center gap-1 rounded-2xl border-2 p-4 transition-colors ${
+                mesa.status === "consumo"
+                  ? "border-emerald-500/50 bg-emerald-500/8"
+                  : mesa.status === "pendente"
+                  ? "border-amber-500/50 bg-amber-500/8"
+                  : "border-border bg-card hover:border-primary/40"
+              }`}
             >
-              <span className="text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">Mesa</span>
-              <span className="text-2xl font-black text-foreground">{String(mesa.numero).padStart(2, "0")}</span>
-              <span className="text-xs font-medium text-muted-foreground">Status {mesa.status}</span>
-            </Button>
+              <span className={`text-3xl font-black tabular-nums ${
+                mesa.status === "consumo" ? "text-emerald-400"
+                : mesa.status === "pendente" ? "text-amber-400"
+                : "text-foreground"
+              }`}>
+                {String(mesa.numero).padStart(2, "0")}
+              </span>
+              <span className={`text-[10px] font-bold uppercase tracking-widest ${
+                mesa.status === "consumo" ? "text-emerald-400"
+                : mesa.status === "pendente" ? "text-amber-400"
+                : "text-muted-foreground"
+              }`}>
+                {mesa.status === "consumo" ? "Ocupada" : mesa.status === "pendente" ? "Pendente" : "Livre"}
+              </span>
+              {mesa.status === "consumo" && (
+                <span className="text-xs font-black tabular-nums text-emerald-400">
+                  {`R$ ${mesa.total.toFixed(2).replace(".", ",")}`}
+                </span>
+              )}
+            </button>
           ))}
         </div>
       </div>
