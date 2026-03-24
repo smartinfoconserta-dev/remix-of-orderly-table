@@ -659,7 +659,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         const totalPedido = calcularTotalItens(mesa.carrinho);
         const snapshot = mesa.carrinho.map(cloneItem);
         const now = new Date();
-        const origem = meta?.modo === "garcom" || meta?.modo === "caixa" ? meta.modo : "cliente";
+        const origem = meta?.modo === "garcom" || meta?.modo === "caixa" ? meta.modo : meta?.modo === "totem" ? "totem" : "cliente";
         const novoPedido: PedidoRealizado = {
           id: `pedido-${now.getTime()}-${Math.random().toString(36).slice(2, 7)}`,
           numeroPedido: mesa.pedidos.length + 1,

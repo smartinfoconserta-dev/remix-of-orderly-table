@@ -517,7 +517,7 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
 
       const operador = modo === "garcom" ? currentGarcom : modo === "caixa" ? currentCaixa : undefined;
       confirmarPedido(mesaId, {
-        modo: modo as "cliente" | "garcom" | "caixa",
+        modo: modo as "cliente" | "garcom" | "caixa" | "totem",
         operador,
         paraViagem,
       });
