@@ -1421,22 +1421,35 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   }, []);
 
   const cancelarPedidoBalcao = useCallback((pedidoId: string, motivo: string, operador: OperationalUser) => {
-    setStore((prev) => ({
-      ...prev,
-      pedidosBalcao: prev.pedidosBalcao.map((p) =>
-        p.id === pedidoId
-          ? { ...p, cancelado: true, canceladoEm: new Date().toISOString(), canceladoMotivo: motivo, canceladoPor: operador.nome, statusBalcao: "cancelado" as const }
-          : p
-      ),
-      eventos: appendEvent(prev.eventos, {
-        tipo: "caixa",
-        descricao: `Pedido #${prev.pedidosBalcao.find((p) => p.id === pedidoId)?.numeroPedido ?? "?"} cancelado — ${motivo}`,
-        acao: "cancelar_pedido_balcao",
-        motivo,
-        usuarioId: operador.id,
-        usuarioNome: operador.nome,
-      }),
-    }));
+    setStore((prev) => {
+      const now = new Date();
+      const pedido = prev.pedidosBalcao.find((p) => p.id === pedidoId);
+      if (!pedido) return prev;
+      return {
+        ...prev,
+        pedidosBalcao: prev.pedidosBalcao.map((p) =>
+          p.id === pedidoId
+            ? {
+                ...p,
+                statusBalcao: "cancelado" as const,
+                cancelado: true,
+                canceladoEm: now.toISOString(),
+                canceladoMotivo: motivo,
+                canceladoPor: operador.nome,
+              }
+            : p,
+        ),
+        eventos: appendEvent(prev.eventos, {
+          tipo: "caixa",
+          descricao: `Pedido ${pedido.origem === "totem" ? "TOTEM" : pedido.origem === "delivery" ? "DELIVERY" : "BALCÃO"} #${pedido.numeroPedido} cancelado por ${operador.nome} — ${motivo}`,
+          usuarioId: operador.id,
+          usuarioNome: operador.nome,
+          acao: "cancelar_pedido",
+          motivo,
+          valor: pedido.total,
+        }),
+      };
+    });
   }, []);
 
   return (
