@@ -1367,7 +1367,7 @@ const GerentePage = () => {
                 disabled={!newEmpName.trim() || newEmpPin.length < 4}
                 className="w-full rounded-xl font-bold gap-1.5"
               >
-                <Plus className="h-4 w-4" /> Criar {newEmpRole === "garcom" ? "garçom" : "caixa"}
+                <Plus className="h-4 w-4" /> Criar {newEmpRole === "garcom" ? "garçom" : newEmpRole === "caixa" ? "caixa" : "caixa delivery"}
               </Button>
             </div>
 
