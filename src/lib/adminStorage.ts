@@ -89,6 +89,19 @@ export interface LicencaConfig {
   nomeCliente: string;
   dataVencimento: string; // YYYY-MM-DD
   ativo: boolean;
+  plano?: "basico" | "medio" | "pro" | "premium";
+}
+
+export type PlanoModulos = "basico" | "medio" | "pro" | "premium";
+
+export function getModulosDoPlano(plano: PlanoModulos): { cozinha: boolean; delivery: boolean; motoboy: boolean; totem: boolean; tvRetirada: boolean } {
+  return {
+    cozinha: true,
+    delivery: plano === "medio" || plano === "pro" || plano === "premium",
+    motoboy: plano === "pro" || plano === "premium",
+    totem: plano === "premium",
+    tvRetirada: plano === "premium",
+  };
 }
 
 // --- Cardápio ---

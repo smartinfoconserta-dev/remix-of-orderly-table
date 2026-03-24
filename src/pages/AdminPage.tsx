@@ -62,6 +62,7 @@ import {
   getHorariosFuncionamento,
   saveHorariosFuncionamento,
   defaultHorariosSemana,
+  getModulosDoPlano,
   type ProdutoOverride,
   type MesasConfig,
   type SistemaConfig,
@@ -70,6 +71,7 @@ import {
   type CategoriaCustom,
   type HorariosSemana,
   type HorarioFuncionamento,
+  type PlanoModulos,
 } from "@/lib/adminStorage";
 import { getBairros, saveBairros, type Bairro } from "@/lib/deliveryStorage";
 import { toast } from "sonner";
@@ -1890,9 +1892,9 @@ const AdminPage = () => {
             {configSection === "modulos" && (
               <div className="space-y-4 max-w-lg">
                 {TODOS_MODULOS.map(mod => {
-                  const plano = sistemaConfig.plano || "basico";
-                  const liberados = PLANO_MODULOS[plano] || [];
-                  const liberado = liberados.includes(mod.id);
+                  const plano = (licencaConfig.plano || sistemaConfig.plano || "basico") as PlanoModulos;
+                  const modulosLiberados = getModulosDoPlano(plano);
+                  const liberado = !!(modulosLiberados as any)[mod.id];
                   const ativo = !!(sistemaConfig.modulos as any)?.[mod.id];
                   return (
                     <div key={mod.id} className="rounded-2xl border border-border bg-card p-5">
@@ -2005,13 +2007,13 @@ const AdminPage = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Plano atual</p>
-                  <p className="text-2xl font-black text-foreground mt-1">{PLANO_LABELS[sistemaConfig.plano || "basico"]}</p>
+                  <p className="text-2xl font-black text-foreground mt-1">{PLANO_LABELS[(licencaConfig.plano || sistemaConfig.plano || "basico")]}</p>
                 </div>
                 <span className="text-4xl">
-                  {(sistemaConfig.plano || "basico") === "basico" && "⭐"}
-                  {sistemaConfig.plano === "medio" && "⭐⭐"}
-                  {sistemaConfig.plano === "pro" && "⭐⭐⭐"}
-                  {sistemaConfig.plano === "premium" && "👑"}
+                  {((licencaConfig.plano || sistemaConfig.plano || "basico")) === "basico" && "⭐"}
+                  {(licencaConfig.plano || sistemaConfig.plano) === "medio" && "⭐⭐"}
+                  {(licencaConfig.plano || sistemaConfig.plano) === "pro" && "⭐⭐⭐"}
+                  {(licencaConfig.plano || sistemaConfig.plano) === "premium" && "👑"}
                 </span>
               </div>
             </div>
@@ -2023,9 +2025,9 @@ const AdminPage = () => {
               </div>
               <div className="divide-y divide-border/50">
                 {TODOS_MODULOS.map(mod => {
-                  const plano = sistemaConfig.plano || "basico";
-                  const liberados = PLANO_MODULOS[plano] || [];
-                  const liberado = liberados.includes(mod.id);
+                  const plano = (licencaConfig.plano || sistemaConfig.plano || "basico") as PlanoModulos;
+                  const modulosLiberados = getModulosDoPlano(plano);
+                  const liberado = !!(modulosLiberados as any)[mod.id];
                   return (
                     <div key={mod.id} className="flex items-center justify-between px-5 py-3">
                       <div className="flex items-center gap-3">
@@ -2047,13 +2049,13 @@ const AdminPage = () => {
             </div>
 
             {/* Upgrade */}
-            {(sistemaConfig.plano || "basico") !== "premium" && (
+            {((licencaConfig.plano || sistemaConfig.plano || "basico")) !== "premium" && (
               <div className="max-w-lg">
                 <Button
                   className="w-full rounded-xl font-black gap-2"
                   onClick={() => {
                     const tel = sistemaConfig.telefoneRestaurante || "5511999999999";
-                    const msg = encodeURIComponent(`Olá! Gostaria de fazer upgrade do meu plano (atual: ${PLANO_LABELS[sistemaConfig.plano || "basico"]})`);
+                    const msg = encodeURIComponent(`Olá! Gostaria de fazer upgrade do meu plano (atual: ${PLANO_LABELS[licencaConfig.plano || sistemaConfig.plano || "basico"]})`);
                     window.open(`https://wa.me/${tel.replace(/\D/g, "")}?text=${msg}`, "_blank");
                   }}
                 >

@@ -29,6 +29,7 @@ export interface Cliente {
   plano: string;
   dataInicio: string;
   dataTermino: string;
+  planoModulos?: "basico" | "medio" | "pro" | "premium";
 }
 
 export interface Despesa {

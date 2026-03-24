@@ -70,6 +70,20 @@ function calcDataTermino(plano: string, dataInicio: string): string {
 
 const todayStr = () => new Date().toISOString().slice(0, 10);
 
+const PLANOS_MODULOS = [
+  { value: "basico", label: "Básico" },
+  { value: "medio", label: "Médio" },
+  { value: "pro", label: "Pro" },
+  { value: "premium", label: "Premium" },
+];
+const PLANO_MODULOS_LABELS: Record<string, string> = { basico: "Básico", medio: "Médio", pro: "Pro", premium: "Premium" };
+const PLANO_MODULOS_BADGE: Record<string, string> = {
+  basico: "bg-muted text-muted-foreground",
+  medio: "bg-blue-600 hover:bg-blue-600 text-white",
+  pro: "bg-emerald-600 hover:bg-emerald-600 text-white",
+  premium: "bg-purple-600 hover:bg-purple-600 text-white",
+};
+
 const emptyForm = {
   nomeRestaurante: "", nomeContato: "", email: "", dataVencimento: "",
   ativo: true, avisoAtivo: false, avisoTexto: "",
@@ -77,6 +91,7 @@ const emptyForm = {
   segmento: "hamburgeria", diaVencimento: 10, valorMensalidade: 0,
   observacoes: "", historicoPagamentos: [] as any[],
   plano: "anual", dataInicio: new Date().toISOString().slice(0, 10), dataTermino: "",
+  planoModulos: "basico" as "basico" | "medio" | "pro" | "premium",
 };
 
 
@@ -136,6 +151,7 @@ const MasterPage = () => {
       diaVencimento: c.diaVencimento || 10, valorMensalidade: c.valorMensalidade || 0,
       observacoes: c.observacoes || "", historicoPagamentos: c.historicoPagamentos || [],
       plano: c.plano || "anual", dataInicio: c.dataInicio || "", dataTermino: c.dataTermino || "",
+      planoModulos: c.planoModulos || "basico",
     });
     setDialogOpen(true);
   };
@@ -328,6 +344,7 @@ const MasterPage = () => {
                       <div className="flex items-center gap-2 flex-wrap">
                         <p className="font-black text-lg text-foreground cursor-pointer hover:underline" onClick={() => openDetail(c)}>{c.nomeRestaurante}</p>
                         {c.plano && <Badge className={PLANO_BADGE_CLASS[c.plano] || "bg-muted text-muted-foreground"}>{PLANO_LABELS[c.plano] || c.plano}</Badge>}
+                        {c.planoModulos && <Badge className={PLANO_MODULOS_BADGE[c.planoModulos] || "bg-muted text-muted-foreground"}>{PLANO_MODULOS_LABELS[c.planoModulos] || c.planoModulos}</Badge>}
                         <Badge className={c.ativo ? "bg-emerald-600 hover:bg-emerald-600 text-white" : "bg-destructive hover:bg-destructive text-destructive-foreground"}>{c.ativo ? "Ativo" : "Bloqueado"}</Badge>
                         {vencAlert === "vencido" && <Badge className="bg-destructive hover:bg-destructive text-destructive-foreground">Vencido</Badge>}
                         {vencAlert === "vence_breve" && <Badge className="bg-yellow-600 hover:bg-yellow-600 text-white">Vence em breve</Badge>}
@@ -700,7 +717,8 @@ const MasterPage = () => {
             <div className="space-y-3">
               <h3 className="text-sm font-bold text-foreground uppercase tracking-wide">Contrato</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div><Label>Plano</Label><Select value={form.plano} onValueChange={(v) => ff("plano", v)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent container={document.body} position="popper" className="z-[80]">{PLANOS.map((p) => <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>)}</SelectContent></Select></div>
+                <div><Label>Plano contratual</Label><Select value={form.plano} onValueChange={(v) => ff("plano", v)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent container={document.body} position="popper" className="z-[80]">{PLANOS.map((p) => <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>)}</SelectContent></Select></div>
+                <div><Label>Plano de módulos</Label><Select value={form.planoModulos} onValueChange={(v) => ff("planoModulos", v)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent container={document.body} position="popper" className="z-[80]">{PLANOS_MODULOS.map((p) => <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>)}</SelectContent></Select></div>
                 <div><Label>Data de início do contrato</Label><Input type="date" value={form.dataInicio} onChange={(e) => ff("dataInicio", e.target.value)} /></div>
                 <div><Label>Valor da mensalidade</Label><div className="relative"><span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">R$</span><Input type="number" className="pl-10" value={form.valorMensalidade || ""} onChange={(e) => ff("valorMensalidade", parseFloat(e.target.value) || 0)} /></div></div>
                 <div><Label>Dia de vencimento</Label><Select value={String(form.diaVencimento)} onValueChange={(v) => ff("diaVencimento", Number(v))}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent container={document.body} position="popper" className="z-[80]">{DIAS_VENCIMENTO.map((d) => <SelectItem key={d} value={String(d)}>Dia {d}</SelectItem>)}</SelectContent></Select></div>
@@ -736,7 +754,8 @@ const MasterPage = () => {
                   <div><span className="text-muted-foreground">Email:</span> <span className="font-semibold text-foreground">{detailClient.email || "—"}</span></div>
                   <div className="sm:col-span-2"><span className="text-muted-foreground">Endereço:</span> <span className="font-semibold text-foreground">{[detailClient.endereco, detailClient.cidade, detailClient.estado].filter(Boolean).join(", ") || "—"}</span></div>
                   <div><span className="text-muted-foreground">Mensalidade:</span> <span className="font-semibold text-foreground">R$ {(detailClient.valorMensalidade || 0).toFixed(2)}</span></div>
-                  <div><span className="text-muted-foreground">Plano:</span> <Badge className={PLANO_BADGE_CLASS[detailClient.plano] || "bg-muted text-muted-foreground"}>{PLANO_LABELS[detailClient.plano] || detailClient.plano || "—"}</Badge></div>
+                  <div><span className="text-muted-foreground">Plano contratual:</span> <Badge className={PLANO_BADGE_CLASS[detailClient.plano] || "bg-muted text-muted-foreground"}>{PLANO_LABELS[detailClient.plano] || detailClient.plano || "—"}</Badge></div>
+                  <div><span className="text-muted-foreground">Plano módulos:</span> <Badge className={PLANO_MODULOS_BADGE[detailClient.planoModulos || "basico"]}>{PLANO_MODULOS_LABELS[detailClient.planoModulos || "basico"]}</Badge></div>
                   <div><span className="text-muted-foreground">Início contrato:</span> <span className="font-semibold text-foreground">{detailClient.dataInicio || "—"}</span></div>
                   <div><span className="text-muted-foreground">Dia vencimento:</span> <span className="font-semibold text-foreground">{detailClient.diaVencimento || "—"}</span></div>
                   <div><span className="text-muted-foreground">Licença:</span> <span className="font-semibold text-foreground">{detailClient.dataVencimento || "—"}</span></div>
