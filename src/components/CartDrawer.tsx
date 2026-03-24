@@ -284,7 +284,7 @@ const CartDrawer = ({
                         </div>
 
                         {/* Subtotal */}
-                        <span className="shrink-0 text-sm font-black text-foreground tabular-nums w-16 text-right">
+                        <span className={`shrink-0 text-sm font-black tabular-nums w-16 text-right ${isTotemMode ? "text-gray-900" : "text-foreground"}`}>
                           {formatPrice(item.precoUnitario * item.quantidade)}
                         </span>
                       </div>
