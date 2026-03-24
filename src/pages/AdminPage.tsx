@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ClipboardList,
   Download,
@@ -63,6 +63,13 @@ import {
   saveHorariosFuncionamento,
   defaultHorariosSemana,
   getModulosDoPlano,
+  saveSistemaConfigAsync,
+  saveLicencaConfigAsync,
+  getSistemaConfigAsync,
+  getLicencaConfigAsync,
+  getCategoriasCustomAsync,
+  saveCategoriasCustomAsync,
+  syncPendingChanges,
   type ProdutoOverride,
   type MesasConfig,
   type SistemaConfig,
@@ -311,8 +318,17 @@ const AdminPage = () => {
     } catch { return "todos"; }
   });
 
+  // Load from Supabase on mount
+  useEffect(() => {
+    getSistemaConfigAsync().then((c) => setSistemaConfig(c));
+    getLicencaConfigAsync().then((l) => setLicencaConfig(l));
+    getCategoriasCustomAsync().then((cats) => setCategoriasCustom(cats));
+    syncPendingChanges();
+  }, []);
+
   const saveSistema = useCallback(() => {
     saveSistemaConfig(sistemaConfig);
+    saveSistemaConfigAsync(sistemaConfig);
     applyCustomPrimaryColor();
     toast.success("Configurações salvas");
   }, [sistemaConfig]);
@@ -322,6 +338,7 @@ const AdminPage = () => {
 
   const saveLicenca = useCallback(() => {
     saveLicencaConfig(licencaConfig);
+    saveLicencaConfigAsync(licencaConfig);
     toast.success("Licença salva");
   }, [licencaConfig]);
 

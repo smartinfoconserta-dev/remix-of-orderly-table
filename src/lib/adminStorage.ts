@@ -1,4 +1,5 @@
 import { type Produto, produtos as baseProdutos } from "@/data/menuData";
+import { fetchConfig, saveConfig, fetchLicenca, saveLicenca, fetchCategorias, saveCategorias, syncPending } from "./configService";
 
 const CARDAPIO_KEY = "orderly-cardapio-overrides-v1";
 const MESAS_CONFIG_KEY = "orderly-mesas-config-v1";
@@ -234,7 +235,19 @@ export function getCategoriasCustom(): CategoriaCustom[] {
 
 export function saveCategoriasCustom(cats: CategoriaCustom[]): void {
   localStorage.setItem(CATEGORIAS_KEY, JSON.stringify(cats));
+  // Fire-and-forget async sync to Supabase
+  saveCategorias(cats).catch(() => {});
 }
+
+// --- Async wrappers (Supabase + fallback) ---
+export const getSistemaConfigAsync = fetchConfig;
+export const saveSistemaConfigAsync = saveConfig;
+export const getLicencaConfigAsync = fetchLicenca;
+export const saveLicencaConfigAsync = saveLicenca;
+export const getCategoriasCustomAsync = fetchCategorias;
+export const saveCategoriasCustomAsync = saveCategorias;
+export const syncPendingChanges = syncPending;
+
 
 // --- Produtos Delivery ---
 export function getProdutosDelivery(): ProdutoOverride[] {
