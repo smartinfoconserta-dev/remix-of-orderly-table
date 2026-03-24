@@ -161,6 +161,12 @@ const MasterPage = () => {
     if (!form.nomeRestaurante.trim() || !form.nomeContato.trim()) { toast.error("Preencha nome do restaurante e contato."); return; }
     if (editId) { updateCliente(editId, form); toast.success("Cliente atualizado."); }
     else { addCliente(form); toast.success("Cliente criado."); }
+    // Sync planoModulos to licença config
+    if (form.planoModulos) {
+      const lic = getLicencaConfig();
+      lic.plano = form.planoModulos;
+      saveLicencaConfig(lic);
+    }
     setDialogOpen(false); refresh();
   };
 
