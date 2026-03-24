@@ -297,8 +297,8 @@ const CartDrawer = ({
                   {!showConfirmEnvio ? (
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
-                        <span className="text-base font-bold text-muted-foreground">Valor a pagar</span>
-                        <span className="text-xl font-black text-foreground tabular-nums">{formatPrice(subtotal)}</span>
+                        <span className={`text-base font-bold ${isTotemMode ? "text-gray-500" : "text-muted-foreground"}`}>Valor a pagar</span>
+                        <span className={`text-xl font-black tabular-nums ${isTotemMode ? "text-gray-900" : "text-foreground"}`}>{formatPrice(subtotal)}</span>
                       </div>
                       <div className="grid grid-cols-2 gap-3">
                         <Button type="button" variant="outline"
