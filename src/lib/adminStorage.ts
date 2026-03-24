@@ -1,4 +1,5 @@
 import { type Produto, produtos as baseProdutos } from "@/data/menuData";
+import { fetchConfig, saveConfig, fetchLicenca, saveLicenca, fetchCategorias, saveCategorias, syncPending } from "./configService";
 
 const CARDAPIO_KEY = "orderly-cardapio-overrides-v1";
 const MESAS_CONFIG_KEY = "orderly-mesas-config-v1";
