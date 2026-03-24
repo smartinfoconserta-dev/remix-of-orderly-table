@@ -113,12 +113,27 @@ const CozinhaPage = () => {
     return all;
   }, [mesas, pedidosBalcao]);
 
+  const pedidosPorSetor = useMemo(() => {
+    if (setorAtivo === "todos") return activePedidos;
+    return activePedidos
+      .map(pedido => ({
+        ...pedido,
+        itens: pedido.itens.filter(item => {
+          const setor = (item as any).setor ?? "cozinha";
+          if (setorAtivo === "cozinha") return setor === "cozinha" || setor === "ambos";
+          if (setorAtivo === "bar") return setor === "bar" || setor === "ambos";
+          return true;
+        }),
+      }))
+      .filter(pedido => pedido.itens.length > 0);
+  }, [activePedidos, setorAtivo]);
+
   const pedidosFiltrados = useMemo(() => {
-    if (filtroOrigem === "todos") return activePedidos;
-    if (filtroOrigem === "delivery") return activePedidos.filter(p => p.origem === "delivery");
-    if (filtroOrigem === "balcao") return activePedidos.filter(p => p.origem === "balcao" || p.isBalcao);
-    return activePedidos.filter(p => p.origem !== "delivery" && !p.isBalcao);
-  }, [activePedidos, filtroOrigem]);
+    if (filtroOrigem === "todos") return pedidosPorSetor;
+    if (filtroOrigem === "delivery") return pedidosPorSetor.filter(p => p.origem === "delivery");
+    if (filtroOrigem === "balcao") return pedidosPorSetor.filter(p => p.origem === "balcao" || p.isBalcao);
+    return pedidosPorSetor.filter(p => p.origem !== "delivery" && !p.isBalcao);
+  }, [pedidosPorSetor, filtroOrigem]);
 
   // Sound notification when new orders arrive — detect by origin
   useEffect(() => {
