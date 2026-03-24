@@ -151,7 +151,9 @@ const CozinhaPage = () => {
       }
     }
     for (const pedido of pedidosBalcao) {
-      if (!pedido.pronto && pedido.statusBalcao !== "pago" && pedido.statusBalcao !== "aguardando_confirmacao") all.push({ ...pedido, mesaNumero: 0, isBalcao: true });
+      const st = pedido.statusBalcao;
+      if (st === "pago" || st === "aguardando_confirmacao" || st === "cancelado" || st === "retirado") continue;
+      all.push({ ...pedido, mesaNumero: 0, isBalcao: true });
     }
     all.sort((a, b) => new Date(a.criadoEmIso).getTime() - new Date(b.criadoEmIso).getTime());
     return all;
