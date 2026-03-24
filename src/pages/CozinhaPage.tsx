@@ -319,6 +319,26 @@ ${pedido.observacaoGeral ? `<div class="c-obs">Obs: ${pedido.observacaoGeral}</d
         </span>
       </div>
 
+      <div className="flex gap-2 px-4 pb-2">
+        {([
+          { id: "todos", label: "Todos os setores" },
+          { id: "cozinha", label: "🍳 Cozinha" },
+          { id: "bar", label: "🍹 Bar" },
+        ] as const).map(s => (
+          <button
+            key={s.id}
+            onClick={() => setSetorAtivo(s.id)}
+            className={`px-4 py-1.5 rounded-xl text-sm font-bold border transition-colors ${
+              setorAtivo === s.id
+                ? "bg-primary text-primary-foreground border-primary"
+                : "border-border text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {s.label}
+          </button>
+        ))}
+      </div>
+
       <div className="flex gap-2 px-4 pb-3 flex-wrap">
         {([
           { id: "todos", label: "Todos" },
