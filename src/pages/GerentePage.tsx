@@ -445,6 +445,16 @@ const GerentePage = () => {
     }).length;
   }, [allEventos, dateRange]);
 
+  const totalDescontos = useMemo(() =>
+    fechFiltrados.reduce((acc, f) => acc + ((f as any).desconto ?? 0), 0),
+    [fechFiltrados]
+  );
+
+  const totalCouvert = useMemo(() =>
+    fechFiltrados.reduce((acc, f) => acc + ((f as any).couvert ?? 0), 0),
+    [fechFiltrados]
+  );
+
   const pedidosPorGarcom = useMemo(() => {
     const map = new Map<string, { nome: string; pedidos: number; mesas: Set<string> }>();
     allEventos.filter((e) => {
