@@ -1453,6 +1453,15 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     });
   }, []);
 
+  const marcarBalcaoRetirado = useCallback((pedidoId: string) => {
+    setStore((prev) => ({
+      ...prev,
+      pedidosBalcao: prev.pedidosBalcao.map((p) =>
+        p.id === pedidoId ? { ...p, statusBalcao: "retirado" as const } : p
+      ),
+    }));
+  }, []);
+
   return (
     <RestaurantContext.Provider
       value={{
