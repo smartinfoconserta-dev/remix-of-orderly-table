@@ -177,6 +177,8 @@ const CozinhaPage = () => {
     const newPedidos = activePedidos.filter((p) => !printedIdsRef.current!.has(p.id));
     for (const pedido of newPedidos) {
       printedIdsRef.current.add(pedido.id);
+      const config = getSistemaConfig();
+      const monitorSetor = (() => { try { return localStorage.getItem(COZINHA_SETOR_KEY) as "tudo" | "cozinha" | "bar" | null; } catch { return null; } })();
       // Detect if ADIÇÃO: another active order from same mesa exists
       const isBalcaoOrder = pedido.origem === "balcao";
       const isDeliveryOrder = pedido.origem === "delivery";
@@ -285,17 +287,25 @@ ${pedido.observacaoGeral ? `<div class="c-obs">Obs: ${pedido.observacaoGeral}</d
 </body></html>`;
 
       try {
-        const config = getSistemaConfig();
         const usaSetores = config.impressaoPorSetor && !isDeliveryOrder && !isBalcaoOrder;
+        const setorEsteMonitor = monitorSetor ?? "tudo";
+
+        const deveImprimirNesteMonitor = !usaSetores || setorEsteMonitor === "tudo" ||
+          pedido.itens.some(it => {
+            const s = (it as any).setor ?? "cozinha";
+            if (setorEsteMonitor === "cozinha") return s === "cozinha" || s === "ambos";
+            if (setorEsteMonitor === "bar") return s === "bar" || s === "ambos";
+            return true;
+          });
+        if (!deveImprimirNesteMonitor) continue;
+
         if (usaSetores) {
-          const itensCozinha = pedido.itens.filter(it => {
-            const s = (it as any).setor ?? "cozinha";
-            return s === "cozinha" || s === "ambos";
-          });
-          const itensBar = pedido.itens.filter(it => {
-            const s = (it as any).setor ?? "cozinha";
-            return s === "bar" || s === "ambos";
-          });
+          const itensCozinha = setorEsteMonitor === "tudo" || setorEsteMonitor === "cozinha"
+            ? pedido.itens.filter(it => { const s = (it as any).setor ?? "cozinha"; return s === "cozinha" || s === "ambos"; })
+            : [];
+          const itensBar = setorEsteMonitor === "tudo" || setorEsteMonitor === "bar"
+            ? pedido.itens.filter(it => { const s = (it as any).setor ?? "cozinha"; return s === "bar" || s === "ambos"; })
+            : [];
           const buildHtml = (itensDoSetor: typeof pedido.itens, labelSetor: string) => {
             const itensSetorHtml = itensDoSetor.map((it) => {
               let line = `<div class="c-item"><span class="c-qty">${it.quantidade}x</span> ${it.nome}</div>`;
