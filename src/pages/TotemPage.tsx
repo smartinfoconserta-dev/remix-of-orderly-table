@@ -1,7 +1,6 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import PedidoFlow from "@/components/PedidoFlow";
 import { useRestaurant } from "@/contexts/RestaurantContext";
-import { getSistemaConfig } from "@/lib/adminStorage";
 import { CheckCircle2 } from "lucide-react";
 
 const TOTEM_MESA_ID = "__totem__";
@@ -11,33 +10,36 @@ const TotemPage = () => {
   const { mesas } = useRestaurant();
   const [pedidoConfirmado, setPedidoConfirmado] = useState<number | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastPedidoCountRef = useRef(0);
 
-  const config = getSistemaConfig();
-
-  // Find latest pedido number for totem mesa
   const totemMesa = mesas.find((m) => m.id === TOTEM_MESA_ID);
 
-  const resetTotem = useCallback(() => {
-    setPedidoConfirmado(null);
-  }, []);
+  // Detect new pedido by watching pedidos count
+  useEffect(() => {
+    if (!totemMesa) return;
+    const count = totemMesa.pedidos.length;
+    if (count > lastPedidoCountRef.current && lastPedidoCountRef.current > 0) {
+      const lastPedido = totemMesa.pedidos[count - 1];
+      setPedidoConfirmado(lastPedido?.numeroPedido ?? count);
+    }
+    lastPedidoCountRef.current = count;
+  }, [totemMesa?.pedidos.length]);
 
   // Auto-reset after success
   useEffect(() => {
     if (pedidoConfirmado === null) return;
-    timerRef.current = setTimeout(resetTotem, AUTO_RESET_MS);
+    timerRef.current = setTimeout(() => setPedidoConfirmado(null), AUTO_RESET_MS);
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
     };
-  }, [pedidoConfirmado, resetTotem]);
+  }, [pedidoConfirmado]);
 
-  // Listen for new pedidos on totem mesa
+  // Also set initial count on mount
   useEffect(() => {
-    if (!totemMesa) return;
-    const lastPedido = totemMesa.pedidos[totemMesa.pedidos.length - 1];
-    if (lastPedido && pedidoConfirmado === null) {
-      // This will be triggered by PedidoFlow's confirmarPedido
+    if (totemMesa) {
+      lastPedidoCountRef.current = totemMesa.pedidos.length;
     }
-  }, [totemMesa, pedidoConfirmado]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Success screen
   if (pedidoConfirmado !== null) {
@@ -56,7 +58,7 @@ const TotemPage = () => {
             <div
               className="h-full bg-primary rounded-full"
               style={{
-                animation: `shrink ${AUTO_RESET_MS}ms linear forwards`,
+                animation: `totem-shrink ${AUTO_RESET_MS}ms linear forwards`,
               }}
             />
           </div>
@@ -65,7 +67,7 @@ const TotemPage = () => {
           </p>
         </div>
         <style>{`
-          @keyframes shrink {
+          @keyframes totem-shrink {
             from { width: 100%; }
             to { width: 0%; }
           }
@@ -79,12 +81,6 @@ const TotemPage = () => {
       <PedidoFlow
         modo="totem"
         mesaId={TOTEM_MESA_ID}
-        onPedidoConfirmado={() => {
-          // Get latest pedido number
-          const mesa = mesas.find((m) => m.id === TOTEM_MESA_ID);
-          const lastPedido = mesa?.pedidos[mesa.pedidos.length - 1];
-          setPedidoConfirmado(lastPedido?.numeroPedido ?? 0);
-        }}
       />
     </div>
   );
