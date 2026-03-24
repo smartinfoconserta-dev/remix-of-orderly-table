@@ -595,7 +595,7 @@ const GerentePage = () => {
         {/* ═══ TAB 1: Fechamento do Turno ═══ */}
         <TabsContent value="fechamento" className="flex-1 overflow-y-auto p-4 md:p-6 mt-0">
           {!pinVerificado ? pinGateUI : (
-          <div className="mx-auto max-w-2xl space-y-6">
+          <div className="space-y-6">
             {/* Payment breakdown */}
             <div className="space-y-3">
               <h2 className="text-sm font-black uppercase tracking-widest text-muted-foreground">Vendas por forma de pagamento</h2>
@@ -679,7 +679,7 @@ const GerentePage = () => {
         {/* ═══ TAB 2: Relatórios ═══ */}
         <TabsContent value="relatorio" className="flex-1 overflow-y-auto p-4 md:p-6 mt-0">
           {!pinVerificado ? pinGateUI : (
-          <div className="mx-auto max-w-2xl space-y-6">
+          <div className="space-y-6">
 
             {/* ── Header with Print ── */}
             <div className="flex items-center justify-between">
@@ -816,8 +816,8 @@ const GerentePage = () => {
             </div>
 
             {/* ── KPI Cards ── */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              <div className="col-span-2 rounded-2xl border border-border bg-card p-4 space-y-3">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+              <div className="col-span-2 lg:col-span-2 rounded-2xl border border-border bg-card p-5 space-y-3">
                 <div className="flex items-center gap-2">
                   <TrendingUp className="h-4 w-4 text-primary" />
                   <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Total faturado no período</p>
@@ -880,7 +880,7 @@ const GerentePage = () => {
             </div>
 
             {/* ── Extra KPI Cards ── */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
               {[
                 { label: "Hora de pico", value: horaDePico, icon: Clock, color: "text-primary" },
                 { label: "Cancelamentos", value: String(cancelamentos), icon: XCircle, color: cancelamentos > 0 ? "text-destructive" : "text-muted-foreground" },
@@ -971,7 +971,7 @@ const GerentePage = () => {
             {/* ── Payment Breakdown ── */}
             <div className="space-y-3">
               <h2 className="text-sm font-black uppercase tracking-widest text-muted-foreground">Formas de pagamento</h2>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 {paymentBreakdown.map((pm) => {
                   const Icon = pm.icon;
                   return (
