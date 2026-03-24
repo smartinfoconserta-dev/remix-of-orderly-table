@@ -615,7 +615,9 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
 
   const header = (
     <header
-      className={`sticky top-0 z-50 flex items-center justify-between gap-3 border-b border-border bg-background/95 backdrop-blur-md ${
+      className={`sticky top-0 z-50 flex items-center justify-between gap-3 border-b ${
+        isTotem ? "border-gray-200 bg-white" : "border-border bg-background/95 backdrop-blur-md"
+      } ${
         isGarcomMobile ? "px-4 py-4" : "px-4 py-3 md:px-6"
       }`}
     >
