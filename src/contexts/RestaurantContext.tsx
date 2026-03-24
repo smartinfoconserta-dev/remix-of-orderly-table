@@ -1355,6 +1355,25 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }));
   }, []);
 
+  const cancelarPedidoBalcao = useCallback((pedidoId: string, motivo: string, operador: OperationalUser) => {
+    setStore((prev) => ({
+      ...prev,
+      pedidosBalcao: prev.pedidosBalcao.map((p) =>
+        p.id === pedidoId
+          ? { ...p, cancelado: true, canceladoEm: new Date().toISOString(), canceladoMotivo: motivo, canceladoPor: operador.nome, statusBalcao: "cancelado" as const }
+          : p
+      ),
+      eventos: appendEvent(prev.eventos, {
+        tipo: "caixa",
+        descricao: `Pedido #${prev.pedidosBalcao.find((p) => p.id === pedidoId)?.numeroPedido ?? "?"} cancelado — ${motivo}`,
+        acao: "cancelar_pedido_balcao",
+        motivo,
+        usuarioId: operador.id,
+        usuarioNome: operador.nome,
+      }),
+    }));
+  }, []);
+
   return (
     <RestaurantContext.Provider
       value={{
