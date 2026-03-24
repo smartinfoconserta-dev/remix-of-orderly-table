@@ -132,13 +132,13 @@ function licencaToDbRow(lic: LicencaConfig) {
 // CONFIG
 // ══════════════════════════════════════
 
-export async function fetchConfig(): Promise<SistemaConfig> {
+export async function fetchConfig(storeId?: string | null): Promise<SistemaConfig> {
   try {
-    const { data, error } = await supabase
-      .from("restaurant_config")
-      .select("*")
-      .limit(1)
-      .maybeSingle();
+    let query = supabase.from("restaurant_config").select("*");
+    if (storeId) {
+      query = query.eq("store_id", storeId);
+    }
+    const { data, error } = await query.limit(1).maybeSingle();
 
     if (error) throw error;
 
