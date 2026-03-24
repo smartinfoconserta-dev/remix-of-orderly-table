@@ -99,6 +99,18 @@ const Index = () => {
           onClick={() => navigate("/delivery")}
         />
         <ModeCard
+          title="Totem"
+          description="Autoatendimento"
+          icon={<Tablet size={28} />}
+          onClick={() => navigate("/totem")}
+        />
+        <ModeCard
+          title="TV Retirada"
+          description="Painel de pedidos prontos"
+          icon={<Monitor size={28} />}
+          onClick={() => navigate("/tv")}
+        />
+        <ModeCard
           title="Gerente"
           description="Relatórios e gestão"
           icon={<ShieldCheck size={28} />}
