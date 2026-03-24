@@ -62,6 +62,7 @@ import {
   getHorariosFuncionamento,
   saveHorariosFuncionamento,
   defaultHorariosSemana,
+  getModulosDoPlano,
   type ProdutoOverride,
   type MesasConfig,
   type SistemaConfig,
@@ -70,6 +71,7 @@ import {
   type CategoriaCustom,
   type HorariosSemana,
   type HorarioFuncionamento,
+  type PlanoModulos,
 } from "@/lib/adminStorage";
 import { getBairros, saveBairros, type Bairro } from "@/lib/deliveryStorage";
 import { toast } from "sonner";
