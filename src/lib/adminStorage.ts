@@ -72,6 +72,9 @@ export interface SistemaConfig {
   horarioFuncionamento?: HorariosSemana;
   mensagemFechado?: string;
   logoEstilo?: "quadrada" | "circular";
+  impressaoPorSetor?: boolean;
+  nomeImpressoraCozinha?: string;
+  nomeImpressoraBar?: string;
 }
 
 export interface LicencaConfig {

@@ -1791,6 +1791,43 @@ const AdminPage = () => {
                   )}
                 </div>
 
+                {/* Impressão por setor */}
+                <div className="rounded-2xl border border-border bg-card p-5 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-black text-foreground">Impressão por setor</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">Separa cozinha e bar em comandas distintas</p>
+                    </div>
+                    <Switch
+                      checked={sistemaConfig.impressaoPorSetor ?? false}
+                      onCheckedChange={(v) => setSistemaConfig((prev) => ({ ...prev, impressaoPorSetor: v }))}
+                    />
+                  </div>
+                  {sistemaConfig.impressaoPorSetor && (
+                    <div className="space-y-3 pt-2 border-t border-border">
+                      <div className="space-y-1">
+                        <label className="text-xs font-bold text-muted-foreground">Nome da impressora — Cozinha</label>
+                        <Input
+                          value={sistemaConfig.nomeImpressoraCozinha ?? ""}
+                          onChange={(e) => setSistemaConfig((prev) => ({ ...prev, nomeImpressoraCozinha: e.target.value }))}
+                          placeholder="Ex: EPSON-COZINHA"
+                          className="h-9 text-sm"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-xs font-bold text-muted-foreground">Nome da impressora — Bar</label>
+                        <Input
+                          value={sistemaConfig.nomeImpressoraBar ?? ""}
+                          onChange={(e) => setSistemaConfig((prev) => ({ ...prev, nomeImpressoraBar: e.target.value }))}
+                          placeholder="Ex: EPSON-BAR"
+                          className="h-9 text-sm"
+                        />
+                      </div>
+                      <p className="text-[10px] text-muted-foreground">Na demonstração abre janelas separadas. Na produção com servidor local, o nome é usado para rotear para a impressora correta.</p>
+                    </div>
+                  )}
+                </div>
+
                 {/* Modo identificação delivery */}
                 <div className="surface-card rounded-2xl p-6 space-y-3">
                   <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">Modo de identificação</p>
