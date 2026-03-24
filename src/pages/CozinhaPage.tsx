@@ -90,7 +90,7 @@ const CozinhaPage = () => {
   const printedIdsRef = useRef<Set<string> | null>(null);
   const initialLoadRef = useRef(true);
   const [filtroOrigem, setFiltroOrigem] = useState<"todos" | "mesa" | "delivery" | "balcao">("todos");
-  const [setorAtivo, setSetorAtivo] = useState<"todos" | "cozinha" | "bar">("todos");
+  
 
   useEffect(() => {
     const id = setInterval(() => { setTick((t) => t + 1); setClock(formatTime(new Date())); }, 30_000);
@@ -113,27 +113,13 @@ const CozinhaPage = () => {
     return all;
   }, [mesas, pedidosBalcao]);
 
-  const pedidosPorSetor = useMemo(() => {
-    if (setorAtivo === "todos") return activePedidos;
-    return activePedidos
-      .map(pedido => ({
-        ...pedido,
-        itens: pedido.itens.filter(item => {
-          const setor = (item as any).setor ?? "cozinha";
-          if (setorAtivo === "cozinha") return setor === "cozinha" || setor === "ambos";
-          if (setorAtivo === "bar") return setor === "bar" || setor === "ambos";
-          return true;
-        }),
-      }))
-      .filter(pedido => pedido.itens.length > 0);
-  }, [activePedidos, setorAtivo]);
 
   const pedidosFiltrados = useMemo(() => {
-    if (filtroOrigem === "todos") return pedidosPorSetor;
-    if (filtroOrigem === "delivery") return pedidosPorSetor.filter(p => p.origem === "delivery");
-    if (filtroOrigem === "balcao") return pedidosPorSetor.filter(p => p.origem === "balcao" || p.isBalcao);
-    return pedidosPorSetor.filter(p => p.origem !== "delivery" && !p.isBalcao);
-  }, [pedidosPorSetor, filtroOrigem]);
+    if (filtroOrigem === "todos") return activePedidos;
+    if (filtroOrigem === "delivery") return activePedidos.filter(p => p.origem === "delivery");
+    if (filtroOrigem === "balcao") return activePedidos.filter(p => p.origem === "balcao" || p.isBalcao);
+    return activePedidos.filter(p => p.origem !== "delivery" && !p.isBalcao);
+  }, [activePedidos, filtroOrigem]);
 
   // Sound notification when new orders arrive — detect by origin
   useEffect(() => {
@@ -317,26 +303,6 @@ ${pedido.observacaoGeral ? `<div class="c-obs">Obs: ${pedido.observacaoGeral}</d
           <span className="h-1.5 w-1.5 rounded-full bg-status-consumo animate-pulse" />
           Ao vivo
         </span>
-      </div>
-
-      <div className="flex gap-2 px-4 pb-2">
-        {([
-          { id: "todos", label: "Todos os setores" },
-          { id: "cozinha", label: "🍳 Cozinha" },
-          { id: "bar", label: "🍹 Bar" },
-        ] as const).map(s => (
-          <button
-            key={s.id}
-            onClick={() => setSetorAtivo(s.id)}
-            className={`px-4 py-1.5 rounded-xl text-sm font-bold border transition-colors ${
-              setorAtivo === s.id
-                ? "bg-primary text-primary-foreground border-primary"
-                : "border-border text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            {s.label}
-          </button>
-        ))}
       </div>
 
       <div className="flex gap-2 px-4 pb-3 flex-wrap">
