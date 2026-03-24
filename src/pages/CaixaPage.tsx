@@ -648,6 +648,12 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
     const pagHtml = data.formaPagamento
       ? `<div class="print-center">${data.formaPagamento}</div>`
       : "";
+    const descontoHtml = (data.desconto ?? 0) > 0
+      ? `<div class="print-item" style="color:#c85b0a"><span>🎁 Desconto aplicado</span><span>- R$ ${data.desconto!.toFixed(2).replace(".", ",")}</span></div>`
+      : "";
+    const couvertHtml = (data.couvert ?? 0) > 0
+      ? `<div class="print-item" style="color:#059669"><span>🍽️ Couvert (${data.numeroPessoas ?? 0} pessoa${(data.numeroPessoas ?? 0) !== 1 ? "s" : ""})</span><span>+ R$ ${data.couvert!.toFixed(2).replace(".", ",")}</span></div>`
+      : "";
     const paraLevarHtml = data.paraViagem
       ? `<div class="print-divider"></div><div class="print-center" style="font-size:18px;font-weight:900;letter-spacing:2px">*** PARA LEVAR — EMBALAR ***</div><div class="print-divider"></div>`
       : "";
