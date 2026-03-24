@@ -2090,6 +2090,32 @@ const AdminPage = () => {
                 </div>
               )}
             </div>
+
+            {/* Caixa Delivery */}
+            <div className="surface-card max-w-lg rounded-2xl overflow-hidden">
+              <div className="px-5 py-3 border-b border-border bg-secondary/50">
+                <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">
+                  🛵 Caixa Delivery ({deliveries.length})
+                </p>
+              </div>
+              {deliveries.length === 0 ? (
+                <p className="px-5 py-6 text-sm text-muted-foreground text-center">
+                  Nenhum caixa delivery cadastrado. Acesse /gerente para cadastrar.
+                </p>
+              ) : (
+                <div className="divide-y divide-border/50">
+                  {deliveries.map((d) => (
+                    <div key={d.id} className="flex items-center justify-between px-5 py-3">
+                      <div>
+                        <p className="text-sm font-bold text-foreground">{d.nome}</p>
+                        <p className="text-xs text-muted-foreground">Caixa Delivery</p>
+                      </div>
+                      <span className="text-xs font-bold text-purple-400 bg-purple-500/10 border border-purple-500/20 rounded-lg px-2 py-0.5">Ativo</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         )}
       </main>
