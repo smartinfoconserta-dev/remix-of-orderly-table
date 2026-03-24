@@ -548,7 +548,7 @@ const AdminPage = () => {
                   <span className="text-2xl">👥</span>
                   <div>
                     <p className="text-sm font-black text-foreground">Ver equipe</p>
-                    <p className="text-xs text-muted-foreground">Garçons, caixas e gerentes</p>
+                    <p className="text-xs text-muted-foreground">Gerentes do restaurante</p>
                   </div>
                 </button>
               </div>
