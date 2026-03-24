@@ -429,7 +429,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
   const resultadosBusca = useMemo(() => {
     const q = buscaComanda.trim();
     if (!q) return [];
-    return fechamentos
+    return allFechamentos
       .filter(f => {
         const numStr = String(f.numeroComanda ?? "").padStart(4, "0");
         const mesaStr = String(f.mesaNumero ?? "").padStart(2, "0");
