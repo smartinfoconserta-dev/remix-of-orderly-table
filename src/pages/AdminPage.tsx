@@ -2025,9 +2025,9 @@ const AdminPage = () => {
               </div>
               <div className="divide-y divide-border/50">
                 {TODOS_MODULOS.map(mod => {
-                  const plano = sistemaConfig.plano || "basico";
-                  const liberados = PLANO_MODULOS[plano] || [];
-                  const liberado = liberados.includes(mod.id);
+                  const plano = (licencaConfig.plano || sistemaConfig.plano || "basico") as PlanoModulos;
+                  const modulosLiberados = getModulosDoPlano(plano);
+                  const liberado = !!(modulosLiberados as any)[mod.id];
                   return (
                     <div key={mod.id} className="flex items-center justify-between px-5 py-3">
                       <div className="flex items-center gap-3">
