@@ -147,7 +147,7 @@ interface RestaurantStore {
 
 interface CriarPedidoBalcaoInput {
   itens: ItemCarrinho[];
-  origem: "balcao" | "delivery";
+  origem: "balcao" | "delivery" | "totem";
   operador: OperationalUser;
   clienteNome?: string;
   clienteTelefone?: string;
@@ -1073,7 +1073,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     setStore((prev) => {
       const now = new Date();
       const totalPedido = calcularTotalItens(input.itens) + (input.origem === "delivery" ? (input.taxaEntrega ?? 0) : 0);
-      const label = input.origem === "delivery" ? `DELIVERY — ${input.clienteNome ?? ""}` : "BALCÃO";
+      const label = input.origem === "delivery" ? `DELIVERY — ${input.clienteNome ?? ""}` : input.origem === "totem" ? "TOTEM" : "BALCÃO";
       const novoPedido: PedidoRealizado = {
         id: `pedido-balcao-${now.getTime()}-${Math.random().toString(36).slice(2, 7)}`,
         numeroPedido: prev.pedidosBalcao.length + 1,
@@ -1093,7 +1093,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         formaPagamentoDelivery: input.formaPagamentoDelivery,
         trocoParaQuanto: input.trocoParaQuanto,
         observacaoGeral: input.observacaoGeral,
-        statusBalcao: input.origem === "delivery" ? "aguardando_confirmacao" : "aberto",
+        statusBalcao: input.origem === "delivery" ? "aguardando_confirmacao" : input.origem === "totem" ? "aberto" : "aberto",
       };
       return {
         ...prev,
