@@ -754,7 +754,8 @@ const MasterPage = () => {
                   <div><span className="text-muted-foreground">Email:</span> <span className="font-semibold text-foreground">{detailClient.email || "—"}</span></div>
                   <div className="sm:col-span-2"><span className="text-muted-foreground">Endereço:</span> <span className="font-semibold text-foreground">{[detailClient.endereco, detailClient.cidade, detailClient.estado].filter(Boolean).join(", ") || "—"}</span></div>
                   <div><span className="text-muted-foreground">Mensalidade:</span> <span className="font-semibold text-foreground">R$ {(detailClient.valorMensalidade || 0).toFixed(2)}</span></div>
-                  <div><span className="text-muted-foreground">Plano:</span> <Badge className={PLANO_BADGE_CLASS[detailClient.plano] || "bg-muted text-muted-foreground"}>{PLANO_LABELS[detailClient.plano] || detailClient.plano || "—"}</Badge></div>
+                  <div><span className="text-muted-foreground">Plano contratual:</span> <Badge className={PLANO_BADGE_CLASS[detailClient.plano] || "bg-muted text-muted-foreground"}>{PLANO_LABELS[detailClient.plano] || detailClient.plano || "—"}</Badge></div>
+                  <div><span className="text-muted-foreground">Plano módulos:</span> <Badge className={PLANO_MODULOS_BADGE[detailClient.planoModulos || "basico"]}>{PLANO_MODULOS_LABELS[detailClient.planoModulos || "basico"]}</Badge></div>
                   <div><span className="text-muted-foreground">Início contrato:</span> <span className="font-semibold text-foreground">{detailClient.dataInicio || "—"}</span></div>
                   <div><span className="text-muted-foreground">Dia vencimento:</span> <span className="font-semibold text-foreground">{detailClient.diaVencimento || "—"}</span></div>
                   <div><span className="text-muted-foreground">Licença:</span> <span className="font-semibold text-foreground">{detailClient.dataVencimento || "—"}</span></div>
