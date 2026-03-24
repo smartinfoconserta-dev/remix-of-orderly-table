@@ -313,6 +313,7 @@ const normalizeItem = (item: Partial<ItemCarrinho>, index = 0): ItemCarrinho => 
   precoUnitario: Number(item.precoUnitario ?? item.precoBase ?? 0),
   imagemUrl: item.imagemUrl ?? undefined,
   gruposEscolhidos: Array.isArray(item.gruposEscolhidos) ? item.gruposEscolhidos : undefined,
+  setor: item.setor ?? undefined,
 });
 
 const normalizePedido = (pedido: Partial<PedidoRealizado>, mesaId: string, index = 0): PedidoRealizado => {
