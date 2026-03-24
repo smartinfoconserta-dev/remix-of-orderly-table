@@ -268,7 +268,7 @@ const CartDrawer = ({
                         <div className="shrink-0 flex items-center gap-1.5">
                           <button type="button"
                             onClick={() => item.quantidade <= 1 ? onRemove(item.uid) : onUpdateQty(item.uid, -1)}
-                            className="flex h-7 w-7 items-center justify-center rounded-lg bg-secondary text-foreground active:scale-90 transition-transform">
+                            className={`flex h-7 w-7 items-center justify-center rounded-lg active:scale-90 transition-transform ${isTotemMode ? "bg-gray-100 text-gray-900" : "bg-secondary text-foreground"}`}>
                             {item.quantidade <= 1
                               ? <Trash2 className="h-3 w-3 text-destructive" />
                               : <Minus className="h-3 w-3" />}
