@@ -242,7 +242,7 @@ const CartDrawer = ({
 
                         {/* Nome e personalizações */}
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-bold text-foreground leading-tight truncate">{item.nome}</p>
+                          <p className={`text-sm font-bold leading-tight truncate ${isTotemMode ? "text-gray-900" : "text-foreground"}`}>{item.nome}</p>
                           {item.adicionais.length > 0 && (
                             <p className="text-xs text-primary leading-tight truncate">
                               + {item.adicionais.map(a => a.nome).join(", ")}
