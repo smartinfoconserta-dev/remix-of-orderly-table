@@ -1,8 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Check, ChefHat, Clock, ShoppingBag, User } from "lucide-react";
+import { Check, ChefHat, Clock, LogOut, ShoppingBag, User } from "lucide-react";
 import { useRestaurant } from "@/contexts/RestaurantContext";
 import type { PedidoRealizado } from "@/contexts/RestaurantContext";
 import { getSistemaConfig } from "@/lib/adminStorage";
+import { useAuth } from "@/contexts/AuthContext";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+
+const COZINHA_SESSAO_KEY = "obsidian-cozinha-sessao-v1";
 
 const minutesAgo = (isoDate: string) => {
   const diff = Date.now() - new Date(isoDate).getTime();
