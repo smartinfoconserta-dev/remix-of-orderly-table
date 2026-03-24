@@ -333,7 +333,7 @@ ${pedido.observacaoGeral ? `<div class="c-obs">Obs: ${pedido.observacaoGeral}</d
       )}
 
       <div className="grid gap-4" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))" }}>
-        {activePedidos.map((pedido, i) => {
+        {pedidosFiltrados.map((pedido, i) => {
           const mins = minutesAgo(pedido.criadoEmIso);
           const isLate = mins >= 15 && mins <= MAX_ELAPSED_MINUTES;
           const isCritical = mins >= 40 && mins <= MAX_ELAPSED_MINUTES;
