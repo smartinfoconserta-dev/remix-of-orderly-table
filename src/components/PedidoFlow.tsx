@@ -1081,21 +1081,27 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
       <main className={`pt-3 px-4 ${isGarcomMobile && carrinho.length > 0 ? "pb-32" : "pb-24"} ${isClientIdle ? "brightness-[0.2] saturate-50" : "brightness-100 saturate-100"} ${isTotem ? "bg-white" : ""}`}>
         <div>{isGarcomMobile && !isTotem ? productGrid : isHomeActive && !isTotem ? homeContent : productGrid}</div>
       </main>
-      {isGarcomMobile && carrinho.length > 0 && !cartOpen && (
+      {(isGarcomMobile || isTotem) && carrinho.length > 0 && !cartOpen && (
         <div className="fixed bottom-0 left-0 right-0 z-50 p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
           <button
             type="button"
             onClick={() => handleCartOpenChange(true)}
-            className="w-full flex items-center justify-between gap-3 rounded-2xl bg-primary px-5 py-4 text-primary-foreground shadow-[0_8px_32px_-8px_hsl(var(--primary)/0.6)] active:scale-[0.98] transition-transform"
+            className={`w-full flex items-center justify-between gap-3 rounded-2xl px-5 py-4 shadow-lg active:scale-[0.98] transition-transform ${
+              isTotem
+                ? "bg-[#FF6B00] text-white"
+                : "bg-primary text-primary-foreground shadow-[0_8px_32px_-8px_hsl(var(--primary)/0.6)]"
+            }`}
           >
             <div className="flex items-center gap-3">
               <div className="relative">
                 <ShoppingCart className="h-5 w-5" />
-                <span className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-white text-[10px] font-black text-primary">
+                <span className={`absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-black ${
+                  isTotem ? "bg-white text-[#FF6B00]" : "bg-white text-primary"
+                }`}>
                   {carrinho.reduce((s, i) => s + i.quantidade, 0)}
                 </span>
               </div>
-              <span className="text-base font-black">Ver carrinho</span>
+              <span className="text-base font-black uppercase">{isTotem ? "CONTINUAR" : "Ver carrinho"}</span>
             </div>
             <span className="text-base font-black tabular-nums">
               {formatPrice(carrinho.reduce((s, i) => s + i.precoUnitario * i.quantidade, 0))}
