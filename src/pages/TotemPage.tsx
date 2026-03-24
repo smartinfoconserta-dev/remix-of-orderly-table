@@ -1,31 +1,17 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import PedidoFlow from "@/components/PedidoFlow";
 import { useRestaurant } from "@/contexts/RestaurantContext";
 import { CheckCircle2 } from "lucide-react";
 import { getSistemaConfig } from "@/lib/adminStorage";
+import type { ItemCarrinho } from "@/contexts/RestaurantContext";
 
-const TOTEM_MESA_ID = "__totem__";
 const AUTO_RESET_MS = 10_000;
 
 const TotemPage = () => {
-  const { mesas } = useRestaurant();
+  const { criarPedidoBalcao, pedidosBalcao } = useRestaurant();
   const [pedidoConfirmado, setPedidoConfirmado] = useState<number | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const lastPedidoCountRef = useRef(0);
   const config = getSistemaConfig();
-
-  const totemMesa = mesas.find((m) => m.id === TOTEM_MESA_ID);
-
-  // Detect new pedido by watching pedidos count
-  useEffect(() => {
-    if (!totemMesa) return;
-    const count = totemMesa.pedidos.length;
-    if (count > lastPedidoCountRef.current && lastPedidoCountRef.current > 0) {
-      const lastPedido = totemMesa.pedidos[count - 1];
-      setPedidoConfirmado(lastPedido?.numeroPedido ?? count);
-    }
-    lastPedidoCountRef.current = count;
-  }, [totemMesa?.pedidos.length]);
 
   // Auto-reset after success
   useEffect(() => {
@@ -36,12 +22,16 @@ const TotemPage = () => {
     };
   }, [pedidoConfirmado]);
 
-  // Set initial count on mount
-  useEffect(() => {
-    if (totemMesa) {
-      lastPedidoCountRef.current = totemMesa.pedidos.length;
-    }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  const handlePedidoConfirmado = useCallback((itens: ItemCarrinho[]) => {
+    const numeroPedido = pedidosBalcao.length + 1;
+    criarPedidoBalcao({
+      itens,
+      origem: "totem",
+      operador: { id: "totem-auto", nome: "Totem", role: "caixa" },
+      clienteNome: "Totem",
+    });
+    setPedidoConfirmado(numeroPedido);
+  }, [criarPedidoBalcao, pedidosBalcao.length]);
 
   // Success screen — fast-food style
   if (pedidoConfirmado !== null) {
@@ -97,7 +87,7 @@ const TotemPage = () => {
     <div className="min-h-screen bg-background">
       <PedidoFlow
         modo="totem"
-        mesaId={TOTEM_MESA_ID}
+        onPedidoConfirmado={handlePedidoConfirmado}
       />
     </div>
   );
