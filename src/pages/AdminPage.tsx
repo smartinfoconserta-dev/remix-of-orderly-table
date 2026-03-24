@@ -1886,6 +1886,47 @@ const AdminPage = () => {
               </div>
             )}
 
+            {/* MÓDULOS */}
+            {configSection === "modulos" && (
+              <div className="space-y-4 max-w-lg">
+                {TODOS_MODULOS.map(mod => {
+                  const plano = sistemaConfig.plano || "basico";
+                  const liberados = PLANO_MODULOS[plano] || [];
+                  const liberado = liberados.includes(mod.id);
+                  const ativo = !!(sistemaConfig.modulos as any)?.[mod.id];
+                  return (
+                    <div key={mod.id} className="rounded-2xl border border-border bg-card p-5">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <span className="text-2xl">{mod.icon}</span>
+                          <div>
+                            <p className="text-sm font-black text-foreground">{mod.label}</p>
+                            <p className="text-xs text-muted-foreground mt-0.5">{mod.desc}</p>
+                          </div>
+                        </div>
+                        {liberado ? (
+                          <Switch
+                            checked={ativo}
+                            onCheckedChange={(v) => {
+                              const next = { ...sistemaConfig, modulos: { ...sistemaConfig.modulos, [mod.id]: v } };
+                              setSistemaConfig(next);
+                              saveSistemaConfig(next);
+                              toast.success(v ? `${mod.label} ativado` : `${mod.label} desativado`);
+                            }}
+                          />
+                        ) : (
+                          <span className="text-xs text-muted-foreground flex items-center gap-1">🔒 Bloqueado</span>
+                        )}
+                      </div>
+                      {!liberado && (
+                        <p className="text-[10px] text-muted-foreground mt-2">Disponível no plano superior</p>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
             {/* SISTEMA */}
             {configSection === "sistema" && (
               <div className="space-y-4 max-w-lg">
