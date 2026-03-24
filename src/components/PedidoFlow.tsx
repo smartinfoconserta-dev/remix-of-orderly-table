@@ -691,7 +691,7 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
                 {nomeAtendimento}
               </div>
             ) : null}
-            {!isExternalOrder && modo !== "totem" && (
+            {!isExternalOrder && (
               <Button
                 type="button"
                 variant="outline"
