@@ -174,9 +174,9 @@ export async function saveConfig(config: SistemaConfig): Promise<void> {
       .maybeSingle();
 
     if (existing) {
-      await supabase.from("restaurant_config").update(row).eq("id", existing.id);
+      await supabase.from("restaurant_config").update(row as any).eq("id", existing.id);
     } else {
-      await supabase.from("restaurant_config").insert(row);
+      await supabase.from("restaurant_config").insert(row as any);
     }
     clearPendingSync("config");
   } catch {
