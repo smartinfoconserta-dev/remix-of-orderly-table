@@ -109,7 +109,7 @@ export interface Mesa {
 }
 
 interface PedidoMeta {
-  modo: "cliente" | "garcom" | "caixa";
+  modo: "cliente" | "garcom" | "caixa" | "totem";
   operador?: OperationalUser | null;
   paraViagem?: boolean;
 }
