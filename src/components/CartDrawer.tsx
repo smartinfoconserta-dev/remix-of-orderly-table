@@ -33,6 +33,7 @@ const CartDrawer = ({
   onOpenChange,
   hideTrigger = false,
   modo = "cliente",
+  isTotemMode = false,
 }: Props) => {
   const subtotal = carrinho.reduce((acc, item) => acc + item.precoUnitario * item.quantidade, 0);
   const totalItens = carrinho.reduce((acc, item) => acc + item.quantidade, 0);
