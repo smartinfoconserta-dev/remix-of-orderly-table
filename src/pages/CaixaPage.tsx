@@ -268,12 +268,17 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
   useEffect(() => {
     if (modoForced) setModoOperacao(modoForced);
   }, [modoForced]);
-  const [caixaView, setCaixaView] = useState<"mesas" | "delivery">(() => {
+  const [caixaView, setCaixaView] = useState<"mesas" | "delivery" | "totem">(() => {
     if (modoForced === "somente_delivery") return "delivery";
     if (modoForced === "somente_mesas") return "mesas";
     const savedModo = localStorage.getItem("obsidian-caixa-modo-v1");
     return savedModo === "somente_delivery" ? "delivery" : "mesas";
   });
+  const [totemCancelOpen, setTotemCancelOpen] = useState<string | null>(null);
+  const [totemCancelMotivo, setTotemCancelMotivo] = useState("");
+  const [totemCancelPin, setTotemCancelPin] = useState("");
+  const [totemCancelError, setTotemCancelError] = useState<string | null>(null);
+  const [totemCancelLoading, setTotemCancelLoading] = useState(false);
   const [deliveryConfirmOpen, setDeliveryConfirmOpen] = useState(false);
   const [deliveryPendingItens, setDeliveryPendingItens] = useState<ItemCarrinho[]>([]);
   const [deliveryPendingParaViagem, setDeliveryPendingParaViagem] = useState(false);
