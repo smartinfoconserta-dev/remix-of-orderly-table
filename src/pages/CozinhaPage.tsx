@@ -90,7 +90,7 @@ const CozinhaPage = () => {
   const printedIdsRef = useRef<Set<string> | null>(null);
   const initialLoadRef = useRef(true);
   const [filtroOrigem, setFiltroOrigem] = useState<"todos" | "mesa" | "delivery" | "balcao">("todos");
-  const [setorAtivo, setSetorAtivo] = useState<"todos" | "cozinha" | "bar">("todos");
+  
 
   useEffect(() => {
     const id = setInterval(() => { setTick((t) => t + 1); setClock(formatTime(new Date())); }, 30_000);
