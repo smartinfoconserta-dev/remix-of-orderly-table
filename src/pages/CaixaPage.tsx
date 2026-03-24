@@ -667,6 +667,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
       <div class="print-divider"></div>
       <div class="print-item"><span>Subtotal</span><span>R$ ${data.subtotal.toFixed(2).replace(".", ",")}</span></div>
       ${taxaHtml}
+      ${descontoHtml}${couvertHtml}
       <div class="print-total"><span>TOTAL</span><span>R$ ${data.total.toFixed(2).replace(".", ",")}</span></div>
       <div class="print-divider"></div>
       ${pagHtml}
