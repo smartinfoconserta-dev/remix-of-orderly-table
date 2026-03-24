@@ -1176,7 +1176,7 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
       <div className={`flex flex-col ${isTotem ? "bg-white max-w-[480px] mx-auto" : "bg-background"}`} style={{ minHeight: '100dvh' }}>
         {header}
         {garcomBanner}
-        {(isMobile || modo === "garcom" || modo === "delivery") ? mobileContent : desktopContent}
+        {(isMobile || modo === "garcom" || modo === "delivery" || isTotem) ? mobileContent : desktopContent}
         <ProductModal produto={produtoSelecionado} onClose={handleCloseProductModal} onAdd={handleAddToCart} isGarcomMobile={isGarcomMobile} skipEmbalagemDefault={modo === "delivery"} />
         {mesa && <MinhaContaDrawer pedidos={mesa.pedidos} total={mesa.total} open={contaOpen} onOpenChange={setContaOpen} />}
         {idleOverlay}
