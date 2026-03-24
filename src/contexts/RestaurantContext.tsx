@@ -27,7 +27,7 @@ export interface PedidoRealizado {
   total: number;
   criadoEm: string;
   criadoEmIso: string;
-  origem: "cliente" | "garcom" | "caixa" | "balcao" | "delivery" | "totem";
+  origem: "mesa" | "cliente" | "garcom" | "caixa" | "balcao" | "delivery" | "totem";
   mesaId: string;
   garcomId?: string;
   garcomNome?: string;
@@ -43,8 +43,12 @@ export interface PedidoRealizado {
   formaPagamentoDelivery?: string;
   trocoParaQuanto?: number;
   observacaoGeral?: string;
-  statusBalcao?: "aberto" | "pronto" | "pago" | "saiu" | "entregue" | "aguardando_confirmacao" | "devolvido";
+  statusBalcao?: "aberto" | "pronto" | "pago" | "saiu" | "entregue" | "aguardando_confirmacao" | "devolvido" | "cancelado";
   motoboyNome?: string;
+  cancelado?: boolean;
+  canceladoEm?: string;
+  canceladoMotivo?: string;
+  canceladoPor?: string;
 }
 
 export interface EventoOperacional {
