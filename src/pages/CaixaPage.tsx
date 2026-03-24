@@ -175,8 +175,9 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
     registrarFechamentoMotoboy,
     estornarFechamento,
     marcarBalcaoRetirado,
+    cancelarPedidoBalcao,
   } = useRestaurant();
-  const { currentCaixa, currentGerente, logout, verifyManagerAccess } = useAuth();
+  const { currentCaixa, currentGerente, logout, verifyManagerAccess, verifyEmployeeAccess } = useAuth();
 
   const [mesaSelecionada, setMesaSelecionada] = useState<string | null>(null);
   const [comandaOpen, setComandaOpen] = useState(false);
@@ -268,12 +269,17 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
   useEffect(() => {
     if (modoForced) setModoOperacao(modoForced);
   }, [modoForced]);
-  const [caixaView, setCaixaView] = useState<"mesas" | "delivery">(() => {
+  const [caixaView, setCaixaView] = useState<"mesas" | "delivery" | "totem">(() => {
     if (modoForced === "somente_delivery") return "delivery";
     if (modoForced === "somente_mesas") return "mesas";
     const savedModo = localStorage.getItem("obsidian-caixa-modo-v1");
     return savedModo === "somente_delivery" ? "delivery" : "mesas";
   });
+  const [totemCancelOpen, setTotemCancelOpen] = useState<string | null>(null);
+  const [totemCancelMotivo, setTotemCancelMotivo] = useState("");
+  const [totemCancelPin, setTotemCancelPin] = useState("");
+  const [totemCancelError, setTotemCancelError] = useState<string | null>(null);
+  const [totemCancelLoading, setTotemCancelLoading] = useState(false);
   const [deliveryConfirmOpen, setDeliveryConfirmOpen] = useState(false);
   const [deliveryPendingItens, setDeliveryPendingItens] = useState<ItemCarrinho[]>([]);
   const [deliveryPendingParaViagem, setDeliveryPendingParaViagem] = useState(false);
@@ -489,7 +495,12 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
       .sort((a, b) => new Date(a.criadoEmIso).getTime() - new Date(b.criadoEmIso).getTime()),
     [pedidosBalcao]
   );
-  const pedidosBalcaoSoAtivos = useMemo(() => pedidosBalcaoAtivos.filter((p) => p.origem === "balcao" || p.origem === "totem"), [pedidosBalcaoAtivos]);
+  const pedidosBalcaoSoAtivos = useMemo(() => pedidosBalcaoAtivos.filter((p) => p.origem === "balcao"), [pedidosBalcaoAtivos]);
+  const pedidosTotem = useMemo(() =>
+    pedidosBalcao.filter((p) => p.origem === "totem").sort((a, b) => new Date(b.criadoEmIso).getTime() - new Date(a.criadoEmIso).getTime()),
+    [pedidosBalcao]
+  );
+  const pedidosTotemAtivos = useMemo(() => pedidosTotem.filter((p) => p.statusBalcao !== "cancelado" && p.statusBalcao !== "retirado"), [pedidosTotem]);
 
   const pedidosParaRetirar = useMemo(() =>
     pedidosDeliveryAtivos.filter(p => p.statusBalcao === "pronto" && !p.motoboyNome),
@@ -1569,6 +1580,19 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
                   )}
                 </button>
                 )}
+                <button
+                  onClick={() => setCaixaView("totem")}
+                  className={`px-4 py-1.5 text-xs font-bold transition-colors border border-border rounded-t -mb-px relative flex items-center gap-1.5 ${
+                    caixaView === "totem"
+                      ? "bg-card text-foreground border-b-card z-10"
+                      : "bg-background text-muted-foreground"
+                  }`}
+                >
+                  🖥️ Totem
+                  {pedidosTotemAtivos.length > 0 && (
+                    <span className="rounded-full px-1.5 py-0.5 text-[10px] font-black tabular-nums leading-none bg-orange-500 text-white">{pedidosTotemAtivos.length}</span>
+                  )}
+                </button>
                 <div className="flex-1 border-b border-border" />
               </div>
 
@@ -1661,7 +1685,7 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
                     })}
                   </div>
                   </>
-                ) : (
+                ) : caixaView === "delivery" ? (
                   /* ── DELIVERY PANEL ── */
                   <div className="space-y-4 fade-in">
                     <div className="flex items-center gap-3">
@@ -1976,6 +2000,173 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
                       <div className="flex flex-col items-center justify-center gap-3 py-20 text-muted-foreground">
                         <Truck className="h-12 w-12 opacity-20" />
                         <p className="text-sm font-semibold">Nenhum delivery ativo no momento</p>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  /* ── TOTEM PANEL ── */
+                  <div className="space-y-4 fade-in">
+                    <div className="flex items-center gap-3">
+                      <span className="text-xl">🖥️</span>
+                      <h2 className="text-base font-black text-foreground flex-1">Pedidos do Totem</h2>
+                      <span className="text-xs text-muted-foreground">{pedidosTotemAtivos.length} ativo{pedidosTotemAtivos.length !== 1 ? "s" : ""}</span>
+                    </div>
+
+                    {pedidosTotem.length === 0 ? (
+                      <div className="flex flex-col items-center justify-center gap-3 py-20 text-muted-foreground">
+                        <span className="text-5xl opacity-20">🖥️</span>
+                        <p className="text-sm font-semibold">Nenhum pedido do totem no momento</p>
+                      </div>
+                    ) : (
+                      <div className="grid gap-3" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))" }}>
+                        {pedidosTotem.map((pt) => {
+                          const isCancelado = pt.statusBalcao === "cancelado";
+                          const isRetirado = pt.statusBalcao === "retirado";
+                          const isPronto = pt.statusBalcao === "pronto";
+                          const isPreparando = pt.statusBalcao === "preparando";
+                          return (
+                            <div
+                              key={pt.id}
+                              className={`rounded-2xl border p-5 space-y-3 ${
+                                isCancelado ? "opacity-50 border-red-500/30 bg-red-500/5"
+                                : isRetirado ? "opacity-50 border-border bg-secondary/30"
+                                : isPronto ? "border-emerald-500/50 bg-emerald-500/5"
+                                : isPreparando ? "border-amber-500/50 bg-amber-500/5"
+                                : "border-border bg-card"
+                              }`}
+                            >
+                              {/* Number + status */}
+                              <div className="flex items-center justify-between">
+                                <span className="text-3xl font-black tabular-nums" style={{ color: "#FF6B00" }}>
+                                  #{String(pt.numeroPedido).padStart(3, "0")}
+                                </span>
+                                <span className={`rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-widest ${
+                                  isCancelado ? "border-red-500/25 bg-red-500/10 text-red-400"
+                                  : isRetirado ? "border-border bg-muted text-muted-foreground"
+                                  : isPronto ? "border-emerald-500/25 bg-emerald-500/10 text-emerald-400"
+                                  : isPreparando ? "border-amber-500/25 bg-amber-500/10 text-amber-400"
+                                  : "border-amber-500/25 bg-amber-500/10 text-amber-400"
+                                }`}>
+                                  {isCancelado ? "CANCELADO" : isRetirado ? "Retirado" : isPronto ? "PRONTO ✓" : isPreparando ? "Preparando..." : "Aberto"}
+                                </span>
+                              </div>
+
+                              {/* Items */}
+                              <div className="text-sm text-foreground">
+                                {pt.itens.map((it) => (
+                                  <span key={it.uid} className="mr-2">
+                                    {it.quantidade}x {it.nome}
+                                  </span>
+                                ))}
+                              </div>
+
+                              {/* Total */}
+                              <div className="text-lg font-black tabular-nums text-foreground">
+                                {formatPrice(pt.total)}
+                              </div>
+
+                              {/* Cancel reason */}
+                              {isCancelado && pt.canceladoMotivo && (
+                                <p className="text-xs text-red-400">Motivo: {pt.canceladoMotivo}</p>
+                              )}
+
+                              {/* Retirado button */}
+                              {isPronto && (
+                                <button
+                                  type="button"
+                                  onClick={() => marcarBalcaoRetirado(pt.id)}
+                                  className="flex w-full items-center justify-center gap-1.5 rounded-xl bg-emerald-600 py-2.5 text-xs font-black text-white hover:bg-emerald-700 active:scale-[0.98]"
+                                >
+                                  <Check className="h-3.5 w-3.5" />
+                                  Retirado
+                                </button>
+                              )}
+
+                              {/* Cancel button */}
+                              {!isCancelado && !isRetirado && (
+                                <button
+                                  type="button"
+                                  onClick={() => { setTotemCancelOpen(pt.id); setTotemCancelMotivo(""); setTotemCancelPin(""); setTotemCancelError(null); }}
+                                  className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-red-500/30 py-2 text-xs font-bold text-red-400 hover:bg-red-500/10 active:scale-[0.98]"
+                                >
+                                  Cancelar
+                                </button>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    {/* Cancel modal */}
+                    {totemCancelOpen && (
+                      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+                        <div className="w-full max-w-sm rounded-2xl border border-border bg-card p-6 space-y-4 shadow-xl">
+                          <h3 className="text-lg font-black text-foreground">Cancelar pedido</h3>
+                          <div className="space-y-3">
+                            <div>
+                              <label className="text-xs font-bold text-muted-foreground">Motivo do cancelamento *</label>
+                              <textarea
+                                value={totemCancelMotivo}
+                                onChange={(e) => setTotemCancelMotivo(e.target.value)}
+                                className="mt-1 w-full rounded-xl border border-border bg-background p-3 text-sm text-foreground resize-none"
+                                rows={2}
+                                placeholder="Descreva o motivo..."
+                                maxLength={200}
+                              />
+                            </div>
+                            <div>
+                              <label className="text-xs font-bold text-muted-foreground">Sua senha (PIN) *</label>
+                              <input
+                                type="password"
+                                inputMode="numeric"
+                                value={totemCancelPin}
+                                onChange={(e) => setTotemCancelPin(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                                className="mt-1 w-full rounded-xl border border-border bg-background p-3 text-sm text-foreground"
+                                placeholder="PIN de 4-6 dígitos"
+                                maxLength={6}
+                              />
+                            </div>
+                            {totemCancelError && (
+                              <p className="text-xs font-bold text-destructive">{totemCancelError}</p>
+                            )}
+                          </div>
+                          <div className="flex gap-2">
+                            <button
+                              type="button"
+                              onClick={() => setTotemCancelOpen(null)}
+                              className="flex-1 rounded-xl border border-border py-2.5 text-sm font-bold text-muted-foreground hover:bg-secondary"
+                            >
+                              Voltar
+                            </button>
+                            <button
+                              type="button"
+                              disabled={!totemCancelMotivo.trim() || !/^\d{4,6}$/.test(totemCancelPin) || totemCancelLoading}
+                              onClick={async () => {
+                                setTotemCancelLoading(true);
+                                setTotemCancelError(null);
+                                const operadorNome = currentCaixa?.nome || currentGerente?.nome || "Operador";
+                                const result = await verifyEmployeeAccess(operadorNome, totemCancelPin);
+                                if (!result.ok) {
+                                  setTotemCancelError("PIN incorreto");
+                                  setTotemCancelLoading(false);
+                                  return;
+                                }
+                                cancelarPedidoBalcao(totemCancelOpen!, totemCancelMotivo.trim(), {
+                                  id: result.user?.id || "unknown",
+                                  nome: result.user?.nome || operadorNome,
+                                  role: (result.user?.role as any) || "caixa",
+                                  criadoEm: new Date().toISOString(),
+                                });
+                                setTotemCancelOpen(null);
+                                setTotemCancelLoading(false);
+                              }}
+                              className="flex-1 rounded-xl bg-red-600 py-2.5 text-sm font-black text-white hover:bg-red-700 disabled:opacity-50"
+                            >
+                              {totemCancelLoading ? "Verificando..." : "Confirmar cancelamento"}
+                            </button>
+                          </div>
+                        </div>
                       </div>
                     )}
                   </div>
