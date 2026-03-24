@@ -1513,6 +1513,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         rejeitarPedidoBalcao,
         cancelarPedidoBalcao,
         marcarBalcaoRetirado,
+        marcarBalcaoPreparando,
         registrarFechamentoMotoboy,
       }}
     >
