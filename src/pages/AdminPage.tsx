@@ -324,6 +324,15 @@ const AdminPage = () => {
     setNewGerentePin("");
   };
 
+  const handleCreateDelivery = () => {
+    if (!newDeliveryName.trim() || !/^\d{4,6}$/.test(newDeliveryPin)) return;
+    const result = createUser("delivery", newDeliveryName, newDeliveryPin);
+    if (!result.ok) { toast.error(result.error || "Erro ao criar"); return; }
+    toast.success(`Caixa Delivery "${result.user?.nome}" criado com sucesso`);
+    setNewDeliveryName("");
+    setNewDeliveryPin("");
+  };
+
   const handleRemoveGerente = (id: string, nome: string) => {
     const result = removeUser(id);
     if (!result.ok) {
