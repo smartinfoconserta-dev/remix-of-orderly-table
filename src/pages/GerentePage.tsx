@@ -188,9 +188,10 @@ const GerentePage = () => {
   // Equipe state
   const garcons = useMemo(() => getActiveProfilesByRole("garcom"), [getActiveProfilesByRole]);
   const caixas = useMemo(() => getActiveProfilesByRole("caixa"), [getActiveProfilesByRole]);
+  const deliveries = useMemo(() => getActiveProfilesByRole("delivery"), [getActiveProfilesByRole]);
   const [newEmpName, setNewEmpName] = useState("");
   const [newEmpPin, setNewEmpPin] = useState("");
-  const [newEmpRole, setNewEmpRole] = useState<"garcom" | "caixa">("garcom");
+  const [newEmpRole, setNewEmpRole] = useState<"garcom" | "caixa" | "delivery">("garcom");
   const [empError, setEmpError] = useState<string | null>(null);
 
   // Motoboy state
