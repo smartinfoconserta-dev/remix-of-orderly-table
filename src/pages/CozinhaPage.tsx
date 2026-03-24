@@ -113,20 +113,6 @@ const CozinhaPage = () => {
     return all;
   }, [mesas, pedidosBalcao]);
 
-  const pedidosPorSetor = useMemo(() => {
-    if (setorAtivo === "todos") return activePedidos;
-    return activePedidos
-      .map(pedido => ({
-        ...pedido,
-        itens: pedido.itens.filter(item => {
-          const setor = (item as any).setor ?? "cozinha";
-          if (setorAtivo === "cozinha") return setor === "cozinha" || setor === "ambos";
-          if (setorAtivo === "bar") return setor === "bar" || setor === "ambos";
-          return true;
-        }),
-      }))
-      .filter(pedido => pedido.itens.length > 0);
-  }, [activePedidos, setorAtivo]);
 
   const pedidosFiltrados = useMemo(() => {
     if (filtroOrigem === "todos") return pedidosPorSetor;
