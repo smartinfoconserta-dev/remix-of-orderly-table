@@ -376,6 +376,38 @@ ${itensSetorHtml}
     [marcarPedidoPronto, marcarPedidoBalcaoPronto],
   );
 
+  const config = getSistemaConfig();
+
+  if (config.impressaoPorSetor && setorMonitor === null) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-8 p-8">
+        <div className="text-center space-y-2">
+          <h1 className="text-3xl font-black text-foreground">Este monitor é de qual setor?</h1>
+          <p className="text-sm text-muted-foreground">A escolha será salva neste dispositivo</p>
+        </div>
+        <div className="flex flex-col gap-4 w-full max-w-xs">
+          {([
+            { id: "cozinha", label: "🍳 Cozinha", desc: "Mostra só itens de cozinha" },
+            { id: "bar", label: "🍹 Bar", desc: "Mostra só itens de bar" },
+            { id: "tudo", label: "⚡ Tudo junto", desc: "Mostra todos os itens" },
+          ] as const).map(s => (
+            <button
+              key={s.id}
+              onClick={() => {
+                localStorage.setItem(COZINHA_SETOR_KEY, s.id);
+                setSetorMonitor(s.id);
+              }}
+              className="rounded-2xl border-2 border-border bg-card hover:border-primary hover:bg-primary/5 p-5 text-left transition-colors"
+            >
+              <p className="text-xl font-black text-foreground">{s.label}</p>
+              <p className="text-sm text-muted-foreground mt-1">{s.desc}</p>
+            </button>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-svh bg-background p-4 md:p-6">
       <div className="mb-5 flex items-center gap-3">
