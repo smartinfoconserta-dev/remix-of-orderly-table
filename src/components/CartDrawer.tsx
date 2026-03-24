@@ -278,7 +278,7 @@ const CartDrawer = ({
                           </span>
                           <button type="button"
                             onClick={() => onUpdateQty(item.uid, 1)}
-                            className="flex h-7 w-7 items-center justify-center rounded-lg bg-secondary text-foreground active:scale-90 transition-transform">
+                            className={`flex h-7 w-7 items-center justify-center rounded-lg active:scale-90 transition-transform ${isTotemMode ? "bg-gray-100 text-gray-900" : "bg-secondary text-foreground"}`}>
                             <Plus className="h-3 w-3" />
                           </button>
                         </div>
