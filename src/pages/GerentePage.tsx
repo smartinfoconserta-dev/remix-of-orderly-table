@@ -1360,7 +1360,7 @@ const GerentePage = () => {
                   setEmpError(null);
                   const result = createUser(newEmpRole, newEmpName, newEmpPin);
                   if (!result.ok) { setEmpError(result.error ?? "Erro"); return; }
-                  toast.success(`${newEmpRole === "garcom" ? "Garçom" : "Caixa"} "${result.user?.nome}" criado`);
+                  toast.success(`${newEmpRole === "garcom" ? "Garçom" : newEmpRole === "caixa" ? "Caixa" : "Caixa Delivery"} "${result.user?.nome}" criado`);
                   setNewEmpName("");
                   setNewEmpPin("");
                 }}
