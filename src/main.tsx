@@ -22,13 +22,15 @@ createRoot(document.getElementById("root")!).render(
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <AuthProvider>
-          <RestaurantProvider>
-            <BrowserRouter>
-              <Toaster />
-              <Sonner />
-              <App />
-            </BrowserRouter>
-          </RestaurantProvider>
+          <StoreProvider>
+            <RestaurantProvider>
+              <BrowserRouter>
+                <Toaster />
+                <Sonner />
+                <App />
+              </BrowserRouter>
+            </RestaurantProvider>
+          </StoreProvider>
         </AuthProvider>
       </TooltipProvider>
     </QueryClientProvider>
