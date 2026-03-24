@@ -187,13 +187,11 @@ export async function saveConfig(config: SistemaConfig, storeId?: string | null)
 // LICENÇA
 // ══════════════════════════════════════
 
-export async function fetchLicenca(): Promise<LicencaConfig> {
+export async function fetchLicenca(storeId?: string | null): Promise<LicencaConfig> {
   try {
-    const { data, error } = await supabase
-      .from("restaurant_license")
-      .select("*")
-      .limit(1)
-      .maybeSingle();
+    let query = supabase.from("restaurant_license").select("*");
+    if (storeId) query = query.eq("store_id", storeId);
+    const { data, error } = await query.limit(1).maybeSingle();
 
     if (error) throw error;
 
