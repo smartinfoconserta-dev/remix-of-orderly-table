@@ -308,6 +308,8 @@ const AdminPage = () => {
   const deliveries = useMemo(() => getActiveProfilesByRole("delivery"), [getActiveProfilesByRole]);
   const [newGerenteName, setNewGerenteName] = useState("");
   const [newGerentePin, setNewGerentePin] = useState("");
+  const [newDeliveryName, setNewDeliveryName] = useState("");
+  const [newDeliveryPin, setNewDeliveryPin] = useState("");
   const [userError, setUserError] = useState<string | null>(null);
 
   const handleCreateGerente = () => {
@@ -320,6 +322,15 @@ const AdminPage = () => {
     toast.success(`Gerente "${result.user?.nome}" criado com sucesso`);
     setNewGerenteName("");
     setNewGerentePin("");
+  };
+
+  const handleCreateDelivery = () => {
+    if (!newDeliveryName.trim() || !/^\d{4,6}$/.test(newDeliveryPin)) return;
+    const result = createUser("delivery", newDeliveryName, newDeliveryPin);
+    if (!result.ok) { toast.error(result.error || "Erro ao criar"); return; }
+    toast.success(`Caixa Delivery "${result.user?.nome}" criado com sucesso`);
+    setNewDeliveryName("");
+    setNewDeliveryPin("");
   };
 
   const handleRemoveGerente = (id: string, nome: string) => {
@@ -2099,9 +2110,7 @@ const AdminPage = () => {
                 </p>
               </div>
               {deliveries.length === 0 ? (
-                <p className="px-5 py-6 text-sm text-muted-foreground text-center">
-                  Nenhum caixa delivery cadastrado. Acesse /gerente para cadastrar.
-                </p>
+                <p className="px-5 py-4 text-sm text-muted-foreground text-center">Nenhum caixa delivery cadastrado.</p>
               ) : (
                 <div className="divide-y divide-border/50">
                   {deliveries.map((d) => (
@@ -2115,6 +2124,29 @@ const AdminPage = () => {
                   ))}
                 </div>
               )}
+              <div className="px-5 py-4 border-t border-border space-y-3">
+                <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">Adicionar caixa delivery</p>
+                <Input
+                  placeholder="Nome"
+                  value={newDeliveryName}
+                  onChange={(e) => setNewDeliveryName(e.target.value)}
+                  maxLength={40}
+                />
+                <Input
+                  placeholder="PIN (4-6 dígitos)"
+                  value={newDeliveryPin}
+                  onChange={(e) => setNewDeliveryPin(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                  inputMode="numeric"
+                  onKeyDown={(e) => { if (e.key === "Enter") handleCreateDelivery(); }}
+                />
+                <Button
+                  className="w-full rounded-xl font-black"
+                  disabled={!newDeliveryName.trim() || !/^\d{4,6}$/.test(newDeliveryPin)}
+                  onClick={handleCreateDelivery}
+                >
+                  <Plus className="h-4 w-4 mr-1" /> Criar caixa delivery
+                </Button>
+              </div>
             </div>
           </div>
         )}
