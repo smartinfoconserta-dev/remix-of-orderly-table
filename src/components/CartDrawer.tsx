@@ -293,7 +293,7 @@ const CartDrawer = ({
                 </div>
 
                 {/* Rodapé fixo */}
-                <div className="absolute inset-x-0 bottom-0 border-t border-border bg-card/98 backdrop-blur-sm px-4 pt-3 pb-[calc(1rem+env(safe-area-inset-bottom))]">
+                <div className={`absolute inset-x-0 bottom-0 border-t backdrop-blur-sm px-4 pt-3 pb-[calc(1rem+env(safe-area-inset-bottom))] ${isTotemMode ? "border-gray-100 bg-white" : "border-border bg-card/98"}`}>
                   {!showConfirmEnvio ? (
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
