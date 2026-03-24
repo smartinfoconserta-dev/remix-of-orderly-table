@@ -530,6 +530,14 @@ ${itensSetorHtml}
           <span className="h-1.5 w-1.5 rounded-full bg-status-consumo animate-pulse" />
           Ao vivo
         </span>
+        <button
+          onClick={handleLogoutCozinha}
+          className="ml-2 flex items-center gap-1.5 rounded-lg border border-border px-2 py-1 text-xs text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+          title="Sair"
+        >
+          <LogOut className="h-3.5 w-3.5" />
+          <span className="hidden md:inline">Sair</span>
+        </button>
       </div>
 
       <div className="flex gap-2 px-4 pb-3 flex-wrap">
