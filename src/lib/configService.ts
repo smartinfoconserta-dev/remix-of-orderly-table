@@ -93,7 +93,7 @@ function configToDbRow(config: SistemaConfig) {
     couvert_ativo: config.couvertAtivo ?? false,
     couvert_valor: config.couvertValor ?? 0,
     couvert_obrigatorio: config.couvertObrigatorio ?? false,
-    horario_funcionamento: config.horarioFuncionamento ?? null,
+    horario_funcionamento: (config.horarioFuncionamento ?? null) as unknown as null,
     mensagem_fechado: config.mensagemFechado ?? null,
     logo_estilo: config.logoEstilo ?? "quadrada",
     impressao_por_setor: config.impressaoPorSetor ?? false,
