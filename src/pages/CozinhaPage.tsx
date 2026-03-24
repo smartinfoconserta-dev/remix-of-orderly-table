@@ -89,6 +89,17 @@ const COZINHA_SETOR_KEY = "obsidian-cozinha-setor-v1";
 
 const CozinhaPage = () => {
   const { mesas, pedidosBalcao, marcarPedidoPronto, marcarPedidoBalcaoPronto } = useRestaurant();
+  const { verifyEmployeeAccess } = useAuth();
+  const [autenticado, setAutenticado] = useState<{ nome: string } | null>(() => {
+    try {
+      const saved = localStorage.getItem(COZINHA_SESSAO_KEY);
+      return saved ? JSON.parse(saved) : null;
+    } catch { return null; }
+  });
+  const [loginNome, setLoginNome] = useState("");
+  const [loginPin, setLoginPin] = useState("");
+  const [loginError, setLoginError] = useState<string | null>(null);
+  const [loginLoading, setLoginLoading] = useState(false);
   const [, setTick] = useState(0);
   const [clock, setClock] = useState(() => formatTime(new Date()));
   const [fadingOut, setFadingOut] = useState<Set<string>>(new Set());
@@ -100,6 +111,29 @@ const CozinhaPage = () => {
   const [setorMonitor, setSetorMonitor] = useState<"tudo" | "cozinha" | "bar" | null>(() => {
     try { return (localStorage.getItem(COZINHA_SETOR_KEY) as any) || null; } catch { return null; }
   });
+
+  const handleLoginCozinha = async () => {
+    if (loginLoading) return;
+    setLoginLoading(true);
+    setLoginError(null);
+    const result = await verifyEmployeeAccess(loginNome.trim(), loginPin);
+    if (!result.ok) {
+      setLoginError(result.error ?? "Credenciais inválidas");
+      setLoginLoading(false);
+      return;
+    }
+    const sessao = { nome: result.user?.nome || loginNome.trim() };
+    localStorage.setItem(COZINHA_SESSAO_KEY, JSON.stringify(sessao));
+    setAutenticado(sessao);
+    setLoginNome("");
+    setLoginPin("");
+    setLoginLoading(false);
+  };
+
+  const handleLogoutCozinha = () => {
+    localStorage.removeItem(COZINHA_SESSAO_KEY);
+    setAutenticado(null);
+  };
 
 
   useEffect(() => {
