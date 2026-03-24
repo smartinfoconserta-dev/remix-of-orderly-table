@@ -2049,7 +2049,7 @@ const AdminPage = () => {
             </div>
 
             {/* Upgrade */}
-            {(sistemaConfig.plano || "basico") !== "premium" && (
+            {((licencaConfig.plano || sistemaConfig.plano || "basico")) !== "premium" && (
               <div className="max-w-lg">
                 <Button
                   className="w-full rounded-xl font-black gap-2"
