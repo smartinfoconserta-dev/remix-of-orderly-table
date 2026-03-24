@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Bike, ChefHat, CircleDollarSign, HandPlatter, Settings, ShieldCheck, User } from "lucide-react";
+import { Bike, ChefHat, CircleDollarSign, HandPlatter, Monitor, Settings, ShieldCheck, Tablet, User } from "lucide-react";
 import { getSistemaConfig } from "@/lib/adminStorage";
 
 interface ModeCardProps {
