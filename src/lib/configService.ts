@@ -210,17 +210,16 @@ export async function fetchLicenca(storeId?: string | null): Promise<LicencaConf
   }
 }
 
-export async function saveLicenca(lic: LicencaConfig): Promise<void> {
+export async function saveLicenca(lic: LicencaConfig, storeId?: string | null): Promise<void> {
   setLocalCache(LICENCA_CACHE_KEY, lic);
 
   try {
-    const row = licencaToDbRow(lic);
+    const row: any = licencaToDbRow(lic);
+    if (storeId) row.store_id = storeId;
 
-    const { data: existing } = await supabase
-      .from("restaurant_license")
-      .select("id")
-      .limit(1)
-      .maybeSingle();
+    let existingQuery = supabase.from("restaurant_license").select("id").limit(1);
+    if (storeId) existingQuery = existingQuery.eq("store_id", storeId);
+    const { data: existing } = await existingQuery.maybeSingle();
 
     if (existing) {
       await supabase.from("restaurant_license").update(row).eq("id", existing.id);
