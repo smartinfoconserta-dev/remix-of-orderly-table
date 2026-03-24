@@ -84,7 +84,7 @@ const TotemPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div style={{ minHeight: "100dvh", background: "#FFFFFF" }}>
       <PedidoFlow
         modo="totem"
         onPedidoConfirmado={handlePedidoConfirmado}

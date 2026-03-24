@@ -642,16 +642,20 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
       <div className="flex shrink-0 items-center gap-2">
         {(modo === "delivery" || modo === "cliente" || modo === "totem") && (
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+            <Search className={`absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 pointer-events-none ${isTotem ? "text-gray-400" : "text-muted-foreground"}`} />
             <input
               type="text"
               placeholder="Buscar..."
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              className="h-9 w-36 rounded-xl border border-border bg-secondary pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:w-48 transition-all"
+              className={`h-9 w-36 rounded-xl border pl-9 pr-3 text-sm focus:outline-none focus:ring-2 focus:w-48 transition-all ${
+                isTotem
+                  ? "border-gray-200 bg-gray-50 text-gray-900 placeholder:text-gray-400 focus:ring-[#FF6B00]"
+                  : "border-border bg-secondary text-foreground placeholder:text-muted-foreground focus:ring-primary"
+              }`}
             />
             {searchQuery && (
-              <button onClick={() => setSearchQuery("")} className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+              <button onClick={() => setSearchQuery("")} className={`absolute right-2 top-1/2 -translate-y-1/2 ${isTotem ? "text-gray-400 hover:text-gray-700" : "text-muted-foreground hover:text-foreground"}`}>
                 <X className="h-3.5 w-3.5" />
               </button>
             )}
