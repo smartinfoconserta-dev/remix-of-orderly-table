@@ -80,6 +80,8 @@ function tocarSom(tipo: "novo_pedido" | "alerta", ctxRef: React.MutableRefObject
   } catch {}
 }
 
+const COZINHA_SETOR_KEY = "obsidian-cozinha-setor-v1";
+
 const CozinhaPage = () => {
   const { mesas, pedidosBalcao, marcarPedidoPronto, marcarPedidoBalcaoPronto } = useRestaurant();
   const [, setTick] = useState(0);
@@ -90,7 +92,10 @@ const CozinhaPage = () => {
   const printedIdsRef = useRef<Set<string> | null>(null);
   const initialLoadRef = useRef(true);
   const [filtroOrigem, setFiltroOrigem] = useState<"todos" | "mesa" | "delivery" | "balcao">("todos");
-  
+  const [setorMonitor, setSetorMonitor] = useState<"tudo" | "cozinha" | "bar" | null>(() => {
+    try { return (localStorage.getItem(COZINHA_SETOR_KEY) as any) || null; } catch { return null; }
+  });
+
 
   useEffect(() => {
     const id = setInterval(() => { setTick((t) => t + 1); setClock(formatTime(new Date())); }, 30_000);
@@ -114,12 +119,31 @@ const CozinhaPage = () => {
   }, [mesas, pedidosBalcao]);
 
 
+  const activePedidosFiltradosPorSetor = useMemo(() => {
+    const config = getSistemaConfig();
+    if (!config.impressaoPorSetor || !setorMonitor || setorMonitor === "tudo") return activePedidos;
+    return activePedidos
+      .map(pedido => {
+        if (pedido.origem === "delivery" || pedido.isBalcao) return pedido;
+        return {
+          ...pedido,
+          itens: pedido.itens.filter(it => {
+            const s = (it as any).setor ?? "cozinha";
+            if (setorMonitor === "cozinha") return s === "cozinha" || s === "ambos";
+            if (setorMonitor === "bar") return s === "bar" || s === "ambos";
+            return true;
+          }),
+        };
+      })
+      .filter(pedido => pedido.itens.length > 0);
+  }, [activePedidos, setorMonitor]);
+
   const pedidosFiltrados = useMemo(() => {
-    if (filtroOrigem === "todos") return activePedidos;
-    if (filtroOrigem === "delivery") return activePedidos.filter(p => p.origem === "delivery");
-    if (filtroOrigem === "balcao") return activePedidos.filter(p => p.origem === "balcao" || p.isBalcao);
-    return activePedidos.filter(p => p.origem !== "delivery" && !p.isBalcao);
-  }, [activePedidos, filtroOrigem]);
+    if (filtroOrigem === "todos") return activePedidosFiltradosPorSetor;
+    if (filtroOrigem === "delivery") return activePedidosFiltradosPorSetor.filter(p => p.origem === "delivery");
+    if (filtroOrigem === "balcao") return activePedidosFiltradosPorSetor.filter(p => p.origem === "balcao" || p.isBalcao);
+    return activePedidosFiltradosPorSetor.filter(p => p.origem !== "delivery" && !p.isBalcao);
+  }, [activePedidosFiltradosPorSetor, filtroOrigem]);
 
   // Sound notification when new orders arrive — detect by origin
   useEffect(() => {
@@ -352,6 +376,38 @@ ${itensSetorHtml}
     [marcarPedidoPronto, marcarPedidoBalcaoPronto],
   );
 
+  const config = getSistemaConfig();
+
+  if (config.impressaoPorSetor && setorMonitor === null) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-8 p-8">
+        <div className="text-center space-y-2">
+          <h1 className="text-3xl font-black text-foreground">Este monitor é de qual setor?</h1>
+          <p className="text-sm text-muted-foreground">A escolha será salva neste dispositivo</p>
+        </div>
+        <div className="flex flex-col gap-4 w-full max-w-xs">
+          {([
+            { id: "cozinha", label: "🍳 Cozinha", desc: "Mostra só itens de cozinha" },
+            { id: "bar", label: "🍹 Bar", desc: "Mostra só itens de bar" },
+            { id: "tudo", label: "⚡ Tudo junto", desc: "Mostra todos os itens" },
+          ] as const).map(s => (
+            <button
+              key={s.id}
+              onClick={() => {
+                localStorage.setItem(COZINHA_SETOR_KEY, s.id);
+                setSetorMonitor(s.id);
+              }}
+              className="rounded-2xl border-2 border-border bg-card hover:border-primary hover:bg-primary/5 p-5 text-left transition-colors"
+            >
+              <p className="text-xl font-black text-foreground">{s.label}</p>
+              <p className="text-sm text-muted-foreground mt-1">{s.desc}</p>
+            </button>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-svh bg-background p-4 md:p-6">
       <div className="mb-5 flex items-center gap-3">
@@ -365,6 +421,17 @@ ${itensSetorHtml}
           </p>
         </div>
         <span className="text-xl font-black tabular-nums text-foreground">{clock}</span>
+        {config.impressaoPorSetor && setorMonitor && (
+          <button
+            onClick={() => {
+              localStorage.removeItem(COZINHA_SETOR_KEY);
+              setSetorMonitor(null);
+            }}
+            className="text-xs text-muted-foreground hover:text-foreground border border-border rounded-lg px-2 py-1"
+          >
+            {setorMonitor === "cozinha" ? "🍳 Cozinha" : setorMonitor === "bar" ? "🍹 Bar" : "⚡ Tudo"} · trocar
+          </button>
+        )}
         <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-status-consumo ml-2">
           <span className="h-1.5 w-1.5 rounded-full bg-status-consumo animate-pulse" />
           Ao vivo
