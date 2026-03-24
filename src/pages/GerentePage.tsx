@@ -595,7 +595,7 @@ const GerentePage = () => {
         {/* ═══ TAB 1: Fechamento do Turno ═══ */}
         <TabsContent value="fechamento" className="flex-1 overflow-y-auto p-4 md:p-6 mt-0">
           {!pinVerificado ? pinGateUI : (
-          <div className="mx-auto max-w-2xl space-y-6">
+          <div className="space-y-6">
             {/* Payment breakdown */}
             <div className="space-y-3">
               <h2 className="text-sm font-black uppercase tracking-widest text-muted-foreground">Vendas por forma de pagamento</h2>
