@@ -820,11 +820,21 @@ const GerentePage = () => {
                   <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Total faturado no período</p>
                 </div>
                 <p className="text-3xl font-black tabular-nums text-primary">{formatPrice(relTotalFaturado)}</p>
-                <div className="grid grid-cols-3 gap-3 pt-2 border-t border-border">
+                <div className="grid grid-cols-5 gap-3 pt-2 border-t border-border">
                   <div className="space-y-0.5">
-                    <p className="text-[10px] font-bold uppercase text-muted-foreground">🍽️ Mesas</p>
+                    <p className="text-[10px] font-bold uppercase text-muted-foreground">🍽️ Salão</p>
                     <p className="text-lg font-black tabular-nums text-foreground">{formatPrice(totalMesas)}</p>
                     <p className="text-xs text-muted-foreground">{fechMesas.length} comandas</p>
+                  </div>
+                  <div className="space-y-0.5">
+                    <p className="text-[10px] font-bold uppercase text-muted-foreground">🏪 Balcão</p>
+                    <p className="text-lg font-black tabular-nums text-foreground">{formatPrice(totalBalcao)}</p>
+                    <p className="text-xs text-muted-foreground">{fechBalcao.length} pedidos</p>
+                  </div>
+                  <div className="space-y-0.5">
+                    <p className="text-[10px] font-bold uppercase text-muted-foreground">🖥️ Totem</p>
+                    <p className="text-lg font-black tabular-nums text-foreground">{formatPrice(totalTotem)}</p>
+                    <p className="text-xs text-muted-foreground">{fechTotem.length} pedidos</p>
                   </div>
                   <div className="space-y-0.5">
                     <p className="text-[10px] font-bold uppercase text-muted-foreground">🛵 Delivery</p>
