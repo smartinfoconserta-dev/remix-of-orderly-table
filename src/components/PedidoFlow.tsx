@@ -45,7 +45,7 @@ import {
 } from "@/lib/tabletBinding";
 
 interface PedidoFlowProps {
-  modo: "cliente" | "garcom" | "caixa" | "balcao" | "delivery";
+  modo: "cliente" | "garcom" | "caixa" | "balcao" | "delivery" | "totem";
   mesaId?: string;
   garcomNome?: string;
   clienteNome?: string;
