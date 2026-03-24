@@ -1093,7 +1093,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         formaPagamentoDelivery: input.formaPagamentoDelivery,
         trocoParaQuanto: input.trocoParaQuanto,
         observacaoGeral: input.observacaoGeral,
-        statusBalcao: input.origem === "delivery" ? "aguardando_confirmacao" : "aberto",
+        statusBalcao: input.origem === "delivery" ? "aguardando_confirmacao" : input.origem === "totem" ? "aberto" : "aberto",
       };
       return {
         ...prev,
