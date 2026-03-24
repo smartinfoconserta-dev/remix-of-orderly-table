@@ -343,15 +343,19 @@ export default function PedidoPage() {
   // ── Delivery desativado ──
   if (!deliveryAtivo) {
     return (
-      <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center p-6 text-center space-y-4">
-        <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center text-3xl">🛵</div>
-        <h1 className="text-2xl font-black text-foreground">Delivery indisponível no momento</h1>
-        <p className="text-muted-foreground">Entre em contato pelo WhatsApp para mais informações</p>
-        {sysConfig.telefoneRestaurante && (
-          <Button variant="outline" onClick={() => window.open(`https://wa.me/55${sysConfig.telefoneRestaurante}`, "_blank")}>
-            📲 Falar no WhatsApp
-          </Button>
+      <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center p-6 text-center space-y-6">
+        {RESTAURANTE_LOGO ? (
+          <img src={RESTAURANTE_LOGO} alt={RESTAURANTE_NOME} className="w-20 h-20 rounded-2xl object-cover border border-border" />
+        ) : (
+          <div className="w-20 h-20 rounded-2xl bg-secondary border border-border flex items-center justify-center text-2xl font-black text-foreground">
+            {RESTAURANTE_INITIALS}
+          </div>
         )}
+        <div className="space-y-2">
+          <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">{RESTAURANTE_NOME}</p>
+          <h1 className="text-3xl font-black text-foreground">Delivery indisponível</h1>
+          <p className="text-sm text-muted-foreground">{sysConfig.mensagemFechado || "Voltamos em breve!"}</p>
+        </div>
       </div>
     );
   }
