@@ -1593,28 +1593,36 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
                     {/* ── Balcão cards only ── */}
                     {pedidosBalcaoSoAtivos.map((pb) => {
                       const isPronto = pb.statusBalcao === "pronto";
-                      return (
-                        <div key={pb.id} className="slide-up">
+                        return (
+                        <div key={pb.id} className={`slide-up ${pb.statusBalcao === "cancelado" ? "opacity-50" : ""}`}>
                           <button
-                            onClick={() => handleSelecionarBalcao(pb.id)}
+                            onClick={() => pb.statusBalcao !== "cancelado" && handleSelecionarBalcao(pb.id)}
                             className={`relative flex min-h-[136px] w-full flex-col items-center justify-center gap-2 rounded-xl border p-5 text-center mesa-card-interactive ${
-                              isPronto
-                                ? "border-status-consumo/50 bg-status-consumo/8 animate-pulse"
-                                : "border-amber-500/50 bg-amber-500/8"
+                              pb.statusBalcao === "cancelado"
+                                ? "border-red-500/30 bg-red-500/5 cursor-not-allowed"
+                                : isPronto
+                                  ? "border-status-consumo/50 bg-status-consumo/8 animate-pulse"
+                                  : "border-amber-500/50 bg-amber-500/8"
                             }`}
                           >
-                            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
-                              Balcão
+                            <span className={`text-[10px] font-bold uppercase tracking-[0.2em] ${
+                              pb.origem === "totem" ? "text-orange-400" : "text-muted-foreground"
+                            }`}>
+                              {pb.origem === "totem" ? "Totem" : "Balcão"}
                             </span>
-                            <span className="text-sm font-black text-foreground truncate max-w-full px-1">
+                            <span className={`text-sm font-black truncate max-w-full px-1 ${
+                              pb.statusBalcao === "cancelado" ? "line-through text-red-400" : "text-foreground"
+                            }`}>
                               {pb.clienteNome || "—"}
                             </span>
                             <span className={`rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-widest ${
-                              isPronto
-                                ? "border-status-consumo/25 bg-status-consumo/10 text-status-consumo"
-                                : "border-amber-500/25 bg-amber-500/10 text-amber-400"
+                              pb.statusBalcao === "cancelado"
+                                ? "border-red-500/25 bg-red-500/10 text-red-400"
+                                : isPronto
+                                  ? "border-status-consumo/25 bg-status-consumo/10 text-status-consumo"
+                                  : "border-amber-500/25 bg-amber-500/10 text-amber-400"
                             }`}>
-                              {isPronto ? "Pronto" : "Aberto"}
+                              {pb.statusBalcao === "cancelado" ? "Cancelado" : isPronto ? "Pronto" : pb.statusBalcao === "pago" ? "Pago" : "Aberto"}
                             </span>
                             {(pb as any).paraViagem === true && (
                               <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/40 bg-amber-500/15 px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest text-amber-400">
@@ -1622,7 +1630,7 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
                                 Para levar
                               </span>
                             )}
-                            <span className="mt-1 text-sm font-black tabular-nums text-foreground">
+                            <span className={`mt-1 text-sm font-black tabular-nums ${pb.statusBalcao === "cancelado" ? "line-through text-red-400" : "text-foreground"}`}>
                               {formatPrice(pb.total)}
                             </span>
                           </button>
