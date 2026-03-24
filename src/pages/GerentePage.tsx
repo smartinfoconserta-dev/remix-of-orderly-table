@@ -296,25 +296,37 @@ const GerentePage = () => {
 
   const fechMesas = useMemo(() =>
     fechFiltrados.filter(f =>
-      !String(f.mesaId || "").startsWith("balcao-") &&
-      !String(f.mesaId || "").startsWith("delivery-motoboy-")
-    ),
-    [fechFiltrados]
-  );
+      f.origem === "mesa" ||
+      (!f.origem && !String(f.mesaId || "").startsWith("balcao-") && !String(f.mesaId || "").startsWith("totem-") && !String(f.mesaId || "").startsWith("delivery-"))
+    ), [fechFiltrados]);
+
+  const fechBalcao = useMemo(() =>
+    fechFiltrados.filter(f =>
+      f.origem === "balcao" ||
+      (!f.origem && String(f.mesaId || "").startsWith("balcao-") && !String(f.mesaId || "").startsWith("delivery-motoboy-"))
+    ), [fechFiltrados]);
+
+  const fechTotem = useMemo(() =>
+    fechFiltrados.filter(f =>
+      f.origem === "totem" ||
+      (!f.origem && String(f.mesaId || "").startsWith("totem-"))
+    ), [fechFiltrados]);
+
   const fechDelivery = useMemo(() =>
     fechFiltrados.filter(f =>
-      String(f.mesaId || "").startsWith("balcao-") &&
-      !String(f.mesaId || "").startsWith("delivery-motoboy-")
-    ),
-    [fechFiltrados]
-  );
+      f.origem === "delivery" ||
+      (!f.origem && String(f.mesaId || "").startsWith("delivery-") && !String(f.mesaId || "").startsWith("delivery-motoboy-"))
+    ), [fechFiltrados]);
+
   const fechMotoboys = useMemo(() =>
     fechFiltrados.filter(f =>
-      String(f.mesaId || "").startsWith("delivery-motoboy-")
-    ),
-    [fechFiltrados]
-  );
+      f.origem === "motoboy" ||
+      (!f.origem && String(f.mesaId || "").startsWith("delivery-motoboy-"))
+    ), [fechFiltrados]);
+
   const totalMesas = useMemo(() => fechMesas.reduce((a, f) => a + f.total, 0), [fechMesas]);
+  const totalBalcao = useMemo(() => fechBalcao.reduce((a, f) => a + f.total, 0), [fechBalcao]);
+  const totalTotem = useMemo(() => fechTotem.reduce((a, f) => a + f.total, 0), [fechTotem]);
   const totalDelivery = useMemo(() => fechDelivery.reduce((a, f) => a + f.total, 0), [fechDelivery]);
   const totalMotoboys = useMemo(() => fechMotoboys.reduce((a, f) => a + f.total, 0), [fechMotoboys]);
 
@@ -694,7 +706,8 @@ const GerentePage = () => {
                   const pgto = f.pagamentos.length > 1
                     ? f.pagamentos.map(p => `${paymentMethods.find(pm => pm.value === p.formaPagamento)?.label ?? p.formaPagamento}: R$${p.valor.toFixed(2)}`).join(", ")
                     : paymentMethods.find(pm => pm.value === f.formaPagamento)?.label ?? f.formaPagamento;
-                  return `<tr><td>Mesa ${String(f.mesaNumero).padStart(2,"0")}</td><td>${f.criadoEm}</td><td>${f.caixaNome}</td><td>${itensStr}</td><td style="text-align:right">${formatPrice(f.total)}</td><td>${pgto}</td></tr>`;
+                  const origemLabel = f.origem === "mesa" ? `Mesa ${String(f.mesaNumero).padStart(2,"0")}` : f.origem === "balcao" ? "Balcão" : f.origem === "totem" ? "Totem" : f.origem === "delivery" ? "Delivery" : f.origem === "motoboy" ? "Motoboy" : f.mesaNumero > 0 ? `Mesa ${String(f.mesaNumero).padStart(2,"0")}` : "Balcão";
+                  return `<tr><td>${origemLabel}</td><td>${f.criadoEm}</td><td>${f.caixaNome}</td><td>${itensStr}</td><td style="text-align:right">${formatPrice(f.total)}</td><td>${pgto}</td></tr>`;
                 }).join("");
 
                 const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Relatório de Vendas</title><style>
@@ -736,7 +749,9 @@ const GerentePage = () => {
                   <table>
                     <thead><tr><th>Origem</th><th style="text-align:right">Total</th><th style="text-align:right">%</th></tr></thead>
                     <tbody>
-                      <tr><td>🍽️ Mesas</td><td style="text-align:right">${formatPrice(totalMesas)}</td><td style="text-align:right">${relTotalFaturado > 0 ? ((totalMesas/relTotalFaturado)*100).toFixed(1) : "0.0"}%</td></tr>
+                      <tr><td>🍽️ Salão (Mesas)</td><td style="text-align:right">${formatPrice(totalMesas)}</td><td style="text-align:right">${relTotalFaturado > 0 ? ((totalMesas/relTotalFaturado)*100).toFixed(1) : "0.0"}%</td></tr>
+                      <tr><td>🏪 Balcão</td><td style="text-align:right">${formatPrice(totalBalcao)}</td><td style="text-align:right">${relTotalFaturado > 0 ? ((totalBalcao/relTotalFaturado)*100).toFixed(1) : "0.0"}%</td></tr>
+                      <tr><td>🖥️ Totem</td><td style="text-align:right">${formatPrice(totalTotem)}</td><td style="text-align:right">${relTotalFaturado > 0 ? ((totalTotem/relTotalFaturado)*100).toFixed(1) : "0.0"}%</td></tr>
                       <tr><td>🛵 Delivery (caixa)</td><td style="text-align:right">${formatPrice(totalDelivery)}</td><td style="text-align:right">${relTotalFaturado > 0 ? ((totalDelivery/relTotalFaturado)*100).toFixed(1) : "0.0"}%</td></tr>
                       <tr><td>🏍️ Motoboys conferidos</td><td style="text-align:right">${formatPrice(totalMotoboys)}</td><td style="text-align:right">${relTotalFaturado > 0 ? ((totalMotoboys/relTotalFaturado)*100).toFixed(1) : "0.0"}%</td></tr>
                     </tbody>
@@ -806,11 +821,21 @@ const GerentePage = () => {
                   <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Total faturado no período</p>
                 </div>
                 <p className="text-3xl font-black tabular-nums text-primary">{formatPrice(relTotalFaturado)}</p>
-                <div className="grid grid-cols-3 gap-3 pt-2 border-t border-border">
+                <div className="grid grid-cols-5 gap-3 pt-2 border-t border-border">
                   <div className="space-y-0.5">
-                    <p className="text-[10px] font-bold uppercase text-muted-foreground">🍽️ Mesas</p>
+                    <p className="text-[10px] font-bold uppercase text-muted-foreground">🍽️ Salão</p>
                     <p className="text-lg font-black tabular-nums text-foreground">{formatPrice(totalMesas)}</p>
                     <p className="text-xs text-muted-foreground">{fechMesas.length} comandas</p>
+                  </div>
+                  <div className="space-y-0.5">
+                    <p className="text-[10px] font-bold uppercase text-muted-foreground">🏪 Balcão</p>
+                    <p className="text-lg font-black tabular-nums text-foreground">{formatPrice(totalBalcao)}</p>
+                    <p className="text-xs text-muted-foreground">{fechBalcao.length} pedidos</p>
+                  </div>
+                  <div className="space-y-0.5">
+                    <p className="text-[10px] font-bold uppercase text-muted-foreground">🖥️ Totem</p>
+                    <p className="text-lg font-black tabular-nums text-foreground">{formatPrice(totalTotem)}</p>
+                    <p className="text-xs text-muted-foreground">{fechTotem.length} pedidos</p>
                   </div>
                   <div className="space-y-0.5">
                     <p className="text-[10px] font-bold uppercase text-muted-foreground">🛵 Delivery</p>
@@ -1176,7 +1201,8 @@ const GerentePage = () => {
                       const pgto = f.pagamentos.length > 1
                         ? f.pagamentos.map((p) => `${paymentMethods.find((pm) => pm.value === p.formaPagamento)?.label ?? p.formaPagamento}: R$${p.valor.toFixed(2)}`).join("; ")
                         : paymentMethods.find((pm) => pm.value === f.formaPagamento)?.label ?? f.formaPagamento;
-                      return `"Mesa ${String(f.mesaNumero).padStart(2, "0")}","${f.criadoEm}","${f.caixaNome}","${itensStr}","R$ ${f.total.toFixed(2).replace(".", ",")}","${pgto}"`;
+                      const origemLabel = f.origem === "mesa" ? `Mesa ${String(f.mesaNumero).padStart(2, "0")}` : f.origem === "balcao" ? "Balcão" : f.origem === "totem" ? "Totem" : f.origem === "delivery" ? "Delivery" : f.origem === "motoboy" ? "Motoboy" : f.mesaNumero > 0 ? `Mesa ${String(f.mesaNumero).padStart(2, "0")}` : "Balcão";
+                      return `"${origemLabel}","${f.criadoEm}","${f.caixaNome}","${itensStr}","R$ ${f.total.toFixed(2).replace(".", ",")}","${pgto}"`;
                     }).join("\n");
                     const blob = new Blob([header + rows], { type: "text/csv;charset=utf-8;" });
                     const url = URL.createObjectURL(blob);
@@ -1196,7 +1222,7 @@ const GerentePage = () => {
               ) : (
                 <div className="rounded-2xl border border-border bg-card overflow-hidden">
                   <div className="grid grid-cols-[auto_1fr_auto_auto_auto_auto] gap-x-4 px-4 py-2.5 border-b border-border bg-secondary/50">
-                    <span className="text-xs font-black uppercase tracking-wider text-muted-foreground">Mesa</span>
+                    <span className="text-xs font-black uppercase tracking-wider text-muted-foreground">Origem</span>
                     <span className="text-xs font-black uppercase tracking-wider text-muted-foreground">Horário</span>
                     <span className="text-xs font-black uppercase tracking-wider text-muted-foreground">Operador</span>
                     <span className="text-xs font-black uppercase tracking-wider text-muted-foreground">Itens</span>
@@ -1205,7 +1231,7 @@ const GerentePage = () => {
                   </div>
                   {[...fechFiltrados].sort((a, b) => new Date(b.criadoEmIso).getTime() - new Date(a.criadoEmIso).getTime()).map((f, i) => (
                     <div key={f.id} className={`grid grid-cols-[auto_1fr_auto_auto_auto_auto] gap-x-4 px-4 py-3 ${i > 0 ? "border-t border-border/50" : ""}`}>
-                      <span className="text-sm font-bold text-foreground whitespace-nowrap">Mesa {String(f.mesaNumero).padStart(2, "0")}</span>
+                      <span className="text-sm font-bold text-foreground whitespace-nowrap">{f.origem === "mesa" ? `Mesa ${String(f.mesaNumero).padStart(2, "0")}` : f.origem === "balcao" ? "Balcão" : f.origem === "totem" ? "Totem" : f.origem === "delivery" ? "Delivery" : f.origem === "motoboy" ? "Motoboy" : f.mesaNumero > 0 ? `Mesa ${String(f.mesaNumero).padStart(2, "0")}` : "Balcão"}</span>
                       <span className="text-sm text-muted-foreground">{f.criadoEm}</span>
                       <span className="text-sm text-muted-foreground">{f.caixaNome}</span>
                       <span className="text-sm text-muted-foreground truncate max-w-[160px]">{(f.itens || []).length > 0 ? (f.itens || []).map((item) => `${item.quantidade}x ${item.nome}`).join(", ") : "—"}</span>
