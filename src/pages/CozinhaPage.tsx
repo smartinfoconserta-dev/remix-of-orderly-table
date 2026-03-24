@@ -293,7 +293,7 @@ ${pedido.observacaoGeral ? `<div class="c-obs">Obs: ${pedido.observacaoGeral}</d
         <div className="flex-1">
           <h1 className="text-lg font-black text-foreground">Cozinha</h1>
           <p className="text-xs text-muted-foreground">
-            {activePedidos.length === 0 ? "Nenhum pedido pendente" : `${activePedidos.length} pedido${activePedidos.length > 1 ? "s" : ""} ativo${activePedidos.length > 1 ? "s" : ""}`}
+            {activePedidos.length === 0 ? "Nenhum pedido pendente" : `${pedidosFiltrados.length} pedido${pedidosFiltrados.length > 1 ? "s" : ""} ativo${pedidosFiltrados.length > 1 ? "s" : ""}${filtroOrigem !== "todos" ? " (filtrado)" : ""}`}
           </p>
         </div>
         <span className="text-xl font-black tabular-nums text-foreground">{clock}</span>
