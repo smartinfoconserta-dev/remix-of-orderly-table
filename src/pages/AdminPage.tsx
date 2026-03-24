@@ -310,6 +310,10 @@ const AdminPage = () => {
   const [newGerentePin, setNewGerentePin] = useState("");
   const [newDeliveryName, setNewDeliveryName] = useState("");
   const [newDeliveryPin, setNewDeliveryPin] = useState("");
+  const [newGarcomName, setNewGarcomName] = useState("");
+  const [newGarcomPin, setNewGarcomPin] = useState("");
+  const [newCaixaName, setNewCaixaName] = useState("");
+  const [newCaixaPin, setNewCaixaPin] = useState("");
   const [userError, setUserError] = useState<string | null>(null);
 
   const handleCreateGerente = () => {
@@ -333,13 +337,31 @@ const AdminPage = () => {
     setNewDeliveryPin("");
   };
 
-  const handleRemoveGerente = (id: string, nome: string) => {
+  const handleCreateGarcom = () => {
+    if (!newGarcomName.trim() || !/^\d{4,6}$/.test(newGarcomPin)) return;
+    const result = createUser("garcom", newGarcomName, newGarcomPin);
+    if (!result.ok) { toast.error(result.error || "Erro ao criar"); return; }
+    toast.success(`Garçom "${result.user?.nome}" criado com sucesso`);
+    setNewGarcomName("");
+    setNewGarcomPin("");
+  };
+
+  const handleCreateCaixa = () => {
+    if (!newCaixaName.trim() || !/^\d{4,6}$/.test(newCaixaPin)) return;
+    const result = createUser("caixa", newCaixaName, newCaixaPin);
+    if (!result.ok) { toast.error(result.error || "Erro ao criar"); return; }
+    toast.success(`Caixa "${result.user?.nome}" criado com sucesso`);
+    setNewCaixaName("");
+    setNewCaixaPin("");
+  };
+
+  const handleRemoveUser = (id: string, nome: string, roleLabel: string) => {
     const result = removeUser(id);
     if (!result.ok) {
       toast.error(result.error ?? "Erro ao remover");
       return;
     }
-    toast.success(`Gerente "${nome}" removido`);
+    toast.success(`${roleLabel} "${nome}" removido`);
   };
 
   // --- Auth gate ---
@@ -2038,7 +2060,7 @@ const AdminPage = () => {
                         <Button
                           variant="ghost"
                           size="icon"
-                          onClick={() => handleRemoveGerente(g.id, g.nome)}
+                          onClick={() => handleRemoveUser(g.id, g.nome, "Gerente")}
                           className="text-destructive hover:bg-destructive/10"
                         >
                           <Trash2 className="h-4 w-4" />
@@ -2058,9 +2080,7 @@ const AdminPage = () => {
                 </p>
               </div>
               {garcons.length === 0 ? (
-                <p className="px-5 py-6 text-sm text-muted-foreground text-center">
-                  Nenhum garçom cadastrado. Acesse /gerente para cadastrar.
-                </p>
+                <p className="px-5 py-4 text-sm text-muted-foreground text-center">Nenhum garçom cadastrado.</p>
               ) : (
                 <div className="divide-y divide-border/50">
                   {garcons.map((g) => (
@@ -2069,11 +2089,24 @@ const AdminPage = () => {
                         <p className="text-sm font-bold text-foreground">{g.nome}</p>
                         <p className="text-xs text-muted-foreground">Garçom</p>
                       </div>
-                      <span className="text-xs font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded-lg px-2 py-0.5">Ativo</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded-lg px-2 py-0.5">Ativo</span>
+                        <Button variant="ghost" size="icon" onClick={() => handleRemoveUser(g.id, g.nome, "Garçom")} className="text-destructive hover:bg-destructive/10 h-8 w-8">
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
                   ))}
                 </div>
               )}
+              <div className="px-5 py-4 border-t border-border space-y-3">
+                <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">Adicionar garçom</p>
+                <Input placeholder="Nome" value={newGarcomName} onChange={(e) => setNewGarcomName(e.target.value)} maxLength={40} />
+                <Input placeholder="PIN (4-6 dígitos)" value={newGarcomPin} onChange={(e) => setNewGarcomPin(e.target.value.replace(/\D/g, "").slice(0, 6))} inputMode="numeric" onKeyDown={(e) => { if (e.key === "Enter") handleCreateGarcom(); }} />
+                <Button className="w-full rounded-xl font-black" disabled={!newGarcomName.trim() || !/^\d{4,6}$/.test(newGarcomPin)} onClick={handleCreateGarcom}>
+                  <Plus className="h-4 w-4 mr-1" /> Criar garçom
+                </Button>
+              </div>
             </div>
 
             {/* Caixas */}
@@ -2084,9 +2117,7 @@ const AdminPage = () => {
                 </p>
               </div>
               {caixas.length === 0 ? (
-                <p className="px-5 py-6 text-sm text-muted-foreground text-center">
-                  Nenhum caixa cadastrado. Acesse /gerente para cadastrar.
-                </p>
+                <p className="px-5 py-4 text-sm text-muted-foreground text-center">Nenhum caixa cadastrado.</p>
               ) : (
                 <div className="divide-y divide-border/50">
                   {caixas.map((c) => (
@@ -2095,11 +2126,24 @@ const AdminPage = () => {
                         <p className="text-sm font-bold text-foreground">{c.nome}</p>
                         <p className="text-xs text-muted-foreground">Caixa</p>
                       </div>
-                      <span className="text-xs font-bold text-blue-400 bg-blue-500/10 border border-blue-500/20 rounded-lg px-2 py-0.5">Ativo</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold text-blue-400 bg-blue-500/10 border border-blue-500/20 rounded-lg px-2 py-0.5">Ativo</span>
+                        <Button variant="ghost" size="icon" onClick={() => handleRemoveUser(c.id, c.nome, "Caixa")} className="text-destructive hover:bg-destructive/10 h-8 w-8">
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
                   ))}
                 </div>
               )}
+              <div className="px-5 py-4 border-t border-border space-y-3">
+                <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">Adicionar caixa</p>
+                <Input placeholder="Nome" value={newCaixaName} onChange={(e) => setNewCaixaName(e.target.value)} maxLength={40} />
+                <Input placeholder="PIN (4-6 dígitos)" value={newCaixaPin} onChange={(e) => setNewCaixaPin(e.target.value.replace(/\D/g, "").slice(0, 6))} inputMode="numeric" onKeyDown={(e) => { if (e.key === "Enter") handleCreateCaixa(); }} />
+                <Button className="w-full rounded-xl font-black" disabled={!newCaixaName.trim() || !/^\d{4,6}$/.test(newCaixaPin)} onClick={handleCreateCaixa}>
+                  <Plus className="h-4 w-4 mr-1" /> Criar caixa
+                </Button>
+              </div>
             </div>
 
             {/* Caixa Delivery */}
@@ -2119,31 +2163,21 @@ const AdminPage = () => {
                         <p className="text-sm font-bold text-foreground">{d.nome}</p>
                         <p className="text-xs text-muted-foreground">Caixa Delivery</p>
                       </div>
-                      <span className="text-xs font-bold text-purple-400 bg-purple-500/10 border border-purple-500/20 rounded-lg px-2 py-0.5">Ativo</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold text-purple-400 bg-purple-500/10 border border-purple-500/20 rounded-lg px-2 py-0.5">Ativo</span>
+                        <Button variant="ghost" size="icon" onClick={() => handleRemoveUser(d.id, d.nome, "Caixa Delivery")} className="text-destructive hover:bg-destructive/10 h-8 w-8">
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
                   ))}
                 </div>
               )}
               <div className="px-5 py-4 border-t border-border space-y-3">
                 <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">Adicionar caixa delivery</p>
-                <Input
-                  placeholder="Nome"
-                  value={newDeliveryName}
-                  onChange={(e) => setNewDeliveryName(e.target.value)}
-                  maxLength={40}
-                />
-                <Input
-                  placeholder="PIN (4-6 dígitos)"
-                  value={newDeliveryPin}
-                  onChange={(e) => setNewDeliveryPin(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                  inputMode="numeric"
-                  onKeyDown={(e) => { if (e.key === "Enter") handleCreateDelivery(); }}
-                />
-                <Button
-                  className="w-full rounded-xl font-black"
-                  disabled={!newDeliveryName.trim() || !/^\d{4,6}$/.test(newDeliveryPin)}
-                  onClick={handleCreateDelivery}
-                >
+                <Input placeholder="Nome" value={newDeliveryName} onChange={(e) => setNewDeliveryName(e.target.value)} maxLength={40} />
+                <Input placeholder="PIN (4-6 dígitos)" value={newDeliveryPin} onChange={(e) => setNewDeliveryPin(e.target.value.replace(/\D/g, "").slice(0, 6))} inputMode="numeric" onKeyDown={(e) => { if (e.key === "Enter") handleCreateDelivery(); }} />
+                <Button className="w-full rounded-xl font-black" disabled={!newDeliveryName.trim() || !/^\d{4,6}$/.test(newDeliveryPin)} onClick={handleCreateDelivery}>
                   <Plus className="h-4 w-4 mr-1" /> Criar caixa delivery
                 </Button>
               </div>
