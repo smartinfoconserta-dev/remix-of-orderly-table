@@ -1463,6 +1463,15 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }));
   }, []);
 
+  const marcarBalcaoPreparando = useCallback((pedidoId: string) => {
+    setStore((prev) => ({
+      ...prev,
+      pedidosBalcao: prev.pedidosBalcao.map((p) =>
+        p.id === pedidoId ? { ...p, statusBalcao: "preparando" as const } : p
+      ),
+    }));
+  }, []);
+
   return (
     <RestaurantContext.Provider
       value={{
