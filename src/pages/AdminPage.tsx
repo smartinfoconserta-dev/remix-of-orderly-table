@@ -2011,9 +2011,9 @@ const AdminPage = () => {
                 </div>
                 <span className="text-4xl">
                   {((licencaConfig.plano || sistemaConfig.plano || "basico")) === "basico" && "⭐"}
-                  {sistemaConfig.plano === "medio" && "⭐⭐"}
-                  {sistemaConfig.plano === "pro" && "⭐⭐⭐"}
-                  {sistemaConfig.plano === "premium" && "👑"}
+                  {(licencaConfig.plano || sistemaConfig.plano) === "medio" && "⭐⭐"}
+                  {(licencaConfig.plano || sistemaConfig.plano) === "pro" && "⭐⭐⭐"}
+                  {(licencaConfig.plano || sistemaConfig.plano) === "premium" && "👑"}
                 </span>
               </div>
             </div>
