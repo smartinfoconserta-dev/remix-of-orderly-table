@@ -488,7 +488,7 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
       .sort((a, b) => new Date(a.criadoEmIso).getTime() - new Date(b.criadoEmIso).getTime()),
     [pedidosBalcao]
   );
-  const pedidosBalcaoSoAtivos = useMemo(() => pedidosBalcaoAtivos.filter((p) => p.origem === "balcao"), [pedidosBalcaoAtivos]);
+  const pedidosBalcaoSoAtivos = useMemo(() => pedidosBalcaoAtivos.filter((p) => p.origem === "balcao" || p.origem === "totem"), [pedidosBalcaoAtivos]);
 
   const pedidosParaRetirar = useMemo(() =>
     pedidosDeliveryAtivos.filter(p => p.statusBalcao === "pronto" && !p.motoboyNome),
