@@ -675,15 +675,39 @@ ${itensSetorHtml}
                 )}
               </div>
 
-              <div className="p-3 pt-0">
-                <button
-                  type="button"
-                  onClick={() => handlePronto(pedido.mesaId, pedido.id, (pedido as any).isBalcao)}
-                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-status-consumo py-3.5 text-sm font-black text-white transition-all hover:bg-status-consumo/90 active:scale-[0.98]"
-                >
-                  <Check className="h-4 w-4" />
-                  Marcar como pronto
-                </button>
+              <div className="p-3 pt-0 flex gap-2">
+                {/* Preparando button — only for aberto/undefined, not yet preparing or pronto */}
+                {!pedido.pronto && pedido.statusBalcao !== "preparando" && pedido.statusBalcao !== "pronto" && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if ((pedido as any).isBalcao) marcarBalcaoPreparando(pedido.id);
+                      // For mesa orders, no "preparando" state — skip
+                    }}
+                    className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-amber-500 py-3.5 text-sm font-black text-white transition-all hover:bg-amber-600 active:scale-[0.98]"
+                  >
+                    <Clock className="h-4 w-4" />
+                    Preparando
+                  </button>
+                )}
+                {/* Pronto button — for aberto, preparando, or undefined */}
+                {!pedido.pronto && pedido.statusBalcao !== "pronto" && (
+                  <button
+                    type="button"
+                    onClick={() => handlePronto(pedido.mesaId, pedido.id, (pedido as any).isBalcao)}
+                    className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-emerald-500 py-3.5 text-sm font-black text-white transition-all hover:bg-emerald-600 active:scale-[0.98]"
+                  >
+                    <Check className="h-4 w-4" />
+                    Pronto ✓
+                  </button>
+                )}
+                {/* Already pronto indicator */}
+                {(pedido.pronto || pedido.statusBalcao === "pronto") && (
+                  <div className="flex flex-1 items-center justify-center gap-2 rounded-xl border-2 border-emerald-500/40 py-3.5 text-sm font-black text-emerald-400">
+                    <Check className="h-4 w-4" />
+                    Pronto — aguardando retirada
+                  </div>
+                )}
               </div>
             </div>
           );
