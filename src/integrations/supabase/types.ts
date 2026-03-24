@@ -21,6 +21,7 @@ export type Database = {
           id: string
           nome: string
           ordem: number | null
+          store_id: string | null
         }
         Insert: {
           created_at?: string | null
@@ -28,6 +29,7 @@ export type Database = {
           id?: string
           nome: string
           ordem?: number | null
+          store_id?: string | null
         }
         Update: {
           created_at?: string | null
@@ -35,8 +37,17 @@ export type Database = {
           id?: string
           nome?: string
           ordem?: number | null
+          store_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "restaurant_categories_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       restaurant_config: {
         Row: {
@@ -66,6 +77,7 @@ export type Database = {
           nome_restaurante: string
           plano: string | null
           senha_wifi: string | null
+          store_id: string | null
           taxa_entrega: number | null
           telefone: string | null
           tempo_entrega: string | null
@@ -100,6 +112,7 @@ export type Database = {
           nome_restaurante?: string
           plano?: string | null
           senha_wifi?: string | null
+          store_id?: string | null
           taxa_entrega?: number | null
           telefone?: string | null
           tempo_entrega?: string | null
@@ -134,6 +147,7 @@ export type Database = {
           nome_restaurante?: string
           plano?: string | null
           senha_wifi?: string | null
+          store_id?: string | null
           taxa_entrega?: number | null
           telefone?: string | null
           tempo_entrega?: string | null
@@ -141,7 +155,15 @@ export type Database = {
           updated_at?: string | null
           wifi_bg?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "restaurant_config_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       restaurant_license: {
         Row: {
@@ -151,6 +173,7 @@ export type Database = {
           id: string
           nome_cliente: string
           plano: string | null
+          store_id: string | null
           updated_at: string | null
         }
         Insert: {
@@ -160,6 +183,7 @@ export type Database = {
           id?: string
           nome_cliente?: string
           plano?: string | null
+          store_id?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -169,7 +193,96 @@ export type Database = {
           id?: string
           nome_cliente?: string
           plano?: string | null
+          store_id?: string | null
           updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "restaurant_license_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      store_members: {
+        Row: {
+          created_at: string | null
+          id: string
+          role_in_store: string
+          store_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          role_in_store?: string
+          store_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          role_in_store?: string
+          store_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "store_members_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stores: {
+        Row: {
+          created_at: string | null
+          id: string
+          name: string
+          owner_id: string | null
+          slug: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          name: string
+          owner_id?: string | null
+          slug: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          name?: string
+          owner_id?: string | null
+          slug?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string | null
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
         }
         Relationships: []
       }
@@ -178,10 +291,18 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_user_store_ids: { Args: { _user_id: string }; Returns: string[] }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      is_master: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "master" | "admin"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -308,6 +429,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["master", "admin"],
+    },
   },
 } as const
