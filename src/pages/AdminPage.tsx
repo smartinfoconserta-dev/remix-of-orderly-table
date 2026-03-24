@@ -310,6 +310,10 @@ const AdminPage = () => {
   const [newGerentePin, setNewGerentePin] = useState("");
   const [newDeliveryName, setNewDeliveryName] = useState("");
   const [newDeliveryPin, setNewDeliveryPin] = useState("");
+  const [newGarcomName, setNewGarcomName] = useState("");
+  const [newGarcomPin, setNewGarcomPin] = useState("");
+  const [newCaixaName, setNewCaixaName] = useState("");
+  const [newCaixaPin, setNewCaixaPin] = useState("");
   const [userError, setUserError] = useState<string | null>(null);
 
   const handleCreateGerente = () => {
@@ -333,13 +337,31 @@ const AdminPage = () => {
     setNewDeliveryPin("");
   };
 
-  const handleRemoveGerente = (id: string, nome: string) => {
+  const handleCreateGarcom = () => {
+    if (!newGarcomName.trim() || !/^\d{4,6}$/.test(newGarcomPin)) return;
+    const result = createUser("garcom", newGarcomName, newGarcomPin);
+    if (!result.ok) { toast.error(result.error || "Erro ao criar"); return; }
+    toast.success(`Garçom "${result.user?.nome}" criado com sucesso`);
+    setNewGarcomName("");
+    setNewGarcomPin("");
+  };
+
+  const handleCreateCaixa = () => {
+    if (!newCaixaName.trim() || !/^\d{4,6}$/.test(newCaixaPin)) return;
+    const result = createUser("caixa", newCaixaName, newCaixaPin);
+    if (!result.ok) { toast.error(result.error || "Erro ao criar"); return; }
+    toast.success(`Caixa "${result.user?.nome}" criado com sucesso`);
+    setNewCaixaName("");
+    setNewCaixaPin("");
+  };
+
+  const handleRemoveUser = (id: string, nome: string, roleLabel: string) => {
     const result = removeUser(id);
     if (!result.ok) {
       toast.error(result.error ?? "Erro ao remover");
       return;
     }
-    toast.success(`Gerente "${nome}" removido`);
+    toast.success(`${roleLabel} "${nome}" removido`);
   };
 
   // --- Auth gate ---
