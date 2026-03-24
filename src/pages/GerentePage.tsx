@@ -290,8 +290,10 @@ const GerentePage = () => {
   const dateRange = getDateRange(periodo, customInicio, customFim);
   const fechFiltrados = filterByDateRange(allFechamentos, dateRange.start, dateRange.end);
 
-  const relTotalFaturado = fechFiltrados.reduce((a, f) => a + f.total, 0);
-  const relComandasFechadas = fechFiltrados.length;
+  const relTotalFaturado = fechFiltrados.filter(f => !f.cancelado).reduce((a, f) => a + f.total, 0);
+  const fechCancelados = fechFiltrados.filter(f => f.cancelado);
+  const totalCancelado = fechCancelados.reduce((a, f) => a + f.total, 0);
+  const relComandasFechadas = fechFiltrados.filter(f => !f.cancelado).length;
   const relTicketMedio = relComandasFechadas > 0 ? relTotalFaturado / relComandasFechadas : 0;
 
   const fechMesas = useMemo(() =>
@@ -864,6 +866,17 @@ const GerentePage = () => {
                   </div>
                 );
               })}
+              {/* Cancelamentos card */}
+              {fechCancelados.length > 0 && (
+                <div className="rounded-2xl border border-red-500/30 bg-red-500/5 p-4 space-y-2">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-red-500/15 text-red-400">
+                    <ClipboardList className="h-4 w-4" />
+                  </div>
+                  <p className="text-xs font-bold text-muted-foreground">Cancelamentos</p>
+                  <p className="text-xl font-black tabular-nums text-red-400">{fechCancelados.length} pedido{fechCancelados.length !== 1 ? "s" : ""}</p>
+                  <p className="text-sm font-bold tabular-nums text-red-400 line-through">{formatPrice(totalCancelado)}</p>
+                </div>
+              )}
             </div>
 
             {/* ── Extra KPI Cards ── */}
@@ -1221,25 +1234,37 @@ const GerentePage = () => {
                 <p className="text-sm text-muted-foreground py-6 text-center">Nenhuma comanda fechada neste período.</p>
               ) : (
                 <div className="rounded-2xl border border-border bg-card overflow-hidden">
-                  <div className="grid grid-cols-[auto_1fr_auto_auto_auto_auto] gap-x-4 px-4 py-2.5 border-b border-border bg-secondary/50">
+                  <div className="grid grid-cols-[auto_1fr_auto_auto_auto_auto_auto] gap-x-4 px-4 py-2.5 border-b border-border bg-secondary/50">
                     <span className="text-xs font-black uppercase tracking-wider text-muted-foreground">Origem</span>
                     <span className="text-xs font-black uppercase tracking-wider text-muted-foreground">Horário</span>
                     <span className="text-xs font-black uppercase tracking-wider text-muted-foreground">Operador</span>
                     <span className="text-xs font-black uppercase tracking-wider text-muted-foreground">Itens</span>
                     <span className="text-xs font-black uppercase tracking-wider text-muted-foreground text-right">Valor</span>
                     <span className="text-xs font-black uppercase tracking-wider text-muted-foreground text-right">Pagamento</span>
+                    <span className="text-xs font-black uppercase tracking-wider text-muted-foreground text-center">Status</span>
                   </div>
                   {[...fechFiltrados].sort((a, b) => new Date(b.criadoEmIso).getTime() - new Date(a.criadoEmIso).getTime()).map((f, i) => (
-                    <div key={f.id} className={`grid grid-cols-[auto_1fr_auto_auto_auto_auto] gap-x-4 px-4 py-3 ${i > 0 ? "border-t border-border/50" : ""}`}>
-                      <span className="text-sm font-bold text-foreground whitespace-nowrap">{f.origem === "mesa" ? `Mesa ${String(f.mesaNumero).padStart(2, "0")}` : f.origem === "balcao" ? "Balcão" : f.origem === "totem" ? "Totem" : f.origem === "delivery" ? "Delivery" : f.origem === "motoboy" ? "Motoboy" : f.mesaNumero > 0 ? `Mesa ${String(f.mesaNumero).padStart(2, "0")}` : "Balcão"}</span>
+                    <div key={f.id} className={`grid grid-cols-[auto_1fr_auto_auto_auto_auto_auto] gap-x-4 px-4 py-3 ${i > 0 ? "border-t border-border/50" : ""} ${f.cancelado ? "bg-red-500/5" : ""}`}>
+                      <span className={`text-sm font-bold whitespace-nowrap ${f.cancelado ? "text-red-400" : "text-foreground"}`}>{f.origem === "mesa" ? `Mesa ${String(f.mesaNumero).padStart(2, "0")}` : f.origem === "balcao" ? "Balcão" : f.origem === "totem" ? "Totem" : f.origem === "delivery" ? "Delivery" : f.origem === "motoboy" ? "Motoboy" : f.mesaNumero > 0 ? `Mesa ${String(f.mesaNumero).padStart(2, "0")}` : "Balcão"}</span>
                       <span className="text-sm text-muted-foreground">{f.criadoEm}</span>
                       <span className="text-sm text-muted-foreground">{f.caixaNome}</span>
                       <span className="text-sm text-muted-foreground truncate max-w-[160px]">{(f.itens || []).length > 0 ? (f.itens || []).map((item) => `${item.quantidade}x ${item.nome}`).join(", ") : "—"}</span>
-                      <span className="text-sm font-black tabular-nums text-foreground text-right">{formatPrice(f.total)}</span>
+                      <span className={`text-sm font-black tabular-nums text-right ${f.cancelado ? "line-through text-red-400" : "text-foreground"}`}>{formatPrice(f.total)}</span>
                       <span className="text-sm text-muted-foreground text-right">
                         {f.pagamentos.length > 1
                           ? `${f.pagamentos.length} formas`
                           : paymentMethods.find((pm) => pm.value === f.formaPagamento)?.label ?? f.formaPagamento}
+                      </span>
+                      <span className="text-center">
+                        {f.cancelado ? (
+                          <span className="rounded-full border border-red-500/25 bg-red-500/10 px-2 py-0.5 text-[10px] font-bold uppercase text-red-400" title={f.canceladoMotivo ? `Motivo: ${f.canceladoMotivo}` : ""}>
+                            Cancelado
+                          </span>
+                        ) : (
+                          <span className="rounded-full border border-emerald-500/25 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold uppercase text-emerald-400">
+                            OK
+                          </span>
+                        )}
                       </span>
                     </div>
                   ))}
