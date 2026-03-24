@@ -14,7 +14,165 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      restaurant_categories: {
+        Row: {
+          created_at: string | null
+          icone: string
+          id: string
+          nome: string
+          ordem: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          icone?: string
+          id?: string
+          nome: string
+          ordem?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          icone?: string
+          id?: string
+          nome?: string
+          ordem?: number | null
+        }
+        Relationships: []
+      }
+      restaurant_config: {
+        Row: {
+          banners: Json | null
+          cor_primaria: string | null
+          couvert_ativo: boolean | null
+          couvert_obrigatorio: boolean | null
+          couvert_valor: number | null
+          cozinha_ativa: boolean | null
+          created_at: string | null
+          delivery_ativo: boolean | null
+          horario_funcionamento: Json | null
+          id: string
+          impressao_por_setor: boolean | null
+          instagram_bg: string | null
+          instagram_url: string | null
+          logo_base64: string | null
+          logo_estilo: string | null
+          logo_url: string | null
+          mensagem_boas_vindas: string | null
+          mensagem_fechado: string | null
+          modo_identificacao_delivery: string | null
+          modo_tv: string | null
+          modulos: Json | null
+          nome_impressora_bar: string | null
+          nome_impressora_cozinha: string | null
+          nome_restaurante: string
+          plano: string | null
+          senha_wifi: string | null
+          taxa_entrega: number | null
+          telefone: string | null
+          tempo_entrega: string | null
+          total_mesas: number | null
+          updated_at: string | null
+          wifi_bg: string | null
+        }
+        Insert: {
+          banners?: Json | null
+          cor_primaria?: string | null
+          couvert_ativo?: boolean | null
+          couvert_obrigatorio?: boolean | null
+          couvert_valor?: number | null
+          cozinha_ativa?: boolean | null
+          created_at?: string | null
+          delivery_ativo?: boolean | null
+          horario_funcionamento?: Json | null
+          id?: string
+          impressao_por_setor?: boolean | null
+          instagram_bg?: string | null
+          instagram_url?: string | null
+          logo_base64?: string | null
+          logo_estilo?: string | null
+          logo_url?: string | null
+          mensagem_boas_vindas?: string | null
+          mensagem_fechado?: string | null
+          modo_identificacao_delivery?: string | null
+          modo_tv?: string | null
+          modulos?: Json | null
+          nome_impressora_bar?: string | null
+          nome_impressora_cozinha?: string | null
+          nome_restaurante?: string
+          plano?: string | null
+          senha_wifi?: string | null
+          taxa_entrega?: number | null
+          telefone?: string | null
+          tempo_entrega?: string | null
+          total_mesas?: number | null
+          updated_at?: string | null
+          wifi_bg?: string | null
+        }
+        Update: {
+          banners?: Json | null
+          cor_primaria?: string | null
+          couvert_ativo?: boolean | null
+          couvert_obrigatorio?: boolean | null
+          couvert_valor?: number | null
+          cozinha_ativa?: boolean | null
+          created_at?: string | null
+          delivery_ativo?: boolean | null
+          horario_funcionamento?: Json | null
+          id?: string
+          impressao_por_setor?: boolean | null
+          instagram_bg?: string | null
+          instagram_url?: string | null
+          logo_base64?: string | null
+          logo_estilo?: string | null
+          logo_url?: string | null
+          mensagem_boas_vindas?: string | null
+          mensagem_fechado?: string | null
+          modo_identificacao_delivery?: string | null
+          modo_tv?: string | null
+          modulos?: Json | null
+          nome_impressora_bar?: string | null
+          nome_impressora_cozinha?: string | null
+          nome_restaurante?: string
+          plano?: string | null
+          senha_wifi?: string | null
+          taxa_entrega?: number | null
+          telefone?: string | null
+          tempo_entrega?: string | null
+          total_mesas?: number | null
+          updated_at?: string | null
+          wifi_bg?: string | null
+        }
+        Relationships: []
+      }
+      restaurant_license: {
+        Row: {
+          ativo: boolean | null
+          created_at: string | null
+          data_vencimento: string | null
+          id: string
+          nome_cliente: string
+          plano: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          ativo?: boolean | null
+          created_at?: string | null
+          data_vencimento?: string | null
+          id?: string
+          nome_cliente?: string
+          plano?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          ativo?: boolean | null
+          created_at?: string | null
+          data_vencimento?: string | null
+          id?: string
+          nome_cliente?: string
+          plano?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
