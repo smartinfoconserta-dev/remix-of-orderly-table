@@ -166,6 +166,7 @@ const MasterPage = () => {
       const lic = getLicencaConfig();
       lic.plano = form.planoModulos;
       saveLicencaConfig(lic);
+      saveLicencaConfigAsync(lic);
     }
     setDialogOpen(false); refresh();
   };
