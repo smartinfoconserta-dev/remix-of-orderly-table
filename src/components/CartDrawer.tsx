@@ -273,7 +273,7 @@ const CartDrawer = ({
                               ? <Trash2 className="h-3 w-3 text-destructive" />
                               : <Minus className="h-3 w-3" />}
                           </button>
-                          <span className="w-5 text-center text-sm font-black text-foreground tabular-nums">
+                          <span className={`w-5 text-center text-sm font-black tabular-nums ${isTotemMode ? "text-gray-900" : "text-foreground"}`}>
                             {item.quantidade}
                           </span>
                           <button type="button"
