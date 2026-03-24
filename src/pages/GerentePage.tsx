@@ -1435,6 +1435,37 @@ const GerentePage = () => {
               )}
             </div>
 
+            {/* Caixa Delivery list */}
+            <div className="surface-card rounded-2xl overflow-hidden">
+              <div className="px-5 py-3 border-b border-border bg-secondary/50">
+                <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">🛵 Caixa Delivery ({deliveries.length})</p>
+              </div>
+              {deliveries.length === 0 ? (
+                <p className="px-5 py-6 text-sm text-muted-foreground text-center">Nenhum caixa delivery cadastrado.</p>
+              ) : (
+                <div className="divide-y divide-border/50">
+                  {deliveries.map((d) => (
+                    <div key={d.id} className="flex items-center justify-between px-5 py-3">
+                      <div>
+                        <p className="text-sm font-bold text-foreground">{d.nome}</p>
+                        <p className="text-xs text-muted-foreground">Desde {new Date(d.criadoEm).toLocaleDateString("pt-BR")}</p>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          deactivateUser(d.id);
+                          toast.success(`Caixa Delivery "${d.nome}" desativado`);
+                        }}
+                        className="text-destructive hover:bg-destructive/10 text-xs font-bold"
+                      >
+                        Desativar
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
 
 
             {/* ── Motoboys ── */}
