@@ -237,6 +237,16 @@ export function saveCategoriasCustom(cats: CategoriaCustom[]): void {
   localStorage.setItem(CATEGORIAS_KEY, JSON.stringify(cats));
 }
 
+// --- Async wrappers (Supabase + fallback) ---
+export const getSistemaConfigAsync = fetchConfig;
+export const saveSistemaConfigAsync = saveConfig;
+export const getLicencaConfigAsync = fetchLicenca;
+export const saveLicencaConfigAsync = saveLicenca;
+export const getCategoriasCustomAsync = fetchCategorias;
+export const saveCategoriasCustomAsync = saveCategorias;
+export const syncPendingChanges = syncPending;
+
+
 // --- Produtos Delivery ---
 export function getProdutosDelivery(): ProdutoOverride[] {
   const overrides = getCardapioOverrides();
