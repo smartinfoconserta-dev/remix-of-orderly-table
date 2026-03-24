@@ -1973,43 +1973,19 @@ const AdminPage = () => {
           <div className="space-y-6 fade-in">
             <div>
               <h2 className="text-2xl font-black text-foreground">Equipe</h2>
-              <p className="text-sm text-muted-foreground">Gerencie garçons, caixas, motoboys e gerentes</p>
+              <p className="text-sm text-muted-foreground">Gerencie os gerentes do restaurante</p>
             </div>
 
-            {/* Formulário unificado */}
+            {/* Formulário de criação de gerente */}
             <div className="surface-card max-w-lg space-y-4 rounded-2xl p-6">
-              <p className="text-sm font-black text-foreground">Novo funcionário</p>
+              <p className="text-sm font-black text-foreground">Novo gerente</p>
               <div className="space-y-3">
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-muted-foreground">Tipo</label>
-                  <div className="flex gap-2 flex-wrap">
-                    {([
-                      { id: "garcom" as const, label: "Garçom", emoji: "🧑‍🍳" },
-                      { id: "caixa" as const, label: "Caixa", emoji: "💰" },
-                      { id: "delivery" as const, label: "Caixa Delivery", emoji: "🛵" },
-                      { id: "gerente" as const, label: "Gerente", emoji: "👔" },
-                    ]).map(r => (
-                      <button
-                        key={r.id}
-                        type="button"
-                        onClick={() => setNewUserRole(r.id)}
-                        className={`px-4 py-2 rounded-xl text-sm font-bold border transition-colors ${
-                          newUserRole === r.id
-                            ? "bg-primary text-primary-foreground border-primary"
-                            : "border-border text-muted-foreground hover:text-foreground"
-                        }`}
-                      >
-                        {r.emoji} {r.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold text-muted-foreground">Nome</label>
                   <Input
                     value={newUserName}
                     onChange={(e) => setNewUserName(e.target.value)}
-                    placeholder="Nome do funcionário"
+                    placeholder="Nome do gerente"
                     maxLength={40}
                   />
                 </div>
@@ -2020,12 +1996,12 @@ const AdminPage = () => {
                     onChange={(e) => setNewUserPin(e.target.value.replace(/\D/g, "").slice(0, 6))}
                     placeholder="1234"
                     inputMode="numeric"
-                    onKeyDown={(e) => { if (e.key === "Enter") handleCreateUser(); }}
+                    onKeyDown={(e) => { if (e.key === "Enter") handleCreateGerente(); }}
                   />
                 </div>
                 {userError && <p className="rounded-xl border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive">{userError}</p>}
-                <Button onClick={handleCreateUser} disabled={!newUserName.trim() || !/^\d{4,6}$/.test(newUserPin)} className="w-full rounded-xl font-bold gap-1.5">
-                  <Plus className="h-4 w-4" /> Criar {roleLabels[newUserRole].toLowerCase()}
+                <Button onClick={handleCreateGerente} disabled={!newUserName.trim() || !/^\d{4,6}$/.test(newUserPin)} className="w-full rounded-xl font-bold gap-1.5">
+                  <Plus className="h-4 w-4" /> Criar gerente
                 </Button>
               </div>
             </div>
