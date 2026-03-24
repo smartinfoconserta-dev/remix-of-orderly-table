@@ -1,167 +1,120 @@
 
 
-# Migrar Configurações do Restaurante para Supabase (com fallback offline)
+# Arquitetura Multi-Tenant: Master vs Admin (Multi-Lojas)
 
 ## Resumo
 
-Criar tabelas no Supabase para armazenar as configurações do restaurante (nome, logo, cores, horários, módulos, licença) e manter localStorage como cache/fallback offline. O sistema lê primeiro do banco, salva localmente, e em caso de falha de rede usa o cache local.
+Transformar o sistema em multi-tenant onde:
+- **Master** = super admin, vê e gerencia TODAS as lojas (restaurantes)
+- **Admin** = dono de UMA loja, vê apenas os dados da sua loja
+- Cada loja tem seu próprio cardápio, equipe, pedidos, configurações
 
----
+## Modelo de Dados
 
-## Etapa 1 — Criar tabelas no Supabase
+### Novas tabelas no Supabase
 
-### Tabela `restaurant_config`
-Armazena todas as configurações do sistema (hoje em `orderly-config-v1`).
+```text
+┌──────────────────────────┐
+│  auth.users (Supabase)   │  ← Master e Admins logam aqui
+│  id, email, password     │
+└──────────┬───────────────┘
+           │
+┌──────────▼───────────────┐
+│  user_roles              │  ← Define se é 'master' ou 'admin'
+│  id, user_id, role       │
+└──────────────────────────┘
+           │
+┌──────────▼───────────────┐
+│  stores (lojas)          │  ← Cada restaurante = 1 registro
+│  id, name, slug,         │
+│  owner_id (→ auth.users) │
+│  created_at              │
+└──────────┬───────────────┘
+           │
+┌──────────▼───────────────┐
+│  store_members           │  ← Vínculo user ↔ loja
+│  id, store_id, user_id,  │
+│  role_in_store           │  ← 'owner', 'gerente', etc.
+└──────────────────────────┘
+```
+
+### Tabelas existentes ganham coluna `store_id`
+
+- `restaurant_config` → adiciona `store_id UUID REFERENCES stores(id)`
+- `restaurant_license` → adiciona `store_id UUID REFERENCES stores(id)`
+- `restaurant_categories` → adiciona `store_id UUID REFERENCES stores(id)`
+- Futuras tabelas (pedidos, cardápio, equipe) seguem o mesmo padrão
+
+### RLS por loja
+
+- **Admin/membros**: só acessam dados onde `store_id` pertence ao seu vínculo em `store_members`
+- **Master**: função `is_master(auth.uid())` retorna true → acesso total (bypassa filtro de loja)
 
 ```sql
-CREATE TABLE public.restaurant_config (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  nome_restaurante TEXT NOT NULL DEFAULT 'Obsidian',
-  logo_url TEXT DEFAULT '',
-  logo_base64 TEXT DEFAULT '',
-  cor_primaria TEXT DEFAULT '',
-  banners JSONB DEFAULT '[]',
-  instagram_url TEXT DEFAULT '',
-  senha_wifi TEXT DEFAULT '',
-  instagram_bg TEXT,
-  wifi_bg TEXT,
-  taxa_entrega NUMERIC DEFAULT 0,
-  telefone TEXT DEFAULT '',
-  tempo_entrega TEXT DEFAULT '',
-  mensagem_boas_vindas TEXT DEFAULT '',
-  delivery_ativo BOOLEAN DEFAULT true,
-  modo_identificacao_delivery TEXT DEFAULT 'visitante',
-  cozinha_ativa BOOLEAN DEFAULT false,
-  couvert_ativo BOOLEAN DEFAULT false,
-  couvert_valor NUMERIC DEFAULT 0,
-  couvert_obrigatorio BOOLEAN DEFAULT false,
-  horario_funcionamento JSONB,
-  mensagem_fechado TEXT,
-  logo_estilo TEXT DEFAULT 'quadrada',
-  impressao_por_setor BOOLEAN DEFAULT false,
-  nome_impressora_cozinha TEXT,
-  nome_impressora_bar TEXT,
-  modulos JSONB DEFAULT '{}',
-  plano TEXT DEFAULT 'basico',
-  modo_tv TEXT DEFAULT 'padrao',
-  total_mesas INTEGER DEFAULT 20,
-  created_at TIMESTAMPTZ DEFAULT now(),
-  updated_at TIMESTAMPTZ DEFAULT now()
+-- Exemplo de policy para restaurant_config
+CREATE POLICY "Users see own store config"
+ON public.restaurant_config FOR SELECT USING (
+  public.is_master(auth.uid())
+  OR store_id IN (SELECT store_id FROM store_members WHERE user_id = auth.uid())
 );
 ```
 
-### Tabela `restaurant_license`
-Armazena a licença (hoje em `orderly-licenca-v1`).
+## Etapas de Implementação
 
-```sql
-CREATE TABLE public.restaurant_license (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  nome_cliente TEXT NOT NULL DEFAULT '',
-  data_vencimento DATE,
-  ativo BOOLEAN DEFAULT true,
-  plano TEXT DEFAULT 'basico',
-  created_at TIMESTAMPTZ DEFAULT now(),
-  updated_at TIMESTAMPTZ DEFAULT now()
-);
-```
+### Etapa 1 — Tabelas base e Auth
 
-### Tabela `restaurant_categories`
-Categorias customizadas (hoje em `orderly-categorias-v1`).
+1. Criar tabela `user_roles` com enum `app_role` ('master', 'admin')
+2. Criar tabela `stores` (id, name, slug, owner_id, created_at)
+3. Criar tabela `store_members` (id, store_id, user_id, role_in_store)
+4. Criar funções `is_master()` e `get_user_store_ids()`
+5. Adicionar `store_id` nas tabelas `restaurant_config`, `restaurant_license`, `restaurant_categories`
+6. Aplicar RLS em todas as tabelas com filtro por store_id + bypass master
 
-```sql
-CREATE TABLE public.restaurant_categories (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  nome TEXT NOT NULL,
-  icone TEXT NOT NULL DEFAULT '🍽️',
-  ordem INTEGER DEFAULT 0,
-  created_at TIMESTAMPTZ DEFAULT now()
-);
-```
+### Etapa 2 — Login com Supabase Auth
 
-### RLS Policies
-Por enquanto, políticas permissivas para leitura pública (o sistema não tem auth Supabase ainda). Escrita liberada temporariamente.
+1. **MasterPage**: login via `supabase.auth.signInWithPassword()` — verifica role 'master' no `user_roles`
+2. **AdminPage**: login via `supabase.auth.signInWithPassword()` — verifica role 'admin', carrega `store_id` do `store_members`
+3. Criar contexto `StoreContext` que armazena o `store_id` ativo (admin vê só 1, master pode alternar)
+4. Todas as queries passam o `store_id` do contexto
 
-```sql
--- restaurant_config
-CREATE POLICY "Allow public read" ON public.restaurant_config FOR SELECT USING (true);
-CREATE POLICY "Allow public write" ON public.restaurant_config FOR ALL USING (true);
+### Etapa 3 — Master gerencia lojas
 
--- restaurant_license
-CREATE POLICY "Allow public read" ON public.restaurant_license FOR SELECT USING (true);
-CREATE POLICY "Allow public write" ON public.restaurant_license FOR ALL USING (true);
+1. No MasterPage, ao cadastrar "Cliente" (restaurante), criar:
+   - Registro em `stores`
+   - Conta em `auth.users` para o dono da loja
+   - Vínculo em `store_members` (owner)
+   - Role 'admin' em `user_roles`
+   - Config inicial em `restaurant_config` e `restaurant_license`
+2. Master pode "entrar" em qualquer loja (selecionar store_id) para ver/editar como se fosse admin
 
--- restaurant_categories
-CREATE POLICY "Allow public read" ON public.restaurant_categories FOR SELECT USING (true);
-CREATE POLICY "Allow public write" ON public.restaurant_categories FOR ALL USING (true);
-```
+### Etapa 4 — Admin isolado
 
----
-
-## Etapa 2 — Criar camada de serviço
-
-### Novo arquivo: `src/lib/configService.ts`
-
-Responsabilidades:
-- **Ler config**: busca do Supabase → salva no localStorage como cache → retorna dados
-- **Salvar config**: salva no Supabase → atualiza cache local → se offline, salva só local e marca como "pendente de sync"
-- **Fallback**: se Supabase falhar na leitura, usa localStorage
-- Mesma lógica para licença e categorias
-
-Funções principais:
-```
-fetchConfig() → SistemaConfig           // Supabase → cache → fallback
-saveConfig(config) → void               // Supabase + cache
-fetchLicenca() → LicencaConfig          // Supabase → cache → fallback
-saveLicenca(config) → void              // Supabase + cache
-fetchCategorias() → CategoriaCustom[]   // Supabase → cache → fallback
-saveCategorias(cats) → void             // Supabase + cache
-```
-
----
-
-## Etapa 3 — Adaptar `adminStorage.ts`
-
-Manter as funções existentes (`getSistemaConfig`, `saveSistemaConfig`, etc.) como wrappers que:
-1. Continuam lendo/escrevendo no localStorage (para compatibilidade imediata)
-2. Exportam novas versões async (`getSistemaConfigAsync`, `saveSistemaConfigAsync`) que usam o `configService`
-
-Isso garante que **nenhuma página quebra** — o código existente continua funcionando, e gradualmente substituímos as chamadas síncronas pelas async.
-
----
-
-## Etapa 4 — Adaptar páginas Admin e Master
-
-### `AdminPage.tsx`
-- Na aba de configurações, ao salvar: chamar `saveSistemaConfigAsync` ao invés de `saveSistemaConfig`
-- Ao carregar: buscar com `fetchConfig()` do service
-
-### `MasterPage.tsx`
-- Ao salvar licença: chamar `saveLicencaAsync`
-- Ao carregar: buscar com `fetchLicenca()`
-
-### Outras páginas (Totem, Cozinha, TV, etc.)
-- Continuam usando `getSistemaConfig()` síncrono do localStorage (que já estará populado pelo cache)
-- Sem alteração necessária nesta etapa
-
----
-
-## O que NÃO muda nesta etapa
-
-- AuthContext (usuários/PINs) — fica no localStorage por enquanto
-- RestaurantContext (pedidos, mesas, fechamentos) — fica no localStorage
-- menuData.ts (produtos) — fica hardcoded
-- deliveryStorage.ts (clientes delivery, bairros) — fica no localStorage
-
----
+1. AdminPage carrega dados filtrados por `store_id` do usuário logado
+2. Equipe operacional (garçom, caixa, gerente) é vinculada à loja
+3. Pedidos, fechamentos, cardápio — tudo filtrado por `store_id`
 
 ## Arquivos afetados
 
 | Arquivo | Ação |
 |---|---|
-| Migração SQL | Criar 3 tabelas + RLS |
-| `src/lib/configService.ts` | **Novo** — camada Supabase |
-| `src/lib/adminStorage.ts` | Adicionar wrappers async |
-| `src/pages/AdminPage.tsx` | Usar service async para salvar/carregar |
-| `src/pages/MasterPage.tsx` | Usar service async para licença |
-| `src/integrations/supabase/types.ts` | Auto-atualizado |
+| Migração SQL | Criar `user_roles`, `stores`, `store_members`, alterar tabelas existentes |
+| `src/contexts/StoreContext.tsx` | **Novo** — contexto de loja ativa |
+| `src/pages/MasterPage.tsx` | Login Supabase Auth + gestão multi-loja |
+| `src/pages/AdminPage.tsx` | Login Supabase Auth + filtro por store_id |
+| `src/lib/configService.ts` | Adicionar store_id em todas as queries |
+| `src/lib/adminStorage.ts` | Wrappers passam store_id |
+
+## O que NÃO muda nesta etapa
+
+- Páginas operacionais (garçom, caixa, cozinha, totem, TV) continuam funcionando com localStorage
+- A migração de pedidos/cardápio para Supabase fica para etapas futuras
+- O fluxo do cliente final não é alterado
+
+## Ordem sugerida (fazer por partes)
+
+1. **Parte 1**: Criar tabelas + funções RLS (migração SQL)
+2. **Parte 2**: Login Master com Supabase Auth
+3. **Parte 3**: Login Admin com Supabase Auth + StoreContext
+4. **Parte 4**: CRUD de lojas no Master
+5. **Parte 5**: Vincular config/licença ao store_id
 
