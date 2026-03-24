@@ -76,6 +76,28 @@ import { toast } from "sonner";
 
 type AdminTab = "dashboard" | "cardapio" | "equipe" | "configuracoes" | "licenca";
 
+const PLANO_MODULOS: Record<string, string[]> = {
+  basico: ["cozinha"],
+  medio: ["cozinha", "delivery"],
+  pro: ["cozinha", "delivery", "motoboy"],
+  premium: ["cozinha", "delivery", "motoboy", "totem", "tvRetirada"],
+};
+
+const TODOS_MODULOS = [
+  { id: "cozinha", label: "Cozinha", icon: "🍳", desc: "Tela de preparo de pedidos" },
+  { id: "delivery", label: "Delivery", icon: "🛵", desc: "Pedidos para entrega" },
+  { id: "motoboy", label: "Motoboy", icon: "🏍️", desc: "Gestão de entregadores" },
+  { id: "totem", label: "Totem", icon: "📱", desc: "Autoatendimento para clientes" },
+  { id: "tvRetirada", label: "TV de Retirada", icon: "📺", desc: "Painel de chamada de pedidos" },
+];
+
+const PLANO_LABELS: Record<string, string> = {
+  basico: "Básico",
+  medio: "Médio",
+  pro: "Pro",
+  premium: "Premium",
+};
+
 const sidebarSections = [
   { id: "dashboard" as const, label: "Início", icon: LayoutDashboard },
   { id: "cardapio" as const, label: "Cardápio", icon: ClipboardList },
