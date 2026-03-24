@@ -177,6 +177,8 @@ const CozinhaPage = () => {
     const newPedidos = activePedidos.filter((p) => !printedIdsRef.current!.has(p.id));
     for (const pedido of newPedidos) {
       printedIdsRef.current.add(pedido.id);
+      const config = getSistemaConfig();
+      const monitorSetor = (() => { try { return localStorage.getItem(COZINHA_SETOR_KEY) as "tudo" | "cozinha" | "bar" | null; } catch { return null; } })();
       // Detect if ADIÇÃO: another active order from same mesa exists
       const isBalcaoOrder = pedido.origem === "balcao";
       const isDeliveryOrder = pedido.origem === "delivery";
