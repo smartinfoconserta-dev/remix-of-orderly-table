@@ -839,11 +839,13 @@ const GerentePage = () => {
             </div>
 
             {/* ── Extra KPI Cards ── */}
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
               {[
                 { label: "Hora de pico", value: horaDePico, icon: Clock, color: "text-primary" },
                 { label: "Cancelamentos", value: String(cancelamentos), icon: XCircle, color: cancelamentos > 0 ? "text-destructive" : "text-muted-foreground" },
                 { label: "Tempo médio/mesa", value: tempoMedioMesa > 0 ? `${tempoMedioMesa} min` : "—", icon: Timer, color: "text-amber-400" },
+                { label: "Descontos dados", value: formatPrice(totalDescontos), icon: Tag, color: totalDescontos > 0 ? "text-destructive" : "text-muted-foreground" },
+                { label: "Couvert arrecadado", value: totalCouvert > 0 ? formatPrice(totalCouvert) : "—", icon: UtensilsCrossed, color: "text-emerald-400" },
               ].map((kpi) => {
                 const Icon = kpi.icon;
                 return (
