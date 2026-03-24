@@ -630,6 +630,9 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
     total: number;
     formaPagamento?: string;
     paraViagem?: boolean;
+    desconto?: number;
+    couvert?: number;
+    numeroPessoas?: number;
   }) => {
     let el = document.getElementById("comanda-print");
     if (!el) {
