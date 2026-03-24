@@ -731,6 +731,7 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
            onOpenChange={handleCartOpenChange}
            hideTrigger={isGarcomMobile}
            modo={modo}
+           isTotemMode={isTotem}
         />
         {modo === "cliente" && (
           <Button
