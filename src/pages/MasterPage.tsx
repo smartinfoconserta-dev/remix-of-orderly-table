@@ -18,6 +18,7 @@ import {
   getClientes, addCliente, updateCliente, removeCliente,
   getDespesas, addDespesa,
 } from "@/lib/masterStorage";
+import { getLicencaConfig, saveLicencaConfig } from "@/lib/adminStorage";
 
 const MASTER_PASS = atob("bWFzdGVyMjAyNQ==");
 
