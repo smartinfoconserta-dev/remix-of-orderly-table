@@ -1149,6 +1149,7 @@ const AdminPage = () => {
                   {configSection === "delivery" && "🛵 Delivery"}
                   {configSection === "salao" && "🍽️ Salão & Mesas"}
                   {configSection === "operacao" && "⚙️ Operação"}
+                  {configSection === "modulos" && "🧩 Módulos"}
                   {configSection === "sistema" && "💾 Sistema"}
                 </h2>
                 {configSection === "inicio" && (
