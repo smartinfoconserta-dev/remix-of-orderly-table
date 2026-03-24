@@ -27,7 +27,7 @@ export interface PedidoRealizado {
   total: number;
   criadoEm: string;
   criadoEmIso: string;
-  origem: "cliente" | "garcom" | "caixa" | "balcao" | "delivery" | "totem";
+  origem: "mesa" | "cliente" | "garcom" | "caixa" | "balcao" | "delivery" | "totem";
   mesaId: string;
   garcomId?: string;
   garcomNome?: string;
@@ -43,8 +43,12 @@ export interface PedidoRealizado {
   formaPagamentoDelivery?: string;
   trocoParaQuanto?: number;
   observacaoGeral?: string;
-  statusBalcao?: "aberto" | "pronto" | "pago" | "saiu" | "entregue" | "aguardando_confirmacao" | "devolvido";
+  statusBalcao?: "aberto" | "pronto" | "pago" | "saiu" | "entregue" | "aguardando_confirmacao" | "devolvido" | "cancelado";
   motoboyNome?: string;
+  cancelado?: boolean;
+  canceladoEm?: string;
+  canceladoMotivo?: string;
+  canceladoPor?: string;
 }
 
 export interface EventoOperacional {
@@ -95,6 +99,7 @@ export interface FechamentoConta {
   canceladoEm?: string;
   canceladoMotivo?: string;
   canceladoPor?: string;
+  origem?: "mesa" | "balcao" | "delivery" | "totem" | "motoboy";
 }
 
 export interface Mesa {
@@ -197,6 +202,7 @@ interface RestaurantContextType {
   fecharContaBalcao: (pedidoId: string, input: FecharContaInput) => void;
   confirmarPedidoBalcao: (pedidoId: string, taxaEntrega?: number) => void;
   rejeitarPedidoBalcao: (pedidoId: string, motivo: string) => void;
+  cancelarPedidoBalcao: (pedidoId: string, motivo: string, operador: OperationalUser) => void;
   registrarFechamentoMotoboy: (input: {
     motoboyNome: string;
     motoboyId: string;
@@ -1349,6 +1355,25 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }));
   }, []);
 
+  const cancelarPedidoBalcao = useCallback((pedidoId: string, motivo: string, operador: OperationalUser) => {
+    setStore((prev) => ({
+      ...prev,
+      pedidosBalcao: prev.pedidosBalcao.map((p) =>
+        p.id === pedidoId
+          ? { ...p, cancelado: true, canceladoEm: new Date().toISOString(), canceladoMotivo: motivo, canceladoPor: operador.nome, statusBalcao: "cancelado" as const }
+          : p
+      ),
+      eventos: appendEvent(prev.eventos, {
+        tipo: "caixa",
+        descricao: `Pedido #${prev.pedidosBalcao.find((p) => p.id === pedidoId)?.numeroPedido ?? "?"} cancelado — ${motivo}`,
+        acao: "cancelar_pedido_balcao",
+        motivo,
+        usuarioId: operador.id,
+        usuarioNome: operador.nome,
+      }),
+    }));
+  }, []);
+
   return (
     <RestaurantContext.Provider
       value={{
@@ -1388,6 +1413,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         fecharContaBalcao,
         confirmarPedidoBalcao,
         rejeitarPedidoBalcao,
+        cancelarPedidoBalcao,
         registrarFechamentoMotoboy,
       }}
     >
