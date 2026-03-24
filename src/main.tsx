@@ -6,6 +6,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { StoreProvider } from "@/contexts/StoreContext";
 import { RestaurantProvider } from "@/contexts/RestaurantContext";
 import { applyCustomPrimaryColor } from "@/lib/adminStorage";
 import App from "./App.tsx";
@@ -21,13 +22,15 @@ createRoot(document.getElementById("root")!).render(
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <AuthProvider>
-          <RestaurantProvider>
-            <BrowserRouter>
-              <Toaster />
-              <Sonner />
-              <App />
-            </BrowserRouter>
-          </RestaurantProvider>
+          <StoreProvider>
+            <RestaurantProvider>
+              <BrowserRouter>
+                <Toaster />
+                <Sonner />
+                <App />
+              </BrowserRouter>
+            </RestaurantProvider>
+          </StoreProvider>
         </AuthProvider>
       </TooltipProvider>
     </QueryClientProvider>

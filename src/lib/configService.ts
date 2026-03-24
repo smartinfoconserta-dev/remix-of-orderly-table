@@ -132,13 +132,13 @@ function licencaToDbRow(lic: LicencaConfig) {
 // CONFIG
 // ══════════════════════════════════════
 
-export async function fetchConfig(): Promise<SistemaConfig> {
+export async function fetchConfig(storeId?: string | null): Promise<SistemaConfig> {
   try {
-    const { data, error } = await supabase
-      .from("restaurant_config")
-      .select("*")
-      .limit(1)
-      .maybeSingle();
+    let query = supabase.from("restaurant_config").select("*");
+    if (storeId) {
+      query = query.eq("store_id", storeId);
+    }
+    const { data, error } = await query.limit(1).maybeSingle();
 
     if (error) throw error;
 
@@ -159,19 +159,18 @@ export async function fetchConfig(): Promise<SistemaConfig> {
   }
 }
 
-export async function saveConfig(config: SistemaConfig): Promise<void> {
+export async function saveConfig(config: SistemaConfig, storeId?: string | null): Promise<void> {
   // Always update local cache immediately
   setLocalCache(CONFIG_CACHE_KEY, config);
 
   try {
-    const row = configToDbRow(config);
+    const row: any = configToDbRow(config);
+    if (storeId) row.store_id = storeId;
 
-    // Check if a row exists
-    const { data: existing } = await supabase
-      .from("restaurant_config")
-      .select("id")
-      .limit(1)
-      .maybeSingle();
+    // Check if a row exists for this store
+    let existingQuery = supabase.from("restaurant_config").select("id").limit(1);
+    if (storeId) existingQuery = existingQuery.eq("store_id", storeId);
+    const { data: existing } = await existingQuery.maybeSingle();
 
     if (existing) {
       await supabase.from("restaurant_config").update(row as any).eq("id", existing.id);
@@ -188,13 +187,11 @@ export async function saveConfig(config: SistemaConfig): Promise<void> {
 // LICENÇA
 // ══════════════════════════════════════
 
-export async function fetchLicenca(): Promise<LicencaConfig> {
+export async function fetchLicenca(storeId?: string | null): Promise<LicencaConfig> {
   try {
-    const { data, error } = await supabase
-      .from("restaurant_license")
-      .select("*")
-      .limit(1)
-      .maybeSingle();
+    let query = supabase.from("restaurant_license").select("*");
+    if (storeId) query = query.eq("store_id", storeId);
+    const { data, error } = await query.limit(1).maybeSingle();
 
     if (error) throw error;
 
@@ -213,17 +210,16 @@ export async function fetchLicenca(): Promise<LicencaConfig> {
   }
 }
 
-export async function saveLicenca(lic: LicencaConfig): Promise<void> {
+export async function saveLicenca(lic: LicencaConfig, storeId?: string | null): Promise<void> {
   setLocalCache(LICENCA_CACHE_KEY, lic);
 
   try {
-    const row = licencaToDbRow(lic);
+    const row: any = licencaToDbRow(lic);
+    if (storeId) row.store_id = storeId;
 
-    const { data: existing } = await supabase
-      .from("restaurant_license")
-      .select("id")
-      .limit(1)
-      .maybeSingle();
+    let existingQuery = supabase.from("restaurant_license").select("id").limit(1);
+    if (storeId) existingQuery = existingQuery.eq("store_id", storeId);
+    const { data: existing } = await existingQuery.maybeSingle();
 
     if (existing) {
       await supabase.from("restaurant_license").update(row).eq("id", existing.id);
@@ -240,12 +236,11 @@ export async function saveLicenca(lic: LicencaConfig): Promise<void> {
 // CATEGORIAS
 // ══════════════════════════════════════
 
-export async function fetchCategorias(): Promise<CategoriaCustom[]> {
+export async function fetchCategorias(storeId?: string | null): Promise<CategoriaCustom[]> {
   try {
-    const { data, error } = await supabase
-      .from("restaurant_categories")
-      .select("*")
-      .order("ordem", { ascending: true });
+    let query = supabase.from("restaurant_categories").select("*");
+    if (storeId) query = query.eq("store_id", storeId);
+    const { data, error } = await query.order("ordem", { ascending: true });
 
     if (error) throw error;
 
@@ -269,12 +264,18 @@ export async function fetchCategorias(): Promise<CategoriaCustom[]> {
   }
 }
 
-export async function saveCategorias(cats: CategoriaCustom[]): Promise<void> {
+export async function saveCategorias(cats: CategoriaCustom[], storeId?: string | null): Promise<void> {
   setLocalCache(CATEGORIAS_CACHE_KEY, cats);
 
   try {
-    // Delete all then re-insert
-    await supabase.from("restaurant_categories").delete().neq("id", "00000000-0000-0000-0000-000000000000");
+    // Delete all for this store then re-insert
+    let deleteQuery = supabase.from("restaurant_categories").delete();
+    if (storeId) {
+      deleteQuery = deleteQuery.eq("store_id", storeId);
+    } else {
+      deleteQuery = deleteQuery.neq("id", "00000000-0000-0000-0000-000000000000");
+    }
+    await deleteQuery;
 
     if (cats.length > 0) {
       const rows = cats.map((c) => ({
@@ -282,6 +283,7 @@ export async function saveCategorias(cats: CategoriaCustom[]): Promise<void> {
         nome: c.nome,
         icone: c.icone,
         ordem: c.ordem,
+        ...(storeId ? { store_id: storeId } : {}),
       }));
       await supabase.from("restaurant_categories").insert(rows);
     }
