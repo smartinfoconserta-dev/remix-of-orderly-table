@@ -2055,7 +2055,7 @@ const AdminPage = () => {
                   className="w-full rounded-xl font-black gap-2"
                   onClick={() => {
                     const tel = sistemaConfig.telefoneRestaurante || "5511999999999";
-                    const msg = encodeURIComponent(`Olá! Gostaria de fazer upgrade do meu plano (atual: ${PLANO_LABELS[sistemaConfig.plano || "basico"]})`);
+                    const msg = encodeURIComponent(`Olá! Gostaria de fazer upgrade do meu plano (atual: ${PLANO_LABELS[licencaConfig.plano || sistemaConfig.plano || "basico"]})`);
                     window.open(`https://wa.me/${tel.replace(/\D/g, "")}?text=${msg}`, "_blank");
                   }}
                 >
