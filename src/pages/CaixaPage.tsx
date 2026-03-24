@@ -1593,6 +1593,7 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
                     <span className="rounded-full px-1.5 py-0.5 text-[10px] font-black tabular-nums leading-none bg-orange-500 text-white">{pedidosTotemAtivos.length}</span>
                   )}
                 </button>
+                <div className="flex-1 border-b border-border" />
               </div>
 
               {/* ── Content Area ── */}
