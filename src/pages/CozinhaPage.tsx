@@ -89,6 +89,7 @@ const CozinhaPage = () => {
   const prevIdsRef = useRef<Set<string> | null>(null);
   const printedIdsRef = useRef<Set<string> | null>(null);
   const initialLoadRef = useRef(true);
+  const [filtroOrigem, setFiltroOrigem] = useState<"todos" | "mesa" | "delivery" | "balcao">("todos");
 
   useEffect(() => {
     const id = setInterval(() => { setTick((t) => t + 1); setClock(formatTime(new Date())); }, 30_000);
@@ -110,6 +111,13 @@ const CozinhaPage = () => {
     all.sort((a, b) => new Date(a.criadoEmIso).getTime() - new Date(b.criadoEmIso).getTime());
     return all;
   }, [mesas, pedidosBalcao]);
+
+  const pedidosFiltrados = useMemo(() => {
+    if (filtroOrigem === "todos") return activePedidos;
+    if (filtroOrigem === "delivery") return activePedidos.filter(p => p.origem === "delivery");
+    if (filtroOrigem === "balcao") return activePedidos.filter(p => p.origem === "balcao" || p.isBalcao);
+    return activePedidos.filter(p => p.origem !== "delivery" && !p.isBalcao);
+  }, [activePedidos, filtroOrigem]);
 
   // Sound notification when new orders arrive — detect by origin
   useEffect(() => {
@@ -285,7 +293,7 @@ ${pedido.observacaoGeral ? `<div class="c-obs">Obs: ${pedido.observacaoGeral}</d
         <div className="flex-1">
           <h1 className="text-lg font-black text-foreground">Cozinha</h1>
           <p className="text-xs text-muted-foreground">
-            {activePedidos.length === 0 ? "Nenhum pedido pendente" : `${activePedidos.length} pedido${activePedidos.length > 1 ? "s" : ""} ativo${activePedidos.length > 1 ? "s" : ""}`}
+            {activePedidos.length === 0 ? "Nenhum pedido pendente" : `${pedidosFiltrados.length} pedido${pedidosFiltrados.length > 1 ? "s" : ""} ativo${pedidosFiltrados.length > 1 ? "s" : ""}${filtroOrigem !== "todos" ? " (filtrado)" : ""}`}
           </p>
         </div>
         <span className="text-xl font-black tabular-nums text-foreground">{clock}</span>
@@ -295,7 +303,28 @@ ${pedido.observacaoGeral ? `<div class="c-obs">Obs: ${pedido.observacaoGeral}</d
         </span>
       </div>
 
-      {activePedidos.length === 0 && (
+      <div className="flex gap-2 px-4 pb-3 flex-wrap">
+        {([
+          { id: "todos", label: "Todos" },
+          { id: "mesa", label: "🍽️ Mesas" },
+          { id: "delivery", label: "🛵 Delivery" },
+          { id: "balcao", label: "🏪 Balcão" },
+        ] as const).map(f => (
+          <button
+            key={f.id}
+            onClick={() => setFiltroOrigem(f.id)}
+            className={`px-4 py-1.5 rounded-xl text-sm font-bold border transition-colors ${
+              filtroOrigem === f.id
+                ? "bg-primary text-primary-foreground border-primary"
+                : "border-border text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {f.label}
+          </button>
+        ))}
+      </div>
+
+      {pedidosFiltrados.length === 0 && (
         <div className="flex flex-col items-center justify-center gap-4 py-32 text-muted-foreground">
           <ChefHat className="h-16 w-16 opacity-15" />
           <p className="text-base font-bold">Nenhum pedido na fila</p>
@@ -304,7 +333,7 @@ ${pedido.observacaoGeral ? `<div class="c-obs">Obs: ${pedido.observacaoGeral}</d
       )}
 
       <div className="grid gap-4" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))" }}>
-        {activePedidos.map((pedido, i) => {
+        {pedidosFiltrados.map((pedido, i) => {
           const mins = minutesAgo(pedido.criadoEmIso);
           const isLate = mins >= 15 && mins <= MAX_ELAPSED_MINUTES;
           const isCritical = mins >= 40 && mins <= MAX_ELAPSED_MINUTES;
