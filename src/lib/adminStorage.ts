@@ -235,6 +235,8 @@ export function getCategoriasCustom(): CategoriaCustom[] {
 
 export function saveCategoriasCustom(cats: CategoriaCustom[]): void {
   localStorage.setItem(CATEGORIAS_KEY, JSON.stringify(cats));
+  // Fire-and-forget async sync to Supabase
+  saveCategorias(cats).catch(() => {});
 }
 
 // --- Async wrappers (Supabase + fallback) ---
