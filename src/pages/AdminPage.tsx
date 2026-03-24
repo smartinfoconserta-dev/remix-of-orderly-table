@@ -219,6 +219,7 @@ const AdminPage = () => {
           disponivelDelivery: editProduct.disponivelDelivery,
           grupos: editProduct.grupos,
           permiteLevar: editForm.permiteLevar,
+          setor: editProduct.setor ?? "cozinha",
         },
       };
       saveCardapioOverrides(updated);
