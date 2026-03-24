@@ -344,6 +344,7 @@ const MasterPage = () => {
                       <div className="flex items-center gap-2 flex-wrap">
                         <p className="font-black text-lg text-foreground cursor-pointer hover:underline" onClick={() => openDetail(c)}>{c.nomeRestaurante}</p>
                         {c.plano && <Badge className={PLANO_BADGE_CLASS[c.plano] || "bg-muted text-muted-foreground"}>{PLANO_LABELS[c.plano] || c.plano}</Badge>}
+                        {c.planoModulos && <Badge className={PLANO_MODULOS_BADGE[c.planoModulos] || "bg-muted text-muted-foreground"}>{PLANO_MODULOS_LABELS[c.planoModulos] || c.planoModulos}</Badge>}
                         <Badge className={c.ativo ? "bg-emerald-600 hover:bg-emerald-600 text-white" : "bg-destructive hover:bg-destructive text-destructive-foreground"}>{c.ativo ? "Ativo" : "Bloqueado"}</Badge>
                         {vencAlert === "vencido" && <Badge className="bg-destructive hover:bg-destructive text-destructive-foreground">Vencido</Badge>}
                         {vencAlert === "vence_breve" && <Badge className="bg-yellow-600 hover:bg-yellow-600 text-white">Vence em breve</Badge>}
