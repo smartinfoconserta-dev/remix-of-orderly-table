@@ -1068,12 +1068,13 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
 
   const mobileContent = (
     <>
-      <div className="sticky top-[57px] z-40 border-b border-border bg-background/95 pt-2 backdrop-blur-md">
+      <div className={`sticky ${isTotem ? "top-[57px] z-40 border-b border-gray-200 bg-white pt-2" : "top-[57px] z-40 border-b border-border bg-background/95 pt-2 backdrop-blur-md"}`}>
         <CategoryTabs
           categorias={navigationItems}
           categoriaAtiva={categoriaAtiva}
           onSelect={handleSelectCategoria}
           paddingClassName={isGarcomMobile ? "px-4 pb-3" : "px-4 pb-2"}
+          totemMode={isTotem}
         />
       </div>
       <div ref={mobileListTopRef} />
