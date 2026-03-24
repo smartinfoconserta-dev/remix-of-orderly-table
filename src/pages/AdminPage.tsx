@@ -303,22 +303,16 @@ const AdminPage = () => {
 
   // --- Usuários (gerentes) state ---
   const gerentes = useMemo(() => getProfilesByRole("gerente"), [getProfilesByRole]);
-  const garcons = useMemo(() => getActiveProfilesByRole("garcom"), [getActiveProfilesByRole]);
-  const caixas = useMemo(() => getActiveProfilesByRole("caixa"), [getActiveProfilesByRole]);
-  const deliveries = useMemo(() => getActiveProfilesByRole("delivery"), [getActiveProfilesByRole]);
   const [newUserName, setNewUserName] = useState("");
   const [newUserPin, setNewUserPin] = useState("");
-  const [newUserRole, setNewUserRole] = useState<"gerente" | "garcom" | "caixa" | "delivery">("garcom");
   const [userError, setUserError] = useState<string | null>(null);
 
-  const roleLabels: Record<string, string> = { gerente: "Gerente", garcom: "Garçom", caixa: "Caixa", delivery: "Caixa Delivery" };
-
-  const handleCreateUser = () => {
+  const handleCreateGerente = () => {
     setUserError(null);
     if (!newUserName.trim() || !/^\d{4,6}$/.test(newUserPin)) return;
-    const result = createUser(newUserRole, newUserName, newUserPin);
+    const result = createUser("gerente", newUserName, newUserPin);
     if (!result.ok) { setUserError(result.error ?? "Erro ao criar"); return; }
-    toast.success(`${roleLabels[newUserRole]} "${result.user?.nome}" criado com sucesso`);
+    toast.success(`Gerente "${result.user?.nome}" criado com sucesso`);
     setNewUserName("");
     setNewUserPin("");
   };
@@ -390,7 +384,6 @@ const AdminPage = () => {
               {userError && <p className="rounded-xl border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive">{userError}</p>}
               <Button
                 onClick={() => {
-                  setNewUserRole("gerente");
                   setUserError(null);
                   if (!newUserName.trim() || !/^\d{4,6}$/.test(newUserPin)) return;
                   const result = createUser("gerente", newUserName, newUserPin);
@@ -524,8 +517,8 @@ const AdminPage = () => {
               </div>
               <div className="surface-card rounded-2xl p-5 space-y-1">
                 <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Equipe</p>
-                <p className="text-3xl font-black text-foreground">{garcons.length + caixas.length}</p>
-                <p className="text-xs text-muted-foreground">{garcons.length} garçon(s) · {caixas.length} caixa(s)</p>
+               <p className="text-3xl font-black text-foreground">{gerentes.length}</p>
+                <p className="text-xs text-muted-foreground">{gerentes.length} gerente(s)</p>
               </div>
             </div>
 
@@ -554,7 +547,7 @@ const AdminPage = () => {
                   <span className="text-2xl">👥</span>
                   <div>
                     <p className="text-sm font-black text-foreground">Ver equipe</p>
-                    <p className="text-xs text-muted-foreground">Garçons, caixas e gerentes</p>
+                    <p className="text-xs text-muted-foreground">Gerentes do restaurante</p>
                   </div>
                 </button>
               </div>
@@ -1979,43 +1972,19 @@ const AdminPage = () => {
           <div className="space-y-6 fade-in">
             <div>
               <h2 className="text-2xl font-black text-foreground">Equipe</h2>
-              <p className="text-sm text-muted-foreground">Gerencie garçons, caixas, motoboys e gerentes</p>
+              <p className="text-sm text-muted-foreground">Gerencie os gerentes do restaurante</p>
             </div>
 
-            {/* Formulário unificado */}
+            {/* Formulário de criação de gerente */}
             <div className="surface-card max-w-lg space-y-4 rounded-2xl p-6">
-              <p className="text-sm font-black text-foreground">Novo funcionário</p>
+              <p className="text-sm font-black text-foreground">Novo gerente</p>
               <div className="space-y-3">
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-muted-foreground">Tipo</label>
-                  <div className="flex gap-2 flex-wrap">
-                    {([
-                      { id: "garcom" as const, label: "Garçom", emoji: "🧑‍🍳" },
-                      { id: "caixa" as const, label: "Caixa", emoji: "💰" },
-                      { id: "delivery" as const, label: "Caixa Delivery", emoji: "🛵" },
-                      { id: "gerente" as const, label: "Gerente", emoji: "👔" },
-                    ]).map(r => (
-                      <button
-                        key={r.id}
-                        type="button"
-                        onClick={() => setNewUserRole(r.id)}
-                        className={`px-4 py-2 rounded-xl text-sm font-bold border transition-colors ${
-                          newUserRole === r.id
-                            ? "bg-primary text-primary-foreground border-primary"
-                            : "border-border text-muted-foreground hover:text-foreground"
-                        }`}
-                      >
-                        {r.emoji} {r.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold text-muted-foreground">Nome</label>
                   <Input
                     value={newUserName}
                     onChange={(e) => setNewUserName(e.target.value)}
-                    placeholder="Nome do funcionário"
+                    placeholder="Nome do gerente"
                     maxLength={40}
                   />
                 </div>
@@ -2026,12 +1995,12 @@ const AdminPage = () => {
                     onChange={(e) => setNewUserPin(e.target.value.replace(/\D/g, "").slice(0, 6))}
                     placeholder="1234"
                     inputMode="numeric"
-                    onKeyDown={(e) => { if (e.key === "Enter") handleCreateUser(); }}
+                    onKeyDown={(e) => { if (e.key === "Enter") handleCreateGerente(); }}
                   />
                 </div>
                 {userError && <p className="rounded-xl border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive">{userError}</p>}
-                <Button onClick={handleCreateUser} disabled={!newUserName.trim() || !/^\d{4,6}$/.test(newUserPin)} className="w-full rounded-xl font-bold gap-1.5">
-                  <Plus className="h-4 w-4" /> Criar {roleLabels[newUserRole].toLowerCase()}
+                <Button onClick={handleCreateGerente} disabled={!newUserName.trim() || !/^\d{4,6}$/.test(newUserPin)} className="w-full rounded-xl font-bold gap-1.5">
+                  <Plus className="h-4 w-4" /> Criar gerente
                 </Button>
               </div>
             </div>
@@ -2065,86 +2034,6 @@ const AdminPage = () => {
               )}
             </div>
 
-            {/* Garçons */}
-            <div className="surface-card max-w-lg rounded-2xl overflow-hidden">
-              <div className="px-5 py-3 border-b border-border bg-secondary/50">
-                <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">🧑‍🍳 Garçons ({garcons.length})</p>
-              </div>
-              {garcons.length === 0 ? (
-                <p className="px-5 py-4 text-sm text-muted-foreground text-center">Nenhum garçom cadastrado.</p>
-              ) : (
-                <div className="divide-y divide-border/50">
-                  {garcons.map((g) => (
-                    <div key={g.id} className="flex items-center justify-between px-5 py-3">
-                      <div>
-                        <p className="text-sm font-bold text-foreground">{g.nome}</p>
-                        <p className="text-xs text-muted-foreground">Garçom</p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded-lg px-2 py-0.5">Ativo</span>
-                        <Button variant="ghost" size="icon" onClick={() => handleRemoveUser(g.id, g.nome, "Garçom")} className="text-destructive hover:bg-destructive/10 h-8 w-8">
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Caixas */}
-            <div className="surface-card max-w-lg rounded-2xl overflow-hidden">
-              <div className="px-5 py-3 border-b border-border bg-secondary/50">
-                <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">💰 Caixas ({caixas.length})</p>
-              </div>
-              {caixas.length === 0 ? (
-                <p className="px-5 py-4 text-sm text-muted-foreground text-center">Nenhum caixa cadastrado.</p>
-              ) : (
-                <div className="divide-y divide-border/50">
-                  {caixas.map((c) => (
-                    <div key={c.id} className="flex items-center justify-between px-5 py-3">
-                      <div>
-                        <p className="text-sm font-bold text-foreground">{c.nome}</p>
-                        <p className="text-xs text-muted-foreground">Caixa</p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-bold text-blue-400 bg-blue-500/10 border border-blue-500/20 rounded-lg px-2 py-0.5">Ativo</span>
-                        <Button variant="ghost" size="icon" onClick={() => handleRemoveUser(c.id, c.nome, "Caixa")} className="text-destructive hover:bg-destructive/10 h-8 w-8">
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Caixa Delivery */}
-            <div className="surface-card max-w-lg rounded-2xl overflow-hidden">
-              <div className="px-5 py-3 border-b border-border bg-secondary/50">
-                <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">🛵 Caixa Delivery ({deliveries.length})</p>
-              </div>
-              {deliveries.length === 0 ? (
-                <p className="px-5 py-4 text-sm text-muted-foreground text-center">Nenhum caixa delivery cadastrado.</p>
-              ) : (
-                <div className="divide-y divide-border/50">
-                  {deliveries.map((d) => (
-                    <div key={d.id} className="flex items-center justify-between px-5 py-3">
-                      <div>
-                        <p className="text-sm font-bold text-foreground">{d.nome}</p>
-                        <p className="text-xs text-muted-foreground">Caixa Delivery</p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-bold text-purple-400 bg-purple-500/10 border border-purple-500/20 rounded-lg px-2 py-0.5">Ativo</span>
-                        <Button variant="ghost" size="icon" onClick={() => handleRemoveUser(d.id, d.nome, "Caixa Delivery")} className="text-destructive hover:bg-destructive/10 h-8 w-8">
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
           </div>
         )}
       </main>
