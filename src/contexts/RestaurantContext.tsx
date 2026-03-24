@@ -1111,7 +1111,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
       const statusInicial: PedidoRealizado["statusBalcao"] =
         input.origem === "delivery" ? "aguardando_confirmacao" :
-        input.origem === "totem" ? "pago" :
+        input.origem === "totem" ? "aberto" :
         "aberto";
 
       const novoPedido: PedidoRealizado = {
