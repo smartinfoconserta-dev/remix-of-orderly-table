@@ -630,6 +630,9 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
     total: number;
     formaPagamento?: string;
     paraViagem?: boolean;
+    desconto?: number;
+    couvert?: number;
+    numeroPessoas?: number;
   }) => {
     let el = document.getElementById("comanda-print");
     if (!el) {
@@ -645,6 +648,12 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
     const pagHtml = data.formaPagamento
       ? `<div class="print-center">${data.formaPagamento}</div>`
       : "";
+    const descontoHtml = (data.desconto ?? 0) > 0
+      ? `<div class="print-item" style="color:#c85b0a"><span>🎁 Desconto aplicado</span><span>- R$ ${data.desconto!.toFixed(2).replace(".", ",")}</span></div>`
+      : "";
+    const couvertHtml = (data.couvert ?? 0) > 0
+      ? `<div class="print-item" style="color:#059669"><span>🍽️ Couvert (${data.numeroPessoas ?? 0} pessoa${(data.numeroPessoas ?? 0) !== 1 ? "s" : ""})</span><span>+ R$ ${data.couvert!.toFixed(2).replace(".", ",")}</span></div>`
+      : "";
     const paraLevarHtml = data.paraViagem
       ? `<div class="print-divider"></div><div class="print-center" style="font-size:18px;font-weight:900;letter-spacing:2px">*** PARA LEVAR — EMBALAR ***</div><div class="print-divider"></div>`
       : "";
@@ -658,6 +667,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
       <div class="print-divider"></div>
       <div class="print-item"><span>Subtotal</span><span>R$ ${data.subtotal.toFixed(2).replace(".", ",")}</span></div>
       ${taxaHtml}
+      ${descontoHtml}${couvertHtml}
       <div class="print-total"><span>TOTAL</span><span>R$ ${data.total.toFixed(2).replace(".", ",")}</span></div>
       <div class="print-divider"></div>
       ${pagHtml}
@@ -2199,7 +2209,10 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                                     ? `<div class="print-item"><span>💵 Troco devolvido</span><span>R$ ${f.troco.toFixed(2).replace(".", ",")}</span></div>`
                                     : "";
                                   const descontoStr = f.desconto && f.desconto > 0
-                                    ? `<div class="print-item" style="color:#c85b0a"><span>🎁 Desconto</span><span>- R$ ${f.desconto.toFixed(2).replace(".", ",")}</span></div>`
+                                    ? `<div class="print-item" style="color:#c85b0a"><span>🎁 Desconto aplicado</span><span>- R$ ${f.desconto.toFixed(2).replace(".", ",")}</span></div>`
+                                    : "";
+                                  const couvertStr = f.couvert && f.couvert > 0
+                                    ? `<div class="print-item" style="color:#059669"><span>🍽️ Couvert (${f.numeroPessoas ?? 0} pessoa${(f.numeroPessoas ?? 0) !== 1 ? "s" : ""})</span><span>+ R$ ${f.couvert.toFixed(2).replace(".", ",")}</span></div>`
                                     : "";
                                   const pagStr = (f.pagamentos?.length
                                     ? f.pagamentos
@@ -2210,7 +2223,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                                   ).join("");
                                   const w = window.open("", "_blank", "width=400,height=600");
                                   if (!w) return;
-                                  w.document.write(`<!DOCTYPE html><html><head><style>body{font-family:monospace;font-size:13px;padding:16px;max-width:300px;margin:0 auto}h2{text-align:center;font-size:15px;margin-bottom:4px}.sub{text-align:center;color:#666;font-size:11px;margin-bottom:12px}hr{border:none;border-top:1px dashed #999;margin:8px 0}.print-item{display:flex;justify-content:space-between;margin:3px 0}.total{font-weight:bold;font-size:15px;display:flex;justify-content:space-between;margin-top:8px}.center{text-align:center;margin-top:12px;font-size:11px;color:#666}</style></head><body><h2>Mesa ${String(mesa?.numero ?? "").padStart(2, "0")}${f.numeroComanda ? ` — Comanda #${String(f.numeroComanda).padStart(4, "0")}` : ""}</h2><div class="sub">${f.criadoEm} • ${f.caixaNome}</div><hr/>${itensStr}<hr/>${descontoStr}${pagStr}${trocoStr}<hr/><div class="total"><span>TOTAL</span><span>R$ ${f.total.toFixed(2).replace(".", ",")}</span></div><div class="center">Obrigado pela visita!</div></body></html>`);
+                                  w.document.write(`<!DOCTYPE html><html><head><style>body{font-family:monospace;font-size:13px;padding:16px;max-width:300px;margin:0 auto}h2{text-align:center;font-size:15px;margin-bottom:4px}.sub{text-align:center;color:#666;font-size:11px;margin-bottom:12px}hr{border:none;border-top:1px dashed #999;margin:8px 0}.print-item{display:flex;justify-content:space-between;margin:3px 0}.total{font-weight:bold;font-size:15px;display:flex;justify-content:space-between;margin-top:8px}.center{text-align:center;margin-top:12px;font-size:11px;color:#666}</style></head><body><h2>Mesa ${String(mesa?.numero ?? "").padStart(2, "0")}${f.numeroComanda ? ` — Comanda #${String(f.numeroComanda).padStart(4, "0")}` : ""}</h2><div class="sub">${f.criadoEm} • ${f.caixaNome}</div><hr/>${itensStr}<hr/>${descontoStr}${couvertStr}${pagStr}${trocoStr}<hr/><div class="total"><span>TOTAL</span><span>R$ ${f.total.toFixed(2).replace(".", ",")}</span></div><div class="center">Obrigado pela visita!</div></body></html>`);
                                   w.document.close();
                                   w.focus();
                                   setTimeout(() => { w.print(); w.close(); }, 400);
@@ -4008,7 +4021,10 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                             ? `<div class="print-item"><span>💵 Troco devolvido</span><span>R$ ${f.troco.toFixed(2).replace(".", ",")}</span></div>`
                             : "";
                           const descontoStr = f.desconto && f.desconto > 0
-                            ? `<div class="print-item" style="color:#c85b0a"><span>🎁 Desconto</span><span>- R$ ${f.desconto.toFixed(2).replace(".", ",")}</span></div>`
+                            ? `<div class="print-item" style="color:#c85b0a"><span>🎁 Desconto aplicado</span><span>- R$ ${f.desconto.toFixed(2).replace(".", ",")}</span></div>`
+                            : "";
+                          const couvertStr = f.couvert && f.couvert > 0
+                            ? `<div class="print-item" style="color:#059669"><span>🍽️ Couvert (${f.numeroPessoas ?? 0} pessoa${(f.numeroPessoas ?? 0) !== 1 ? "s" : ""})</span><span>+ R$ ${f.couvert.toFixed(2).replace(".", ",")}</span></div>`
                             : "";
                           const pagStr = (f.pagamentos?.length
                             ? f.pagamentos
@@ -4019,7 +4035,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                           ).join("");
                           const w = window.open("", "_blank", "width=400,height=600");
                           if (!w) return;
-                          w.document.write(`<!DOCTYPE html><html><head><style>body{font-family:monospace;font-size:13px;padding:16px;max-width:300px;margin:0 auto}h2{text-align:center;font-size:15px;margin-bottom:4px}.sub{text-align:center;color:#666;font-size:11px;margin-bottom:12px}hr{border:none;border-top:1px dashed #999;margin:8px 0}.print-item{display:flex;justify-content:space-between;margin:3px 0}.total{font-weight:bold;font-size:15px;display:flex;justify-content:space-between;margin-top:8px}.center{text-align:center;margin-top:12px;font-size:11px;color:#666}</style></head><body><h2>${f.mesaNumero === 0 ? "Balcão" : `Mesa ${String(f.mesaNumero).padStart(2,"0")}`}${f.numeroComanda ? ` — Comanda #${String(f.numeroComanda).padStart(4,"0")}` : ""}</h2><div class="sub">${f.criadoEm} • ${f.caixaNome}</div><hr/>${itensStr}<hr/>${descontoStr}${pagStr}${trocoStr}<hr/><div class="total"><span>TOTAL</span><span>R$ ${f.total.toFixed(2).replace(".",",")}</span></div><div class="center">Obrigado pela visita!</div></body></html>`);
+                          w.document.write(`<!DOCTYPE html><html><head><style>body{font-family:monospace;font-size:13px;padding:16px;max-width:300px;margin:0 auto}h2{text-align:center;font-size:15px;margin-bottom:4px}.sub{text-align:center;color:#666;font-size:11px;margin-bottom:12px}hr{border:none;border-top:1px dashed #999;margin:8px 0}.print-item{display:flex;justify-content:space-between;margin:3px 0}.total{font-weight:bold;font-size:15px;display:flex;justify-content:space-between;margin-top:8px}.center{text-align:center;margin-top:12px;font-size:11px;color:#666}</style></head><body><h2>${f.mesaNumero === 0 ? "Balcão" : `Mesa ${String(f.mesaNumero).padStart(2,"0")}`}${f.numeroComanda ? ` — Comanda #${String(f.numeroComanda).padStart(4,"0")}` : ""}</h2><div class="sub">${f.criadoEm} • ${f.caixaNome}</div><hr/>${itensStr}<hr/>${descontoStr}${couvertStr}${pagStr}${trocoStr}<hr/><div class="total"><span>TOTAL</span><span>R$ ${f.total.toFixed(2).replace(".",",")}</span></div><div class="center">Obrigado pela visita!</div></body></html>`);
                           w.document.close();
                           w.focus();
                           setTimeout(() => { w.print(); w.close(); }, 400);
