@@ -1221,7 +1221,7 @@ const GerentePage = () => {
               ) : (
                 <div className="rounded-2xl border border-border bg-card overflow-hidden">
                   <div className="grid grid-cols-[auto_1fr_auto_auto_auto_auto] gap-x-4 px-4 py-2.5 border-b border-border bg-secondary/50">
-                    <span className="text-xs font-black uppercase tracking-wider text-muted-foreground">Mesa</span>
+                    <span className="text-xs font-black uppercase tracking-wider text-muted-foreground">Origem</span>
                     <span className="text-xs font-black uppercase tracking-wider text-muted-foreground">Horário</span>
                     <span className="text-xs font-black uppercase tracking-wider text-muted-foreground">Operador</span>
                     <span className="text-xs font-black uppercase tracking-wider text-muted-foreground">Itens</span>
