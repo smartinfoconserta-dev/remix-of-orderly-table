@@ -376,13 +376,13 @@ const AdminPage = () => {
               <p className="text-xs text-muted-foreground text-center">Crie o primeiro gerente para começar:</p>
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-muted-foreground">Nome do gerente</label>
-                <Input value={newGerenteName} onChange={(e) => setNewGerenteName(e.target.value)} placeholder="Ex.: Mariana" maxLength={40} />
+                <Input value={newUserName} onChange={(e) => setNewUserName(e.target.value)} placeholder="Ex.: Mariana" maxLength={40} />
               </div>
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-muted-foreground">PIN (4-6 dígitos)</label>
                 <Input
-                  value={newGerentePin}
-                  onChange={(e) => setNewGerentePin(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                  value={newUserPin}
+                  onChange={(e) => setNewUserPin(e.target.value.replace(/\D/g, "").slice(0, 6))}
                   placeholder="4 a 6 dígitos"
                   inputMode="numeric"
                 />
@@ -390,13 +390,18 @@ const AdminPage = () => {
               {userError && <p className="rounded-xl border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive">{userError}</p>}
               <Button
                 onClick={() => {
-                  handleCreateGerente();
-                  if (newGerenteName.trim() && /^\d{4,6}$/.test(newGerentePin)) {
-                    setAuthenticated(true);
-                    setTab("equipe");
-                  }
+                  setNewUserRole("gerente");
+                  setUserError(null);
+                  if (!newUserName.trim() || !/^\d{4,6}$/.test(newUserPin)) return;
+                  const result = createUser("gerente", newUserName, newUserPin);
+                  if (!result.ok) { setUserError(result.error ?? "Erro ao criar"); return; }
+                  toast.success(`Gerente "${result.user?.nome}" criado com sucesso`);
+                  setNewUserName("");
+                  setNewUserPin("");
+                  setAuthenticated(true);
+                  setTab("equipe");
                 }}
-                disabled={!newGerenteName.trim() || !/^\d{4,6}$/.test(newGerentePin)}
+                disabled={!newUserName.trim() || !/^\d{4,6}$/.test(newUserPin)}
                 className="w-full h-12 rounded-xl text-base font-black"
               >
                 Começar configuração
