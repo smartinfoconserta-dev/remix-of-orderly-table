@@ -725,6 +725,8 @@ const GerentePage = () => {
                     <div class="summary-item"><div class="label">Hora de pico</div><div class="value">${horaDePico}</div></div>
                     <div class="summary-item"><div class="label">Cancelamentos</div><div class="value" style="${cancelamentos > 0 ? "color:red" : ""}">${cancelamentos}</div></div>
                     <div class="summary-item"><div class="label">Tempo médio/mesa</div><div class="value">${tempoMedioMesa > 0 ? tempoMedioMesa + " min" : "—"}</div></div>
+                    ${totalDescontos > 0 ? `<div class="summary-item"><div class="label">Descontos dados</div><div class="value" style="color:red">- ${formatPrice(totalDescontos)}</div></div>` : ""}
+                    ${totalCouvert > 0 ? `<div class="summary-item"><div class="label">Couvert arrecadado</div><div class="value" style="color:green">${formatPrice(totalCouvert)}</div></div>` : ""}
                   </div>
                   <h2>Produtos Mais Vendidos</h2>
                   <table><thead><tr><th>Produto</th><th style="text-align:center">Qtd</th><th style="text-align:right">Total R$</th><th style="text-align:right">% Faturamento</th></tr></thead><tbody>${prodRows || "<tr><td colspan=4 style='text-align:center;color:#999'>Sem dados</td></tr>"}</tbody></table>
