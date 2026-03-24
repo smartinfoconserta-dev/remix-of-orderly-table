@@ -159,19 +159,18 @@ export async function fetchConfig(storeId?: string | null): Promise<SistemaConfi
   }
 }
 
-export async function saveConfig(config: SistemaConfig): Promise<void> {
+export async function saveConfig(config: SistemaConfig, storeId?: string | null): Promise<void> {
   // Always update local cache immediately
   setLocalCache(CONFIG_CACHE_KEY, config);
 
   try {
-    const row = configToDbRow(config);
+    const row: any = configToDbRow(config);
+    if (storeId) row.store_id = storeId;
 
-    // Check if a row exists
-    const { data: existing } = await supabase
-      .from("restaurant_config")
-      .select("id")
-      .limit(1)
-      .maybeSingle();
+    // Check if a row exists for this store
+    let existingQuery = supabase.from("restaurant_config").select("id").limit(1);
+    if (storeId) existingQuery = existingQuery.eq("store_id", storeId);
+    const { data: existing } = await existingQuery.maybeSingle();
 
     if (existing) {
       await supabase.from("restaurant_config").update(row as any).eq("id", existing.id);
