@@ -518,8 +518,8 @@ const AdminPage = () => {
               </div>
               <div className="surface-card rounded-2xl p-5 space-y-1">
                 <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Equipe</p>
-                <p className="text-3xl font-black text-foreground">{garcons.length + caixas.length}</p>
-                <p className="text-xs text-muted-foreground">{garcons.length} garçon(s) · {caixas.length} caixa(s)</p>
+               <p className="text-3xl font-black text-foreground">{gerentes.length}</p>
+                <p className="text-xs text-muted-foreground">{gerentes.length} gerente(s)</p>
               </div>
             </div>
 
