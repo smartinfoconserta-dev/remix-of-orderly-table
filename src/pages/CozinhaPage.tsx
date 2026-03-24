@@ -421,6 +421,17 @@ ${itensSetorHtml}
           </p>
         </div>
         <span className="text-xl font-black tabular-nums text-foreground">{clock}</span>
+        {config.impressaoPorSetor && setorMonitor && (
+          <button
+            onClick={() => {
+              localStorage.removeItem(COZINHA_SETOR_KEY);
+              setSetorMonitor(null);
+            }}
+            className="text-xs text-muted-foreground hover:text-foreground border border-border rounded-lg px-2 py-1"
+          >
+            {setorMonitor === "cozinha" ? "🍳 Cozinha" : setorMonitor === "bar" ? "🍹 Bar" : "⚡ Tudo"} · trocar
+          </button>
+        )}
         <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-status-consumo ml-2">
           <span className="h-1.5 w-1.5 rounded-full bg-status-consumo animate-pulse" />
           Ao vivo
