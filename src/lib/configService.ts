@@ -236,12 +236,11 @@ export async function saveLicenca(lic: LicencaConfig, storeId?: string | null): 
 // CATEGORIAS
 // ══════════════════════════════════════
 
-export async function fetchCategorias(): Promise<CategoriaCustom[]> {
+export async function fetchCategorias(storeId?: string | null): Promise<CategoriaCustom[]> {
   try {
-    const { data, error } = await supabase
-      .from("restaurant_categories")
-      .select("*")
-      .order("ordem", { ascending: true });
+    let query = supabase.from("restaurant_categories").select("*");
+    if (storeId) query = query.eq("store_id", storeId);
+    const { data, error } = await query.order("ordem", { ascending: true });
 
     if (error) throw error;
 
