@@ -175,8 +175,9 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
     registrarFechamentoMotoboy,
     estornarFechamento,
     marcarBalcaoRetirado,
+    cancelarPedidoBalcao,
   } = useRestaurant();
-  const { currentCaixa, currentGerente, logout, verifyManagerAccess } = useAuth();
+  const { currentCaixa, currentGerente, logout, verifyManagerAccess, verifyEmployeeAccess } = useAuth();
 
   const [mesaSelecionada, setMesaSelecionada] = useState<string | null>(null);
   const [comandaOpen, setComandaOpen] = useState(false);
