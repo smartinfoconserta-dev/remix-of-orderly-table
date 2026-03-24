@@ -27,7 +27,7 @@ export interface PedidoRealizado {
   total: number;
   criadoEm: string;
   criadoEmIso: string;
-  origem: "cliente" | "garcom" | "caixa" | "balcao" | "delivery";
+  origem: "cliente" | "garcom" | "caixa" | "balcao" | "delivery" | "totem";
   mesaId: string;
   garcomId?: string;
   garcomNome?: string;
@@ -109,7 +109,7 @@ export interface Mesa {
 }
 
 interface PedidoMeta {
-  modo: "cliente" | "garcom" | "caixa";
+  modo: "cliente" | "garcom" | "caixa" | "totem";
   operador?: OperationalUser | null;
   paraViagem?: boolean;
 }
@@ -659,7 +659,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         const totalPedido = calcularTotalItens(mesa.carrinho);
         const snapshot = mesa.carrinho.map(cloneItem);
         const now = new Date();
-        const origem = meta?.modo === "garcom" || meta?.modo === "caixa" ? meta.modo : "cliente";
+        const origem = meta?.modo === "garcom" || meta?.modo === "caixa" ? meta.modo : meta?.modo === "totem" ? "totem" : "cliente";
         const novoPedido: PedidoRealizado = {
           id: `pedido-${now.getTime()}-${Math.random().toString(36).slice(2, 7)}`,
           numeroPedido: mesa.pedidos.length + 1,

@@ -45,7 +45,7 @@ import {
 } from "@/lib/tabletBinding";
 
 interface PedidoFlowProps {
-  modo: "cliente" | "garcom" | "caixa" | "balcao" | "delivery";
+  modo: "cliente" | "garcom" | "caixa" | "balcao" | "delivery" | "totem";
   mesaId?: string;
   garcomNome?: string;
   clienteNome?: string;
@@ -385,7 +385,7 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
   }, [modo, navigate, onBack]);
 
   const handleBack = useCallback(() => {
-    if (modo === "cliente") return;
+    if (modo === "cliente" || modo === "totem") return;
 
     if (carrinho.length > 0) {
       setShowExitAlert(true);
@@ -517,7 +517,7 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
 
       const operador = modo === "garcom" ? currentGarcom : modo === "caixa" ? currentCaixa : undefined;
       confirmarPedido(mesaId, {
-        modo: modo as "cliente" | "garcom" | "caixa",
+        modo: modo as "cliente" | "garcom" | "caixa" | "totem",
         operador,
         paraViagem,
       });
@@ -619,7 +619,7 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
       }`}
     >
       <div className="flex min-w-0 flex-1 items-center gap-3">
-        {modo !== "cliente" && modo !== "delivery" && (
+        {modo !== "cliente" && modo !== "delivery" && modo !== "totem" && (
           <button
             type="button"
             onClick={handleBack}
@@ -637,7 +637,7 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
         {restaurantIdentity}
       </div>
       <div className="flex shrink-0 items-center gap-2">
-        {(modo === "delivery" || modo === "cliente") && (
+        {(modo === "delivery" || modo === "cliente" || modo === "totem") && (
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
             <input
@@ -688,7 +688,7 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
                 {nomeAtendimento}
               </div>
             ) : null}
-            {!isExternalOrder && (
+            {!isExternalOrder && modo !== "totem" && (
               <Button
                 type="button"
                 variant="outline"
