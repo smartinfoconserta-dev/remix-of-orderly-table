@@ -426,6 +426,51 @@ ${itensSetorHtml}
   );
 
   const config = getSistemaConfig();
+  const nomeRestaurante = config.nomeRestaurante || "Orderly Table";
+
+  if (!autenticado) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6 gap-6">
+        <div className="text-center space-y-2">
+          <div className="flex justify-center mb-4">
+            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/15 text-primary">
+              <ChefHat className="h-8 w-8" />
+            </div>
+          </div>
+          <h1 className="text-2xl font-black text-foreground">{nomeRestaurante}</h1>
+          <p className="text-sm text-muted-foreground">Acesso ao monitor da cozinha</p>
+        </div>
+        <div className="w-full max-w-xs space-y-4">
+          <Input
+            placeholder="Nome"
+            value={loginNome}
+            onChange={(e) => setLoginNome(e.target.value)}
+            maxLength={40}
+            className="h-12 rounded-xl text-base"
+          />
+          <Input
+            placeholder="PIN (4-6 dígitos)"
+            type="password"
+            value={loginPin}
+            onChange={(e) => setLoginPin(e.target.value.replace(/\D/g, "").slice(0, 6))}
+            inputMode="numeric"
+            className="h-12 rounded-xl text-base"
+            onKeyDown={(e) => { if (e.key === "Enter") handleLoginCozinha(); }}
+          />
+          {loginError && (
+            <p className="rounded-xl border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive">{loginError}</p>
+          )}
+          <Button
+            onClick={handleLoginCozinha}
+            disabled={loginLoading || !loginNome.trim() || !/^\d{4,6}$/.test(loginPin)}
+            className="h-12 w-full rounded-xl font-black text-base"
+          >
+            Entrar
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   if (config.impressaoPorSetor && setorMonitor === null) {
     return (
