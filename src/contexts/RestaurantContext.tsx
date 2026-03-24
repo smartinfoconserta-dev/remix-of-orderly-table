@@ -1059,21 +1059,43 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   }, []);
 
   const fecharCaixaDoDia = useCallback((usuario: OperationalUser) => {
-    setStore((prev) => ({
-      mesas: criarMesasIniciais(),
-      eventos: appendEvent(prev.eventos, {
-        tipo: "caixa",
-        descricao: `Gerente ${usuario.nome} fechou o caixa do dia`,
-        usuarioId: usuario.id,
-        usuarioNome: usuario.nome,
-        acao: "fechamento_dia",
-      }),
-      movimentacoesCaixa: [],
-      fechamentos: [],
-      caixaAberto: false,
-      fundoTroco: 0,
-      pedidosBalcao: [],
-    }));
+    setStore((prev) => {
+      const now = new Date();
+      const pedidosTotemAbertos = prev.pedidosBalcao.filter(
+        (p) => p.origem === "totem" && p.statusBalcao !== "pago" && p.statusBalcao !== "cancelado"
+      );
+      const fechamentosTotemExtras: FechamentoConta[] = pedidosTotemAbertos.map((p) => ({
+        id: `fechamento-totem-auto-${now.getTime()}-${p.id}`,
+        mesaId: p.mesaId,
+        mesaNumero: 0,
+        origem: "totem" as const,
+        total: p.total,
+        formaPagamento: "pix" as const,
+        pagamentos: [{ id: `pag-totem-auto-${now.getTime()}-${p.id}`, formaPagamento: "pix" as const, valor: p.total }],
+        itens: p.itens.map(cloneItem),
+        criadoEm: formatDateTime(now),
+        criadoEmIso: now.toISOString(),
+        caixaId: "totem-auto",
+        caixaNome: "Totem Autoatendimento (fechamento automático)",
+        troco: 0,
+        desconto: 0,
+      }));
+      return {
+        mesas: criarMesasIniciais(),
+        eventos: appendEvent(prev.eventos, {
+          tipo: "caixa",
+          descricao: `Gerente ${usuario.nome} fechou o caixa do dia`,
+          usuarioId: usuario.id,
+          usuarioNome: usuario.nome,
+          acao: "fechamento_dia",
+        }),
+        movimentacoesCaixa: [],
+        fechamentos: [...fechamentosTotemExtras, ...prev.fechamentos],
+        caixaAberto: false,
+        fundoTroco: 0,
+        pedidosBalcao: [],
+      };
+    });
   }, []);
 
   const criarPedidoBalcao = useCallback((input: CriarPedidoBalcaoInput) => {
@@ -1399,22 +1421,35 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   }, []);
 
   const cancelarPedidoBalcao = useCallback((pedidoId: string, motivo: string, operador: OperationalUser) => {
-    setStore((prev) => ({
-      ...prev,
-      pedidosBalcao: prev.pedidosBalcao.map((p) =>
-        p.id === pedidoId
-          ? { ...p, cancelado: true, canceladoEm: new Date().toISOString(), canceladoMotivo: motivo, canceladoPor: operador.nome, statusBalcao: "cancelado" as const }
-          : p
-      ),
-      eventos: appendEvent(prev.eventos, {
-        tipo: "caixa",
-        descricao: `Pedido #${prev.pedidosBalcao.find((p) => p.id === pedidoId)?.numeroPedido ?? "?"} cancelado — ${motivo}`,
-        acao: "cancelar_pedido_balcao",
-        motivo,
-        usuarioId: operador.id,
-        usuarioNome: operador.nome,
-      }),
-    }));
+    setStore((prev) => {
+      const now = new Date();
+      const pedido = prev.pedidosBalcao.find((p) => p.id === pedidoId);
+      if (!pedido) return prev;
+      return {
+        ...prev,
+        pedidosBalcao: prev.pedidosBalcao.map((p) =>
+          p.id === pedidoId
+            ? {
+                ...p,
+                statusBalcao: "cancelado" as const,
+                cancelado: true,
+                canceladoEm: now.toISOString(),
+                canceladoMotivo: motivo,
+                canceladoPor: operador.nome,
+              }
+            : p,
+        ),
+        eventos: appendEvent(prev.eventos, {
+          tipo: "caixa",
+          descricao: `Pedido ${pedido.origem === "totem" ? "TOTEM" : pedido.origem === "delivery" ? "DELIVERY" : "BALCÃO"} #${pedido.numeroPedido} cancelado por ${operador.nome} — ${motivo}`,
+          usuarioId: operador.id,
+          usuarioNome: operador.nome,
+          acao: "cancelar_pedido",
+          motivo,
+          valor: pedido.total,
+        }),
+      };
+    });
   }, []);
 
   return (
