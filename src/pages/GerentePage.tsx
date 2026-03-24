@@ -706,7 +706,8 @@ const GerentePage = () => {
                   const pgto = f.pagamentos.length > 1
                     ? f.pagamentos.map(p => `${paymentMethods.find(pm => pm.value === p.formaPagamento)?.label ?? p.formaPagamento}: R$${p.valor.toFixed(2)}`).join(", ")
                     : paymentMethods.find(pm => pm.value === f.formaPagamento)?.label ?? f.formaPagamento;
-                  return `<tr><td>Mesa ${String(f.mesaNumero).padStart(2,"0")}</td><td>${f.criadoEm}</td><td>${f.caixaNome}</td><td>${itensStr}</td><td style="text-align:right">${formatPrice(f.total)}</td><td>${pgto}</td></tr>`;
+                  const origemLabel = f.origem === "mesa" ? `Mesa ${String(f.mesaNumero).padStart(2,"0")}` : f.origem === "balcao" ? "Balcão" : f.origem === "totem" ? "Totem" : f.origem === "delivery" ? "Delivery" : f.origem === "motoboy" ? "Motoboy" : f.mesaNumero > 0 ? `Mesa ${String(f.mesaNumero).padStart(2,"0")}` : "Balcão";
+                  return `<tr><td>${origemLabel}</td><td>${f.criadoEm}</td><td>${f.caixaNome}</td><td>${itensStr}</td><td style="text-align:right">${formatPrice(f.total)}</td><td>${pgto}</td></tr>`;
                 }).join("");
 
                 const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Relatório de Vendas</title><style>
