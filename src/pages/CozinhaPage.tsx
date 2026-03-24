@@ -1,8 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Check, ChefHat, Clock, ShoppingBag, User } from "lucide-react";
+import { Check, ChefHat, Clock, LogOut, ShoppingBag, User } from "lucide-react";
 import { useRestaurant } from "@/contexts/RestaurantContext";
 import type { PedidoRealizado } from "@/contexts/RestaurantContext";
 import { getSistemaConfig } from "@/lib/adminStorage";
+import { useAuth } from "@/contexts/AuthContext";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+
+const COZINHA_SESSAO_KEY = "obsidian-cozinha-sessao-v1";
 
 const minutesAgo = (isoDate: string) => {
   const diff = Date.now() - new Date(isoDate).getTime();
@@ -84,6 +89,17 @@ const COZINHA_SETOR_KEY = "obsidian-cozinha-setor-v1";
 
 const CozinhaPage = () => {
   const { mesas, pedidosBalcao, marcarPedidoPronto, marcarPedidoBalcaoPronto } = useRestaurant();
+  const { verifyEmployeeAccess } = useAuth();
+  const [autenticado, setAutenticado] = useState<{ nome: string } | null>(() => {
+    try {
+      const saved = localStorage.getItem(COZINHA_SESSAO_KEY);
+      return saved ? JSON.parse(saved) : null;
+    } catch { return null; }
+  });
+  const [loginNome, setLoginNome] = useState("");
+  const [loginPin, setLoginPin] = useState("");
+  const [loginError, setLoginError] = useState<string | null>(null);
+  const [loginLoading, setLoginLoading] = useState(false);
   const [, setTick] = useState(0);
   const [clock, setClock] = useState(() => formatTime(new Date()));
   const [fadingOut, setFadingOut] = useState<Set<string>>(new Set());
@@ -95,6 +111,29 @@ const CozinhaPage = () => {
   const [setorMonitor, setSetorMonitor] = useState<"tudo" | "cozinha" | "bar" | null>(() => {
     try { return (localStorage.getItem(COZINHA_SETOR_KEY) as any) || null; } catch { return null; }
   });
+
+  const handleLoginCozinha = async () => {
+    if (loginLoading) return;
+    setLoginLoading(true);
+    setLoginError(null);
+    const result = await verifyEmployeeAccess(loginNome.trim(), loginPin);
+    if (!result.ok) {
+      setLoginError(result.error ?? "Credenciais inválidas");
+      setLoginLoading(false);
+      return;
+    }
+    const sessao = { nome: result.user?.nome || loginNome.trim() };
+    localStorage.setItem(COZINHA_SESSAO_KEY, JSON.stringify(sessao));
+    setAutenticado(sessao);
+    setLoginNome("");
+    setLoginPin("");
+    setLoginLoading(false);
+  };
+
+  const handleLogoutCozinha = () => {
+    localStorage.removeItem(COZINHA_SESSAO_KEY);
+    setAutenticado(null);
+  };
 
 
   useEffect(() => {
@@ -387,6 +426,51 @@ ${itensSetorHtml}
   );
 
   const config = getSistemaConfig();
+  const nomeRestaurante = config.nomeRestaurante || "Orderly Table";
+
+  if (!autenticado) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6 gap-6">
+        <div className="text-center space-y-2">
+          <div className="flex justify-center mb-4">
+            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/15 text-primary">
+              <ChefHat className="h-8 w-8" />
+            </div>
+          </div>
+          <h1 className="text-2xl font-black text-foreground">{nomeRestaurante}</h1>
+          <p className="text-sm text-muted-foreground">Acesso ao monitor da cozinha</p>
+        </div>
+        <div className="w-full max-w-xs space-y-4">
+          <Input
+            placeholder="Nome"
+            value={loginNome}
+            onChange={(e) => setLoginNome(e.target.value)}
+            maxLength={40}
+            className="h-12 rounded-xl text-base"
+          />
+          <Input
+            placeholder="PIN (4-6 dígitos)"
+            type="password"
+            value={loginPin}
+            onChange={(e) => setLoginPin(e.target.value.replace(/\D/g, "").slice(0, 6))}
+            inputMode="numeric"
+            className="h-12 rounded-xl text-base"
+            onKeyDown={(e) => { if (e.key === "Enter") handleLoginCozinha(); }}
+          />
+          {loginError && (
+            <p className="rounded-xl border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive">{loginError}</p>
+          )}
+          <Button
+            onClick={handleLoginCozinha}
+            disabled={loginLoading || !loginNome.trim() || !/^\d{4,6}$/.test(loginPin)}
+            className="h-12 w-full rounded-xl font-black text-base"
+          >
+            Entrar
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   if (config.impressaoPorSetor && setorMonitor === null) {
     return (
@@ -446,6 +530,14 @@ ${itensSetorHtml}
           <span className="h-1.5 w-1.5 rounded-full bg-status-consumo animate-pulse" />
           Ao vivo
         </span>
+        <button
+          onClick={handleLogoutCozinha}
+          className="ml-2 flex items-center gap-1.5 rounded-lg border border-border px-2 py-1 text-xs text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+          title="Sair"
+        >
+          <LogOut className="h-3.5 w-3.5" />
+          <span className="hidden md:inline">Sair</span>
+        </button>
       </div>
 
       <div className="flex gap-2 px-4 pb-3 flex-wrap">
