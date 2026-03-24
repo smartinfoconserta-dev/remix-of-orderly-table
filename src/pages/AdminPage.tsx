@@ -1992,14 +1992,80 @@ const AdminPage = () => {
           </div>
         )}
 
-        {/* ═══ LICENÇA ═══ */}
+        {/* ═══ MEU PLANO ═══ */}
         {tab === "licenca" && (
           <div className="space-y-6">
             <div>
-              <h2 className="text-2xl font-black text-foreground">Licença</h2>
-              <p className="text-sm text-muted-foreground">Gerencie a licença de uso do sistema</p>
+              <h2 className="text-2xl font-black text-foreground">Meu Plano</h2>
+              <p className="text-sm text-muted-foreground">Veja seu plano atual e módulos disponíveis</p>
             </div>
+
+            {/* Plano atual */}
+            <div className="surface-card max-w-lg rounded-2xl p-6 space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Plano atual</p>
+                  <p className="text-2xl font-black text-foreground mt-1">{PLANO_LABELS[sistemaConfig.plano || "basico"]}</p>
+                </div>
+                <span className="text-4xl">
+                  {(sistemaConfig.plano || "basico") === "basico" && "⭐"}
+                  {sistemaConfig.plano === "medio" && "⭐⭐"}
+                  {sistemaConfig.plano === "pro" && "⭐⭐⭐"}
+                  {sistemaConfig.plano === "premium" && "👑"}
+                </span>
+              </div>
+            </div>
+
+            {/* Módulos */}
+            <div className="surface-card max-w-lg rounded-2xl overflow-hidden">
+              <div className="px-5 py-3 border-b border-border bg-secondary/50">
+                <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">Módulos</p>
+              </div>
+              <div className="divide-y divide-border/50">
+                {TODOS_MODULOS.map(mod => {
+                  const plano = sistemaConfig.plano || "basico";
+                  const liberados = PLANO_MODULOS[plano] || [];
+                  const liberado = liberados.includes(mod.id);
+                  return (
+                    <div key={mod.id} className="flex items-center justify-between px-5 py-3">
+                      <div className="flex items-center gap-3">
+                        <span className="text-xl">{mod.icon}</span>
+                        <div>
+                          <p className="text-sm font-bold text-foreground">{mod.label}</p>
+                          <p className="text-xs text-muted-foreground">{mod.desc}</p>
+                        </div>
+                      </div>
+                      {liberado ? (
+                        <span className="text-xs font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded-lg px-2 py-0.5">✅ Liberado</span>
+                      ) : (
+                        <span className="text-xs font-bold text-muted-foreground bg-muted border border-border rounded-lg px-2 py-0.5">🔒 Bloqueado</span>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Upgrade */}
+            {(sistemaConfig.plano || "basico") !== "premium" && (
+              <div className="max-w-lg">
+                <Button
+                  className="w-full rounded-xl font-black gap-2"
+                  onClick={() => {
+                    const tel = sistemaConfig.telefoneRestaurante || "5511999999999";
+                    const msg = encodeURIComponent(`Olá! Gostaria de fazer upgrade do meu plano (atual: ${PLANO_LABELS[sistemaConfig.plano || "basico"]})`);
+                    window.open(`https://wa.me/${tel.replace(/\D/g, "")}?text=${msg}`, "_blank");
+                  }}
+                >
+                  🚀 Fazer upgrade
+                </Button>
+                <p className="text-[10px] text-muted-foreground text-center mt-2">Você será redirecionado para o WhatsApp</p>
+              </div>
+            )}
+
+            {/* Licença (mantida) */}
             <div className="surface-card max-w-lg space-y-5 rounded-2xl p-6">
+              <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">Licença</p>
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-muted-foreground">Nome do cliente (restaurante)</label>
                 <Input
