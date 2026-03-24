@@ -70,13 +70,28 @@ function calcDataTermino(plano: string, dataInicio: string): string {
 
 const todayStr = () => new Date().toISOString().slice(0, 10);
 
+const PLANOS_MODULOS = [
+  { value: "basico", label: "Básico" },
+  { value: "medio", label: "Médio" },
+  { value: "pro", label: "Pro" },
+  { value: "premium", label: "Premium" },
+];
+const PLANO_MODULOS_LABELS: Record<string, string> = { basico: "Básico", medio: "Médio", pro: "Pro", premium: "Premium" };
+const PLANO_MODULOS_BADGE: Record<string, string> = {
+  basico: "bg-muted text-muted-foreground",
+  medio: "bg-blue-600 hover:bg-blue-600 text-white",
+  pro: "bg-emerald-600 hover:bg-emerald-600 text-white",
+  premium: "bg-purple-600 hover:bg-purple-600 text-white",
+};
+
 const emptyForm = {
   nomeRestaurante: "", nomeContato: "", email: "", dataVencimento: "",
   ativo: true, avisoAtivo: false, avisoTexto: "",
   telefone: "", cnpj: "", cidade: "", estado: "", endereco: "",
-  segmento: "hamburgeria", diaVencimento: 10, valorMensalidade: 0,
+  segmento: "hamburguria", diaVencimento: 10, valorMensalidade: 0,
   observacoes: "", historicoPagamentos: [] as any[],
   plano: "anual", dataInicio: new Date().toISOString().slice(0, 10), dataTermino: "",
+  planoModulos: "basico" as string,
 };
 
 
