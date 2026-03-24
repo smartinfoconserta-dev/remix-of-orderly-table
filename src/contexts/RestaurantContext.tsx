@@ -43,7 +43,7 @@ export interface PedidoRealizado {
   formaPagamentoDelivery?: string;
   trocoParaQuanto?: number;
   observacaoGeral?: string;
-  statusBalcao?: "aberto" | "pronto" | "pago" | "saiu" | "entregue" | "aguardando_confirmacao" | "devolvido" | "cancelado";
+  statusBalcao?: "aberto" | "preparando" | "pronto" | "retirado" | "pago" | "saiu" | "entregue" | "aguardando_confirmacao" | "devolvido" | "cancelado";
   motoboyNome?: string;
   cancelado?: boolean;
   canceladoEm?: string;
@@ -203,6 +203,7 @@ interface RestaurantContextType {
   confirmarPedidoBalcao: (pedidoId: string, taxaEntrega?: number) => void;
   rejeitarPedidoBalcao: (pedidoId: string, motivo: string) => void;
   cancelarPedidoBalcao: (pedidoId: string, motivo: string, operador: OperationalUser) => void;
+  marcarBalcaoRetirado: (pedidoId: string) => void;
   registrarFechamentoMotoboy: (input: {
     motoboyNome: string;
     motoboyId: string;
@@ -1452,6 +1453,15 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     });
   }, []);
 
+  const marcarBalcaoRetirado = useCallback((pedidoId: string) => {
+    setStore((prev) => ({
+      ...prev,
+      pedidosBalcao: prev.pedidosBalcao.map((p) =>
+        p.id === pedidoId ? { ...p, statusBalcao: "retirado" as const } : p
+      ),
+    }));
+  }, []);
+
   return (
     <RestaurantContext.Provider
       value={{
@@ -1492,6 +1502,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         confirmarPedidoBalcao,
         rejeitarPedidoBalcao,
         cancelarPedidoBalcao,
+        marcarBalcaoRetirado,
         registrarFechamentoMotoboy,
       }}
     >
