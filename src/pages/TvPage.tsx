@@ -3,9 +3,8 @@ import { useRestaurant } from "@/contexts/RestaurantContext";
 import { getSistemaConfig } from "@/lib/adminStorage";
 
 const TvPage = () => {
-  const { mesas, pedidosBalcao } = useRestaurant();
+  const { pedidosBalcao } = useRestaurant();
   const config = getSistemaConfig();
-  const modoTV = config.modoTV ?? "padrao";
   const [clock, setClock] = useState(() => new Date());
 
   // Update clock every 30s
