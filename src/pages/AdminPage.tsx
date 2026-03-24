@@ -303,12 +303,8 @@ const AdminPage = () => {
 
   // --- Usuários (gerentes) state ---
   const gerentes = useMemo(() => getProfilesByRole("gerente"), [getProfilesByRole]);
-  const garcons = useMemo(() => getActiveProfilesByRole("garcom"), [getActiveProfilesByRole]);
-  const caixas = useMemo(() => getActiveProfilesByRole("caixa"), [getActiveProfilesByRole]);
-  const deliveries = useMemo(() => getActiveProfilesByRole("delivery"), [getActiveProfilesByRole]);
   const [newUserName, setNewUserName] = useState("");
   const [newUserPin, setNewUserPin] = useState("");
-  const [newUserRole, setNewUserRole] = useState<"gerente" | "garcom" | "caixa" | "delivery">("garcom");
   const [userError, setUserError] = useState<string | null>(null);
 
   const roleLabels: Record<string, string> = { gerente: "Gerente", garcom: "Garçom", caixa: "Caixa", delivery: "Caixa Delivery" };
