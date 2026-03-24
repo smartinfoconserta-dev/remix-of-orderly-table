@@ -229,7 +229,7 @@ const CartDrawer = ({
                     {carrinho.map((item) => (
                       <div key={item.uid} className="flex items-center gap-3 px-4 py-3">
                         {/* Foto do produto */}
-                        <div className="shrink-0 h-14 w-14 rounded-xl overflow-hidden border border-border bg-secondary">
+                        <div className={`shrink-0 h-14 w-14 rounded-xl overflow-hidden border ${isTotemMode ? "border-gray-200 bg-gray-50" : "border-border bg-secondary"}`}>
                           {item.imagemUrl ? (
                             <img src={item.imagemUrl} alt={item.nome}
                               className="h-full w-full object-cover" />
