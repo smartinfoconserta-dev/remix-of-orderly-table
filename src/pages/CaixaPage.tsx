@@ -307,7 +307,7 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
   const currentOperator = accessMode === "gerente" ? currentGerente : currentCaixa;
   const hasCaixaAccess = accessMode === "gerente"
     ? currentGerente?.role === "gerente" || currentGerente?.id === "seed-admin-001"
-    : currentCaixa?.role === "caixa" || currentCaixa?.role === "gerente" || currentCaixa?.id === "seed-admin-001";
+    : currentCaixa?.role === "caixa" || currentCaixa?.role === "gerente" || currentCaixa?.role === "delivery" || currentCaixa?.id === "seed-admin-001";
 
   useRouteLock(accessMode === "gerente" ? "/gerente" : "/caixa");
 
@@ -789,6 +789,7 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
                   ))}
                 </div>
               </div>
+              {!modoForced && (
               <div className="space-y-2">
                 <label className="text-sm font-bold text-foreground">Modo de operação</label>
                 <div className="grid grid-cols-3 gap-2">
@@ -814,6 +815,7 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
                   ))}
                 </div>
               </div>
+              )}
               <Button onClick={handleAbrirCaixa} className="w-full h-12 rounded-xl text-base font-black gap-2">
                 <Check className="h-5 w-5" />
                 Abrir Caixa
