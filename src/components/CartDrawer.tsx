@@ -201,8 +201,8 @@ const CartDrawer = ({
         ) : (
           <>
             {/* Header simples */}
-            <div className="shrink-0 flex items-center justify-between px-5 py-4 border-b border-border">
-              <h2 className="text-lg font-black text-foreground">Carrinho</h2>
+            <div className={`shrink-0 flex items-center justify-between px-5 py-4 border-b ${isTotemMode ? "border-gray-200" : "border-border"}`}>
+              <h2 className={`text-lg font-black ${isTotemMode ? "text-gray-900" : "text-foreground"}`}>Carrinho</h2>
               <button type="button" onClick={handleClose}
                 className={`flex h-9 w-9 items-center justify-center rounded-full border ${isTotemMode ? "bg-gray-100 text-gray-700 border-gray-200" : "bg-background text-muted-foreground border-border"} hover:text-foreground`}>
                 <X className="h-4 w-4" />
@@ -220,16 +220,16 @@ const CartDrawer = ({
                 {/* Lista de itens com foto */}
                 <div className="flex-1 overflow-y-auto">
                   {/* Cabeçalho da tabela */}
-                  <div className="grid grid-cols-[1fr_auto_auto] gap-4 px-4 py-2 border-b border-border/50 bg-secondary/30">
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Item</span>
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground text-center">Qtd</span>
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground text-right">Subtotal</span>
+                  <div className={`grid grid-cols-[1fr_auto_auto] gap-4 px-4 py-2 border-b ${isTotemMode ? "border-gray-100 bg-gray-50" : "border-border/50 bg-secondary/30"}`}>
+                    <span className={`text-[10px] font-bold uppercase tracking-widest ${isTotemMode ? "text-gray-400" : "text-muted-foreground"}`}>Item</span>
+                    <span className={`text-[10px] font-bold uppercase tracking-widest text-center ${isTotemMode ? "text-gray-400" : "text-muted-foreground"}`}>Qtd</span>
+                    <span className={`text-[10px] font-bold uppercase tracking-widest text-right ${isTotemMode ? "text-gray-400" : "text-muted-foreground"}`}>Subtotal</span>
                   </div>
-                  <div className="divide-y divide-border/40 pb-36">
+                  <div className={`divide-y pb-36 ${isTotemMode ? "divide-gray-100" : "divide-border/40"}`}>
                     {carrinho.map((item) => (
                       <div key={item.uid} className="flex items-center gap-3 px-4 py-3">
                         {/* Foto do produto */}
-                        <div className="shrink-0 h-14 w-14 rounded-xl overflow-hidden border border-border bg-secondary">
+                        <div className={`shrink-0 h-14 w-14 rounded-xl overflow-hidden border ${isTotemMode ? "border-gray-200 bg-gray-50" : "border-border bg-secondary"}`}>
                           {item.imagemUrl ? (
                             <img src={item.imagemUrl} alt={item.nome}
                               className="h-full w-full object-cover" />
@@ -242,7 +242,7 @@ const CartDrawer = ({
 
                         {/* Nome e personalizações */}
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-bold text-foreground leading-tight truncate">{item.nome}</p>
+                          <p className={`text-sm font-bold leading-tight truncate ${isTotemMode ? "text-gray-900" : "text-foreground"}`}>{item.nome}</p>
                           {item.adicionais.length > 0 && (
                             <p className="text-xs text-primary leading-tight truncate">
                               + {item.adicionais.map(a => a.nome).join(", ")}
@@ -268,23 +268,23 @@ const CartDrawer = ({
                         <div className="shrink-0 flex items-center gap-1.5">
                           <button type="button"
                             onClick={() => item.quantidade <= 1 ? onRemove(item.uid) : onUpdateQty(item.uid, -1)}
-                            className="flex h-7 w-7 items-center justify-center rounded-lg bg-secondary text-foreground active:scale-90 transition-transform">
+                            className={`flex h-7 w-7 items-center justify-center rounded-lg active:scale-90 transition-transform ${isTotemMode ? "bg-gray-100 text-gray-900" : "bg-secondary text-foreground"}`}>
                             {item.quantidade <= 1
                               ? <Trash2 className="h-3 w-3 text-destructive" />
                               : <Minus className="h-3 w-3" />}
                           </button>
-                          <span className="w-5 text-center text-sm font-black text-foreground tabular-nums">
+                          <span className={`w-5 text-center text-sm font-black tabular-nums ${isTotemMode ? "text-gray-900" : "text-foreground"}`}>
                             {item.quantidade}
                           </span>
                           <button type="button"
                             onClick={() => onUpdateQty(item.uid, 1)}
-                            className="flex h-7 w-7 items-center justify-center rounded-lg bg-secondary text-foreground active:scale-90 transition-transform">
+                            className={`flex h-7 w-7 items-center justify-center rounded-lg active:scale-90 transition-transform ${isTotemMode ? "bg-gray-100 text-gray-900" : "bg-secondary text-foreground"}`}>
                             <Plus className="h-3 w-3" />
                           </button>
                         </div>
 
                         {/* Subtotal */}
-                        <span className="shrink-0 text-sm font-black text-foreground tabular-nums w-16 text-right">
+                        <span className={`shrink-0 text-sm font-black tabular-nums w-16 text-right ${isTotemMode ? "text-gray-900" : "text-foreground"}`}>
                           {formatPrice(item.precoUnitario * item.quantidade)}
                         </span>
                       </div>
@@ -297,8 +297,8 @@ const CartDrawer = ({
                   {!showConfirmEnvio ? (
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
-                        <span className="text-base font-bold text-muted-foreground">Valor a pagar</span>
-                        <span className="text-xl font-black text-foreground tabular-nums">{formatPrice(subtotal)}</span>
+                        <span className={`text-base font-bold ${isTotemMode ? "text-gray-500" : "text-muted-foreground"}`}>Valor a pagar</span>
+                        <span className={`text-xl font-black tabular-nums ${isTotemMode ? "text-gray-900" : "text-foreground"}`}>{formatPrice(subtotal)}</span>
                       </div>
                       <div className="grid grid-cols-2 gap-3">
                         <Button type="button" variant="outline"
