@@ -112,6 +112,13 @@ const CozinhaPage = () => {
     return all;
   }, [mesas, pedidosBalcao]);
 
+  const pedidosFiltrados = useMemo(() => {
+    if (filtroOrigem === "todos") return activePedidos;
+    if (filtroOrigem === "delivery") return activePedidos.filter(p => p.origem === "delivery");
+    if (filtroOrigem === "balcao") return activePedidos.filter(p => p.origem === "balcao" || p.isBalcao);
+    return activePedidos.filter(p => p.origem !== "delivery" && !p.isBalcao);
+  }, [activePedidos, filtroOrigem]);
+
   // Sound notification when new orders arrive — detect by origin
   useEffect(() => {
     const currentIds = new Set(activePedidos.map((p) => p.id));
