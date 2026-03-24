@@ -307,14 +307,12 @@ const AdminPage = () => {
   const [newUserPin, setNewUserPin] = useState("");
   const [userError, setUserError] = useState<string | null>(null);
 
-  const roleLabels: Record<string, string> = { gerente: "Gerente", garcom: "Garçom", caixa: "Caixa", delivery: "Caixa Delivery" };
-
-  const handleCreateUser = () => {
+  const handleCreateGerente = () => {
     setUserError(null);
     if (!newUserName.trim() || !/^\d{4,6}$/.test(newUserPin)) return;
-    const result = createUser(newUserRole, newUserName, newUserPin);
+    const result = createUser("gerente", newUserName, newUserPin);
     if (!result.ok) { setUserError(result.error ?? "Erro ao criar"); return; }
-    toast.success(`${roleLabels[newUserRole]} "${result.user?.nome}" criado com sucesso`);
+    toast.success(`Gerente "${result.user?.nome}" criado com sucesso`);
     setNewUserName("");
     setNewUserPin("");
   };
