@@ -1684,7 +1684,7 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
                     })}
                   </div>
                   </>
-                ) : (
+                ) : caixaView === "delivery" ? (
                   /* ── DELIVERY PANEL ── */
                   <div className="space-y-4 fade-in">
                     <div className="flex items-center gap-3">
