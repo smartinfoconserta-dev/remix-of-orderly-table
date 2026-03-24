@@ -261,10 +261,76 @@ ${pedido.observacaoGeral ? `<div class="c-obs">Obs: ${pedido.observacaoGeral}</d
 </body></html>`;
 
       try {
-        const w = window.open("", "_blank", "width=350,height=600");
-        if (w) {
-          w.document.write(html);
-          w.document.close();
+        const config = getSistemaConfig();
+        const usaSetores = config.impressaoPorSetor && !isDeliveryOrder && !isBalcaoOrder;
+        if (usaSetores) {
+          const itensCozinha = pedido.itens.filter(it => {
+            const s = (it as any).setor ?? "cozinha";
+            return s === "cozinha" || s === "ambos";
+          });
+          const itensBar = pedido.itens.filter(it => {
+            const s = (it as any).setor ?? "cozinha";
+            return s === "bar" || s === "ambos";
+          });
+          const buildHtml = (itensDoSetor: typeof pedido.itens, labelSetor: string) => {
+            const itensSetorHtml = itensDoSetor.map((it) => {
+              let line = `<div class="c-item"><span class="c-qty">${it.quantidade}x</span> ${it.nome}</div>`;
+              if (it.adicionais.length > 0) line += `<div class="c-add">+ ${it.adicionais.map((a) => a.nome).join(", ")}</div>`;
+              if (it.removidos.length > 0) line += `<div class="c-rem">- Sem ${it.removidos.join(", ")}</div>`;
+              if (it.gruposEscolhidos?.length) {
+                for (const g of it.gruposEscolhidos) {
+                  const t = (g as any).tipo || "adicional";
+                  if (t === "retirar") line += `<div class="c-rem">SEM ${g.opcoes.map(o => o.nome).join(" • SEM ")}</div>`;
+                  else if (t === "adicional") line += `<div class="c-add">${g.opcoes.map(o => `+ ${o.nome}${o.preco > 0 ? ` (R$ ${o.preco.toFixed(2).replace(".", ",")})` : ""}`).join(" • ")}</div>`;
+                  else line += `<div class="c-add">${g.grupoNome}: ${g.opcoes.map(o => o.nome).join(", ")}</div>`;
+                }
+              }
+              if (it.observacoes) line += `<div class="c-obs">${it.observacoes}</div>`;
+              return line;
+            }).join("");
+            return `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${labelSetor} #${pedido.numeroPedido}</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Courier New',monospace;width:80mm;padding:4mm;color:#000;background:#fff}
+.c-header{text-align:center;font-size:16px;font-weight:900;margin-bottom:4px}
+.c-setor{text-align:center;font-size:18px;font-weight:900;padding:4px 0;border-top:2px solid #000;border-bottom:2px solid #000;margin:6px 0;letter-spacing:2px}
+.c-tipo{text-align:center;font-size:14px;font-weight:700;margin-bottom:2px}
+.c-num{text-align:center;font-size:12px;margin-bottom:6px}
+.c-divider{border-top:1px dashed #000;margin:6px 0}
+.c-special{text-align:center;font-size:16px;font-weight:900;padding:6px 0;border-top:2px solid #000;border-bottom:2px solid #000;margin:6px 0}
+.c-viagem{background:#f59e0b;color:#000}
+.c-item{font-size:13px;font-weight:700;margin:4px 0 1px}
+.c-qty{font-weight:900}
+.c-add{font-size:11px;color:#333;margin-left:16px}
+.c-rem{font-size:11px;color:#900;margin-left:16px}
+.c-obs{font-size:11px;font-style:italic;margin-left:16px;color:#555}
+</style></head><body>
+<div class="c-header">${nomeRest}</div>
+<div class="c-setor">${labelSetor.toUpperCase()}</div>
+<div class="c-tipo">${tipoLabel}</div>
+<div class="c-num">Pedido #${pedido.numeroPedido} — ${hora}</div>
+${specialBlock}
+<div class="c-divider"></div>
+${itensSetorHtml}
+<div class="c-divider"></div>
+</body></html>`;
+          };
+          if (itensCozinha.length > 0) {
+            const w = window.open("", "_blank", "width=350,height=600");
+            if (w) { w.document.write(buildHtml(itensCozinha, "🍳 Cozinha")); w.document.close(); }
+          }
+          if (itensBar.length > 0) {
+            setTimeout(() => {
+              const w = window.open("", "_blank", "width=350,height=600");
+              if (w) { w.document.write(buildHtml(itensBar, "🍹 Bar")); w.document.close(); }
+            }, 800);
+          }
+        } else {
+          const w = window.open("", "_blank", "width=350,height=600");
+          if (w) {
+            w.document.write(html);
+            w.document.close();
+          }
         }
       } catch {}
     }
