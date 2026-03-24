@@ -1230,7 +1230,7 @@ const GerentePage = () => {
                   </div>
                   {[...fechFiltrados].sort((a, b) => new Date(b.criadoEmIso).getTime() - new Date(a.criadoEmIso).getTime()).map((f, i) => (
                     <div key={f.id} className={`grid grid-cols-[auto_1fr_auto_auto_auto_auto] gap-x-4 px-4 py-3 ${i > 0 ? "border-t border-border/50" : ""}`}>
-                      <span className="text-sm font-bold text-foreground whitespace-nowrap">Mesa {String(f.mesaNumero).padStart(2, "0")}</span>
+                      <span className="text-sm font-bold text-foreground whitespace-nowrap">{f.origem === "mesa" ? `Mesa ${String(f.mesaNumero).padStart(2, "0")}` : f.origem === "balcao" ? "Balcão" : f.origem === "totem" ? "Totem" : f.origem === "delivery" ? "Delivery" : f.origem === "motoboy" ? "Motoboy" : f.mesaNumero > 0 ? `Mesa ${String(f.mesaNumero).padStart(2, "0")}` : "Balcão"}</span>
                       <span className="text-sm text-muted-foreground">{f.criadoEm}</span>
                       <span className="text-sm text-muted-foreground">{f.caixaNome}</span>
                       <span className="text-sm text-muted-foreground truncate max-w-[160px]">{(f.itens || []).length > 0 ? (f.itens || []).map((item) => `${item.quantidade}x ${item.nome}`).join(", ") : "—"}</span>
