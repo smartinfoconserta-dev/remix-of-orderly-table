@@ -11,6 +11,8 @@ import AdminPage from "./pages/AdminPage";
 import MasterPage from "./pages/MasterPage";
 import PedidoPage from "./pages/PedidoPage";
 import MotoboyPage from "./pages/MotoboyPage";
+import TotemPage from "./pages/TotemPage";
+import TvPage from "./pages/TvPage";
 import NotFound from "./pages/NotFound";
 
 const App = () => {
@@ -31,6 +33,8 @@ const App = () => {
         <Route path="/master" element={<MasterPage />} />
         <Route path="/pedido" element={<PedidoPage />} />
         <Route path="/motoboy" element={<MotoboyPage />} />
+        <Route path="/totem" element={<TotemPage />} />
+        <Route path="/tv" element={<TvPage />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </div>

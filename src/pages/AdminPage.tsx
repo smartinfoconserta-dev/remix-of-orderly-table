@@ -76,6 +76,28 @@ import { toast } from "sonner";
 
 type AdminTab = "dashboard" | "cardapio" | "equipe" | "configuracoes" | "licenca";
 
+const PLANO_MODULOS: Record<string, string[]> = {
+  basico: ["cozinha"],
+  medio: ["cozinha", "delivery"],
+  pro: ["cozinha", "delivery", "motoboy"],
+  premium: ["cozinha", "delivery", "motoboy", "totem", "tvRetirada"],
+};
+
+const TODOS_MODULOS = [
+  { id: "cozinha", label: "Cozinha", icon: "🍳", desc: "Tela de preparo de pedidos" },
+  { id: "delivery", label: "Delivery", icon: "🛵", desc: "Pedidos para entrega" },
+  { id: "motoboy", label: "Motoboy", icon: "🏍️", desc: "Gestão de entregadores" },
+  { id: "totem", label: "Totem", icon: "📱", desc: "Autoatendimento para clientes" },
+  { id: "tvRetirada", label: "TV de Retirada", icon: "📺", desc: "Painel de chamada de pedidos" },
+];
+
+const PLANO_LABELS: Record<string, string> = {
+  basico: "Básico",
+  medio: "Médio",
+  pro: "Pro",
+  premium: "Premium",
+};
+
 const sidebarSections = [
   { id: "dashboard" as const, label: "Início", icon: LayoutDashboard },
   { id: "cardapio" as const, label: "Cardápio", icon: ClipboardList },
@@ -97,7 +119,7 @@ const AdminPage = () => {
   const [authLoading, setAuthLoading] = useState(false);
 
   const [tab, setTab] = useState<AdminTab>("dashboard");
-  const [configSection, setConfigSection] = useState<"inicio" | "identidade" | "delivery" | "salao" | "operacao" | "sistema">("inicio");
+  const [configSection, setConfigSection] = useState<"inicio" | "identidade" | "delivery" | "salao" | "operacao" | "modulos" | "sistema">("inicio");
 
   // --- Cardápio state ---
   const [overrides, setOverrides] = useState<Record<string, ProdutoOverride>>(getCardapioOverrides);
@@ -1127,6 +1149,7 @@ const AdminPage = () => {
                   {configSection === "delivery" && "🛵 Delivery"}
                   {configSection === "salao" && "🍽️ Salão & Mesas"}
                   {configSection === "operacao" && "⚙️ Operação"}
+                  {configSection === "modulos" && "🧩 Módulos"}
                   {configSection === "sistema" && "💾 Sistema"}
                 </h2>
                 {configSection === "inicio" && (
@@ -1143,6 +1166,7 @@ const AdminPage = () => {
                   { id: "delivery", icon: "🛵", label: "Delivery", desc: "Horários, bairros, taxas" },
                   { id: "salao", icon: "🍽️", label: "Salão & Mesas", desc: "Número de mesas, QR Codes" },
                   { id: "operacao", icon: "⚙️", label: "Operação", desc: "Cozinha, couvert, modos" },
+                  { id: "modulos", icon: "🧩", label: "Módulos", desc: "Ativar e desativar funcionalidades" },
                   { id: "sistema", icon: "💾", label: "Sistema", desc: "Backup e restauração" },
                 ].map(card => (
                   <button key={card.id} onClick={() => setConfigSection(card.id as any)}
@@ -1862,6 +1886,47 @@ const AdminPage = () => {
               </div>
             )}
 
+            {/* MÓDULOS */}
+            {configSection === "modulos" && (
+              <div className="space-y-4 max-w-lg">
+                {TODOS_MODULOS.map(mod => {
+                  const plano = sistemaConfig.plano || "basico";
+                  const liberados = PLANO_MODULOS[plano] || [];
+                  const liberado = liberados.includes(mod.id);
+                  const ativo = !!(sistemaConfig.modulos as any)?.[mod.id];
+                  return (
+                    <div key={mod.id} className="rounded-2xl border border-border bg-card p-5">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <span className="text-2xl">{mod.icon}</span>
+                          <div>
+                            <p className="text-sm font-black text-foreground">{mod.label}</p>
+                            <p className="text-xs text-muted-foreground mt-0.5">{mod.desc}</p>
+                          </div>
+                        </div>
+                        {liberado ? (
+                          <Switch
+                            checked={ativo}
+                            onCheckedChange={(v) => {
+                              const next = { ...sistemaConfig, modulos: { ...sistemaConfig.modulos, [mod.id]: v } };
+                              setSistemaConfig(next);
+                              saveSistemaConfig(next);
+                              toast.success(v ? `${mod.label} ativado` : `${mod.label} desativado`);
+                            }}
+                          />
+                        ) : (
+                          <span className="text-xs text-muted-foreground flex items-center gap-1">🔒 Bloqueado</span>
+                        )}
+                      </div>
+                      {!liberado && (
+                        <p className="text-[10px] text-muted-foreground mt-2">Disponível no plano superior</p>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
             {/* SISTEMA */}
             {configSection === "sistema" && (
               <div className="space-y-4 max-w-lg">
@@ -1927,14 +1992,80 @@ const AdminPage = () => {
           </div>
         )}
 
-        {/* ═══ LICENÇA ═══ */}
+        {/* ═══ MEU PLANO ═══ */}
         {tab === "licenca" && (
           <div className="space-y-6">
             <div>
-              <h2 className="text-2xl font-black text-foreground">Licença</h2>
-              <p className="text-sm text-muted-foreground">Gerencie a licença de uso do sistema</p>
+              <h2 className="text-2xl font-black text-foreground">Meu Plano</h2>
+              <p className="text-sm text-muted-foreground">Veja seu plano atual e módulos disponíveis</p>
             </div>
+
+            {/* Plano atual */}
+            <div className="surface-card max-w-lg rounded-2xl p-6 space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Plano atual</p>
+                  <p className="text-2xl font-black text-foreground mt-1">{PLANO_LABELS[sistemaConfig.plano || "basico"]}</p>
+                </div>
+                <span className="text-4xl">
+                  {(sistemaConfig.plano || "basico") === "basico" && "⭐"}
+                  {sistemaConfig.plano === "medio" && "⭐⭐"}
+                  {sistemaConfig.plano === "pro" && "⭐⭐⭐"}
+                  {sistemaConfig.plano === "premium" && "👑"}
+                </span>
+              </div>
+            </div>
+
+            {/* Módulos */}
+            <div className="surface-card max-w-lg rounded-2xl overflow-hidden">
+              <div className="px-5 py-3 border-b border-border bg-secondary/50">
+                <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">Módulos</p>
+              </div>
+              <div className="divide-y divide-border/50">
+                {TODOS_MODULOS.map(mod => {
+                  const plano = sistemaConfig.plano || "basico";
+                  const liberados = PLANO_MODULOS[plano] || [];
+                  const liberado = liberados.includes(mod.id);
+                  return (
+                    <div key={mod.id} className="flex items-center justify-between px-5 py-3">
+                      <div className="flex items-center gap-3">
+                        <span className="text-xl">{mod.icon}</span>
+                        <div>
+                          <p className="text-sm font-bold text-foreground">{mod.label}</p>
+                          <p className="text-xs text-muted-foreground">{mod.desc}</p>
+                        </div>
+                      </div>
+                      {liberado ? (
+                        <span className="text-xs font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded-lg px-2 py-0.5">✅ Liberado</span>
+                      ) : (
+                        <span className="text-xs font-bold text-muted-foreground bg-muted border border-border rounded-lg px-2 py-0.5">🔒 Bloqueado</span>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Upgrade */}
+            {(sistemaConfig.plano || "basico") !== "premium" && (
+              <div className="max-w-lg">
+                <Button
+                  className="w-full rounded-xl font-black gap-2"
+                  onClick={() => {
+                    const tel = sistemaConfig.telefoneRestaurante || "5511999999999";
+                    const msg = encodeURIComponent(`Olá! Gostaria de fazer upgrade do meu plano (atual: ${PLANO_LABELS[sistemaConfig.plano || "basico"]})`);
+                    window.open(`https://wa.me/${tel.replace(/\D/g, "")}?text=${msg}`, "_blank");
+                  }}
+                >
+                  🚀 Fazer upgrade
+                </Button>
+                <p className="text-[10px] text-muted-foreground text-center mt-2">Você será redirecionado para o WhatsApp</p>
+              </div>
+            )}
+
+            {/* Licença (mantida) */}
             <div className="surface-card max-w-lg space-y-5 rounded-2xl p-6">
+              <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">Licença</p>
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-muted-foreground">Nome do cliente (restaurante)</label>
                 <Input

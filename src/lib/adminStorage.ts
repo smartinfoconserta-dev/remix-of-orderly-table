@@ -75,6 +75,14 @@ export interface SistemaConfig {
   impressaoPorSetor?: boolean;
   nomeImpressoraCozinha?: string;
   nomeImpressoraBar?: string;
+  modulos?: {
+    totem?: boolean;
+    tvRetirada?: boolean;
+    cozinha?: boolean;
+    delivery?: boolean;
+    motoboy?: boolean;
+  };
+  plano?: "basico" | "medio" | "pro" | "premium";
 }
 
 export interface LicencaConfig {
