@@ -151,6 +151,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
     mesas,
     eventos,
     fechamentos,
+    allFechamentos,
     movimentacoesCaixa,
     pedidosBalcao,
     caixaAberto,
