@@ -82,6 +82,7 @@ const ensureAtivoField = (users: StoredUser[]): StoredUser[] =>
 const SESSION_ALLOWED_ROLES: Record<UserRole, UserRole[]> = {
   garcom: ["garcom", "caixa", "gerente"],
   caixa: ["caixa", "gerente"],
+  delivery: ["delivery", "caixa", "gerente"],
   gerente: ["gerente"],
 };
 

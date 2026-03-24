@@ -24,6 +24,7 @@ const App = () => {
         <Route path="/garcom" element={<ProtectedRoute requiredSession="garcom"><GarcomPage /></ProtectedRoute>} />
         <Route path="/mesa/:id" element={<ProtectedRoute requiredSession="garcom"><MesaPage /></ProtectedRoute>} />
         <Route path="/caixa" element={<ProtectedRoute requiredSession="caixa"><CaixaPage accessMode="caixa" /></ProtectedRoute>} />
+        <Route path="/delivery" element={<ProtectedRoute requiredSession="delivery"><CaixaPage accessMode="caixa" modoForced="somente_delivery" /></ProtectedRoute>} />
         <Route path="/gerente" element={<ProtectedRoute requiredSession="gerente"><GerentePage /></ProtectedRoute>} />
         <Route path="/cozinha" element={<CozinhaPage />} />
         <Route path="/admin" element={<AdminPage />} />

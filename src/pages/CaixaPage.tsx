@@ -264,6 +264,9 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
   const [balcaoValorEntregue, setBalcaoValorEntregue] = useState("");
   const [balcaoFlowAtivo, setBalcaoFlowAtivo] = useState(false);
   const [modoOperacao, setModoOperacao] = useState<"completo" | "somente_mesas" | "somente_delivery">("completo");
+  useEffect(() => {
+    if (modoForced) setModoOperacao(modoForced);
+  }, [modoForced]);
   const [caixaView, setCaixaView] = useState<"mesas" | "delivery">(() => {
     const savedModo = localStorage.getItem("obsidian-caixa-modo-v1");
     return savedModo === "somente_delivery" ? "delivery" : "mesas";
