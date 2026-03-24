@@ -17,6 +17,7 @@ export interface ItemCarrinho {
   precoUnitario: number;
   imagemUrl?: string;
   gruposEscolhidos?: { grupoNome: string; tipo: "escolha" | "adicional" | "retirar"; opcoes: { nome: string; preco: number }[] }[];
+  setor?: "cozinha" | "bar" | "ambos";
 }
 
 export interface PedidoRealizado {
