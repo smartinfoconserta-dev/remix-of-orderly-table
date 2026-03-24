@@ -1165,6 +1165,7 @@ const AdminPage = () => {
                   { id: "delivery", icon: "🛵", label: "Delivery", desc: "Horários, bairros, taxas" },
                   { id: "salao", icon: "🍽️", label: "Salão & Mesas", desc: "Número de mesas, QR Codes" },
                   { id: "operacao", icon: "⚙️", label: "Operação", desc: "Cozinha, couvert, modos" },
+                  { id: "modulos", icon: "🧩", label: "Módulos", desc: "Ativar e desativar funcionalidades" },
                   { id: "sistema", icon: "💾", label: "Sistema", desc: "Backup e restauração" },
                 ].map(card => (
                   <button key={card.id} onClick={() => setConfigSection(card.id as any)}
