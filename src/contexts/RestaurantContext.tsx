@@ -1329,7 +1329,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         numeroComanda: proximoNumeroBalcao,
         mesaId: pedido.mesaId,
         mesaNumero: 0,
-        origem: (pedido.origem === "delivery" ? "delivery" : pedido.origem === "totem" ? "totem" : "balcao") as const,
+        origem: (pedido.origem === "delivery" ? "delivery" : pedido.origem === "totem" ? "totem" : "balcao") as FechamentoConta["origem"],
         total: Math.max(pedido.total - (input.desconto ?? 0), 0),
         formaPagamento: pagamentos[0].formaPagamento,
         pagamentos,
