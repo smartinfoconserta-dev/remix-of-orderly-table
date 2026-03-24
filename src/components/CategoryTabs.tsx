@@ -7,6 +7,7 @@ interface Props {
   categoriaAtiva: string;
   onSelect: (id: string) => void;
   paddingClassName?: string;
+  totemMode?: boolean;
 }
 
 const CategoryTabs = ({
