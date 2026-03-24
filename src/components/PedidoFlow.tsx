@@ -134,7 +134,7 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
     chamarGarcom,
     dismissChamarGarcom,
   } = useRestaurant();
-  const isExternalOrder = modo === "balcao" || modo === "delivery";
+  const isExternalOrder = modo === "balcao" || modo === "delivery" || modo === "totem";
   const customCats = useMemo(() => getCategoriasCustom(), []);
   const allCategorias: Categoria[] = useMemo(() => [
     ...categorias,
