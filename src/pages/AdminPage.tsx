@@ -384,7 +384,6 @@ const AdminPage = () => {
               {userError && <p className="rounded-xl border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive">{userError}</p>}
               <Button
                 onClick={() => {
-                  setNewUserRole("gerente");
                   setUserError(null);
                   if (!newUserName.trim() || !/^\d{4,6}$/.test(newUserPin)) return;
                   const result = createUser("gerente", newUserName, newUserPin);
