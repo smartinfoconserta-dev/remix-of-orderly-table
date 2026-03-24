@@ -151,6 +151,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
     mesas,
     eventos,
     fechamentos,
+    allFechamentos,
     movimentacoesCaixa,
     pedidosBalcao,
     caixaAberto,
@@ -428,7 +429,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
   const resultadosBusca = useMemo(() => {
     const q = buscaComanda.trim();
     if (!q) return [];
-    return fechamentos
+    return allFechamentos
       .filter(f => {
         const numStr = String(f.numeroComanda ?? "").padStart(4, "0");
         const mesaStr = String(f.mesaNumero ?? "").padStart(2, "0");
@@ -440,7 +441,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
       })
       .sort((a, b) => new Date(b.criadoEmIso).getTime() - new Date(a.criadoEmIso).getTime())
       .slice(0, 20);
-  }, [buscaComanda, fechamentos]);
+  }, [buscaComanda, allFechamentos]);
 
   /* ── payment math (mesa) ── */
   const couvertValorUnit = sistemaConfig.couvertAtivo && !couvertDispensado && couvertPessoas > 0
