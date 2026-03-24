@@ -866,6 +866,17 @@ const GerentePage = () => {
                   </div>
                 );
               })}
+              {/* Cancelamentos card */}
+              {fechCancelados.length > 0 && (
+                <div className="rounded-2xl border border-red-500/30 bg-red-500/5 p-4 space-y-2">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-red-500/15 text-red-400">
+                    <ClipboardList className="h-4 w-4" />
+                  </div>
+                  <p className="text-xs font-bold text-muted-foreground">Cancelamentos</p>
+                  <p className="text-xl font-black tabular-nums text-red-400">{fechCancelados.length} pedido{fechCancelados.length !== 1 ? "s" : ""}</p>
+                  <p className="text-sm font-bold tabular-nums text-red-400 line-through">{formatPrice(totalCancelado)}</p>
+                </div>
+              )}
             </div>
 
             {/* ── Extra KPI Cards ── */}
