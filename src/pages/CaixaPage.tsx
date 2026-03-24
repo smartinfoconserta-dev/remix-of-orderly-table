@@ -441,7 +441,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
       })
       .sort((a, b) => new Date(b.criadoEmIso).getTime() - new Date(a.criadoEmIso).getTime())
       .slice(0, 20);
-  }, [buscaComanda, fechamentos]);
+  }, [buscaComanda, allFechamentos]);
 
   /* ── payment math (mesa) ── */
   const couvertValorUnit = sistemaConfig.couvertAtivo && !couvertDispensado && couvertPessoas > 0
