@@ -1173,7 +1173,7 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
 
   return (
     <>
-      <div className="flex flex-col bg-background" style={{ minHeight: '100dvh' }}>
+      <div className={`flex flex-col ${isTotem ? "bg-white max-w-[480px] mx-auto" : "bg-background"}`} style={{ minHeight: '100dvh' }}>
         {header}
         {garcomBanner}
         {(isMobile || modo === "garcom" || modo === "delivery") ? mobileContent : desktopContent}
