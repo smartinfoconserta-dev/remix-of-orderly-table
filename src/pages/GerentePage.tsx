@@ -971,7 +971,7 @@ const GerentePage = () => {
             {/* ── Payment Breakdown ── */}
             <div className="space-y-3">
               <h2 className="text-sm font-black uppercase tracking-widest text-muted-foreground">Formas de pagamento</h2>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 {paymentBreakdown.map((pm) => {
                   const Icon = pm.icon;
                   return (
