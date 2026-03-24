@@ -220,12 +220,12 @@ const CartDrawer = ({
                 {/* Lista de itens com foto */}
                 <div className="flex-1 overflow-y-auto">
                   {/* Cabeçalho da tabela */}
-                  <div className="grid grid-cols-[1fr_auto_auto] gap-4 px-4 py-2 border-b border-border/50 bg-secondary/30">
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Item</span>
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground text-center">Qtd</span>
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground text-right">Subtotal</span>
+                  <div className={`grid grid-cols-[1fr_auto_auto] gap-4 px-4 py-2 border-b ${isTotemMode ? "border-gray-100 bg-gray-50" : "border-border/50 bg-secondary/30"}`}>
+                    <span className={`text-[10px] font-bold uppercase tracking-widest ${isTotemMode ? "text-gray-400" : "text-muted-foreground"}`}>Item</span>
+                    <span className={`text-[10px] font-bold uppercase tracking-widest text-center ${isTotemMode ? "text-gray-400" : "text-muted-foreground"}`}>Qtd</span>
+                    <span className={`text-[10px] font-bold uppercase tracking-widest text-right ${isTotemMode ? "text-gray-400" : "text-muted-foreground"}`}>Subtotal</span>
                   </div>
-                  <div className="divide-y divide-border/40 pb-36">
+                  <div className={`divide-y pb-36 ${isTotemMode ? "divide-gray-100" : "divide-border/40"}`}>
                     {carrinho.map((item) => (
                       <div key={item.uid} className="flex items-center gap-3 px-4 py-3">
                         {/* Foto do produto */}
