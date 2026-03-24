@@ -202,6 +202,7 @@ interface RestaurantContextType {
   fecharContaBalcao: (pedidoId: string, input: FecharContaInput) => void;
   confirmarPedidoBalcao: (pedidoId: string, taxaEntrega?: number) => void;
   rejeitarPedidoBalcao: (pedidoId: string, motivo: string) => void;
+  cancelarPedidoBalcao: (pedidoId: string, motivo: string, operador: OperationalUser) => void;
   registrarFechamentoMotoboy: (input: {
     motoboyNome: string;
     motoboyId: string;
