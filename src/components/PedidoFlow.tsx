@@ -385,7 +385,7 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
   }, [modo, navigate, onBack]);
 
   const handleBack = useCallback(() => {
-    if (modo === "cliente") return;
+    if (modo === "cliente" || modo === "totem") return;
 
     if (carrinho.length > 0) {
       setShowExitAlert(true);
