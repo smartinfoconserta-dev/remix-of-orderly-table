@@ -264,12 +264,18 @@ export async function fetchCategorias(storeId?: string | null): Promise<Categori
   }
 }
 
-export async function saveCategorias(cats: CategoriaCustom[]): Promise<void> {
+export async function saveCategorias(cats: CategoriaCustom[], storeId?: string | null): Promise<void> {
   setLocalCache(CATEGORIAS_CACHE_KEY, cats);
 
   try {
-    // Delete all then re-insert
-    await supabase.from("restaurant_categories").delete().neq("id", "00000000-0000-0000-0000-000000000000");
+    // Delete all for this store then re-insert
+    let deleteQuery = supabase.from("restaurant_categories").delete();
+    if (storeId) {
+      deleteQuery = deleteQuery.eq("store_id", storeId);
+    } else {
+      deleteQuery = deleteQuery.neq("id", "00000000-0000-0000-0000-000000000000");
+    }
+    await deleteQuery;
 
     if (cats.length > 0) {
       const rows = cats.map((c) => ({
