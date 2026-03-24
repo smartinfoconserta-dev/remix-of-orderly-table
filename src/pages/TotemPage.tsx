@@ -27,7 +27,7 @@ const TotemPage = () => {
     criarPedidoBalcao({
       itens,
       origem: "totem",
-      operador: { id: "totem-auto", nome: "Totem", role: "caixa" },
+      operador: { id: "totem-auto", nome: "Totem", role: "caixa", criadoEm: new Date().toISOString() },
       clienteNome: "Totem",
     });
     setPedidoConfirmado(numeroPedido);
