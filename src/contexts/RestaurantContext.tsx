@@ -1080,15 +1080,24 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       const now = new Date();
       const totalPedido = calcularTotalItens(input.itens) + (input.origem === "delivery" ? (input.taxaEntrega ?? 0) : 0);
       const label = input.origem === "delivery" ? `DELIVERY — ${input.clienteNome ?? ""}` : input.origem === "totem" ? "TOTEM" : "BALCÃO";
+
+      const idPrefix = input.origem === "totem" ? "totem" : input.origem === "delivery" ? "delivery" : "balcao";
+      const mesaIdGerado = `${idPrefix}-${now.getTime()}`;
+
+      const statusInicial: PedidoRealizado["statusBalcao"] =
+        input.origem === "delivery" ? "aguardando_confirmacao" :
+        input.origem === "totem" ? "pago" :
+        "aberto";
+
       const novoPedido: PedidoRealizado = {
-        id: `pedido-balcao-${now.getTime()}-${Math.random().toString(36).slice(2, 7)}`,
+        id: `pedido-${idPrefix}-${now.getTime()}-${Math.random().toString(36).slice(2, 7)}`,
         numeroPedido: prev.pedidosBalcao.length + 1,
         itens: input.itens.map(cloneItem),
         total: totalPedido,
         criadoEm: formatClock(now),
         criadoEmIso: now.toISOString(),
         origem: input.origem,
-        mesaId: `balcao-${now.getTime()}`,
+        mesaId: mesaIdGerado,
         caixaId: input.operador.id,
         caixaNome: input.operador.nome,
         clienteNome: input.clienteNome,
@@ -1099,14 +1108,45 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         formaPagamentoDelivery: input.formaPagamentoDelivery,
         trocoParaQuanto: input.trocoParaQuanto,
         observacaoGeral: input.observacaoGeral,
-        statusBalcao: input.origem === "delivery" ? "aguardando_confirmacao" : input.origem === "totem" ? "aberto" : "aberto",
+        statusBalcao: statusInicial,
+        pronto: input.origem === "totem" ? true : false,
       };
+
+      const fechamentoTotem: FechamentoConta | null = input.origem === "totem" ? (() => {
+        const proximoNumero = (() => {
+          try {
+            const atual = parseInt(localStorage.getItem("obsidian-contador-comanda-v1") ?? "0", 10);
+            const proximo = (isNaN(atual) ? 0 : atual) + 1;
+            localStorage.setItem("obsidian-contador-comanda-v1", String(proximo));
+            return proximo;
+          } catch { return 0; }
+        })();
+        return {
+          id: `fechamento-totem-${now.getTime()}-${Math.random().toString(36).slice(2, 7)}`,
+          numeroComanda: proximoNumero,
+          mesaId: mesaIdGerado,
+          mesaNumero: 0,
+          origem: "totem" as const,
+          total: totalPedido,
+          formaPagamento: "pix" as const,
+          pagamentos: [{ id: `pag-totem-${now.getTime()}`, formaPagamento: "pix" as const, valor: totalPedido }],
+          itens: input.itens.map(cloneItem),
+          criadoEm: formatDateTime(now),
+          criadoEmIso: now.toISOString(),
+          caixaId: "totem-auto",
+          caixaNome: "Totem Autoatendimento",
+          troco: 0,
+          desconto: 0,
+        };
+      })() : null;
+
       return {
         ...prev,
         pedidosBalcao: [...prev.pedidosBalcao, novoPedido],
+        fechamentos: fechamentoTotem ? [fechamentoTotem, ...prev.fechamentos] : prev.fechamentos,
         eventos: appendEvent(prev.eventos, {
           tipo: "caixa",
-          descricao: `Caixa ${input.operador.nome} criou pedido ${label}`,
+          descricao: `${input.origem === "totem" ? "Totem" : `Caixa ${input.operador.nome}`} criou pedido ${label}`,
           usuarioId: input.operador.id,
           usuarioNome: input.operador.nome,
           acao: "lancar_pedido",
