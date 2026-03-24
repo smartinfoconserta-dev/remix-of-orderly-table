@@ -42,9 +42,13 @@ const CategoryTabs = ({
             }}
             onClick={() => onSelect(cat.id)}
             className={`inline-flex shrink-0 items-center gap-2 rounded-xl border px-5 py-3 text-sm font-semibold transition-all duration-300 ease-in-out active:scale-95 will-change-transform ${
-              categoriaAtiva === cat.id
-                ? "border-primary/40 bg-primary/15 text-foreground shadow-[0_0_0_1px_hsl(var(--primary)/0.35),0_0_18px_hsl(var(--primary)/0.20)]"
-                : "border-transparent bg-secondary/60 text-muted-foreground hover:bg-secondary hover:text-foreground"
+              totemMode
+                ? categoriaAtiva === cat.id
+                  ? "border-[#FF6B00]/40 bg-[#FF6B00] text-white shadow-md"
+                  : "border-gray-200 bg-gray-100 text-[#1A1A1A] hover:bg-gray-200"
+                : categoriaAtiva === cat.id
+                  ? "border-primary/40 bg-primary/15 text-foreground shadow-[0_0_0_1px_hsl(var(--primary)/0.35),0_0_18px_hsl(var(--primary)/0.20)]"
+                  : "border-transparent bg-secondary/60 text-muted-foreground hover:bg-secondary hover:text-foreground"
             }`}
           >
             <CategoryIcon
