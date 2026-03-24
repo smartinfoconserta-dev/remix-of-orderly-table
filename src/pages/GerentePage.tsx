@@ -296,25 +296,37 @@ const GerentePage = () => {
 
   const fechMesas = useMemo(() =>
     fechFiltrados.filter(f =>
-      !String(f.mesaId || "").startsWith("balcao-") &&
-      !String(f.mesaId || "").startsWith("delivery-motoboy-")
-    ),
-    [fechFiltrados]
-  );
+      f.origem === "mesa" ||
+      (!f.origem && !String(f.mesaId || "").startsWith("balcao-") && !String(f.mesaId || "").startsWith("totem-") && !String(f.mesaId || "").startsWith("delivery-"))
+    ), [fechFiltrados]);
+
+  const fechBalcao = useMemo(() =>
+    fechFiltrados.filter(f =>
+      f.origem === "balcao" ||
+      (!f.origem && String(f.mesaId || "").startsWith("balcao-") && !String(f.mesaId || "").startsWith("delivery-motoboy-"))
+    ), [fechFiltrados]);
+
+  const fechTotem = useMemo(() =>
+    fechFiltrados.filter(f =>
+      f.origem === "totem" ||
+      (!f.origem && String(f.mesaId || "").startsWith("totem-"))
+    ), [fechFiltrados]);
+
   const fechDelivery = useMemo(() =>
     fechFiltrados.filter(f =>
-      String(f.mesaId || "").startsWith("balcao-") &&
-      !String(f.mesaId || "").startsWith("delivery-motoboy-")
-    ),
-    [fechFiltrados]
-  );
+      f.origem === "delivery" ||
+      (!f.origem && String(f.mesaId || "").startsWith("delivery-") && !String(f.mesaId || "").startsWith("delivery-motoboy-"))
+    ), [fechFiltrados]);
+
   const fechMotoboys = useMemo(() =>
     fechFiltrados.filter(f =>
-      String(f.mesaId || "").startsWith("delivery-motoboy-")
-    ),
-    [fechFiltrados]
-  );
+      f.origem === "motoboy" ||
+      (!f.origem && String(f.mesaId || "").startsWith("delivery-motoboy-"))
+    ), [fechFiltrados]);
+
   const totalMesas = useMemo(() => fechMesas.reduce((a, f) => a + f.total, 0), [fechMesas]);
+  const totalBalcao = useMemo(() => fechBalcao.reduce((a, f) => a + f.total, 0), [fechBalcao]);
+  const totalTotem = useMemo(() => fechTotem.reduce((a, f) => a + f.total, 0), [fechTotem]);
   const totalDelivery = useMemo(() => fechDelivery.reduce((a, f) => a + f.total, 0), [fechDelivery]);
   const totalMotoboys = useMemo(() => fechMotoboys.reduce((a, f) => a + f.total, 0), [fechMotoboys]);
 
