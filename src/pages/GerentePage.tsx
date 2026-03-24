@@ -21,6 +21,8 @@ import {
   Plus,
   Trash2,
   Users,
+  Tag,
+  UtensilsCrossed,
   XCircle,
 } from "lucide-react";
 import { toast } from "sonner";
