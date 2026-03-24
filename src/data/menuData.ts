@@ -35,6 +35,7 @@ export interface Produto {
   embalagemOptions?: string[];
   grupos?: GrupoPersonalizacao[];
   permiteLevar?: boolean;
+  setor?: "cozinha" | "bar" | "ambos";
 }
 
 export interface Categoria {
