@@ -202,7 +202,7 @@ const CartDrawer = ({
           <>
             {/* Header simples */}
             <div className={`shrink-0 flex items-center justify-between px-5 py-4 border-b ${isTotemMode ? "border-gray-200" : "border-border"}`}>
-              <h2 className="text-lg font-black text-foreground">Carrinho</h2>
+              <h2 className={`text-lg font-black ${isTotemMode ? "text-gray-900" : "text-foreground"}`}>Carrinho</h2>
               <button type="button" onClick={handleClose}
                 className={`flex h-9 w-9 items-center justify-center rounded-full border ${isTotemMode ? "bg-gray-100 text-gray-700 border-gray-200" : "bg-background text-muted-foreground border-border"} hover:text-foreground`}>
                 <X className="h-4 w-4" />
