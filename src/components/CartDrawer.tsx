@@ -15,6 +15,7 @@ interface Props {
   onOpenChange?: (open: boolean) => void;
   hideTrigger?: boolean;
   modo?: "cliente" | "garcom" | "caixa" | "balcao" | "delivery" | "totem";
+  isTotemMode?: boolean;
 }
 
 const formatPrice = (v: number) => `R$ ${v.toFixed(2).replace(".", ",")}`;
@@ -32,6 +33,7 @@ const CartDrawer = ({
   onOpenChange,
   hideTrigger = false,
   modo = "cliente",
+  isTotemMode = false,
 }: Props) => {
   const subtotal = carrinho.reduce((acc, item) => acc + item.precoUnitario * item.quantidade, 0);
   const totalItens = carrinho.reduce((acc, item) => acc + item.quantidade, 0);
@@ -166,7 +168,7 @@ const CartDrawer = ({
         className="absolute inset-0 bg-foreground/45 backdrop-blur-[2px]"
       />
 
-      <aside className={`absolute inset-y-0 right-0 flex h-full w-full flex-col border-l border-border bg-card shadow-2xl ${isClosing ? "drawer-slide-out" : "animate-slide-in-right"}`}>
+      <aside className={`absolute inset-y-0 right-0 flex h-full w-full flex-col border-l shadow-2xl ${isTotemMode ? "border-gray-200 bg-white" : "border-border bg-card"} ${isClosing ? "drawer-slide-out" : "animate-slide-in-right"}`}>
 
 
 
@@ -202,7 +204,7 @@ const CartDrawer = ({
             <div className="shrink-0 flex items-center justify-between px-5 py-4 border-b border-border">
               <h2 className="text-lg font-black text-foreground">Carrinho</h2>
               <button type="button" onClick={handleClose}
-                className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-background text-muted-foreground hover:text-foreground">
+                className={`flex h-9 w-9 items-center justify-center rounded-full border ${isTotemMode ? "bg-gray-100 text-gray-700 border-gray-200" : "bg-background text-muted-foreground border-border"} hover:text-foreground`}>
                 <X className="h-4 w-4" />
               </button>
             </div>
@@ -291,7 +293,7 @@ const CartDrawer = ({
                 </div>
 
                 {/* Rodapé fixo */}
-                <div className="absolute inset-x-0 bottom-0 border-t border-border bg-card/98 backdrop-blur-sm px-4 pt-3 pb-[calc(1rem+env(safe-area-inset-bottom))]">
+                <div className={`absolute inset-x-0 bottom-0 border-t backdrop-blur-sm px-4 pt-3 pb-[calc(1rem+env(safe-area-inset-bottom))] ${isTotemMode ? "border-gray-100 bg-white" : "border-border bg-card/98"}`}>
                   {!showConfirmEnvio ? (
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
