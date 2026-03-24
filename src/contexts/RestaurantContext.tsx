@@ -204,6 +204,7 @@ interface RestaurantContextType {
   rejeitarPedidoBalcao: (pedidoId: string, motivo: string) => void;
   cancelarPedidoBalcao: (pedidoId: string, motivo: string, operador: OperationalUser) => void;
   marcarBalcaoRetirado: (pedidoId: string) => void;
+  marcarBalcaoPreparando: (pedidoId: string) => void;
   registrarFechamentoMotoboy: (input: {
     motoboyNome: string;
     motoboyId: string;
@@ -1462,6 +1463,15 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }));
   }, []);
 
+  const marcarBalcaoPreparando = useCallback((pedidoId: string) => {
+    setStore((prev) => ({
+      ...prev,
+      pedidosBalcao: prev.pedidosBalcao.map((p) =>
+        p.id === pedidoId ? { ...p, statusBalcao: "preparando" as const } : p
+      ),
+    }));
+  }, []);
+
   return (
     <RestaurantContext.Provider
       value={{
@@ -1503,6 +1513,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         rejeitarPedidoBalcao,
         cancelarPedidoBalcao,
         marcarBalcaoRetirado,
+        marcarBalcaoPreparando,
         registrarFechamentoMotoboy,
       }}
     >

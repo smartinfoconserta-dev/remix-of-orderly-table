@@ -88,7 +88,7 @@ function tocarSom(tipo: "novo_pedido" | "alerta", ctxRef: React.MutableRefObject
 const COZINHA_SETOR_KEY = "obsidian-cozinha-setor-v1";
 
 const CozinhaPage = () => {
-  const { mesas, pedidosBalcao, marcarPedidoPronto, marcarPedidoBalcaoPronto } = useRestaurant();
+  const { mesas, pedidosBalcao, marcarPedidoPronto, marcarPedidoBalcaoPronto, marcarBalcaoPreparando } = useRestaurant();
   const { verifyEmployeeAccess } = useAuth();
   const [autenticado, setAutenticado] = useState<{ nome: string } | null>(() => {
     try {
@@ -151,7 +151,9 @@ const CozinhaPage = () => {
       }
     }
     for (const pedido of pedidosBalcao) {
-      if (!pedido.pronto && pedido.statusBalcao !== "pago" && pedido.statusBalcao !== "aguardando_confirmacao") all.push({ ...pedido, mesaNumero: 0, isBalcao: true });
+      const st = pedido.statusBalcao;
+      if (st === "pago" || st === "aguardando_confirmacao" || st === "cancelado" || st === "retirado") continue;
+      all.push({ ...pedido, mesaNumero: 0, isBalcao: true });
     }
     all.sort((a, b) => new Date(a.criadoEmIso).getTime() - new Date(b.criadoEmIso).getTime());
     return all;
@@ -583,11 +585,15 @@ ${itensSetorHtml}
             <div
               key={pedido.id}
               className={`slide-up flex flex-col rounded-2xl border bg-card transition-all ${fadingOut.has(pedido.id) ? "fade-out-remove" : ""} ${
-                isLate
-                  ? "border-destructive/60 animate-pulse shadow-[0_0_20px_hsl(var(--destructive)/0.2)]"
-                  : isParaViagem
-                    ? "border-amber-500/60"
-                    : "border-border"
+                pedido.pronto || pedido.statusBalcao === "pronto"
+                  ? "border-emerald-500/60 bg-emerald-500/5"
+                  : isLate
+                    ? "border-destructive/60 animate-pulse shadow-[0_0_20px_hsl(var(--destructive)/0.2)]"
+                    : pedido.statusBalcao === "preparando"
+                      ? "border-amber-500/60"
+                      : isParaViagem
+                        ? "border-amber-500/60"
+                        : "border-border"
               }`}
               style={{ animationDelay: `${Math.min(i * 30, 300)}ms`, animationFillMode: 'both' }}
             >
@@ -597,12 +603,22 @@ ${itensSetorHtml}
                 </div>
               )}
               {/* Origin / viagem badges */}
-              {(isBalcaoOrder || isDeliveryOrder || isParaViagem) && (
+              {(isBalcaoOrder || isDeliveryOrder || isParaViagem || pedido.statusBalcao === "preparando") && (
                 <div className="px-4 pt-3 flex flex-wrap gap-1.5">
+                  {pedido.statusBalcao === "preparando" && (
+                    <span className="inline-flex items-center gap-1 rounded-lg bg-amber-500/15 border border-amber-500/30 px-2.5 py-1 text-xs font-black text-amber-400">
+                      🔥 PREPARANDO
+                    </span>
+                  )}
                   {isBalcaoOrder && (
                     <span className="inline-flex items-center gap-1 rounded-lg bg-amber-500/15 border border-amber-500/30 px-2.5 py-1 text-xs font-black text-amber-400">
                       {isParaViagem && <ShoppingBag className="h-3 w-3" />}
                       BALCÃO{pedido.clienteNome ? ` — ${pedido.clienteNome}` : ""}
+                    </span>
+                  )}
+                  {pedido.origem === "totem" && (
+                    <span className="inline-flex items-center gap-1 rounded-lg border px-2.5 py-1 text-xs font-black" style={{ background: "rgba(255,107,0,0.15)", borderColor: "rgba(255,107,0,0.3)", color: "#FF6B00" }}>
+                      🖥️ TOTEM
                     </span>
                   )}
                   {isDeliveryOrder && (
@@ -669,15 +685,39 @@ ${itensSetorHtml}
                 )}
               </div>
 
-              <div className="p-3 pt-0">
-                <button
-                  type="button"
-                  onClick={() => handlePronto(pedido.mesaId, pedido.id, (pedido as any).isBalcao)}
-                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-status-consumo py-3.5 text-sm font-black text-white transition-all hover:bg-status-consumo/90 active:scale-[0.98]"
-                >
-                  <Check className="h-4 w-4" />
-                  Marcar como pronto
-                </button>
+              <div className="p-3 pt-0 flex gap-2">
+                {/* Preparando button — only for aberto/undefined, not yet preparing or pronto */}
+                {!pedido.pronto && pedido.statusBalcao !== "preparando" && pedido.statusBalcao !== "pronto" && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if ((pedido as any).isBalcao) marcarBalcaoPreparando(pedido.id);
+                      // For mesa orders, no "preparando" state — skip
+                    }}
+                    className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-amber-500 py-3.5 text-sm font-black text-white transition-all hover:bg-amber-600 active:scale-[0.98]"
+                  >
+                    <Clock className="h-4 w-4" />
+                    Preparando
+                  </button>
+                )}
+                {/* Pronto button — for aberto, preparando, or undefined */}
+                {!pedido.pronto && pedido.statusBalcao !== "pronto" && (
+                  <button
+                    type="button"
+                    onClick={() => handlePronto(pedido.mesaId, pedido.id, (pedido as any).isBalcao)}
+                    className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-emerald-500 py-3.5 text-sm font-black text-white transition-all hover:bg-emerald-600 active:scale-[0.98]"
+                  >
+                    <Check className="h-4 w-4" />
+                    Pronto ✓
+                  </button>
+                )}
+                {/* Already pronto indicator */}
+                {(pedido.pronto || pedido.statusBalcao === "pronto") && (
+                  <div className="flex flex-1 items-center justify-center gap-2 rounded-xl border-2 border-emerald-500/40 py-3.5 text-sm font-black text-emerald-400">
+                    <Check className="h-4 w-4" />
+                    Pronto — aguardando retirada
+                  </div>
+                )}
               </div>
             </div>
           );
