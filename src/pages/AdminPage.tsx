@@ -306,61 +306,26 @@ const AdminPage = () => {
   const garcons = useMemo(() => getActiveProfilesByRole("garcom"), [getActiveProfilesByRole]);
   const caixas = useMemo(() => getActiveProfilesByRole("caixa"), [getActiveProfilesByRole]);
   const deliveries = useMemo(() => getActiveProfilesByRole("delivery"), [getActiveProfilesByRole]);
-  const [newGerenteName, setNewGerenteName] = useState("");
-  const [newGerentePin, setNewGerentePin] = useState("");
-  const [newDeliveryName, setNewDeliveryName] = useState("");
-  const [newDeliveryPin, setNewDeliveryPin] = useState("");
-  const [newGarcomName, setNewGarcomName] = useState("");
-  const [newGarcomPin, setNewGarcomPin] = useState("");
-  const [newCaixaName, setNewCaixaName] = useState("");
-  const [newCaixaPin, setNewCaixaPin] = useState("");
+  const [newUserName, setNewUserName] = useState("");
+  const [newUserPin, setNewUserPin] = useState("");
+  const [newUserRole, setNewUserRole] = useState<"gerente" | "garcom" | "caixa" | "delivery">("garcom");
   const [userError, setUserError] = useState<string | null>(null);
 
-  const handleCreateGerente = () => {
+  const roleLabels: Record<string, string> = { gerente: "Gerente", garcom: "Garçom", caixa: "Caixa", delivery: "Caixa Delivery" };
+
+  const handleCreateUser = () => {
     setUserError(null);
-    const result = createUser("gerente", newGerenteName, newGerentePin);
-    if (!result.ok) {
-      setUserError(result.error ?? "Erro ao criar gerente");
-      return;
-    }
-    toast.success(`Gerente "${result.user?.nome}" criado com sucesso`);
-    setNewGerenteName("");
-    setNewGerentePin("");
-  };
-
-  const handleCreateDelivery = () => {
-    if (!newDeliveryName.trim() || !/^\d{4,6}$/.test(newDeliveryPin)) return;
-    const result = createUser("delivery", newDeliveryName, newDeliveryPin);
-    if (!result.ok) { toast.error(result.error || "Erro ao criar"); return; }
-    toast.success(`Caixa Delivery "${result.user?.nome}" criado com sucesso`);
-    setNewDeliveryName("");
-    setNewDeliveryPin("");
-  };
-
-  const handleCreateGarcom = () => {
-    if (!newGarcomName.trim() || !/^\d{4,6}$/.test(newGarcomPin)) return;
-    const result = createUser("garcom", newGarcomName, newGarcomPin);
-    if (!result.ok) { toast.error(result.error || "Erro ao criar"); return; }
-    toast.success(`Garçom "${result.user?.nome}" criado com sucesso`);
-    setNewGarcomName("");
-    setNewGarcomPin("");
-  };
-
-  const handleCreateCaixa = () => {
-    if (!newCaixaName.trim() || !/^\d{4,6}$/.test(newCaixaPin)) return;
-    const result = createUser("caixa", newCaixaName, newCaixaPin);
-    if (!result.ok) { toast.error(result.error || "Erro ao criar"); return; }
-    toast.success(`Caixa "${result.user?.nome}" criado com sucesso`);
-    setNewCaixaName("");
-    setNewCaixaPin("");
+    if (!newUserName.trim() || !/^\d{4,6}$/.test(newUserPin)) return;
+    const result = createUser(newUserRole, newUserName, newUserPin);
+    if (!result.ok) { setUserError(result.error ?? "Erro ao criar"); return; }
+    toast.success(`${roleLabels[newUserRole]} "${result.user?.nome}" criado com sucesso`);
+    setNewUserName("");
+    setNewUserPin("");
   };
 
   const handleRemoveUser = (id: string, nome: string, roleLabel: string) => {
     const result = removeUser(id);
-    if (!result.ok) {
-      toast.error(result.error ?? "Erro ao remover");
-      return;
-    }
+    if (!result.ok) { toast.error(result.error ?? "Erro ao remover"); return; }
     toast.success(`${roleLabel} "${nome}" removido`);
   };
 
