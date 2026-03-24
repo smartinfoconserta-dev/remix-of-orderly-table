@@ -816,8 +816,8 @@ const GerentePage = () => {
             </div>
 
             {/* ── KPI Cards ── */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              <div className="col-span-2 rounded-2xl border border-border bg-card p-4 space-y-3">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+              <div className="col-span-2 lg:col-span-2 rounded-2xl border border-border bg-card p-5 space-y-3">
                 <div className="flex items-center gap-2">
                   <TrendingUp className="h-4 w-4 text-primary" />
                   <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Total faturado no período</p>
