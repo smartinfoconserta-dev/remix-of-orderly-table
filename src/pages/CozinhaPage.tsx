@@ -603,12 +603,22 @@ ${itensSetorHtml}
                 </div>
               )}
               {/* Origin / viagem badges */}
-              {(isBalcaoOrder || isDeliveryOrder || isParaViagem) && (
+              {(isBalcaoOrder || isDeliveryOrder || isParaViagem || pedido.statusBalcao === "preparando") && (
                 <div className="px-4 pt-3 flex flex-wrap gap-1.5">
+                  {pedido.statusBalcao === "preparando" && (
+                    <span className="inline-flex items-center gap-1 rounded-lg bg-amber-500/15 border border-amber-500/30 px-2.5 py-1 text-xs font-black text-amber-400">
+                      🔥 PREPARANDO
+                    </span>
+                  )}
                   {isBalcaoOrder && (
                     <span className="inline-flex items-center gap-1 rounded-lg bg-amber-500/15 border border-amber-500/30 px-2.5 py-1 text-xs font-black text-amber-400">
                       {isParaViagem && <ShoppingBag className="h-3 w-3" />}
                       BALCÃO{pedido.clienteNome ? ` — ${pedido.clienteNome}` : ""}
+                    </span>
+                  )}
+                  {pedido.origem === "totem" && (
+                    <span className="inline-flex items-center gap-1 rounded-lg border px-2.5 py-1 text-xs font-black" style={{ background: "rgba(255,107,0,0.15)", borderColor: "rgba(255,107,0,0.3)", color: "#FF6B00" }}>
+                      🖥️ TOTEM
                     </span>
                   )}
                   {isDeliveryOrder && (
