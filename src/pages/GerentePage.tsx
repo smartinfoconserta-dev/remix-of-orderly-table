@@ -1234,25 +1234,37 @@ const GerentePage = () => {
                 <p className="text-sm text-muted-foreground py-6 text-center">Nenhuma comanda fechada neste período.</p>
               ) : (
                 <div className="rounded-2xl border border-border bg-card overflow-hidden">
-                  <div className="grid grid-cols-[auto_1fr_auto_auto_auto_auto] gap-x-4 px-4 py-2.5 border-b border-border bg-secondary/50">
+                  <div className="grid grid-cols-[auto_1fr_auto_auto_auto_auto_auto] gap-x-4 px-4 py-2.5 border-b border-border bg-secondary/50">
                     <span className="text-xs font-black uppercase tracking-wider text-muted-foreground">Origem</span>
                     <span className="text-xs font-black uppercase tracking-wider text-muted-foreground">Horário</span>
                     <span className="text-xs font-black uppercase tracking-wider text-muted-foreground">Operador</span>
                     <span className="text-xs font-black uppercase tracking-wider text-muted-foreground">Itens</span>
                     <span className="text-xs font-black uppercase tracking-wider text-muted-foreground text-right">Valor</span>
                     <span className="text-xs font-black uppercase tracking-wider text-muted-foreground text-right">Pagamento</span>
+                    <span className="text-xs font-black uppercase tracking-wider text-muted-foreground text-center">Status</span>
                   </div>
                   {[...fechFiltrados].sort((a, b) => new Date(b.criadoEmIso).getTime() - new Date(a.criadoEmIso).getTime()).map((f, i) => (
-                    <div key={f.id} className={`grid grid-cols-[auto_1fr_auto_auto_auto_auto] gap-x-4 px-4 py-3 ${i > 0 ? "border-t border-border/50" : ""}`}>
-                      <span className="text-sm font-bold text-foreground whitespace-nowrap">{f.origem === "mesa" ? `Mesa ${String(f.mesaNumero).padStart(2, "0")}` : f.origem === "balcao" ? "Balcão" : f.origem === "totem" ? "Totem" : f.origem === "delivery" ? "Delivery" : f.origem === "motoboy" ? "Motoboy" : f.mesaNumero > 0 ? `Mesa ${String(f.mesaNumero).padStart(2, "0")}` : "Balcão"}</span>
+                    <div key={f.id} className={`grid grid-cols-[auto_1fr_auto_auto_auto_auto_auto] gap-x-4 px-4 py-3 ${i > 0 ? "border-t border-border/50" : ""} ${f.cancelado ? "bg-red-500/5" : ""}`}>
+                      <span className={`text-sm font-bold whitespace-nowrap ${f.cancelado ? "text-red-400" : "text-foreground"}`}>{f.origem === "mesa" ? `Mesa ${String(f.mesaNumero).padStart(2, "0")}` : f.origem === "balcao" ? "Balcão" : f.origem === "totem" ? "Totem" : f.origem === "delivery" ? "Delivery" : f.origem === "motoboy" ? "Motoboy" : f.mesaNumero > 0 ? `Mesa ${String(f.mesaNumero).padStart(2, "0")}` : "Balcão"}</span>
                       <span className="text-sm text-muted-foreground">{f.criadoEm}</span>
                       <span className="text-sm text-muted-foreground">{f.caixaNome}</span>
                       <span className="text-sm text-muted-foreground truncate max-w-[160px]">{(f.itens || []).length > 0 ? (f.itens || []).map((item) => `${item.quantidade}x ${item.nome}`).join(", ") : "—"}</span>
-                      <span className="text-sm font-black tabular-nums text-foreground text-right">{formatPrice(f.total)}</span>
+                      <span className={`text-sm font-black tabular-nums text-right ${f.cancelado ? "line-through text-red-400" : "text-foreground"}`}>{formatPrice(f.total)}</span>
                       <span className="text-sm text-muted-foreground text-right">
                         {f.pagamentos.length > 1
                           ? `${f.pagamentos.length} formas`
                           : paymentMethods.find((pm) => pm.value === f.formaPagamento)?.label ?? f.formaPagamento}
+                      </span>
+                      <span className="text-center">
+                        {f.cancelado ? (
+                          <span className="rounded-full border border-red-500/25 bg-red-500/10 px-2 py-0.5 text-[10px] font-bold uppercase text-red-400" title={f.canceladoMotivo ? `Motivo: ${f.canceladoMotivo}` : ""}>
+                            Cancelado
+                          </span>
+                        ) : (
+                          <span className="rounded-full border border-emerald-500/25 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold uppercase text-emerald-400">
+                            OK
+                          </span>
+                        )}
                       </span>
                     </div>
                   ))}
