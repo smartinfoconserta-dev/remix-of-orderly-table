@@ -1073,7 +1073,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     setStore((prev) => {
       const now = new Date();
       const totalPedido = calcularTotalItens(input.itens) + (input.origem === "delivery" ? (input.taxaEntrega ?? 0) : 0);
-      const label = input.origem === "delivery" ? `DELIVERY — ${input.clienteNome ?? ""}` : "BALCÃO";
+      const label = input.origem === "delivery" ? `DELIVERY — ${input.clienteNome ?? ""}` : input.origem === "totem" ? "TOTEM" : "BALCÃO";
       const novoPedido: PedidoRealizado = {
         id: `pedido-balcao-${now.getTime()}-${Math.random().toString(36).slice(2, 7)}`,
         numeroPedido: prev.pedidosBalcao.length + 1,
