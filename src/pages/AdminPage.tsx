@@ -1892,9 +1892,9 @@ const AdminPage = () => {
             {configSection === "modulos" && (
               <div className="space-y-4 max-w-lg">
                 {TODOS_MODULOS.map(mod => {
-                  const plano = sistemaConfig.plano || "basico";
-                  const liberados = PLANO_MODULOS[plano] || [];
-                  const liberado = liberados.includes(mod.id);
+                  const plano = (licencaConfig.plano || sistemaConfig.plano || "basico") as PlanoModulos;
+                  const modulosLiberados = getModulosDoPlano(plano);
+                  const liberado = !!(modulosLiberados as any)[mod.id];
                   const ativo = !!(sistemaConfig.modulos as any)?.[mod.id];
                   return (
                     <div key={mod.id} className="rounded-2xl border border-border bg-card p-5">
