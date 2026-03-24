@@ -305,6 +305,7 @@ const AdminPage = () => {
   const gerentes = useMemo(() => getProfilesByRole("gerente"), [getProfilesByRole]);
   const garcons = useMemo(() => getActiveProfilesByRole("garcom"), [getActiveProfilesByRole]);
   const caixas = useMemo(() => getActiveProfilesByRole("caixa"), [getActiveProfilesByRole]);
+  const deliveries = useMemo(() => getActiveProfilesByRole("delivery"), [getActiveProfilesByRole]);
   const [newGerenteName, setNewGerenteName] = useState("");
   const [newGerentePin, setNewGerentePin] = useState("");
   const [userError, setUserError] = useState<string | null>(null);
