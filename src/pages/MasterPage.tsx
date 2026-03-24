@@ -171,7 +171,15 @@ const MasterPage = () => {
   };
 
   const handleRemove = () => { if (removeId) { removeCliente(removeId); toast.success("Cliente removido."); setRemoveId(null); refresh(); } };
-  const toggleAtivo = (c: Cliente) => { updateCliente(c.id, { ativo: !c.ativo }); refresh(); };
+  const toggleAtivo = (c: Cliente) => {
+    updateCliente(c.id, { ativo: !c.ativo });
+    if (c.planoModulos) {
+      const lic = getLicencaConfig();
+      lic.plano = c.planoModulos;
+      saveLicencaConfig(lic);
+    }
+    refresh();
+  };
   const isVencido = (d: string) => d && new Date(d) < new Date(todayStr());
   const ff = (key: string, value: any) => {
     setForm((prev) => {
