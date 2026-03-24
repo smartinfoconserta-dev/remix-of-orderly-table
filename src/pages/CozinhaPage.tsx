@@ -303,7 +303,28 @@ ${pedido.observacaoGeral ? `<div class="c-obs">Obs: ${pedido.observacaoGeral}</d
         </span>
       </div>
 
-      {activePedidos.length === 0 && (
+      <div className="flex gap-2 px-4 pb-3 flex-wrap">
+        {([
+          { id: "todos", label: "Todos" },
+          { id: "mesa", label: "🍽️ Mesas" },
+          { id: "delivery", label: "🛵 Delivery" },
+          { id: "balcao", label: "🏪 Balcão" },
+        ] as const).map(f => (
+          <button
+            key={f.id}
+            onClick={() => setFiltroOrigem(f.id)}
+            className={`px-4 py-1.5 rounded-xl text-sm font-bold border transition-colors ${
+              filtroOrigem === f.id
+                ? "bg-primary text-primary-foreground border-primary"
+                : "border-border text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {f.label}
+          </button>
+        ))}
+      </div>
+
+      {pedidosFiltrados.length === 0 && (
         <div className="flex flex-col items-center justify-center gap-4 py-32 text-muted-foreground">
           <ChefHat className="h-16 w-16 opacity-15" />
           <p className="text-base font-bold">Nenhum pedido na fila</p>
