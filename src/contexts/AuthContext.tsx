@@ -271,6 +271,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const allowedRoles: Record<UserRole, UserRole[]> = {
         garcom: ["garcom", "caixa", "gerente"],
         caixa: ["caixa", "gerente"],
+        delivery: ["delivery", "caixa", "gerente"],
         gerente: ["gerente"],
       };
       const allowed = allowedRoles[role] ?? [role];
