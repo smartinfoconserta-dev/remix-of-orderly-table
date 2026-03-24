@@ -147,7 +147,7 @@ interface RestaurantStore {
 
 interface CriarPedidoBalcaoInput {
   itens: ItemCarrinho[];
-  origem: "balcao" | "delivery";
+  origem: "balcao" | "delivery" | "totem";
   operador: OperationalUser;
   clienteNome?: string;
   clienteTelefone?: string;
