@@ -290,8 +290,10 @@ const GerentePage = () => {
   const dateRange = getDateRange(periodo, customInicio, customFim);
   const fechFiltrados = filterByDateRange(allFechamentos, dateRange.start, dateRange.end);
 
-  const relTotalFaturado = fechFiltrados.reduce((a, f) => a + f.total, 0);
-  const relComandasFechadas = fechFiltrados.length;
+  const relTotalFaturado = fechFiltrados.filter(f => !f.cancelado).reduce((a, f) => a + f.total, 0);
+  const fechCancelados = fechFiltrados.filter(f => f.cancelado);
+  const totalCancelado = fechCancelados.reduce((a, f) => a + f.total, 0);
+  const relComandasFechadas = fechFiltrados.filter(f => !f.cancelado).length;
   const relTicketMedio = relComandasFechadas > 0 ? relTotalFaturado / relComandasFechadas : 0;
 
   const fechMesas = useMemo(() =>
