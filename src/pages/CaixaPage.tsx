@@ -141,6 +141,7 @@ type CriticalAction =
 
 interface CaixaPageProps {
   accessMode?: Extract<UserRole, "caixa" | "gerente">;
+  modoForced?: "somente_delivery" | "somente_mesas" | "completo";
 }
 
 /* ══════════════════════════════════════ */
