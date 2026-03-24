@@ -88,10 +88,10 @@ const emptyForm = {
   nomeRestaurante: "", nomeContato: "", email: "", dataVencimento: "",
   ativo: true, avisoAtivo: false, avisoTexto: "",
   telefone: "", cnpj: "", cidade: "", estado: "", endereco: "",
-  segmento: "hamburguria", diaVencimento: 10, valorMensalidade: 0,
+  segmento: "hamburgeria", diaVencimento: 10, valorMensalidade: 0,
   observacoes: "", historicoPagamentos: [] as any[],
   plano: "anual", dataInicio: new Date().toISOString().slice(0, 10), dataTermino: "",
-  planoModulos: "basico" as string,
+  planoModulos: "basico" as "basico" | "medio" | "pro" | "premium",
 };
 
 
