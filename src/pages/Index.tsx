@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Bike, ChefHat, CircleDollarSign, HandPlatter, Settings, ShieldCheck, User } from "lucide-react";
+import { Bike, ChefHat, CircleDollarSign, HandPlatter, Monitor, Settings, ShieldCheck, Tablet, User } from "lucide-react";
 import { getSistemaConfig } from "@/lib/adminStorage";
 
 interface ModeCardProps {
@@ -97,6 +97,18 @@ const Index = () => {
           description="Receber e gerenciar entregas"
           icon={<span className="text-2xl">🛵</span>}
           onClick={() => navigate("/delivery")}
+        />
+        <ModeCard
+          title="Totem"
+          description="Autoatendimento"
+          icon={<Tablet size={28} />}
+          onClick={() => navigate("/totem")}
+        />
+        <ModeCard
+          title="TV Retirada"
+          description="Painel de pedidos prontos"
+          icon={<Monitor size={28} />}
+          onClick={() => navigate("/tv")}
         />
         <ModeCard
           title="Gerente"

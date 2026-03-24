@@ -120,6 +120,7 @@ const formatMesaLabel = (mesaId: string) => {
 };
 
 const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, onBack, onPedidoConfirmado }: PedidoFlowProps) => {
+  const isTotem = modo === "totem";
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const { currentGarcom, currentCaixa, verifyEmployeeAccess } = useAuth();
@@ -614,7 +615,9 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
 
   const header = (
     <header
-      className={`sticky top-0 z-50 flex items-center justify-between gap-3 border-b border-border bg-background/95 backdrop-blur-md ${
+      className={`sticky top-0 z-50 flex items-center justify-between gap-3 border-b ${
+        isTotem ? "border-gray-200 bg-white" : "border-border bg-background/95 backdrop-blur-md"
+      } ${
         isGarcomMobile ? "px-4 py-4" : "px-4 py-3 md:px-6"
       }`}
     >
@@ -850,11 +853,11 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
   const productGrid = (
     <div>
       {searchQuery.trim() && (
-        <p className="text-xs text-muted-foreground px-4 pb-2">{produtosFiltrados.length} resultado(s) para "{searchQuery}"</p>
+        <p className={`text-xs px-4 pb-2 ${isTotem ? "text-gray-500" : "text-muted-foreground"}`}>{produtosFiltrados.length} resultado(s) para "{searchQuery}"</p>
       )}
       <div
         key={categoryFadeKey}
-        className={`grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4 ${categoryFadeClass}`}
+        className={`grid ${isTotem ? "grid-cols-2 gap-4" : "grid-cols-2 gap-3 md:grid-cols-3 md:gap-4"} ${categoryFadeClass}`}
       >
       {visibleProducts.map((produto, index) => {
         const isCardSelected = selectedProductCardId === produto.id;
@@ -862,8 +865,8 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
         return (
           <article
             key={produto.id}
-            className={`group overflow-hidden rounded-[1.75rem] border border-border bg-card text-left shadow-[0_20px_45px_-30px_hsl(var(--foreground)/0.8)] transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/30 card-fade-up ${
-              isCardSelected ? "scale-[1.01] shadow-[0_20px_44px_-24px_hsl(var(--foreground)/0.92)]" : ""
+            className={`group overflow-hidden ${isTotem ? "rounded-2xl border border-gray-200 bg-white shadow-md" : "rounded-[1.75rem] border border-border bg-card shadow-[0_20px_45px_-30px_hsl(var(--foreground)/0.8)]"} text-left transition-all duration-300 hover:-translate-y-0.5 ${isTotem ? "hover:border-[#FF6B00]/30" : "hover:border-primary/30"} card-fade-up ${
+              isCardSelected ? `scale-[1.01] ${isTotem ? "shadow-lg" : "shadow-[0_20px_44px_-24px_hsl(var(--foreground)/0.92)]"}` : ""
             }`}
             style={{
               animationDelay: `${index * 30}ms`,
@@ -873,24 +876,29 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
             }}
           >
             <button type="button" onClick={() => handleOpenProductModal(produto)} className="flex w-full flex-col text-left">
-              <div className="aspect-[3/2] overflow-hidden">
+              <div className={isTotem ? "aspect-square overflow-hidden" : "aspect-[3/2] overflow-hidden"}>
                 <img src={produto.imagem} alt={produto.nome} className="h-full w-full object-cover" loading="lazy" />
               </div>
-              <div className="flex min-h-[9rem] flex-1 flex-col gap-2 p-4">
-                <h2 className="line-clamp-2 text-[1.05rem] font-black leading-tight text-foreground">{produto.nome}</h2>
-                <p className="line-clamp-3 flex-1 text-sm leading-relaxed text-muted-foreground">{produto.descricao}</p>
+              <div className={`flex flex-1 flex-col gap-2 p-4 ${isTotem ? "min-h-[7rem]" : "min-h-[9rem]"}`}>
+                <h2 className={`line-clamp-2 font-black leading-tight ${isTotem ? "text-lg text-[#1A1A1A]" : "text-[1.05rem] text-foreground"}`}>{produto.nome}</h2>
+                {!isTotem && <p className="line-clamp-3 flex-1 text-sm leading-relaxed text-muted-foreground">{produto.descricao}</p>}
                 <div className="mt-1 flex items-end justify-between gap-2">
-                  <p className="text-[1.05rem] font-black tracking-tight text-foreground">{formatPrice(produto.preco)}</p>
+                  <p className={`font-black tracking-tight ${isTotem ? "text-lg text-[#FF6B00]" : "text-[1.05rem] text-foreground"}`}>{formatPrice(produto.preco)}</p>
                   <button
                     type="button"
                     onClick={(event) => {
                       event.stopPropagation();
                       handleOpenProductModal(produto);
                     }}
-                    className="flex h-11 w-11 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-[0_18px_32px_-22px_hsl(var(--primary)/0.95)] transition-transform active:scale-95"
+                    className={`flex items-center justify-center transition-transform active:scale-95 ${
+                      isTotem
+                        ? "h-12 rounded-xl bg-[#FF6B00] px-4 text-white font-black text-sm shadow-md gap-1"
+                        : "h-11 w-11 rounded-full bg-primary text-primary-foreground shadow-[0_18px_32px_-22px_hsl(var(--primary)/0.95)]"
+                    }`}
                     aria-label={`Adicionar ${produto.nome}`}
                   >
-                    <Plus className="h-5 w-5" />
+                    <Plus className={isTotem ? "h-4 w-4" : "h-5 w-5"} />
+                    {isTotem && <span>ADICIONAR</span>}
                   </button>
                 </div>
               </div>
@@ -1060,33 +1068,40 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
 
   const mobileContent = (
     <>
-      <div className="sticky top-[57px] z-40 border-b border-border bg-background/95 pt-2 backdrop-blur-md">
+      <div className={`sticky ${isTotem ? "top-[57px] z-40 border-b border-gray-200 bg-white pt-2" : "top-[57px] z-40 border-b border-border bg-background/95 pt-2 backdrop-blur-md"}`}>
         <CategoryTabs
           categorias={navigationItems}
           categoriaAtiva={categoriaAtiva}
           onSelect={handleSelectCategoria}
           paddingClassName={isGarcomMobile ? "px-4 pb-3" : "px-4 pb-2"}
+          totemMode={isTotem}
         />
       </div>
       <div ref={mobileListTopRef} />
-      <main className={`pt-3 px-4 ${isGarcomMobile && carrinho.length > 0 ? "pb-32" : "pb-24"} ${isClientIdle ? "brightness-[0.2] saturate-50" : "brightness-100 saturate-100"}`}>
-        <div>{isGarcomMobile ? productGrid : isHomeActive ? homeContent : productGrid}</div>
+      <main className={`pt-3 px-4 ${isGarcomMobile && carrinho.length > 0 ? "pb-32" : "pb-24"} ${isClientIdle ? "brightness-[0.2] saturate-50" : "brightness-100 saturate-100"} ${isTotem ? "bg-white" : ""}`}>
+        <div>{isGarcomMobile && !isTotem ? productGrid : isHomeActive && !isTotem ? homeContent : productGrid}</div>
       </main>
-      {isGarcomMobile && carrinho.length > 0 && !cartOpen && (
+      {(isGarcomMobile || isTotem) && carrinho.length > 0 && !cartOpen && (
         <div className="fixed bottom-0 left-0 right-0 z-50 p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
           <button
             type="button"
             onClick={() => handleCartOpenChange(true)}
-            className="w-full flex items-center justify-between gap-3 rounded-2xl bg-primary px-5 py-4 text-primary-foreground shadow-[0_8px_32px_-8px_hsl(var(--primary)/0.6)] active:scale-[0.98] transition-transform"
+            className={`w-full flex items-center justify-between gap-3 rounded-2xl px-5 py-4 shadow-lg active:scale-[0.98] transition-transform ${
+              isTotem
+                ? "bg-[#FF6B00] text-white"
+                : "bg-primary text-primary-foreground shadow-[0_8px_32px_-8px_hsl(var(--primary)/0.6)]"
+            }`}
           >
             <div className="flex items-center gap-3">
               <div className="relative">
                 <ShoppingCart className="h-5 w-5" />
-                <span className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-white text-[10px] font-black text-primary">
+                <span className={`absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-black ${
+                  isTotem ? "bg-white text-[#FF6B00]" : "bg-white text-primary"
+                }`}>
                   {carrinho.reduce((s, i) => s + i.quantidade, 0)}
                 </span>
               </div>
-              <span className="text-base font-black">Ver carrinho</span>
+              <span className="text-base font-black uppercase">{isTotem ? "CONTINUAR" : "Ver carrinho"}</span>
             </div>
             <span className="text-base font-black tabular-nums">
               {formatPrice(carrinho.reduce((s, i) => s + i.precoUnitario * i.quantidade, 0))}
@@ -1158,10 +1173,10 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
 
   return (
     <>
-      <div className="flex flex-col bg-background" style={{ minHeight: '100dvh' }}>
+      <div className={`flex flex-col ${isTotem ? "bg-white max-w-[480px] mx-auto" : "bg-background"}`} style={{ minHeight: '100dvh' }}>
         {header}
         {garcomBanner}
-        {(isMobile || modo === "garcom" || modo === "delivery") ? mobileContent : desktopContent}
+        {(isMobile || modo === "garcom" || modo === "delivery" || isTotem) ? mobileContent : desktopContent}
         <ProductModal produto={produtoSelecionado} onClose={handleCloseProductModal} onAdd={handleAddToCart} isGarcomMobile={isGarcomMobile} skipEmbalagemDefault={modo === "delivery"} />
         {mesa && <MinhaContaDrawer pedidos={mesa.pedidos} total={mesa.total} open={contaOpen} onOpenChange={setContaOpen} />}
         {idleOverlay}
