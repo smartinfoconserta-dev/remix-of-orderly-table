@@ -174,6 +174,7 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
     marcarBalcaoPronto,
     registrarFechamentoMotoboy,
     estornarFechamento,
+    marcarBalcaoRetirado,
   } = useRestaurant();
   const { currentCaixa, currentGerente, logout, verifyManagerAccess } = useAuth();
 
