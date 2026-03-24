@@ -93,6 +93,12 @@ const Index = () => {
           onClick={() => navigate("/caixa")}
         />
         <ModeCard
+          title="Caixa Delivery"
+          description="Pedidos de entrega"
+          icon={<span className="text-2xl">🛵</span>}
+          onClick={() => navigate("/delivery")}
+        />
+        <ModeCard
           title="Gerente"
           description="Gestão e relatórios"
           icon={<ShieldCheck size={28} />}
