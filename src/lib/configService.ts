@@ -283,6 +283,7 @@ export async function saveCategorias(cats: CategoriaCustom[], storeId?: string |
         nome: c.nome,
         icone: c.icone,
         ordem: c.ordem,
+        ...(storeId ? { store_id: storeId } : {}),
       }));
       await supabase.from("restaurant_categories").insert(rows);
     }
