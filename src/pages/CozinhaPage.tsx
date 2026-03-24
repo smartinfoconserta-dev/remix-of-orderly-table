@@ -119,12 +119,31 @@ const CozinhaPage = () => {
   }, [mesas, pedidosBalcao]);
 
 
+  const activePedidosFiltradosPorSetor = useMemo(() => {
+    const config = getSistemaConfig();
+    if (!config.impressaoPorSetor || !setorMonitor || setorMonitor === "tudo") return activePedidos;
+    return activePedidos
+      .map(pedido => {
+        if (pedido.origem === "delivery" || pedido.isBalcao) return pedido;
+        return {
+          ...pedido,
+          itens: pedido.itens.filter(it => {
+            const s = (it as any).setor ?? "cozinha";
+            if (setorMonitor === "cozinha") return s === "cozinha" || s === "ambos";
+            if (setorMonitor === "bar") return s === "bar" || s === "ambos";
+            return true;
+          }),
+        };
+      })
+      .filter(pedido => pedido.itens.length > 0);
+  }, [activePedidos, setorMonitor]);
+
   const pedidosFiltrados = useMemo(() => {
-    if (filtroOrigem === "todos") return activePedidos;
-    if (filtroOrigem === "delivery") return activePedidos.filter(p => p.origem === "delivery");
-    if (filtroOrigem === "balcao") return activePedidos.filter(p => p.origem === "balcao" || p.isBalcao);
-    return activePedidos.filter(p => p.origem !== "delivery" && !p.isBalcao);
-  }, [activePedidos, filtroOrigem]);
+    if (filtroOrigem === "todos") return activePedidosFiltradosPorSetor;
+    if (filtroOrigem === "delivery") return activePedidosFiltradosPorSetor.filter(p => p.origem === "delivery");
+    if (filtroOrigem === "balcao") return activePedidosFiltradosPorSetor.filter(p => p.origem === "balcao" || p.isBalcao);
+    return activePedidosFiltradosPorSetor.filter(p => p.origem !== "delivery" && !p.isBalcao);
+  }, [activePedidosFiltradosPorSetor, filtroOrigem]);
 
   // Sound notification when new orders arrive — detect by origin
   useEffect(() => {
