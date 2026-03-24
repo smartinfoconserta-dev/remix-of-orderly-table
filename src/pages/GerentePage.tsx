@@ -748,7 +748,9 @@ const GerentePage = () => {
                   <table>
                     <thead><tr><th>Origem</th><th style="text-align:right">Total</th><th style="text-align:right">%</th></tr></thead>
                     <tbody>
-                      <tr><td>🍽️ Mesas</td><td style="text-align:right">${formatPrice(totalMesas)}</td><td style="text-align:right">${relTotalFaturado > 0 ? ((totalMesas/relTotalFaturado)*100).toFixed(1) : "0.0"}%</td></tr>
+                      <tr><td>🍽️ Salão (Mesas)</td><td style="text-align:right">${formatPrice(totalMesas)}</td><td style="text-align:right">${relTotalFaturado > 0 ? ((totalMesas/relTotalFaturado)*100).toFixed(1) : "0.0"}%</td></tr>
+                      <tr><td>🏪 Balcão</td><td style="text-align:right">${formatPrice(totalBalcao)}</td><td style="text-align:right">${relTotalFaturado > 0 ? ((totalBalcao/relTotalFaturado)*100).toFixed(1) : "0.0"}%</td></tr>
+                      <tr><td>🖥️ Totem</td><td style="text-align:right">${formatPrice(totalTotem)}</td><td style="text-align:right">${relTotalFaturado > 0 ? ((totalTotem/relTotalFaturado)*100).toFixed(1) : "0.0"}%</td></tr>
                       <tr><td>🛵 Delivery (caixa)</td><td style="text-align:right">${formatPrice(totalDelivery)}</td><td style="text-align:right">${relTotalFaturado > 0 ? ((totalDelivery/relTotalFaturado)*100).toFixed(1) : "0.0"}%</td></tr>
                       <tr><td>🏍️ Motoboys conferidos</td><td style="text-align:right">${formatPrice(totalMotoboys)}</td><td style="text-align:right">${relTotalFaturado > 0 ? ((totalMotoboys/relTotalFaturado)*100).toFixed(1) : "0.0"}%</td></tr>
                     </tbody>
