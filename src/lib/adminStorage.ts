@@ -83,6 +83,7 @@ export interface SistemaConfig {
     motoboy?: boolean;
   };
   plano?: "basico" | "medio" | "pro" | "premium";
+  modoTV?: "padrao" | "completo";
 }
 
 export interface LicencaConfig {
