@@ -15,35 +15,19 @@ const TvPage = () => {
   }, []);
 
   const pedidosProntos = useMemo(() => {
-    const prontos: { id: string; numero: number; nome: string; timestamp: string }[] = [];
+    const prontos: { id: string; numero: number; nome: string; origem: string; timestamp: string }[] = [];
 
-    // Mesas — only in "completo" mode
-    if (modoTV === "completo") {
-      for (const mesa of mesas) {
-        for (const p of mesa.pedidos) {
-          if (p.pronto) {
-            prontos.push({
-              id: p.id,
-              numero: p.numeroPedido,
-              nome: `Mesa ${String(mesa.numero).padStart(2, "0")}`,
-              timestamp: p.criadoEmIso,
-            });
-          }
-        }
-      }
-    }
-
-    // Balcão and Totem only (never delivery)
+    // Buscar de pedidosBalcao — somente balcao e totem, NUNCA delivery
     for (const p of pedidosBalcao) {
-      if (p.origem === "delivery") continue;
-      if (p.pronto || p.statusBalcao === "pronto") {
-        const label = p.origem === "totem"
-          ? `#${String(p.numeroPedido).padStart(3, "0")}`
-          : `Balcão — ${p.clienteNome || ""}`;
+      if (
+        (p.origem === "balcao" || p.origem === "totem") &&
+        p.statusBalcao === "pronto"
+      ) {
         prontos.push({
           id: p.id,
           numero: p.numeroPedido,
-          nome: label,
+          nome: p.origem === "totem" ? "Totem" : (p.clienteNome || "Balcão"),
+          origem: p.origem,
           timestamp: p.criadoEmIso,
         });
       }
@@ -51,7 +35,7 @@ const TvPage = () => {
 
     prontos.sort((a, b) => a.timestamp.localeCompare(b.timestamp));
     return prontos;
-  }, [mesas, pedidosBalcao, modoTV]);
+  }, [pedidosBalcao]);
 
   const latest = pedidosProntos[pedidosProntos.length - 1] ?? null;
   const others = pedidosProntos.slice(0, -1);
