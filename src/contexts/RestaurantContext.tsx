@@ -27,7 +27,7 @@ export interface PedidoRealizado {
   total: number;
   criadoEm: string;
   criadoEmIso: string;
-  origem: "cliente" | "garcom" | "caixa" | "balcao" | "delivery";
+  origem: "cliente" | "garcom" | "caixa" | "balcao" | "delivery" | "totem";
   mesaId: string;
   garcomId?: string;
   garcomNome?: string;
