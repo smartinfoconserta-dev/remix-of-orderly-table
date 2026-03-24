@@ -21,6 +21,8 @@ import {
   Plus,
   Trash2,
   Users,
+  Tag,
+  UtensilsCrossed,
   XCircle,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -443,6 +445,16 @@ const GerentePage = () => {
     }).length;
   }, [allEventos, dateRange]);
 
+  const totalDescontos = useMemo(() =>
+    fechFiltrados.reduce((acc, f) => acc + ((f as any).desconto ?? 0), 0),
+    [fechFiltrados]
+  );
+
+  const totalCouvert = useMemo(() =>
+    fechFiltrados.reduce((acc, f) => acc + ((f as any).couvert ?? 0), 0),
+    [fechFiltrados]
+  );
+
   const pedidosPorGarcom = useMemo(() => {
     const map = new Map<string, { nome: string; pedidos: number; mesas: Set<string> }>();
     allEventos.filter((e) => {
@@ -713,6 +725,8 @@ const GerentePage = () => {
                     <div class="summary-item"><div class="label">Hora de pico</div><div class="value">${horaDePico}</div></div>
                     <div class="summary-item"><div class="label">Cancelamentos</div><div class="value" style="${cancelamentos > 0 ? "color:red" : ""}">${cancelamentos}</div></div>
                     <div class="summary-item"><div class="label">Tempo médio/mesa</div><div class="value">${tempoMedioMesa > 0 ? tempoMedioMesa + " min" : "—"}</div></div>
+                    ${totalDescontos > 0 ? `<div class="summary-item"><div class="label">Descontos dados</div><div class="value" style="color:red">- ${formatPrice(totalDescontos)}</div></div>` : ""}
+                    ${totalCouvert > 0 ? `<div class="summary-item"><div class="label">Couvert arrecadado</div><div class="value" style="color:green">${formatPrice(totalCouvert)}</div></div>` : ""}
                   </div>
                   <h2>Produtos Mais Vendidos</h2>
                   <table><thead><tr><th>Produto</th><th style="text-align:center">Qtd</th><th style="text-align:right">Total R$</th><th style="text-align:right">% Faturamento</th></tr></thead><tbody>${prodRows || "<tr><td colspan=4 style='text-align:center;color:#999'>Sem dados</td></tr>"}</tbody></table>
@@ -827,11 +841,13 @@ const GerentePage = () => {
             </div>
 
             {/* ── Extra KPI Cards ── */}
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
               {[
                 { label: "Hora de pico", value: horaDePico, icon: Clock, color: "text-primary" },
                 { label: "Cancelamentos", value: String(cancelamentos), icon: XCircle, color: cancelamentos > 0 ? "text-destructive" : "text-muted-foreground" },
                 { label: "Tempo médio/mesa", value: tempoMedioMesa > 0 ? `${tempoMedioMesa} min` : "—", icon: Timer, color: "text-amber-400" },
+                { label: "Descontos dados", value: formatPrice(totalDescontos), icon: Tag, color: totalDescontos > 0 ? "text-destructive" : "text-muted-foreground" },
+                { label: "Couvert arrecadado", value: totalCouvert > 0 ? formatPrice(totalCouvert) : "—", icon: UtensilsCrossed, color: "text-emerald-400" },
               ].map((kpi) => {
                 const Icon = kpi.icon;
                 return (
