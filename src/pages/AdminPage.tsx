@@ -308,6 +308,8 @@ const AdminPage = () => {
   const deliveries = useMemo(() => getActiveProfilesByRole("delivery"), [getActiveProfilesByRole]);
   const [newGerenteName, setNewGerenteName] = useState("");
   const [newGerentePin, setNewGerentePin] = useState("");
+  const [newDeliveryName, setNewDeliveryName] = useState("");
+  const [newDeliveryPin, setNewDeliveryPin] = useState("");
   const [userError, setUserError] = useState<string | null>(null);
 
   const handleCreateGerente = () => {
