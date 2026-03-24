@@ -1342,6 +1342,17 @@ const GerentePage = () => {
                 >
                   Caixa
                 </button>
+                <button
+                  type="button"
+                  onClick={() => setNewEmpRole("delivery")}
+                  className={`rounded-xl px-4 py-2 text-xs font-bold transition-colors ${
+                    newEmpRole === "delivery"
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-secondary text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  🛵 Delivery
+                </button>
               </div>
               {empError && <p className="rounded-xl border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive">{empError}</p>}
               <Button
