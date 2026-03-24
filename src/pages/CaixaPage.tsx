@@ -2199,7 +2199,10 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                                     ? `<div class="print-item"><span>💵 Troco devolvido</span><span>R$ ${f.troco.toFixed(2).replace(".", ",")}</span></div>`
                                     : "";
                                   const descontoStr = f.desconto && f.desconto > 0
-                                    ? `<div class="print-item" style="color:#c85b0a"><span>🎁 Desconto</span><span>- R$ ${f.desconto.toFixed(2).replace(".", ",")}</span></div>`
+                                    ? `<div class="print-item" style="color:#c85b0a"><span>🎁 Desconto aplicado</span><span>- R$ ${f.desconto.toFixed(2).replace(".", ",")}</span></div>`
+                                    : "";
+                                  const couvertStr = f.couvert && f.couvert > 0
+                                    ? `<div class="print-item" style="color:#059669"><span>🍽️ Couvert (${f.numeroPessoas ?? 0} pessoa${(f.numeroPessoas ?? 0) !== 1 ? "s" : ""})</span><span>+ R$ ${f.couvert.toFixed(2).replace(".", ",")}</span></div>`
                                     : "";
                                   const pagStr = (f.pagamentos?.length
                                     ? f.pagamentos
