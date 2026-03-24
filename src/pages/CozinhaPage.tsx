@@ -585,11 +585,15 @@ ${itensSetorHtml}
             <div
               key={pedido.id}
               className={`slide-up flex flex-col rounded-2xl border bg-card transition-all ${fadingOut.has(pedido.id) ? "fade-out-remove" : ""} ${
-                isLate
-                  ? "border-destructive/60 animate-pulse shadow-[0_0_20px_hsl(var(--destructive)/0.2)]"
-                  : isParaViagem
-                    ? "border-amber-500/60"
-                    : "border-border"
+                pedido.pronto || pedido.statusBalcao === "pronto"
+                  ? "border-emerald-500/60 bg-emerald-500/5"
+                  : isLate
+                    ? "border-destructive/60 animate-pulse shadow-[0_0_20px_hsl(var(--destructive)/0.2)]"
+                    : pedido.statusBalcao === "preparando"
+                      ? "border-amber-500/60"
+                      : isParaViagem
+                        ? "border-amber-500/60"
+                        : "border-border"
               }`}
               style={{ animationDelay: `${Math.min(i * 30, 300)}ms`, animationFillMode: 'both' }}
             >
