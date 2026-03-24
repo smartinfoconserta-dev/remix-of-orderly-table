@@ -115,11 +115,11 @@ const CozinhaPage = () => {
 
 
   const pedidosFiltrados = useMemo(() => {
-    if (filtroOrigem === "todos") return pedidosPorSetor;
-    if (filtroOrigem === "delivery") return pedidosPorSetor.filter(p => p.origem === "delivery");
-    if (filtroOrigem === "balcao") return pedidosPorSetor.filter(p => p.origem === "balcao" || p.isBalcao);
-    return pedidosPorSetor.filter(p => p.origem !== "delivery" && !p.isBalcao);
-  }, [pedidosPorSetor, filtroOrigem]);
+    if (filtroOrigem === "todos") return activePedidos;
+    if (filtroOrigem === "delivery") return activePedidos.filter(p => p.origem === "delivery");
+    if (filtroOrigem === "balcao") return activePedidos.filter(p => p.origem === "balcao" || p.isBalcao);
+    return activePedidos.filter(p => p.origem !== "delivery" && !p.isBalcao);
+  }, [activePedidos, filtroOrigem]);
 
   // Sound notification when new orders arrive — detect by origin
   useEffect(() => {
