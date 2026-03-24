@@ -120,6 +120,7 @@ const formatMesaLabel = (mesaId: string) => {
 };
 
 const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, onBack, onPedidoConfirmado }: PedidoFlowProps) => {
+  const isTotem = modo === "totem";
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const { currentGarcom, currentCaixa, verifyEmployeeAccess } = useAuth();
