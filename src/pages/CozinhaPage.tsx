@@ -88,7 +88,7 @@ function tocarSom(tipo: "novo_pedido" | "alerta", ctxRef: React.MutableRefObject
 const COZINHA_SETOR_KEY = "obsidian-cozinha-setor-v1";
 
 const CozinhaPage = () => {
-  const { mesas, pedidosBalcao, marcarPedidoPronto, marcarPedidoBalcaoPronto } = useRestaurant();
+  const { mesas, pedidosBalcao, marcarPedidoPronto, marcarPedidoBalcaoPronto, marcarBalcaoPreparando } = useRestaurant();
   const { verifyEmployeeAccess } = useAuth();
   const [autenticado, setAutenticado] = useState<{ nome: string } | null>(() => {
     try {
