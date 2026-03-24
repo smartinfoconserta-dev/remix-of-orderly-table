@@ -2007,10 +2007,10 @@ const AdminPage = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Plano atual</p>
-                  <p className="text-2xl font-black text-foreground mt-1">{PLANO_LABELS[sistemaConfig.plano || "basico"]}</p>
+                  <p className="text-2xl font-black text-foreground mt-1">{PLANO_LABELS[(licencaConfig.plano || sistemaConfig.plano || "basico")]}</p>
                 </div>
                 <span className="text-4xl">
-                  {(sistemaConfig.plano || "basico") === "basico" && "⭐"}
+                  {((licencaConfig.plano || sistemaConfig.plano || "basico")) === "basico" && "⭐"}
                   {sistemaConfig.plano === "medio" && "⭐⭐"}
                   {sistemaConfig.plano === "pro" && "⭐⭐⭐"}
                   {sistemaConfig.plano === "premium" && "👑"}
