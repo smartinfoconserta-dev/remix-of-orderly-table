@@ -99,7 +99,7 @@ function configToDbRow(config: SistemaConfig) {
     impressao_por_setor: config.impressaoPorSetor ?? false,
     nome_impressora_cozinha: config.nomeImpressoraCozinha ?? null,
     nome_impressora_bar: config.nomeImpressoraBar ?? null,
-    modulos: config.modulos ?? {},
+    modulos: (config.modulos ?? {}) as unknown as null,
     plano: config.plano ?? "basico",
     modo_tv: config.modoTV ?? "padrao",
     total_mesas: 20,
