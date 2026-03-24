@@ -69,50 +69,50 @@ const Index = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-4xl">
         <ModeCard
-          title="Cliente"
-          description="Cardápio, pedidos e conta"
+          title="Cardápio"
+          description="Faça seu pedido"
           icon={<User size={28} />}
           onClick={() => navigate("/cliente")}
         />
         <ModeCard
           title="Garçom"
-          description="Mesas e lançamento de pedidos"
+          description="Atender mesas e lançar pedidos"
           icon={<HandPlatter size={28} />}
           onClick={() => navigate("/garcom")}
         />
         <ModeCard
           title="Cozinha"
-          description="Painel de pedidos em tempo real"
+          description="Pedidos em preparo"
           icon={<ChefHat size={28} />}
           onClick={() => navigate("/cozinha")}
         />
         <ModeCard
           title="Caixa"
-          description="Pagamentos e fechamento"
+          description="Pagamentos e fechamento de mesas"
           icon={<CircleDollarSign size={28} />}
           onClick={() => navigate("/caixa")}
         />
         <ModeCard
-          title="Caixa Delivery"
-          description="Pedidos de entrega"
+          title="Delivery"
+          description="Receber e gerenciar entregas"
           icon={<span className="text-2xl">🛵</span>}
           onClick={() => navigate("/delivery")}
         />
         <ModeCard
           title="Gerente"
-          description="Gestão e relatórios"
+          description="Relatórios e gestão"
           icon={<ShieldCheck size={28} />}
           onClick={() => navigate("/gerente")}
         />
         <ModeCard
           title="Motoboy"
-          description="Entregas em andamento"
+          description="Minhas entregas"
           icon={<Bike size={28} />}
           onClick={() => navigate("/motoboy")}
         />
         <ModeCard
-          title="Admin"
-          description="Configurações do sistema"
+          title="Administrador"
+          description="Configurações do restaurante"
           icon={<Settings size={28} />}
           onClick={() => navigate("/admin")}
         />
