@@ -78,7 +78,7 @@ function configToDbRow(config: SistemaConfig) {
     logo_url: config.logoUrl,
     logo_base64: config.logoBase64 ?? "",
     cor_primaria: config.corPrimaria,
-    banners: config.banners ?? [],
+    banners: (config.banners ?? []) as unknown as null,
     instagram_url: config.instagramUrl ?? "",
     senha_wifi: config.senhaWifi ?? "",
     instagram_bg: config.instagramBg ?? null,
