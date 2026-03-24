@@ -400,6 +400,7 @@ const ProductModal = ({ produto, onClose, onAdd, isGarcomMobile = false, skipEmb
       precoUnitario,
       imagemUrl: produto.imagem || undefined,
       gruposEscolhidos: gruposData.length > 0 ? gruposData : undefined,
+      setor: (produto as any).setor ?? "cozinha",
     };
 
     setIsAddLocked(true);
