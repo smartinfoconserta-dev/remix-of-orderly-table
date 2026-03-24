@@ -188,9 +188,10 @@ const GerentePage = () => {
   // Equipe state
   const garcons = useMemo(() => getActiveProfilesByRole("garcom"), [getActiveProfilesByRole]);
   const caixas = useMemo(() => getActiveProfilesByRole("caixa"), [getActiveProfilesByRole]);
+  const deliveries = useMemo(() => getActiveProfilesByRole("delivery"), [getActiveProfilesByRole]);
   const [newEmpName, setNewEmpName] = useState("");
   const [newEmpPin, setNewEmpPin] = useState("");
-  const [newEmpRole, setNewEmpRole] = useState<"garcom" | "caixa">("garcom");
+  const [newEmpRole, setNewEmpRole] = useState<"garcom" | "caixa" | "delivery">("garcom");
   const [empError, setEmpError] = useState<string | null>(null);
 
   // Motoboy state
@@ -1341,6 +1342,17 @@ const GerentePage = () => {
                 >
                   Caixa
                 </button>
+                <button
+                  type="button"
+                  onClick={() => setNewEmpRole("delivery")}
+                  className={`rounded-xl px-4 py-2 text-xs font-bold transition-colors ${
+                    newEmpRole === "delivery"
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-secondary text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  🛵 Delivery
+                </button>
               </div>
               {empError && <p className="rounded-xl border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive">{empError}</p>}
               <Button
@@ -1348,14 +1360,14 @@ const GerentePage = () => {
                   setEmpError(null);
                   const result = createUser(newEmpRole, newEmpName, newEmpPin);
                   if (!result.ok) { setEmpError(result.error ?? "Erro"); return; }
-                  toast.success(`${newEmpRole === "garcom" ? "Garçom" : "Caixa"} "${result.user?.nome}" criado`);
+                  toast.success(`${newEmpRole === "garcom" ? "Garçom" : newEmpRole === "caixa" ? "Caixa" : "Caixa Delivery"} "${result.user?.nome}" criado`);
                   setNewEmpName("");
                   setNewEmpPin("");
                 }}
                 disabled={!newEmpName.trim() || newEmpPin.length < 4}
                 className="w-full rounded-xl font-bold gap-1.5"
               >
-                <Plus className="h-4 w-4" /> Criar {newEmpRole === "garcom" ? "garçom" : "caixa"}
+                <Plus className="h-4 w-4" /> Criar {newEmpRole === "garcom" ? "garçom" : newEmpRole === "caixa" ? "caixa" : "caixa delivery"}
               </Button>
             </div>
 
@@ -1423,6 +1435,37 @@ const GerentePage = () => {
               )}
             </div>
 
+            {/* Caixa Delivery list */}
+            <div className="surface-card rounded-2xl overflow-hidden">
+              <div className="px-5 py-3 border-b border-border bg-secondary/50">
+                <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">🛵 Caixa Delivery ({deliveries.length})</p>
+              </div>
+              {deliveries.length === 0 ? (
+                <p className="px-5 py-6 text-sm text-muted-foreground text-center">Nenhum caixa delivery cadastrado.</p>
+              ) : (
+                <div className="divide-y divide-border/50">
+                  {deliveries.map((d) => (
+                    <div key={d.id} className="flex items-center justify-between px-5 py-3">
+                      <div>
+                        <p className="text-sm font-bold text-foreground">{d.nome}</p>
+                        <p className="text-xs text-muted-foreground">Desde {new Date(d.criadoEm).toLocaleDateString("pt-BR")}</p>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          deactivateUser(d.id);
+                          toast.success(`Caixa Delivery "${d.nome}" desativado`);
+                        }}
+                        className="text-destructive hover:bg-destructive/10 text-xs font-bold"
+                      >
+                        Desativar
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
 
 
             {/* ── Motoboys ── */}
