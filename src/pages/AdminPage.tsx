@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   ClipboardList,
   Download,
@@ -16,6 +17,14 @@ import {
   Trash2,
   Users,
   X,
+  UtensilsCrossed,
+  CreditCard,
+  ChefHat,
+  Truck,
+  Bike,
+  Monitor,
+  Tv,
+  ExternalLink,
 } from "lucide-react";
 import StorePinsManager from "@/components/StorePinsManager";
 import { useStore } from "@/contexts/StoreContext";
