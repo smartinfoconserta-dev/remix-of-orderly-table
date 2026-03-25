@@ -33,7 +33,7 @@ const GarcomPage = () => {
   if (!currentGarcom) {
     return (
       <AppLayout title="Garçom">
-        <OperationalAccessCard role="garcom" />
+        <p className="text-center text-muted-foreground py-12">Acesso não autorizado. Faça login na tela inicial.</p>
       </AppLayout>
     );
   }
