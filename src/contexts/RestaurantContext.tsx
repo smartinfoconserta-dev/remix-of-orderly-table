@@ -1112,8 +1112,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       const mesaIdGerado = `${idPrefix}-${now.getTime()}`;
 
       const statusInicial: PedidoRealizado["statusBalcao"] =
-        input.origem === "delivery" ? "aguardando_confirmacao" :
-        input.origem === "totem" ? "aberto" :
+        input.origem === "delivery" && !input.skipConfirmacao ? "aguardando_confirmacao" :
         "aberto";
 
       const novoPedido: PedidoRealizado = {
