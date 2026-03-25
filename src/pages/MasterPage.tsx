@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -22,7 +23,7 @@ import {
 } from "@/lib/masterStorage";
 import { getLicencaConfig, saveLicencaConfig, saveLicencaConfigAsync } from "@/lib/adminStorage";
 
-const MASTER_PASS = atob("bWFzdGVyMjAyNQ==");
+
 
 const SEGMENTOS = ["hamburgeria", "pizzaria", "sushi", "pastel", "a-la-carte", "outro"];
 const SEGMENTO_LABELS: Record<string, string> = {
@@ -110,9 +111,7 @@ function proximoVencimento(diaVencimento: number): string {
 }
 
 const MasterPage = () => {
-  const [authed, setAuthed] = useState(false);
-  const [senha, setSenha] = useState("");
-  const [senhaErro, setSenhaErro] = useState(false);
+  const { logout } = useAuth();
 
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -139,20 +138,14 @@ const MasterPage = () => {
   // Stores for PINs tab
   const [stores, setStores] = useState<{ id: string; name: string; slug: string }[]>([]);
   useEffect(() => {
-    if (!authed) return;
-    import("@/integrations/supabase/client").then(({ supabase }) => {
-      supabase.from("stores").select("id, name, slug").then(({ data }) => {
-        if (data) setStores(data);
-      });
+    supabase.from("stores").select("id, name, slug").then(({ data }) => {
+      if (data) setStores(data);
     });
-  }, [authed]);
+  }, []);
 
   const refresh = () => { setClientes(getClientes()); setDespesas(getDespesas()); };
 
-  const handleLogin = () => {
-    if (senha === MASTER_PASS) { setAuthed(true); setSenhaErro(false); refresh(); }
-    else setSenhaErro(true);
-  };
+  useEffect(() => { refresh(); }, []);
 
   const openCreate = () => { setEditId(null); setForm(emptyForm); setDialogOpen(true); };
   const openEdit = (c: Cliente) => {
@@ -372,18 +365,6 @@ const MasterPage = () => {
     refresh();
   };
 
-  if (!authed) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background p-4">
-        <div className="w-full max-w-sm space-y-4 rounded-2xl border bg-card p-6 shadow">
-          <h1 className="text-2xl font-black text-center text-foreground">Painel Master</h1>
-          <Input type="password" placeholder="Senha master" value={senha} onChange={(e) => { setSenha(e.target.value); setSenhaErro(false); }} onKeyDown={(e) => e.key === "Enter" && handleLogin()} />
-          {senhaErro && <p className="text-sm text-destructive text-center">Senha incorreta.</p>}
-          <Button className="w-full" onClick={handleLogin}>Entrar</Button>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-background p-4 md:p-8">
@@ -391,7 +372,7 @@ const MasterPage = () => {
         {/* Header */}
         <div className="flex items-center justify-between">
           <h1 className="text-2xl md:text-3xl font-black text-foreground">Painel Master</h1>
-          <Button variant="outline" size="sm" onClick={() => setAuthed(false)}><LogOut className="w-4 h-4 mr-1" /> Sair</Button>
+          <Button variant="outline" size="sm" onClick={() => logout()}><LogOut className="w-4 h-4 mr-1" /> Sair</Button>
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
