@@ -261,6 +261,9 @@ const MasterPage = () => {
     refresh();
   };
   const isVencido = (d: string) => d && new Date(d) < new Date(todayStr());
+  const toSlug = (str: string) =>
+    str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+
   const ff = (key: string, value: any) => {
     setForm((prev) => {
       const next = { ...prev, [key]: value };
@@ -272,6 +275,9 @@ const MasterPage = () => {
           next.dataTermino = dt;
           next.dataVencimento = dt;
         }
+      }
+      if (key === "nomeRestaurante") {
+        next.slugLoja = toSlug(value);
       }
       return next;
     });
