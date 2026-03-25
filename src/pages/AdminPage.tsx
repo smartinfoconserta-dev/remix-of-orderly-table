@@ -123,6 +123,7 @@ const formatPrice = (v: number) => `R$ ${v.toFixed(2).replace(".", ",")}`;
 
 const AdminPage = () => {
   const { verifyManagerAccess, verifyEmployeeAccess, getProfilesByRole, getActiveProfilesByRole, createUser, removeUser } = useAuth();
+  const { storeId, storeName: ctxStoreName } = useStore();
 
   // Auth gate state
   const [authenticated, setAuthenticated] = useState(false);
