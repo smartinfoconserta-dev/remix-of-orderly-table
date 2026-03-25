@@ -314,8 +314,66 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   /* ─── Legacy stubs ─── */
   const loginWithPin = useCallback(async () => ({ ok: false as const, error: LEGACY_ERROR }), []);
-  const verifyManagerAccess = useCallback(async () => ({ ok: false as const, error: LEGACY_ERROR }), []);
-  const verifyEmployeeAccess = useCallback(async () => ({ ok: false as const, error: LEGACY_ERROR }), []);
+  const verifyManagerAccess = useCallback(async (_nome: string, pin: string): Promise<{ ok: boolean; error?: string; user?: OperationalUser }> => {
+    const storeId = operationalSession?.storeId ?? null;
+    try {
+      let query = supabase
+        .from("module_pins")
+        .select("pin_hash, label, module")
+        .in("module", ["gerente", "administrador"])
+        .eq("active", true);
+      if (storeId) query = query.eq("store_id", storeId);
+      const { data: pins } = await query;
+      if (!pins || pins.length === 0) {
+        return { ok: false, error: "Nenhum PIN de gerente ativo encontrado" };
+      }
+      for (const p of pins) {
+        const { data: isValid } = await supabase.rpc("verify_pin", {
+          input_pin: pin,
+          stored_hash: p.pin_hash,
+        });
+        if (isValid) {
+          return {
+            ok: true,
+            user: { id: "mgr-op", nome: p.label ?? "Gerente", role: "gerente" as UserRole, criadoEm: "" },
+          };
+        }
+      }
+      return { ok: false, error: "PIN de gerente inválido" };
+    } catch {
+      return { ok: false, error: "Erro ao verificar PIN" };
+    }
+  }, [operationalSession]);
+
+  const verifyEmployeeAccess = useCallback(async (_nome: string, pin: string): Promise<{ ok: boolean; error?: string; user?: OperationalUser }> => {
+    const storeId = operationalSession?.storeId ?? null;
+    try {
+      let query = supabase
+        .from("module_pins")
+        .select("pin_hash, label, module")
+        .eq("active", true);
+      if (storeId) query = query.eq("store_id", storeId);
+      const { data: pins } = await query;
+      if (!pins || pins.length === 0) {
+        return { ok: false, error: "Nenhum PIN ativo encontrado" };
+      }
+      for (const p of pins) {
+        const { data: isValid } = await supabase.rpc("verify_pin", {
+          input_pin: pin,
+          stored_hash: p.pin_hash,
+        });
+        if (isValid) {
+          return {
+            ok: true,
+            user: { id: "emp-op", nome: p.label ?? "Operador", role: (p.module as UserRole) ?? "caixa", criadoEm: "" },
+          };
+        }
+      }
+      return { ok: false, error: "PIN inválido" };
+    } catch {
+      return { ok: false, error: "Erro ao verificar PIN" };
+    }
+  }, [operationalSession]);
   const createUser = useCallback(() => ({ ok: false as const, error: LEGACY_ERROR }), []);
   const removeUser = useCallback(() => ({ ok: false as const, error: LEGACY_ERROR }), []);
   const deactivateUser = useCallback(() => ({ ok: false as const, error: LEGACY_ERROR }), []);
