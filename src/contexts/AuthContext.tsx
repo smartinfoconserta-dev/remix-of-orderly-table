@@ -1,435 +1,312 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { z } from "zod";
+import { supabase } from "@/integrations/supabase/client";
 import type { OperationalUser, UserRole } from "@/types/operations";
+import type { User } from "@supabase/supabase-js";
 
-interface StoredUser extends OperationalUser {
-  pinHash: string;
-  ativo: boolean;
-}
+/* ─── Types ─── */
 
-interface StoredSession {
-  userId: string;
-  loggedInAt: string;
-}
+type AuthLevel = "unauthenticated" | "master" | "admin" | "operational";
 
-interface AuthState {
-  users: StoredUser[];
-  sessions: Partial<Record<UserRole, StoredSession>>;
+interface OperationalSession {
+  storeId: string;
+  storeSlug: string;
+  storeName: string;
+  module: string;
+  pinLabel: string | null;
 }
 
 interface LoginResult {
   ok: boolean;
   error?: string;
-  user?: OperationalUser;
 }
 
 interface AuthContextType {
+  /** Current authentication level */
+  authLevel: AuthLevel;
+  /** Supabase user (master/admin only) */
+  supabaseUser: User | null;
+  /** True while checking initial session */
+  isLoading: boolean;
+
+  /* ─── Level 1 & 2: Supabase Auth ─── */
+  loginAsMaster: (email: string, password: string) => Promise<LoginResult>;
+  loginAsAdmin: (email: string, password: string) => Promise<LoginResult>;
+
+  /* ─── Level 3: Operational PIN ─── */
+  loginAsOperational: (storeSlug: string, module: string, pin: string) => Promise<LoginResult>;
+  operationalSession: OperationalSession | null;
+
+  /* ─── Universal logout ─── */
+  logout: () => Promise<void>;
+
+  /* ─── Legacy stubs (backward compat) ─── */
   currentGarcom: OperationalUser | null;
   currentCaixa: OperationalUser | null;
   currentGerente: OperationalUser | null;
   getProfilesByRole: (role: UserRole) => OperationalUser[];
   getActiveProfilesByRole: (role: UserRole) => OperationalUser[];
-  loginWithPin: (role: UserRole, nome: string, pin: string) => Promise<LoginResult>;
+  loginWithPin: (role: UserRole, nome: string, pin: string) => Promise<{ ok: boolean; error?: string; user?: OperationalUser }>;
   createUser: (role: UserRole, nome: string, pin: string) => { ok: boolean; error?: string; user?: OperationalUser };
   removeUser: (id: string) => { ok: boolean; error?: string };
   deactivateUser: (id: string) => { ok: boolean; error?: string };
   activateUser: (id: string) => { ok: boolean; error?: string };
-  verifyManagerAccess: (nome: string, pin: string) => Promise<LoginResult>;
-  verifyEmployeeAccess: (nome: string, pin: string) => Promise<LoginResult>;
-  logout: (role: UserRole) => void;
+  verifyManagerAccess: (nome: string, pin: string) => Promise<{ ok: boolean; error?: string; user?: OperationalUser }>;
+  verifyEmployeeAccess: (nome: string, pin: string) => Promise<{ ok: boolean; error?: string; user?: OperationalUser }>;
+  logout_role: (role: UserRole) => void;
 }
 
-const AUTH_STORAGE_KEY = "obsidian-auth-v1";
+/* ─── Storage keys ─── */
 
-const loginSchema = z.object({
-  nome: z
-    .string()
-    .trim()
-    .min(2, "Informe um nome com pelo menos 2 caracteres")
-    .max(40, "Use no máximo 40 caracteres")
-    .regex(/^[\p{L}\p{N}][\p{L}\p{N} .'-]*$/u, "Use apenas letras, números e separadores simples"),
-  pin: z.string().regex(/^\d{4,6}$/, "O PIN deve ter entre 4 e 6 números"),
-});
+const OP_SESSION_KEY = "obsidian-op-session-v2";
 
-const seedAdmin: StoredUser = {
-  id: "seed-admin-001",
-  role: "gerente",
-  nome: "admin",
-  pinHash: btoa("pin:1234").split("").reverse().join(""),
-  ativo: true,
-  criadoEm: new Date().toISOString(),
-};
-
-const emptyState: AuthState = {
-  users: [seedAdmin],
-  sessions: {},
-};
+/* ─── Context setup (HMR-safe) ─── */
 
 const authContextStore = globalThis as typeof globalThis & {
   __obsidianAuthContext__?: React.Context<AuthContextType | null>;
 };
-
 const AuthContext = authContextStore.__obsidianAuthContext__ ?? createContext<AuthContextType | null>(null);
 authContextStore.__obsidianAuthContext__ = AuthContext;
 
-const hashPin = (pin: string) => btoa(`pin:${pin}`).split("").reverse().join("");
+/* ─── Helpers ─── */
 
-const toPublicUser = ({ pinHash: _pinHash, ativo: _ativo, ...user }: StoredUser): OperationalUser => user;
-
-const ensureAtivoField = (users: StoredUser[]): StoredUser[] =>
-  users.map((u) => ({ ...u, ativo: u.ativo !== false }));
-
-const SESSION_ALLOWED_ROLES: Record<UserRole, UserRole[]> = {
-  garcom: ["garcom", "caixa", "gerente"],
-  caixa: ["caixa", "gerente"],
-  delivery: ["delivery", "caixa", "gerente"],
-  gerente: ["gerente"],
-};
-
-const sanitizeSessions = (
-  users: StoredUser[],
-  sessions: Partial<Record<UserRole, StoredSession>>,
-): Partial<Record<UserRole, StoredSession>> => {
-  const next: Partial<Record<UserRole, StoredSession>> = {};
-
-  (Object.entries(sessions) as [UserRole, StoredSession | undefined][]).forEach(([sessionRole, session]) => {
-    if (!session) return;
-
-    const user = users.find((item) => item.id === session.userId);
-    if (!user) return;
-    if (user.id === "seed-admin-001") {
-      next[sessionRole] = session;
-      return;
-    }
-
-    const allowed = SESSION_ALLOWED_ROLES[sessionRole] ?? [sessionRole];
-    if (allowed.includes(user.role)) {
-      next[sessionRole] = session;
-    }
-  });
-
-  return next;
-};
-
-const readAuthState = (): AuthState => {
-  if (typeof window === "undefined") return emptyState;
-
+const readOpSession = (): OperationalSession | null => {
   try {
-    const raw = window.localStorage.getItem(AUTH_STORAGE_KEY);
-    if (!raw) {
-      const initial = { users: [seedAdmin], sessions: {} };
-      window.localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(initial));
-      return initial;
-    }
-
-    const parsed = JSON.parse(raw) as Partial<AuthState>;
-    let users = ensureAtivoField(Array.isArray(parsed.users) ? parsed.users : []);
-    users = users.map((u) => (u.role as string) === "admin" ? { ...u, role: "gerente" as UserRole } : u);
-
-    const hasSeedAdmin = users.some(
-      (u) => u.role === "gerente" && u.nome.toLocaleLowerCase("pt-BR") === "admin",
-    );
-    if (!hasSeedAdmin) {
-      users = [seedAdmin, ...users];
-    }
-
-    const sessions = sanitizeSessions(users, parsed.sessions ?? {});
-    const patched = { users, sessions };
-    window.localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(patched));
-    return patched;
+    const raw = sessionStorage.getItem(OP_SESSION_KEY);
+    return raw ? (JSON.parse(raw) as OperationalSession) : null;
   } catch {
-    return emptyState;
+    return null;
   }
 };
 
+const writeOpSession = (session: OperationalSession | null) => {
+  if (session) {
+    sessionStorage.setItem(OP_SESSION_KEY, JSON.stringify(session));
+  } else {
+    sessionStorage.removeItem(OP_SESSION_KEY);
+  }
+};
+
+/* ─── Legacy stub error ─── */
+const LEGACY_ERROR = "Use o novo sistema de login";
+
+/* ─── Provider ─── */
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [state, setState] = useState<AuthState>(readAuthState);
+  const [supabaseUser, setSupabaseUser] = useState<User | null>(null);
+  const [authLevel, setAuthLevel] = useState<AuthLevel>("unauthenticated");
+  const [isLoading, setIsLoading] = useState(true);
+  const [operationalSession, setOperationalSession] = useState<OperationalSession | null>(readOpSession);
 
-  useEffect(() => {
-    const sanitizedSessions = sanitizeSessions(state.users, state.sessions);
-    if (JSON.stringify(sanitizedSessions) !== JSON.stringify(state.sessions)) {
-      setState((prev) => ({ ...prev, sessions: sanitizedSessions }));
-    }
-  }, [state.sessions, state.users]);
+  /* ─── Resolve auth level from Supabase user ─── */
+  const resolveSupabaseLevel = useCallback(async (user: User): Promise<AuthLevel> => {
+    const { data: roles } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", user.id);
 
-  useEffect(() => {
-    window.localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(state));
-  }, [state]);
-
-  const getCurrentUser = useCallback(
-    (role: UserRole): OperationalUser | null => {
-      const session = state.sessions[role];
-      if (!session) return null;
-
-      const user = state.users.find((item) => item.id === session.userId);
-      if (!user) return null;
-      if (user.id === "seed-admin-001") return toPublicUser(user);
-
-      const allowed = SESSION_ALLOWED_ROLES[role] ?? [role];
-      if (!allowed.includes(user.role)) return null;
-
-      return toPublicUser(user);
-    },
-    [state.sessions, state.users],
-  );
-
-  const currentGarcom = useMemo(() => getCurrentUser("garcom"), [getCurrentUser]);
-  const currentCaixa = useMemo(() => getCurrentUser("caixa"), [getCurrentUser]);
-  const currentGerente = useMemo(() => getCurrentUser("gerente"), [getCurrentUser]);
-
-  const getProfilesByRole = useCallback(
-    (role: UserRole) => state.users.filter((user) => user.role === role).map(toPublicUser),
-    [state.users],
-  );
-
-  const getActiveProfilesByRole = useCallback(
-    (role: UserRole) => state.users.filter((user) => user.role === role && user.ativo !== false).map(toPublicUser),
-    [state.users],
-  );
-
-  const createUser = useCallback((role: UserRole, nome: string, pin: string): { ok: boolean; error?: string; user?: OperationalUser } => {
-    const parsed = loginSchema.safeParse({ nome, pin });
-    if (!parsed.success) {
-      return { ok: false, error: parsed.error.issues[0]?.message ?? "Revise os dados informados" };
-    }
-
-    const nomeNormalizado = parsed.data.nome.trim();
-    const pinHash = hashPin(parsed.data.pin);
-
-    const existing = state.users.find(
-      (u) => u.role === role && u.nome.toLocaleLowerCase("pt-BR") === nomeNormalizado.toLocaleLowerCase("pt-BR"),
-    );
-
-    if (existing) {
-      return { ok: false, error: "Já existe um usuário com este nome neste perfil" };
-    }
-
-    const newUser: StoredUser = {
-      id: `user-${role}-${Date.now()}`,
-      nome: nomeNormalizado,
-      role,
-      criadoEm: new Date().toISOString(),
-      pinHash,
-      ativo: true,
-    };
-
-    setState((prev) => ({
-      ...prev,
-      users: [newUser, ...prev.users],
-    }));
-
-    return { ok: true, user: toPublicUser(newUser) };
-  }, [state.users]);
-
-  const removeUser = useCallback((id: string): { ok: boolean; error?: string } => {
-    const user = state.users.find((u) => u.id === id);
-    if (!user) return { ok: false, error: "Usuário não encontrado" };
-    if (id.startsWith("seed-")) return { ok: false, error: "Não é possível remover usuários padrão" };
-
-    setState((prev) => ({
-      users: prev.users.filter((u) => u.id !== id),
-      sessions: prev.sessions,
-    }));
-    return { ok: true };
-  }, [state.users]);
-
-  const deactivateUser = useCallback((id: string): { ok: boolean; error?: string } => {
-    const user = state.users.find((u) => u.id === id);
-    if (!user) return { ok: false, error: "Usuário não encontrado" };
-
-    setState((prev) => ({
-      ...prev,
-      users: prev.users.map((u) => u.id === id ? { ...u, ativo: false } : u),
-    }));
-    return { ok: true };
-  }, [state.users]);
-
-  const activateUser = useCallback((id: string): { ok: boolean; error?: string } => {
-    const user = state.users.find((u) => u.id === id);
-    if (!user) return { ok: false, error: "Usuário não encontrado" };
-
-    setState((prev) => ({
-      ...prev,
-      users: prev.users.map((u) => u.id === id ? { ...u, ativo: true } : u),
-    }));
-    return { ok: true };
-  }, [state.users]);
-
-  const loginWithPin = useCallback(async (role: UserRole, nome: string, pin: string): Promise<LoginResult> => {
-    const parsed = loginSchema.safeParse({ nome, pin });
-    if (!parsed.success) {
-      return { ok: false, error: parsed.error.issues[0]?.message ?? "Revise os dados informados" };
-    }
-
-    const nomeNormalizado = parsed.data.nome.trim();
-    const pinHash = hashPin(parsed.data.pin);
-    let authenticatedUser: OperationalUser | null = null;
-    let error: string | undefined;
-
-    setState((prev) => {
-      // Roles allowed per target route
-      const allowedRoles: Record<UserRole, UserRole[]> = {
-        garcom: ["garcom", "caixa", "gerente"],
-        caixa: ["caixa", "gerente"],
-        delivery: ["delivery", "caixa", "gerente"],
-        gerente: ["gerente"],
-      };
-      const allowed = allowedRoles[role] ?? [role];
-
-      // First: try to find user by name across ALL roles
-      const anyUser = prev.users.find(
-        (user) => user.nome.toLocaleLowerCase("pt-BR") === nomeNormalizado.toLocaleLowerCase("pt-BR"),
-      );
-
-      // Seed admin (nome="admin", role="gerente") can access ANY route
-      const isSeedAdmin = anyUser && anyUser.id === "seed-admin-001";
-
-      // Find user matching allowed roles for this route
-      const existingUser = isSeedAdmin
-        ? anyUser
-        : prev.users.find(
-            (user) => allowed.includes(user.role) && user.nome.toLocaleLowerCase("pt-BR") === nomeNormalizado.toLocaleLowerCase("pt-BR"),
-          );
-
-      if (existingUser && existingUser.ativo === false) {
-        error = "Este usuário está desativado. Contacte o gerente.";
-        return prev;
-      }
-
-      if (existingUser && existingUser.pinHash !== pinHash) {
-        error = "PIN inválido para este usuário";
-        return prev;
-      }
-
-      if (!existingUser) {
-        // User exists but with wrong role
-        if (anyUser) {
-          error = "Acesso negado. Seu perfil não tem permissão para esta área.";
-          return prev;
-        }
-
-        // Auto-register only for garçom
-        if (role === "garcom") {
-          const storedUser: StoredUser = {
-            id: `user-${role}-${Date.now()}`,
-            nome: nomeNormalizado,
-            role,
-            criadoEm: new Date().toISOString(),
-            pinHash,
-            ativo: true,
-          };
-          authenticatedUser = toPublicUser(storedUser);
-          return {
-            users: [storedUser, ...prev.users],
-            sessions: {
-              ...prev.sessions,
-              [role]: { userId: storedUser.id, loggedInAt: new Date().toISOString() },
-            },
-          };
-        }
-        error = role === "caixa"
-          ? "Usuário não encontrado. Solicite cadastro ao gerente."
-          : "Usuário não encontrado. Solicite cadastro ao admin.";
-        return prev;
-      }
-
-      authenticatedUser = toPublicUser(existingUser);
-
-      return {
-        users: prev.users,
-        sessions: {
-          ...prev.sessions,
-          [role]: { userId: existingUser.id, loggedInAt: new Date().toISOString() },
-        },
-      };
-    });
-
-    if (error) {
-      return { ok: false, error };
-    }
-
-    return { ok: true, user: authenticatedUser ?? undefined };
+    if (roles?.some((r) => r.role === "master")) return "master";
+    if (roles?.some((r) => r.role === "admin")) return "admin";
+    return "unauthenticated";
   }, []);
 
-  const verifyManagerAccess = useCallback(async (nome: string, pin: string): Promise<LoginResult> => {
-    const parsed = loginSchema.safeParse({ nome, pin });
-    if (!parsed.success) {
-      return { ok: false, error: parsed.error.issues[0]?.message ?? "Revise os dados informados" };
+  /* ─── Listen to auth state changes ─── */
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (session?.user) {
+        setSupabaseUser(session.user);
+        const level = await resolveSupabaseLevel(session.user);
+        setAuthLevel(level);
+        // Clear operational session when a Supabase session is active
+        if (level !== "unauthenticated") {
+          setOperationalSession(null);
+          writeOpSession(null);
+        }
+      } else {
+        setSupabaseUser(null);
+        // Keep operational session if it exists
+        const opSession = readOpSession();
+        setAuthLevel(opSession ? "operational" : "unauthenticated");
+        setOperationalSession(opSession);
+      }
+      setIsLoading(false);
+    });
+
+    // Check existing session
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (session?.user) {
+        setSupabaseUser(session.user);
+        const level = await resolveSupabaseLevel(session.user);
+        setAuthLevel(level);
+      } else {
+        const opSession = readOpSession();
+        if (opSession) {
+          setAuthLevel("operational");
+          setOperationalSession(opSession);
+        }
+      }
+      setIsLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
+  }, [resolveSupabaseLevel]);
+
+  /* ─── Level 1: Master login ─── */
+  const loginAsMaster = useCallback(async (email: string, password: string): Promise<LoginResult> => {
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error || !data.user) {
+      return { ok: false, error: error?.message ?? "Falha ao autenticar" };
     }
 
-    const nomeNormalizado = parsed.data.nome.trim();
-    const user = state.users.find(
-      (u) => u.role === "gerente" && u.nome.toLocaleLowerCase("pt-BR") === nomeNormalizado.toLocaleLowerCase("pt-BR"),
-    );
-
-    if (!user) {
-      return { ok: false, error: "Gerente não encontrado" };
+    const level = await resolveSupabaseLevel(data.user);
+    if (level !== "master") {
+      await supabase.auth.signOut();
+      return { ok: false, error: "Este usuário não possui permissão de Master" };
     }
 
-    if (user.ativo === false) {
-      return { ok: false, error: "Este gerente está desativado" };
+    setSupabaseUser(data.user);
+    setAuthLevel("master");
+    setOperationalSession(null);
+    writeOpSession(null);
+    return { ok: true };
+  }, [resolveSupabaseLevel]);
+
+  /* ─── Level 2: Admin login ─── */
+  const loginAsAdmin = useCallback(async (email: string, password: string): Promise<LoginResult> => {
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error || !data.user) {
+      return { ok: false, error: error?.message ?? "Falha ao autenticar" };
     }
 
-    if (user.pinHash !== hashPin(parsed.data.pin)) {
-      return { ok: false, error: "PIN do gerente inválido" };
+    const level = await resolveSupabaseLevel(data.user);
+    if (level !== "admin" && level !== "master") {
+      await supabase.auth.signOut();
+      return { ok: false, error: "Este usuário não possui permissão de Admin" };
     }
 
-    return { ok: true, user: toPublicUser(user) };
-  }, [state.users]);
+    setSupabaseUser(data.user);
+    setAuthLevel(level);
+    setOperationalSession(null);
+    writeOpSession(null);
+    return { ok: true };
+  }, [resolveSupabaseLevel]);
 
-  const verifyEmployeeAccess = useCallback(async (nome: string, pin: string): Promise<LoginResult> => {
-    const parsed = loginSchema.safeParse({ nome, pin });
-    if (!parsed.success) {
-      return { ok: false, error: parsed.error.issues[0]?.message ?? "Revise os dados informados" };
+  /* ─── Level 3: Operational PIN login ─── */
+  const loginAsOperational = useCallback(async (storeSlug: string, module: string, pin: string): Promise<LoginResult> => {
+    // 1. Find store by slug
+    const { data: store, error: storeError } = await supabase
+      .from("stores")
+      .select("id, name, slug")
+      .eq("slug", storeSlug)
+      .maybeSingle();
+
+    if (storeError || !store) {
+      return { ok: false, error: "Loja não encontrada" };
     }
 
-    const nomeNormalizado = parsed.data.nome.trim();
-    const pinHashed = hashPin(parsed.data.pin);
-    const employee = state.users.find(
-      (user) => user.nome.toLocaleLowerCase("pt-BR") === nomeNormalizado.toLocaleLowerCase("pt-BR"),
-    );
+    // 2. Fetch active PINs for this store+module
+    const { data: pins, error: pinsError } = await supabase
+      .from("module_pins")
+      .select("pin_hash, label")
+      .eq("store_id", store.id)
+      .eq("module", module)
+      .eq("active", true);
 
-    if (!employee) {
-      return { ok: false, error: "Funcionário não encontrado" };
+    if (pinsError || !pins || pins.length === 0) {
+      return { ok: false, error: "Nenhum PIN ativo para este módulo" };
     }
 
-    if (employee.ativo === false) {
-      return { ok: false, error: "Este funcionário está desativado. Contacte o gerente." };
+    // 3. Verify PIN against each hash using the RPC
+    let matchedLabel: string | null = null;
+    let found = false;
+
+    for (const p of pins) {
+      const { data: isValid } = await supabase.rpc("verify_pin", {
+        input_pin: pin,
+        stored_hash: p.pin_hash,
+      });
+
+      if (isValid) {
+        found = true;
+        matchedLabel = p.label;
+        break;
+      }
     }
 
-    if (employee.pinHash !== pinHashed) {
+    if (!found) {
       return { ok: false, error: "PIN inválido" };
     }
 
-    return { ok: true, user: toPublicUser(employee) };
-  }, [state.users]);
+    // 4. Save operational session
+    const opSession: OperationalSession = {
+      storeId: store.id,
+      storeSlug: store.slug,
+      storeName: store.name,
+      module,
+      pinLabel: matchedLabel,
+    };
 
-  const logout = useCallback((role: UserRole) => {
-    setState((prev) => {
-      const sessions = { ...prev.sessions };
-      delete sessions[role];
-      return { ...prev, sessions };
-    });
+    setOperationalSession(opSession);
+    writeOpSession(opSession);
+    setAuthLevel("operational");
+    return { ok: true };
   }, []);
 
+  /* ─── Universal logout ─── */
+  const logout = useCallback(async () => {
+    if (supabaseUser) {
+      await supabase.auth.signOut();
+    }
+    setSupabaseUser(null);
+    setOperationalSession(null);
+    writeOpSession(null);
+    setAuthLevel("unauthenticated");
+  }, [supabaseUser]);
+
+  /* ─── Legacy stubs ─── */
+  const loginWithPin = useCallback(async () => ({ ok: false as const, error: LEGACY_ERROR }), []);
+  const verifyManagerAccess = useCallback(async () => ({ ok: false as const, error: LEGACY_ERROR }), []);
+  const verifyEmployeeAccess = useCallback(async () => ({ ok: false as const, error: LEGACY_ERROR }), []);
+  const createUser = useCallback(() => ({ ok: false as const, error: LEGACY_ERROR }), []);
+  const removeUser = useCallback(() => ({ ok: false as const, error: LEGACY_ERROR }), []);
+  const deactivateUser = useCallback(() => ({ ok: false as const, error: LEGACY_ERROR }), []);
+  const activateUser = useCallback(() => ({ ok: false as const, error: LEGACY_ERROR }), []);
+  const getProfilesByRole = useCallback(() => [] as OperationalUser[], []);
+  const getActiveProfilesByRole = useCallback(() => [] as OperationalUser[], []);
+  const logout_role = useCallback(() => {}, []);
+
+  const value = useMemo<AuthContextType>(() => ({
+    authLevel,
+    supabaseUser,
+    isLoading,
+    loginAsMaster,
+    loginAsAdmin,
+    loginAsOperational,
+    operationalSession,
+    logout,
+    // Legacy stubs
+    currentGarcom: null,
+    currentCaixa: null,
+    currentGerente: null,
+    getProfilesByRole,
+    getActiveProfilesByRole,
+    loginWithPin,
+    createUser,
+    removeUser,
+    deactivateUser,
+    activateUser,
+    verifyManagerAccess,
+    verifyEmployeeAccess,
+    logout_role,
+  }), [
+    authLevel, supabaseUser, isLoading, operationalSession,
+    loginAsMaster, loginAsAdmin, loginAsOperational, logout,
+    getProfilesByRole, getActiveProfilesByRole, loginWithPin,
+    createUser, removeUser, deactivateUser, activateUser,
+    verifyManagerAccess, verifyEmployeeAccess, logout_role,
+  ]);
+
   return (
-    <AuthContext.Provider
-      value={{
-        currentGarcom,
-        currentCaixa,
-        currentGerente,
-        getProfilesByRole,
-        getActiveProfilesByRole,
-        loginWithPin,
-        createUser,
-        removeUser,
-        deactivateUser,
-        activateUser,
-        verifyManagerAccess,
-        verifyEmployeeAccess,
-        logout,
-      }}
-    >
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );
