@@ -233,16 +233,19 @@ const GerentePage = () => {
   }, []);
 
   const handleVerificarPin = useCallback(async () => {
-    if (!currentGerente) return;
+    if (!effectiveGerente || isAdminAccess) {
+      setPinVerificado(true);
+      return;
+    }
     setPinError("");
-    const result = await verifyManagerAccess(currentGerente.nome, pinInput);
+    const result = await verifyManagerAccess(effectiveGerente.nome, pinInput);
     if (result.ok) {
       setPinVerificado(true);
       setPinInput("");
     } else {
       setPinError(result.error ?? "PIN inválido");
     }
-  }, [currentGerente, pinInput, verifyManagerAccess]);
+  }, [effectiveGerente, isAdminAccess, pinInput, verifyManagerAccess]);
 
   /* ── shift closing data ── */
   const sumByMethod = (method: PaymentMethod) =>
