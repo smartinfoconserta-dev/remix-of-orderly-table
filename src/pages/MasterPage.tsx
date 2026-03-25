@@ -785,6 +785,22 @@ const MasterPage = () => {
                 <div><Label>Email</Label><Input type="email" value={form.email} onChange={(e) => ff("email", e.target.value)} /></div>
               </div>
             </div>
+            {!editId && (
+              <div className="space-y-3">
+                <h3 className="text-sm font-bold text-foreground uppercase tracking-wide">Conta Admin (Supabase)</h3>
+                <div className="flex items-center gap-2">
+                  <Switch checked={form.criarContaAdmin} onCheckedChange={(v) => ff("criarContaAdmin", v)} />
+                  <Label>Criar conta de acesso admin para este cliente</Label>
+                </div>
+                {form.criarContaAdmin && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 rounded-xl border bg-background p-4">
+                    <div><Label>Email (login)</Label><Input type="email" value={form.email} onChange={(e) => ff("email", e.target.value)} placeholder="admin@restaurante.com" /></div>
+                    <div><Label>Senha</Label><Input type="password" value={form.senhaAdmin} onChange={(e) => ff("senhaAdmin", e.target.value)} placeholder="Mínimo 6 caracteres" /></div>
+                    <div className="sm:col-span-2"><Label>Slug da loja</Label><Input value={form.slugLoja} onChange={(e) => ff("slugLoja", e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))} placeholder="ex: restaurante-01" /><p className="text-xs text-muted-foreground mt-1">Identificador único usado no login operacional</p></div>
+                  </div>
+                )}
+              </div>
+            )}
             <div className="space-y-3">
               <h3 className="text-sm font-bold text-foreground uppercase tracking-wide">Localização</h3>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
