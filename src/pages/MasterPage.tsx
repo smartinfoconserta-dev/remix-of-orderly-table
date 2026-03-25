@@ -321,8 +321,9 @@ const MasterPage = () => {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="w-full grid grid-cols-4">
+          <TabsList className="w-full grid grid-cols-5">
             <TabsTrigger value="clientes"><Users className="w-4 h-4 mr-1" />Clientes</TabsTrigger>
+            <TabsTrigger value="pins"><KeyRound className="w-4 h-4 mr-1" />PINs</TabsTrigger>
             <TabsTrigger value="financeiro"><DollarSign className="w-4 h-4 mr-1" />Financeiro</TabsTrigger>
             <TabsTrigger value="cobrancas"><AlertTriangle className="w-4 h-4 mr-1" />Cobranças</TabsTrigger>
             <TabsTrigger value="avisos"><Bell className="w-4 h-4 mr-1" />Avisos</TabsTrigger>
