@@ -332,6 +332,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     loginAsMaster,
     loginAsAdmin,
     loginAsOperational,
+    loginByPin,
     operationalSession,
     logout,
     // Legacy stubs
