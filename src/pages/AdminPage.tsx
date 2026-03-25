@@ -443,7 +443,7 @@ const AdminPage = () => {
             </div>
 
             {/* Status cards — 4 columns */}
-            <div className="grid grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="rounded-xl border border-border bg-card p-5 space-y-2">
                 <div className="flex items-center justify-between">
                   <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Produtos</p>
