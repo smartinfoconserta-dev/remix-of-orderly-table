@@ -691,7 +691,7 @@ const GerentePage = () => {
                 const nomeRestaurante = getSistemaConfig().nomeRestaurante || "Relatório";
                 const periodoLabel = periodo === "hoje" ? "Hoje" : periodo === "semana" ? "Esta semana" : periodo === "mes" ? "Este mês" : `${customInicio || "—"} a ${customFim || "—"}`;
                 const geradoEm = new Date().toLocaleString("pt-BR");
-                const operador = currentGerente?.nome || "—";
+                const operador = effectiveGerente?.nome || "—";
 
                 const prodRows = topProducts.map(p => {
                   const pct = relTotalFaturado > 0 ? ((p.total / relTotalFaturado) * 100).toFixed(1) : "0.0";
