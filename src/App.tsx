@@ -22,8 +22,7 @@ const App = () => {
     <div key={location.pathname} className="route-fade-in">
       <Routes location={location}>
         <Route path="/" element={<Index />} />
-        <Route path="/cliente" element={<ClientePage />} />
-        <Route path="/pedido" element={<PedidoPage />} />
+        {/* Public routes removed — cardápio will use /:slug in the future */}
 
         {/* Level 1: Master */}
         <Route path="/master" element={<ProtectedRoute requiredLevel="master"><MasterPage /></ProtectedRoute>} />
