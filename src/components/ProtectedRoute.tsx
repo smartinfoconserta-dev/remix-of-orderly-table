@@ -27,10 +27,13 @@ export const ProtectedRoute = ({ children, requiredLevel, requiredModule }: Prot
   }
 
   if (requiredLevel === "operational") {
-    if (authLevel !== "operational") {
-      return <Navigate to="/" replace />;
-    }
-    if (requiredModule && operationalSession?.module !== requiredModule) {
+    if (authLevel === "admin" || authLevel === "master") {
+      // Admin/master têm acesso total a qualquer módulo operacional
+    } else if (authLevel === "operational") {
+      if (requiredModule && operationalSession?.module !== requiredModule) {
+        return <Navigate to="/" replace />;
+      }
+    } else {
       return <Navigate to="/" replace />;
     }
   }
