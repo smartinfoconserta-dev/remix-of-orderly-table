@@ -163,6 +163,8 @@ interface CriarPedidoBalcaoInput {
   trocoParaQuanto?: number;
   observacaoGeral?: string;
   taxaEntrega?: number;
+  /** When true, delivery orders start as "aberto" instead of "aguardando_confirmacao" */
+  skipConfirmacao?: boolean;
 }
 
 interface RestaurantContextType {
