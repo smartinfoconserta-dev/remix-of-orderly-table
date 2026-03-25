@@ -15,7 +15,8 @@ type Filtro = "todas" | "consumo" | "livres" | "chamado";
 
 const GarcomPage = () => {
   const { mesas, dismissChamarGarcom } = useRestaurant();
-  const { currentGarcom, logout } = useAuth();
+  const { currentGarcom, logout, authLevel } = useAuth();
+  const isAdminAccess = authLevel === "admin" || authLevel === "master";
   const [searchParams, setSearchParams] = useSearchParams();
   const mesaIdSelecionada = searchParams.get("mesa")?.trim() ?? "";
   const [filtro, setFiltro] = useState<Filtro>("todas");
