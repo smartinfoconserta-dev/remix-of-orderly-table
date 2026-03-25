@@ -1,7 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Bike, ChefHat, CircleDollarSign, HandPlatter, Monitor, Settings, ShieldCheck, Tablet, User } from "lucide-react";
+import { Bike, ChefHat, CircleDollarSign, HandPlatter, KeyRound, Monitor, Settings, ShieldCheck, Tablet, User } from "lucide-react";
 import { getSistemaConfig } from "@/lib/adminStorage";
+import { useAuth } from "@/contexts/AuthContext";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 interface ModeCardProps {
   title: string;
@@ -24,6 +29,107 @@ const ModeCard = ({ title, description, icon, onClick }: ModeCardProps) => (
     </div>
   </button>
 );
+
+const AdminLoginDialog = () => {
+  const navigate = useNavigate();
+  const { loginAsMaster, loginAsAdmin } = useAuth();
+  const [open, setOpen] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const reset = () => {
+    setEmail("");
+    setPassword("");
+    setError(null);
+    setLoading(false);
+  };
+
+  const handleLogin = async (tab: "master" | "admin") => {
+    if (!email.trim() || !password) {
+      setError("Preencha email e senha");
+      return;
+    }
+    setLoading(true);
+    setError(null);
+
+    const result = tab === "master"
+      ? await loginAsMaster(email.trim(), password)
+      : await loginAsAdmin(email.trim(), password);
+
+    if (!result.ok) {
+      setError(result.error ?? "Falha ao autenticar");
+      setLoading(false);
+      return;
+    }
+
+    setOpen(false);
+    reset();
+    navigate(tab === "master" ? "/master" : "/admin");
+  };
+
+  const fields = (tab: "master" | "admin") => (
+    <div className="flex flex-col gap-4 pt-2">
+      <div className="space-y-2">
+        <label className="text-sm font-semibold text-foreground">Email</label>
+        <Input
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="seu@email.com"
+          autoComplete="email"
+        />
+      </div>
+      <div className="space-y-2">
+        <label className="text-sm font-semibold text-foreground">Senha</label>
+        <Input
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          placeholder="••••••••"
+          autoComplete="current-password"
+        />
+      </div>
+      {error && (
+        <p className="rounded-xl border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive">
+          {error}
+        </p>
+      )}
+      <Button
+        onClick={() => handleLogin(tab)}
+        disabled={loading}
+        className="h-11 rounded-xl text-base font-bold"
+      >
+        {loading ? "Entrando…" : "Entrar"}
+      </Button>
+    </div>
+  );
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) reset(); }}>
+      <DialogTrigger asChild>
+        <button className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors">
+          <KeyRound className="h-3.5 w-3.5" />
+          Acesso administrativo
+        </button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-sm">
+        <DialogHeader>
+          <DialogTitle className="text-lg font-black text-foreground">Acesso Administrativo</DialogTitle>
+        </DialogHeader>
+        <Tabs defaultValue="master" onValueChange={() => setError(null)}>
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="master">Master</TabsTrigger>
+            <TabsTrigger value="admin">Admin</TabsTrigger>
+          </TabsList>
+          <TabsContent value="master">{fields("master")}</TabsContent>
+          <TabsContent value="admin">{fields("admin")}</TabsContent>
+        </Tabs>
+      </DialogContent>
+    </Dialog>
+  );
+};
 
 const Index = () => {
   const navigate = useNavigate();
@@ -122,12 +228,11 @@ const Index = () => {
           icon={<Bike size={28} />}
           onClick={() => navigate("/motoboy")}
         />
-        <ModeCard
-          title="Administrador"
-          description="Configurações do restaurante"
-          icon={<Settings size={28} />}
-          onClick={() => navigate("/admin")}
-        />
+      </div>
+
+      {/* Footer — admin access */}
+      <div className="mt-4">
+        <AdminLoginDialog />
       </div>
 
       {showInstallBanner && (
