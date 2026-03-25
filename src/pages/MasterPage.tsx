@@ -364,18 +364,6 @@ const MasterPage = () => {
     refresh();
   };
 
-  if (!authed) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background p-4">
-        <div className="w-full max-w-sm space-y-4 rounded-2xl border bg-card p-6 shadow">
-          <h1 className="text-2xl font-black text-center text-foreground">Painel Master</h1>
-          <Input type="password" placeholder="Senha master" value={senha} onChange={(e) => { setSenha(e.target.value); setSenhaErro(false); }} onKeyDown={(e) => e.key === "Enter" && handleLogin()} />
-          {senhaErro && <p className="text-sm text-destructive text-center">Senha incorreta.</p>}
-          <Button className="w-full" onClick={handleLogin}>Entrar</Button>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-background p-4 md:p-8">
