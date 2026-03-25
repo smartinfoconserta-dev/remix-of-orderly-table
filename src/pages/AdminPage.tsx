@@ -561,9 +561,6 @@ const AdminPage = () => {
                 </div>
               </div>
             </div>
-                );
-              } catch { return null; }
-            })()}
           </div>
         )}
 
