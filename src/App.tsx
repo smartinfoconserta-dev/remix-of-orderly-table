@@ -23,18 +23,25 @@ const App = () => {
       <Routes location={location}>
         <Route path="/" element={<Index />} />
         <Route path="/cliente" element={<ClientePage />} />
-        <Route path="/garcom" element={<ProtectedRoute requiredSession="garcom"><GarcomPage /></ProtectedRoute>} />
-        <Route path="/mesa/:id" element={<ProtectedRoute requiredSession="garcom"><MesaPage /></ProtectedRoute>} />
-        <Route path="/caixa" element={<ProtectedRoute requiredSession="caixa"><CaixaPage accessMode="caixa" /></ProtectedRoute>} />
-        <Route path="/delivery" element={<ProtectedRoute requiredSession="delivery"><CaixaPage accessMode="caixa" modoForced="somente_delivery" /></ProtectedRoute>} />
-        <Route path="/gerente" element={<ProtectedRoute requiredSession="gerente"><GerentePage /></ProtectedRoute>} />
-        <Route path="/cozinha" element={<CozinhaPage />} />
-        <Route path="/admin" element={<AdminPage />} />
-        <Route path="/master" element={<MasterPage />} />
         <Route path="/pedido" element={<PedidoPage />} />
-        <Route path="/motoboy" element={<MotoboyPage />} />
-        <Route path="/totem" element={<TotemPage />} />
-        <Route path="/tv" element={<TvPage />} />
+
+        {/* Level 1: Master */}
+        <Route path="/master" element={<ProtectedRoute requiredLevel="master"><MasterPage /></ProtectedRoute>} />
+
+        {/* Level 2: Admin */}
+        <Route path="/admin" element={<ProtectedRoute requiredLevel="admin"><AdminPage /></ProtectedRoute>} />
+
+        {/* Level 3: Operational */}
+        <Route path="/garcom" element={<ProtectedRoute requiredLevel="operational" requiredModule="garcom"><GarcomPage /></ProtectedRoute>} />
+        <Route path="/mesa/:id" element={<ProtectedRoute requiredLevel="operational" requiredModule="garcom"><MesaPage /></ProtectedRoute>} />
+        <Route path="/caixa" element={<ProtectedRoute requiredLevel="operational" requiredModule="caixa"><CaixaPage accessMode="caixa" /></ProtectedRoute>} />
+        <Route path="/delivery" element={<ProtectedRoute requiredLevel="operational" requiredModule="delivery"><CaixaPage accessMode="caixa" modoForced="somente_delivery" /></ProtectedRoute>} />
+        <Route path="/gerente" element={<ProtectedRoute requiredLevel="operational" requiredModule="gerente"><GerentePage /></ProtectedRoute>} />
+        <Route path="/cozinha" element={<ProtectedRoute requiredLevel="operational" requiredModule="cozinha"><CozinhaPage /></ProtectedRoute>} />
+        <Route path="/motoboy" element={<ProtectedRoute requiredLevel="operational" requiredModule="motoboy"><MotoboyPage /></ProtectedRoute>} />
+        <Route path="/totem" element={<ProtectedRoute requiredLevel="operational" requiredModule="totem"><TotemPage /></ProtectedRoute>} />
+        <Route path="/tv" element={<ProtectedRoute requiredLevel="operational" requiredModule="tv_retirada"><TvPage /></ProtectedRoute>} />
+
         <Route path="*" element={<NotFound />} />
       </Routes>
     </div>
