@@ -165,6 +165,7 @@ const MasterPage = () => {
       observacoes: c.observacoes || "", historicoPagamentos: c.historicoPagamentos || [],
       plano: c.plano || "anual", dataInicio: c.dataInicio || "", dataTermino: c.dataTermino || "",
       planoModulos: c.planoModulos || "basico",
+      criarContaAdmin: false, senhaAdmin: "", slugLoja: "",
     });
     setDialogOpen(true);
   };
