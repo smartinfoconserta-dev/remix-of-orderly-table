@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ClipboardList,
   Download,
+  KeyRound,
   LayoutDashboard,
   Upload,
   Grid3X3,
@@ -16,6 +17,8 @@ import {
   Users,
   X,
 } from "lucide-react";
+import StorePinsManager from "@/components/StorePinsManager";
+import { useStore } from "@/contexts/StoreContext";
 import CategoryIcon from "@/components/CategoryIcon";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
