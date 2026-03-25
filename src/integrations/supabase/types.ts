@@ -14,6 +14,47 @@ export type Database = {
   }
   public: {
     Tables: {
+      mesas: {
+        Row: {
+          capacidade: number | null
+          created_at: string | null
+          id: string
+          nome: string | null
+          numero: number
+          status: string
+          store_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          capacidade?: number | null
+          created_at?: string | null
+          id?: string
+          nome?: string | null
+          numero: number
+          status?: string
+          store_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          capacidade?: number | null
+          created_at?: string | null
+          id?: string
+          nome?: string | null
+          numero?: number
+          status?: string
+          store_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mesas_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       module_pins: {
         Row: {
           active: boolean | null
