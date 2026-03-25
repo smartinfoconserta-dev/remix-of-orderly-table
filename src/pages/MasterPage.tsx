@@ -292,12 +292,17 @@ const MasterPage = () => {
 
     if (editId) { updateCliente(editId, form); toast.success("Cliente atualizado."); }
     else { addCliente(form); toast.success("Cliente criado."); }
-    // Sync planoModulos to licença config
+    // Sync planoModulos to licença config AND restaurant_config
     if (form.planoModulos) {
       const lic = getLicencaConfig();
       lic.plano = form.planoModulos;
       saveLicencaConfig(lic);
       saveLicencaConfigAsync(lic);
+
+      const cfg = getSistemaConfig();
+      cfg.plano = form.planoModulos;
+      saveSistemaConfig(cfg);
+      saveSistemaConfigAsync(cfg);
     }
     setDialogOpen(false); refresh();
   };
