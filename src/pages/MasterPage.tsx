@@ -21,7 +21,7 @@ import {
   getClientes, addCliente, updateCliente, removeCliente,
   getDespesas, addDespesa,
 } from "@/lib/masterStorage";
-import { getLicencaConfig, saveLicencaConfig, saveLicencaConfigAsync } from "@/lib/adminStorage";
+import { getLicencaConfig, saveLicencaConfig, saveLicencaConfigAsync, getSistemaConfig, saveSistemaConfig, saveSistemaConfigAsync } from "@/lib/adminStorage";
 
 
 
