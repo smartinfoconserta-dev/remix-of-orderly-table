@@ -172,6 +172,32 @@ const MasterPage = () => {
   };
 
   const [savingAccount, setSavingAccount] = useState(false);
+  const [buscandoCnpj, setBuscandoCnpj] = useState(false);
+
+  const buscarCnpj = async (cnpjRaw: string) => {
+    const cnpjClean = cnpjRaw.replace(/\D/g, "");
+    if (cnpjClean.length !== 14) return;
+    setBuscandoCnpj(true);
+    try {
+      const res = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${cnpjClean}`);
+      if (!res.ok) { toast.error("CNPJ não encontrado."); setBuscandoCnpj(false); return; }
+      const data = await res.json();
+      setForm((prev) => ({
+        ...prev,
+        nomeRestaurante: prev.nomeRestaurante || data.nome_fantasia || data.razao_social || "",
+        nomeContato: prev.nomeContato || (data.qsa?.[0]?.nome_socio || ""),
+        telefone: prev.telefone || (data.ddd_telefone_1 ? `(${data.ddd_telefone_1.slice(0, 2)}) ${data.ddd_telefone_1.slice(2)}` : ""),
+        email: prev.email || data.email || "",
+        endereco: prev.endereco || [data.descricao_tipo_de_logradouro, data.logradouro, data.numero, data.complemento].filter(Boolean).join(", "),
+        cidade: prev.cidade || data.municipio || "",
+        estado: prev.estado || data.uf || "",
+      }));
+      toast.success("Dados do CNPJ preenchidos!");
+    } catch {
+      toast.error("Erro ao buscar CNPJ.");
+    }
+    setBuscandoCnpj(false);
+  };
 
   const handleSave = async () => {
     if (!form.nomeRestaurante.trim() || !form.nomeContato.trim()) { toast.error("Preencha nome do restaurante e contato."); return; }
@@ -774,7 +800,7 @@ const MasterPage = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div><Label>Nome do restaurante</Label><Input value={form.nomeRestaurante} onChange={(e) => ff("nomeRestaurante", e.target.value)} /></div>
                 <div><Label>Segmento</Label><Select value={form.segmento} onValueChange={(v) => ff("segmento", v)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent container={document.body} position="popper" className="z-[80]">{SEGMENTOS.map((s) => <SelectItem key={s} value={s}>{SEGMENTO_LABELS[s]}</SelectItem>)}</SelectContent></Select></div>
-                <div><Label>CNPJ</Label><Input placeholder="00.000.000/0000-00" value={form.cnpj} onChange={(e) => ff("cnpj", e.target.value)} /></div>
+                <div><Label>CNPJ</Label><div className="flex gap-2"><Input placeholder="00.000.000/0000-00" value={form.cnpj} onChange={(e) => ff("cnpj", e.target.value)} onBlur={() => buscarCnpj(form.cnpj)} className="flex-1" /><Button type="button" variant="outline" size="sm" className="shrink-0 h-10" disabled={buscandoCnpj || form.cnpj.replace(/\D/g, "").length !== 14} onClick={() => buscarCnpj(form.cnpj)}>{buscandoCnpj ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}</Button></div></div>
                 <div><Label>Telefone</Label><Input placeholder="(00) 00000-0000" value={form.telefone} onChange={(e) => ff("telefone", e.target.value)} /></div>
               </div>
             </div>
