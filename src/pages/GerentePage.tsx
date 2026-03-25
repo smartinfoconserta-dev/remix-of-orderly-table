@@ -173,7 +173,7 @@ const GerentePage = () => {
     allMovimentacoesCaixa,
     pedidosBalcao,
   } = useRestaurant();
-  const { currentGerente, logout, verifyManagerAccess, getActiveProfilesByRole, createUser, deactivateUser, authLevel } = useAuth();
+  const { currentGerente, logout, verifyManagerAccess, authLevel, operationalSession } = useAuth();
   const isAdminAccess = authLevel === "admin" || authLevel === "master";
   const effectiveGerente = currentGerente ?? (isAdminAccess ? { id: "admin", nome: "Administrador", role: "gerente" as const, criadoEm: "" } : null);
   useRouteLock("/gerente");
