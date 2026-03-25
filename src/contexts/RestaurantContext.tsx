@@ -1084,6 +1084,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         caixaId: "totem-auto",
         caixaNome: "Totem Autoatendimento (fechamento automático)",
         troco: 0,
+        subtotal: p.total,
         desconto: 0,
       }));
       return {
