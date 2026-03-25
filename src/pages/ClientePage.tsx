@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { LockKeyhole, TabletSmartphone } from "lucide-react";
 import PedidoFlow from "@/components/PedidoFlow";
 import { Button } from "@/components/ui/button";
@@ -20,8 +20,9 @@ import {
 
 const ClientePage = () => {
   const { mesas } = useRestaurant();
-  const { loginByPin } = useAuth();
+  const { loginByPin, logout } = useAuth();
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
 
   const [mesaId, setMesaId] = useState<string | null>(() => {
     const savedMesa = getBoundTabletMesaId();
@@ -47,7 +48,7 @@ const ClientePage = () => {
     }
   }, [searchParams]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  useRouteLock("/cliente");
+  useRouteLock("/cliente", Boolean(tabletUser || mesaId));
 
   useEffect(() => {
     if (!mesaId) return;
@@ -115,20 +116,24 @@ const ClientePage = () => {
     setMesaId(boundMesaId);
   };
 
-  const handleDevExit = () => {
+  const handleDevExit = async () => {
     clearBoundTabletMesaId();
     clearTabletLoginUser();
     setMesaId(null);
     setTabletUser(null);
-    window.location.href = "/";
+    setStoreSlug("");
+    setPin("");
+    setLoginError(null);
+    await logout();
+    navigate("/", { replace: true });
   };
 
   if (mesaId) {
     return (
       <div className="relative">
         <button
-          onClick={handleDevExit}
-          className="fixed top-2 right-2 z-[9999] rounded-lg bg-destructive px-3 py-1.5 text-xs font-bold text-destructive-foreground opacity-60 hover:opacity-100 transition-opacity"
+          onClick={() => void handleDevExit()}
+          className="fixed right-2 top-2 z-[9999] rounded-lg bg-destructive px-3 py-1.5 text-xs font-bold text-destructive-foreground opacity-60 transition-opacity hover:opacity-100"
         >
           Sair (dev)
         </button>
@@ -222,21 +227,25 @@ const ClientePage = () => {
                 mesa.status === "consumo"
                   ? "border-emerald-500/50 bg-emerald-500/8"
                   : mesa.status === "pendente"
-                  ? "border-amber-500/50 bg-amber-500/8"
-                  : "border-border bg-card hover:border-primary/40"
+                    ? "border-amber-500/50 bg-amber-500/8"
+                    : "border-border bg-card hover:border-primary/40"
               }`}
             >
               <span className={`text-3xl font-black tabular-nums ${
-                mesa.status === "consumo" ? "text-emerald-400"
-                : mesa.status === "pendente" ? "text-amber-400"
-                : "text-foreground"
+                mesa.status === "consumo"
+                  ? "text-emerald-400"
+                  : mesa.status === "pendente"
+                    ? "text-amber-400"
+                    : "text-foreground"
               }`}>
                 {String(mesa.numero).padStart(2, "0")}
               </span>
               <span className={`text-[10px] font-bold uppercase tracking-widest ${
-                mesa.status === "consumo" ? "text-emerald-400"
-                : mesa.status === "pendente" ? "text-amber-400"
-                : "text-muted-foreground"
+                mesa.status === "consumo"
+                  ? "text-emerald-400"
+                  : mesa.status === "pendente"
+                    ? "text-amber-400"
+                    : "text-muted-foreground"
               }`}>
                 {mesa.status === "consumo" ? "Ocupada" : mesa.status === "pendente" ? "Pendente" : "Livre"}
               </span>

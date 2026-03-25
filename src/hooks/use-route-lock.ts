@@ -1,11 +1,13 @@
 import { useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
-export const useRouteLock = (allowedPath: string) => {
+export const useRouteLock = (allowedPath: string, enabled = true) => {
   const location = useLocation();
   const navigate = useNavigate();
 
   useEffect(() => {
+    if (!enabled) return;
+
     const reinforceLock = () => {
       if (typeof window === "undefined") return;
 
@@ -38,5 +40,5 @@ export const useRouteLock = (allowedPath: string) => {
     return () => {
       window.removeEventListener("popstate", handlePopState);
     };
-  }, [allowedPath, location.hash, location.pathname, location.search, navigate]);
+  }, [allowedPath, enabled, location.hash, location.pathname, location.search, navigate]);
 };
