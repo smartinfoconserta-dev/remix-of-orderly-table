@@ -2271,6 +2271,21 @@ const AdminPage = () => {
           );
         })()}
 
+        {/* ═══ PINS ═══ */}
+        {tab === "pins" && (
+          <div className="space-y-6 fade-in">
+            <div>
+              <h2 className="text-xl font-black text-foreground">Gerenciamento de PINs</h2>
+              <p className="text-sm text-muted-foreground mt-1">Crie e gerencie PINs de acesso para cada módulo operacional.</p>
+            </div>
+            {storeId ? (
+              <StorePinsManager stores={[{ id: storeId, name: ctxStoreName || "Minha Loja", slug: "" }]} />
+            ) : (
+              <p className="text-sm text-muted-foreground py-8 text-center">Loja não identificada. Faça login novamente.</p>
+            )}
+          </div>
+        )}
+
         {/* ═══ EQUIPE ═══ */}
         {tab === "equipe" && (
           <div className="space-y-6 fade-in">
