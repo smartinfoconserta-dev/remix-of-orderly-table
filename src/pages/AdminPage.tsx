@@ -429,17 +429,15 @@ const AdminPage = () => {
       <main className="flex-1 overflow-y-auto p-8 bg-background" key={tab}>
         {/* ═══ DASHBOARD ═══ */}
         {tab === "dashboard" && (
-          <div className="space-y-8 fade-in max-w-4xl">
+          <div className="space-y-8 fade-in">
             {/* Header */}
-            <div className="flex items-end justify-between">
-              <div>
-                <h2 className="text-2xl font-black text-foreground">
-                  Bem-vindo de volta 👋
-                </h2>
-                <p className="text-sm text-muted-foreground mt-1">
-                  {new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
-                </p>
-              </div>
+            <div>
+              <h2 className="text-2xl font-black text-foreground">
+                Bem-vindo de volta 👋
+              </h2>
+              <p className="text-sm text-muted-foreground mt-1 capitalize">
+                {new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
+              </p>
             </div>
 
             {/* Status cards — 4 columns */}
@@ -447,7 +445,9 @@ const AdminPage = () => {
               <div className="rounded-xl border border-border bg-card p-5 space-y-2">
                 <div className="flex items-center justify-between">
                   <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Produtos</p>
-                  <ClipboardList className="h-4 w-4 text-muted-foreground/50" />
+                  <div className="h-7 w-7 rounded-lg bg-primary/15 flex items-center justify-center">
+                    <ClipboardList className="h-3.5 w-3.5 text-primary" />
+                  </div>
                 </div>
                 <p className="text-3xl font-black text-foreground">{allProducts.length}</p>
                 <p className="text-xs text-muted-foreground">itens no cardápio</p>
@@ -455,7 +455,9 @@ const AdminPage = () => {
               <div className="rounded-xl border border-border bg-card p-5 space-y-2">
                 <div className="flex items-center justify-between">
                   <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Mesas</p>
-                  <Grid3X3 className="h-4 w-4 text-muted-foreground/50" />
+                  <div className="h-7 w-7 rounded-lg bg-primary/15 flex items-center justify-center">
+                    <Grid3X3 className="h-3.5 w-3.5 text-primary" />
+                  </div>
                 </div>
                 <p className="text-3xl font-black text-foreground">{mesasConfig.totalMesas}</p>
                 <p className="text-xs text-muted-foreground">configuradas</p>
@@ -463,11 +465,21 @@ const AdminPage = () => {
               <div className="rounded-xl border border-border bg-card p-5 space-y-2">
                 <div className="flex items-center justify-between">
                   <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Delivery</p>
-                  <Truck className="h-4 w-4 text-muted-foreground/50" />
+                  <div className="h-7 w-7 rounded-lg bg-emerald-500/15 flex items-center justify-center">
+                    <Truck className="h-3.5 w-3.5 text-emerald-400" />
+                  </div>
                 </div>
-                <p className={`text-xl font-black ${sistemaConfig.deliveryAtivo !== false ? "text-emerald-400" : "text-destructive"}`}>
-                  {sistemaConfig.deliveryAtivo !== false ? "Ativo" : "Inativo"}
-                </p>
+                <div className="flex items-center gap-2">
+                  {sistemaConfig.deliveryAtivo !== false && (
+                    <span className="relative flex h-2.5 w-2.5">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                      <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-400" />
+                    </span>
+                  )}
+                  <p className={`text-xl font-black ${sistemaConfig.deliveryAtivo !== false ? "text-emerald-400" : "text-destructive"}`}>
+                    {sistemaConfig.deliveryAtivo !== false ? "Ativo" : "Inativo"}
+                  </p>
+                </div>
                 <p className="text-xs text-muted-foreground">
                   {sistemaConfig.deliveryAtivo !== false ? "Aceitando pedidos" : "Pausado"}
                 </p>
@@ -475,90 +487,69 @@ const AdminPage = () => {
               <div className="rounded-xl border border-border bg-card p-5 space-y-2">
                 <div className="flex items-center justify-between">
                   <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Equipe</p>
-                  <KeyRound className="h-4 w-4 text-muted-foreground/50" />
+                  <div className="h-7 w-7 rounded-lg bg-primary/15 flex items-center justify-center">
+                    <KeyRound className="h-3.5 w-3.5 text-primary" />
+                  </div>
                 </div>
                 <p className="text-3xl font-black text-foreground">—</p>
                 <p className="text-xs text-muted-foreground">Gerenciado via PINs</p>
               </div>
             </div>
 
-            {/* Two-column layout: Quick actions + License */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* Ações rápidas */}
-              <div className="lg:col-span-2 space-y-3">
-                <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Ações rápidas</p>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <button onClick={() => { setTab("cardapio"); openNewProduct(); }}
-                    className="flex items-center gap-4 rounded-xl border border-border bg-card px-5 py-4 text-left hover:border-primary/40 hover:bg-primary/5 transition-all group">
-                    <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors shrink-0">
-                      <Plus className="h-5 w-5 text-primary" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-bold text-foreground">Adicionar produto</p>
-                      <p className="text-xs text-muted-foreground">Novo item no cardápio</p>
-                    </div>
-                  </button>
-                  <button onClick={() => setTab("configuracoes")}
-                    className="flex items-center gap-4 rounded-xl border border-border bg-card px-5 py-4 text-left hover:border-primary/40 hover:bg-primary/5 transition-all group">
-                    <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors shrink-0">
-                      <Settings className="h-5 w-5 text-primary" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-bold text-foreground">Configurar sistema</p>
-                      <p className="text-xs text-muted-foreground">Delivery, horários</p>
-                    </div>
-                  </button>
-                  <button onClick={() => setTab("pins")}
-                    className="flex items-center gap-4 rounded-xl border border-border bg-card px-5 py-4 text-left hover:border-primary/40 hover:bg-primary/5 transition-all group">
-                    <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors shrink-0">
-                      <KeyRound className="h-5 w-5 text-primary" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-bold text-foreground">Gerenciar PINs</p>
-                      <p className="text-xs text-muted-foreground">Acessos da equipe</p>
-                    </div>
-                  </button>
+            {/* Plan banner */}
+            <div className="rounded-xl border border-border bg-card p-5">
+              <div className="flex items-center gap-5 flex-wrap">
+                <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-primary to-red-500 flex items-center justify-center shrink-0">
+                  <Shield className="h-6 w-6 text-primary-foreground" />
                 </div>
-              </div>
-
-              {/* License alert or info */}
-              <div className="space-y-3">
-                <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Seu plano</p>
-                <div className="rounded-xl border border-border bg-card p-5 space-y-3">
-                  <div className="flex items-center gap-3">
-                    <Shield className="h-5 w-5 text-primary" />
-                    <div>
-                      <p className="text-sm font-bold text-foreground">{PLANO_LABELS[licencaConfig.plano || "basico"] || "Básico"}</p>
-                      <p className="text-xs text-muted-foreground">Plano atual</p>
+                <div className="mr-auto">
+                  <p className="text-lg font-black text-foreground">{PLANO_LABELS[licencaConfig.plano || "basico"] || "Básico"}</p>
+                  <span className="inline-block mt-1 px-3 py-0.5 rounded-md border border-primary/40 bg-primary/10 text-primary text-[10px] font-black uppercase tracking-widest">
+                    Plano atual
+                  </span>
+                </div>
+                {[
+                  { label: "Módulos ilimitados", show: licencaConfig.plano === "premium" },
+                  { label: "Delivery integrado", show: ["medio", "pro", "premium"].includes(licencaConfig.plano || "") },
+                  { label: "Suporte prioritário", show: ["pro", "premium"].includes(licencaConfig.plano || "") },
+                ].map((f) => (
+                  <div key={f.label} className="flex items-center gap-2">
+                    <div className={`h-5 w-5 rounded flex items-center justify-center text-xs ${f.show ? "bg-emerald-500/20 text-emerald-400" : "bg-muted text-muted-foreground"}`}>
+                      {f.show ? "✓" : "—"}
                     </div>
+                    <span className="text-xs text-muted-foreground">{f.label}</span>
                   </div>
-                  {(() => {
-                    try {
-                      const raw = localStorage.getItem("orderly-licenca-v1");
-                      if (!raw) return null;
-                      const lic = JSON.parse(raw);
-                      if (!lic.dataVencimento) return null;
-                      const dias = Math.ceil((new Date(lic.dataVencimento).getTime() - Date.now()) / 86400000);
-                      if (dias > 14) return (
-                        <p className="text-xs text-muted-foreground">Válido por mais {dias} dias</p>
-                      );
-                      return (
-                        <div className={`rounded-lg px-3 py-2 ${dias <= 3 ? "bg-destructive/10 border border-destructive/30" : "bg-amber-500/10 border border-amber-500/30"}`}>
-                          <p className={`text-xs font-bold ${dias <= 3 ? "text-destructive" : "text-amber-400"}`}>
-                            {dias <= 0 ? "Licença vencida!" : `Vence em ${dias} dia(s)`}
-                          </p>
-                          <p className="text-[10px] text-muted-foreground mt-0.5">Entre em contato para renovar</p>
-                        </div>
-                      );
-                    } catch { return null; }
-                  })()}
+                ))}
+                <Button size="sm" variant="outline" className="rounded-xl font-bold text-xs ml-2" onClick={() => setTab("licenca")}>
+                  Ver plano →
+                </Button>
+              </div>
+            </div>
+
+            {/* Módulos ao vivo — 4x2 grid */}
+            <div className="space-y-4">
+              <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Módulos ao vivo</p>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {[
+                  { label: "Garçom", icon: UtensilsCrossed, path: "/garcom" },
+                  { label: "Caixa", icon: CreditCard, path: "/caixa" },
+                  { label: "Cozinha", icon: ChefHat, path: "/cozinha" },
+                  { label: "Delivery", icon: Truck, path: "/delivery" },
+                  { label: "Motoboy", icon: Bike, path: "/motoboy" },
+                  { label: "Totem", icon: Monitor, path: "/totem" },
+                  { label: "TV Retirada", icon: Tv, path: "/tv" },
+                  { label: "Gerente", icon: Users, path: "/gerente" },
+                ].map((m) => (
                   <button
-                    onClick={() => setTab("licenca")}
-                    className="text-xs text-primary hover:underline font-semibold"
+                    key={m.path}
+                    type="button"
+                    onClick={() => navigate(m.path)}
+                    className="flex items-center justify-between rounded-xl border border-border bg-card px-5 py-4 text-left transition-all hover:border-primary/50 hover:bg-primary/5 group"
                   >
-                    Ver detalhes do plano →
+                    <span className="text-sm font-bold text-foreground group-hover:text-primary transition-colors">{m.label}</span>
+                    <ExternalLink className="h-3.5 w-3.5 text-muted-foreground/40 group-hover:text-primary transition-colors" />
                   </button>
-                </div>
+                ))}
               </div>
             </div>
           </div>
