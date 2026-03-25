@@ -2156,11 +2156,6 @@ const AdminPage = () => {
                 <KeyRound className="h-4 w-4 mr-2" /> Ir para PINs
               </Button>
             </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
 
           </div>
         )}
