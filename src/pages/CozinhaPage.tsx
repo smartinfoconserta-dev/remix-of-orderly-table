@@ -134,9 +134,12 @@ const CozinhaPage = () => {
     setLoginLoading(false);
   };
 
-  const handleLogoutCozinha = () => {
+  const handleLogoutCozinha = async () => {
     localStorage.removeItem(COZINHA_SESSAO_KEY);
+    localStorage.removeItem(COZINHA_SETOR_KEY);
     setAutenticado(null);
+    await logout();
+    navigate("/", { replace: true });
   };
 
 
