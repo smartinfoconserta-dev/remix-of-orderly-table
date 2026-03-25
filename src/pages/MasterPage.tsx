@@ -23,7 +23,7 @@ import {
 } from "@/lib/masterStorage";
 import { getLicencaConfig, saveLicencaConfig, saveLicencaConfigAsync } from "@/lib/adminStorage";
 
-const MASTER_PASS = atob("bWFzdGVyMjAyNQ==");
+
 
 const SEGMENTOS = ["hamburgeria", "pizzaria", "sushi", "pastel", "a-la-carte", "outro"];
 const SEGMENTO_LABELS: Record<string, string> = {
