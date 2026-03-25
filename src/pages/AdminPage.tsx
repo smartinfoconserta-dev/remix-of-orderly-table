@@ -2179,6 +2179,15 @@ const AdminPage = () => {
           );
         })()}
 
+        {/* ═══ MESAS ═══ */}
+        {tab === "mesas" && (
+          storeId ? (
+            <MesasManager storeId={storeId} storeName={sistemaConfig.nomeRestaurante || "Restaurante"} />
+          ) : (
+            <p className="text-sm text-muted-foreground py-8 text-center">Loja não identificada. Faça login novamente.</p>
+          )
+        )}
+
         {/* ═══ PINS ═══ */}
         {tab === "pins" && (
           <div className="space-y-6 fade-in">
