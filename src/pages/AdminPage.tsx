@@ -341,11 +341,6 @@ const AdminPage = () => {
     toast.success("Licença salva");
   }, [licencaConfig]);
 
-  // --- Usuários (gerentes) state ---
-  const gerentes = useMemo(() => getProfilesByRole("gerente"), [getProfilesByRole]);
-  const [newUserName, setNewUserName] = useState("");
-  const [newUserPin, setNewUserPin] = useState("");
-  const [userError, setUserError] = useState<string | null>(null);
 
   const handleCreateGerente = () => {
     setUserError(null);
