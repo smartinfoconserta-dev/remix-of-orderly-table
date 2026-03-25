@@ -177,7 +177,8 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
     marcarBalcaoRetirado,
     cancelarPedidoBalcao,
   } = useRestaurant();
-  const { currentCaixa, currentGerente, logout, verifyManagerAccess, verifyEmployeeAccess } = useAuth();
+  const { currentCaixa, currentGerente, logout, verifyManagerAccess, verifyEmployeeAccess, authLevel } = useAuth();
+  const isAdminAccess = authLevel === "admin" || authLevel === "master";
 
   const [mesaSelecionada, setMesaSelecionada] = useState<string | null>(null);
   const [comandaOpen, setComandaOpen] = useState(false);
