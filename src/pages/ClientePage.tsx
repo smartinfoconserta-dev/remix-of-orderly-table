@@ -88,6 +88,7 @@ const ClientePage = () => {
     setLoginError(null);
 
     const result = await loginByPin(storeSlug.trim(), pin);
+    console.log("[ClientePage] loginByPin result:", JSON.stringify(result));
 
     if (!result.ok) {
       setLoginError(result.error ?? "Credenciais inválidas");
