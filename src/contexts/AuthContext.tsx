@@ -52,6 +52,7 @@ interface AuthContextType {
   activateUser: (id: string) => { ok: boolean; error?: string };
   verifyManagerAccess: (nome: string, pin: string) => Promise<{ ok: boolean; error?: string; user?: OperationalUser }>;
   verifyEmployeeAccess: (nome: string, pin: string) => Promise<{ ok: boolean; error?: string; user?: OperationalUser }>;
+  /** @deprecated Use logout() instead */
   logout_role: (role: UserRole) => void;
 }
 
