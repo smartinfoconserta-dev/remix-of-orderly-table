@@ -34,6 +34,7 @@ interface AuthContextType {
 
   /* ─── Level 3: Operational PIN ─── */
   loginAsOperational: (storeSlug: string, module: string, pin: string) => Promise<LoginResult>;
+  loginByPin: (storeSlug: string, pin: string) => Promise<LoginResult & { module?: string }>;
   operationalSession: OperationalSession | null;
 
   /* ─── Universal logout ─── */
@@ -253,6 +254,55 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return { ok: true };
   }, []);
 
+  /* ─── Level 3b: Login by PIN only (auto-detect module) ─── */
+  const loginByPin = useCallback(async (storeSlug: string, pin: string): Promise<LoginResult & { module?: string }> => {
+    // 1. Find store by slug
+    const { data: store, error: storeError } = await supabase
+      .from("stores")
+      .select("id, name, slug")
+      .eq("slug", storeSlug)
+      .maybeSingle();
+
+    if (storeError || !store) {
+      return { ok: false, error: "Loja não encontrada" };
+    }
+
+    // 2. Fetch ALL active PINs for this store (any module)
+    const { data: pins, error: pinsError } = await supabase
+      .from("module_pins")
+      .select("pin_hash, label, module")
+      .eq("store_id", store.id)
+      .eq("active", true);
+
+    if (pinsError || !pins || pins.length === 0) {
+      return { ok: false, error: "Nenhum PIN ativo nesta loja" };
+    }
+
+    // 3. Verify PIN against each hash
+    for (const p of pins) {
+      const { data: isValid } = await supabase.rpc("verify_pin", {
+        input_pin: pin,
+        stored_hash: p.pin_hash,
+      });
+
+      if (isValid) {
+        const opSession: OperationalSession = {
+          storeId: store.id,
+          storeSlug: store.slug,
+          storeName: store.name,
+          module: p.module,
+          pinLabel: p.label,
+        };
+        setOperationalSession(opSession);
+        writeOpSession(opSession);
+        setAuthLevel("operational");
+        return { ok: true, module: p.module };
+      }
+    }
+
+    return { ok: false, error: "PIN inválido" };
+  }, []);
+
   /* ─── Universal logout ─── */
   const logout = useCallback(async (_role?: UserRole) => {
     if (supabaseUser) {
@@ -283,6 +333,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     loginAsMaster,
     loginAsAdmin,
     loginAsOperational,
+    loginByPin,
     operationalSession,
     logout,
     // Legacy stubs
@@ -301,7 +352,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     logout_role,
   }), [
     authLevel, supabaseUser, isLoading, operationalSession,
-    loginAsMaster, loginAsAdmin, loginAsOperational, logout,
+    loginAsMaster, loginAsAdmin, loginAsOperational, loginByPin, logout,
     getProfilesByRole, getActiveProfilesByRole, loginWithPin,
     createUser, removeUser, deactivateUser, activateUser,
     verifyManagerAccess, verifyEmployeeAccess, logout_role,

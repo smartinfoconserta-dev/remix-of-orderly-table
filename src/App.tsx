@@ -1,6 +1,6 @@
 import { Route, Routes, useLocation } from "react-router-dom";
 import Index from "./pages/Index";
-import ClientePage from "./pages/ClientePage";
+
 import GarcomPage from "./pages/GarcomPage";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import MesaPage from "./pages/MesaPage";
@@ -9,7 +9,7 @@ import GerentePage from "./pages/GerentePage";
 import CozinhaPage from "./pages/CozinhaPage";
 import AdminPage from "./pages/AdminPage";
 import MasterPage from "./pages/MasterPage";
-import PedidoPage from "./pages/PedidoPage";
+
 import MotoboyPage from "./pages/MotoboyPage";
 import TotemPage from "./pages/TotemPage";
 import TvPage from "./pages/TvPage";
@@ -22,8 +22,7 @@ const App = () => {
     <div key={location.pathname} className="route-fade-in">
       <Routes location={location}>
         <Route path="/" element={<Index />} />
-        <Route path="/cliente" element={<ClientePage />} />
-        <Route path="/pedido" element={<PedidoPage />} />
+        {/* Public routes removed — cardápio will use /:slug in the future */}
 
         {/* Level 1: Master */}
         <Route path="/master" element={<ProtectedRoute requiredLevel="master"><MasterPage /></ProtectedRoute>} />

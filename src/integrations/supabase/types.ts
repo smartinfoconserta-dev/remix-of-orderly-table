@@ -350,6 +350,13 @@ export type Database = {
         Returns: boolean
       }
       is_master: { Args: { _user_id: string }; Returns: boolean }
+      search_stores: {
+        Args: { query: string }
+        Returns: {
+          name: string
+          slug: string
+        }[]
+      }
       verify_pin: {
         Args: { input_pin: string; stored_hash: string }
         Returns: boolean

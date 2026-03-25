@@ -26,7 +26,7 @@ import {
   XCircle,
 } from "lucide-react";
 import { toast } from "sonner";
-import OperationalAccessCard from "@/components/OperationalAccessCard";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -515,9 +515,7 @@ const GerentePage = () => {
             Gerente
           </h1>
         </header>
-        <main className="flex-1 overflow-y-auto p-4 md:p-6">
-          <OperationalAccessCard role="gerente" />
-        </main>
+          <p className="text-center text-muted-foreground py-12">Acesso não autorizado. Faça login na tela inicial.</p>
       </div>
     );
   }

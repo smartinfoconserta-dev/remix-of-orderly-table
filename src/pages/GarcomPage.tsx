@@ -4,7 +4,7 @@ import { useSearchParams } from "react-router-dom";
 import PedidoFlow from "@/components/PedidoFlow";
 import AppLayout from "@/components/AppLayout";
 import MesaCard from "@/components/MesaCard";
-import OperationalAccessCard from "@/components/OperationalAccessCard";
+
 import LicenseBanner from "@/components/LicenseBanner";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
@@ -33,7 +33,7 @@ const GarcomPage = () => {
   if (!currentGarcom) {
     return (
       <AppLayout title="Garçom">
-        <OperationalAccessCard role="garcom" />
+        <p className="text-center text-muted-foreground py-12">Acesso não autorizado. Faça login na tela inicial.</p>
       </AppLayout>
     );
   }

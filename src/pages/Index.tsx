@@ -1,52 +1,52 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Bike, ChefHat, CircleDollarSign, HandPlatter, KeyRound, Monitor, Settings, ShieldCheck, Tablet, User } from "lucide-react";
-import { getSistemaConfig } from "@/lib/adminStorage";
+import { KeyRound, Building2, Hash } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
-interface ModeCardProps {
-  title: string;
-  description: string;
-  icon: React.ReactNode;
-  onClick: () => void;
+/* ─── Store search hook ─── */
+
+interface StoreOption {
+  name: string;
+  slug: string;
 }
 
-const ModeCard = ({ title, description, icon, onClick }: ModeCardProps) => (
-  <button
-    onClick={onClick}
-    className="surface-card p-8 md:p-10 flex flex-col items-center justify-center gap-4 min-h-[160px] md:min-h-[200px] w-full"
-  >
-    <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
-      {icon}
-    </div>
-    <div className="text-center">
-      <span className="text-foreground text-xl font-bold block">{title}</span>
-      <span className="text-muted-foreground text-sm mt-1 block">{description}</span>
-    </div>
-  </button>
-);
+const useStoreSearch = () => {
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState<StoreOption[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
 
-const AdminLoginDialog = () => {
+  useEffect(() => {
+    if (query.trim().length < 2) {
+      setResults([]);
+      return;
+    }
+    const timeout = setTimeout(async () => {
+      setIsSearching(true);
+      const { data } = await supabase.rpc("search_stores", { query: query.trim() });
+      setResults((data as StoreOption[]) ?? []);
+      setIsSearching(false);
+    }, 300);
+    return () => clearTimeout(timeout);
+  }, [query]);
+
+  return { query, setQuery, results, isSearching };
+};
+
+/* ─── Admin Login Tab ─── */
+
+const AdminLoginTab = () => {
   const navigate = useNavigate();
   const { loginAsMaster, loginAsAdmin } = useAuth();
-  const [open, setOpen] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const reset = () => {
-    setEmail("");
-    setPassword("");
-    setError(null);
-    setLoading(false);
-  };
-
-  const handleLogin = async (tab: "master" | "admin") => {
+  const handleLogin = async () => {
     if (!email.trim() || !password) {
       setError("Preencha email e senha");
       return;
@@ -54,22 +54,24 @@ const AdminLoginDialog = () => {
     setLoading(true);
     setError(null);
 
-    const result = tab === "master"
-      ? await loginAsMaster(email.trim(), password)
-      : await loginAsAdmin(email.trim(), password);
-
-    if (!result.ok) {
-      setError(result.error ?? "Falha ao autenticar");
-      setLoading(false);
+    // Try master first, then admin
+    const masterResult = await loginAsMaster(email.trim(), password);
+    if (masterResult.ok) {
+      navigate("/master");
       return;
     }
 
-    setOpen(false);
-    reset();
-    navigate(tab === "master" ? "/master" : "/admin");
+    const adminResult = await loginAsAdmin(email.trim(), password);
+    if (adminResult.ok) {
+      navigate("/admin");
+      return;
+    }
+
+    setError(adminResult.error ?? "Credenciais inválidas ou sem permissão");
+    setLoading(false);
   };
 
-  const fields = (tab: "master" | "admin") => (
+  return (
     <div className="flex flex-col gap-4 pt-2">
       <div className="space-y-2">
         <label className="text-sm font-semibold text-foreground">Email</label>
@@ -89,6 +91,7 @@ const AdminLoginDialog = () => {
           onChange={(e) => setPassword(e.target.value)}
           placeholder="••••••••"
           autoComplete="current-password"
+          onKeyDown={(e) => e.key === "Enter" && handleLogin()}
         />
       </div>
       {error && (
@@ -96,48 +99,162 @@ const AdminLoginDialog = () => {
           {error}
         </p>
       )}
-      <Button
-        onClick={() => handleLogin(tab)}
-        disabled={loading}
-        className="h-11 rounded-xl text-base font-bold"
-      >
+      <Button onClick={handleLogin} disabled={loading} className="h-11 rounded-xl text-base font-bold">
         {loading ? "Entrando…" : "Entrar"}
       </Button>
     </div>
   );
+};
+
+/* ─── Operational Login Tab ─── */
+
+const OperationalLoginTab = () => {
+  const navigate = useNavigate();
+  const { loginByPin } = useAuth();
+  const { query, setQuery, results, isSearching } = useStoreSearch();
+  const [selectedSlug, setSelectedSlug] = useState("");
+  const [selectedName, setSelectedName] = useState("");
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [pin, setPin] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const handleSelectStore = (store: StoreOption) => {
+    setSelectedSlug(store.slug);
+    setSelectedName(store.name);
+    setQuery(store.name);
+    setShowDropdown(false);
+  };
+
+  const handleSubmit = async () => {
+    if (!selectedSlug) {
+      setError("Selecione uma empresa");
+      return;
+    }
+    if (!/^\d{4,6}$/.test(pin)) {
+      setError("O PIN deve ter entre 4 e 6 números");
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    const result = await loginByPin(selectedSlug, pin);
+
+    if (!result.ok) {
+      setError(result.error ?? "Não foi possível entrar");
+      setLoading(false);
+      return;
+    }
+
+    navigate(`/${result.module}`);
+  };
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setShowDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
 
   return (
-    <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) reset(); }}>
-      <DialogTrigger asChild>
-        <button className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors">
-          <KeyRound className="h-3.5 w-3.5" />
-          Acesso administrativo
-        </button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-sm">
-        <DialogHeader>
-          <DialogTitle className="text-lg font-black text-foreground">Acesso Administrativo</DialogTitle>
-        </DialogHeader>
-        <Tabs defaultValue="master" onValueChange={() => setError(null)}>
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="master">Master</TabsTrigger>
-            <TabsTrigger value="admin">Admin</TabsTrigger>
-          </TabsList>
-          <TabsContent value="master">{fields("master")}</TabsContent>
-          <TabsContent value="admin">{fields("admin")}</TabsContent>
-        </Tabs>
-      </DialogContent>
-    </Dialog>
+    <div className="flex flex-col gap-4 pt-2">
+      <div className="space-y-2 relative" ref={dropdownRef}>
+        <label className="flex items-center gap-2 text-sm font-semibold text-foreground">
+          <Building2 className="h-4 w-4" />
+          Empresa
+        </label>
+        <Input
+          value={query}
+          onChange={(e) => {
+            setQuery(e.target.value);
+            setSelectedSlug("");
+            setSelectedName("");
+            setShowDropdown(true);
+          }}
+          onFocus={() => query.length >= 2 && setShowDropdown(true)}
+          placeholder="Digite o nome ou código da empresa"
+        />
+        {showDropdown && results.length > 0 && (
+          <div className="absolute top-full left-0 right-0 z-50 mt-1 rounded-xl border border-border bg-popover shadow-lg overflow-hidden">
+            {results.map((store) => (
+              <button
+                key={store.slug}
+                type="button"
+                onClick={() => handleSelectStore(store)}
+                className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm hover:bg-accent transition-colors"
+              >
+                <Building2 className="h-4 w-4 shrink-0 text-muted-foreground" />
+                <div>
+                  <span className="font-medium text-foreground">{store.name}</span>
+                  <span className="ml-2 text-xs text-muted-foreground">{store.slug}</span>
+                </div>
+              </button>
+            ))}
+          </div>
+        )}
+        {showDropdown && query.length >= 2 && results.length === 0 && !isSearching && (
+          <div className="absolute top-full left-0 right-0 z-50 mt-1 rounded-xl border border-border bg-popover px-4 py-3 text-sm text-muted-foreground shadow-lg">
+            Nenhuma empresa encontrada
+          </div>
+        )}
+        {selectedName && (
+          <p className="text-xs text-muted-foreground">
+            Selecionada: <span className="font-semibold text-foreground">{selectedName}</span>
+          </p>
+        )}
+      </div>
+
+      <div className="space-y-2">
+        <label className="flex items-center gap-2 text-sm font-semibold text-foreground">
+          <Hash className="h-4 w-4" />
+          PIN numérico
+        </label>
+        <Input
+          value={pin}
+          onChange={(e) => setPin(e.target.value.replace(/\D/g, "").slice(0, 6))}
+          placeholder="4 a 6 dígitos"
+          inputMode="numeric"
+          autoComplete="one-time-code"
+          onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
+        />
+      </div>
+
+      {error && (
+        <p className="rounded-xl border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive">
+          {error}
+        </p>
+      )}
+
+      <Button onClick={handleSubmit} disabled={loading} className="h-11 rounded-xl text-base font-bold">
+        {loading ? "Verificando…" : "Entrar"}
+      </Button>
+    </div>
   );
 };
 
+/* ─── Main Page ─── */
+
 const Index = () => {
   const navigate = useNavigate();
-  const config = getSistemaConfig();
-  const nomeRestaurante = config.nomeRestaurante || "Orderly Table";
+  const { authLevel, operationalSession, isLoading } = useAuth();
+
+  // Auto-redirect if already logged in
+  useEffect(() => {
+    if (isLoading) return;
+    if (authLevel === "master") navigate("/master", { replace: true });
+    else if (authLevel === "admin") navigate("/admin", { replace: true });
+    else if (authLevel === "operational" && operationalSession?.module) {
+      navigate(`/${operationalSession.module}`, { replace: true });
+    }
+  }, [authLevel, operationalSession, isLoading, navigate]);
 
   // PWA install prompt
-  const [installPrompt, setInstallPrompt] = useState<Event | null>(null);
   const [showInstallBanner, setShowInstallBanner] = useState(false);
   const deferredRef = useRef<any>(null);
 
@@ -145,7 +262,6 @@ const Index = () => {
     const handler = (e: Event) => {
       e.preventDefault();
       deferredRef.current = e;
-      setInstallPrompt(e);
       setShowInstallBanner(true);
     };
     window.addEventListener("beforeinstallprompt", handler);
@@ -156,83 +272,50 @@ const Index = () => {
     if (!deferredRef.current) return;
     deferredRef.current.prompt();
     const result = await deferredRef.current.userChoicePromise;
-    if (result?.outcome === "accepted") {
-      setShowInstallBanner(false);
-    }
+    if (result?.outcome === "accepted") setShowInstallBanner(false);
     deferredRef.current = null;
   };
 
+  if (isLoading) {
+    return (
+      <div className="min-h-svh bg-background flex items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-svh bg-background flex flex-col items-center justify-center p-6 gap-6 relative">
-      <div className="text-center mb-4">
+    <div className="min-h-svh bg-background flex flex-col items-center justify-center p-6 gap-6">
+      <div className="text-center mb-2">
         <h1 className="text-foreground text-3xl md:text-4xl font-black tracking-tight">
-          {nomeRestaurante}
+          Orderly Table
         </h1>
         <p className="text-muted-foreground text-sm md:text-base mt-2">
-          Selecione o modo de acesso
+          Acesse o sistema
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-4xl">
-        <ModeCard
-          title="Cardápio"
-          description="Faça seu pedido"
-          icon={<User size={28} />}
-          onClick={() => navigate("/cliente")}
-        />
-        <ModeCard
-          title="Garçom"
-          description="Atender mesas e lançar pedidos"
-          icon={<HandPlatter size={28} />}
-          onClick={() => navigate("/garcom")}
-        />
-        <ModeCard
-          title="Cozinha"
-          description="Pedidos em preparo"
-          icon={<ChefHat size={28} />}
-          onClick={() => navigate("/cozinha")}
-        />
-        <ModeCard
-          title="Caixa"
-          description="Pagamentos e fechamento de mesas"
-          icon={<CircleDollarSign size={28} />}
-          onClick={() => navigate("/caixa")}
-        />
-        <ModeCard
-          title="Delivery"
-          description="Receber e gerenciar entregas"
-          icon={<span className="text-2xl">🛵</span>}
-          onClick={() => navigate("/delivery")}
-        />
-        <ModeCard
-          title="Totem"
-          description="Autoatendimento"
-          icon={<Tablet size={28} />}
-          onClick={() => navigate("/totem")}
-        />
-        <ModeCard
-          title="TV Retirada"
-          description="Painel de pedidos prontos"
-          icon={<Monitor size={28} />}
-          onClick={() => navigate("/tv")}
-        />
-        <ModeCard
-          title="Gerente"
-          description="Relatórios e gestão"
-          icon={<ShieldCheck size={28} />}
-          onClick={() => navigate("/gerente")}
-        />
-        <ModeCard
-          title="Motoboy"
-          description="Minhas entregas"
-          icon={<Bike size={28} />}
-          onClick={() => navigate("/motoboy")}
-        />
-      </div>
-
-      {/* Footer — admin access */}
-      <div className="mt-4">
-        <AdminLoginDialog />
+      <div className="w-full max-w-sm">
+        <div className="surface-card p-6 md:p-7">
+          <Tabs defaultValue="admin">
+            <TabsList className="grid w-full grid-cols-2 mb-4">
+              <TabsTrigger value="admin" className="gap-2">
+                <KeyRound className="h-4 w-4" />
+                Administração
+              </TabsTrigger>
+              <TabsTrigger value="operational" className="gap-2">
+                <Hash className="h-4 w-4" />
+                Operacional
+              </TabsTrigger>
+            </TabsList>
+            <TabsContent value="admin">
+              <AdminLoginTab />
+            </TabsContent>
+            <TabsContent value="operational">
+              <OperationalLoginTab />
+            </TabsContent>
+          </Tabs>
+        </div>
       </div>
 
       {showInstallBanner && (
