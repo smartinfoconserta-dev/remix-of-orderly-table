@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Check, ChefHat, Clock, LogOut, ShoppingBag, User } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { useRestaurant } from "@/contexts/RestaurantContext";
 import type { PedidoRealizado } from "@/contexts/RestaurantContext";
 import { getSistemaConfig } from "@/lib/adminStorage";
@@ -89,7 +90,8 @@ const COZINHA_SETOR_KEY = "obsidian-cozinha-setor-v1";
 
 const CozinhaPage = () => {
   const { mesas, pedidosBalcao, marcarPedidoPronto, marcarPedidoBalcaoPronto, marcarBalcaoPreparando } = useRestaurant();
-  const { verifyEmployeeAccess, authLevel } = useAuth();
+  const { verifyEmployeeAccess, authLevel, logout } = useAuth();
+  const navigate = useNavigate();
   const isAdminAccess = authLevel === "admin" || authLevel === "master";
   const [autenticado, setAutenticado] = useState<{ nome: string } | null>(() => {
     if (isAdminAccess) return { nome: "Administrador" };
@@ -132,9 +134,12 @@ const CozinhaPage = () => {
     setLoginLoading(false);
   };
 
-  const handleLogoutCozinha = () => {
+  const handleLogoutCozinha = async () => {
     localStorage.removeItem(COZINHA_SESSAO_KEY);
+    localStorage.removeItem(COZINHA_SETOR_KEY);
     setAutenticado(null);
+    await logout();
+    navigate("/", { replace: true });
   };
 
 
