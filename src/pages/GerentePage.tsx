@@ -456,7 +456,7 @@ const GerentePage = () => {
   );
 
   const totalCouvert = useMemo(() =>
-    fechFiltrados.reduce((acc, f) => acc + ((f as any).couvert ?? 0), 0),
+    fechFiltrados.reduce((acc, f) => acc + (f.couvert ?? 0), 0),
     [fechFiltrados]
   );
 
