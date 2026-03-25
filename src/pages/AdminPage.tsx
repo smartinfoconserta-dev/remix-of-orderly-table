@@ -2150,59 +2150,12 @@ const AdminPage = () => {
               <p className="text-sm text-muted-foreground">Gerencie os gerentes do restaurante</p>
             </div>
 
-            {/* Formulário de criação de gerente */}
-            <div className="surface-card max-w-lg space-y-4 rounded-2xl p-6">
-              <p className="text-sm font-black text-foreground">Novo gerente</p>
-              <div className="space-y-3">
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-muted-foreground">Nome</label>
-                  <Input
-                    value={newUserName}
-                    onChange={(e) => setNewUserName(e.target.value)}
-                    placeholder="Nome do gerente"
-                    maxLength={40}
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-muted-foreground">PIN (4-6 dígitos)</label>
-                  <Input
-                    value={newUserPin}
-                    onChange={(e) => setNewUserPin(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                    placeholder="1234"
-                    inputMode="numeric"
-                    onKeyDown={(e) => { if (e.key === "Enter") handleCreateGerente(); }}
-                  />
-                </div>
-                {userError && <p className="rounded-xl border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive">{userError}</p>}
-                <Button onClick={handleCreateGerente} disabled={!newUserName.trim() || !/^\d{4,6}$/.test(newUserPin)} className="w-full rounded-xl font-bold gap-1.5">
-                  <Plus className="h-4 w-4" /> Criar gerente
-                </Button>
-              </div>
+            <div className="surface-card max-w-lg rounded-2xl p-6">
+              <p className="text-sm text-muted-foreground">A equipe operacional agora é gerenciada via PINs na aba "PINs".</p>
+              <Button variant="outline" className="mt-4" onClick={() => setTab("pins")}>
+                <KeyRound className="h-4 w-4 mr-2" /> Ir para PINs
+              </Button>
             </div>
-
-            {/* Gerentes */}
-            <div className="surface-card max-w-lg rounded-2xl overflow-hidden">
-              <div className="px-5 py-3 border-b border-border bg-secondary/50">
-                <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">👔 Gerentes ({gerentes.length})</p>
-              </div>
-              {gerentes.length === 0 ? (
-                <p className="px-5 py-4 text-sm text-muted-foreground text-center">Nenhum gerente cadastrado.</p>
-              ) : (
-                <div className="divide-y divide-border/50">
-                  {gerentes.map((g) => (
-                    <div key={g.id} className="flex items-center justify-between px-5 py-3">
-                      <div>
-                        <p className="text-sm font-bold text-foreground">{g.nome}</p>
-                        <p className="text-xs text-muted-foreground">Gerente</p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-bold text-amber-400 bg-amber-500/10 border border-amber-500/20 rounded-lg px-2 py-0.5">Ativo</span>
-                        {!g.id.startsWith("seed-") && (
-                          <Button variant="ghost" size="icon" onClick={() => handleRemoveUser(g.id, g.nome, "Gerente")} className="text-destructive hover:bg-destructive/10 h-8 w-8">
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        )}
-                      </div>
                     </div>
                   ))}
                 </div>
