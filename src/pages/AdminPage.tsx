@@ -125,8 +125,8 @@ const AdminPage = () => {
   const { verifyManagerAccess, verifyEmployeeAccess, getProfilesByRole, getActiveProfilesByRole, createUser, removeUser } = useAuth();
   const { storeId, storeName: ctxStoreName } = useStore();
 
-  // Auth gate state
-  const [authenticated, setAuthenticated] = useState(false);
+  // Auth gate state — ProtectedRoute already validates auth level
+  const [authenticated, setAuthenticated] = useState(true);
   const [authName, setAuthName] = useState("");
   const [authPin, setAuthPin] = useState("");
   const [authError, setAuthError] = useState<string | null>(null);
