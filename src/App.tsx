@@ -1,6 +1,6 @@
 import { Route, Routes, useLocation } from "react-router-dom";
 import Index from "./pages/Index";
-import ClientePage from "./pages/ClientePage";
+
 import GarcomPage from "./pages/GarcomPage";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import MesaPage from "./pages/MesaPage";
