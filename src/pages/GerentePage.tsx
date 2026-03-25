@@ -562,7 +562,7 @@ const GerentePage = () => {
       {/* Title bar — Windows style */}
       <div className="flex items-center justify-between px-4 py-2 shrink-0" style={{ backgroundColor: "#1e3a5f" }}>
         <span className="text-sm font-bold text-white">Gerente — {nomeRestaurante}</span>
-        <span className="text-xs text-white/70">Operador: {currentGerente.nome} • {horaAtual}</span>
+        <span className="text-xs text-white/70">Operador: {effectiveGerente.nome} • {horaAtual}</span>
         <Button variant="ghost" size="sm" className="h-7 px-2 text-white/80 hover:text-white hover:bg-white/10 text-xs gap-1" onClick={() => logout("gerente")}>
           <LogOut className="h-3.5 w-3.5" />
           Sair
