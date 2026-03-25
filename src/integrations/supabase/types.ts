@@ -14,6 +14,47 @@ export type Database = {
   }
   public: {
     Tables: {
+      module_pins: {
+        Row: {
+          active: boolean | null
+          created_at: string | null
+          created_by: string | null
+          id: string
+          label: string | null
+          module: string
+          pin_hash: string
+          store_id: string
+        }
+        Insert: {
+          active?: boolean | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          label?: string | null
+          module: string
+          pin_hash: string
+          store_id: string
+        }
+        Update: {
+          active?: boolean | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          label?: string | null
+          module?: string
+          pin_hash?: string
+          store_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "module_pins_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       restaurant_categories: {
         Row: {
           created_at: string | null
