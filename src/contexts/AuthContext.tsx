@@ -253,7 +253,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   /* ─── Universal logout ─── */
-  const logout = useCallback(async () => {
+  const logout = useCallback(async (_role?: UserRole) => {
     if (supabaseUser) {
       await supabase.auth.signOut();
     }
