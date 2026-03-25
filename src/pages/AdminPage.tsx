@@ -483,39 +483,39 @@ const AdminPage = () => {
             </div>
 
             {/* Two-column layout: Quick actions + License */}
-            <div className="grid grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Ações rápidas */}
-              <div className="space-y-3">
+              <div className="lg:col-span-2 space-y-3">
                 <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Ações rápidas</p>
-                <div className="space-y-2">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <button onClick={() => { setTab("cardapio"); openNewProduct(); }}
-                    className="flex w-full items-center gap-4 rounded-xl border border-border bg-card px-5 py-4 text-left hover:border-primary/40 hover:bg-primary/5 transition-all group">
-                    <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                    className="flex items-center gap-4 rounded-xl border border-border bg-card px-5 py-4 text-left hover:border-primary/40 hover:bg-primary/5 transition-all group">
+                    <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors shrink-0">
                       <Plus className="h-5 w-5 text-primary" />
                     </div>
                     <div>
                       <p className="text-sm font-bold text-foreground">Adicionar produto</p>
-                      <p className="text-xs text-muted-foreground">Cadastrar novo item no cardápio</p>
+                      <p className="text-xs text-muted-foreground">Novo item no cardápio</p>
                     </div>
                   </button>
                   <button onClick={() => setTab("configuracoes")}
-                    className="flex w-full items-center gap-4 rounded-xl border border-border bg-card px-5 py-4 text-left hover:border-primary/40 hover:bg-primary/5 transition-all group">
-                    <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                    className="flex items-center gap-4 rounded-xl border border-border bg-card px-5 py-4 text-left hover:border-primary/40 hover:bg-primary/5 transition-all group">
+                    <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors shrink-0">
                       <Settings className="h-5 w-5 text-primary" />
                     </div>
                     <div>
                       <p className="text-sm font-bold text-foreground">Configurar sistema</p>
-                      <p className="text-xs text-muted-foreground">Delivery, horários, aparência</p>
+                      <p className="text-xs text-muted-foreground">Delivery, horários</p>
                     </div>
                   </button>
                   <button onClick={() => setTab("pins")}
-                    className="flex w-full items-center gap-4 rounded-xl border border-border bg-card px-5 py-4 text-left hover:border-primary/40 hover:bg-primary/5 transition-all group">
-                    <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                    className="flex items-center gap-4 rounded-xl border border-border bg-card px-5 py-4 text-left hover:border-primary/40 hover:bg-primary/5 transition-all group">
+                    <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors shrink-0">
                       <KeyRound className="h-5 w-5 text-primary" />
                     </div>
                     <div>
                       <p className="text-sm font-bold text-foreground">Gerenciar PINs</p>
-                      <p className="text-xs text-muted-foreground">Acessos operacionais da equipe</p>
+                      <p className="text-xs text-muted-foreground">Acessos da equipe</p>
                     </div>
                   </button>
                 </div>
