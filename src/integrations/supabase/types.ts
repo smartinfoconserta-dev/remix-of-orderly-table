@@ -341,6 +341,14 @@ export type Database = {
         }
         Returns: string
       }
+      get_store_by_slug: {
+        Args: { _slug: string }
+        Returns: {
+          id: string
+          name: string
+          slug: string
+        }[]
+      }
       get_user_store_ids: { Args: { _user_id: string }; Returns: string[] }
       has_role: {
         Args: {
