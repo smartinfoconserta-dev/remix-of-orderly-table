@@ -1604,74 +1604,15 @@ const AdminPage = () => {
               </div>
             )}
 
-            {/* SALÃO & MESAS */}
+            {/* SALÃO (simplified — mesas moved to dedicated tab) */}
             {configSection === "salao" && (
               <div className="space-y-4 max-w-lg">
-                <div className="surface-card inline-flex items-center gap-6 rounded-2xl p-6">
-                  <span className="text-sm font-bold text-muted-foreground">Número de mesas</span>
-                  <Input
-                    type="number"
-                    min={1}
-                    max={50}
-                    value={mesasInput}
-                    onChange={(e) => setMesasInput(e.target.value)}
-                    className="w-24 text-center text-xl font-black"
-                  />
-                  <Button onClick={handleMesasApply} className="rounded-xl font-bold">
-                    Aplicar
-                  </Button>
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  As alterações serão aplicadas ao reabrir o caixa do dia. Mínimo 1, máximo 50.
+                <p className="text-sm text-muted-foreground">
+                  A gestão de mesas e QR Codes agora fica na aba <strong>"Mesas"</strong> do menu lateral.
                 </p>
-
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="text-lg font-black text-foreground">QR Codes das mesas</h3>
-                    <p className="text-xs text-muted-foreground">Cada QR Code direciona para a mesa correspondente.</p>
-                  </div>
-                  <div className="grid grid-cols-3 md:grid-cols-4 gap-4">
-                    {Array.from({ length: parseInt(mesasInput) || mesasConfig.totalMesas }, (_, i) => {
-                      const num = i + 1;
-                      const url = `${window.location.origin}/mesa/${num}`;
-                      const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(url)}`;
-                      const nomeRest = sistemaConfig.nomeRestaurante || "Restaurante";
-                      return (
-                        <div key={num} className="flex flex-col items-center gap-2 rounded-xl border border-border bg-card p-3">
-                          <img src={qrUrl} alt={`Mesa ${String(num).padStart(2, "0")}`} className="w-full aspect-square rounded-lg" loading="lazy" />
-                          <span className="text-xs font-black text-foreground">Mesa {String(num).padStart(2, "0")}</span>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="w-full text-[10px] h-7 rounded-lg font-bold gap-1"
-                            onClick={() => {
-                              const printWindow = window.open("", "_blank", "width=400,height=600");
-                              if (!printWindow) return;
-                              const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>QR Mesa ${String(num).padStart(2, "0")}</title><style>
-                                body{margin:0;padding:40px 20px;font-family:Arial,sans-serif;text-align:center;background:#fff;color:#000}
-                                img{width:260px;height:260px;margin:20px auto}
-                                .nome{font-size:18px;font-weight:700;margin-bottom:10px}
-                                .mesa{font-size:32px;font-weight:900;margin-top:16px}
-                                .url{font-size:10px;color:#888;margin-top:8px;word-break:break-all}
-                                @media print{body{padding:20mm 10mm}@page{margin:10mm}}
-                              </style></head><body>
-                                <div class="nome">${nomeRest}</div>
-                                <img src="${qrUrl}" alt="QR Code Mesa ${String(num).padStart(2, "0")}" />
-                                <div class="mesa">Mesa ${String(num).padStart(2, "0")}</div>
-                                <div class="url">${url}</div>
-                              </body></html>`;
-                              printWindow.document.write(html);
-                              printWindow.document.close();
-                              setTimeout(() => printWindow.print(), 800);
-                            }}
-                          >
-                            Imprimir QR
-                          </Button>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
+                <Button variant="outline" className="rounded-xl font-bold gap-1.5" onClick={() => setTab("mesas")}>
+                  <Grid3X3 className="h-4 w-4" /> Ir para Mesas
+                </Button>
               </div>
             )}
 
