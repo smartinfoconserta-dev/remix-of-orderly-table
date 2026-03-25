@@ -3,6 +3,7 @@ import Index from "./pages/Index";
 
 import GarcomPage from "./pages/GarcomPage";
 import { ProtectedRoute } from "./components/ProtectedRoute";
+import { AdminBackButton } from "./components/AdminBackButton";
 import MesaPage from "./pages/MesaPage";
 import CaixaPage from "./pages/CaixaPage";
 import GerentePage from "./pages/GerentePage";
@@ -20,6 +21,7 @@ const App = () => {
 
   return (
     <div key={location.pathname} className="route-fade-in">
+      <AdminBackButton />
       <Routes location={location}>
         <Route path="/" element={<Index />} />
         {/* Public routes removed — cardápio will use /:slug in the future */}
