@@ -17,8 +17,6 @@ import {
   Timer,
   TrendingUp,
   Wallet,
-  Plus,
-  Trash2,
   Users,
   Tag,
   UtensilsCrossed,
