@@ -34,6 +34,7 @@ interface AuthContextType {
 
   /* ─── Level 3: Operational PIN ─── */
   loginAsOperational: (storeSlug: string, module: string, pin: string) => Promise<LoginResult>;
+  loginByPin: (storeSlug: string, pin: string) => Promise<LoginResult & { module?: string }>;
   operationalSession: OperationalSession | null;
 
   /* ─── Universal logout ─── */
