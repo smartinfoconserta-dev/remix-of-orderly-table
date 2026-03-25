@@ -115,8 +115,26 @@ const ClientePage = () => {
     setMesaId(boundMesaId);
   };
 
+  const handleDevExit = () => {
+    clearBoundTabletMesaId();
+    clearTabletLoginUser();
+    setMesaId(null);
+    setTabletUser(null);
+    window.location.href = "/";
+  };
+
   if (mesaId) {
-    return <PedidoFlow modo="cliente" mesaId={mesaId} />;
+    return (
+      <div className="relative">
+        <button
+          onClick={handleDevExit}
+          className="fixed top-2 right-2 z-[9999] rounded-lg bg-destructive px-3 py-1.5 text-xs font-bold text-destructive-foreground opacity-60 hover:opacity-100 transition-opacity"
+        >
+          Sair (dev)
+        </button>
+        <PedidoFlow modo="cliente" mesaId={mesaId} />
+      </div>
+    );
   }
 
   if (!tabletUser) {
