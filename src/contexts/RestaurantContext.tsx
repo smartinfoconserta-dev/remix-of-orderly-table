@@ -92,6 +92,7 @@ export interface FechamentoConta {
   caixaId: string;
   caixaNome: string;
   troco?: number;
+  subtotal?: number;
   desconto?: number;
   couvert?: number;
   numeroPessoas?: number;
@@ -806,6 +807,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
             caixaId: input.usuario.id,
             caixaNome: input.usuario.nome,
             troco: input.troco ?? 0,
+            subtotal: mesa.total,
             desconto: input?.desconto ?? 0,
             couvert: input?.couvert ?? 0,
             numeroPessoas: input?.numeroPessoas ?? 0,
@@ -1082,6 +1084,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         caixaId: "totem-auto",
         caixaNome: "Totem Autoatendimento (fechamento automático)",
         troco: 0,
+        subtotal: p.total,
         desconto: 0,
       }));
       return {
@@ -1162,6 +1165,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           caixaId: "totem-auto",
           caixaNome: "Totem Autoatendimento",
           troco: 0,
+          subtotal: totalPedido,
           desconto: 0,
         };
       })() : null;
@@ -1306,6 +1310,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         mesaNumero: 0,
         origem: "motoboy" as const,
         total: totalGeral,
+        subtotal: totalGeral,
         formaPagamento: pagamentos[0]?.formaPagamento ?? "dinheiro",
         pagamentos: pagamentos.length > 0 ? pagamentos : [{ id: `pag-${now.getTime()}`, formaPagamento: "dinheiro", valor: totalGeral }],
         itens: itensMotoboy,
@@ -1364,6 +1369,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         caixaId: input.usuario.id,
         caixaNome: input.usuario.nome,
         troco: input.troco ?? 0,
+        subtotal: pedido.total,
         desconto: input.desconto ?? 0,
         couvert: input.couvert ?? 0,
         numeroPessoas: input.numeroPessoas ?? 0,

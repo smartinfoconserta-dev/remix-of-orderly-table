@@ -451,12 +451,12 @@ const GerentePage = () => {
   }, [allEventos, dateRange]);
 
   const totalDescontos = useMemo(() =>
-    fechFiltrados.reduce((acc, f) => acc + ((f as any).desconto ?? 0), 0),
+    fechFiltrados.reduce((acc, f) => acc + (f.desconto ?? 0), 0),
     [fechFiltrados]
   );
 
   const totalCouvert = useMemo(() =>
-    fechFiltrados.reduce((acc, f) => acc + ((f as any).couvert ?? 0), 0),
+    fechFiltrados.reduce((acc, f) => acc + (f.couvert ?? 0), 0),
     [fechFiltrados]
   );
 
@@ -697,7 +697,8 @@ const GerentePage = () => {
                     ? f.pagamentos.map(p => `${paymentMethods.find(pm => pm.value === p.formaPagamento)?.label ?? p.formaPagamento}: R$${p.valor.toFixed(2)}`).join(", ")
                     : paymentMethods.find(pm => pm.value === f.formaPagamento)?.label ?? f.formaPagamento;
                   const origemLabel = f.origem === "mesa" ? `Mesa ${String(f.mesaNumero).padStart(2,"0")}` : f.origem === "balcao" ? "Balcão" : f.origem === "totem" ? "Totem" : f.origem === "delivery" ? "Delivery" : f.origem === "motoboy" ? "Motoboy" : f.mesaNumero > 0 ? `Mesa ${String(f.mesaNumero).padStart(2,"0")}` : "Balcão";
-                  return `<tr><td>${origemLabel}</td><td>${f.criadoEm}</td><td>${f.caixaNome}</td><td>${itensStr}</td><td style="text-align:right">${formatPrice(f.total)}</td><td>${pgto}</td></tr>`;
+                  const descontoStr = (f.desconto ?? 0) > 0 ? ` (sub: ${formatPrice(f.subtotal ?? (f.total + (f.desconto ?? 0)))} desc: -${formatPrice(f.desconto!)})` : "";
+                  return `<tr><td>${origemLabel}</td><td>${f.criadoEm}</td><td>${f.caixaNome}</td><td>${itensStr}</td><td style="text-align:right">${formatPrice(f.total)}${descontoStr}</td><td>${pgto}</td></tr>`;
                 }).join("");
 
                 const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Relatório de Vendas</title><style>
@@ -1237,7 +1238,17 @@ const GerentePage = () => {
                       <span className="text-sm text-muted-foreground">{f.criadoEm}</span>
                       <span className="text-sm text-muted-foreground">{f.caixaNome}</span>
                       <span className="text-sm text-muted-foreground truncate max-w-[160px]">{(f.itens || []).length > 0 ? (f.itens || []).map((item) => `${item.quantidade}x ${item.nome}`).join(", ") : "—"}</span>
-                      <span className={`text-sm font-black tabular-nums text-right ${f.cancelado ? "line-through text-red-400" : "text-foreground"}`}>{formatPrice(f.total)}</span>
+                      <span className={`text-sm font-black tabular-nums text-right ${f.cancelado ? "line-through text-red-400" : "text-foreground"}`}>
+                        {(f.desconto ?? 0) > 0 ? (
+                          <span className="flex flex-col items-end gap-0.5">
+                            <span className="text-muted-foreground text-xs line-through">{formatPrice(f.subtotal ?? (f.total + (f.desconto ?? 0)))}</span>
+                            <span className="text-red-400 text-xs">- {formatPrice(f.desconto!)}</span>
+                            <span>{formatPrice(f.total)}</span>
+                          </span>
+                        ) : (
+                          formatPrice(f.total)
+                        )}
+                      </span>
                       <span className="text-sm text-muted-foreground text-right">
                         {f.pagamentos.length > 1
                           ? `${f.pagamentos.length} formas`
