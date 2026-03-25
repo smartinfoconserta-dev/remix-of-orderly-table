@@ -1,31 +1,58 @@
 
 
-## Plano: Tela dedicada de login para Tablets (Clientes)
+## Plano: Página "Mesas" no Admin — CRUD completo + PIN de vínculo
 
 ### Situação atual
-A página `/cliente` usa o mesmo sistema de login operacional (`loginByPin` com Código da Loja + PIN) que garçom, caixa, etc. O módulo "cliente" do tablet precisa de um login próprio e separado.
+- Mesas são apenas um número (`total_mesas`) no `restaurant_config`, sem entidade individual
+- Não existe tabela de mesas no banco — tudo é derivado de um contador
+- O vínculo tablet↔mesa usa `localStorage` no dispositivo (`tabletBinding.ts`)
+- QR Codes e config de mesas ficam dentro de "Configurações > Salão"
 
-### O que muda
+### O que será criado
 
-**1. Adicionar módulo "cliente" ao StorePinsManager**
-- Incluir `{ value: "cliente", label: "Tablet Cliente" }` na lista `MODULES` em `StorePinsManager.tsx`
-- Assim o admin pode criar PINs específicos para tablets de cliente
+**1. Nova tabela `mesas` no Supabase**
 
-**2. Atualizar a tela de login em ClientePage**
-- Manter os dois campos: **Código da Loja** (slug) + **PIN**
-- Alterar a lógica de `handleLogin` para usar `loginByPin` mas filtrar apenas PINs do módulo `cliente`
-- Na prática: continua usando `loginByPin` (que já resolve o módulo automaticamente). Se o PIN cadastrado for do módulo "cliente", o tablet é liberado. Se for de outro módulo (garçom, caixa), exibe erro "PIN não autorizado para tablet"
-- Ajustar o texto da UI para deixar claro que é um PIN de tablet
+Colunas:
+- `id` (uuid, PK)
+- `store_id` (uuid, NOT NULL)
+- `numero` (integer, NOT NULL)
+- `nome` (text, nullable — apelido opcional como "VIP 1")
+- `status` (text, default "livre") — livre, ocupada, reservada, inativa
+- `capacidade` (integer, nullable — lugares)
+- `created_at`, `updated_at`
+- Unique constraint em `(store_id, numero)`
 
-**3. Validação no ClientePage**
-- Após `loginByPin` retornar sucesso, verificar se `result.module === "cliente"`
-- Se não for, mostrar erro: "Este PIN não é de um tablet. Cadastre um PIN de Tablet Cliente no painel."
+RLS: leitura pública, escrita para store members e masters.
 
-### Detalhes técnicos
+**2. Nova aba "Mesas" na sidebar do Admin**
 
-- **Sem alteração no banco**: a tabela `module_pins` já suporta qualquer valor de `module`. Basta cadastrar PINs com `module = "cliente"`
-- **Sem nova RPC**: o `loginByPin` do AuthContext já busca todos os PINs da loja e retorna o módulo encontrado. Apenas validamos no frontend que o módulo é "cliente"
-- **Arquivos alterados**:
-  - `src/components/StorePinsManager.tsx` — adicionar "cliente" / "Tablet Cliente" ao array MODULES
-  - `src/pages/ClientePage.tsx` — adicionar verificação `result.module === "cliente"` no handleLogin, com mensagem de erro apropriada
+Adicionar `{ id: "mesas", label: "Mesas", icon: Grid3X3 }` ao array `sidebarSections` entre "Cardápio" e "PINs".
+
+**3. Conteúdo da aba Mesas**
+
+- **Barra superior**: botão "Nova Mesa" + contador total
+- **Lista/grid de mesas**: cada card mostra número, nome (se houver), status (badge colorido), capacidade
+- **Ações por mesa**: Editar (modal com nome, capacidade, status), Excluir (confirmação)
+- **Criar mesa**: modal com número (auto-incrementa), nome opcional, capacidade
+- **Criar em lote**: botão "Criar 10 mesas" para setup inicial rápido
+- **QR Codes**: mantém geração de QR por mesa (move da seção Salão para cá)
+
+**4. PIN de vínculo de mesa (para tablet do cliente)**
+
+- Na lista de mesas, cada mesa terá um botão "Gerar PIN" que cria um PIN temporário de 4 dígitos
+- Esse PIN é salvo na tabela `module_pins` com `module = "cliente"` e `label = "Mesa XX"`
+- No tablet (`/cliente`), após login com Código da Loja + PIN de Tablet Cliente, o sistema identifica qual mesa está vinculada pelo label do PIN
+- Opção de "Revogar PIN" para desativar o PIN ativo daquela mesa
+
+**5. Arquivos alterados**
+
+| Arquivo | Mudança |
+|---|---|
+| `supabase/migrations/` | Nova migration: tabela `mesas` + RLS |
+| `src/pages/AdminPage.tsx` | Nova aba "mesas" na sidebar, novo bloco de renderização com CRUD |
+| `src/contexts/RestaurantContext.tsx` | Fetch de mesas do Supabase para uso global |
+
+**6. Remover seção "Salão" das Configurações**
+
+O conteúdo atual (número de mesas + QR Codes) será absorvido pela nova aba Mesas. A seção "Salão" em Configurações será removida.
 
