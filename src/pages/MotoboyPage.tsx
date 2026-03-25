@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { getSistemaConfig } from "@/lib/adminStorage";
 import { useRestaurant } from "@/contexts/RestaurantContext";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
 import jsQR from "jsqr";
 
 const SESSAO_KEY = "obsidian-motoboy-sessao-v1";
@@ -36,7 +37,11 @@ export default function MotoboyPage() {
   const INITIALS = NOME_REST.slice(0, 2).toUpperCase();
 
   const { pedidosBalcao, marcarBalcaoSaiu, marcarBalcaoEntregue, cancelarEntregaMotoboy } = useRestaurant();
-  const [sessao, setSessao] = useState<{ id: string; nome: string; fundoTroco: number } | null>(() => getSessao());
+  const { authLevel } = useAuth();
+  const isAdminAccess = authLevel === "admin" || authLevel === "master";
+  const [sessao, setSessao] = useState<{ id: string; nome: string; fundoTroco: number } | null>(() =>
+    isAdminAccess ? { id: "admin", nome: "Administrador", fundoTroco: 0 } : getSessao()
+  );
   const [nomeInput, setNomeInput] = useState("");
   const [pinInput, setPinInput] = useState("");
   const [fundoInput, setFundoInput] = useState("");

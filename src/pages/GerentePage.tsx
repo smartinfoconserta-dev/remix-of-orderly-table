@@ -173,7 +173,9 @@ const GerentePage = () => {
     allMovimentacoesCaixa,
     pedidosBalcao,
   } = useRestaurant();
-  const { currentGerente, logout, verifyManagerAccess, getActiveProfilesByRole, createUser, deactivateUser } = useAuth();
+  const { currentGerente, logout, verifyManagerAccess, getActiveProfilesByRole, createUser, deactivateUser, authLevel } = useAuth();
+  const isAdminAccess = authLevel === "admin" || authLevel === "master";
+  const effectiveGerente = currentGerente ?? (isAdminAccess ? { id: "admin", nome: "Administrador", role: "gerente" as const, criadoEm: "" } : null);
   useRouteLock("/gerente");
   const [logFilter, setLogFilter] = useState<LogCategory>("all");
   const [pinVerificado, setPinVerificado] = useState(false);
@@ -507,7 +509,7 @@ const GerentePage = () => {
   }, [fechFiltrados, allEventos, dateRange]);
 
   /* ── auth guard ── */
-  if (!currentGerente) {
+  if (!effectiveGerente) {
     return (
       <div className="min-h-svh flex flex-col bg-background">
         <header className="flex items-center gap-3 border-b border-border bg-card px-4 py-4 shrink-0 md:px-6">
@@ -521,7 +523,7 @@ const GerentePage = () => {
   }
 
   const handleFecharDia = () => {
-    fecharCaixaDoDia(currentGerente);
+    fecharCaixaDoDia(effectiveGerente);
     toast.success("Caixa do dia fechado com sucesso. Estado resetado.", { duration: 2000, icon: "🔒" });
   };
 
@@ -560,7 +562,7 @@ const GerentePage = () => {
       {/* Title bar — Windows style */}
       <div className="flex items-center justify-between px-4 py-2 shrink-0" style={{ backgroundColor: "#1e3a5f" }}>
         <span className="text-sm font-bold text-white">Gerente — {nomeRestaurante}</span>
-        <span className="text-xs text-white/70">Operador: {currentGerente.nome} • {horaAtual}</span>
+        <span className="text-xs text-white/70">Operador: {effectiveGerente.nome} • {horaAtual}</span>
         <Button variant="ghost" size="sm" className="h-7 px-2 text-white/80 hover:text-white hover:bg-white/10 text-xs gap-1" onClick={() => logout("gerente")}>
           <LogOut className="h-3.5 w-3.5" />
           Sair
@@ -689,7 +691,7 @@ const GerentePage = () => {
                 const nomeRestaurante = getSistemaConfig().nomeRestaurante || "Relatório";
                 const periodoLabel = periodo === "hoje" ? "Hoje" : periodo === "semana" ? "Esta semana" : periodo === "mes" ? "Este mês" : `${customInicio || "—"} a ${customFim || "—"}`;
                 const geradoEm = new Date().toLocaleString("pt-BR");
-                const operador = currentGerente?.nome || "—";
+                const operador = effectiveGerente?.nome || "—";
 
                 const prodRows = topProducts.map(p => {
                   const pct = relTotalFaturado > 0 ? ((p.total / relTotalFaturado) * 100).toFixed(1) : "0.0";
@@ -1600,7 +1602,7 @@ const GerentePage = () => {
       {/* Status bar — Windows style */}
       <div className="shrink-0 flex items-center gap-0 border-t border-border bg-card text-[10px] text-muted-foreground">
         <span className="px-3 py-1 border-r border-border">● Online</span>
-        <span className="px-3 py-1 border-r border-border">Operador: {currentGerente.nome}</span>
+        <span className="px-3 py-1 border-r border-border">Operador: {effectiveGerente.nome}</span>
         <span className="px-3 py-1 border-r border-border">Fechamentos: {fechamentos.length}</span>
         <span className="px-3 py-1">Mesas ativas: {mesas.filter(m => m.status === "consumo").length}</span>
       </div>

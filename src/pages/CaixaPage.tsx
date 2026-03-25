@@ -177,7 +177,8 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
     marcarBalcaoRetirado,
     cancelarPedidoBalcao,
   } = useRestaurant();
-  const { currentCaixa, currentGerente, logout, verifyManagerAccess, verifyEmployeeAccess } = useAuth();
+  const { currentCaixa, currentGerente, logout, verifyManagerAccess, verifyEmployeeAccess, authLevel } = useAuth();
+  const isAdminAccess = authLevel === "admin" || authLevel === "master";
 
   const [mesaSelecionada, setMesaSelecionada] = useState<string | null>(null);
   const [comandaOpen, setComandaOpen] = useState(false);
@@ -311,10 +312,11 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
 
   const mesa = mesaSelecionada ? mesas.find((item) => item.id === mesaSelecionada) ?? null : null;
   const balcaoPedido = balcaoPedidoSelecionado ? pedidosBalcao.find((p) => p.id === balcaoPedidoSelecionado) ?? null : null;
-  const currentOperator = accessMode === "gerente" ? currentGerente : currentCaixa;
-  const hasCaixaAccess = accessMode === "gerente"
+  const adminOperator = isAdminAccess ? { id: "admin", nome: "Administrador", role: "caixa" as const, criadoEm: "" } : null;
+  const currentOperator = adminOperator ?? (accessMode === "gerente" ? currentGerente : currentCaixa);
+  const hasCaixaAccess = isAdminAccess || (accessMode === "gerente"
     ? currentGerente?.role === "gerente" || currentGerente?.id === "seed-admin-001"
-    : currentCaixa?.role === "caixa" || currentCaixa?.role === "gerente" || currentCaixa?.role === "delivery" || currentCaixa?.id === "seed-admin-001";
+    : currentCaixa?.role === "caixa" || currentCaixa?.role === "gerente" || currentCaixa?.role === "delivery" || currentCaixa?.id === "seed-admin-001");
 
   useRouteLock(accessMode === "gerente" ? "/gerente" : "/caixa");
 

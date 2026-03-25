@@ -15,7 +15,8 @@ type Filtro = "todas" | "consumo" | "livres" | "chamado";
 
 const GarcomPage = () => {
   const { mesas, dismissChamarGarcom } = useRestaurant();
-  const { currentGarcom, logout } = useAuth();
+  const { currentGarcom, logout, authLevel } = useAuth();
+  const isAdminAccess = authLevel === "admin" || authLevel === "master";
   const [searchParams, setSearchParams] = useSearchParams();
   const mesaIdSelecionada = searchParams.get("mesa")?.trim() ?? "";
   const [filtro, setFiltro] = useState<Filtro>("todas");
@@ -30,7 +31,7 @@ const GarcomPage = () => {
     return () => clearInterval(id);
   }, []);
 
-  if (!currentGarcom) {
+  if (!currentGarcom && !isAdminAccess) {
     return (
       <AppLayout title="Garçom">
         <p className="text-center text-muted-foreground py-12">Acesso não autorizado. Faça login na tela inicial.</p>
@@ -38,8 +39,10 @@ const GarcomPage = () => {
     );
   }
 
+  const garcomNome = currentGarcom?.nome ?? (isAdminAccess ? "Administrador" : "");
+
   if (mesaIdSelecionada) {
-    return <PedidoFlow modo="garcom" mesaId={mesaIdSelecionada} garcomNome={currentGarcom.nome} />;
+    return <PedidoFlow modo="garcom" mesaId={mesaIdSelecionada} garcomNome={garcomNome} />;
   }
 
   const chamadoCount = mesas.filter((m) => m.chamarGarcom).length;
@@ -72,7 +75,7 @@ const GarcomPage = () => {
       }
     >
       <div className="mb-4 rounded-xl border border-border bg-card px-4 py-3">
-        <p className="text-base font-bold text-foreground">{currentGarcom.nome}</p>
+        <p className="text-base font-bold text-foreground">{garcomNome}</p>
         <p className="text-sm text-muted-foreground">Selecione uma mesa para lançar pedidos.</p>
       </div>
 
