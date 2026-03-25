@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LogOut, Plus, Pencil, Trash2, Phone, Mail, MapPin, DollarSign, Users, TrendingUp, TrendingDown, Receipt, Eye, AlertTriangle, ShieldOff, RefreshCw, Search, Send, Bell, KeyRound } from "lucide-react";
 import StorePinsManager from "@/components/StorePinsManager";
+import { supabase } from "@/integrations/supabase/client";
 import type { Pagamento } from "@/lib/masterStorage";
 import { toast } from "sonner";
 import {
