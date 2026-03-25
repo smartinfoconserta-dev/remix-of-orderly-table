@@ -187,24 +187,8 @@ const GerentePage = () => {
   const [customInicio, setCustomInicio] = useState("");
   const [customFim, setCustomFim] = useState("");
 
-  // Equipe state
-  const garcons = useMemo(() => getActiveProfilesByRole("garcom"), [getActiveProfilesByRole]);
-  const caixas = useMemo(() => getActiveProfilesByRole("caixa"), [getActiveProfilesByRole]);
-  const deliveries = useMemo(() => getActiveProfilesByRole("delivery"), [getActiveProfilesByRole]);
-  const [newEmpName, setNewEmpName] = useState("");
-  const [newEmpPin, setNewEmpPin] = useState("");
-  const [newEmpRole, setNewEmpRole] = useState<"garcom" | "caixa" | "delivery">("garcom");
-  const [empError, setEmpError] = useState<string | null>(null);
-
-  // Motoboy state
-  const MOTOBOY_KEY = "obsidian-motoboys-v1";
-  const getMotoboys = useCallback((): { id: string; nome: string; pinHash: string; ativo: boolean }[] => {
-    try { const raw = localStorage.getItem(MOTOBOY_KEY); return raw ? JSON.parse(raw) : []; } catch { return []; }
-  }, []);
-  const [motoboysList, setMotoboysList] = useState(() => getMotoboys());
-  const [mNome, setMNome] = useState("");
-  const [mPin, setMPin] = useState("");
-  const [mError, setMError] = useState<string | null>(null);
+  // Store ID for PIN management
+  const storeId = operationalSession?.storeId ?? null;
 
   // Fechamentos motoboy
   const FECHAMENTOS_KEY = "obsidian-motoboy-fechamentos-v1";
