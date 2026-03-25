@@ -341,6 +341,10 @@ export type Database = {
         Returns: boolean
       }
       is_master: { Args: { _user_id: string }; Returns: boolean }
+      verify_pin: {
+        Args: { input_pin: string; stored_hash: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role: "master" | "admin"
