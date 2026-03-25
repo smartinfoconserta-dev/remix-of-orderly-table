@@ -137,13 +137,10 @@ const MasterPage = () => {
   // Stores for PINs tab
   const [stores, setStores] = useState<{ id: string; name: string; slug: string }[]>([]);
   useEffect(() => {
-    if (!authed) return;
-    import("@/integrations/supabase/client").then(({ supabase }) => {
-      supabase.from("stores").select("id, name, slug").then(({ data }) => {
-        if (data) setStores(data);
-      });
+    supabase.from("stores").select("id, name, slug").then(({ data }) => {
+      if (data) setStores(data);
     });
-  }, [authed]);
+  }, []);
 
   const refresh = () => { setClientes(getClientes()); setDespesas(getDespesas()); };
 
