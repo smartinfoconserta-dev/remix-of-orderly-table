@@ -38,11 +38,20 @@ const useStoreSearch = () => {
 
 /* ─── Admin Login Tab ─── */
 
+const SAVED_CREDS_KEY = "orderly-saved-login-v1";
+
 const AdminLoginTab = () => {
   const navigate = useNavigate();
   const { loginAsMaster, loginAsAdmin } = useAuth();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState(() => {
+    try { return JSON.parse(localStorage.getItem(SAVED_CREDS_KEY) ?? "{}").email ?? ""; } catch { return ""; }
+  });
+  const [password, setPassword] = useState(() => {
+    try { return JSON.parse(localStorage.getItem(SAVED_CREDS_KEY) ?? "{}").password ?? ""; } catch { return ""; }
+  });
+  const [rememberMe, setRememberMe] = useState(() => {
+    try { return !!JSON.parse(localStorage.getItem(SAVED_CREDS_KEY) ?? "{}").email; } catch { return false; }
+  });
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -53,6 +62,13 @@ const AdminLoginTab = () => {
     }
     setLoading(true);
     setError(null);
+
+    // Save or clear credentials
+    if (rememberMe) {
+      localStorage.setItem(SAVED_CREDS_KEY, JSON.stringify({ email: email.trim(), password }));
+    } else {
+      localStorage.removeItem(SAVED_CREDS_KEY);
+    }
 
     // Try master first, then admin
     const masterResult = await loginAsMaster(email.trim(), password);
@@ -94,6 +110,18 @@ const AdminLoginTab = () => {
           onKeyDown={(e) => e.key === "Enter" && handleLogin()}
         />
       </div>
+      <label className="flex items-center gap-2 cursor-pointer select-none">
+        <input
+          type="checkbox"
+          checked={rememberMe}
+          onChange={(e) => {
+            setRememberMe(e.target.checked);
+            if (!e.target.checked) localStorage.removeItem(SAVED_CREDS_KEY);
+          }}
+          className="h-4 w-4 rounded border-border accent-primary"
+        />
+        <span className="text-sm text-muted-foreground">Lembrar credenciais</span>
+      </label>
       {error && (
         <p className="rounded-xl border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive">
           {error}
