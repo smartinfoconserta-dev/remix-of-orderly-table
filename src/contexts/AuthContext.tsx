@@ -37,7 +37,7 @@ interface AuthContextType {
   operationalSession: OperationalSession | null;
 
   /* ─── Universal logout ─── */
-  logout: () => Promise<void>;
+  logout: (role?: UserRole) => Promise<void>;
 
   /* ─── Legacy stubs (backward compat) ─── */
   currentGarcom: OperationalUser | null;
