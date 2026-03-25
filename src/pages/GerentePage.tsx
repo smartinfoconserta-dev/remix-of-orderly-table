@@ -451,7 +451,7 @@ const GerentePage = () => {
   }, [allEventos, dateRange]);
 
   const totalDescontos = useMemo(() =>
-    fechFiltrados.reduce((acc, f) => acc + ((f as any).desconto ?? 0), 0),
+    fechFiltrados.reduce((acc, f) => acc + (f.desconto ?? 0), 0),
     [fechFiltrados]
   );
 
