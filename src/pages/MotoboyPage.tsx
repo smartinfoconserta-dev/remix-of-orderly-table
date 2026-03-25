@@ -36,7 +36,11 @@ export default function MotoboyPage() {
   const INITIALS = NOME_REST.slice(0, 2).toUpperCase();
 
   const { pedidosBalcao, marcarBalcaoSaiu, marcarBalcaoEntregue, cancelarEntregaMotoboy } = useRestaurant();
-  const [sessao, setSessao] = useState<{ id: string; nome: string; fundoTroco: number } | null>(() => getSessao());
+  const { authLevel } = useAuth();
+  const isAdminAccess = authLevel === "admin" || authLevel === "master";
+  const [sessao, setSessao] = useState<{ id: string; nome: string; fundoTroco: number } | null>(() =>
+    isAdminAccess ? { id: "admin", nome: "Administrador", fundoTroco: 0 } : getSessao()
+  );
   const [nomeInput, setNomeInput] = useState("");
   const [pinInput, setPinInput] = useState("");
   const [fundoInput, setFundoInput] = useState("");

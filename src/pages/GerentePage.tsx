@@ -1602,7 +1602,7 @@ const GerentePage = () => {
       {/* Status bar — Windows style */}
       <div className="shrink-0 flex items-center gap-0 border-t border-border bg-card text-[10px] text-muted-foreground">
         <span className="px-3 py-1 border-r border-border">● Online</span>
-        <span className="px-3 py-1 border-r border-border">Operador: {currentGerente.nome}</span>
+        <span className="px-3 py-1 border-r border-border">Operador: {effectiveGerente.nome}</span>
         <span className="px-3 py-1 border-r border-border">Fechamentos: {fechamentos.length}</span>
         <span className="px-3 py-1">Mesas ativas: {mesas.filter(m => m.status === "consumo").length}</span>
       </div>

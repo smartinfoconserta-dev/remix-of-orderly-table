@@ -75,7 +75,7 @@ const GarcomPage = () => {
       }
     >
       <div className="mb-4 rounded-xl border border-border bg-card px-4 py-3">
-        <p className="text-base font-bold text-foreground">{currentGarcom.nome}</p>
+        <p className="text-base font-bold text-foreground">{garcomNome}</p>
         <p className="text-sm text-muted-foreground">Selecione uma mesa para lançar pedidos.</p>
       </div>
 
