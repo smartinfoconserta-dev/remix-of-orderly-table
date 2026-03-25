@@ -54,6 +54,8 @@ import type { FechamentoConta } from "@/contexts/RestaurantContext";
 import { useRouteLock } from "@/hooks/use-route-lock";
 import type { PaymentMethod } from "@/types/operations";
 import { getSistemaConfig } from "@/lib/adminStorage";
+import StorePinsManager from "@/components/StorePinsManager";
+import { useStore } from "@/contexts/StoreContext";
 
 /* ── helpers ── */
 const formatPrice = (v: number) => `R$ ${v.toFixed(2).replace(".", ",")}`;
