@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ClipboardList,
   Download,
+  KeyRound,
   LayoutDashboard,
   Upload,
   Grid3X3,
@@ -16,6 +17,8 @@ import {
   Users,
   X,
 } from "lucide-react";
+import StorePinsManager from "@/components/StorePinsManager";
+import { useStore } from "@/contexts/StoreContext";
 import CategoryIcon from "@/components/CategoryIcon";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -83,7 +86,7 @@ import {
 import { getBairros, saveBairros, type Bairro } from "@/lib/deliveryStorage";
 import { toast } from "sonner";
 
-type AdminTab = "dashboard" | "cardapio" | "equipe" | "configuracoes" | "licenca";
+type AdminTab = "dashboard" | "cardapio" | "equipe" | "configuracoes" | "licenca" | "pins";
 
 const PLANO_MODULOS: Record<string, string[]> = {
   basico: ["cozinha"],
@@ -110,6 +113,7 @@ const PLANO_LABELS: Record<string, string> = {
 const sidebarSections = [
   { id: "dashboard" as const, label: "Início", icon: LayoutDashboard },
   { id: "cardapio" as const, label: "Cardápio", icon: ClipboardList },
+  { id: "pins" as const, label: "PINs", icon: KeyRound },
   { id: "equipe" as const, label: "Equipe", icon: Users },
   { id: "configuracoes" as const, label: "Configurações", icon: Settings },
   { id: "licenca" as const, label: "Meu Plano", icon: Shield },
@@ -119,6 +123,7 @@ const formatPrice = (v: number) => `R$ ${v.toFixed(2).replace(".", ",")}`;
 
 const AdminPage = () => {
   const { verifyManagerAccess, verifyEmployeeAccess, getProfilesByRole, getActiveProfilesByRole, createUser, removeUser } = useAuth();
+  const { storeId, storeName: ctxStoreName } = useStore();
 
   // Auth gate state
   const [authenticated, setAuthenticated] = useState(false);
@@ -2265,6 +2270,21 @@ const AdminPage = () => {
           </div>
           );
         })()}
+
+        {/* ═══ PINS ═══ */}
+        {tab === "pins" && (
+          <div className="space-y-6 fade-in">
+            <div>
+              <h2 className="text-xl font-black text-foreground">Gerenciamento de PINs</h2>
+              <p className="text-sm text-muted-foreground mt-1">Crie e gerencie PINs de acesso para cada módulo operacional.</p>
+            </div>
+            {storeId ? (
+              <StorePinsManager stores={[{ id: storeId, name: ctxStoreName || "Minha Loja", slug: "" }]} />
+            ) : (
+              <p className="text-sm text-muted-foreground py-8 text-center">Loja não identificada. Faça login novamente.</p>
+            )}
+          </div>
+        )}
 
         {/* ═══ EQUIPE ═══ */}
         {tab === "equipe" && (
