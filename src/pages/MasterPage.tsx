@@ -94,6 +94,7 @@ const emptyForm = {
   observacoes: "", historicoPagamentos: [] as any[],
   plano: "anual", dataInicio: new Date().toISOString().slice(0, 10), dataTermino: "",
   planoModulos: "basico" as "basico" | "medio" | "pro" | "premium",
+  criarContaAdmin: false, senhaAdmin: "", slugLoja: "",
 };
 
 
