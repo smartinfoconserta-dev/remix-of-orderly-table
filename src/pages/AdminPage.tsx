@@ -355,10 +355,18 @@ const AdminPage = () => {
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
-      {/* Title bar — Windows style */}
-      <div className="flex items-center justify-between px-4 py-2 shrink-0" style={{ backgroundColor: "#1e3a5f" }}>
-        <h1 className="text-sm font-bold text-white">Admin — {nomeRestaurante}</h1>
-        <Button variant="ghost" size="sm" className="h-7 px-2 text-white/80 hover:text-white hover:bg-white/10 text-xs gap-1" onClick={() => logout()}>
+      {/* Title bar */}
+      <div className="flex items-center justify-between px-5 py-2.5 shrink-0 bg-sidebar-background border-b border-sidebar-border">
+        <div className="flex items-center gap-3">
+          <div className="h-7 w-7 rounded-lg bg-primary/20 flex items-center justify-center">
+            <LayoutDashboard className="h-3.5 w-3.5 text-primary" />
+          </div>
+          <div>
+            <h1 className="text-sm font-bold text-sidebar-foreground leading-none">{nomeRestaurante}</h1>
+            <p className="text-[10px] text-muted-foreground">Painel Administrativo</p>
+          </div>
+        </div>
+        <Button variant="ghost" size="sm" className="h-7 px-2 text-muted-foreground hover:text-foreground hover:bg-secondary text-xs gap-1.5" onClick={() => logout()}>
           <LogOut className="h-3.5 w-3.5" />
           Sair
         </Button>
@@ -366,8 +374,9 @@ const AdminPage = () => {
 
       <div className="flex flex-1 min-h-0">
       {/* Sidebar */}
-      <aside className="flex w-[200px] shrink-0 flex-col border-r border-border bg-card">
-        <nav className="flex-1 py-2">
+      <aside className="flex w-[220px] shrink-0 flex-col border-r border-sidebar-border bg-sidebar-background">
+        <nav className="flex-1 py-3 px-2 space-y-0.5">
+          <p className="px-3 pt-1 pb-2 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Menu</p>
           {sidebarSections.map((s) => {
             const Icon = s.icon;
             const active = tab === s.id;
@@ -376,22 +385,22 @@ const AdminPage = () => {
                 key={s.id}
                 type="button"
                 onClick={() => { setTab(s.id); setConfigSection("inicio"); }}
-                className={`flex w-full items-center gap-3 px-4 py-2 text-sm font-semibold transition-colors ${
+                className={`flex w-full items-center gap-3 px-3 py-2 text-sm rounded-lg transition-colors ${
                   active
-                    ? "bg-primary/15 text-primary border-l-2 border-primary"
-                    : "text-muted-foreground hover:bg-secondary"
+                    ? "bg-primary/15 text-primary font-bold"
+                    : "text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground font-medium"
                 }`}
               >
-                <Icon className="h-4 w-4" />
+                <Icon className="h-4 w-4 shrink-0" />
                 {s.label}
               </button>
             );
           })}
-         </nav>
+        </nav>
 
         {/* Módulos operacionais */}
-        <div className="border-t border-border pt-2 pb-2">
-          <p className="px-4 py-1.5 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Módulos</p>
+        <div className="border-t border-sidebar-border px-2 py-3 space-y-0.5">
+          <p className="px-3 pt-1 pb-2 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Módulos ao vivo</p>
           {[
             { label: "Garçom", icon: UtensilsCrossed, path: "/garcom" },
             { label: "Caixa", icon: CreditCard, path: "/caixa" },
@@ -406,111 +415,152 @@ const AdminPage = () => {
               key={m.path}
               type="button"
               onClick={() => navigate(m.path)}
-              className="flex w-full items-center gap-3 px-4 py-1.5 text-sm text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
+              className="flex w-full items-center gap-3 px-3 py-1.5 text-sm text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground rounded-lg transition-colors font-medium"
             >
-              <m.icon className="h-3.5 w-3.5" />
+              <m.icon className="h-3.5 w-3.5 shrink-0" />
               <span className="flex-1 text-left">{m.label}</span>
-              <ExternalLink className="h-3 w-3 opacity-40" />
+              <ExternalLink className="h-3 w-3 opacity-30" />
             </button>
           ))}
         </div>
       </aside>
 
       {/* Content */}
-      <main className="flex-1 overflow-y-auto p-6 md:p-8 bg-background" key={tab}>
+      <main className="flex-1 overflow-y-auto p-8 bg-background" key={tab}>
         {/* ═══ DASHBOARD ═══ */}
         {tab === "dashboard" && (
-          <div className="space-y-6 fade-in">
-            <div>
-              <h2 className="text-2xl font-black text-foreground">
-                Olá! Bem-vindo ao painel 👋
-              </h2>
-              <p className="text-sm text-muted-foreground">
-                {new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" })}
-              </p>
+          <div className="space-y-8 fade-in max-w-4xl">
+            {/* Header */}
+            <div className="flex items-end justify-between">
+              <div>
+                <h2 className="text-2xl font-black text-foreground">
+                  Bem-vindo de volta 👋
+                </h2>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
+                </p>
+              </div>
             </div>
 
-            {/* Cards de status */}
-            <div className="grid grid-cols-2 gap-3 max-w-2xl">
-              <div className="surface-card rounded-2xl p-5 space-y-1">
-                <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Produtos</p>
+            {/* Status cards — 4 columns */}
+            <div className="grid grid-cols-4 gap-4">
+              <div className="rounded-xl border border-border bg-card p-5 space-y-2">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Produtos</p>
+                  <ClipboardList className="h-4 w-4 text-muted-foreground/50" />
+                </div>
                 <p className="text-3xl font-black text-foreground">{allProducts.length}</p>
-                <p className="text-xs text-muted-foreground">no cardápio</p>
+                <p className="text-xs text-muted-foreground">itens no cardápio</p>
               </div>
-              <div className="surface-card rounded-2xl p-5 space-y-1">
-                <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Mesas</p>
+              <div className="rounded-xl border border-border bg-card p-5 space-y-2">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Mesas</p>
+                  <Grid3X3 className="h-4 w-4 text-muted-foreground/50" />
+                </div>
                 <p className="text-3xl font-black text-foreground">{mesasConfig.totalMesas}</p>
                 <p className="text-xs text-muted-foreground">configuradas</p>
               </div>
-              <div className="surface-card rounded-2xl p-5 space-y-1">
-                <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Delivery</p>
+              <div className="rounded-xl border border-border bg-card p-5 space-y-2">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Delivery</p>
+                  <Truck className="h-4 w-4 text-muted-foreground/50" />
+                </div>
                 <p className={`text-xl font-black ${sistemaConfig.deliveryAtivo !== false ? "text-emerald-400" : "text-destructive"}`}>
-                  {sistemaConfig.deliveryAtivo !== false ? "✓ Ativo" : "✗ Inativo"}
+                  {sistemaConfig.deliveryAtivo !== false ? "Ativo" : "Inativo"}
                 </p>
                 <p className="text-xs text-muted-foreground">
                   {sistemaConfig.deliveryAtivo !== false ? "Aceitando pedidos" : "Pausado"}
                 </p>
               </div>
-              <div className="surface-card rounded-2xl p-5 space-y-1">
-                <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Equipe</p>
-               <p className="text-3xl font-black text-foreground">—</p>
+              <div className="rounded-xl border border-border bg-card p-5 space-y-2">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Equipe</p>
+                  <KeyRound className="h-4 w-4 text-muted-foreground/50" />
+                </div>
+                <p className="text-3xl font-black text-foreground">—</p>
                 <p className="text-xs text-muted-foreground">Gerenciado via PINs</p>
               </div>
             </div>
 
-            {/* Ações rápidas */}
-            <div>
-              <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-3">Ações rápidas</p>
-              <div className="grid grid-cols-1 gap-2 max-w-sm">
-                <button onClick={() => { setTab("cardapio"); openNewProduct(); }}
-                  className="flex items-center gap-3 rounded-2xl border border-border bg-card px-5 py-4 text-left hover:border-primary/40 hover:bg-primary/5 transition-colors">
-                  <span className="text-2xl">➕</span>
-                  <div>
-                    <p className="text-sm font-black text-foreground">Adicionar produto</p>
-                    <p className="text-xs text-muted-foreground">Cadastrar novo item no cardápio</p>
-                  </div>
-                </button>
-                <button onClick={() => setTab("configuracoes")}
-                  className="flex items-center gap-3 rounded-2xl border border-border bg-card px-5 py-4 text-left hover:border-primary/40 hover:bg-primary/5 transition-colors">
-                  <span className="text-2xl">⚙️</span>
-                  <div>
-                    <p className="text-sm font-black text-foreground">Configurar sistema</p>
-                    <p className="text-xs text-muted-foreground">Delivery, horários, aparência</p>
-                  </div>
-                </button>
-                <button onClick={() => setTab("equipe")}
-                  className="flex items-center gap-3 rounded-2xl border border-border bg-card px-5 py-4 text-left hover:border-primary/40 hover:bg-primary/5 transition-colors">
-                  <span className="text-2xl">👥</span>
-                  <div>
-                    <p className="text-sm font-black text-foreground">Ver equipe</p>
-                    <p className="text-xs text-muted-foreground">Gerentes do restaurante</p>
-                  </div>
-                </button>
-              </div>
-            </div>
-
-            {/* Alerta de licença */}
-            {(() => {
-              try {
-                const raw = localStorage.getItem("orderly-licenca-v1");
-                if (!raw) return null;
-                const lic = JSON.parse(raw);
-                if (!lic.dataVencimento) return null;
-                const dias = Math.ceil((new Date(lic.dataVencimento).getTime() - Date.now()) / 86400000);
-                if (dias > 14) return null;
-                return (
-                  <div className={`max-w-2xl rounded-2xl border px-5 py-4 flex items-center gap-3 ${dias <= 3 ? "border-destructive/40 bg-destructive/5" : "border-amber-500/40 bg-amber-500/5"}`}>
-                    <span className="text-2xl">{dias <= 3 ? "🚨" : "⚠️"}</span>
+            {/* Two-column layout: Quick actions + License */}
+            <div className="grid grid-cols-2 gap-6">
+              {/* Ações rápidas */}
+              <div className="space-y-3">
+                <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Ações rápidas</p>
+                <div className="space-y-2">
+                  <button onClick={() => { setTab("cardapio"); openNewProduct(); }}
+                    className="flex w-full items-center gap-4 rounded-xl border border-border bg-card px-5 py-4 text-left hover:border-primary/40 hover:bg-primary/5 transition-all group">
+                    <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                      <Plus className="h-5 w-5 text-primary" />
+                    </div>
                     <div>
-                      <p className={`text-sm font-black ${dias <= 3 ? "text-destructive" : "text-amber-400"}`}>
-                        {dias <= 0 ? "Licença vencida!" : `Licença vence em ${dias} dia(s)`}
-                      </p>
-                      <p className="text-xs text-muted-foreground">Entre em contato para renovar</p>
+                      <p className="text-sm font-bold text-foreground">Adicionar produto</p>
+                      <p className="text-xs text-muted-foreground">Cadastrar novo item no cardápio</p>
+                    </div>
+                  </button>
+                  <button onClick={() => setTab("configuracoes")}
+                    className="flex w-full items-center gap-4 rounded-xl border border-border bg-card px-5 py-4 text-left hover:border-primary/40 hover:bg-primary/5 transition-all group">
+                    <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                      <Settings className="h-5 w-5 text-primary" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-foreground">Configurar sistema</p>
+                      <p className="text-xs text-muted-foreground">Delivery, horários, aparência</p>
+                    </div>
+                  </button>
+                  <button onClick={() => setTab("pins")}
+                    className="flex w-full items-center gap-4 rounded-xl border border-border bg-card px-5 py-4 text-left hover:border-primary/40 hover:bg-primary/5 transition-all group">
+                    <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                      <KeyRound className="h-5 w-5 text-primary" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-foreground">Gerenciar PINs</p>
+                      <p className="text-xs text-muted-foreground">Acessos operacionais da equipe</p>
+                    </div>
+                  </button>
+                </div>
+              </div>
+
+              {/* License alert or info */}
+              <div className="space-y-3">
+                <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Seu plano</p>
+                <div className="rounded-xl border border-border bg-card p-5 space-y-3">
+                  <div className="flex items-center gap-3">
+                    <Shield className="h-5 w-5 text-primary" />
+                    <div>
+                      <p className="text-sm font-bold text-foreground">{PLANO_LABELS[licencaConfig.plano || "basico"] || "Básico"}</p>
+                      <p className="text-xs text-muted-foreground">Plano atual</p>
                     </div>
                   </div>
-                );
-              } catch { return null; }
-            })()}
+                  {(() => {
+                    try {
+                      const raw = localStorage.getItem("orderly-licenca-v1");
+                      if (!raw) return null;
+                      const lic = JSON.parse(raw);
+                      if (!lic.dataVencimento) return null;
+                      const dias = Math.ceil((new Date(lic.dataVencimento).getTime() - Date.now()) / 86400000);
+                      if (dias > 14) return (
+                        <p className="text-xs text-muted-foreground">Válido por mais {dias} dias</p>
+                      );
+                      return (
+                        <div className={`rounded-lg px-3 py-2 ${dias <= 3 ? "bg-destructive/10 border border-destructive/30" : "bg-amber-500/10 border border-amber-500/30"}`}>
+                          <p className={`text-xs font-bold ${dias <= 3 ? "text-destructive" : "text-amber-400"}`}>
+                            {dias <= 0 ? "Licença vencida!" : `Vence em ${dias} dia(s)`}
+                          </p>
+                          <p className="text-[10px] text-muted-foreground mt-0.5">Entre em contato para renovar</p>
+                        </div>
+                      );
+                    } catch { return null; }
+                  })()}
+                  <button
+                    onClick={() => setTab("licenca")}
+                    className="text-xs text-primary hover:underline font-semibold"
+                  >
+                    Ver detalhes do plano →
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
