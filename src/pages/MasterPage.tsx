@@ -337,6 +337,15 @@ const MasterPage = () => {
             </div>
           )}
 
+          {/* ========== ABA PINS ========== */}
+          <TabsContent value="pins" className="mt-4">
+            {stores.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-8 text-center">Nenhuma loja cadastrada.</p>
+            ) : (
+              <StorePinsManager stores={stores} />
+            )}
+          </TabsContent>
+
           {/* ========== ABA CLIENTES ========== */}
           <TabsContent value="clientes" className="space-y-4 mt-4">
             {/* Search & Filters */}
