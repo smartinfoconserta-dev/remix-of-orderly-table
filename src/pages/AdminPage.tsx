@@ -419,8 +419,8 @@ const AdminPage = () => {
               </div>
               <div className="surface-card rounded-2xl p-5 space-y-1">
                 <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Equipe</p>
-               <p className="text-3xl font-black text-foreground">{gerentes.length}</p>
-                <p className="text-xs text-muted-foreground">{gerentes.length} gerente(s)</p>
+               <p className="text-3xl font-black text-foreground">—</p>
+                <p className="text-xs text-muted-foreground">Gerenciado via PINs</p>
               </div>
             </div>
 
