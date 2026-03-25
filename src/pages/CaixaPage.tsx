@@ -868,6 +868,7 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
         const match = balcaoBairro.trim() ? bairrosDisp.find((b) => normStr(b.nome) === normStr(balcaoBairro)) : null;
         return match ? match.taxa : 0;
       })(),
+      skipConfirmacao: true,
     });
     toast.success(`Pedido delivery enviado para ${balcaoClienteNome}`, { duration: 1600, icon: "🍽️" });
     setDeliveryConfirmOpen(false);
