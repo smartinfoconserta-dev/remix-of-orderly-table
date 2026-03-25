@@ -189,8 +189,9 @@ const GerentePage = () => {
   const [customInicio, setCustomInicio] = useState("");
   const [customFim, setCustomFim] = useState("");
 
-  // Store ID for PIN management
-  const storeId = operationalSession?.storeId ?? null;
+  // Store ID for PIN management  
+  const { storeId: ctxStoreId } = useStore();
+  const equipeStoreId = operationalSession?.storeId ?? ctxStoreId;
 
   // Fechamentos motoboy
   const FECHAMENTOS_KEY = "obsidian-motoboy-fechamentos-v1";
