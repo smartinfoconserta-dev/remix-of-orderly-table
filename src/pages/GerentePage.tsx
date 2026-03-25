@@ -18,8 +18,6 @@ import {
   Timer,
   TrendingUp,
   Wallet,
-  Plus,
-  Trash2,
   Users,
   Tag,
   UtensilsCrossed,
@@ -54,6 +52,8 @@ import type { FechamentoConta } from "@/contexts/RestaurantContext";
 import { useRouteLock } from "@/hooks/use-route-lock";
 import type { PaymentMethod } from "@/types/operations";
 import { getSistemaConfig } from "@/lib/adminStorage";
+import StorePinsManager from "@/components/StorePinsManager";
+import { useStore } from "@/contexts/StoreContext";
 
 /* ── helpers ── */
 const formatPrice = (v: number) => `R$ ${v.toFixed(2).replace(".", ",")}`;
@@ -173,7 +173,7 @@ const GerentePage = () => {
     allMovimentacoesCaixa,
     pedidosBalcao,
   } = useRestaurant();
-  const { currentGerente, logout, verifyManagerAccess, getActiveProfilesByRole, createUser, deactivateUser, authLevel } = useAuth();
+  const { currentGerente, logout, verifyManagerAccess, authLevel, operationalSession } = useAuth();
   const isAdminAccess = authLevel === "admin" || authLevel === "master";
   const effectiveGerente = currentGerente ?? (isAdminAccess ? { id: "admin", nome: "Administrador", role: "gerente" as const, criadoEm: "" } : null);
   useRouteLock("/gerente");
@@ -187,24 +187,9 @@ const GerentePage = () => {
   const [customInicio, setCustomInicio] = useState("");
   const [customFim, setCustomFim] = useState("");
 
-  // Equipe state
-  const garcons = useMemo(() => getActiveProfilesByRole("garcom"), [getActiveProfilesByRole]);
-  const caixas = useMemo(() => getActiveProfilesByRole("caixa"), [getActiveProfilesByRole]);
-  const deliveries = useMemo(() => getActiveProfilesByRole("delivery"), [getActiveProfilesByRole]);
-  const [newEmpName, setNewEmpName] = useState("");
-  const [newEmpPin, setNewEmpPin] = useState("");
-  const [newEmpRole, setNewEmpRole] = useState<"garcom" | "caixa" | "delivery">("garcom");
-  const [empError, setEmpError] = useState<string | null>(null);
-
-  // Motoboy state
-  const MOTOBOY_KEY = "obsidian-motoboys-v1";
-  const getMotoboys = useCallback((): { id: string; nome: string; pinHash: string; ativo: boolean }[] => {
-    try { const raw = localStorage.getItem(MOTOBOY_KEY); return raw ? JSON.parse(raw) : []; } catch { return []; }
-  }, []);
-  const [motoboysList, setMotoboysList] = useState(() => getMotoboys());
-  const [mNome, setMNome] = useState("");
-  const [mPin, setMPin] = useState("");
-  const [mError, setMError] = useState<string | null>(null);
+  // Store ID for PIN management  
+  const { storeId: ctxStoreId } = useStore();
+  const equipeStoreId = operationalSession?.storeId ?? ctxStoreId;
 
   // Fechamentos motoboy
   const FECHAMENTOS_KEY = "obsidian-motoboy-fechamentos-v1";
@@ -1347,256 +1332,13 @@ const GerentePage = () => {
           <div className="mx-auto max-w-2xl space-y-6">
             <div>
               <h2 className="text-lg font-black text-foreground">Gerenciar equipe</h2>
-              <p className="text-sm text-muted-foreground">Crie garçons e caixas, ou desative funcionários</p>
+              <p className="text-sm text-muted-foreground">Crie e gerencie PINs de acesso para cada módulo operacional.</p>
             </div>
-
-            {/* Create form */}
-            <div className="surface-card rounded-2xl p-5 space-y-4">
-              <p className="text-sm font-black text-foreground">Novo funcionário</p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-muted-foreground">Nome</label>
-                  <Input
-                    value={newEmpName}
-                    onChange={(e) => setNewEmpName(e.target.value)}
-                    placeholder="Nome do funcionário"
-                    maxLength={40}
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-muted-foreground">PIN (4-6 dígitos)</label>
-                  <Input
-                    value={newEmpPin}
-                    onChange={(e) => setNewEmpPin(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                    placeholder="1234"
-                    inputMode="numeric"
-                  />
-                </div>
-              </div>
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => setNewEmpRole("garcom")}
-                  className={`rounded-xl px-4 py-2 text-xs font-bold transition-colors ${
-                    newEmpRole === "garcom"
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-secondary text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  Garçom
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setNewEmpRole("caixa")}
-                  className={`rounded-xl px-4 py-2 text-xs font-bold transition-colors ${
-                    newEmpRole === "caixa"
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-secondary text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  Caixa
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setNewEmpRole("delivery")}
-                  className={`rounded-xl px-4 py-2 text-xs font-bold transition-colors ${
-                    newEmpRole === "delivery"
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-secondary text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  🛵 Delivery
-                </button>
-              </div>
-              {empError && <p className="rounded-xl border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive">{empError}</p>}
-              <Button
-                onClick={() => {
-                  setEmpError(null);
-                  const result = createUser(newEmpRole, newEmpName, newEmpPin);
-                  if (!result.ok) { setEmpError(result.error ?? "Erro"); return; }
-                  toast.success(`${newEmpRole === "garcom" ? "Garçom" : newEmpRole === "caixa" ? "Caixa" : "Caixa Delivery"} "${result.user?.nome}" criado`);
-                  setNewEmpName("");
-                  setNewEmpPin("");
-                }}
-                disabled={!newEmpName.trim() || newEmpPin.length < 4}
-                className="w-full rounded-xl font-bold gap-1.5"
-              >
-                <Plus className="h-4 w-4" /> Criar {newEmpRole === "garcom" ? "garçom" : newEmpRole === "caixa" ? "caixa" : "caixa delivery"}
-              </Button>
-            </div>
-
-            {/* Garçons list */}
-            <div className="surface-card rounded-2xl overflow-hidden">
-              <div className="px-5 py-3 border-b border-border bg-secondary/50">
-                <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">Garçons ativos ({garcons.length})</p>
-              </div>
-              {garcons.length === 0 ? (
-                <p className="px-5 py-6 text-sm text-muted-foreground text-center">Nenhum garçom cadastrado.</p>
-              ) : (
-                <div className="divide-y divide-border/50">
-                  {garcons.map((g) => (
-                    <div key={g.id} className="flex items-center justify-between px-5 py-3">
-                      <div>
-                        <p className="text-sm font-bold text-foreground">{g.nome}</p>
-                        <p className="text-xs text-muted-foreground">Desde {new Date(g.criadoEm).toLocaleDateString("pt-BR")}</p>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          deactivateUser(g.id);
-                          toast.success(`Garçom "${g.nome}" desativado`);
-                        }}
-                        className="text-destructive hover:bg-destructive/10 text-xs font-bold"
-                      >
-                        Desativar
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Caixas list */}
-            <div className="surface-card rounded-2xl overflow-hidden">
-              <div className="px-5 py-3 border-b border-border bg-secondary/50">
-                <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">Caixas ativos ({caixas.length})</p>
-              </div>
-              {caixas.length === 0 ? (
-                <p className="px-5 py-6 text-sm text-muted-foreground text-center">Nenhum caixa cadastrado.</p>
-              ) : (
-                <div className="divide-y divide-border/50">
-                  {caixas.map((c) => (
-                    <div key={c.id} className="flex items-center justify-between px-5 py-3">
-                      <div>
-                        <p className="text-sm font-bold text-foreground">{c.nome}</p>
-                        <p className="text-xs text-muted-foreground">Desde {new Date(c.criadoEm).toLocaleDateString("pt-BR")}</p>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          deactivateUser(c.id);
-                          toast.success(`Caixa "${c.nome}" desativado`);
-                        }}
-                        className="text-destructive hover:bg-destructive/10 text-xs font-bold"
-                      >
-                        Desativar
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Caixa Delivery list */}
-            <div className="surface-card rounded-2xl overflow-hidden">
-              <div className="px-5 py-3 border-b border-border bg-secondary/50">
-                <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">🛵 Caixa Delivery ({deliveries.length})</p>
-              </div>
-              {deliveries.length === 0 ? (
-                <p className="px-5 py-6 text-sm text-muted-foreground text-center">Nenhum caixa delivery cadastrado.</p>
-              ) : (
-                <div className="divide-y divide-border/50">
-                  {deliveries.map((d) => (
-                    <div key={d.id} className="flex items-center justify-between px-5 py-3">
-                      <div>
-                        <p className="text-sm font-bold text-foreground">{d.nome}</p>
-                        <p className="text-xs text-muted-foreground">Desde {new Date(d.criadoEm).toLocaleDateString("pt-BR")}</p>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          deactivateUser(d.id);
-                          toast.success(`Caixa Delivery "${d.nome}" desativado`);
-                        }}
-                        className="text-destructive hover:bg-destructive/10 text-xs font-bold"
-                      >
-                        Desativar
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-
-            {/* ── Motoboys ── */}
-            {(() => {
-              const saveMotoboys = (list: typeof motoboysList) => {
-                localStorage.setItem("obsidian-motoboys-v1", JSON.stringify(list));
-                setMotoboysList(list);
-              };
-
-              const handleAddMotoboy = () => {
-                setMError(null);
-                if (!mNome.trim()) { setMError("Nome obrigatório"); return; }
-                if (mPin.length < 4) { setMError("PIN deve ter 4-6 dígitos"); return; }
-                if (motoboysList.some((m) => m.nome.toLowerCase() === mNome.trim().toLowerCase() && m.ativo)) {
-                  setMError("Já existe motoboy com esse nome"); return;
-                }
-                const novo = {
-                  id: `motoboy-${Date.now()}`,
-                  nome: mNome.trim(),
-                  pinHash: btoa("pin:" + mPin),
-                  ativo: true,
-                };
-                saveMotoboys([...motoboysList, novo]);
-                setMNome("");
-                setMPin("");
-                toast.success(`Motoboy "${novo.nome}" cadastrado`);
-              };
-
-              const handleRemoveMotoboy = (id: string) => {
-                saveMotoboys(motoboysList.filter((m) => m.id !== id));
-                toast.success("Motoboy removido");
-              };
-
-              const ativosOnly = motoboysList.filter((m) => m.ativo);
-
-              return (
-                <div className="surface-card rounded-2xl overflow-hidden">
-                  <div className="px-5 py-3 border-b border-border bg-secondary/50">
-                    <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">
-                      <Bike className="inline h-3.5 w-3.5 mr-1.5" />
-                      Motoboys ({ativosOnly.length})
-                    </p>
-                  </div>
-                  <div className="p-5 space-y-3">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <div className="space-y-1.5">
-                        <label className="text-xs font-bold text-muted-foreground">Nome</label>
-                        <Input value={mNome} onChange={(e) => setMNome(e.target.value)} placeholder="Nome do motoboy" maxLength={40} />
-                      </div>
-                      <div className="space-y-1.5">
-                        <label className="text-xs font-bold text-muted-foreground">PIN (4-6 dígitos)</label>
-                        <Input value={mPin} onChange={(e) => setMPin(e.target.value.replace(/\D/g, "").slice(0, 6))} placeholder="1234" inputMode="numeric" />
-                      </div>
-                    </div>
-                    {mError && <p className="rounded-xl border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive">{mError}</p>}
-                    <Button onClick={handleAddMotoboy} disabled={!mNome.trim() || mPin.length < 4} className="w-full rounded-xl font-bold gap-1.5">
-                      <Plus className="h-4 w-4" /> Adicionar motoboy
-                    </Button>
-                  </div>
-                  {ativosOnly.length > 0 && (
-                    <div className="divide-y divide-border/50 border-t border-border">
-                      {ativosOnly.map((m) => (
-                        <div key={m.id} className="flex items-center justify-between px-5 py-3">
-                          <div>
-                            <p className="text-sm font-bold text-foreground">{m.nome}</p>
-                            <p className="text-xs text-muted-foreground">PIN: ••••</p>
-                          </div>
-                          <Button variant="ghost" size="sm" onClick={() => handleRemoveMotoboy(m.id)} className="text-destructive hover:bg-destructive/10 text-xs font-bold">
-                            <Trash2 className="h-3.5 w-3.5 mr-1" /> Remover
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              );
-            })()}
+            {equipeStoreId ? (
+              <StorePinsManager stores={[{ id: equipeStoreId, name: effectiveGerente.nome, slug: "" }]} />
+            ) : (
+              <p className="text-sm text-muted-foreground py-8 text-center">Loja não identificada. Faça login novamente.</p>
+            )}
           </div>
           )}
         </TabsContent>
