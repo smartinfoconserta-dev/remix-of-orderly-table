@@ -365,7 +365,7 @@ const AdminPage = () => {
       {/* Title bar — Windows style */}
       <div className="flex items-center justify-between px-4 py-2 shrink-0" style={{ backgroundColor: "#1e3a5f" }}>
         <h1 className="text-sm font-bold text-white">Admin — {nomeRestaurante}</h1>
-        <Button variant="ghost" size="sm" className="h-7 px-2 text-white/80 hover:text-white hover:bg-white/10 text-xs gap-1" onClick={() => { setAuthenticated(false); setAuthName(""); setAuthPin(""); setAuthError(null); }}>
+        <Button variant="ghost" size="sm" className="h-7 px-2 text-white/80 hover:text-white hover:bg-white/10 text-xs gap-1" onClick={() => logout()}>
           <LogOut className="h-3.5 w-3.5" />
           Sair
         </Button>
