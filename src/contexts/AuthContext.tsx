@@ -256,13 +256,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   /* ─── Level 3b: Login by PIN only (auto-detect module) ─── */
   const loginByPin = useCallback(async (storeSlug: string, pin: string): Promise<LoginResult & { module?: string }> => {
-    // 1. Find store by slug
-    const { data: store, error: storeError } = await supabase
-      .from("stores")
-      .select("id, name, slug")
-      .eq("slug", storeSlug)
-      .maybeSingle();
+    // 1. Find store by slug (using SECURITY DEFINER RPC to bypass RLS)
+    const { data: storeRows, error: storeError } = await supabase
+      .rpc("get_store_by_slug", { _slug: storeSlug });
 
+    const store = storeRows?.[0];
     if (storeError || !store) {
       return { ok: false, error: "Loja não encontrada" };
     }
