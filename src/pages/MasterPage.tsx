@@ -171,8 +171,47 @@ const MasterPage = () => {
     setDialogOpen(true);
   };
 
-  const handleSave = () => {
+  const [savingAccount, setSavingAccount] = useState(false);
+
+  const handleSave = async () => {
     if (!form.nomeRestaurante.trim() || !form.nomeContato.trim()) { toast.error("Preencha nome do restaurante e contato."); return; }
+
+    // Create admin account if requested
+    if (form.criarContaAdmin && !editId) {
+      if (!form.email.trim()) { toast.error("Email é obrigatório para criar conta admin."); return; }
+      if (!form.senhaAdmin || form.senhaAdmin.length < 6) { toast.error("Senha deve ter no mínimo 6 caracteres."); return; }
+      if (!form.slugLoja.trim()) { toast.error("Slug da loja é obrigatório."); return; }
+
+      setSavingAccount(true);
+      try {
+        const { data: sessionData } = await supabase.auth.getSession();
+        const { data, error } = await supabase.functions.invoke("create-admin-account", {
+          body: {
+            email: form.email.trim(),
+            password: form.senhaAdmin,
+            storeName: form.nomeRestaurante.trim(),
+            storeSlug: form.slugLoja.trim(),
+          },
+        });
+
+        if (error || data?.error) {
+          toast.error(data?.error || error?.message || "Erro ao criar conta admin");
+          setSavingAccount(false);
+          return;
+        }
+
+        toast.success("Conta admin criada com sucesso!");
+        // Refresh stores list
+        const { data: newStores } = await supabase.from("stores").select("id, name, slug");
+        if (newStores) setStores(newStores);
+      } catch (err: any) {
+        toast.error(err.message || "Erro ao criar conta admin");
+        setSavingAccount(false);
+        return;
+      }
+      setSavingAccount(false);
+    }
+
     if (editId) { updateCliente(editId, form); toast.success("Cliente atualizado."); }
     else { addCliente(form); toast.success("Cliente criado."); }
     // Sync planoModulos to licença config
