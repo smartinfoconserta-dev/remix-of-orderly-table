@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -10,7 +10,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { LogOut, Plus, Pencil, Trash2, Phone, Mail, MapPin, DollarSign, Users, TrendingUp, TrendingDown, Receipt, Eye, AlertTriangle, ShieldOff, RefreshCw, Search, Send, Bell } from "lucide-react";
+import { LogOut, Plus, Pencil, Trash2, Phone, Mail, MapPin, DollarSign, Users, TrendingUp, TrendingDown, Receipt, Eye, AlertTriangle, ShieldOff, RefreshCw, Search, Send, Bell, KeyRound } from "lucide-react";
+import StorePinsManager from "@/components/StorePinsManager";
 import type { Pagamento } from "@/lib/masterStorage";
 import { toast } from "sonner";
 import {
@@ -132,7 +133,17 @@ const MasterPage = () => {
   // Aviso state
   const [avisoMensagem, setAvisoMensagem] = useState("");
   const [avisoTipo, setAvisoTipo] = useState<"info" | "alerta" | "urgente">("info");
-  
+
+  // Stores for PINs tab
+  const [stores, setStores] = useState<{ id: string; name: string; slug: string }[]>([]);
+  useEffect(() => {
+    if (!authed) return;
+    import("@/integrations/supabase/client").then(({ supabase }) => {
+      supabase.from("stores").select("id, name, slug").then(({ data }) => {
+        if (data) setStores(data);
+      });
+    });
+  }, [authed]);
 
   const refresh = () => { setClientes(getClientes()); setDespesas(getDespesas()); };
 
@@ -310,8 +321,9 @@ const MasterPage = () => {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="w-full grid grid-cols-4">
+          <TabsList className="w-full grid grid-cols-5">
             <TabsTrigger value="clientes"><Users className="w-4 h-4 mr-1" />Clientes</TabsTrigger>
+            <TabsTrigger value="pins"><KeyRound className="w-4 h-4 mr-1" />PINs</TabsTrigger>
             <TabsTrigger value="financeiro"><DollarSign className="w-4 h-4 mr-1" />Financeiro</TabsTrigger>
             <TabsTrigger value="cobrancas"><AlertTriangle className="w-4 h-4 mr-1" />Cobranças</TabsTrigger>
             <TabsTrigger value="avisos"><Bell className="w-4 h-4 mr-1" />Avisos</TabsTrigger>
@@ -324,6 +336,15 @@ const MasterPage = () => {
               <Button size="sm" variant="outline" className="border-orange-500/50 text-orange-400 hover:bg-orange-500/20" onClick={() => setActiveTab("cobrancas")}>Ver cobranças</Button>
             </div>
           )}
+
+          {/* ========== ABA PINS ========== */}
+          <TabsContent value="pins" className="mt-4">
+            {stores.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-8 text-center">Nenhuma loja cadastrada.</p>
+            ) : (
+              <StorePinsManager stores={stores} />
+            )}
+          </TabsContent>
 
           {/* ========== ABA CLIENTES ========== */}
           <TabsContent value="clientes" className="space-y-4 mt-4">

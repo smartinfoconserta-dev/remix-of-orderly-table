@@ -332,6 +332,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_module_pin: {
+        Args: {
+          _label?: string
+          _module: string
+          _pin: string
+          _store_id: string
+        }
+        Returns: string
+      }
       get_user_store_ids: { Args: { _user_id: string }; Returns: string[] }
       has_role: {
         Args: {
