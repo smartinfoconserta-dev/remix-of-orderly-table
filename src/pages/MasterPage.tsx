@@ -314,6 +314,10 @@ const MasterPage = () => {
       const lic = getLicencaConfig();
       lic.plano = c.planoModulos;
       saveLicencaConfig(lic);
+
+      const cfg = getSistemaConfig();
+      cfg.plano = c.planoModulos;
+      saveSistemaConfig(cfg);
     }
     refresh();
   };
