@@ -873,6 +873,35 @@ const MasterPage = () => {
                 )}
               </div>
             )}
+            {editId && (
+              <div className="space-y-3">
+                <h3 className="text-sm font-bold text-foreground uppercase tracking-wide">Alterar credenciais de acesso</h3>
+                {editLinkedUserId ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 rounded-xl border bg-background p-4">
+                    <div>
+                      <Label>Novo email de login</Label>
+                      <Input type="email" value={editNovoEmail} onChange={(e) => setEditNovoEmail(e.target.value)} placeholder="Deixe vazio para manter" />
+                    </div>
+                    <div>
+                      <Label>Nova senha</Label>
+                      <Input type="password" value={editNovaSenha} onChange={(e) => setEditNovaSenha(e.target.value)} placeholder="Mínimo 6 caracteres" />
+                    </div>
+                    <div className="sm:col-span-2">
+                      <Button
+                        variant="outline"
+                        onClick={handleUpdateCredentials}
+                        disabled={savingCredentials || (!editNovoEmail.trim() && !editNovaSenha)}
+                        className="w-full"
+                      >
+                        {savingCredentials ? "Atualizando…" : "Atualizar credenciais"}
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground rounded-xl border bg-background p-4">Nenhuma conta Supabase vinculada a este cliente. Vincule pela correspondência do nome do restaurante com uma loja cadastrada.</p>
+                )}
+              </div>
+            )}
             <div className="space-y-3">
               <h3 className="text-sm font-bold text-foreground uppercase tracking-wide">Localização</h3>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
