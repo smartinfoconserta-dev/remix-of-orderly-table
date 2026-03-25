@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Check, ChefHat, Clock, LogOut, ShoppingBag, User } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { useRestaurant } from "@/contexts/RestaurantContext";
 import type { PedidoRealizado } from "@/contexts/RestaurantContext";
 import { getSistemaConfig } from "@/lib/adminStorage";
