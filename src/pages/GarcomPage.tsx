@@ -31,7 +31,7 @@ const GarcomPage = () => {
     return () => clearInterval(id);
   }, []);
 
-  if (!currentGarcom) {
+  if (!currentGarcom && !isAdminAccess) {
     return (
       <AppLayout title="Garçom">
         <p className="text-center text-muted-foreground py-12">Acesso não autorizado. Faça login na tela inicial.</p>
@@ -39,8 +39,10 @@ const GarcomPage = () => {
     );
   }
 
+  const garcomNome = currentGarcom?.nome ?? (isAdminAccess ? "Administrador" : "");
+
   if (mesaIdSelecionada) {
-    return <PedidoFlow modo="garcom" mesaId={mesaIdSelecionada} garcomNome={currentGarcom.nome} />;
+    return <PedidoFlow modo="garcom" mesaId={mesaIdSelecionada} garcomNome={garcomNome} />;
   }
 
   const chamadoCount = mesas.filter((m) => m.chamarGarcom).length;
