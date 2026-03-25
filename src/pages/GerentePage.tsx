@@ -178,7 +178,7 @@ const GerentePage = () => {
   const effectiveGerente = currentGerente ?? (isAdminAccess ? { id: "admin", nome: "Administrador", role: "gerente" as const, criadoEm: "" } : null);
   useRouteLock("/gerente");
   const [logFilter, setLogFilter] = useState<LogCategory>("all");
-  const [pinVerificado, setPinVerificado] = useState(false);
+  const [pinVerificado, setPinVerificado] = useState(isAdminAccess);
   const [pinInput, setPinInput] = useState("");
   const [pinError, setPinError] = useState("");
 
