@@ -110,9 +110,7 @@ function proximoVencimento(diaVencimento: number): string {
 }
 
 const MasterPage = () => {
-  const [authed, setAuthed] = useState(false);
-  const [senha, setSenha] = useState("");
-  const [senhaErro, setSenhaErro] = useState(false);
+  const { logout } = useAuth();
 
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
