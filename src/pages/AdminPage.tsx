@@ -122,15 +122,9 @@ const sidebarSections = [
 const formatPrice = (v: number) => `R$ ${v.toFixed(2).replace(".", ",")}`;
 
 const AdminPage = () => {
-  const { verifyManagerAccess, verifyEmployeeAccess, getProfilesByRole, getActiveProfilesByRole, createUser, removeUser } = useAuth();
+  const { logout } = useAuth();
   const { storeId, storeName: ctxStoreName } = useStore();
 
-  // Auth gate state — ProtectedRoute already validates auth level
-  const [authenticated, setAuthenticated] = useState(true);
-  const [authName, setAuthName] = useState("");
-  const [authPin, setAuthPin] = useState("");
-  const [authError, setAuthError] = useState<string | null>(null);
-  const [authLoading, setAuthLoading] = useState(false);
 
   const [tab, setTab] = useState<AdminTab>("dashboard");
   const [configSection, setConfigSection] = useState<"inicio" | "identidade" | "delivery" | "salao" | "operacao" | "modulos" | "sistema">("inicio");
@@ -347,145 +341,7 @@ const AdminPage = () => {
     toast.success("Licença salva");
   }, [licencaConfig]);
 
-  // --- Usuários (gerentes) state ---
-  const gerentes = useMemo(() => getProfilesByRole("gerente"), [getProfilesByRole]);
-  const [newUserName, setNewUserName] = useState("");
-  const [newUserPin, setNewUserPin] = useState("");
-  const [userError, setUserError] = useState<string | null>(null);
 
-  const handleCreateGerente = () => {
-    setUserError(null);
-    if (!newUserName.trim() || !/^\d{4,6}$/.test(newUserPin)) return;
-    const result = createUser("gerente", newUserName, newUserPin);
-    if (!result.ok) { setUserError(result.error ?? "Erro ao criar"); return; }
-    toast.success(`Gerente "${result.user?.nome}" criado com sucesso`);
-    setNewUserName("");
-    setNewUserPin("");
-  };
-
-  const handleRemoveUser = (id: string, nome: string, roleLabel: string) => {
-    const result = removeUser(id);
-    if (!result.ok) { toast.error(result.error ?? "Erro ao remover"); return; }
-    toast.success(`${roleLabel} "${nome}" removido`);
-  };
-
-  // --- Auth gate ---
-  const handleAuth = async () => {
-    if (!authName.trim()) { setAuthError("Informe o nome do administrador"); return; }
-    if (!/^\d{4,6}$/.test(authPin)) { setAuthError("PIN inválido (4-6 dígitos)"); return; }
-    setAuthLoading(true);
-    setAuthError(null);
-    const result = await verifyEmployeeAccess(authName, authPin);
-    if (!result.ok) { setAuthError(result.error ?? "Não autorizado"); setAuthLoading(false); return; }
-    if (result.user?.role !== "gerente") {
-      setAuthError("Acesso restrito ao gerente/administrador do sistema");
-      setAuthLoading(false);
-      return;
-    }
-    setAuthenticated(true);
-    setAuthLoading(false);
-  };
-
-  if (!authenticated) {
-    // Welcome wizard when no gerente exists
-    if (gerentes.length === 0) {
-      return (
-        <div className="min-h-svh flex items-center justify-center bg-background p-6">
-          <div className="w-full max-w-md space-y-8">
-            <div className="text-center space-y-2">
-              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/15 text-primary">
-                <Settings className="h-8 w-8" />
-              </div>
-              <h2 className="text-2xl font-black text-foreground">Configuração inicial do sistema</h2>
-              <p className="text-sm text-muted-foreground">Siga os passos para configurar seu restaurante</p>
-            </div>
-            <div className="surface-card rounded-2xl p-6 space-y-4">
-              {[
-                { n: 1, t: "Criar primeiro gerente" },
-                { n: 2, t: "Configurar nome e logo" },
-                { n: 3, t: "Ajustar cardápio" },
-                { n: 4, t: "Configurar mesas e QR Codes" },
-              ].map((s) => (
-                <div key={s.n} className="flex items-center gap-3">
-                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary text-sm font-black">{s.n}</span>
-                  <span className="text-sm text-foreground font-semibold">{s.t}</span>
-                </div>
-              ))}
-            </div>
-            <div className="space-y-4">
-              <p className="text-xs text-muted-foreground text-center">Crie o primeiro gerente para começar:</p>
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-muted-foreground">Nome do gerente</label>
-                <Input value={newUserName} onChange={(e) => setNewUserName(e.target.value)} placeholder="Ex.: Mariana" maxLength={40} />
-              </div>
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-muted-foreground">PIN (4-6 dígitos)</label>
-                <Input
-                  value={newUserPin}
-                  onChange={(e) => setNewUserPin(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                  placeholder="4 a 6 dígitos"
-                  inputMode="numeric"
-                />
-              </div>
-              {userError && <p className="rounded-xl border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive">{userError}</p>}
-              <Button
-                onClick={() => {
-                  setUserError(null);
-                  if (!newUserName.trim() || !/^\d{4,6}$/.test(newUserPin)) return;
-                  const result = createUser("gerente", newUserName, newUserPin);
-                  if (!result.ok) { setUserError(result.error ?? "Erro ao criar"); return; }
-                  toast.success(`Gerente "${result.user?.nome}" criado com sucesso`);
-                  setNewUserName("");
-                  setNewUserPin("");
-                  setAuthenticated(true);
-                  setTab("equipe");
-                }}
-                disabled={!newUserName.trim() || !/^\d{4,6}$/.test(newUserPin)}
-                className="w-full h-12 rounded-xl text-base font-black"
-              >
-                Começar configuração
-              </Button>
-            </div>
-          </div>
-        </div>
-      );
-    }
-
-    return (
-      <div className="min-h-svh flex items-center justify-center bg-background p-6">
-        <div className="w-full max-w-sm space-y-6">
-          <div className="text-center space-y-2">
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/15 text-primary">
-              <Shield className="h-8 w-8" />
-            </div>
-            <h2 className="text-2xl font-black text-foreground">Painel Admin</h2>
-            <p className="text-sm text-muted-foreground">Acesso restrito ao administrador do sistema.</p>
-          </div>
-          <div className="space-y-3">
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-muted-foreground">Nome do administrador</label>
-              <Input value={authName} onChange={(e) => setAuthName(e.target.value)} placeholder="Ex.: admin" maxLength={40} />
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-muted-foreground">PIN</label>
-              <Input
-                value={authPin}
-                onChange={(e) => setAuthPin(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                placeholder="4 a 6 dígitos"
-                inputMode="numeric"
-                autoComplete="one-time-code"
-                onKeyDown={(e) => e.key === "Enter" && handleAuth()}
-              />
-            </div>
-            {authError && <p className="rounded-xl border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive">{authError}</p>}
-          </div>
-          <Button onClick={handleAuth} disabled={authLoading} className="w-full h-12 rounded-xl text-base font-black">
-            Entrar
-          </Button>
-        </div>
-      </div>
-    );
-  }
 
   const nomeRestaurante = getSistemaConfig().nomeRestaurante || "Restaurante";
 
@@ -494,7 +350,7 @@ const AdminPage = () => {
       {/* Title bar — Windows style */}
       <div className="flex items-center justify-between px-4 py-2 shrink-0" style={{ backgroundColor: "#1e3a5f" }}>
         <h1 className="text-sm font-bold text-white">Admin — {nomeRestaurante}</h1>
-        <Button variant="ghost" size="sm" className="h-7 px-2 text-white/80 hover:text-white hover:bg-white/10 text-xs gap-1" onClick={() => { setAuthenticated(false); setAuthName(""); setAuthPin(""); setAuthError(null); }}>
+        <Button variant="ghost" size="sm" className="h-7 px-2 text-white/80 hover:text-white hover:bg-white/10 text-xs gap-1" onClick={() => logout()}>
           <LogOut className="h-3.5 w-3.5" />
           Sair
         </Button>
@@ -563,8 +419,8 @@ const AdminPage = () => {
               </div>
               <div className="surface-card rounded-2xl p-5 space-y-1">
                 <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Equipe</p>
-               <p className="text-3xl font-black text-foreground">{gerentes.length}</p>
-                <p className="text-xs text-muted-foreground">{gerentes.length} gerente(s)</p>
+               <p className="text-3xl font-black text-foreground">—</p>
+                <p className="text-xs text-muted-foreground">Gerenciado via PINs</p>
               </div>
             </div>
 
@@ -2294,63 +2150,11 @@ const AdminPage = () => {
               <p className="text-sm text-muted-foreground">Gerencie os gerentes do restaurante</p>
             </div>
 
-            {/* Formulário de criação de gerente */}
-            <div className="surface-card max-w-lg space-y-4 rounded-2xl p-6">
-              <p className="text-sm font-black text-foreground">Novo gerente</p>
-              <div className="space-y-3">
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-muted-foreground">Nome</label>
-                  <Input
-                    value={newUserName}
-                    onChange={(e) => setNewUserName(e.target.value)}
-                    placeholder="Nome do gerente"
-                    maxLength={40}
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-muted-foreground">PIN (4-6 dígitos)</label>
-                  <Input
-                    value={newUserPin}
-                    onChange={(e) => setNewUserPin(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                    placeholder="1234"
-                    inputMode="numeric"
-                    onKeyDown={(e) => { if (e.key === "Enter") handleCreateGerente(); }}
-                  />
-                </div>
-                {userError && <p className="rounded-xl border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive">{userError}</p>}
-                <Button onClick={handleCreateGerente} disabled={!newUserName.trim() || !/^\d{4,6}$/.test(newUserPin)} className="w-full rounded-xl font-bold gap-1.5">
-                  <Plus className="h-4 w-4" /> Criar gerente
-                </Button>
-              </div>
-            </div>
-
-            {/* Gerentes */}
-            <div className="surface-card max-w-lg rounded-2xl overflow-hidden">
-              <div className="px-5 py-3 border-b border-border bg-secondary/50">
-                <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">👔 Gerentes ({gerentes.length})</p>
-              </div>
-              {gerentes.length === 0 ? (
-                <p className="px-5 py-4 text-sm text-muted-foreground text-center">Nenhum gerente cadastrado.</p>
-              ) : (
-                <div className="divide-y divide-border/50">
-                  {gerentes.map((g) => (
-                    <div key={g.id} className="flex items-center justify-between px-5 py-3">
-                      <div>
-                        <p className="text-sm font-bold text-foreground">{g.nome}</p>
-                        <p className="text-xs text-muted-foreground">Gerente</p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-bold text-amber-400 bg-amber-500/10 border border-amber-500/20 rounded-lg px-2 py-0.5">Ativo</span>
-                        {!g.id.startsWith("seed-") && (
-                          <Button variant="ghost" size="icon" onClick={() => handleRemoveUser(g.id, g.nome, "Gerente")} className="text-destructive hover:bg-destructive/10 h-8 w-8">
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
+            <div className="surface-card max-w-lg rounded-2xl p-6">
+              <p className="text-sm text-muted-foreground">A equipe operacional agora é gerenciada via PINs na aba "PINs".</p>
+              <Button variant="outline" className="mt-4" onClick={() => setTab("pins")}>
+                <KeyRound className="h-4 w-4 mr-2" /> Ir para PINs
+              </Button>
             </div>
 
           </div>
