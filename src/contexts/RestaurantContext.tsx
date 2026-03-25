@@ -1310,6 +1310,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         mesaNumero: 0,
         origem: "motoboy" as const,
         total: totalGeral,
+        subtotal: totalGeral,
         formaPagamento: pagamentos[0]?.formaPagamento ?? "dinheiro",
         pagamentos: pagamentos.length > 0 ? pagamentos : [{ id: `pag-${now.getTime()}`, formaPagamento: "dinheiro", valor: totalGeral }],
         itens: itensMotoboy,
