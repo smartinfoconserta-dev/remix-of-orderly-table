@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LogOut, Plus, Pencil, Trash2, Phone, Mail, MapPin, DollarSign, Users, TrendingUp, TrendingDown, Receipt, Eye, AlertTriangle, ShieldOff, RefreshCw, Search, Send, Bell, KeyRound } from "lucide-react";
 import StorePinsManager from "@/components/StorePinsManager";
+import { supabase } from "@/integrations/supabase/client";
 import type { Pagamento } from "@/lib/masterStorage";
 import { toast } from "sonner";
 import {
@@ -94,6 +95,7 @@ const emptyForm = {
   observacoes: "", historicoPagamentos: [] as any[],
   plano: "anual", dataInicio: new Date().toISOString().slice(0, 10), dataTermino: "",
   planoModulos: "basico" as "basico" | "medio" | "pro" | "premium",
+  criarContaAdmin: false, senhaAdmin: "", slugLoja: "",
 };
 
 
@@ -164,12 +166,52 @@ const MasterPage = () => {
       observacoes: c.observacoes || "", historicoPagamentos: c.historicoPagamentos || [],
       plano: c.plano || "anual", dataInicio: c.dataInicio || "", dataTermino: c.dataTermino || "",
       planoModulos: c.planoModulos || "basico",
+      criarContaAdmin: false, senhaAdmin: "", slugLoja: "",
     });
     setDialogOpen(true);
   };
 
-  const handleSave = () => {
+  const [savingAccount, setSavingAccount] = useState(false);
+
+  const handleSave = async () => {
     if (!form.nomeRestaurante.trim() || !form.nomeContato.trim()) { toast.error("Preencha nome do restaurante e contato."); return; }
+
+    // Create admin account if requested
+    if (form.criarContaAdmin && !editId) {
+      if (!form.email.trim()) { toast.error("Email é obrigatório para criar conta admin."); return; }
+      if (!form.senhaAdmin || form.senhaAdmin.length < 6) { toast.error("Senha deve ter no mínimo 6 caracteres."); return; }
+      if (!form.slugLoja.trim()) { toast.error("Slug da loja é obrigatório."); return; }
+
+      setSavingAccount(true);
+      try {
+        const { data: sessionData } = await supabase.auth.getSession();
+        const { data, error } = await supabase.functions.invoke("create-admin-account", {
+          body: {
+            email: form.email.trim(),
+            password: form.senhaAdmin,
+            storeName: form.nomeRestaurante.trim(),
+            storeSlug: form.slugLoja.trim(),
+          },
+        });
+
+        if (error || data?.error) {
+          toast.error(data?.error || error?.message || "Erro ao criar conta admin");
+          setSavingAccount(false);
+          return;
+        }
+
+        toast.success("Conta admin criada com sucesso!");
+        // Refresh stores list
+        const { data: newStores } = await supabase.from("stores").select("id, name, slug");
+        if (newStores) setStores(newStores);
+      } catch (err: any) {
+        toast.error(err.message || "Erro ao criar conta admin");
+        setSavingAccount(false);
+        return;
+      }
+      setSavingAccount(false);
+    }
+
     if (editId) { updateCliente(editId, form); toast.success("Cliente atualizado."); }
     else { addCliente(form); toast.success("Cliente criado."); }
     // Sync planoModulos to licença config
@@ -743,6 +785,22 @@ const MasterPage = () => {
                 <div><Label>Email</Label><Input type="email" value={form.email} onChange={(e) => ff("email", e.target.value)} /></div>
               </div>
             </div>
+            {!editId && (
+              <div className="space-y-3">
+                <h3 className="text-sm font-bold text-foreground uppercase tracking-wide">Conta Admin (Supabase)</h3>
+                <div className="flex items-center gap-2">
+                  <Switch checked={form.criarContaAdmin} onCheckedChange={(v) => ff("criarContaAdmin", v)} />
+                  <Label>Criar conta de acesso admin para este cliente</Label>
+                </div>
+                {form.criarContaAdmin && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 rounded-xl border bg-background p-4">
+                    <div><Label>Email (login)</Label><Input type="email" value={form.email} onChange={(e) => ff("email", e.target.value)} placeholder="admin@restaurante.com" /></div>
+                    <div><Label>Senha</Label><Input type="password" value={form.senhaAdmin} onChange={(e) => ff("senhaAdmin", e.target.value)} placeholder="Mínimo 6 caracteres" /></div>
+                    <div className="sm:col-span-2"><Label>Slug da loja</Label><Input value={form.slugLoja} onChange={(e) => ff("slugLoja", e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))} placeholder="ex: restaurante-01" /><p className="text-xs text-muted-foreground mt-1">Identificador único usado no login operacional</p></div>
+                  </div>
+                )}
+              </div>
+            )}
             <div className="space-y-3">
               <h3 className="text-sm font-bold text-foreground uppercase tracking-wide">Localização</h3>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -767,7 +825,9 @@ const MasterPage = () => {
               <h3 className="text-sm font-bold text-foreground uppercase tracking-wide">Observações</h3>
               <Textarea placeholder="Observações livres sobre o cliente..." value={form.observacoes} onChange={(e) => ff("observacoes", e.target.value)} rows={3} />
             </div>
-            <Button onClick={handleSave} className="w-full">Salvar</Button>
+            <Button onClick={handleSave} className="w-full" disabled={savingAccount}>
+              {savingAccount ? "Criando conta..." : "Salvar"}
+            </Button>
           </div>
         </SheetContent>
       </Sheet>
