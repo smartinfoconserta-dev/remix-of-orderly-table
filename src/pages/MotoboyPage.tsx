@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { getSistemaConfig } from "@/lib/adminStorage";
 import { useRestaurant } from "@/contexts/RestaurantContext";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
 import jsQR from "jsqr";
 
 const SESSAO_KEY = "obsidian-motoboy-sessao-v1";
