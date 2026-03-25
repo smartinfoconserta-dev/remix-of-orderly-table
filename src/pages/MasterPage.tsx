@@ -261,6 +261,9 @@ const MasterPage = () => {
     refresh();
   };
   const isVencido = (d: string) => d && new Date(d) < new Date(todayStr());
+  const toSlug = (str: string) =>
+    str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+
   const ff = (key: string, value: any) => {
     setForm((prev) => {
       const next = { ...prev, [key]: value };
@@ -272,6 +275,9 @@ const MasterPage = () => {
           next.dataTermino = dt;
           next.dataVencimento = dt;
         }
+      }
+      if (key === "nomeRestaurante") {
+        next.slugLoja = toSlug(value);
       }
       return next;
     });
@@ -822,7 +828,7 @@ const MasterPage = () => {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 rounded-xl border bg-background p-4">
                     <div><Label>Email (login)</Label><Input type="email" value={form.email} onChange={(e) => ff("email", e.target.value)} placeholder="admin@restaurante.com" /></div>
                     <div><Label>Senha</Label><Input type="password" value={form.senhaAdmin} onChange={(e) => ff("senhaAdmin", e.target.value)} placeholder="Mínimo 6 caracteres" /></div>
-                    <div className="sm:col-span-2"><Label>Slug da loja</Label><Input value={form.slugLoja} onChange={(e) => ff("slugLoja", e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))} placeholder="ex: restaurante-01" /><p className="text-xs text-muted-foreground mt-1">Identificador único usado no login operacional</p></div>
+                    {form.slugLoja && <div className="sm:col-span-2"><Label>Slug da loja</Label><p className="text-sm text-muted-foreground mt-1 font-mono bg-background rounded-md px-3 py-2 border">{form.slugLoja}</p></div>}
                   </div>
                 )}
               </div>
