@@ -255,7 +255,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   /* ─── Level 3b: Login by PIN only (auto-detect module) ─── */
-  const loginByPin = useCallback(async (storeSlug: string, pin: string): Promise<LoginByPinResult> => {
+  const loginByPin = useCallback(async (storeSlug: string, pin: string): Promise<LoginResult & { module?: string }> => {
     // 1. Find store by slug
     const { data: store, error: storeError } = await supabase
       .from("stores")
