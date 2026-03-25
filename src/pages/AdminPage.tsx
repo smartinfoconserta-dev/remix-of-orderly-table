@@ -1079,7 +1079,7 @@ const AdminPage = () => {
                   {configSection === "inicio" && "Configurações"}
                   {configSection === "identidade" && "🎨 Identidade Visual"}
                   {configSection === "delivery" && "🛵 Delivery"}
-                  {configSection === "salao" && "🍽️ Salão & Mesas"}
+                  {configSection === "salao" && "🍽️ Salão"}
                   {configSection === "operacao" && "⚙️ Operação"}
                   {configSection === "modulos" && "🧩 Módulos"}
                   {configSection === "sistema" && "💾 Sistema"}
