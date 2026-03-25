@@ -167,6 +167,65 @@ const MasterPage = () => {
   const [savingAccount, setSavingAccount] = useState(false);
   const [buscandoCnpj, setBuscandoCnpj] = useState(false);
 
+  // Edit account credentials state
+  const [editNovoEmail, setEditNovoEmail] = useState("");
+  const [editNovaSenha, setEditNovaSenha] = useState("");
+  const [editLinkedUserId, setEditLinkedUserId] = useState<string | null>(null);
+  const [savingCredentials, setSavingCredentials] = useState(false);
+
+  // When editing, try to find linked Supabase user via store slug
+  useEffect(() => {
+    setEditNovoEmail("");
+    setEditNovaSenha("");
+    setEditLinkedUserId(null);
+    if (!editId || !dialogOpen) return;
+    const cliente = clientes.find((c) => c.id === editId);
+    if (!cliente) return;
+    // Try to find store by name match
+    const matchedStore = stores.find(
+      (s) => s.name.toLowerCase() === cliente.nomeRestaurante.toLowerCase()
+    );
+    if (!matchedStore) return;
+    supabase
+      .from("store_members")
+      .select("user_id")
+      .eq("store_id", matchedStore.id)
+      .eq("role_in_store", "owner")
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data?.user_id) setEditLinkedUserId(data.user_id);
+      });
+  }, [editId, dialogOpen, clientes, stores]);
+
+  const handleUpdateCredentials = async () => {
+    if (!editLinkedUserId) { toast.error("Usuário Supabase não encontrado para este cliente."); return; }
+    if (!editNovoEmail && !editNovaSenha) { toast.error("Preencha o novo email ou a nova senha."); return; }
+    if (editNovaSenha && editNovaSenha.length < 6) { toast.error("Senha deve ter no mínimo 6 caracteres."); return; }
+    setSavingCredentials(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("update-admin-account", {
+        body: {
+          userId: editLinkedUserId,
+          newEmail: editNovoEmail.trim() || undefined,
+          newPassword: editNovaSenha || undefined,
+        },
+      });
+      if (error || data?.error) {
+        toast.error(data?.error || error?.message || "Erro ao atualizar credenciais");
+      } else {
+        toast.success("Credenciais atualizadas com sucesso!");
+        if (editNovoEmail.trim()) {
+          ff("email", editNovoEmail.trim());
+        }
+        setEditNovoEmail("");
+        setEditNovaSenha("");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao atualizar credenciais");
+    }
+    setSavingCredentials(false);
+  };
+
   const buscarCnpj = async (cnpjRaw: string) => {
     const cnpjClean = cnpjRaw.replace(/\D/g, "");
     if (cnpjClean.length !== 14) return;
