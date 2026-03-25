@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   ClipboardList,
   Download,
@@ -16,6 +17,14 @@ import {
   Trash2,
   Users,
   X,
+  UtensilsCrossed,
+  CreditCard,
+  ChefHat,
+  Truck,
+  Bike,
+  Monitor,
+  Tv,
+  ExternalLink,
 } from "lucide-react";
 import StorePinsManager from "@/components/StorePinsManager";
 import { useStore } from "@/contexts/StoreContext";
@@ -124,8 +133,7 @@ const formatPrice = (v: number) => `R$ ${v.toFixed(2).replace(".", ",")}`;
 const AdminPage = () => {
   const { logout } = useAuth();
   const { storeId, storeName: ctxStoreName } = useStore();
-
-
+  const navigate = useNavigate();
   const [tab, setTab] = useState<AdminTab>("dashboard");
   const [configSection, setConfigSection] = useState<"inicio" | "identidade" | "delivery" | "salao" | "operacao" | "modulos" | "sistema">("inicio");
 
@@ -379,7 +387,33 @@ const AdminPage = () => {
               </button>
             );
           })}
-        </nav>
+         </nav>
+
+        {/* Módulos operacionais */}
+        <div className="border-t border-border pt-2 pb-2">
+          <p className="px-4 py-1.5 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Módulos</p>
+          {[
+            { label: "Garçom", icon: UtensilsCrossed, path: "/garcom" },
+            { label: "Caixa", icon: CreditCard, path: "/caixa" },
+            { label: "Cozinha", icon: ChefHat, path: "/cozinha" },
+            { label: "Delivery", icon: Truck, path: "/delivery" },
+            { label: "Motoboy", icon: Bike, path: "/motoboy" },
+            { label: "Totem", icon: Monitor, path: "/totem" },
+            { label: "TV Retirada", icon: Tv, path: "/tv" },
+            { label: "Gerente", icon: Users, path: "/gerente" },
+          ].map((m) => (
+            <button
+              key={m.path}
+              type="button"
+              onClick={() => navigate(m.path)}
+              className="flex w-full items-center gap-3 px-4 py-1.5 text-sm text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
+            >
+              <m.icon className="h-3.5 w-3.5" />
+              <span className="flex-1 text-left">{m.label}</span>
+              <ExternalLink className="h-3 w-3 opacity-40" />
+            </button>
+          ))}
+        </div>
       </aside>
 
       {/* Content */}
