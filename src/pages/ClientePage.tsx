@@ -95,6 +95,12 @@ const ClientePage = () => {
       return;
     }
 
+    if (result.module !== "cliente") {
+      setLoginError("Este PIN não é de Tablet Cliente. Cadastre um PIN do módulo 'Tablet Cliente' no painel.");
+      setIsLoggingIn(false);
+      return;
+    }
+
     const userName = result.module ?? "Operador";
     const authenticatedUser = setTabletLoginUser(userName);
     setTabletUser(authenticatedUser);
