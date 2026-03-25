@@ -342,21 +342,6 @@ const AdminPage = () => {
   }, [licencaConfig]);
 
 
-  const handleCreateGerente = () => {
-    setUserError(null);
-    if (!newUserName.trim() || !/^\d{4,6}$/.test(newUserPin)) return;
-    const result = createUser("gerente", newUserName, newUserPin);
-    if (!result.ok) { setUserError(result.error ?? "Erro ao criar"); return; }
-    toast.success(`Gerente "${result.user?.nome}" criado com sucesso`);
-    setNewUserName("");
-    setNewUserPin("");
-  };
-
-  const handleRemoveUser = (id: string, nome: string, roleLabel: string) => {
-    const result = removeUser(id);
-    if (!result.ok) { toast.error(result.error ?? "Erro ao remover"); return; }
-    toast.success(`${roleLabel} "${nome}" removido`);
-  };
 
   const nomeRestaurante = getSistemaConfig().nomeRestaurante || "Restaurante";
 
