@@ -1096,7 +1096,7 @@ const AdminPage = () => {
                 {[
                   { id: "identidade", icon: "🎨", label: "Identidade Visual", desc: "Logo, nome, cor, banners" },
                   { id: "delivery", icon: "🛵", label: "Delivery", desc: "Horários, bairros, taxas" },
-                  { id: "salao", icon: "🍽️", label: "Salão & Mesas", desc: "Número de mesas, QR Codes" },
+                  { id: "salao", icon: "🍽️", label: "Salão", desc: "Boas-vindas, Wi-Fi, Instagram" },
                   { id: "operacao", icon: "⚙️", label: "Operação", desc: "Cozinha, couvert, modos" },
                   { id: "modulos", icon: "🧩", label: "Módulos", desc: "Ativar e desativar funcionalidades" },
                   { id: "sistema", icon: "💾", label: "Sistema", desc: "Backup e restauração" },
