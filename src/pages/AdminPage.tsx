@@ -398,31 +398,6 @@ const AdminPage = () => {
           })}
         </nav>
 
-        {/* Módulos operacionais */}
-        <div className="border-t border-sidebar-border px-2 py-3 space-y-0.5">
-          <p className="px-3 pt-1 pb-2 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Módulos ao vivo</p>
-          {[
-            { label: "Garçom", icon: UtensilsCrossed, path: "/garcom" },
-            { label: "Caixa", icon: CreditCard, path: "/caixa" },
-            { label: "Cozinha", icon: ChefHat, path: "/cozinha" },
-            { label: "Delivery", icon: Truck, path: "/delivery" },
-            { label: "Motoboy", icon: Bike, path: "/motoboy" },
-            { label: "Totem", icon: Monitor, path: "/totem" },
-            { label: "TV Retirada", icon: Tv, path: "/tv" },
-            { label: "Gerente", icon: Users, path: "/gerente" },
-          ].map((m) => (
-            <button
-              key={m.path}
-              type="button"
-              onClick={() => navigate(m.path)}
-              className="flex w-full items-center gap-3 px-3 py-1.5 text-sm text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground rounded-lg transition-colors font-medium"
-            >
-              <m.icon className="h-3.5 w-3.5 shrink-0" />
-              <span className="flex-1 text-left">{m.label}</span>
-              <ExternalLink className="h-3 w-3 opacity-30" />
-            </button>
-          ))}
-        </div>
       </aside>
 
       {/* Content */}
