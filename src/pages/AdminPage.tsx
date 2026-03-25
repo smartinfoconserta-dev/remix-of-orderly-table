@@ -125,12 +125,6 @@ const AdminPage = () => {
   const { logout } = useAuth();
   const { storeId, storeName: ctxStoreName } = useStore();
 
-  // Auth gate state — ProtectedRoute already validates auth level
-  const [authenticated, setAuthenticated] = useState(true);
-  const [authName, setAuthName] = useState("");
-  const [authPin, setAuthPin] = useState("");
-  const [authError, setAuthError] = useState<string | null>(null);
-  const [authLoading, setAuthLoading] = useState(false);
 
   const [tab, setTab] = useState<AdminTab>("dashboard");
   const [configSection, setConfigSection] = useState<"inicio" | "identidade" | "delivery" | "salao" | "operacao" | "modulos" | "sistema">("inicio");
