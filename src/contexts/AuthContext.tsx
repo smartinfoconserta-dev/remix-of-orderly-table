@@ -334,10 +334,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     loginByPin,
     operationalSession,
     logout,
-    // Legacy stubs
-    currentGarcom: null,
-    currentCaixa: null,
-    currentGerente: null,
+    // Legacy stubs — derive from operational session
+    currentGarcom: operationalSession?.module === "garcom" ? { id: "op", nome: operationalSession.pinLabel ?? "Garçom", role: "garcom" as UserRole, criadoEm: "" } : null,
+    currentCaixa: operationalSession?.module === "caixa" ? { id: "op", nome: operationalSession.pinLabel ?? "Caixa", role: "caixa" as UserRole, criadoEm: "" } : null,
+    currentGerente: operationalSession?.module === "gerente" ? { id: "op", nome: operationalSession.pinLabel ?? "Gerente", role: "gerente" as UserRole, criadoEm: "" } : null,
     getProfilesByRole,
     getActiveProfilesByRole,
     loginWithPin,
