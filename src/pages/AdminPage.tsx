@@ -122,7 +122,7 @@ const sidebarSections = [
 const formatPrice = (v: number) => `R$ ${v.toFixed(2).replace(".", ",")}`;
 
 const AdminPage = () => {
-  const { verifyManagerAccess, verifyEmployeeAccess, getProfilesByRole, getActiveProfilesByRole, createUser, removeUser } = useAuth();
+  const { logout } = useAuth();
   const { storeId, storeName: ctxStoreName } = useStore();
 
   // Auth gate state — ProtectedRoute already validates auth level
