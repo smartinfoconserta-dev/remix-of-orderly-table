@@ -825,7 +825,9 @@ const MasterPage = () => {
               <h3 className="text-sm font-bold text-foreground uppercase tracking-wide">Observações</h3>
               <Textarea placeholder="Observações livres sobre o cliente..." value={form.observacoes} onChange={(e) => ff("observacoes", e.target.value)} rows={3} />
             </div>
-            <Button onClick={handleSave} className="w-full">Salvar</Button>
+            <Button onClick={handleSave} className="w-full" disabled={savingAccount}>
+              {savingAccount ? "Criando conta..." : "Salvar"}
+            </Button>
           </div>
         </SheetContent>
       </Sheet>
