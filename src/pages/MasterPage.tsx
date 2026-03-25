@@ -21,7 +21,7 @@ import {
   getClientes, addCliente, updateCliente, removeCliente,
   getDespesas, addDespesa,
 } from "@/lib/masterStorage";
-import { getLicencaConfig, saveLicencaConfig, saveLicencaConfigAsync } from "@/lib/adminStorage";
+import { getLicencaConfig, saveLicencaConfig, saveLicencaConfigAsync, getSistemaConfig, saveSistemaConfig, saveSistemaConfigAsync } from "@/lib/adminStorage";
 
 
 
@@ -292,12 +292,17 @@ const MasterPage = () => {
 
     if (editId) { updateCliente(editId, form); toast.success("Cliente atualizado."); }
     else { addCliente(form); toast.success("Cliente criado."); }
-    // Sync planoModulos to licença config
+    // Sync planoModulos to licença config AND restaurant_config
     if (form.planoModulos) {
       const lic = getLicencaConfig();
       lic.plano = form.planoModulos;
       saveLicencaConfig(lic);
       saveLicencaConfigAsync(lic);
+
+      const cfg = getSistemaConfig();
+      cfg.plano = form.planoModulos;
+      saveSistemaConfig(cfg);
+      saveSistemaConfigAsync(cfg);
     }
     setDialogOpen(false); refresh();
   };
@@ -309,6 +314,10 @@ const MasterPage = () => {
       const lic = getLicencaConfig();
       lic.plano = c.planoModulos;
       saveLicencaConfig(lic);
+
+      const cfg = getSistemaConfig();
+      cfg.plano = c.planoModulos;
+      saveSistemaConfig(cfg);
     }
     refresh();
   };
