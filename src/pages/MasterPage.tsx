@@ -172,6 +172,32 @@ const MasterPage = () => {
   };
 
   const [savingAccount, setSavingAccount] = useState(false);
+  const [buscandoCnpj, setBuscandoCnpj] = useState(false);
+
+  const buscarCnpj = async (cnpjRaw: string) => {
+    const cnpjClean = cnpjRaw.replace(/\D/g, "");
+    if (cnpjClean.length !== 14) return;
+    setBuscandoCnpj(true);
+    try {
+      const res = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${cnpjClean}`);
+      if (!res.ok) { toast.error("CNPJ não encontrado."); setBuscandoCnpj(false); return; }
+      const data = await res.json();
+      setForm((prev) => ({
+        ...prev,
+        nomeRestaurante: prev.nomeRestaurante || data.nome_fantasia || data.razao_social || "",
+        nomeContato: prev.nomeContato || (data.qsa?.[0]?.nome_socio || ""),
+        telefone: prev.telefone || (data.ddd_telefone_1 ? `(${data.ddd_telefone_1.slice(0, 2)}) ${data.ddd_telefone_1.slice(2)}` : ""),
+        email: prev.email || data.email || "",
+        endereco: prev.endereco || [data.descricao_tipo_de_logradouro, data.logradouro, data.numero, data.complemento].filter(Boolean).join(", "),
+        cidade: prev.cidade || data.municipio || "",
+        estado: prev.estado || data.uf || "",
+      }));
+      toast.success("Dados do CNPJ preenchidos!");
+    } catch {
+      toast.error("Erro ao buscar CNPJ.");
+    }
+    setBuscandoCnpj(false);
+  };
 
   const handleSave = async () => {
     if (!form.nomeRestaurante.trim() || !form.nomeContato.trim()) { toast.error("Preencha nome do restaurante e contato."); return; }
