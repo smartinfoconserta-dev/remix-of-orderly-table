@@ -1,6 +1,5 @@
 import { useState } from "react";
-import { BriefcaseBusiness, HandPlatter, KeyRound, Shield, Wallet } from "lucide-react";
-import { z } from "zod";
+import { BriefcaseBusiness, HandPlatter, KeyRound, Store, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/contexts/AuthContext";
@@ -10,11 +9,6 @@ import { toast } from "sonner";
 interface OperationalAccessCardProps {
   role: UserRole;
 }
-
-const accessSchema = z.object({
-  nome: z.string().trim().min(2, "Informe seu nome").max(40, "Máximo de 40 caracteres"),
-  pin: z.string().regex(/^\d{4,6}$/, "Use um PIN de 4 a 6 dígitos"),
-});
 
 const roleCopy: Record<string, { title: string; description: string; submit: string; icon: typeof HandPlatter }> = {
   garcom: {
@@ -38,28 +32,31 @@ const roleCopy: Record<string, { title: string; description: string; submit: str
 };
 
 const OperationalAccessCard = ({ role }: OperationalAccessCardProps) => {
-  const { loginWithPin } = useAuth();
-  const [nome, setNome] = useState("");
+  const { loginAsOperational } = useAuth();
+  const [storeSlug, setStoreSlug] = useState("");
   const [pin, setPin] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const copy = roleCopy[role];
+  const copy = roleCopy[role] ?? roleCopy.garcom;
   const Icon = copy.icon;
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const parsed = accessSchema.safeParse({ nome, pin });
 
-    if (!parsed.success) {
-      setError(parsed.error.issues[0]?.message ?? "Revise os dados informados");
+    if (!storeSlug.trim()) {
+      setError("Informe o código da loja");
+      return;
+    }
+    if (!/^\d{4,6}$/.test(pin)) {
+      setError("O PIN deve ter entre 4 e 6 números");
       return;
     }
 
     setIsSubmitting(true);
     setError(null);
 
-    const result = await loginWithPin(role, parsed.data.nome, parsed.data.pin);
+    const result = await loginAsOperational(storeSlug.trim(), role, pin);
 
     if (!result.ok) {
       setError(result.error ?? "Não foi possível entrar agora");
@@ -68,7 +65,7 @@ const OperationalAccessCard = ({ role }: OperationalAccessCardProps) => {
     }
 
     setPin("");
-    toast.success(`${result.user?.nome ?? "Usuário"} identificado com sucesso`, {
+    toast.success("Acesso autorizado", {
       duration: 1200,
       icon: role === "garcom" ? "🍽️" : role === "gerente" ? "🛡️" : "💰",
     });
@@ -90,8 +87,11 @@ const OperationalAccessCard = ({ role }: OperationalAccessCardProps) => {
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div className="space-y-2">
-            <label className="text-sm font-semibold text-foreground">Nome do operador</label>
-            <Input value={nome} onChange={(event) => setNome(event.target.value)} placeholder="Ex.: João" maxLength={40} />
+            <label className="flex items-center gap-2 text-sm font-semibold text-foreground">
+              <Store className="h-4 w-4" />
+              Código da loja
+            </label>
+            <Input value={storeSlug} onChange={(event) => setStoreSlug(event.target.value)} placeholder="Ex.: restaurante-01" maxLength={60} />
           </div>
 
           <div className="space-y-2">
