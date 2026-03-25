@@ -800,7 +800,7 @@ const MasterPage = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div><Label>Nome do restaurante</Label><Input value={form.nomeRestaurante} onChange={(e) => ff("nomeRestaurante", e.target.value)} /></div>
                 <div><Label>Segmento</Label><Select value={form.segmento} onValueChange={(v) => ff("segmento", v)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent container={document.body} position="popper" className="z-[80]">{SEGMENTOS.map((s) => <SelectItem key={s} value={s}>{SEGMENTO_LABELS[s]}</SelectItem>)}</SelectContent></Select></div>
-                <div><Label>CNPJ</Label><Input placeholder="00.000.000/0000-00" value={form.cnpj} onChange={(e) => ff("cnpj", e.target.value)} /></div>
+                <div><Label>CNPJ</Label><div className="flex gap-2"><Input placeholder="00.000.000/0000-00" value={form.cnpj} onChange={(e) => ff("cnpj", e.target.value)} onBlur={() => buscarCnpj(form.cnpj)} className="flex-1" /><Button type="button" variant="outline" size="sm" className="shrink-0 h-10" disabled={buscandoCnpj || form.cnpj.replace(/\D/g, "").length !== 14} onClick={() => buscarCnpj(form.cnpj)}>{buscandoCnpj ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}</Button></div></div>
                 <div><Label>Telefone</Label><Input placeholder="(00) 00000-0000" value={form.telefone} onChange={(e) => ff("telefone", e.target.value)} /></div>
               </div>
             </div>
