@@ -17,11 +17,10 @@ import {
   clearBoundTabletMesaId,
   clearTabletLoginUser,
 } from "@/lib/tabletBinding";
-import { toast } from "sonner";
 
 const ClientePage = () => {
   const { mesas } = useRestaurant();
-  const { verifyEmployeeAccess } = useAuth();
+  const { loginByPin } = useAuth();
   const [searchParams] = useSearchParams();
 
   const [mesaId, setMesaId] = useState<string | null>(() => {
@@ -34,7 +33,7 @@ const ClientePage = () => {
     return savedMesa;
   });
   const [tabletUser, setTabletUser] = useState<string | null>(() => getTabletLoginUser());
-  const [nome, setNome] = useState("");
+  const [storeSlug, setStoreSlug] = useState("");
   const [pin, setPin] = useState("");
   const [loginError, setLoginError] = useState<string | null>(null);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
@@ -64,7 +63,7 @@ const ClientePage = () => {
       setTabletUser(nextTabletUser);
 
       if (!nextMesaId && !nextTabletUser) {
-        setNome("");
+        setStoreSlug("");
         setPin("");
         setLoginError(null);
       }
@@ -88,7 +87,7 @@ const ClientePage = () => {
     setIsLoggingIn(true);
     setLoginError(null);
 
-    const result = await verifyEmployeeAccess(nome.trim(), pin);
+    const result = await loginByPin(storeSlug.trim(), pin);
 
     if (!result.ok) {
       setLoginError(result.error ?? "Credenciais inválidas");
@@ -96,7 +95,8 @@ const ClientePage = () => {
       return;
     }
 
-    const authenticatedUser = setTabletLoginUser(result.user!.nome);
+    const userName = result.module ?? "Operador";
+    const authenticatedUser = setTabletLoginUser(userName);
     setTabletUser(authenticatedUser);
     setPin("");
     setLoginError(null);
@@ -107,7 +107,6 @@ const ClientePage = () => {
     const boundMesaId = setBoundTabletMesaId(selectedMesaId);
     setMesaId(boundMesaId);
   };
-
 
   if (mesaId) {
     return <PedidoFlow modo="cliente" mesaId={mesaId} />;
@@ -122,16 +121,16 @@ const ClientePage = () => {
               <TabletSmartphone className="h-6 w-6" />
             </div>
             <h1 className="text-2xl font-black text-foreground">Acesso do tablet</h1>
-            <p className="text-sm text-muted-foreground">Faça login com suas credenciais de funcionário para liberar o tablet.</p>
+            <p className="text-sm text-muted-foreground">Informe o código da loja e o PIN para liberar o tablet.</p>
           </div>
 
           <div className="space-y-4">
             <div className="space-y-2">
-              <label className="text-sm font-semibold text-foreground">Nome</label>
+              <label className="text-sm font-semibold text-foreground">Código da Loja</label>
               <Input
-                value={nome}
-                onChange={(event) => setNome(event.target.value.slice(0, 40))}
-                placeholder="Seu nome de funcionário"
+                value={storeSlug}
+                onChange={(event) => setStoreSlug(event.target.value.slice(0, 40))}
+                placeholder="Ex: minha-loja"
                 autoComplete="username"
               />
             </div>
@@ -161,7 +160,6 @@ const ClientePage = () => {
               Entrar no tablet
             </Button>
           </div>
-
         </div>
       </div>
     );
