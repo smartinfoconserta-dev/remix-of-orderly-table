@@ -144,10 +144,7 @@ const MasterPage = () => {
 
   const refresh = () => { setClientes(getClientes()); setDespesas(getDespesas()); };
 
-  const handleLogin = () => {
-    if (senha === MASTER_PASS) { setAuthed(true); setSenhaErro(false); refresh(); }
-    else setSenhaErro(true);
-  };
+  useEffect(() => { refresh(); }, []);
 
   const openCreate = () => { setEditId(null); setForm(emptyForm); setDialogOpen(true); };
   const openEdit = (c: Cliente) => {
