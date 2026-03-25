@@ -112,27 +112,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   /* ─── Listen to auth state changes ─── */
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      if (session?.user) {
-        setSupabaseUser(session.user);
-        const level = await resolveSupabaseLevel(session.user);
-        setAuthLevel(level);
-        // Clear operational session when a Supabase session is active
-        if (level !== "unauthenticated") {
-          setOperationalSession(null);
-          writeOpSession(null);
-        }
-      } else {
-        setSupabaseUser(null);
-        // Keep operational session if it exists
-        const opSession = readOpSession();
-        setAuthLevel(opSession ? "operational" : "unauthenticated");
-        setOperationalSession(opSession);
-      }
-      setIsLoading(false);
-    });
-
-    // Check existing session
+    // 1. Restore session from storage FIRST
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (session?.user) {
         setSupabaseUser(session.user);
@@ -144,6 +124,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setAuthLevel("operational");
           setOperationalSession(opSession);
         }
+      }
+      setIsLoading(false);
+    });
+
+    // 2. Subscribe to subsequent changes — NEVER await inside this callback
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        setSupabaseUser(session.user);
+        // Fire-and-forget role resolution to avoid deadlock
+        resolveSupabaseLevel(session.user).then((level) => {
+          setAuthLevel(level);
+          if (level !== "unauthenticated") {
+            setOperationalSession(null);
+            writeOpSession(null);
+          }
+        });
+      } else {
+        setSupabaseUser(null);
+        const opSession = readOpSession();
+        setAuthLevel(opSession ? "operational" : "unauthenticated");
+        setOperationalSession(opSession);
       }
       setIsLoading(false);
     });
