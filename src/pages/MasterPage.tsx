@@ -371,7 +371,7 @@ const MasterPage = () => {
         {/* Header */}
         <div className="flex items-center justify-between">
           <h1 className="text-2xl md:text-3xl font-black text-foreground">Painel Master</h1>
-          <Button variant="outline" size="sm" onClick={() => setAuthed(false)}><LogOut className="w-4 h-4 mr-1" /> Sair</Button>
+          <Button variant="outline" size="sm" onClick={() => logout()}><LogOut className="w-4 h-4 mr-1" /> Sair</Button>
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
