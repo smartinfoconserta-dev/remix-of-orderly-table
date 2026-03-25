@@ -92,6 +92,7 @@ export interface FechamentoConta {
   caixaId: string;
   caixaNome: string;
   troco?: number;
+  subtotal?: number;
   desconto?: number;
   couvert?: number;
   numeroPessoas?: number;
