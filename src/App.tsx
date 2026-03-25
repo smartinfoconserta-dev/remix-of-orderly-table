@@ -6,6 +6,7 @@ import { ProtectedRoute } from "./components/ProtectedRoute";
 import { AdminBackButton } from "./components/AdminBackButton";
 import MesaPage from "./pages/MesaPage";
 import CaixaPage from "./pages/CaixaPage";
+import ClientePage from "./pages/ClientePage";
 import GerentePage from "./pages/GerentePage";
 import CozinhaPage from "./pages/CozinhaPage";
 import AdminPage from "./pages/AdminPage";
