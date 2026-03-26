@@ -14,6 +14,7 @@ interface TabletRow {
   nome: string;
   mesa_id: string | null;
   pin_id: string | null;
+  pin_code: string | null;
   ativo: boolean;
   created_at: string | null;
 }
