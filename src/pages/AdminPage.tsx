@@ -2132,6 +2132,17 @@ const AdminPage = () => {
           )
         )}
 
+        {/* ═══ TABLETS ═══ */}
+        {tab === "tablets" && (
+          <div className="space-y-6 fade-in">
+            {storeId ? (
+              <TabletsManager storeId={storeId} />
+            ) : (
+              <p className="text-sm text-muted-foreground py-8 text-center">Loja não identificada. Faça login novamente.</p>
+            )}
+          </div>
+        )}
+
         {/* ═══ PINS ═══ */}
         {tab === "pins" && (
           <div className="space-y-6 fade-in">
