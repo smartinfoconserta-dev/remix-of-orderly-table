@@ -54,6 +54,7 @@ import {
 } from "lucide-react";
 import StorePinsManager from "@/components/StorePinsManager";
 import MesasManager from "@/components/MesasManager";
+import TabletsManager from "@/components/TabletsManager";
 import { useStore } from "@/contexts/StoreContext";
 import CategoryIcon from "@/components/CategoryIcon";
 import { Button } from "@/components/ui/button";
