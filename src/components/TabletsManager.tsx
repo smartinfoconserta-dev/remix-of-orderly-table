@@ -37,6 +37,9 @@ const TabletsManager = ({ storeId }: Props) => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingTablet, setEditingTablet] = useState<TabletRow | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<TabletRow | null>(null);
+  const [detailTablet, setDetailTablet] = useState<TabletRow | null>(null);
+  const [detailPin, setDetailPin] = useState("");
+  const [regenerating, setRegenerating] = useState(false);
 
   const [formNome, setFormNome] = useState("");
   const [formMesaId, setFormMesaId] = useState<string>("none");
