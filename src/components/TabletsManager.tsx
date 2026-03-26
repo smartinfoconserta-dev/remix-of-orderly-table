@@ -120,19 +120,22 @@ const TabletsManager = ({ storeId }: Props) => {
         return;
       }
 
-      const { error } = await supabase.from("tablets").insert({
+      const { data: newTablet, error } = await supabase.from("tablets").insert({
         store_id: storeId,
         nome: formNome.trim(),
         mesa_id: mesaIdValue,
         pin_id: pinId,
         ativo: true,
-      });
+      }).select("*").single();
 
-      if (error) {
+      if (error || !newTablet) {
         toast.error("Erro ao criar tablet");
         console.error(error);
       } else {
-        toast.success(`Tablet criado! PIN: ${generatedPin}`);
+        toast.success("Tablet criado!");
+        // Open detail popup showing the generated PIN
+        setDetailTablet(newTablet as TabletRow);
+        setDetailPin(generatedPin);
       }
     }
 
