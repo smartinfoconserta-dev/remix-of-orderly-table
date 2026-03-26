@@ -341,6 +341,68 @@ const TabletsManager = ({ storeId }: Props) => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Detail / PIN dialog */}
+      <Dialog open={!!detailTablet} onOpenChange={(open) => !open && setDetailTablet(null)}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <TabletSmartphone className="h-5 w-5" />
+              {detailTablet?.nome}
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4 pt-2">
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Mesa</span>
+                <span className="font-semibold text-foreground">{getMesaLabel(detailTablet?.mesa_id ?? null)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Status</span>
+                <Badge variant={detailTablet?.ativo ? "default" : "secondary"} className="text-[10px]">
+                  {detailTablet?.ativo ? "Ativo" : "Inativo"}
+                </Badge>
+              </div>
+            </div>
+
+            {/* PIN section */}
+            <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 text-center space-y-3">
+              <div className="flex items-center justify-center gap-2">
+                <KeyRound className="h-4 w-4 text-primary" />
+                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">PIN de Acesso</p>
+              </div>
+
+              {detailPin ? (
+                <>
+                  <p className="text-4xl font-black tabular-nums tracking-[0.3em] text-primary">{detailPin}</p>
+                  <Button size="sm" variant="outline" onClick={copyPin} className="gap-1 rounded-lg text-xs">
+                    <Copy className="h-3 w-3" /> Copiar PIN
+                  </Button>
+                </>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  {detailTablet?.pin_id ? "PIN configurado (hash seguro)" : "Nenhum PIN configurado"}
+                </p>
+              )}
+            </div>
+
+            <Button
+              onClick={handleRegeneratePin}
+              disabled={regenerating}
+              variant="outline"
+              className="h-11 w-full rounded-xl font-bold gap-2"
+            >
+              <RefreshCw className={`h-4 w-4 ${regenerating ? "animate-spin" : ""}`} />
+              {regenerating ? "Gerando…" : detailTablet?.pin_id ? "Regenerar PIN" : "Gerar PIN"}
+            </Button>
+
+            <p className="text-[11px] text-muted-foreground text-center">
+              Ao regenerar, o PIN anterior será desativado e um novo será criado.
+            </p>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
