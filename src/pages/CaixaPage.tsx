@@ -3679,8 +3679,8 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
               <div className="space-y-3 rounded-xl border border-border bg-card p-4">
                 <label className="text-xs font-semibold text-foreground">Buscar cliente por CPF ou Telefone</label>
                 <div className="flex gap-2">
-                  <Input value={deliveryBusca} onChange={(e) => setDeliveryBusca(e.target.value)} placeholder="CPF ou telefone..." onKeyDown={(e) => { if (e.key === "Enter") setDeliveryResultados(findClienteDelivery(deliveryBusca)); }} />
-                  <Button size="sm" onClick={() => setDeliveryResultados(findClienteDelivery(deliveryBusca))} className="rounded-xl font-bold gap-1.5 shrink-0"><Search className="h-4 w-4" />Buscar</Button>
+                  <Input value={deliveryBusca} onChange={(e) => setDeliveryBusca(e.target.value)} placeholder="CPF ou telefone..." onKeyDown={async (e) => { if (e.key === "Enter") setDeliveryResultados(await findClienteDelivery(deliveryBusca)); }} />
+                  <Button size="sm" onClick={async () => setDeliveryResultados(await findClienteDelivery(deliveryBusca))} className="rounded-xl font-bold gap-1.5 shrink-0"><Search className="h-4 w-4" />Buscar</Button>
                 </div>
                 {deliveryResultados.length > 0 && (
                   <div className="space-y-1.5 mt-2">

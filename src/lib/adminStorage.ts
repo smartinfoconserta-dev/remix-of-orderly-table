@@ -215,7 +215,7 @@ export async function loadCardapioOverrides(
     let query = supabase.from("restaurant_config").select("cardapio_overrides").limit(1);
     if (storeId) query = query.eq("store_id", storeId);
     const { data } = await query.maybeSingle();
-    const overrides = (data?.cardapio_overrides as Record<string, ProdutoOverride>) ?? {};
+    const overrides = (data?.cardapio_overrides as unknown as Record<string, ProdutoOverride>) ?? {};
     _cardapioCache = overrides;
     return overrides;
   } catch {

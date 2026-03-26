@@ -7,7 +7,7 @@ import { Progress } from "@/components/ui/progress";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { getSistemaConfig, isDeliveryAberto, getHorariosFuncionamento } from "@/lib/adminStorage";
-import { findClienteDelivery, upsertClienteDelivery, getBairros, getClientesDelivery, saveClientesDelivery, type ClienteDelivery, type Bairro } from "@/lib/deliveryStorage";
+import { findClienteDelivery, upsertClienteDelivery, getBairros, getClientesDelivery, type ClienteDelivery, type Bairro } from "@/lib/deliveryStorage";
 import { useRestaurant, type ItemCarrinho } from "@/contexts/RestaurantContext";
 import PedidoFlow from "@/components/PedidoFlow";
 import { toast } from "sonner";
@@ -208,7 +208,7 @@ export default function PedidoPage() {
   }, [loginTel, loginSenha]);
 
   // ── Registration handler (cadastro mode) ──
-  const handleRegistrar = useCallback(() => {
+  const handleRegistrar = useCallback(async () => {
     if (!nome.trim() || !telefone.trim() || !cpf.trim() || !regSenha) {
       toast.error("Preencha todos os campos obrigatórios"); return;
     }
@@ -216,24 +216,21 @@ export default function PedidoPage() {
     if (regSenha.length < 4) { toast.error("Senha deve ter pelo menos 4 caracteres"); return; }
     const telNorm = telefone.replace(/\D/g, "");
     const senhaHash = btoa(telNorm + ":" + regSenha);
-    const cliente = upsertClienteDelivery({
+    const cliente = await upsertClienteDelivery({
       nome: nome.trim(), cpf: cpf.trim(), telefone: telefone.trim(),
       endereco: endereco.trim(), numero: numero.trim(), bairro: bairro.trim(),
       complemento: complemento.trim(), referencia: referencia.trim(),
+      senhaHash,
     });
-    // Save senha hash
-    const all = getClientesDelivery();
-    const updated = all.map((c) => c.id === cliente.id ? { ...c, senhaHash } : c);
-    saveClientesDelivery(updated);
     setLoggedClient({ ...cliente, senhaHash });
     setEtapa("cardapio");
     toast.success("Conta criada com sucesso!");
   }, [nome, telefone, cpf, regSenha, regSenhaConfirm, endereco, numero, bairro, complemento, referencia]);
 
   // ── Visitante busca ──
-  const handleBuscar = useCallback(() => {
+  const handleBuscar = useCallback(async () => {
     if (!busca.trim()) return;
-    const results = findClienteDelivery(busca.trim());
+    const results = await findClienteDelivery(busca.trim());
     setBuscaFeita(true);
     if (results.length > 0) {
       setClienteEncontrado(results[0]);
@@ -303,13 +300,13 @@ export default function PedidoPage() {
   const taxaEntrega = bairroSel ? bairroSel.taxa : (sysConfig.taxaEntrega ?? 0);
   const totalPedido = itens.reduce((s, i) => s + i.precoUnitario * i.quantidade, 0) + taxaEntrega;
 
-  const handleConfirmarPedido = () => {
+  const handleConfirmarPedido = async () => {
     const statusAgora = isDeliveryAberto();
     if (!statusAgora.aberto) {
       toast.error(statusAgora.mensagem + (statusAgora.proximoHorario ? `. ${statusAgora.proximoHorario}` : ""));
       return;
     }
-    const cliente = upsertClienteDelivery({
+    const cliente = await upsertClienteDelivery({
       nome: nome.trim(), cpf: cpf.trim(), telefone: telefone.trim(),
       endereco: endereco.trim(), numero: numero.trim(), bairro: bairro.trim(),
       complemento: complemento.trim(), referencia: referencia.trim(),

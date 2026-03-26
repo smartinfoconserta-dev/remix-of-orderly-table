@@ -11,26 +11,36 @@ export interface Bairro {
   ativo: boolean;
 }
 
-export const getBairros = async (storeId?: string | null): Promise<Bairro[]> => {
+let _bairrosCache: Bairro[] = [];
+
+/** Sync getter — returns cached bairros (call loadBairrosAsync first) */
+export function getBairros(): Bairro[] {
+  return _bairrosCache;
+}
+
+export const getBairrosAsync = async (storeId?: string | null): Promise<Bairro[]> => {
   try {
-    let query = supabase.from("bairros_delivery").select("*");
+    let query = supabase.from("bairros_delivery" as any).select("*");
     if (storeId) query = query.eq("store_id", storeId);
     const { data, error } = await query.order("nome");
     if (error) throw error;
-    return (data ?? []).map((r) => ({
+    const mapped = (data ?? []).map((r: any) => ({
       id: r.id,
       nome: r.nome,
       taxa: Number(r.taxa ?? 0),
       ativo: r.ativo ?? true,
     }));
+    _bairrosCache = mapped;
+    return mapped;
   } catch {
-    return [];
+    return _bairrosCache;
   }
 };
 
 export const saveBairros = async (bairros: Bairro[], storeId?: string | null): Promise<void> => {
+  _bairrosCache = bairros;
   try {
-    let del = supabase.from("bairros_delivery").delete();
+    let del = (supabase.from as any)("bairros_delivery").delete();
     if (storeId) {
       del = del.eq("store_id", storeId);
     } else {
@@ -46,7 +56,7 @@ export const saveBairros = async (bairros: Bairro[], storeId?: string | null): P
         ativo: b.ativo,
         ...(storeId ? { store_id: storeId } : {}),
       }));
-      await supabase.from("bairros_delivery").insert(rows);
+      await (supabase.from as any)("bairros_delivery").insert(rows);
     }
   } catch (err) {
     console.error("Erro ao salvar bairros:", err);
@@ -79,11 +89,11 @@ export function getClientesDelivery(): ClienteDelivery[] {
 
 export async function getClientesDeliveryAsync(storeId?: string | null): Promise<ClienteDelivery[]> {
   try {
-    let query = supabase.from("clientes_delivery").select("*");
+    let query = (supabase.from as any)("clientes_delivery").select("*");
     if (storeId) query = query.eq("store_id", storeId);
     const { data, error } = await query.order("ultimo_pedido", { ascending: false });
     if (error) throw error;
-    return (data ?? []).map((r) => ({
+    return (data ?? []).map((r: any) => ({
       id: r.id,
       nome: r.nome,
       cpf: r.cpf ?? "",
@@ -149,7 +159,7 @@ export async function upsertClienteDelivery(
         referencia: dados.referencia || existing.referencia,
         ultimo_pedido: now,
       };
-      await supabase.from("clientes_delivery").update(updated).eq("id", existing.id);
+      await (supabase.from as any)("clientes_delivery").update(updated).eq("id", existing.id);
       return { ...existing, ...dados, ultimoPedido: now };
     }
 
@@ -169,7 +179,7 @@ export async function upsertClienteDelivery(
       ultimo_pedido: now,
       ...(storeId ? { store_id: storeId } : {}),
     };
-    await supabase.from("clientes_delivery").insert(novo);
+    await (supabase.from as any)("clientes_delivery").insert(novo);
 
     return {
       id: novoId,
