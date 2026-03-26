@@ -208,7 +208,7 @@ export default function PedidoPage() {
   }, [loginTel, loginSenha]);
 
   // ── Registration handler (cadastro mode) ──
-  const handleRegistrar = useCallback(() => {
+  const handleRegistrar = useCallback(async () => {
     if (!nome.trim() || !telefone.trim() || !cpf.trim() || !regSenha) {
       toast.error("Preencha todos os campos obrigatórios"); return;
     }
@@ -216,15 +216,12 @@ export default function PedidoPage() {
     if (regSenha.length < 4) { toast.error("Senha deve ter pelo menos 4 caracteres"); return; }
     const telNorm = telefone.replace(/\D/g, "");
     const senhaHash = btoa(telNorm + ":" + regSenha);
-    const cliente = upsertClienteDelivery({
+    const cliente = await upsertClienteDelivery({
       nome: nome.trim(), cpf: cpf.trim(), telefone: telefone.trim(),
       endereco: endereco.trim(), numero: numero.trim(), bairro: bairro.trim(),
       complemento: complemento.trim(), referencia: referencia.trim(),
+      senhaHash,
     });
-    // Save senha hash
-    const all = getClientesDelivery();
-    const updated = all.map((c) => c.id === cliente.id ? { ...c, senhaHash } : c);
-    saveClientesDelivery(updated);
     setLoggedClient({ ...cliente, senhaHash });
     setEtapa("cardapio");
     toast.success("Conta criada com sucesso!");
