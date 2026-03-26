@@ -19,7 +19,7 @@ const MODULES = [
   { value: "motoboy", label: "Motoboy" },
   { value: "administrador", label: "Administrador" },
   { value: "cardapio", label: "Cardápio" },
-  { value: "cliente", label: "Tablet Cliente" },
+  { value: "cliente", label: "Tablet" },
 ];
 
 const MODULE_LABELS: Record<string, string> = Object.fromEntries(MODULES.map((m) => [m.value, m.label]));

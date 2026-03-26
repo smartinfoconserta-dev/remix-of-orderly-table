@@ -44,7 +44,8 @@ const App = () => {
         <Route path="/motoboy" element={<ProtectedRoute requiredLevel="operational" requiredModule="motoboy"><MotoboyPage /></ProtectedRoute>} />
         <Route path="/totem" element={<ProtectedRoute requiredLevel="operational" requiredModule="totem"><TotemPage /></ProtectedRoute>} />
         <Route path="/tv" element={<ProtectedRoute requiredLevel="operational" requiredModule="tv_retirada"><TvPage /></ProtectedRoute>} />
-        <Route path="/cliente" element={<ClientePage />} />
+        <Route path="/tablet" element={<TabletPage />} />
+        <Route path="/cliente" element={<Navigate to="/tablet" replace />} />
 
         <Route path="*" element={<NotFound />} />
       </Routes>
