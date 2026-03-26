@@ -1,58 +1,62 @@
 
 
-## Plano: Página "Mesas" no Admin — CRUD completo + PIN de vínculo
+## Plano: Renomear /cliente para /tablet + Cadastro de Tablets no Admin
 
-### Situação atual
-- Mesas são apenas um número (`total_mesas`) no `restaurant_config`, sem entidade individual
-- Não existe tabela de mesas no banco — tudo é derivado de um contador
-- O vínculo tablet↔mesa usa `localStorage` no dispositivo (`tabletBinding.ts`)
-- QR Codes e config de mesas ficam dentro de "Configurações > Salão"
+### Contexto
+- A rota `/cliente` na verdade serve tablets de mesa, mas o nome confunde
+- Hoje o admin cria PINs do módulo "cliente" manualmente na aba PINs, sem gestao dedicada
+- O vínculo tablet↔mesa é feito pelo label do PIN (ex: "Mesa 05") de forma manual e frágil
 
-### O que será criado
+### O que será feito
 
-**1. Nova tabela `mesas` no Supabase**
+**1. Renomear rota e arquivos**
 
-Colunas:
+| De | Para |
+|---|---|
+| `/cliente` (rota) | `/tablet` |
+| `ClientePage.tsx` | `TabletPage.tsx` |
+| `MesaPage.tsx` redirect | Atualizar para `/tablet?mesa=ID` |
+| Módulo `"cliente"` nos PINs | Manter como `"cliente"` internamente (evita migration), mas exibir como "Tablet" no UI |
+
+**2. Nova aba "Tablets" no Admin**
+
+Adicionar `{ id: "tablets", label: "Tablets", icon: TabletSmartphone }` ao `sidebarSections`, entre "Mesas" e "PINs".
+
+**3. Conteudo da aba Tablets (CRUD)**
+
+Nova tabela `tablets` no Supabase:
 - `id` (uuid, PK)
 - `store_id` (uuid, NOT NULL)
-- `numero` (integer, NOT NULL)
-- `nome` (text, nullable — apelido opcional como "VIP 1")
-- `status` (text, default "livre") — livre, ocupada, reservada, inativa
-- `capacidade` (integer, nullable — lugares)
+- `nome` (text, NOT NULL) -- ex: "Tablet Mesa 05", "Tablet VIP"
+- `mesa_id` (uuid, nullable, FK para mesas)
+- `pin_id` (uuid, nullable, FK para module_pins) -- PIN associado
+- `ativo` (boolean, default true)
 - `created_at`, `updated_at`
-- Unique constraint em `(store_id, numero)`
 
-RLS: leitura pública, escrita para store members e masters.
+RLS: leitura publica, escrita para store members e masters.
 
-**2. Nova aba "Mesas" na sidebar do Admin**
+A tela mostrara:
+- **Lista de tablets cadastrados**: nome, mesa vinculada (numero), PIN ativo (sim/nao), status
+- **Botao "Novo Tablet"**: modal com nome, selecao de mesa (dropdown das mesas da loja), e gera PIN de 4 digitos automaticamente (salva em `module_pins` com module="cliente" e label=nome do tablet, e vincula o `pin_id` no registro do tablet)
+- **Editar**: alterar nome, trocar mesa vinculada
+- **Excluir**: desativa o PIN associado e remove o registro
 
-Adicionar `{ id: "mesas", label: "Mesas", icon: Grid3X3 }` ao array `sidebarSections` entre "Cardápio" e "PINs".
+**4. Fluxo simplificado no tablet**
 
-**3. Conteúdo da aba Mesas**
-
-- **Barra superior**: botão "Nova Mesa" + contador total
-- **Lista/grid de mesas**: cada card mostra número, nome (se houver), status (badge colorido), capacidade
-- **Ações por mesa**: Editar (modal com nome, capacidade, status), Excluir (confirmação)
-- **Criar mesa**: modal com número (auto-incrementa), nome opcional, capacidade
-- **Criar em lote**: botão "Criar 10 mesas" para setup inicial rápido
-- **QR Codes**: mantém geração de QR por mesa (move da seção Salão para cá)
-
-**4. PIN de vínculo de mesa (para tablet do cliente)**
-
-- Na lista de mesas, cada mesa terá um botão "Gerar PIN" que cria um PIN temporário de 4 dígitos
-- Esse PIN é salvo na tabela `module_pins` com `module = "cliente"` e `label = "Mesa XX"`
-- No tablet (`/cliente`), após login com Código da Loja + PIN de Tablet Cliente, o sistema identifica qual mesa está vinculada pelo label do PIN
-- Opção de "Revogar PIN" para desativar o PIN ativo daquela mesa
+Na `TabletPage.tsx`, ao fazer login com PIN de modulo "cliente":
+- O sistema busca na tabela `tablets` qual registro tem aquele `pin_id`
+- Se encontrar e tiver `mesa_id`, vincula automaticamente a mesa (sem tela de selecao)
+- Se nao tiver mesa vinculada, mostra a tela de selecao de mesa (fluxo atual)
 
 **5. Arquivos alterados**
 
-| Arquivo | Mudança |
+| Arquivo | Mudanca |
 |---|---|
-| `supabase/migrations/` | Nova migration: tabela `mesas` + RLS |
-| `src/pages/AdminPage.tsx` | Nova aba "mesas" na sidebar, novo bloco de renderização com CRUD |
-| `src/contexts/RestaurantContext.tsx` | Fetch de mesas do Supabase para uso global |
-
-**6. Remover seção "Salão" das Configurações**
-
-O conteúdo atual (número de mesas + QR Codes) será absorvido pela nova aba Mesas. A seção "Salão" em Configurações será removida.
+| `supabase/migrations/` | Nova migration: tabela `tablets` + RLS |
+| `src/App.tsx` | Rota `/tablet` no lugar de `/cliente`, manter `/cliente` como redirect |
+| `src/pages/ClientePage.tsx` | Renomear para `TabletPage.tsx`, ajustar logica de auto-vinculo |
+| `src/pages/MesaPage.tsx` | Redirect para `/tablet?mesa=ID` |
+| `src/pages/AdminPage.tsx` | Nova aba "tablets" na sidebar + componente de CRUD |
+| `src/components/TabletsManager.tsx` | Novo componente com CRUD completo |
+| `src/components/StorePinsManager.tsx` | Label "Tablet Cliente" → "Tablet" (cosmético) |
 
