@@ -228,9 +228,9 @@ export default function PedidoPage() {
   }, [nome, telefone, cpf, regSenha, regSenhaConfirm, endereco, numero, bairro, complemento, referencia]);
 
   // ── Visitante busca ──
-  const handleBuscar = useCallback(() => {
+  const handleBuscar = useCallback(async () => {
     if (!busca.trim()) return;
-    const results = findClienteDelivery(busca.trim());
+    const results = await findClienteDelivery(busca.trim());
     setBuscaFeita(true);
     if (results.length > 0) {
       setClienteEncontrado(results[0]);
