@@ -6,7 +6,8 @@ import { ProtectedRoute } from "./components/ProtectedRoute";
 import { AdminBackButton } from "./components/AdminBackButton";
 import MesaPage from "./pages/MesaPage";
 import CaixaPage from "./pages/CaixaPage";
-import ClientePage from "./pages/ClientePage";
+import TabletPage from "./pages/TabletPage";
+import { Navigate } from "react-router-dom";
 import GerentePage from "./pages/GerentePage";
 import CozinhaPage from "./pages/CozinhaPage";
 import AdminPage from "./pages/AdminPage";
@@ -43,7 +44,8 @@ const App = () => {
         <Route path="/motoboy" element={<ProtectedRoute requiredLevel="operational" requiredModule="motoboy"><MotoboyPage /></ProtectedRoute>} />
         <Route path="/totem" element={<ProtectedRoute requiredLevel="operational" requiredModule="totem"><TotemPage /></ProtectedRoute>} />
         <Route path="/tv" element={<ProtectedRoute requiredLevel="operational" requiredModule="tv_retirada"><TvPage /></ProtectedRoute>} />
-        <Route path="/cliente" element={<ClientePage />} />
+        <Route path="/tablet" element={<TabletPage />} />
+        <Route path="/cliente" element={<Navigate to="/tablet" replace />} />
 
         <Route path="*" element={<NotFound />} />
       </Routes>

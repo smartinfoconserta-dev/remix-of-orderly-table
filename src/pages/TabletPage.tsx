@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRestaurant } from "@/contexts/RestaurantContext";
 import { useRouteLock } from "@/hooks/use-route-lock";
+import { supabase } from "@/integrations/supabase/client";
 import {
   TABLET_BINDING_CHANGED_EVENT,
   TABLET_LOGIN_CHANGED_EVENT,
@@ -18,7 +19,7 @@ import {
   clearTabletLoginUser,
 } from "@/lib/tabletBinding";
 
-const ClientePage = () => {
+const TabletPage = () => {
   const { mesas } = useRestaurant();
   const { loginByPin, logout } = useAuth();
   const [searchParams] = useSearchParams();
@@ -48,7 +49,7 @@ const ClientePage = () => {
     }
   }, [searchParams]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  useRouteLock("/cliente", Boolean(tabletUser || mesaId));
+  useRouteLock("/tablet", Boolean(tabletUser || mesaId));
 
   useEffect(() => {
     if (!mesaId) return;
@@ -89,7 +90,7 @@ const ClientePage = () => {
     setLoginError(null);
 
     const result = await loginByPin(storeSlug.trim(), pin);
-    console.log("[ClientePage] loginByPin result:", JSON.stringify(result));
+    console.log("[TabletPage] loginByPin result:", JSON.stringify(result));
 
     if (!result.ok) {
       setLoginError(result.error ?? "Credenciais inválidas");
@@ -98,7 +99,7 @@ const ClientePage = () => {
     }
 
     if (result.module !== "cliente") {
-      setLoginError("Este PIN não é de Tablet Cliente. Cadastre um PIN do módulo 'Tablet Cliente' no painel.");
+      setLoginError("Este PIN não é de Tablet. Cadastre um PIN do módulo 'Tablet' no painel.");
       setIsLoggingIn(false);
       return;
     }
@@ -108,6 +109,58 @@ const ClientePage = () => {
     setTabletUser(authenticatedUser);
     setPin("");
     setLoginError(null);
+
+    // Auto-vínculo: buscar se este PIN está associado a um tablet com mesa
+    try {
+      // Find the pin_id that matched — we need to look it up by store + module
+      const { data: tabletRows } = await supabase
+        .from("tablets")
+        .select("mesa_id")
+        .eq("ativo", true)
+        .not("mesa_id", "is", null);
+
+      // Since loginByPin doesn't return pin_id, we use the operational session's pinLabel
+      // to find the matching tablet. The pin label matches the tablet name.
+      if (tabletRows && tabletRows.length > 0) {
+        // We'll try to match via the pin label from the auth context
+        // For now, check if there's a tablet with a matching pin
+        const { data: matchingTablets } = await supabase
+          .from("tablets")
+          .select("mesa_id, nome, pin_id")
+          .eq("ativo", true)
+          .not("mesa_id", "is", null)
+          .not("pin_id", "is", null);
+
+        if (matchingTablets) {
+          // Get all active pins for this store to find which one matched our PIN
+          for (const tablet of matchingTablets) {
+            if (!tablet.pin_id) continue;
+            const { data: pinRow } = await supabase
+              .from("module_pins")
+              .select("pin_hash")
+              .eq("id", tablet.pin_id)
+              .eq("active", true)
+              .maybeSingle();
+
+            if (pinRow) {
+              const { data: isValid } = await supabase.rpc("verify_pin", {
+                input_pin: pin,
+                stored_hash: pinRow.pin_hash,
+              });
+              if (isValid && tablet.mesa_id) {
+                const boundMesaId = setBoundTabletMesaId(tablet.mesa_id);
+                setMesaId(boundMesaId);
+                setIsLoggingIn(false);
+                return;
+              }
+            }
+          }
+        }
+      }
+    } catch (err) {
+      console.warn("[TabletPage] Auto-vínculo falhou, mostrando seleção de mesa:", err);
+    }
+
     setIsLoggingIn(false);
   };
 
@@ -262,4 +315,4 @@ const ClientePage = () => {
   );
 };
 
-export default ClientePage;
+export default TabletPage;

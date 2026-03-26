@@ -25,9 +25,11 @@ import {
   Monitor,
   Tv,
   ExternalLink,
+  TabletSmartphone,
 } from "lucide-react";
 import StorePinsManager from "@/components/StorePinsManager";
 import MesasManager from "@/components/MesasManager";
+import TabletsManager from "@/components/TabletsManager";
 import { useStore } from "@/contexts/StoreContext";
 import CategoryIcon from "@/components/CategoryIcon";
 import { Button } from "@/components/ui/button";
@@ -96,7 +98,7 @@ import {
 import { getBairros, saveBairros, type Bairro } from "@/lib/deliveryStorage";
 import { toast } from "sonner";
 
-type AdminTab = "dashboard" | "cardapio" | "mesas" | "equipe" | "configuracoes" | "licenca" | "pins";
+type AdminTab = "dashboard" | "cardapio" | "mesas" | "tablets" | "equipe" | "configuracoes" | "licenca" | "pins";
 
 const PLANO_MODULOS: Record<string, string[]> = {
   basico: ["cozinha"],
@@ -124,6 +126,7 @@ const sidebarSections = [
   { id: "dashboard" as const, label: "Início", icon: LayoutDashboard },
   { id: "cardapio" as const, label: "Cardápio", icon: ClipboardList },
   { id: "mesas" as const, label: "Mesas", icon: Grid3X3 },
+  { id: "tablets" as const, label: "Tablets", icon: TabletSmartphone },
   { id: "pins" as const, label: "PINs", icon: KeyRound },
   { id: "equipe" as const, label: "Equipe", icon: Users },
   { id: "configuracoes" as const, label: "Configurações", icon: Settings },
@@ -2127,6 +2130,17 @@ const AdminPage = () => {
           ) : (
             <p className="text-sm text-muted-foreground py-8 text-center">Loja não identificada. Faça login novamente.</p>
           )
+        )}
+
+        {/* ═══ TABLETS ═══ */}
+        {tab === "tablets" && (
+          <div className="space-y-6 fade-in">
+            {storeId ? (
+              <TabletsManager storeId={storeId} />
+            ) : (
+              <p className="text-sm text-muted-foreground py-8 text-center">Loja não identificada. Faça login novamente.</p>
+            )}
+          </div>
         )}
 
         {/* ═══ PINS ═══ */}
