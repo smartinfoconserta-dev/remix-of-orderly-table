@@ -1,11 +1,14 @@
 import { type Produto, produtos as baseProdutos } from "@/data/menuData";
-import { fetchConfig, saveConfig, fetchLicenca, saveLicenca, fetchCategorias, saveCategorias, syncPending } from "./configService";
-
-const CARDAPIO_KEY = "orderly-cardapio-overrides-v1";
-const MESAS_CONFIG_KEY = "orderly-mesas-config-v1";
-const SISTEMA_CONFIG_KEY = "orderly-config-v1";
-const LICENCA_KEY = "orderly-licenca-v1";
-const CATEGORIAS_KEY = "orderly-categorias-v1";
+import {
+  fetchConfig,
+  saveConfig,
+  fetchLicenca,
+  saveLicenca,
+  fetchCategorias,
+  saveCategorias,
+  syncPending,
+} from "./configService";
+import { supabase } from "@/integrations/supabase/client";
 
 export interface CategoriaCustom {
   id: string;
@@ -36,8 +39,8 @@ export interface BannerConfig {
 
 export interface HorarioFuncionamento {
   ativo: boolean;
-  abertura: string; // "HH:MM"
-  fechamento: string; // "HH:MM"
+  abertura: string;
+  fechamento: string;
 }
 
 export interface HorariosSemana {
@@ -89,14 +92,20 @@ export interface SistemaConfig {
 
 export interface LicencaConfig {
   nomeCliente: string;
-  dataVencimento: string; // YYYY-MM-DD
+  dataVencimento: string;
   ativo: boolean;
   plano?: "basico" | "medio" | "pro" | "premium";
 }
 
 export type PlanoModulos = "basico" | "medio" | "pro" | "premium";
 
-export function getModulosDoPlano(plano: PlanoModulos): { cozinha: boolean; delivery: boolean; motoboy: boolean; totem: boolean; tvRetirada: boolean } {
+export function getModulosDoPlano(plano: PlanoModulos): {
+  cozinha: boolean;
+  delivery: boolean;
+  motoboy: boolean;
+  totem: boolean;
+  tvRetirada: boolean;
+} {
   return {
     cozinha: true,
     delivery: plano === "medio" || plano === "pro" || plano === "premium",
@@ -106,35 +115,14 @@ export function getModulosDoPlano(plano: PlanoModulos): { cozinha: boolean; deli
   };
 }
 
-// --- Cardápio ---
-export function getCardapioOverrides(): Record<string, ProdutoOverride> {
-  try {
-    const raw = localStorage.getItem(CARDAPIO_KEY) || localStorage.getItem("orderly-cardapio-v1");
-    return raw ? JSON.parse(raw) : {};
-  } catch {
-    return {};
-  }
-}
+// ─────────────────────────────────
+// CACHE EM MEMÓRIA (não localStorage)
+// ─────────────────────────────────
 
-export function saveCardapioOverrides(overrides: Record<string, ProdutoOverride>) {
-  localStorage.setItem(CARDAPIO_KEY, JSON.stringify(overrides));
-}
+let _configCache: SistemaConfig | null = null;
+let _licencaCache: LicencaConfig | null = null;
+let _cardapioCache: Record<string, ProdutoOverride> | null = null;
 
-// --- Mesas ---
-export function getMesasConfig(): MesasConfig {
-  try {
-    const raw = localStorage.getItem(MESAS_CONFIG_KEY);
-    return raw ? JSON.parse(raw) : { totalMesas: 20 };
-  } catch {
-    return { totalMesas: 20 };
-  }
-}
-
-export function saveMesasConfig(config: MesasConfig) {
-  localStorage.setItem(MESAS_CONFIG_KEY, JSON.stringify(config));
-}
-
-// --- Sistema ---
 const defaultSistemaConfig: SistemaConfig = {
   nomeRestaurante: "Obsidian",
   logoUrl: "",
@@ -148,37 +136,33 @@ const defaultSistemaConfig: SistemaConfig = {
   couvertObrigatorio: false,
 };
 
+// ─────────────────────────────────
+// CONFIG DO SISTEMA
+// ─────────────────────────────────
+
+/** Leitura rápida do cache. Use getSistemaConfigAsync para dado do banco. */
 export function getSistemaConfig(): SistemaConfig {
-  try {
-    const raw = localStorage.getItem(SISTEMA_CONFIG_KEY);
-    if (!raw) return { ...defaultSistemaConfig };
-    const parsed = { ...defaultSistemaConfig, ...JSON.parse(raw) };
-    if (parsed.deliveryAtivo === undefined) parsed.deliveryAtivo = true;
-    return parsed;
-  } catch {
-    return { ...defaultSistemaConfig };
-  }
+  return _configCache ?? { ...defaultSistemaConfig };
 }
 
-export function saveSistemaConfig(config: SistemaConfig) {
-  localStorage.setItem(SISTEMA_CONFIG_KEY, JSON.stringify(config));
+export async function saveSistemaConfig(config: SistemaConfig, storeId?: string | null): Promise<void> {
+  _configCache = config;
+  await saveConfig(config, storeId);
 }
 
-// --- Licença ---
+// ─────────────────────────────────
+// LICENÇA
+// ─────────────────────────────────
+
 export function getLicencaConfig(): LicencaConfig {
-  try {
-    const raw = localStorage.getItem(LICENCA_KEY);
-    return raw ? JSON.parse(raw) : { nomeCliente: "", dataVencimento: "", ativo: true };
-  } catch {
-    return { nomeCliente: "", dataVencimento: "", ativo: true };
-  }
+  return _licencaCache ?? { nomeCliente: "", dataVencimento: "", ativo: true };
 }
 
-export function saveLicencaConfig(config: LicencaConfig) {
-  localStorage.setItem(LICENCA_KEY, JSON.stringify(config));
+export async function saveLicencaConfig(config: LicencaConfig, storeId?: string | null): Promise<void> {
+  _licencaCache = config;
+  await saveLicenca(config, storeId);
 }
 
-/** Returns days until license expiry. Negative = expired. null = no date set. */
 export function getLicencaDaysLeft(): number | null {
   const lic = getLicencaConfig();
   if (!lic.dataVencimento) return null;
@@ -188,7 +172,6 @@ export function getLicencaDaysLeft(): number | null {
   return Math.ceil((exp.getTime() - today.getTime()) / 86400000);
 }
 
-/** Check if the system is blocked (expired or manually deactivated) */
 export function isSystemBlocked(): boolean {
   const lic = getLicencaConfig();
   if (!lic.ativo) return true;
@@ -197,7 +180,77 @@ export function isSystemBlocked(): boolean {
   return false;
 }
 
-/** Apply custom primary color from config to :root CSS variable */
+// ─────────────────────────────────
+// CARDÁPIO OVERRIDES
+// ─────────────────────────────────
+
+export function getCardapioOverrides(): Record<string, ProdutoOverride> {
+  return _cardapioCache ?? {};
+}
+
+export async function saveCardapioOverrides(
+  overrides: Record<string, ProdutoOverride>,
+  storeId?: string | null
+): Promise<void> {
+  _cardapioCache = overrides;
+  try {
+    let existingQuery = supabase.from("restaurant_config").select("id").limit(1);
+    if (storeId) existingQuery = existingQuery.eq("store_id", storeId);
+    const { data: existing } = await existingQuery.maybeSingle();
+    if (existing) {
+      await supabase
+        .from("restaurant_config")
+        .update({ cardapio_overrides: overrides as any })
+        .eq("id", existing.id);
+    }
+  } catch (err) {
+    console.error("Erro ao salvar cardápio:", err);
+  }
+}
+
+export async function loadCardapioOverrides(
+  storeId?: string | null
+): Promise<Record<string, ProdutoOverride>> {
+  try {
+    let query = supabase.from("restaurant_config").select("cardapio_overrides").limit(1);
+    if (storeId) query = query.eq("store_id", storeId);
+    const { data } = await query.maybeSingle();
+    const overrides = (data?.cardapio_overrides as Record<string, ProdutoOverride>) ?? {};
+    _cardapioCache = overrides;
+    return overrides;
+  } catch {
+    return {};
+  }
+}
+
+// ─────────────────────────────────
+// MESAS CONFIG
+// ─────────────────────────────────
+
+export function getMesasConfig(): MesasConfig {
+  return { totalMesas: 20 };
+}
+
+export async function saveMesasConfig(config: MesasConfig, storeId?: string | null): Promise<void> {
+  try {
+    let existingQuery = supabase.from("restaurant_config").select("id").limit(1);
+    if (storeId) existingQuery = existingQuery.eq("store_id", storeId);
+    const { data: existing } = await existingQuery.maybeSingle();
+    if (existing) {
+      await supabase
+        .from("restaurant_config")
+        .update({ total_mesas: config.totalMesas })
+        .eq("id", existing.id);
+    }
+  } catch (err) {
+    console.error("Erro ao salvar config de mesas:", err);
+  }
+}
+
+// ─────────────────────────────────
+// COR PRIMÁRIA
+// ─────────────────────────────────
+
 export function applyCustomPrimaryColor() {
   const cfg = getSistemaConfig();
   if (!cfg.corPrimaria) return;
@@ -205,7 +258,8 @@ export function applyCustomPrimaryColor() {
   const r = parseInt(hex.slice(1, 3), 16) / 255;
   const g = parseInt(hex.slice(3, 5), 16) / 255;
   const b = parseInt(hex.slice(5, 7), 16) / 255;
-  const max = Math.max(r, g, b), min = Math.min(r, g, b);
+  const max = Math.max(r, g, b),
+    min = Math.min(r, g, b);
   const l = (max + min) / 2;
   let h = 0, s = 0;
   if (max !== min) {
@@ -220,52 +274,30 @@ export function applyCustomPrimaryColor() {
   const lPct = Math.round(l * 100);
   document.documentElement.style.setProperty("--primary", `${hDeg} ${sPct}% ${lPct}%`);
   const fgL = lPct > 55 ? 10 : 98;
-  document.documentElement.style.setProperty("--primary-foreground", `${hDeg} ${Math.round(sPct * 0.3)}% ${fgL}%`);
-}
-
-// --- Categorias Custom ---
-export function getCategoriasCustom(): CategoriaCustom[] {
-  try {
-    const raw = localStorage.getItem(CATEGORIAS_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch {
-    return [];
-  }
-}
-
-export function saveCategoriasCustom(cats: CategoriaCustom[]): void {
-  localStorage.setItem(CATEGORIAS_KEY, JSON.stringify(cats));
-  // Fire-and-forget async sync to Supabase
-  saveCategorias(cats).catch(() => {});
-}
-
-// --- Async wrappers (Supabase + fallback) ---
-export const getSistemaConfigAsync = fetchConfig;
-export const saveSistemaConfigAsync = saveConfig;
-export const getLicencaConfigAsync = fetchLicenca;
-export const saveLicencaConfigAsync = saveLicenca;
-export const getCategoriasCustomAsync = fetchCategorias;
-export const saveCategoriasCustomAsync = saveCategorias;
-export const syncPendingChanges = syncPending;
-
-
-// --- Produtos Delivery ---
-export function getProdutosDelivery(): ProdutoOverride[] {
-  const overrides = getCardapioOverrides();
-  const base = baseProdutos.map((p) => {
-    const ov = overrides[p.id];
-    if (ov) return { ...p, ...ov };
-    return { ...p, ativo: true } as ProdutoOverride;
-  });
-  const customIds = Object.keys(overrides).filter((id) => !baseProdutos.some((p) => p.id === id));
-  const custom = customIds.map((id) => overrides[id]);
-  return [...base, ...custom].filter(
-    (p) => p.ativo === true && p.removido !== true && p.disponivelDelivery !== false,
+  document.documentElement.style.setProperty(
+    "--primary-foreground",
+    `${hDeg} ${Math.round(sPct * 0.3)}% ${fgL}%`
   );
 }
 
-// --- Horários de Funcionamento ---
-const HORARIOS_KEY = "orderly-horarios-v1";
+// ─────────────────────────────────
+// CATEGORIAS
+// ─────────────────────────────────
+
+export function getCategoriasCustom(): CategoriaCustom[] {
+  return [];
+}
+
+export async function saveCategoriasCustom(
+  cats: CategoriaCustom[],
+  storeId?: string | null
+): Promise<void> {
+  await saveCategorias(cats, storeId);
+}
+
+// ─────────────────────────────────
+// HORÁRIOS DE FUNCIONAMENTO
+// ─────────────────────────────────
 
 const defaultHorario: HorarioFuncionamento = { ativo: true, abertura: "18:00", fechamento: "23:00" };
 
@@ -280,26 +312,32 @@ export const defaultHorariosSemana: HorariosSemana = {
 };
 
 export function getHorariosFuncionamento(): HorariosSemana {
-  try {
-    const raw = localStorage.getItem(HORARIOS_KEY);
-    return raw ? { ...defaultHorariosSemana, ...JSON.parse(raw) } : { ...defaultHorariosSemana };
-  } catch { return { ...defaultHorariosSemana }; }
+  const cfg = getSistemaConfig();
+  return cfg.horarioFuncionamento ?? { ...defaultHorariosSemana };
 }
 
-export function saveHorariosFuncionamento(h: HorariosSemana) {
-  localStorage.setItem(HORARIOS_KEY, JSON.stringify(h));
+export async function saveHorariosFuncionamento(
+  h: HorariosSemana,
+  storeId?: string | null
+): Promise<void> {
+  const config = getSistemaConfig();
+  await saveSistemaConfig({ ...config, horarioFuncionamento: h }, storeId);
 }
 
-export function isDeliveryAberto(): { aberto: boolean; mensagem: string; proximoHorario: string; horasRestantes?: number } {
+export function isDeliveryAberto(): {
+  aberto: boolean;
+  mensagem: string;
+  proximoHorario: string;
+  horasRestantes?: number;
+} {
   const horarios = getHorariosFuncionamento();
   const agora = new Date();
   const diasSemana: (keyof HorariosSemana)[] = ["dom", "seg", "ter", "qua", "qui", "sex", "sab"];
   const diaAtual = diasSemana[agora.getDay()];
   const horarioDia = horarios[diaAtual];
-
   const nomes = ["domingo", "segunda", "terça", "quarta", "quinta", "sexta", "sábado"];
 
-  const calcularHorasAte = (targetHora: string, diasAdiante: number = 0): number => {
+  const calcularHorasAte = (targetHora: string, diasAdiante = 0): number => {
     const [h, m] = targetHora.split(":").map(Number);
     const target = new Date(agora);
     target.setDate(target.getDate() + diasAdiante);
@@ -314,10 +352,7 @@ export function isDeliveryAberto(): { aberto: boolean; mensagem: string; proximo
       if (h.ativo) {
         const horas = calcularHorasAte(h.abertura, i);
         const nomeDia = nomes[(agora.getDay() + i) % 7];
-        return {
-          texto: `Abrimos ${nomeDia} às ${h.abertura}`,
-          horas,
-        };
+        return { texto: `Abrimos ${nomeDia} às ${h.abertura}`, horas };
       }
     }
     return { texto: "", horas: 0 };
@@ -359,5 +394,42 @@ export function isDeliveryAberto(): { aberto: boolean; mensagem: string; proximo
     };
   }
 
-  return { aberto: true, mensagem: `Aberto até ${horarioDia.fechamento}`, proximoHorario: "", horasRestantes: 0 };
+  return {
+    aberto: true,
+    mensagem: `Aberto até ${horarioDia.fechamento}`,
+    proximoHorario: "",
+    horasRestantes: 0,
+  };
 }
+
+// ─────────────────────────────────
+// PRODUTOS DELIVERY (calculado)
+// ─────────────────────────────────
+
+export function getProdutosDelivery(): ProdutoOverride[] {
+  const overrides = getCardapioOverrides();
+  const base = baseProdutos.map((p) => {
+    const ov = overrides[p.id];
+    if (ov) return { ...p, ...ov };
+    return { ...p, ativo: true } as ProdutoOverride;
+  });
+  const customIds = Object.keys(overrides).filter(
+    (id) => !baseProdutos.some((p) => p.id === id)
+  );
+  const custom = customIds.map((id) => overrides[id]);
+  return [...base, ...custom].filter(
+    (p) => p.ativo === true && p.removido !== true && p.disponivelDelivery !== false
+  );
+}
+
+// ─────────────────────────────────
+// EXPORTS ASSÍNCRONOS (Supabase)
+// ─────────────────────────────────
+
+export const getSistemaConfigAsync = fetchConfig;
+export const saveSistemaConfigAsync = saveConfig;
+export const getLicencaConfigAsync = fetchLicenca;
+export const saveLicencaConfigAsync = saveLicenca;
+export const getCategoriasCustomAsync = fetchCategorias;
+export const saveCategoriasCustomAsync = saveCategorias;
+export const syncPendingChanges = syncPending;

@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,9 +21,7 @@ import {
   getClientes, addCliente, updateCliente, removeCliente,
   getDespesas, addDespesa,
 } from "@/lib/masterStorage";
-import { getLicencaConfig, saveLicencaConfig, saveLicencaConfigAsync, getSistemaConfig, saveSistemaConfig, saveSistemaConfigAsync } from "@/lib/adminStorage";
-
-
+import { getLicencaConfig, saveLicencaConfigAsync, getSistemaConfig, saveSistemaConfigAsync } from "@/lib/adminStorage";
 
 const SEGMENTOS = ["hamburgeria", "pizzaria", "sushi", "pastel", "a-la-carte", "outro"];
 const SEGMENTO_LABELS: Record<string, string> = {
@@ -99,7 +97,6 @@ const emptyForm = {
   criarContaAdmin: false, senhaAdmin: "", slugLoja: "",
 };
 
-
 function proximoVencimento(diaVencimento: number): string {
   const hoje = new Date();
   let mes = hoje.getMonth();
@@ -125,17 +122,14 @@ const MasterPage = () => {
   const [detailClient, setDetailClient] = useState<Cliente | null>(null);
   const [pagForm, setPagForm] = useState({ valor: 0, metodo: "pix", data: todayStr(), observacao: "" });
 
-  // Filters
   const [busca, setBusca] = useState("");
   const [filtroStatus, setFiltroStatus] = useState<"todos" | "ativos" | "bloqueados" | "vencidos">("todos");
   const [filtroPlano, setFiltroPlano] = useState("todos");
   const [activeTab, setActiveTab] = useState("clientes");
 
-  // Aviso state
   const [avisoMensagem, setAvisoMensagem] = useState("");
   const [avisoTipo, setAvisoTipo] = useState<"info" | "alerta" | "urgente">("info");
 
-  // Stores for PINs tab
   const [stores, setStores] = useState<{ id: string; name: string; slug: string }[]>([]);
   useEffect(() => {
     supabase.from("stores").select("id, name, slug").then(({ data }) => {
@@ -143,9 +137,13 @@ const MasterPage = () => {
     });
   }, []);
 
-  const refresh = () => { setClientes(getClientes()); setDespesas(getDespesas()); };
+  const refresh = useCallback(async () => {
+    const [cs, ds] = await Promise.all([getClientes(), getDespesas()]);
+    setClientes(cs);
+    setDespesas(ds);
+  }, []);
 
-  useEffect(() => { refresh(); }, []);
+  useEffect(() => { refresh(); }, [refresh]);
 
   const openCreate = () => { setEditId(null); setForm(emptyForm); setDialogOpen(true); };
   const openEdit = (c: Cliente) => {
@@ -166,14 +164,11 @@ const MasterPage = () => {
 
   const [savingAccount, setSavingAccount] = useState(false);
   const [buscandoCnpj, setBuscandoCnpj] = useState(false);
-
-  // Edit account credentials state
   const [editNovoEmail, setEditNovoEmail] = useState("");
   const [editNovaSenha, setEditNovaSenha] = useState("");
   const [editLinkedUserId, setEditLinkedUserId] = useState<string | null>(null);
   const [savingCredentials, setSavingCredentials] = useState(false);
 
-  // When editing, try to find linked Supabase user via store slug
   useEffect(() => {
     setEditNovoEmail("");
     setEditNovaSenha("");
@@ -181,7 +176,6 @@ const MasterPage = () => {
     if (!editId || !dialogOpen) return;
     const cliente = clientes.find((c) => c.id === editId);
     if (!cliente) return;
-    // Try to find store by name match
     const matchedStore = stores.find(
       (s) => s.name.toLowerCase() === cliente.nomeRestaurante.toLowerCase()
     );
@@ -204,19 +198,13 @@ const MasterPage = () => {
     setSavingCredentials(true);
     try {
       const { data, error } = await supabase.functions.invoke("update-admin-account", {
-        body: {
-          userId: editLinkedUserId,
-          newEmail: editNovoEmail.trim() || undefined,
-          newPassword: editNovaSenha || undefined,
-        },
+        body: { userId: editLinkedUserId, newEmail: editNovoEmail.trim() || undefined, newPassword: editNovaSenha || undefined },
       });
       if (error || data?.error) {
         toast.error(data?.error || error?.message || "Erro ao atualizar credenciais");
       } else {
         toast.success("Credenciais atualizadas com sucesso!");
-        if (editNovoEmail.trim()) {
-          ff("email", editNovoEmail.trim());
-        }
+        if (editNovoEmail.trim()) ff("email", editNovoEmail.trim());
         setEditNovoEmail("");
         setEditNovaSenha("");
       }
@@ -254,7 +242,6 @@ const MasterPage = () => {
   const handleSave = async () => {
     if (!form.nomeRestaurante.trim() || !form.nomeContato.trim()) { toast.error("Preencha nome do restaurante e contato."); return; }
 
-    // Create admin account if requested
     if (form.criarContaAdmin && !editId) {
       if (!form.email.trim()) { toast.error("Email é obrigatório para criar conta admin."); return; }
       if (!form.senhaAdmin || form.senhaAdmin.length < 6) { toast.error("Senha deve ter no mínimo 6 caracteres."); return; }
@@ -262,24 +249,15 @@ const MasterPage = () => {
 
       setSavingAccount(true);
       try {
-        const { data: sessionData } = await supabase.auth.getSession();
         const { data, error } = await supabase.functions.invoke("create-admin-account", {
-          body: {
-            email: form.email.trim(),
-            password: form.senhaAdmin,
-            storeName: form.nomeRestaurante.trim(),
-            storeSlug: form.slugLoja.trim(),
-          },
+          body: { email: form.email.trim(), password: form.senhaAdmin, storeName: form.nomeRestaurante.trim(), storeSlug: form.slugLoja.trim() },
         });
-
         if (error || data?.error) {
           toast.error(data?.error || error?.message || "Erro ao criar conta admin");
           setSavingAccount(false);
           return;
         }
-
         toast.success("Conta admin criada com sucesso!");
-        // Refresh stores list
         const { data: newStores } = await supabase.from("stores").select("id, name, slug");
         if (newStores) setStores(newStores);
       } catch (err: any) {
@@ -290,37 +268,48 @@ const MasterPage = () => {
       setSavingAccount(false);
     }
 
-    if (editId) { updateCliente(editId, form); toast.success("Cliente atualizado."); }
-    else { addCliente(form); toast.success("Cliente criado."); }
-    // Sync planoModulos to licença config AND restaurant_config
+    if (editId) {
+      await updateCliente(editId, form);
+      toast.success("Cliente atualizado.");
+    } else {
+      await addCliente(form);
+      toast.success("Cliente criado.");
+    }
+
     if (form.planoModulos) {
       const lic = getLicencaConfig();
       lic.plano = form.planoModulos;
-      saveLicencaConfig(lic);
-      saveLicencaConfigAsync(lic);
-
+      await saveLicencaConfigAsync(lic);
       const cfg = getSistemaConfig();
       cfg.plano = form.planoModulos;
-      saveSistemaConfig(cfg);
-      saveSistemaConfigAsync(cfg);
+      await saveSistemaConfigAsync(cfg);
     }
-    setDialogOpen(false); refresh();
+    setDialogOpen(false);
+    await refresh();
   };
 
-  const handleRemove = () => { if (removeId) { removeCliente(removeId); toast.success("Cliente removido."); setRemoveId(null); refresh(); } };
-  const toggleAtivo = (c: Cliente) => {
-    updateCliente(c.id, { ativo: !c.ativo });
+  const handleRemove = async () => {
+    if (removeId) {
+      await removeCliente(removeId);
+      toast.success("Cliente removido.");
+      setRemoveId(null);
+      await refresh();
+    }
+  };
+
+  const toggleAtivo = async (c: Cliente) => {
+    await updateCliente(c.id, { ativo: !c.ativo });
     if (c.planoModulos) {
       const lic = getLicencaConfig();
       lic.plano = c.planoModulos;
-      saveLicencaConfig(lic);
-
+      await saveLicencaConfigAsync(lic);
       const cfg = getSistemaConfig();
       cfg.plano = c.planoModulos;
-      saveSistemaConfig(cfg);
+      await saveSistemaConfigAsync(cfg);
     }
-    refresh();
+    await refresh();
   };
+
   const isVencido = (d: string) => d && new Date(d) < new Date(todayStr());
   const toSlug = (str: string) =>
     str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
@@ -337,9 +326,7 @@ const MasterPage = () => {
           next.dataVencimento = dt;
         }
       }
-      if (key === "nomeRestaurante") {
-        next.slugLoja = toSlug(value);
-      }
+      if (key === "nomeRestaurante") next.slugLoja = toSlug(value);
       return next;
     });
   };
@@ -349,46 +336,40 @@ const MasterPage = () => {
     setPagForm({ valor: c.valorMensalidade || 0, metodo: "pix", data: todayStr(), observacao: "" });
   };
 
-  const handleRegistrarPagamento = () => {
+  const handleRegistrarPagamento = async () => {
     if (!detailClient) return;
     if (!pagForm.valor || pagForm.valor <= 0) { toast.error("Informe um valor válido."); return; }
     const novoPag: Pagamento = { id: crypto.randomUUID(), data: pagForm.data, valor: pagForm.valor, metodo: pagForm.metodo, observacao: pagForm.observacao };
     const hist = [...(detailClient.historicoPagamentos || []), novoPag];
-    updateCliente(detailClient.id, { historicoPagamentos: hist });
+    await updateCliente(detailClient.id, { historicoPagamentos: hist });
     toast.success("Pagamento registrado.");
-    refresh();
-    const updated = getClientes().find((c) => c.id === detailClient.id);
-    if (updated) { setDetailClient(updated); }
+    await refresh();
+    const updated = (await getClientes()).find((c) => c.id === detailClient.id);
+    if (updated) setDetailClient(updated);
     setPagForm({ valor: detailClient.valorMensalidade || 0, metodo: "pix", data: todayStr(), observacao: "" });
   };
 
-  // Financeiro
   const mesAtual = todayStr().slice(0, 7);
   const despesasMes = despesas.filter((d) => d.data.startsWith(mesAtual)).sort((a, b) => b.data.localeCompare(a.data));
   const totalDespesasMes = despesasMes.reduce((s, d) => s + d.valor, 0);
   const receitaPrevista = clientes.filter((c) => c.ativo).reduce((s, c) => s + (c.valorMensalidade || 0), 0);
   const clientesAtivos = clientes.filter((c) => c.ativo).length;
 
-  // Filtered clients
   const filteredClientes = useMemo(() => {
     const hoje = new Date(todayStr());
     return clientes.filter((c) => {
-      // Search
       if (busca) {
         const q = busca.toLowerCase();
         if (!(c.nomeRestaurante.toLowerCase().includes(q) || (c.cidade || "").toLowerCase().includes(q) || c.nomeContato.toLowerCase().includes(q))) return false;
       }
-      // Status
       if (filtroStatus === "ativos" && !c.ativo) return false;
       if (filtroStatus === "bloqueados" && c.ativo) return false;
       if (filtroStatus === "vencidos" && !(c.dataVencimento && new Date(c.dataVencimento) < hoje)) return false;
-      // Plano
       if (filtroPlano !== "todos" && c.plano !== filtroPlano) return false;
       return true;
     });
   }, [clientes, busca, filtroStatus, filtroPlano]);
 
-  // Alert: clients expiring in 3 days or already expired
   const clientesCriticos = useMemo(() => {
     const hoje = new Date(todayStr());
     const em3dias = new Date(hoje);
@@ -396,7 +377,6 @@ const MasterPage = () => {
     return clientes.filter((c) => c.dataVencimento && new Date(c.dataVencimento) <= em3dias);
   }, [clientes]);
 
-  // Vencimento helpers for cards
   const getVencAlert = (c: { dataVencimento: string }) => {
     if (!c.dataVencimento) return null;
     const hoje = new Date(todayStr());
@@ -408,7 +388,6 @@ const MasterPage = () => {
     return null;
   };
 
-  // Chart data: last 6 months
   const chartData = useMemo(() => {
     const meses: { label: string; key: string; receita: number; despesa: number }[] = [];
     const hoje = new Date();
@@ -424,20 +403,18 @@ const MasterPage = () => {
   }, [clientes, despesas]);
   const chartMax = Math.max(...chartData.flatMap((m) => [m.receita, m.despesa]), 1);
 
-  const handleRegistrarDespesa = () => {
+  const handleRegistrarDespesa = async () => {
     if (!novaDespesa.descricao.trim()) { toast.error("Preencha a descrição."); return; }
     if (!novaDespesa.valor || novaDespesa.valor <= 0) { toast.error("Informe um valor válido."); return; }
-    addDespesa(novaDespesa);
+    await addDespesa(novaDespesa);
     toast.success("Despesa registrada.");
     setNovaDespesa({ descricao: "", valor: 0, categoria: "gasolina", data: todayStr() });
-    refresh();
+    await refresh();
   };
-
 
   return (
     <div className="min-h-screen bg-background p-4 md:p-8">
       <div className="max-w-5xl mx-auto space-y-6">
-        {/* Header */}
         <div className="flex items-center justify-between">
           <h1 className="text-2xl md:text-3xl font-black text-foreground">Painel Master</h1>
           <Button variant="outline" size="sm" onClick={() => logout()}><LogOut className="w-4 h-4 mr-1" /> Sair</Button>
@@ -452,7 +429,6 @@ const MasterPage = () => {
             <TabsTrigger value="avisos"><Bell className="w-4 h-4 mr-1" />Avisos</TabsTrigger>
           </TabsList>
 
-          {/* Alert banner */}
           {clientesCriticos.length > 0 && (
             <div className="mt-3 rounded-xl bg-orange-500/15 border border-orange-500/30 p-3 flex items-center justify-between gap-3 flex-wrap">
               <p className="text-sm font-semibold text-orange-400 flex items-center gap-2"><AlertTriangle className="w-4 h-4" />{clientesCriticos.length} cliente(s) precisam de atenção — veja a aba Cobranças</p>
@@ -460,7 +436,6 @@ const MasterPage = () => {
             </div>
           )}
 
-          {/* ========== ABA PINS ========== */}
           <TabsContent value="pins" className="mt-4">
             {stores.length === 0 ? (
               <p className="text-sm text-muted-foreground py-8 text-center">Nenhuma loja cadastrada.</p>
@@ -469,9 +444,7 @@ const MasterPage = () => {
             )}
           </TabsContent>
 
-          {/* ========== ABA CLIENTES ========== */}
           <TabsContent value="clientes" className="space-y-4 mt-4">
-            {/* Search & Filters */}
             <div className="space-y-3">
               <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
                 <div className="relative flex-1 w-full sm:max-w-sm">
@@ -498,46 +471,44 @@ const MasterPage = () => {
               {filteredClientes.map((c) => {
                 const vencAlert = getVencAlert(c);
                 return (
-                <div key={c.id} className="rounded-2xl border bg-card p-5 space-y-3">
-                  <div className="flex flex-col md:flex-row md:items-start gap-2 justify-between">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <p className="font-black text-lg text-foreground cursor-pointer hover:underline" onClick={() => openDetail(c)}>{c.nomeRestaurante}</p>
-                        {c.plano && <Badge className={PLANO_BADGE_CLASS[c.plano] || "bg-muted text-muted-foreground"}>{PLANO_LABELS[c.plano] || c.plano}</Badge>}
-                        {c.planoModulos && <Badge className={PLANO_MODULOS_BADGE[c.planoModulos] || "bg-muted text-muted-foreground"}>{PLANO_MODULOS_LABELS[c.planoModulos] || c.planoModulos}</Badge>}
-                        <Badge className={c.ativo ? "bg-emerald-600 hover:bg-emerald-600 text-white" : "bg-destructive hover:bg-destructive text-destructive-foreground"}>{c.ativo ? "Ativo" : "Bloqueado"}</Badge>
-                        {vencAlert === "vencido" && <Badge className="bg-destructive hover:bg-destructive text-destructive-foreground">Vencido</Badge>}
-                        {vencAlert === "vence_breve" && <Badge className="bg-yellow-600 hover:bg-yellow-600 text-white">Vence em breve</Badge>}
+                  <div key={c.id} className="rounded-2xl border bg-card p-5 space-y-3">
+                    <div className="flex flex-col md:flex-row md:items-start gap-2 justify-between">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className="font-black text-lg text-foreground cursor-pointer hover:underline" onClick={() => openDetail(c)}>{c.nomeRestaurante}</p>
+                          {c.plano && <Badge className={PLANO_BADGE_CLASS[c.plano] || "bg-muted text-muted-foreground"}>{PLANO_LABELS[c.plano] || c.plano}</Badge>}
+                          {c.planoModulos && <Badge className={PLANO_MODULOS_BADGE[c.planoModulos] || "bg-muted text-muted-foreground"}>{PLANO_MODULOS_LABELS[c.planoModulos] || c.planoModulos}</Badge>}
+                          <Badge className={c.ativo ? "bg-emerald-600 hover:bg-emerald-600 text-white" : "bg-destructive hover:bg-destructive text-destructive-foreground"}>{c.ativo ? "Ativo" : "Bloqueado"}</Badge>
+                          {vencAlert === "vencido" && <Badge className="bg-destructive hover:bg-destructive text-destructive-foreground">Vencido</Badge>}
+                          {vencAlert === "vence_breve" && <Badge className="bg-yellow-600 hover:bg-yellow-600 text-white">Vence em breve</Badge>}
+                        </div>
+                        {c.segmento && <p className="text-xs text-muted-foreground">{SEGMENTO_LABELS[c.segmento] || c.segmento}</p>}
                       </div>
-                      {c.segmento && <p className="text-xs text-muted-foreground">{SEGMENTO_LABELS[c.segmento] || c.segmento}</p>}
+                      <div className="flex items-center gap-1 flex-wrap shrink-0">
+                        <Switch checked={c.ativo} onCheckedChange={() => toggleAtivo(c)} />
+                        <Button variant="ghost" size="icon" onClick={() => openEdit(c)}><Pencil className="w-4 h-4" /></Button>
+                        <Button variant="ghost" size="icon" className="text-destructive" onClick={() => setRemoveId(c.id)}><Trash2 className="w-4 h-4" /></Button>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-1 flex-wrap shrink-0">
-                      <Switch checked={c.ativo} onCheckedChange={() => toggleAtivo(c)} />
-                      <Button variant="ghost" size="icon" onClick={() => openEdit(c)}><Pencil className="w-4 h-4" /></Button>
-                      <Button variant="ghost" size="icon" className="text-destructive" onClick={() => setRemoveId(c.id)}><Trash2 className="w-4 h-4" /></Button>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 text-sm text-muted-foreground">
+                      <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5" />{c.cidade && c.estado ? `${c.cidade} - ${c.estado}` : "—"}</span>
+                      <span className="flex items-center gap-1"><Phone className="w-3.5 h-3.5" />{c.telefone || "—"}</span>
+                      <span className="flex items-center gap-1"><Mail className="w-3.5 h-3.5" />{c.email || "—"}</span>
+                      <span className="flex items-center gap-1 font-semibold text-foreground"><DollarSign className="w-3.5 h-3.5" />R$ {(c.valorMensalidade || 0).toFixed(2)}</span>
+                    </div>
+                    <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                      <span>{c.nomeContato}</span>
+                      <span>Próximo venc.: {c.diaVencimento ? proximoVencimento(c.diaVencimento) : "—"}</span>
+                      <span>Licença: {c.dataVencimento || "—"}</span>
                     </div>
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 text-sm text-muted-foreground">
-                    <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5" />{c.cidade && c.estado ? `${c.cidade} - ${c.estado}` : "—"}</span>
-                    <span className="flex items-center gap-1"><Phone className="w-3.5 h-3.5" />{c.telefone || "—"}</span>
-                    <span className="flex items-center gap-1"><Mail className="w-3.5 h-3.5" />{c.email || "—"}</span>
-                    <span className="flex items-center gap-1 font-semibold text-foreground"><DollarSign className="w-3.5 h-3.5" />R$ {(c.valorMensalidade || 0).toFixed(2)}</span>
-                  </div>
-                  <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                    <span>{c.nomeContato}</span>
-                    <span>Próximo venc.: {c.diaVencimento ? proximoVencimento(c.diaVencimento) : "—"}</span>
-                    <span>Licença: {c.dataVencimento || "—"}</span>
-                  </div>
-                </div>
-              );
+                );
               })}
               {filteredClientes.length === 0 && <p className="text-center text-muted-foreground py-8">{clientes.length === 0 ? "Nenhum cliente cadastrado." : "Nenhum cliente encontrado com os filtros atuais."}</p>}
             </div>
           </TabsContent>
 
-          {/* ========== ABA FINANCEIRO ========== */}
           <TabsContent value="financeiro" className="space-y-6 mt-4">
-            {/* Resumo */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="rounded-2xl border bg-card p-4 space-y-1">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground"><TrendingUp className="w-4 h-4" />Receita prevista</div>
@@ -557,7 +528,6 @@ const MasterPage = () => {
               </div>
             </div>
 
-            {/* Gráfico de barras CSS */}
             <div className="rounded-2xl border bg-card p-5 space-y-4">
               <h2 className="text-lg font-black text-foreground">Receita vs Despesas — últimos 6 meses</h2>
               <div className="flex items-end gap-3 h-48 overflow-x-auto">
@@ -583,31 +553,17 @@ const MasterPage = () => {
               </div>
             </div>
 
-            {/* Registrar despesa */}
             <div className="rounded-2xl border bg-card p-5 space-y-4">
               <h2 className="text-lg font-black text-foreground flex items-center gap-2"><Receipt className="w-5 h-5" />Registrar despesa</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 items-end">
                 <div><Label>Descrição</Label><Input placeholder="Ex: Gasolina visita" value={novaDespesa.descricao} onChange={(e) => setNovaDespesa({ ...novaDespesa, descricao: e.target.value })} /></div>
-                <div>
-                  <Label>Valor</Label>
-                  <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">R$</span>
-                    <Input type="number" className="pl-10" value={novaDespesa.valor || ""} onChange={(e) => setNovaDespesa({ ...novaDespesa, valor: parseFloat(e.target.value) || 0 })} />
-                  </div>
-                </div>
-                <div>
-                  <Label>Categoria</Label>
-                  <Select value={novaDespesa.categoria} onValueChange={(v) => setNovaDespesa({ ...novaDespesa, categoria: v })}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>{CATEGORIAS_DESPESA.map((c) => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}</SelectContent>
-                  </Select>
-                </div>
+                <div><Label>Valor</Label><div className="relative"><span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">R$</span><Input type="number" className="pl-10" value={novaDespesa.valor || ""} onChange={(e) => setNovaDespesa({ ...novaDespesa, valor: parseFloat(e.target.value) || 0 })} /></div></div>
+                <div><Label>Categoria</Label><Select value={novaDespesa.categoria} onValueChange={(v) => setNovaDespesa({ ...novaDespesa, categoria: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{CATEGORIAS_DESPESA.map((c) => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}</SelectContent></Select></div>
                 <div><Label>Data</Label><Input type="date" value={novaDespesa.data} onChange={(e) => setNovaDespesa({ ...novaDespesa, data: e.target.value })} /></div>
                 <Button onClick={handleRegistrarDespesa} className="h-10">Registrar</Button>
               </div>
             </div>
 
-            {/* Histórico */}
             <div className="rounded-2xl border bg-card p-5 space-y-4">
               <h2 className="text-lg font-black text-foreground">Histórico de despesas do mês</h2>
               {despesasMes.length === 0 && <p className="text-sm text-muted-foreground">Nenhuma despesa registrada neste mês.</p>}
@@ -625,14 +581,12 @@ const MasterPage = () => {
             </div>
           </TabsContent>
 
-          {/* ========== ABA COBRANÇAS ========== */}
           <TabsContent value="cobrancas" className="space-y-6 mt-4">
             {(() => {
               const hoje = todayStr();
               const hojeDate = new Date(hoje);
               const em7dias = new Date(hojeDate);
               em7dias.setDate(em7dias.getDate() + 7);
-
               type StatusVenc = "vencido" | "vence_hoje" | "vence_em_breve" | "em_dia";
               const classify = (c: Cliente): StatusVenc => {
                 if (!c.dataVencimento) return "em_dia";
@@ -642,7 +596,6 @@ const MasterPage = () => {
                 if (d <= em7dias) return "vence_em_breve";
                 return "em_dia";
               };
-
               const classified = clientes.map((c) => ({ ...c, statusVenc: classify(c) }));
               const vencidos = classified.filter((c) => c.statusVenc === "vencido");
               const venceHoje = classified.filter((c) => c.statusVenc === "vence_hoje");
@@ -650,46 +603,27 @@ const MasterPage = () => {
               const emDia = classified.filter((c) => c.statusVenc === "em_dia");
               const atencao = [...vencidos, ...venceHoje, ...vencemBreve];
               const todosOrdenados = [...classified].sort((a, b) => (a.dataVencimento || "9999").localeCompare(b.dataVencimento || "9999"));
-
-              const diffDays = (d: string) => {
-                const diff = Math.ceil((new Date(d).getTime() - hojeDate.getTime()) / (1000 * 60 * 60 * 24));
-                return diff;
-              };
-
+              const diffDays = (d: string) => Math.ceil((new Date(d).getTime() - hojeDate.getTime()) / (1000 * 60 * 60 * 24));
               const statusBadge = (s: StatusVenc, dataVenc: string) => {
                 if (s === "vencido") return <Badge className="bg-destructive hover:bg-destructive text-destructive-foreground">Vencido</Badge>;
                 if (s === "vence_hoje") return <Badge className="bg-yellow-600 hover:bg-yellow-600 text-white">Vence hoje</Badge>;
                 if (s === "vence_em_breve") return <Badge className="bg-yellow-600 hover:bg-yellow-600 text-white">Vence em {diffDays(dataVenc)} dias</Badge>;
                 return <Badge className="bg-emerald-600 hover:bg-emerald-600 text-white">Em dia</Badge>;
               };
-
-              const handleBloquear = (c: Cliente) => {
+              const handleBloquear = async (c: Cliente) => {
                 const ontem = new Date();
                 ontem.setDate(ontem.getDate() - 1);
-                updateCliente(c.id, { ativo: false, dataVencimento: ontem.toISOString().slice(0, 10) });
+                await updateCliente(c.id, { ativo: false, dataVencimento: ontem.toISOString().slice(0, 10) });
                 toast.success(`${c.nomeRestaurante} bloqueado imediatamente.`);
-                refresh();
+                await refresh();
               };
-
               return (
                 <>
-                  {/* Resumo */}
                   <div className="grid grid-cols-3 gap-4">
-                    <div className="rounded-2xl border bg-card p-4 space-y-1">
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground"><AlertTriangle className="w-4 h-4" />Vencidos</div>
-                      <p className="text-xl font-black text-destructive">{vencidos.length}</p>
-                    </div>
-                    <div className="rounded-2xl border bg-card p-4 space-y-1">
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground"><AlertTriangle className="w-4 h-4" />Vencem em 7 dias</div>
-                      <p className="text-xl font-black text-yellow-500">{venceHoje.length + vencemBreve.length}</p>
-                    </div>
-                    <div className="rounded-2xl border bg-card p-4 space-y-1">
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground"><Users className="w-4 h-4" />Em dia</div>
-                      <p className="text-xl font-black text-emerald-500">{emDia.length}</p>
-                    </div>
+                    <div className="rounded-2xl border bg-card p-4 space-y-1"><div className="flex items-center gap-2 text-sm text-muted-foreground"><AlertTriangle className="w-4 h-4" />Vencidos</div><p className="text-xl font-black text-destructive">{vencidos.length}</p></div>
+                    <div className="rounded-2xl border bg-card p-4 space-y-1"><div className="flex items-center gap-2 text-sm text-muted-foreground"><AlertTriangle className="w-4 h-4" />Vencem em 7 dias</div><p className="text-xl font-black text-yellow-500">{venceHoje.length + vencemBreve.length}</p></div>
+                    <div className="rounded-2xl border bg-card p-4 space-y-1"><div className="flex items-center gap-2 text-sm text-muted-foreground"><Users className="w-4 h-4" />Em dia</div><p className="text-xl font-black text-emerald-500">{emDia.length}</p></div>
                   </div>
-
-                  {/* Atenção necessária */}
                   <div className="rounded-2xl border bg-card p-5 space-y-4">
                     <h2 className="text-lg font-black text-foreground flex items-center gap-2"><AlertTriangle className="w-5 h-5" />Atenção necessária</h2>
                     {atencao.length === 0 && <p className="text-sm text-muted-foreground text-center py-4">Todos os clientes estão em dia ✓</p>}
@@ -697,10 +631,7 @@ const MasterPage = () => {
                       {atencao.map((c) => (
                         <div key={c.id} className="rounded-xl border bg-background p-4 flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
                           <div className="space-y-1">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <p className="font-bold text-foreground">{c.nomeRestaurante}</p>
-                              {statusBadge(c.statusVenc, c.dataVencimento)}
-                            </div>
+                            <div className="flex items-center gap-2 flex-wrap"><p className="font-bold text-foreground">{c.nomeRestaurante}</p>{statusBadge(c.statusVenc, c.dataVencimento)}</div>
                             <div className="flex items-center gap-3 text-xs text-muted-foreground flex-wrap">
                               <span className="flex items-center gap-1"><Phone className="w-3 h-3" />{c.telefone || "—"}</span>
                               <span className="flex items-center gap-1"><Mail className="w-3 h-3" />{c.email || "—"}</span>
@@ -708,43 +639,19 @@ const MasterPage = () => {
                             </div>
                           </div>
                           <div className="flex items-center gap-2">
-                            {c.ativo && (
-                              <Button variant="destructive" size="sm" onClick={() => handleBloquear(c)}>
-                                <ShieldOff className="w-3.5 h-3.5 mr-1" />Bloquear
-                              </Button>
-                            )}
-                            <Button variant="outline" size="sm" onClick={() => openEdit(c)}>
-                              <RefreshCw className="w-3.5 h-3.5 mr-1" />Renovar
-                            </Button>
+                            {c.ativo && <Button variant="destructive" size="sm" onClick={() => handleBloquear(c)}><ShieldOff className="w-3.5 h-3.5 mr-1" />Bloquear</Button>}
+                            <Button variant="outline" size="sm" onClick={() => openEdit(c)}><RefreshCw className="w-3.5 h-3.5 mr-1" />Renovar</Button>
                           </div>
                         </div>
                       ))}
                     </div>
                   </div>
-
-                  {/* Todos os clientes - tabela */}
                   <div className="rounded-2xl border bg-card p-5 space-y-4">
                     <h2 className="text-lg font-black text-foreground">Todos os clientes</h2>
                     <div className="overflow-x-auto">
                       <table className="w-full text-sm">
-                        <thead>
-                          <tr className="border-b text-muted-foreground text-left">
-                            <th className="pb-2 font-semibold">Nome</th>
-                            <th className="pb-2 font-semibold">Vencimento</th>
-                            <th className="pb-2 font-semibold">Status</th>
-                            <th className="pb-2 font-semibold text-right">Mensalidade</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {todosOrdenados.map((c) => (
-                            <tr key={c.id} className="border-b border-border/50">
-                              <td className="py-2 font-semibold text-foreground">{c.nomeRestaurante}</td>
-                              <td className="py-2 text-muted-foreground">{c.dataVencimento || "—"}</td>
-                              <td className="py-2">{statusBadge(c.statusVenc, c.dataVencimento)}</td>
-                              <td className="py-2 text-right text-foreground">R$ {(c.valorMensalidade || 0).toFixed(2)}</td>
-                            </tr>
-                          ))}
-                        </tbody>
+                        <thead><tr className="border-b text-muted-foreground text-left"><th className="pb-2 font-semibold">Nome</th><th className="pb-2 font-semibold">Vencimento</th><th className="pb-2 font-semibold">Status</th><th className="pb-2 font-semibold text-right">Mensalidade</th></tr></thead>
+                        <tbody>{todosOrdenados.map((c) => (<tr key={c.id} className="border-b border-border/50"><td className="py-2 font-semibold text-foreground">{c.nomeRestaurante}</td><td className="py-2 text-muted-foreground">{c.dataVencimento || "—"}</td><td className="py-2">{statusBadge(c.statusVenc, c.dataVencimento)}</td><td className="py-2 text-right text-foreground">R$ {(c.valorMensalidade || 0).toFixed(2)}</td></tr>))}</tbody>
                       </table>
                     </div>
                   </div>
@@ -753,99 +660,33 @@ const MasterPage = () => {
             })()}
           </TabsContent>
 
-          {/* ========== ABA AVISOS ========== */}
           <TabsContent value="avisos" className="space-y-6 mt-4">
             <div className="rounded-2xl border bg-card p-5 space-y-4">
               <h2 className="text-lg font-black text-foreground flex items-center gap-2"><Send className="w-5 h-5" />Enviar aviso ao caixa</h2>
               <div className="space-y-3">
-                <div>
-                  <Label>Mensagem</Label>
-                  <Textarea placeholder="Escreva o aviso..." value={avisoMensagem} onChange={(e) => setAvisoMensagem(e.target.value)} rows={3} />
-                </div>
+                <div><Label>Mensagem</Label><Textarea placeholder="Escreva o aviso..." value={avisoMensagem} onChange={(e) => setAvisoMensagem(e.target.value)} rows={3} /></div>
                 <div>
                   <Label>Tipo</Label>
                   <div className="flex gap-2 mt-1">
-                    {([
-                      { value: "info" as const, label: "Info", color: "bg-blue-600 text-white" },
-                      { value: "alerta" as const, label: "Alerta", color: "bg-yellow-600 text-white" },
-                      { value: "urgente" as const, label: "Urgente", color: "bg-destructive text-destructive-foreground" },
-                    ]).map((t) => (
-                      <Button
-                        key={t.value}
-                        size="sm"
-                        variant={avisoTipo === t.value ? "default" : "outline"}
-                        className={avisoTipo === t.value ? t.color : ""}
-                        onClick={() => setAvisoTipo(t.value)}
-                      >
-                        {t.label}
-                      </Button>
+                    {([{ value: "info" as const, label: "Info", color: "bg-blue-600 text-white" }, { value: "alerta" as const, label: "Alerta", color: "bg-yellow-600 text-white" }, { value: "urgente" as const, label: "Urgente", color: "bg-destructive text-destructive-foreground" }]).map((t) => (
+                      <Button key={t.value} size="sm" variant={avisoTipo === t.value ? "default" : "outline"} className={avisoTipo === t.value ? t.color : ""} onClick={() => setAvisoTipo(t.value)}>{t.label}</Button>
                     ))}
                   </div>
                 </div>
-                <Button
-                  className="w-full"
-                  disabled={!avisoMensagem.trim()}
-                  onClick={() => {
-                    const aviso = { mensagem: avisoMensagem.trim(), tipo: avisoTipo, enviadoEm: new Date().toISOString(), lido: false };
-                    localStorage.setItem("obsidian-master-aviso-v1", JSON.stringify(aviso));
-                    // Save to history
-                    try {
-                      const histRaw = localStorage.getItem("obsidian-master-avisos-historico-v1");
-                      const hist = histRaw ? JSON.parse(histRaw) : [];
-                      hist.unshift({ ...aviso });
-                      if (hist.length > 50) hist.length = 50;
-                      localStorage.setItem("obsidian-master-avisos-historico-v1", JSON.stringify(hist));
-                    } catch {}
-                    toast.success("Aviso enviado ao caixa!");
-                    setAvisoMensagem("");
-                  }}
-                >
+                <Button className="w-full" disabled={!avisoMensagem.trim()} onClick={() => {
+                  const aviso = { mensagem: avisoMensagem.trim(), tipo: avisoTipo, enviadoEm: new Date().toISOString(), lido: false };
+                  localStorage.setItem("obsidian-master-aviso-v1", JSON.stringify(aviso));
+                  toast.success("Aviso enviado ao caixa!");
+                  setAvisoMensagem("");
+                }}>
                   <Send className="w-4 h-4 mr-1" /> Enviar aviso
                 </Button>
               </div>
-            </div>
-
-            {/* Histórico de avisos */}
-            <div className="rounded-2xl border bg-card p-5 space-y-4">
-              <h2 className="text-lg font-black text-foreground">Histórico de avisos</h2>
-              {(() => {
-                try {
-                  const histRaw = localStorage.getItem("obsidian-master-avisos-historico-v1");
-                  const hist: Array<{ mensagem: string; tipo: string; enviadoEm: string; lido?: boolean }> = histRaw ? JSON.parse(histRaw) : [];
-                  if (hist.length === 0) return <p className="text-sm text-muted-foreground text-center py-4">Nenhum aviso enviado ainda.</p>;
-                  const tipoCores: Record<string, string> = { info: "border-blue-500/50 bg-blue-500/10", alerta: "border-yellow-500/50 bg-yellow-500/10", urgente: "border-destructive/50 bg-destructive/10" };
-                  const tipoLabels: Record<string, string> = { info: "Info", alerta: "Alerta", urgente: "Urgente" };
-                  // Check current active aviso to show lido status
-                  let currentAviso: { mensagem: string; lido?: boolean } | null = null;
-                  try { const raw = localStorage.getItem("obsidian-master-aviso-v1"); if (raw) currentAviso = JSON.parse(raw); } catch {}
-                  return (
-                    <div className="space-y-2 max-h-80 overflow-y-auto">
-                      {hist.map((a, i) => {
-                        const isActive = currentAviso && currentAviso.mensagem === a.mensagem;
-                        const lido = isActive ? currentAviso?.lido : undefined;
-                        return (
-                          <div key={i} className={`rounded-xl border p-3 ${tipoCores[a.tipo] || "border-border"}`}>
-                            <div className="flex items-center justify-between mb-1">
-                              <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">{tipoLabels[a.tipo] || a.tipo}</span>
-                              <span className="text-[10px] text-muted-foreground">
-                                {new Date(a.enviadoEm).toLocaleString("pt-BR")}
-                                {isActive && lido !== undefined && (lido ? " · ✓ Lido" : " · Não lido")}
-                              </span>
-                            </div>
-                            <p className="text-sm font-semibold text-foreground">{a.mensagem}</p>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  );
-                } catch { return null; }
-              })()}
             </div>
           </TabsContent>
         </Tabs>
       </div>
 
-      {/* Create/Edit Sheet */}
       <Sheet open={dialogOpen} onOpenChange={setDialogOpen} modal={false}>
         <SheetContent side="right" className="w-full sm:max-w-2xl overflow-y-auto">
           <SheetHeader><SheetTitle>{editId ? "Editar cliente" : "Novo cliente"}</SheetTitle></SheetHeader>
@@ -869,10 +710,7 @@ const MasterPage = () => {
             {!editId && (
               <div className="space-y-3">
                 <h3 className="text-sm font-bold text-foreground uppercase tracking-wide">Conta Admin (Supabase)</h3>
-                <div className="flex items-center gap-2">
-                  <Switch checked={form.criarContaAdmin} onCheckedChange={(v) => ff("criarContaAdmin", v)} />
-                  <Label>Criar conta de acesso admin para este cliente</Label>
-                </div>
+                <div className="flex items-center gap-2"><Switch checked={form.criarContaAdmin} onCheckedChange={(v) => ff("criarContaAdmin", v)} /><Label>Criar conta de acesso admin para este cliente</Label></div>
                 {form.criarContaAdmin && (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 rounded-xl border bg-background p-4">
                     <div><Label>Email (login)</Label><Input type="email" value={form.email} onChange={(e) => ff("email", e.target.value)} placeholder="admin@restaurante.com" /></div>
@@ -887,27 +725,12 @@ const MasterPage = () => {
                 <h3 className="text-sm font-bold text-foreground uppercase tracking-wide">Alterar credenciais de acesso</h3>
                 {editLinkedUserId ? (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 rounded-xl border bg-background p-4">
-                    <div>
-                      <Label>Novo email de login</Label>
-                      <Input type="email" value={editNovoEmail} onChange={(e) => setEditNovoEmail(e.target.value)} placeholder="Deixe vazio para manter" />
-                    </div>
-                    <div>
-                      <Label>Nova senha</Label>
-                      <Input type="password" value={editNovaSenha} onChange={(e) => setEditNovaSenha(e.target.value)} placeholder="Mínimo 6 caracteres" />
-                    </div>
-                    <div className="sm:col-span-2">
-                      <Button
-                        variant="outline"
-                        onClick={handleUpdateCredentials}
-                        disabled={savingCredentials || (!editNovoEmail.trim() && !editNovaSenha)}
-                        className="w-full"
-                      >
-                        {savingCredentials ? "Atualizando…" : "Atualizar credenciais"}
-                      </Button>
-                    </div>
+                    <div><Label>Novo email de login</Label><Input type="email" value={editNovoEmail} onChange={(e) => setEditNovoEmail(e.target.value)} placeholder="Deixe vazio para manter" /></div>
+                    <div><Label>Nova senha</Label><Input type="password" value={editNovaSenha} onChange={(e) => setEditNovaSenha(e.target.value)} placeholder="Mínimo 6 caracteres" /></div>
+                    <div className="sm:col-span-2"><Button variant="outline" onClick={handleUpdateCredentials} disabled={savingCredentials || (!editNovoEmail.trim() && !editNovaSenha)} className="w-full">{savingCredentials ? "Atualizando…" : "Atualizar credenciais"}</Button></div>
                   </div>
                 ) : (
-                  <p className="text-sm text-muted-foreground rounded-xl border bg-background p-4">Nenhuma conta Supabase vinculada a este cliente. Vincule pela correspondência do nome do restaurante com uma loja cadastrada.</p>
+                  <p className="text-sm text-muted-foreground rounded-xl border bg-background p-4">Nenhuma conta Supabase vinculada a este cliente.</p>
                 )}
               </div>
             )}
@@ -935,14 +758,11 @@ const MasterPage = () => {
               <h3 className="text-sm font-bold text-foreground uppercase tracking-wide">Observações</h3>
               <Textarea placeholder="Observações livres sobre o cliente..." value={form.observacoes} onChange={(e) => ff("observacoes", e.target.value)} rows={3} />
             </div>
-            <Button onClick={handleSave} className="w-full" disabled={savingAccount}>
-              {savingAccount ? "Criando conta..." : "Salvar"}
-            </Button>
+            <Button onClick={handleSave} className="w-full" disabled={savingAccount}>{savingAccount ? "Criando conta..." : "Salvar"}</Button>
           </div>
         </SheetContent>
       </Sheet>
 
-      {/* Detail Dialog */}
       <Dialog open={!!detailClient} onOpenChange={(o) => !o && setDetailClient(null)}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle>{detailClient?.nomeRestaurante}</DialogTitle></DialogHeader>
@@ -952,7 +772,6 @@ const MasterPage = () => {
                 <TabsTrigger value="detalhes"><Eye className="w-4 h-4 mr-1" />Detalhes</TabsTrigger>
                 <TabsTrigger value="pagamentos"><DollarSign className="w-4 h-4 mr-1" />Pagamentos</TabsTrigger>
               </TabsList>
-
               <TabsContent value="detalhes" className="space-y-4 mt-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
                   <div><span className="text-muted-foreground">Segmento:</span> <span className="font-semibold text-foreground">{SEGMENTO_LABELS[detailClient.segmento] || detailClient.segmento || "—"}</span></div>
@@ -968,12 +787,9 @@ const MasterPage = () => {
                   <div><span className="text-muted-foreground">Licença:</span> <span className="font-semibold text-foreground">{detailClient.dataVencimento || "—"}</span></div>
                   <div><span className="text-muted-foreground">Status:</span> <Badge className={detailClient.ativo ? "bg-emerald-600 hover:bg-emerald-600 text-white" : "bg-destructive hover:bg-destructive text-destructive-foreground"}>{detailClient.ativo ? "Ativo" : "Bloqueado"}</Badge></div>
                 </div>
-                {detailClient.observacoes && (
-                  <div className="text-sm"><span className="text-muted-foreground">Observações:</span><p className="mt-1 text-foreground bg-background rounded-xl p-3">{detailClient.observacoes}</p></div>
-                )}
+                {detailClient.observacoes && <div className="text-sm"><span className="text-muted-foreground">Observações:</span><p className="mt-1 text-foreground bg-background rounded-xl p-3">{detailClient.observacoes}</p></div>}
                 <Button variant="outline" onClick={() => { const c = detailClient; setDetailClient(null); openEdit(c); }}><Pencil className="w-4 h-4 mr-1" />Editar</Button>
               </TabsContent>
-
               <TabsContent value="pagamentos" className="space-y-4 mt-4">
                 {(() => {
                   const anoAtual = String(new Date().getFullYear());
@@ -981,49 +797,26 @@ const MasterPage = () => {
                   const totalAno = pagsAno.reduce((s, p) => s + p.valor, 0);
                   return (
                     <div className="flex gap-4">
-                      <div className="rounded-xl border bg-background p-3 flex-1 text-center">
-                        <p className="text-xs text-muted-foreground">Total pago {anoAtual}</p>
-                        <p className="text-lg font-black text-emerald-500">R$ {totalAno.toFixed(2)}</p>
-                      </div>
-                      <div className="rounded-xl border bg-background p-3 flex-1 text-center">
-                        <p className="text-xs text-muted-foreground">Pagamentos</p>
-                        <p className="text-lg font-black text-foreground">{pagsAno.length}</p>
-                      </div>
+                      <div className="rounded-xl border bg-background p-3 flex-1 text-center"><p className="text-xs text-muted-foreground">Total pago {anoAtual}</p><p className="text-lg font-black text-emerald-500">R$ {totalAno.toFixed(2)}</p></div>
+                      <div className="rounded-xl border bg-background p-3 flex-1 text-center"><p className="text-xs text-muted-foreground">Pagamentos</p><p className="text-lg font-black text-foreground">{pagsAno.length}</p></div>
                     </div>
                   );
                 })()}
-
                 <div className="rounded-xl border bg-background p-4 space-y-3">
                   <h4 className="text-sm font-bold text-foreground">Registrar pagamento</h4>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                      <Label>Valor</Label>
-                      <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">R$</span>
-                        <Input type="number" className="pl-10" value={pagForm.valor || ""} onChange={(e) => setPagForm({ ...pagForm, valor: parseFloat(e.target.value) || 0 })} />
-                      </div>
-                    </div>
-                    <div>
-                      <Label>Método</Label>
-                      <Select value={pagForm.metodo} onValueChange={(v) => setPagForm({ ...pagForm, metodo: v })}>
-                        <SelectTrigger><SelectValue /></SelectTrigger>
-                        <SelectContent container={document.body}>{METODOS_PAGAMENTO.map((m) => <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>)}</SelectContent>
-                      </Select>
-                    </div>
+                    <div><Label>Valor</Label><div className="relative"><span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">R$</span><Input type="number" className="pl-10" value={pagForm.valor || ""} onChange={(e) => setPagForm({ ...pagForm, valor: parseFloat(e.target.value) || 0 })} /></div></div>
+                    <div><Label>Método</Label><Select value={pagForm.metodo} onValueChange={(v) => setPagForm({ ...pagForm, metodo: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent container={document.body}>{METODOS_PAGAMENTO.map((m) => <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>)}</SelectContent></Select></div>
                     <div><Label>Data</Label><Input type="date" value={pagForm.data} onChange={(e) => setPagForm({ ...pagForm, data: e.target.value })} /></div>
                     <div><Label>Observação</Label><Input placeholder="Opcional" value={pagForm.observacao} onChange={(e) => setPagForm({ ...pagForm, observacao: e.target.value })} /></div>
                   </div>
                   <Button onClick={handleRegistrarPagamento} className="w-full">Registrar pagamento</Button>
                 </div>
-
                 <div className="space-y-2">
                   {(detailClient.historicoPagamentos || []).length === 0 && <p className="text-sm text-muted-foreground text-center py-4">Nenhum pagamento registrado.</p>}
                   {[...(detailClient.historicoPagamentos || [])].sort((a, b) => b.data.localeCompare(a.data)).map((p) => (
                     <div key={p.id} className="flex items-center justify-between rounded-xl border bg-background p-3">
-                      <div className="space-y-0.5">
-                        <p className="text-sm font-semibold text-foreground">{p.data}</p>
-                        <p className="text-xs text-muted-foreground">{METODOS_PAGAMENTO.find((m) => m.value === p.metodo)?.label || p.metodo}{p.observacao ? ` · ${p.observacao}` : ""}</p>
-                      </div>
+                      <div className="space-y-0.5"><p className="text-sm font-semibold text-foreground">{p.data}</p><p className="text-xs text-muted-foreground">{METODOS_PAGAMENTO.find((m) => m.value === p.metodo)?.label || p.metodo}{p.observacao ? ` · ${p.observacao}` : ""}</p></div>
                       <p className="text-sm font-black text-emerald-500">R$ {p.valor.toFixed(2)}</p>
                     </div>
                   ))}
@@ -1034,7 +827,6 @@ const MasterPage = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Remove AlertDialog */}
       <AlertDialog open={!!removeId} onOpenChange={(o) => !o && setRemoveId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader><AlertDialogTitle>Remover cliente?</AlertDialogTitle><AlertDialogDescription>Essa ação não pode ser desfeita.</AlertDialogDescription></AlertDialogHeader>

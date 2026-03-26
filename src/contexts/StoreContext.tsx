@@ -51,8 +51,8 @@ export const StoreProvider = ({ children }: { children: React.ReactNode }) => {
           .order("name");
         setStores(allStores ?? []);
         
-        // Restore last selected store
-        const saved = localStorage.getItem("orderly-active-store");
+        // Restore last selected store (usando sessionStorage — dura só enquanto o navegador está aberto)
+        const saved = sessionStorage.getItem("orderly-active-store");
         if (saved && allStores?.find((s) => s.id === saved)) {
           setStoreId(saved);
           setStoreName(allStores.find((s) => s.id === saved)?.name ?? null);
@@ -113,7 +113,7 @@ export const StoreProvider = ({ children }: { children: React.ReactNode }) => {
     setStoreId(id);
     const found = stores.find((s) => s.id === id);
     setStoreName(found?.name ?? null);
-    localStorage.setItem("orderly-active-store", id);
+    sessionStorage.setItem("orderly-active-store", id);
   }, [stores]);
 
   const refreshStores = useCallback(async () => {
