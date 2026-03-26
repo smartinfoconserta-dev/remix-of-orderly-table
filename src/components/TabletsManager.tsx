@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { TabletSmartphone, Plus, Pencil, Trash2, Power, PowerOff } from "lucide-react";
+import { TabletSmartphone, Plus, Pencil, Trash2, Power, PowerOff, KeyRound, RefreshCw, Copy } from "lucide-react";
 import { toast } from "sonner";
 
 interface TabletRow {
@@ -37,6 +37,9 @@ const TabletsManager = ({ storeId }: Props) => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingTablet, setEditingTablet] = useState<TabletRow | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<TabletRow | null>(null);
+  const [detailTablet, setDetailTablet] = useState<TabletRow | null>(null);
+  const [detailPin, setDetailPin] = useState("");
+  const [regenerating, setRegenerating] = useState(false);
 
   const [formNome, setFormNome] = useState("");
   const [formMesaId, setFormMesaId] = useState<string>("none");
@@ -169,6 +172,48 @@ const TabletsManager = ({ storeId }: Props) => {
     fetchData();
   };
 
+  const openDetail = (tablet: TabletRow) => {
+    setDetailTablet(tablet);
+    setDetailPin("");
+  };
+
+  const handleRegeneratePin = async () => {
+    if (!detailTablet) return;
+    setRegenerating(true);
+    const newPin = generatePin();
+
+    // Deactivate old PIN
+    if (detailTablet.pin_id) {
+      await supabase.from("module_pins").update({ active: false }).eq("id", detailTablet.pin_id);
+    }
+
+    // Create new PIN
+    const { data: pinId, error } = await supabase.rpc("create_module_pin", {
+      _store_id: storeId,
+      _module: "cliente",
+      _pin: newPin,
+      _label: detailTablet.nome,
+    });
+
+    if (error || !pinId) {
+      toast.error("Erro ao regenerar PIN");
+      setRegenerating(false);
+      return;
+    }
+
+    await supabase.from("tablets").update({ pin_id: pinId, updated_at: new Date().toISOString() }).eq("id", detailTablet.id);
+    setDetailPin(newPin);
+    setDetailTablet({ ...detailTablet, pin_id: pinId });
+    setRegenerating(false);
+    toast.success("Novo PIN gerado!");
+    fetchData();
+  };
+
+  const copyPin = () => {
+    navigator.clipboard.writeText(detailPin);
+    toast.success("PIN copiado!");
+  };
+
   if (loading) {
     return <div className="flex items-center justify-center py-12 text-muted-foreground">Carregando tablets…</div>;
   }
@@ -193,7 +238,11 @@ const TabletsManager = ({ storeId }: Props) => {
       ) : (
         <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
           {tablets.map((tablet) => (
-            <div key={tablet.id} className={`surface-card flex flex-col gap-3 p-4 ${!tablet.ativo ? "opacity-50" : ""}`}>
+            <div
+              key={tablet.id}
+              className={`surface-card flex flex-col gap-3 p-4 cursor-pointer transition-colors hover:ring-1 hover:ring-primary/30 ${!tablet.ativo ? "opacity-50" : ""}`}
+              onClick={() => openDetail(tablet)}
+            >
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-2">
                   <TabletSmartphone className="h-5 w-5 text-muted-foreground" />
@@ -209,7 +258,7 @@ const TabletsManager = ({ storeId }: Props) => {
                 <p>PIN: <span className="font-semibold text-foreground">{tablet.pin_id ? "✓ Configurado" : "✗ Sem PIN"}</span></p>
               </div>
 
-              <div className="flex gap-2 pt-1">
+              <div className="flex gap-2 pt-1" onClick={(e) => e.stopPropagation()}>
                 <Button size="sm" variant="outline" onClick={() => openEditDialog(tablet)} className="gap-1 rounded-lg text-xs">
                   <Pencil className="h-3 w-3" /> Editar
                 </Button>
@@ -292,6 +341,68 @@ const TabletsManager = ({ storeId }: Props) => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Detail / PIN dialog */}
+      <Dialog open={!!detailTablet} onOpenChange={(open) => !open && setDetailTablet(null)}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <TabletSmartphone className="h-5 w-5" />
+              {detailTablet?.nome}
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4 pt-2">
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Mesa</span>
+                <span className="font-semibold text-foreground">{getMesaLabel(detailTablet?.mesa_id ?? null)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Status</span>
+                <Badge variant={detailTablet?.ativo ? "default" : "secondary"} className="text-[10px]">
+                  {detailTablet?.ativo ? "Ativo" : "Inativo"}
+                </Badge>
+              </div>
+            </div>
+
+            {/* PIN section */}
+            <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 text-center space-y-3">
+              <div className="flex items-center justify-center gap-2">
+                <KeyRound className="h-4 w-4 text-primary" />
+                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">PIN de Acesso</p>
+              </div>
+
+              {detailPin ? (
+                <>
+                  <p className="text-4xl font-black tabular-nums tracking-[0.3em] text-primary">{detailPin}</p>
+                  <Button size="sm" variant="outline" onClick={copyPin} className="gap-1 rounded-lg text-xs">
+                    <Copy className="h-3 w-3" /> Copiar PIN
+                  </Button>
+                </>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  {detailTablet?.pin_id ? "PIN configurado (hash seguro)" : "Nenhum PIN configurado"}
+                </p>
+              )}
+            </div>
+
+            <Button
+              onClick={handleRegeneratePin}
+              disabled={regenerating}
+              variant="outline"
+              className="h-11 w-full rounded-xl font-bold gap-2"
+            >
+              <RefreshCw className={`h-4 w-4 ${regenerating ? "animate-spin" : ""}`} />
+              {regenerating ? "Gerando…" : detailTablet?.pin_id ? "Regenerar PIN" : "Gerar PIN"}
+            </Button>
+
+            <p className="text-[11px] text-muted-foreground text-center">
+              Ao regenerar, o PIN anterior será desativado e um novo será criado.
+            </p>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
