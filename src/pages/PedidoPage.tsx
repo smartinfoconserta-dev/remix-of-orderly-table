@@ -306,7 +306,7 @@ export default function PedidoPage() {
       toast.error(statusAgora.mensagem + (statusAgora.proximoHorario ? `. ${statusAgora.proximoHorario}` : ""));
       return;
     }
-    const cliente = upsertClienteDelivery({
+    const cliente = await upsertClienteDelivery({
       nome: nome.trim(), cpf: cpf.trim(), telefone: telefone.trim(),
       endereco: endereco.trim(), numero: numero.trim(), bairro: bairro.trim(),
       complemento: complemento.trim(), referencia: referencia.trim(),
