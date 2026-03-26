@@ -70,7 +70,7 @@ export async function getClientes(): Promise<Cliente[]> {
       diaVencimento: r.dia_vencimento ?? 10,
       valorMensalidade: Number(r.valor_mensalidade ?? 0),
       observacoes: r.observacoes ?? "",
-      historicoPagamentos: (r.historico_pagamentos as Pagamento[]) ?? [],
+      historicoPagamentos: (r.historico_pagamentos as unknown as Pagamento[]) ?? [],
       plano: r.plano ?? "anual",
       dataInicio: r.data_inicio ?? "",
       dataTermino: r.data_termino ?? "",
