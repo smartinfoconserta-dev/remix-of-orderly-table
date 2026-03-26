@@ -172,6 +172,48 @@ const TabletsManager = ({ storeId }: Props) => {
     fetchData();
   };
 
+  const openDetail = (tablet: TabletRow) => {
+    setDetailTablet(tablet);
+    setDetailPin("");
+  };
+
+  const handleRegeneratePin = async () => {
+    if (!detailTablet) return;
+    setRegenerating(true);
+    const newPin = generatePin();
+
+    // Deactivate old PIN
+    if (detailTablet.pin_id) {
+      await supabase.from("module_pins").update({ active: false }).eq("id", detailTablet.pin_id);
+    }
+
+    // Create new PIN
+    const { data: pinId, error } = await supabase.rpc("create_module_pin", {
+      _store_id: storeId,
+      _module: "cliente",
+      _pin: newPin,
+      _label: detailTablet.nome,
+    });
+
+    if (error || !pinId) {
+      toast.error("Erro ao regenerar PIN");
+      setRegenerating(false);
+      return;
+    }
+
+    await supabase.from("tablets").update({ pin_id: pinId, updated_at: new Date().toISOString() }).eq("id", detailTablet.id);
+    setDetailPin(newPin);
+    setDetailTablet({ ...detailTablet, pin_id: pinId });
+    setRegenerating(false);
+    toast.success("Novo PIN gerado!");
+    fetchData();
+  };
+
+  const copyPin = () => {
+    navigator.clipboard.writeText(detailPin);
+    toast.success("PIN copiado!");
+  };
+
   if (loading) {
     return <div className="flex items-center justify-center py-12 text-muted-foreground">Carregando tablets…</div>;
   }
