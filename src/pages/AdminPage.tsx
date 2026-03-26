@@ -27,31 +27,6 @@ import {
   ExternalLink,
   TabletSmartphone,
 } from "lucide-react";
-  ClipboardList,
-  Download,
-  KeyRound,
-  LayoutDashboard,
-  Upload,
-  Grid3X3,
-  ImagePlus,
-  LogOut,
-  Settings,
-  Shield,
-  Pencil,
-  Plus,
-  Save,
-  Trash2,
-  Users,
-  X,
-  UtensilsCrossed,
-  CreditCard,
-  ChefHat,
-  Truck,
-  Bike,
-  Monitor,
-  Tv,
-  ExternalLink,
-} from "lucide-react";
 import StorePinsManager from "@/components/StorePinsManager";
 import MesasManager from "@/components/MesasManager";
 import TabletsManager from "@/components/TabletsManager";
