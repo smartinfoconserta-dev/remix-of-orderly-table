@@ -179,7 +179,7 @@ const TabletsManager = ({ storeId }: Props) => {
 
   const openDetail = (tablet: TabletRow) => {
     setDetailTablet(tablet);
-    setDetailPin("");
+    setDetailPin(tablet.pin_code ?? "");
   };
 
   const handleRegeneratePin = async () => {
