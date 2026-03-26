@@ -11,20 +11,29 @@ export interface Bairro {
   ativo: boolean;
 }
 
-export const getBairros = async (storeId?: string | null): Promise<Bairro[]> => {
+let _bairrosCache: Bairro[] = [];
+
+/** Sync getter — returns cached bairros (call loadBairrosAsync first) */
+export function getBairros(): Bairro[] {
+  return _bairrosCache;
+}
+
+export const getBairrosAsync = async (storeId?: string | null): Promise<Bairro[]> => {
   try {
-    let query = supabase.from("bairros_delivery").select("*");
+    let query = supabase.from("bairros_delivery" as any).select("*");
     if (storeId) query = query.eq("store_id", storeId);
     const { data, error } = await query.order("nome");
     if (error) throw error;
-    return (data ?? []).map((r) => ({
+    const mapped = (data ?? []).map((r: any) => ({
       id: r.id,
       nome: r.nome,
       taxa: Number(r.taxa ?? 0),
       ativo: r.ativo ?? true,
     }));
+    _bairrosCache = mapped;
+    return mapped;
   } catch {
-    return [];
+    return _bairrosCache;
   }
 };
 
