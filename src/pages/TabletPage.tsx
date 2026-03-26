@@ -21,20 +21,31 @@ import {
 
 const TabletPage = () => {
   const { mesas } = useRestaurant();
-  const { loginByPin, logout } = useAuth();
+  const { loginByPin, logout, authLevel, operationalSession } = useAuth();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+
+  // Detect if user arrived via operational login (Index page)
+  const arrivedViaOperational = authLevel === "operational" && operationalSession?.module === "cliente";
 
   const [mesaId, setMesaId] = useState<string | null>(() => {
     const savedMesa = getBoundTabletMesaId();
     const savedUser = getTabletLoginUser();
-    if (savedMesa && !savedUser) {
+    if (savedMesa && !savedUser && !arrivedViaOperational) {
       clearBoundTabletMesaId();
       return null;
     }
     return savedMesa;
   });
-  const [tabletUser, setTabletUser] = useState<string | null>(() => getTabletLoginUser());
+  const [tabletUser, setTabletUser] = useState<string | null>(() => {
+    if (arrivedViaOperational && !getTabletLoginUser()) {
+      // Sync: mark tablet as logged in from operational session
+      const label = operationalSession?.pinLabel ?? "Operador";
+      setTabletLoginUser(label);
+      return label;
+    }
+    return getTabletLoginUser();
+  });
   const [storeSlug, setStoreSlug] = useState("");
   const [pin, setPin] = useState("");
   const [loginError, setLoginError] = useState<string | null>(null);
