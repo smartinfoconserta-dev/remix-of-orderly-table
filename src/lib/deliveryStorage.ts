@@ -159,7 +159,7 @@ export async function upsertClienteDelivery(
         referencia: dados.referencia || existing.referencia,
         ultimo_pedido: now,
       };
-      await supabase.from("clientes_delivery").update(updated).eq("id", existing.id);
+      await (supabase.from as any)("clientes_delivery").update(updated).eq("id", existing.id);
       return { ...existing, ...dados, ultimoPedido: now };
     }
 
@@ -179,7 +179,7 @@ export async function upsertClienteDelivery(
       ultimo_pedido: now,
       ...(storeId ? { store_id: storeId } : {}),
     };
-    await supabase.from("clientes_delivery").insert(novo);
+    await (supabase.from as any)("clientes_delivery").insert(novo);
 
     return {
       id: novoId,
