@@ -1,0 +1,1 @@
+ALTER TABLE public.tablets ADD COLUMN pin_code text DEFAULT NULL;
