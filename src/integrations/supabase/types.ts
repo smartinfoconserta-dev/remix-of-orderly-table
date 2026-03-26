@@ -14,6 +14,258 @@ export type Database = {
   }
   public: {
     Tables: {
+      bairros_delivery: {
+        Row: {
+          ativo: boolean | null
+          created_at: string | null
+          id: string
+          nome: string
+          store_id: string | null
+          taxa: number
+        }
+        Insert: {
+          ativo?: boolean | null
+          created_at?: string | null
+          id: string
+          nome: string
+          store_id?: string | null
+          taxa?: number
+        }
+        Update: {
+          ativo?: boolean | null
+          created_at?: string | null
+          id?: string
+          nome?: string
+          store_id?: string | null
+          taxa?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bairros_delivery_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      clientes_delivery: {
+        Row: {
+          bairro: string | null
+          complemento: string | null
+          cpf: string | null
+          created_at: string | null
+          criado_em: string | null
+          endereco: string | null
+          id: string
+          nome: string
+          numero: string | null
+          referencia: string | null
+          senha_hash: string | null
+          store_id: string | null
+          telefone: string | null
+          ultimo_pedido: string | null
+        }
+        Insert: {
+          bairro?: string | null
+          complemento?: string | null
+          cpf?: string | null
+          created_at?: string | null
+          criado_em?: string | null
+          endereco?: string | null
+          id: string
+          nome?: string
+          numero?: string | null
+          referencia?: string | null
+          senha_hash?: string | null
+          store_id?: string | null
+          telefone?: string | null
+          ultimo_pedido?: string | null
+        }
+        Update: {
+          bairro?: string | null
+          complemento?: string | null
+          cpf?: string | null
+          created_at?: string | null
+          criado_em?: string | null
+          endereco?: string | null
+          id?: string
+          nome?: string
+          numero?: string | null
+          referencia?: string | null
+          senha_hash?: string | null
+          store_id?: string | null
+          telefone?: string | null
+          ultimo_pedido?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clientes_delivery_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      estado_mesas: {
+        Row: {
+          carrinho: Json | null
+          chamado_em: number | null
+          chamar_garcom: boolean | null
+          id: string
+          mesa_id: string
+          numero: number
+          pedidos: Json | null
+          status: string
+          store_id: string | null
+          total: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          carrinho?: Json | null
+          chamado_em?: number | null
+          chamar_garcom?: boolean | null
+          id: string
+          mesa_id: string
+          numero: number
+          pedidos?: Json | null
+          status?: string
+          store_id?: string | null
+          total?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          carrinho?: Json | null
+          chamado_em?: number | null
+          chamar_garcom?: boolean | null
+          id?: string
+          mesa_id?: string
+          numero?: number
+          pedidos?: Json | null
+          status?: string
+          store_id?: string | null
+          total?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "estado_mesas_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      master_clientes: {
+        Row: {
+          ativo: boolean | null
+          aviso_ativo: boolean | null
+          aviso_texto: string | null
+          cidade: string | null
+          cnpj: string | null
+          criado_em: string | null
+          data_inicio: string | null
+          data_termino: string | null
+          data_vencimento: string | null
+          dia_vencimento: number | null
+          email: string | null
+          endereco: string | null
+          estado: string | null
+          historico_pagamentos: Json | null
+          id: string
+          nome_contato: string | null
+          nome_restaurante: string
+          observacoes: string | null
+          plano: string | null
+          plano_modulos: string | null
+          segmento: string | null
+          telefone: string | null
+          updated_at: string | null
+          valor_mensalidade: number | null
+        }
+        Insert: {
+          ativo?: boolean | null
+          aviso_ativo?: boolean | null
+          aviso_texto?: string | null
+          cidade?: string | null
+          cnpj?: string | null
+          criado_em?: string | null
+          data_inicio?: string | null
+          data_termino?: string | null
+          data_vencimento?: string | null
+          dia_vencimento?: number | null
+          email?: string | null
+          endereco?: string | null
+          estado?: string | null
+          historico_pagamentos?: Json | null
+          id: string
+          nome_contato?: string | null
+          nome_restaurante?: string
+          observacoes?: string | null
+          plano?: string | null
+          plano_modulos?: string | null
+          segmento?: string | null
+          telefone?: string | null
+          updated_at?: string | null
+          valor_mensalidade?: number | null
+        }
+        Update: {
+          ativo?: boolean | null
+          aviso_ativo?: boolean | null
+          aviso_texto?: string | null
+          cidade?: string | null
+          cnpj?: string | null
+          criado_em?: string | null
+          data_inicio?: string | null
+          data_termino?: string | null
+          data_vencimento?: string | null
+          dia_vencimento?: number | null
+          email?: string | null
+          endereco?: string | null
+          estado?: string | null
+          historico_pagamentos?: Json | null
+          id?: string
+          nome_contato?: string | null
+          nome_restaurante?: string
+          observacoes?: string | null
+          plano?: string | null
+          plano_modulos?: string | null
+          segmento?: string | null
+          telefone?: string | null
+          updated_at?: string | null
+          valor_mensalidade?: number | null
+        }
+        Relationships: []
+      }
+      master_despesas: {
+        Row: {
+          categoria: string | null
+          created_at: string | null
+          data: string | null
+          descricao: string
+          id: string
+          valor: number
+        }
+        Insert: {
+          categoria?: string | null
+          created_at?: string | null
+          data?: string | null
+          descricao?: string
+          id: string
+          valor?: number
+        }
+        Update: {
+          categoria?: string | null
+          created_at?: string | null
+          data?: string | null
+          descricao?: string
+          id?: string
+          valor?: number
+        }
+        Relationships: []
+      }
       mesas: {
         Row: {
           capacidade: number | null
@@ -96,6 +348,116 @@ export type Database = {
           },
         ]
       }
+      pedidos: {
+        Row: {
+          bairro: string | null
+          caixa_id: string | null
+          caixa_nome: string | null
+          cancelado: boolean | null
+          cancelado_em: string | null
+          cancelado_motivo: string | null
+          cancelado_por: string | null
+          cliente_nome: string | null
+          cliente_telefone: string | null
+          created_at: string | null
+          criado_em: string
+          criado_em_iso: string
+          endereco_completo: string | null
+          forma_pagamento_delivery: string | null
+          garcom_id: string | null
+          garcom_nome: string | null
+          id: string
+          itens: Json
+          mesa_id: string | null
+          motoboy_nome: string | null
+          numero_pedido: number
+          observacao_geral: string | null
+          origem: string
+          para_viagem: boolean | null
+          pronto: boolean | null
+          referencia: string | null
+          status_balcao: string | null
+          store_id: string | null
+          total: number
+          troco_para_quanto: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          bairro?: string | null
+          caixa_id?: string | null
+          caixa_nome?: string | null
+          cancelado?: boolean | null
+          cancelado_em?: string | null
+          cancelado_motivo?: string | null
+          cancelado_por?: string | null
+          cliente_nome?: string | null
+          cliente_telefone?: string | null
+          created_at?: string | null
+          criado_em: string
+          criado_em_iso?: string
+          endereco_completo?: string | null
+          forma_pagamento_delivery?: string | null
+          garcom_id?: string | null
+          garcom_nome?: string | null
+          id: string
+          itens?: Json
+          mesa_id?: string | null
+          motoboy_nome?: string | null
+          numero_pedido: number
+          observacao_geral?: string | null
+          origem?: string
+          para_viagem?: boolean | null
+          pronto?: boolean | null
+          referencia?: string | null
+          status_balcao?: string | null
+          store_id?: string | null
+          total?: number
+          troco_para_quanto?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          bairro?: string | null
+          caixa_id?: string | null
+          caixa_nome?: string | null
+          cancelado?: boolean | null
+          cancelado_em?: string | null
+          cancelado_motivo?: string | null
+          cancelado_por?: string | null
+          cliente_nome?: string | null
+          cliente_telefone?: string | null
+          created_at?: string | null
+          criado_em?: string
+          criado_em_iso?: string
+          endereco_completo?: string | null
+          forma_pagamento_delivery?: string | null
+          garcom_id?: string | null
+          garcom_nome?: string | null
+          id?: string
+          itens?: Json
+          mesa_id?: string | null
+          motoboy_nome?: string | null
+          numero_pedido?: number
+          observacao_geral?: string | null
+          origem?: string
+          para_viagem?: boolean | null
+          pronto?: boolean | null
+          referencia?: string | null
+          status_balcao?: string | null
+          store_id?: string | null
+          total?: number
+          troco_para_quanto?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pedidos_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       restaurant_categories: {
         Row: {
           created_at: string | null
@@ -134,6 +496,7 @@ export type Database = {
       restaurant_config: {
         Row: {
           banners: Json | null
+          cardapio_overrides: Json | null
           cor_primaria: string | null
           couvert_ativo: boolean | null
           couvert_obrigatorio: boolean | null
@@ -169,6 +532,7 @@ export type Database = {
         }
         Insert: {
           banners?: Json | null
+          cardapio_overrides?: Json | null
           cor_primaria?: string | null
           couvert_ativo?: boolean | null
           couvert_obrigatorio?: boolean | null
@@ -204,6 +568,7 @@ export type Database = {
         }
         Update: {
           banners?: Json | null
+          cardapio_overrides?: Json | null
           cor_primaria?: string | null
           couvert_ativo?: boolean | null
           couvert_obrigatorio?: boolean | null
