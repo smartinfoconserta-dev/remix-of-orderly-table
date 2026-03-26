@@ -238,7 +238,11 @@ const TabletsManager = ({ storeId }: Props) => {
       ) : (
         <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
           {tablets.map((tablet) => (
-            <div key={tablet.id} className={`surface-card flex flex-col gap-3 p-4 ${!tablet.ativo ? "opacity-50" : ""}`}>
+            <div
+              key={tablet.id}
+              className={`surface-card flex flex-col gap-3 p-4 cursor-pointer transition-colors hover:ring-1 hover:ring-primary/30 ${!tablet.ativo ? "opacity-50" : ""}`}
+              onClick={() => openDetail(tablet)}
+            >
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-2">
                   <TabletSmartphone className="h-5 w-5 text-muted-foreground" />
@@ -254,7 +258,7 @@ const TabletsManager = ({ storeId }: Props) => {
                 <p>PIN: <span className="font-semibold text-foreground">{tablet.pin_id ? "✓ Configurado" : "✗ Sem PIN"}</span></p>
               </div>
 
-              <div className="flex gap-2 pt-1">
+              <div className="flex gap-2 pt-1" onClick={(e) => e.stopPropagation()}>
                 <Button size="sm" variant="outline" onClick={() => openEditDialog(tablet)} className="gap-1 rounded-lg text-xs">
                   <Pencil className="h-3 w-3" /> Editar
                 </Button>
