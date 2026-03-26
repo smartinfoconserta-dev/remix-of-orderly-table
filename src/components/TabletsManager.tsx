@@ -206,7 +206,7 @@ const TabletsManager = ({ storeId }: Props) => {
       return;
     }
 
-    await supabase.from("tablets").update({ pin_id: pinId, updated_at: new Date().toISOString() }).eq("id", detailTablet.id);
+    await supabase.from("tablets").update({ pin_id: pinId, pin_code: newPin, updated_at: new Date().toISOString() }).eq("id", detailTablet.id);
     setDetailPin(newPin);
     setDetailTablet({ ...detailTablet, pin_id: pinId });
     setRegenerating(false);
