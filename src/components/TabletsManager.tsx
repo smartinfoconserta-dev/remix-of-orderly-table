@@ -126,6 +126,7 @@ const TabletsManager = ({ storeId }: Props) => {
         nome: formNome.trim(),
         mesa_id: mesaIdValue,
         pin_id: pinId,
+        pin_code: generatedPin,
         ativo: true,
       }).select("*").single();
 
