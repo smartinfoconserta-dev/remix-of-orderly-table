@@ -38,8 +38,9 @@ export const getBairrosAsync = async (storeId?: string | null): Promise<Bairro[]
 };
 
 export const saveBairros = async (bairros: Bairro[], storeId?: string | null): Promise<void> => {
+  _bairrosCache = bairros;
   try {
-    let del = supabase.from("bairros_delivery").delete();
+    let del = (supabase.from as any)("bairros_delivery").delete();
     if (storeId) {
       del = del.eq("store_id", storeId);
     } else {
@@ -55,7 +56,7 @@ export const saveBairros = async (bairros: Bairro[], storeId?: string | null): P
         ativo: b.ativo,
         ...(storeId ? { store_id: storeId } : {}),
       }));
-      await supabase.from("bairros_delivery").insert(rows);
+      await (supabase.from as any)("bairros_delivery").insert(rows);
     }
   } catch (err) {
     console.error("Erro ao salvar bairros:", err);
