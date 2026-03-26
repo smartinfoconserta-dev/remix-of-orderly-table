@@ -719,6 +719,7 @@ export type Database = {
           id: string
           mesa_id: string | null
           nome: string
+          pin_code: string | null
           pin_id: string | null
           store_id: string
           updated_at: string | null
@@ -729,6 +730,7 @@ export type Database = {
           id?: string
           mesa_id?: string | null
           nome: string
+          pin_code?: string | null
           pin_id?: string | null
           store_id: string
           updated_at?: string | null
@@ -739,6 +741,7 @@ export type Database = {
           id?: string
           mesa_id?: string | null
           nome?: string
+          pin_code?: string | null
           pin_id?: string | null
           store_id?: string
           updated_at?: string | null

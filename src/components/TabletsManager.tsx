@@ -14,6 +14,7 @@ interface TabletRow {
   nome: string;
   mesa_id: string | null;
   pin_id: string | null;
+  pin_code: string | null;
   ativo: boolean;
   created_at: string | null;
 }
@@ -125,6 +126,7 @@ const TabletsManager = ({ storeId }: Props) => {
         nome: formNome.trim(),
         mesa_id: mesaIdValue,
         pin_id: pinId,
+        pin_code: generatedPin,
         ativo: true,
       }).select("*").single();
 
@@ -177,7 +179,7 @@ const TabletsManager = ({ storeId }: Props) => {
 
   const openDetail = (tablet: TabletRow) => {
     setDetailTablet(tablet);
-    setDetailPin("");
+    setDetailPin(tablet.pin_code ?? "");
   };
 
   const handleRegeneratePin = async () => {
@@ -204,7 +206,7 @@ const TabletsManager = ({ storeId }: Props) => {
       return;
     }
 
-    await supabase.from("tablets").update({ pin_id: pinId, updated_at: new Date().toISOString() }).eq("id", detailTablet.id);
+    await supabase.from("tablets").update({ pin_id: pinId, pin_code: newPin, updated_at: new Date().toISOString() }).eq("id", detailTablet.id);
     setDetailPin(newPin);
     setDetailTablet({ ...detailTablet, pin_id: pinId });
     setRegenerating(false);
