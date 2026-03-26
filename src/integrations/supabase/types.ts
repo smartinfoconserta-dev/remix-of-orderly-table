@@ -712,6 +712,61 @@ export type Database = {
         }
         Relationships: []
       }
+      tablets: {
+        Row: {
+          ativo: boolean
+          created_at: string | null
+          id: string
+          mesa_id: string | null
+          nome: string
+          pin_id: string | null
+          store_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string | null
+          id?: string
+          mesa_id?: string | null
+          nome: string
+          pin_id?: string | null
+          store_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string | null
+          id?: string
+          mesa_id?: string | null
+          nome?: string
+          pin_id?: string | null
+          store_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tablets_mesa_id_fkey"
+            columns: ["mesa_id"]
+            isOneToOne: false
+            referencedRelation: "mesas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tablets_pin_id_fkey"
+            columns: ["pin_id"]
+            isOneToOne: false
+            referencedRelation: "module_pins"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tablets_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string | null
