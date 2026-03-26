@@ -123,7 +123,7 @@ import {
 import { getBairros, saveBairros, type Bairro } from "@/lib/deliveryStorage";
 import { toast } from "sonner";
 
-type AdminTab = "dashboard" | "cardapio" | "mesas" | "equipe" | "configuracoes" | "licenca" | "pins";
+type AdminTab = "dashboard" | "cardapio" | "mesas" | "tablets" | "equipe" | "configuracoes" | "licenca" | "pins";
 
 const PLANO_MODULOS: Record<string, string[]> = {
   basico: ["cozinha"],
