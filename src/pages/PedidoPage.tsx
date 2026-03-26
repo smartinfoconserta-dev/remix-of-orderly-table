@@ -300,7 +300,7 @@ export default function PedidoPage() {
   const taxaEntrega = bairroSel ? bairroSel.taxa : (sysConfig.taxaEntrega ?? 0);
   const totalPedido = itens.reduce((s, i) => s + i.precoUnitario * i.quantidade, 0) + taxaEntrega;
 
-  const handleConfirmarPedido = () => {
+  const handleConfirmarPedido = async () => {
     const statusAgora = isDeliveryAberto();
     if (!statusAgora.aberto) {
       toast.error(statusAgora.mensagem + (statusAgora.proximoHorario ? `. ${statusAgora.proximoHorario}` : ""));
