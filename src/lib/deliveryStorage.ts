@@ -89,11 +89,11 @@ export function getClientesDelivery(): ClienteDelivery[] {
 
 export async function getClientesDeliveryAsync(storeId?: string | null): Promise<ClienteDelivery[]> {
   try {
-    let query = supabase.from("clientes_delivery").select("*");
+    let query = (supabase.from as any)("clientes_delivery").select("*");
     if (storeId) query = query.eq("store_id", storeId);
     const { data, error } = await query.order("ultimo_pedido", { ascending: false });
     if (error) throw error;
-    return (data ?? []).map((r) => ({
+    return (data ?? []).map((r: any) => ({
       id: r.id,
       nome: r.nome,
       cpf: r.cpf ?? "",
