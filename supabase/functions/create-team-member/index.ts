@@ -122,14 +122,27 @@ Deno.serve(async (req) => {
       });
     }
 
-    // 3. If PIN provided, also create module_pin for quick auth
+    // 3. If PIN provided, create/update module pin linked to this user
     if (pin && /^\d{4,6}$/.test(pin)) {
-      await adminClient.rpc("create_module_pin", {
+      await adminClient
+        .from("module_pins")
+        .delete()
+        .eq("store_id", storeId)
+        .eq("created_by", userId);
+
+      const { data: pinId } = await adminClient.rpc("create_module_pin", {
         _store_id: storeId,
         _module: role,
         _pin: pin,
         _label: name,
       });
+
+      if (pinId) {
+        await adminClient
+          .from("module_pins")
+          .update({ created_by: userId, label: name, module: role, active: true })
+          .eq("id", pinId);
+      }
     }
 
     return new Response(
