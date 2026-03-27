@@ -124,8 +124,9 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
   ], [customCats, dbCategorias]);
   const navigationItems = useMemo(() => [HOME_TAB, ...allCategorias], [allCategorias]);
   const [localCarrinho, setLocalCarrinho] = useState<ItemCarrinho[]>([]);
-  const [categoriaAtiva, setCategoriaAtiva] = useState(isExternalOrder ? categorias[0]?.id ?? HOME_TAB_ID : HOME_TAB_ID);
-  const [categoriaExibida, setCategoriaExibida] = useState(isExternalOrder ? categorias[0]?.id ?? HOME_TAB_ID : HOME_TAB_ID);
+  const firstCatId = allCategorias[0]?.id ?? HOME_TAB_ID;
+  const [categoriaAtiva, setCategoriaAtiva] = useState(isExternalOrder ? firstCatId : HOME_TAB_ID);
+  const [categoriaExibida, setCategoriaExibida] = useState(isExternalOrder ? firstCatId : HOME_TAB_ID);
   const [categoryFadeKey, setCategoryFadeKey] = useState(0);
   const [selectedProductCardId, setSelectedProductCardId] = useState<string | null>(null);
   const [bannerIndex, setBannerIndex] = useState(0);
