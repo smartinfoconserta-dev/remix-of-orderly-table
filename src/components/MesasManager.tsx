@@ -248,7 +248,7 @@ const MesasManager = ({ storeId, storeName }: Props) => {
     setPinSaving(false);
 
     // Refresh pins
-    const { data } = await supabase
+    const { data } = await (supabase as any)
       .from("module_pins")
       .select("id, module, label, active")
       .eq("store_id", storeId)
