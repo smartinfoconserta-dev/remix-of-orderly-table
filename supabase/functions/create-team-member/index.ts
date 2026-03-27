@@ -70,7 +70,8 @@ Deno.serve(async (req) => {
       }
     }
 
-    // 1. Create auth user
+    // 1. Create auth user (or reuse existing)
+    let userId: string;
     const { data: newUser, error: createError } = await adminClient.auth.admin.createUser({
       email,
       password,
@@ -78,21 +79,39 @@ Deno.serve(async (req) => {
       user_metadata: { name, role },
     });
 
-    if (createError || !newUser.user) {
-      return new Response(JSON.stringify({ error: createError?.message ?? "Falha ao criar usuário" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    if (createError) {
+      // If user already exists, find and reuse
+      if (createError.message?.includes("already been registered") || createError.message?.includes("already exists")) {
+        const { data: { users } } = await adminClient.auth.admin.listUsers();
+        const existing = users?.find((u: any) => u.email === email);
+        if (!existing) {
+          return new Response(JSON.stringify({ error: "Usuário existe mas não foi encontrado" }), {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        userId = existing.id;
+        // Update password and metadata
+        await adminClient.auth.admin.updateUserById(userId, {
+          password,
+          user_metadata: { name, role },
+        });
+      } else {
+        return new Response(JSON.stringify({ error: createError.message ?? "Falha ao criar usuário" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    } else {
+      userId = newUser.user!.id;
     }
 
-    const userId = newUser.user.id;
-
-    // 2. Add store membership with role
-    const { error: memberError } = await adminClient.from("store_members").insert({
+    // 2. Add store membership (upsert to handle re-adding)
+    const { error: memberError } = await adminClient.from("store_members").upsert({
       user_id: userId,
       store_id: storeId,
       role_in_store: role,
-    });
+    }, { onConflict: "store_id,user_id" }).select().single();
 
     if (memberError) {
       // Cleanup: delete the auth user if membership fails
