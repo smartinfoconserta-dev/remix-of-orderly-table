@@ -196,7 +196,7 @@ interface RestaurantContextType {
   marcarPedidoPronto: (mesaId: string, pedidoId: string) => void;
   registrarMovimentacaoCaixa: (input: MovimentacaoInput) => void;
   abrirCaixa: (fundoTroco: number, usuario: OperationalUser) => void;
-  fecharCaixaDoDia: (usuario: OperationalUser) => void;
+  fecharCaixaDoDia: (usuario: OperationalUser, extras?: { diferenca_dinheiro?: number; diferenca_motivo?: string; fundo_proximo?: number }) => void;
   criarPedidoBalcao: (input: CriarPedidoBalcaoInput) => void;
   marcarPedidoBalcaoPronto: (pedidoId: string) => void;
   marcarBalcaoSaiu: (pedidoId: string, motoboyNome: string) => void;
