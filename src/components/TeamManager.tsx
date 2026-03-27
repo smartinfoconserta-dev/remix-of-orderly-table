@@ -16,7 +16,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Plus, ShieldOff, ShieldCheck, Trash2, Users } from "lucide-react";
+import { Plus, ShieldOff, ShieldCheck, Trash2, Users, Search } from "lucide-react";
 import { toast } from "sonner";
 
 const ROLES = [
