@@ -30,6 +30,7 @@ import {
 import TeamManager from "@/components/TeamManager";
 import MesasManager from "@/components/MesasManager";
 import TabletsManager from "@/components/TabletsManager";
+import DevicesManager from "@/components/DevicesManager";
 import { useStore } from "@/contexts/StoreContext";
 import CategoryIcon from "@/components/CategoryIcon";
 import { Button } from "@/components/ui/button";
