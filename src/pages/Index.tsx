@@ -137,7 +137,7 @@ const Index = () => {
                 checked={rememberMe}
                 onChange={(e) => {
                   setRememberMe(e.target.checked);
-                  if (!e.target.checked) localStorage.removeItem(SAVED_CREDS_KEY);
+                  if (!e.target.checked) sessionStorage.removeItem(SAVED_CREDS_KEY);
                 }}
                 className="h-4 w-4 rounded border-border accent-primary"
               />
