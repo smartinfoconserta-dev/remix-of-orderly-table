@@ -25,11 +25,6 @@ const ROLES = [
   { value: "cozinha", label: "Cozinha" },
   { value: "gerente", label: "Gerente" },
   { value: "motoboy", label: "Motoboy" },
-  { value: "delivery", label: "Delivery" },
-  { value: "totem", label: "Totem" },
-  { value: "tv_retirada", label: "TV Retirada" },
-  { value: "administrador", label: "Administrador" },
-  { value: "cardapio", label: "Cardápio" },
 ];
 
 const ROLE_LABELS: Record<string, string> = Object.fromEntries(
@@ -42,16 +37,16 @@ const ROLE_COLORS: Record<string, string> = {
   cozinha: "bg-amber-500/15 text-amber-400 border-amber-500/30",
   gerente: "bg-purple-500/15 text-purple-400 border-purple-500/30",
   motoboy: "bg-rose-500/15 text-rose-400 border-rose-500/30",
-  delivery: "bg-cyan-500/15 text-cyan-400 border-cyan-500/30",
-  administrador: "bg-primary/15 text-primary border-primary/30",
 };
 
 interface MemberRow {
   id: string;
-  module: string;
-  label: string | null;
-  active: boolean | null;
+  user_id: string;
+  role_in_store: string;
   created_at: string | null;
+  user_email?: string;
+  user_name?: string;
+  active?: boolean;
 }
 
 interface Props {
@@ -63,18 +58,43 @@ const TeamManager = ({ storeId }: Props) => {
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [formName, setFormName] = useState("");
+  const [formEmail, setFormEmail] = useState("");
+  const [formPassword, setFormPassword] = useState("");
   const [formRole, setFormRole] = useState("garcom");
   const [formPin, setFormPin] = useState("");
   const [saving, setSaving] = useState(false);
 
   const fetchMembers = useCallback(async () => {
     setLoading(true);
+    // Fetch store_members for this store (excluding owner role which is the admin)
     const { data } = await supabase
-      .from("module_pins")
-      .select("id, module, label, active, created_at")
+      .from("store_members")
+      .select("id, user_id, role_in_store, created_at")
       .eq("store_id", storeId)
       .order("created_at", { ascending: false });
-    setMembers(data ?? []);
+
+    if (data) {
+      // Also fetch module_pins for labels/active status
+      const { data: pins } = await supabase
+        .from("module_pins")
+        .select("label, active, module, created_by")
+        .eq("store_id", storeId);
+
+      const enriched: MemberRow[] = data
+        .filter((m) => m.role_in_store !== "owner")
+        .map((m) => {
+          // Try to find matching pin by matching user_id to created_by or by role
+          const pin = pins?.find(
+            (p) => p.created_by === m.user_id || (p.module === m.role_in_store && p.label)
+          );
+          return {
+            ...m,
+            user_name: pin?.label ?? undefined,
+            active: pin?.active ?? true,
+          };
+        });
+      setMembers(enriched);
+    }
     setLoading(false);
   }, [storeId]);
 
@@ -87,83 +107,72 @@ const TeamManager = ({ storeId }: Props) => {
       toast.error("Informe o nome do membro");
       return;
     }
-    if (!/^\d{4,6}$/.test(formPin)) {
+    if (!formEmail.trim()) {
+      toast.error("Informe o email do membro");
+      return;
+    }
+    if (!formPassword || formPassword.length < 6) {
+      toast.error("A senha deve ter no mínimo 6 caracteres");
+      return;
+    }
+    if (formPin && !/^\d{4,6}$/.test(formPin)) {
       toast.error("O PIN deve ter entre 4 e 6 dígitos");
       return;
     }
+
     setSaving(true);
 
-    const { error } = await supabase.rpc("create_module_pin", {
-      _store_id: storeId,
-      _module: formRole,
-      _pin: formPin,
-      _label: formName.trim(),
-    });
+    try {
+      const { data, error } = await supabase.functions.invoke("create-team-member", {
+        body: {
+          email: formEmail.trim().toLowerCase(),
+          password: formPassword,
+          name: formName.trim(),
+          role: formRole,
+          storeId,
+          pin: formPin || undefined,
+        },
+      });
 
-    if (error) {
-      toast.error(error.message);
-      setSaving(false);
-      return;
+      if (error) {
+        toast.error(error.message || "Erro ao criar membro");
+        setSaving(false);
+        return;
+      }
+
+      if (data?.error) {
+        toast.error(data.error);
+        setSaving(false);
+        return;
+      }
+
+      toast.success(`${formName.trim()} adicionado como ${ROLE_LABELS[formRole]}`);
+      setDialogOpen(false);
+      setFormName("");
+      setFormEmail("");
+      setFormPassword("");
+      setFormPin("");
+      setFormRole("garcom");
+      fetchMembers();
+    } catch (err: any) {
+      toast.error(err?.message || "Erro ao criar membro");
     }
-
-    toast.success(`${formName.trim()} adicionado como ${ROLE_LABELS[formRole]}`);
-    setDialogOpen(false);
-    setFormName("");
-    setFormPin("");
-    setFormRole("garcom");
     setSaving(false);
-    fetchMembers();
-  };
-
-  const handleToggleActive = async (member: MemberRow) => {
-    const newActive = !member.active;
-    const { error } = await supabase
-      .from("module_pins")
-      .update({ active: newActive })
-      .eq("id", member.id);
-
-    if (error) {
-      toast.error(error.message);
-      return;
-    }
-    toast.success(
-      newActive
-        ? `${member.label || "Membro"} reativado`
-        : `${member.label || "Membro"} desativado`
-    );
-    fetchMembers();
   };
 
   const handleDelete = async (member: MemberRow) => {
+    // Remove from store_members (we can't delete auth user from client)
     const { error } = await supabase
-      .from("module_pins")
+      .from("store_members")
       .delete()
       .eq("id", member.id);
     if (error) {
       toast.error(error.message);
       return;
     }
-    toast.success(`${member.label || "Membro"} removido`);
+    toast.success(`${member.user_name || "Membro"} removido da equipe`);
     fetchMembers();
   };
-
-  const handleDeleteAllInactive = async () => {
-    const ids = members.filter((m) => !m.active).map((m) => m.id);
-    if (ids.length === 0) return;
-    const { error } = await supabase
-      .from("module_pins")
-      .delete()
-      .in("id", ids);
-    if (error) {
-      toast.error(error.message);
-      return;
-    }
-    toast.success(`${ids.length} membros inativos removidos`);
-    fetchMembers();
-  };
-
-  const activeMembers = members.filter((m) => m.active);
-  const inactiveMembers = members.filter((m) => !m.active);
 
   return (
     <div className="space-y-6">
@@ -188,7 +197,7 @@ const TeamManager = ({ storeId }: Props) => {
         <div className="flex justify-center py-12">
           <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
         </div>
-      ) : activeMembers.length === 0 && inactiveMembers.length === 0 ? (
+      ) : members.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-center">
           <div className="h-14 w-14 rounded-2xl bg-muted/50 flex items-center justify-center mb-4">
             <Users className="h-7 w-7 text-muted-foreground" />
@@ -197,7 +206,7 @@ const TeamManager = ({ storeId }: Props) => {
             Nenhum membro cadastrado
           </p>
           <p className="text-sm text-muted-foreground mt-1 max-w-xs">
-            Adicione membros da equipe com nome, função e PIN para login rápido.
+            Adicione membros da equipe com email, senha e função para acesso seguro ao sistema.
           </p>
           <Button
             onClick={() => setDialogOpen(true)}
@@ -207,124 +216,51 @@ const TeamManager = ({ storeId }: Props) => {
           </Button>
         </div>
       ) : (
-        <>
-          {/* Active members */}
-          {activeMembers.length > 0 && (
-            <div className="space-y-2">
-              <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
-                Ativos ({activeMembers.length})
-              </p>
-              <div className="grid gap-2">
-                {activeMembers.map((m) => (
-                  <div
-                    key={m.id}
-                    className="flex items-center justify-between rounded-xl border border-border bg-card px-4 py-3"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center text-sm font-bold text-primary">
-                        {(m.label || "?")[0].toUpperCase()}
-                      </div>
-                      <div>
-                        <p className="text-sm font-bold text-foreground">
-                          {m.label || "Sem nome"}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {m.created_at
-                            ? `Desde ${new Date(m.created_at).toLocaleDateString("pt-BR")}`
-                            : ""}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Badge
-                        variant="outline"
-                        className={`text-xs border ${ROLE_COLORS[m.module] || "bg-muted/50 text-muted-foreground"}`}
-                      >
-                        {ROLE_LABELS[m.module] ?? m.module}
-                      </Badge>
-                      <Badge variant="outline" className="text-xs bg-emerald-500/10 text-emerald-400 border-emerald-500/30">
-                        Ativo
-                      </Badge>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-destructive hover:text-destructive hover:bg-destructive/10 text-xs"
-                        onClick={() => handleToggleActive(m)}
-                      >
-                        <ShieldOff className="h-3.5 w-3.5 mr-1" /> Desativar
-                      </Button>
-                    </div>
+        <div className="space-y-2">
+          <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
+            Membros ({members.length})
+          </p>
+          <div className="grid gap-2">
+            {members.map((m) => (
+              <div
+                key={m.id}
+                className="flex items-center justify-between rounded-xl border border-border bg-card px-4 py-3"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center text-sm font-bold text-primary">
+                    {(m.user_name || m.role_in_store || "?")[0].toUpperCase()}
                   </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Inactive members */}
-          {inactiveMembers.length > 0 && (
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
-                  Inativos ({inactiveMembers.length})
-                </p>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-destructive hover:text-destructive hover:bg-destructive/10 text-xs gap-1"
-                  onClick={handleDeleteAllInactive}
-                >
-                  <Trash2 className="h-3.5 w-3.5" /> Remover todos inativos
-                </Button>
-              </div>
-              <div className="grid gap-2">
-                {inactiveMembers.map((m) => (
-                  <div
-                    key={m.id}
-                    className="flex items-center justify-between rounded-xl border border-border/50 bg-card/50 px-4 py-3 opacity-70"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="h-9 w-9 rounded-full bg-muted/30 flex items-center justify-center text-sm font-bold text-muted-foreground">
-                        {(m.label || "?")[0].toUpperCase()}
-                      </div>
-                      <div>
-                        <p className="text-sm font-semibold text-muted-foreground">
-                          {m.label || "Sem nome"}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Badge
-                        variant="outline"
-                        className="text-xs text-muted-foreground"
-                      >
-                        {ROLE_LABELS[m.module] ?? m.module}
-                      </Badge>
-                      <Badge variant="outline" className="text-xs text-muted-foreground border-border">
-                        Inativo
-                      </Badge>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-emerald-400 hover:text-emerald-400 hover:bg-emerald-500/10 text-xs"
-                        onClick={() => handleToggleActive(m)}
-                      >
-                        <ShieldCheck className="h-3.5 w-3.5 mr-1" /> Reativar
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-destructive hover:text-destructive hover:bg-destructive/10 text-xs"
-                        onClick={() => handleDelete(m)}
-                      >
-                        <Trash2 className="h-3.5 w-3.5 mr-1" /> Excluir
-                      </Button>
-                    </div>
+                  <div>
+                    <p className="text-sm font-bold text-foreground">
+                      {m.user_name || m.role_in_store}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {m.created_at
+                        ? `Desde ${new Date(m.created_at).toLocaleDateString("pt-BR")}`
+                        : ""}
+                    </p>
                   </div>
-                ))}
+                </div>
+                <div className="flex items-center gap-2">
+                  <Badge
+                    variant="outline"
+                    className={`text-xs border ${ROLE_COLORS[m.role_in_store] || "bg-muted/50 text-muted-foreground"}`}
+                  >
+                    {ROLE_LABELS[m.role_in_store] ?? m.role_in_store}
+                  </Badge>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-destructive hover:text-destructive hover:bg-destructive/10 text-xs"
+                    onClick={() => handleDelete(m)}
+                  >
+                    <Trash2 className="h-3.5 w-3.5 mr-1" /> Remover
+                  </Button>
+                </div>
               </div>
-            </div>
-          )}
-        </>
+            ))}
+          </div>
+        </div>
       )}
 
       {/* Add Member Dialog */}
@@ -346,6 +282,26 @@ const TeamManager = ({ storeId }: Props) => {
               />
             </div>
             <div className="space-y-2">
+              <label className="text-sm font-bold text-foreground">Email</label>
+              <Input
+                type="email"
+                value={formEmail}
+                onChange={(e) => setFormEmail(e.target.value)}
+                placeholder="joao@restaurante.com"
+                autoComplete="off"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-foreground">Senha</label>
+              <Input
+                type="password"
+                value={formPassword}
+                onChange={(e) => setFormPassword(e.target.value)}
+                placeholder="Mínimo 6 caracteres"
+                autoComplete="new-password"
+              />
+            </div>
+            <div className="space-y-2">
               <label className="text-sm font-bold text-foreground">
                 Função
               </label>
@@ -364,7 +320,7 @@ const TeamManager = ({ storeId }: Props) => {
             </div>
             <div className="space-y-2">
               <label className="text-sm font-bold text-foreground">
-                PIN de acesso
+                PIN de acesso <span className="text-muted-foreground font-normal">(opcional)</span>
               </label>
               <Input
                 value={formPin}
@@ -376,7 +332,7 @@ const TeamManager = ({ storeId }: Props) => {
                 type="password"
               />
               <p className="text-xs text-muted-foreground">
-                O PIN será usado para login rápido no sistema
+                O PIN é usado para autorização de ações internas (opcional)
               </p>
             </div>
             <Button
@@ -384,7 +340,7 @@ const TeamManager = ({ storeId }: Props) => {
               disabled={saving}
               className="h-11 rounded-xl font-bold mt-2"
             >
-              {saving ? "Salvando…" : "Adicionar membro"}
+              {saving ? "Criando conta…" : "Adicionar membro"}
             </Button>
           </div>
         </DialogContent>
