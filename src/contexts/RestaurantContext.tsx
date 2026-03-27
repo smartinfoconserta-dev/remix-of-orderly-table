@@ -787,7 +787,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         const origem = meta?.modo === "garcom" || meta?.modo === "caixa" ? meta.modo : meta?.modo === "totem" ? "totem" : "cliente";
         const novoPedido: PedidoRealizado = {
           id: `pedido-${now.getTime()}-${Math.random().toString(36).slice(2, 7)}`,
-          numeroPedido: mesa.pedidos.length + 1, itens: snapshot, total: totalPedido,
+          numeroPedido: proximoNumeroPedido(), itens: snapshot, total: totalPedido,
           criadoEm: formatClock(now), criadoEmIso: now.toISOString(), origem, mesaId,
           garcomId: origem === "garcom" ? meta?.operador?.id : undefined,
           garcomNome: origem === "garcom" ? meta?.operador?.nome : undefined,
