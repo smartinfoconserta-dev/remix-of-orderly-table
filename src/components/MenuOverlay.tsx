@@ -1,6 +1,7 @@
 import { useState, useCallback } from "react";
 import { X } from "lucide-react";
-import { categorias, produtos, type Produto } from "@/data/menuData";
+import { type Produto } from "@/data/menuData";
+import { getCachedProdutos, getCachedCategorias } from "@/hooks/useProducts";
 import ProductModal from "@/components/ProductModal";
 import CategoryIcon from "@/components/CategoryIcon";
 import type { ItemCarrinho } from "@/contexts/RestaurantContext";
@@ -12,7 +13,9 @@ interface Props {
 }
 
 const MenuOverlay = ({ open, onClose, onAddItem }: Props) => {
-  const [categoriaAtiva, setCategoriaAtiva] = useState(categorias[0].id);
+  const categorias = getCachedCategorias();
+  const produtos = getCachedProdutos();
+  const [categoriaAtiva, setCategoriaAtiva] = useState(categorias[0]?.id ?? "");
   const [produtoSelecionado, setProdutoSelecionado] = useState<Produto | null>(null);
 
   const produtosFiltrados = produtos.filter((p) => p.categoria === categoriaAtiva);
