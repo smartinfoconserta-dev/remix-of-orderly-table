@@ -72,8 +72,6 @@ import {
   getCachedCategorias,
 } from "@/hooks/useProducts";
 import {
-  getCardapioOverrides,
-  saveCardapioOverrides,
   getMesasConfig,
   getMesasConfigAsync,
   saveMesasConfig,
@@ -95,7 +93,6 @@ import {
   getCategoriasCustomAsync,
   saveCategoriasCustomAsync,
   syncPendingChanges,
-  type ProdutoOverride,
   type MesasConfig,
   type SistemaConfig,
   type LicencaConfig,
