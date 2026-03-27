@@ -1721,7 +1721,7 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
                                 </div>
                                 <div className="text-right">
                                   <p className="text-[10px] text-muted-foreground uppercase tracking-widest">Total a prestar</p>
-                                  <p className="text-xl font-black text-amber-400">R$ {f.resumo.totalAPrestar.toFixed(2)}</p>
+                                  <p className="text-xl font-black text-amber-400">R$ {(f.resumo?.totalAPrestar ?? 0).toFixed(2)}</p>
                                 </div>
                               </div>
                             </button>
