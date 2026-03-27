@@ -475,7 +475,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     logout_role,
   }), [
     authLevel, supabaseUser, isLoading, operationalSession,
-    loginAsMaster, loginAsAdmin, loginAsOperational, loginByPin, logout,
+    loginUnified, loginAsMaster, loginAsAdmin, loginAsOperational, loginByPin, logout,
     getProfilesByRole, getActiveProfilesByRole, loginWithPin,
     createUser, removeUser, deactivateUser, activateUser,
     verifyManagerAccess, verifyEmployeeAccess, logout_role,
