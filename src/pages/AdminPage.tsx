@@ -30,6 +30,7 @@ import {
 import TeamManager from "@/components/TeamManager";
 import MesasManager from "@/components/MesasManager";
 import TabletsManager from "@/components/TabletsManager";
+import DevicesManager from "@/components/DevicesManager";
 import { useStore } from "@/contexts/StoreContext";
 import CategoryIcon from "@/components/CategoryIcon";
 import { Button } from "@/components/ui/button";
@@ -2146,7 +2147,12 @@ const AdminPage = () => {
         {tab === "tablets" && (
           <div className="space-y-6 fade-in">
             {storeId ? (
-              <TabletsManager storeId={storeId} />
+              <>
+                <DevicesManager storeId={storeId} />
+                <div className="border-t border-border pt-6">
+                  <TabletsManager storeId={storeId} />
+                </div>
+              </>
             ) : (
               <p className="text-sm text-muted-foreground py-8 text-center">Loja não identificada. Faça login novamente.</p>
             )}

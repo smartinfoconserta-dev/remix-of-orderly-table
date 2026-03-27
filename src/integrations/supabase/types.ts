@@ -108,6 +108,63 @@ export type Database = {
           },
         ]
       }
+      devices: {
+        Row: {
+          activated_at: string
+          active: boolean
+          created_at: string | null
+          device_id: string
+          id: string
+          label: string | null
+          last_seen_at: string | null
+          mesa_id: string | null
+          store_id: string
+          type: string
+          updated_at: string | null
+        }
+        Insert: {
+          activated_at?: string
+          active?: boolean
+          created_at?: string | null
+          device_id: string
+          id?: string
+          label?: string | null
+          last_seen_at?: string | null
+          mesa_id?: string | null
+          store_id: string
+          type: string
+          updated_at?: string | null
+        }
+        Update: {
+          activated_at?: string
+          active?: boolean
+          created_at?: string | null
+          device_id?: string
+          id?: string
+          label?: string | null
+          last_seen_at?: string | null
+          mesa_id?: string | null
+          store_id?: string
+          type?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "devices_mesa_id_fkey"
+            columns: ["mesa_id"]
+            isOneToOne: false
+            referencedRelation: "mesas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "devices_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       estado_caixa: {
         Row: {
           aberto: boolean | null
