@@ -305,6 +305,13 @@ const AdminPage = () => {
   const [mesasConfig, setMesasConfig] = useState<MesasConfig>(getMesasConfig);
   const [mesasInput, setMesasInput] = useState(String(mesasConfig.totalMesas));
 
+  useEffect(() => {
+    getMesasConfigAsync(storeId).then((cfg) => {
+      setMesasConfig(cfg);
+      setMesasInput(String(cfg.totalMesas));
+    });
+  }, [storeId]);
+
   const handleMesasApply = useCallback(() => {
     const val = Math.max(1, Math.min(50, parseInt(mesasInput) || 1));
     const next = { totalMesas: val };
