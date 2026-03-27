@@ -305,7 +305,7 @@ const AdminPage = () => {
       toast.error("Erro ao remover produto");
     }
   }, [removeTarget, storeId, loadProducts]);
-  }, [removeTarget]);
+  
 
   // --- Mesas state ---
   const [mesasConfig, setMesasConfig] = useState<MesasConfig>(getMesasConfig);
