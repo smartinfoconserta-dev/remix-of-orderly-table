@@ -108,6 +108,45 @@ export type Database = {
           },
         ]
       }
+      estado_caixa: {
+        Row: {
+          aberto: boolean | null
+          aberto_em: string | null
+          aberto_por: string | null
+          created_at: string | null
+          fechado_em: string | null
+          fechado_por: string | null
+          fundo_troco: number | null
+          id: string
+          store_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          aberto?: boolean | null
+          aberto_em?: string | null
+          aberto_por?: string | null
+          created_at?: string | null
+          fechado_em?: string | null
+          fechado_por?: string | null
+          fundo_troco?: number | null
+          id?: string
+          store_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          aberto?: boolean | null
+          aberto_em?: string | null
+          aberto_por?: string | null
+          created_at?: string | null
+          fechado_em?: string | null
+          fechado_por?: string | null
+          fundo_troco?: number | null
+          id?: string
+          store_id?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       estado_mesas: {
         Row: {
           carrinho: Json | null
@@ -157,6 +196,141 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      eventos_operacionais: {
+        Row: {
+          acao: string | null
+          created_at: string | null
+          criado_em: string | null
+          criado_em_iso: string | null
+          descricao: string | null
+          id: string
+          item_nome: string | null
+          mesa_id: string | null
+          motivo: string | null
+          pedido_numero: number | null
+          store_id: string
+          tipo: string
+          usuario_id: string | null
+          usuario_nome: string | null
+          valor: number | null
+        }
+        Insert: {
+          acao?: string | null
+          created_at?: string | null
+          criado_em?: string | null
+          criado_em_iso?: string | null
+          descricao?: string | null
+          id: string
+          item_nome?: string | null
+          mesa_id?: string | null
+          motivo?: string | null
+          pedido_numero?: number | null
+          store_id: string
+          tipo: string
+          usuario_id?: string | null
+          usuario_nome?: string | null
+          valor?: number | null
+        }
+        Update: {
+          acao?: string | null
+          created_at?: string | null
+          criado_em?: string | null
+          criado_em_iso?: string | null
+          descricao?: string | null
+          id?: string
+          item_nome?: string | null
+          mesa_id?: string | null
+          motivo?: string | null
+          pedido_numero?: number | null
+          store_id?: string
+          tipo?: string
+          usuario_id?: string | null
+          usuario_nome?: string | null
+          valor?: number | null
+        }
+        Relationships: []
+      }
+      fechamentos: {
+        Row: {
+          caixa_id: string | null
+          caixa_nome: string | null
+          cancelado: boolean | null
+          cancelado_em: string | null
+          cancelado_motivo: string | null
+          cancelado_por: string | null
+          couvert: number | null
+          created_at: string | null
+          criado_em: string | null
+          criado_em_iso: string | null
+          desconto: number | null
+          forma_pagamento: string | null
+          id: string
+          itens: Json | null
+          mesa_id: string | null
+          mesa_numero: number | null
+          numero_comanda: number | null
+          numero_pessoas: number | null
+          origem: string | null
+          pagamentos: Json | null
+          store_id: string
+          subtotal: number | null
+          total: number | null
+          troco: number | null
+        }
+        Insert: {
+          caixa_id?: string | null
+          caixa_nome?: string | null
+          cancelado?: boolean | null
+          cancelado_em?: string | null
+          cancelado_motivo?: string | null
+          cancelado_por?: string | null
+          couvert?: number | null
+          created_at?: string | null
+          criado_em?: string | null
+          criado_em_iso?: string | null
+          desconto?: number | null
+          forma_pagamento?: string | null
+          id: string
+          itens?: Json | null
+          mesa_id?: string | null
+          mesa_numero?: number | null
+          numero_comanda?: number | null
+          numero_pessoas?: number | null
+          origem?: string | null
+          pagamentos?: Json | null
+          store_id: string
+          subtotal?: number | null
+          total?: number | null
+          troco?: number | null
+        }
+        Update: {
+          caixa_id?: string | null
+          caixa_nome?: string | null
+          cancelado?: boolean | null
+          cancelado_em?: string | null
+          cancelado_motivo?: string | null
+          cancelado_por?: string | null
+          couvert?: number | null
+          created_at?: string | null
+          criado_em?: string | null
+          criado_em_iso?: string | null
+          desconto?: number | null
+          forma_pagamento?: string | null
+          id?: string
+          itens?: Json | null
+          mesa_id?: string | null
+          mesa_numero?: number | null
+          numero_comanda?: number | null
+          numero_pessoas?: number | null
+          origem?: string | null
+          pagamentos?: Json | null
+          store_id?: string
+          subtotal?: number | null
+          total?: number | null
+          troco?: number | null
+        }
+        Relationships: []
       }
       master_clientes: {
         Row: {
@@ -347,6 +521,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      movimentacoes_caixa: {
+        Row: {
+          created_at: string | null
+          criado_em: string | null
+          criado_em_iso: string | null
+          descricao: string | null
+          id: string
+          store_id: string
+          tipo: string
+          usuario_id: string | null
+          usuario_nome: string | null
+          valor: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          criado_em?: string | null
+          criado_em_iso?: string | null
+          descricao?: string | null
+          id: string
+          store_id: string
+          tipo: string
+          usuario_id?: string | null
+          usuario_nome?: string | null
+          valor?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          criado_em?: string | null
+          criado_em_iso?: string | null
+          descricao?: string | null
+          id?: string
+          store_id?: string
+          tipo?: string
+          usuario_id?: string | null
+          usuario_nome?: string | null
+          valor?: number | null
+        }
+        Relationships: []
       }
       pedidos: {
         Row: {
