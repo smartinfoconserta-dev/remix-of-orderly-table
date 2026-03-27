@@ -2153,36 +2153,14 @@ const AdminPage = () => {
           </div>
         )}
 
-        {/* ═══ PINS ═══ */}
-        {tab === "pins" && (
-          <div className="space-y-6 fade-in">
-            <div>
-              <h2 className="text-xl font-black text-foreground">Gerenciamento de PINs</h2>
-              <p className="text-sm text-muted-foreground mt-1">Crie e gerencie PINs de acesso para cada módulo operacional.</p>
-            </div>
-            {storeId ? (
-              <StorePinsManager stores={[{ id: storeId, name: ctxStoreName || "Minha Loja", slug: "" }]} />
-            ) : (
-              <p className="text-sm text-muted-foreground py-8 text-center">Loja não identificada. Faça login novamente.</p>
-            )}
-          </div>
-        )}
-
         {/* ═══ EQUIPE ═══ */}
         {tab === "equipe" && (
           <div className="space-y-6 fade-in">
-            <div>
-              <h2 className="text-2xl font-black text-foreground">Equipe</h2>
-              <p className="text-sm text-muted-foreground">Gerencie os gerentes do restaurante</p>
-            </div>
-
-            <div className="surface-card max-w-lg rounded-2xl p-6">
-              <p className="text-sm text-muted-foreground">A equipe operacional agora é gerenciada via PINs na aba "PINs".</p>
-              <Button variant="outline" className="mt-4" onClick={() => setTab("pins")}>
-                <KeyRound className="h-4 w-4 mr-2" /> Ir para PINs
-              </Button>
-            </div>
-
+            {storeId ? (
+              <TeamManager storeId={storeId} />
+            ) : (
+              <p className="text-sm text-muted-foreground py-8 text-center">Loja não identificada. Faça login novamente.</p>
+            )}
           </div>
         )}
       </main>
