@@ -746,6 +746,84 @@ export type Database = {
           },
         ]
       }
+      produtos: {
+        Row: {
+          adicionais: Json | null
+          ativo: boolean | null
+          bebida_options: Json | null
+          categoria_id: string
+          created_at: string | null
+          descricao: string | null
+          disponivel_delivery: boolean | null
+          embalagem_options: Json | null
+          etapas_fluxo: Json | null
+          grupos: Json | null
+          id: string
+          imagem: string | null
+          imagem_base64: string | null
+          ingredientes_removiveis: Json | null
+          nome: string
+          ordem: number | null
+          permite_levar: boolean | null
+          preco: number
+          removido: boolean | null
+          setor: string | null
+          store_id: string
+          tipo_options: Json | null
+          updated_at: string | null
+        }
+        Insert: {
+          adicionais?: Json | null
+          ativo?: boolean | null
+          bebida_options?: Json | null
+          categoria_id: string
+          created_at?: string | null
+          descricao?: string | null
+          disponivel_delivery?: boolean | null
+          embalagem_options?: Json | null
+          etapas_fluxo?: Json | null
+          grupos?: Json | null
+          id?: string
+          imagem?: string | null
+          imagem_base64?: string | null
+          ingredientes_removiveis?: Json | null
+          nome: string
+          ordem?: number | null
+          permite_levar?: boolean | null
+          preco?: number
+          removido?: boolean | null
+          setor?: string | null
+          store_id: string
+          tipo_options?: Json | null
+          updated_at?: string | null
+        }
+        Update: {
+          adicionais?: Json | null
+          ativo?: boolean | null
+          bebida_options?: Json | null
+          categoria_id?: string
+          created_at?: string | null
+          descricao?: string | null
+          disponivel_delivery?: boolean | null
+          embalagem_options?: Json | null
+          etapas_fluxo?: Json | null
+          grupos?: Json | null
+          id?: string
+          imagem?: string | null
+          imagem_base64?: string | null
+          ingredientes_removiveis?: Json | null
+          nome?: string
+          ordem?: number | null
+          permite_levar?: boolean | null
+          preco?: number
+          removido?: boolean | null
+          setor?: string | null
+          store_id?: string
+          tipo_options?: Json | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       restaurant_categories: {
         Row: {
           created_at: string | null
