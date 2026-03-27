@@ -222,13 +222,76 @@ const TeamManager = ({ storeId }: Props) => {
             <Plus className="h-4 w-4" /> Adicionar primeiro membro
           </Button>
         </div>
-      ) : (
-        <div className="space-y-2">
+      ) : (() => {
+        const normalize = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+        const filtered = members.filter((m) => {
+          if (filterRole !== "all" && m.role_in_store !== filterRole) return false;
+          if (searchQuery.trim()) {
+            const q = normalize(searchQuery);
+            const name = normalize(m.user_name || m.role_in_store || "");
+            if (!name.includes(q)) return false;
+          }
+          return true;
+        });
+        const roleCounts: Record<string, number> = { all: members.length };
+        members.forEach((m) => {
+          roleCounts[m.role_in_store] = (roleCounts[m.role_in_store] || 0) + 1;
+        });
+
+        return (
+        <div className="space-y-3">
+          {/* Search */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Buscar membro..."
+              className="pl-9"
+            />
+          </div>
+
+          {/* Role filter tabs */}
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={() => setFilterRole("all")}
+              className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-bold border transition-colors ${
+                filterRole === "all"
+                  ? "border-primary bg-primary/10 text-primary"
+                  : "border-border bg-card text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              Todos
+              <span className="rounded-full bg-primary/20 text-primary px-1.5 text-[10px] font-black min-w-[18px] text-center">
+                {roleCounts.all}
+              </span>
+            </button>
+            {ROLES.filter((r) => roleCounts[r.value]).map((r) => (
+              <button
+                key={r.value}
+                onClick={() => setFilterRole(r.value)}
+                className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-bold border transition-colors ${
+                  filterRole === r.value
+                    ? "border-primary bg-primary/10 text-primary"
+                    : "border-border bg-card text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {r.label}
+                <span className="rounded-full bg-primary/20 text-primary px-1.5 text-[10px] font-black min-w-[18px] text-center">
+                  {roleCounts[r.value]}
+                </span>
+              </button>
+            ))}
+          </div>
+
+          {/* Count */}
           <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
-            Membros ({members.length})
+            {filterRole === "all" ? "Membros" : ROLE_LABELS[filterRole]} ({filtered.length})
           </p>
+
+          {/* List */}
           <div className="grid gap-2">
-            {members.map((m) => (
+            {filtered.map((m) => (
               <div
                 key={m.id}
                 className="flex items-center justify-between rounded-xl border border-border bg-card px-4 py-3"
