@@ -13,5 +13,10 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
     storage: sessionStorage,
     persistSession: true,
     autoRefreshToken: true,
+    detectSessionInUrl: true,
+    flowType: 'implicit',
+    // Prevent cross-tab session sync — each tab is an independent device
+    lock: async (_name: string, _acquireTimeout: number, fn: () => Promise<any>) => fn(),
+    broadcastChannel: null as any,
   }
 });
