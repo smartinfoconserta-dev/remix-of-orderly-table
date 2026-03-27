@@ -64,8 +64,7 @@ const RESTAURANTE = {
   logoFallback: (sysConfig.nomeRestaurante || "Restaurante").slice(0, 2).toUpperCase(),
 };
 
-// Products now come from Supabase via cached service
-const produtos = getCachedProdutos();
+// Products are loaded reactively inside the component
 
 // Configurable banners from admin or fallback to defaults
 const configBanners = sysConfig.banners?.filter((b) => b.titulo && b.imagemUrl) ?? [];
@@ -116,7 +115,21 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
     dismissChamarGarcom,
   } = useRestaurant();
   const isExternalOrder = modo === "balcao" || modo === "delivery" || modo === "totem";
-  const dbCategorias = getCachedCategorias();
+
+  // Reactive product/category loading from Supabase cache
+  const [produtos, setProdutos] = useState<Produto[]>(() => getCachedProdutos());
+  const [dbCategorias, setDbCategorias] = useState<Categoria[]>(() => getCachedCategorias());
+
+  useEffect(() => {
+    let cancelled = false;
+    preloadProducts().then(() => {
+      if (cancelled) return;
+      setProdutos([...getCachedProdutos()]);
+      setDbCategorias([...getCachedCategorias()]);
+    });
+    return () => { cancelled = true; };
+  }, []);
+
   const customCats = useMemo(() => getCategoriasCustom(), []);
   const allCategorias: Categoria[] = useMemo(() => [
     ...dbCategorias,
@@ -171,7 +184,7 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
 
   const produtosDisponiveis = useMemo(() => {
     return produtos;
-  }, []);
+  }, [produtos]);
 
   const cartTotal = useMemo(
     () => carrinho.reduce((acc, item) => acc + item.precoUnitario * item.quantidade, 0),
@@ -193,13 +206,13 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
   }, [searchQuery, produtosDaCategoria, produtosDisponiveis]);
   const featuredProducts = useMemo(
     () => ["c1", "l2", "pr1"].map((id) => produtos.find((produto) => produto.id === id)).filter(Boolean) as Produto[],
-    [],
+    [produtos],
   );
 
   // Combo products for home section
   const comboProducts = useMemo(
     () => produtos.filter((p) => p.categoria === "combos"),
-    [],
+    [produtos],
   );
 
   useEffect(() => {

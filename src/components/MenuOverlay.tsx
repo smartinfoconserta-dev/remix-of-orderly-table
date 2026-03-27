@@ -1,7 +1,7 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { X } from "lucide-react";
 import { type Produto } from "@/data/menuData";
-import { getCachedProdutos, getCachedCategorias } from "@/hooks/useProducts";
+import { getCachedProdutos, getCachedCategorias, preloadProducts } from "@/hooks/useProducts";
 import ProductModal from "@/components/ProductModal";
 import CategoryIcon from "@/components/CategoryIcon";
 import type { ItemCarrinho } from "@/contexts/RestaurantContext";
@@ -13,10 +13,17 @@ interface Props {
 }
 
 const MenuOverlay = ({ open, onClose, onAddItem }: Props) => {
-  const categorias = getCachedCategorias();
-  const produtos = getCachedProdutos();
+  const [categorias, setCategorias] = useState(() => getCachedCategorias());
+  const [produtos, setProdutos] = useState(() => getCachedProdutos());
   const [categoriaAtiva, setCategoriaAtiva] = useState(categorias[0]?.id ?? "");
   const [produtoSelecionado, setProdutoSelecionado] = useState<Produto | null>(null);
+
+  useEffect(() => {
+    preloadProducts().then(() => {
+      setCategorias([...getCachedCategorias()]);
+      setProdutos([...getCachedProdutos()]);
+    });
+  }, []);
 
   const produtosFiltrados = produtos.filter((p) => p.categoria === categoriaAtiva);
 
