@@ -84,9 +84,8 @@ export default function MotoboyPage() {
   // Check if there's a pending fechamento in Supabase
   useEffect(() => {
     if (!sessao || sessao.id === "admin") return;
-    const storeId = getStoreIdFromSession();
-    if (!storeId) return;
-    supabase.from("motoboy_fechamentos").select("id,status").eq("store_id", storeId).eq("motoboy_id", sessao.id).eq("status", "aguardando")
+    if (!effectiveStoreId) return;
+    supabase.from("motoboy_fechamentos").select("id,status").eq("store_id", effectiveStoreId).eq("motoboy_id", sessao.id).eq("status", "aguardando")
       .then(({ data }) => { setFechamentoEnviado((data ?? []).length > 0); });
   }, [sessao]);
 
