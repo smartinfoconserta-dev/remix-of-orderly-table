@@ -15,6 +15,12 @@ interface OperationalSession {
   pinLabel: string | null;
 }
 
+interface LoginUnifiedResult {
+  ok: boolean;
+  error?: string;
+  redirect?: string;
+}
+
 interface LoginResult {
   ok: boolean;
   error?: string;
