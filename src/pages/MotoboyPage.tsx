@@ -378,8 +378,8 @@ export default function MotoboyPage() {
               {loginError && (
                 <p className="rounded-xl border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive">{loginError}</p>
               )}
-              <Button className="w-full rounded-xl" onClick={handleLogin} disabled={!nomeInput.trim() || pinInput.length < 4}>
-                <Bike className="w-4 h-4 mr-2" /> Entrar
+              <Button className="w-full rounded-xl" onClick={handleLogin} disabled={!nomeInput.trim() || pinInput.length < 4 || loginLoading}>
+                {loginLoading ? <span className="animate-spin mr-2">⏳</span> : <Bike className="w-4 h-4 mr-2" />} Entrar
               </Button>
             </div>
           )}
