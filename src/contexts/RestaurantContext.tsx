@@ -278,18 +278,21 @@ const resetMesa = (mesa: Mesa): Mesa => ({
 });
 
 // ── Supabase persistence helpers ──
+let _cachedStoreId: string | null = null;
+
 const getActiveStoreId = (): string | null => {
   // Try operational session first
   try {
     const raw = sessionStorage.getItem("obsidian-op-session-v2");
-    if (raw) { const s = JSON.parse(raw); if (s.storeId) return s.storeId; }
+    if (raw) { const s = JSON.parse(raw); if (s.storeId) { _cachedStoreId = s.storeId; return s.storeId; } }
   } catch {}
   // Try admin store
   try {
     const saved = sessionStorage.getItem("orderly-active-store");
-    if (saved) return saved;
+    if (saved) { _cachedStoreId = saved; return saved; }
   } catch {}
-  return null;
+  // Fallback to cached value (covers edge cases where session is briefly unavailable)
+  return _cachedStoreId;
 };
 
 // DB row converters for pedidos
