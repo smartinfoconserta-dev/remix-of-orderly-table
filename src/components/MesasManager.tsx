@@ -258,7 +258,7 @@ const MesasManager = ({ storeId, storeName }: Props) => {
   };
 
   const handleDeactivatePin = async (pinId: string) => {
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from("module_pins")
       .update({ active: false })
       .eq("id", pinId);
