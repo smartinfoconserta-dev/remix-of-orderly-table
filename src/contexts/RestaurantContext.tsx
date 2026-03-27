@@ -275,7 +275,7 @@ const normalizeItem = (item: Partial<ItemCarrinho>, index = 0): ItemCarrinho => 
 });
 
 const estadoInicial = (): RestaurantStore => ({
-  mesas: criarMesasIniciais(), eventos: [], movimentacoesCaixa: [], fechamentos: [], caixaAberto: false, fundoTroco: 0, pedidosBalcao: [],
+  mesas: [], eventos: [], movimentacoesCaixa: [], fechamentos: [], caixaAberto: false, fundoTroco: 0, pedidosBalcao: [],
 });
 
 const resetMesa = (mesa: Mesa): Mesa => ({
