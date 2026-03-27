@@ -8,18 +8,13 @@ import { getSistemaConfig } from "@/lib/adminStorage";
 import { useRestaurant } from "@/contexts/RestaurantContext";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import jsQR from "jsqr";
 
 const SESSAO_KEY = "obsidian-motoboy-sessao-v1";
-const MOTOBOY_LIST_KEY = "obsidian-motoboys-v1";
 const ORDEM_KEY = "obsidian-motoboy-ordem-v1";
-const FECHAMENTOS_KEY = "obsidian-motoboy-fechamentos-v1";
 
 type Motoboy = { id: string; nome: string; pinHash: string; ativo: boolean };
-
-const getMotoboys = (): Motoboy[] => {
-  try { const raw = localStorage.getItem(MOTOBOY_LIST_KEY); return raw ? JSON.parse(raw) : []; } catch { return []; }
-};
 
 const getSessao = (): { id: string; nome: string; fundoTroco: number } | null => {
   try { const raw = localStorage.getItem(SESSAO_KEY); return raw ? JSON.parse(raw) : null; } catch { return null; }
@@ -29,6 +24,18 @@ const getOrdem = (): string[] => {
   try { const raw = localStorage.getItem(ORDEM_KEY); return raw ? JSON.parse(raw) : []; } catch { return []; }
 };
 const saveOrdem = (ids: string[]) => localStorage.setItem(ORDEM_KEY, JSON.stringify(ids));
+
+const getStoreIdFromSession = (): string | null => {
+  try {
+    const raw = sessionStorage.getItem("obsidian-op-session-v2");
+    if (raw) { const s = JSON.parse(raw); return s.storeId ?? null; }
+  } catch {}
+  try {
+    const saved = sessionStorage.getItem("orderly-active-store");
+    if (saved) return saved;
+  } catch {}
+  return null;
+};
 
 export default function MotoboyPage() {
   const sysConfig = getSistemaConfig();
@@ -46,6 +53,7 @@ export default function MotoboyPage() {
   const [pinInput, setPinInput] = useState("");
   const [fundoInput, setFundoInput] = useState("");
   const [loginError, setLoginError] = useState("");
+  const [loginLoading, setLoginLoading] = useState(false);
   const [scanningPedidoId, setScanningPedidoId] = useState<string | null>(null);
   const [generalScan, setGeneralScan] = useState(false);
   const [showManualPick, setShowManualPick] = useState(false);
@@ -58,29 +66,44 @@ export default function MotoboyPage() {
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const dragOverId = useRef<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [fechamentoEnviado, setFechamentoEnviado] = useState(() => {
-    try {
-      const raw = localStorage.getItem(FECHAMENTOS_KEY);
-      const lista = raw ? JSON.parse(raw) : [];
-      return lista.some((f: any) => f.motoboyId === getSessao()?.id && f.status === "aguardando");
-    } catch { return false; }
-  });
+  const [motoboys, setMotoboys] = useState<Motoboy[]>([]);
+  const [fechamentoEnviado, setFechamentoEnviado] = useState(false);
 
-  const motoboys = getMotoboys().filter((m) => m.ativo);
+  // Load motoboys from Supabase
+  useEffect(() => {
+    const storeId = getStoreIdFromSession();
+    if (!storeId) return;
+    supabase.from("motoboys").select("*").eq("store_id", storeId).eq("ativo", true)
+      .then(({ data }) => {
+        setMotoboys((data ?? []).map((r: any) => ({ id: r.id, nome: r.nome, pinHash: r.pin_hash, ativo: r.ativo })));
+      });
+  }, []);
+
+  // Check if there's a pending fechamento in Supabase
+  useEffect(() => {
+    if (!sessao || sessao.id === "admin") return;
+    const storeId = getStoreIdFromSession();
+    if (!storeId) return;
+    supabase.from("motoboy_fechamentos").select("id,status").eq("store_id", storeId).eq("motoboy_id", sessao.id).eq("status", "aguardando")
+      .then(({ data }) => { setFechamentoEnviado((data ?? []).length > 0); });
+  }, [sessao]);
 
   // ── Login ──
-  const handleLogin = useCallback(() => {
+  const handleLogin = useCallback(async () => {
     setLoginError("");
+    setLoginLoading(true);
     const norm = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
     const motoboy = motoboys.find((m) => norm(m.nome) === norm(nomeInput));
-    if (!motoboy) { setLoginError("Nome ou PIN incorreto"); return; }
-    if (pinInput.length < 4) { setLoginError("Nome ou PIN incorreto"); return; }
-    const expectedHash = btoa("pin:" + pinInput);
-    if (motoboy.pinHash !== expectedHash) { setLoginError("Nome ou PIN incorreto"); return; }
+    if (!motoboy) { setLoginError("Nome ou PIN incorreto"); setLoginLoading(false); return; }
+    if (pinInput.length < 4) { setLoginError("Nome ou PIN incorreto"); setLoginLoading(false); return; }
+    // Verify PIN via Supabase RPC
+    const { data: pinOk } = await supabase.rpc("verify_pin", { input_pin: pinInput, stored_hash: motoboy.pinHash });
+    if (!pinOk) { setLoginError("Nome ou PIN incorreto"); setLoginLoading(false); return; }
     const fundoTroco = parseFloat(fundoInput.replace(",", ".")) || 0;
     const s = { id: motoboy.id, nome: motoboy.nome, fundoTroco };
     localStorage.setItem(SESSAO_KEY, JSON.stringify(s));
     setSessao(s);
+    setLoginLoading(false);
     toast.success(`Bem-vindo, ${motoboy.nome}!`);
   }, [nomeInput, pinInput, fundoInput, motoboys]);
 
@@ -355,8 +378,8 @@ export default function MotoboyPage() {
               {loginError && (
                 <p className="rounded-xl border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive">{loginError}</p>
               )}
-              <Button className="w-full rounded-xl" onClick={handleLogin} disabled={!nomeInput.trim() || pinInput.length < 4}>
-                <Bike className="w-4 h-4 mr-2" /> Entrar
+              <Button className="w-full rounded-xl" onClick={handleLogin} disabled={!nomeInput.trim() || pinInput.length < 4 || loginLoading}>
+                {loginLoading ? <span className="animate-spin mr-2">⏳</span> : <Bike className="w-4 h-4 mr-2" />} Entrar
               </Button>
             </div>
           )}
@@ -608,11 +631,13 @@ export default function MotoboyPage() {
                     className="w-full mt-2 font-black h-12 bg-primary hover:bg-primary/90"
                     onClick={() => {
                       if (entregues.length === 0) { toast.error("Nenhuma entrega para fechar."); return; }
+                      const storeId = getStoreIdFromSession();
+                      if (!storeId) { toast.error("Erro: loja não identificada"); return; }
                       const fechamento = {
                         id: `fechamento-${Date.now()}`,
-                        motoboyId: sessao?.id || "",
-                        motoboyNome: sessao?.nome || "",
-                        timestamp: new Date().toISOString(),
+                        store_id: storeId,
+                        motoboy_id: sessao?.id || "",
+                        motoboy_nome: sessao?.nome || "",
                         status: "aguardando",
                         resumo: {
                           totalEntregas: resumo.count,
@@ -626,16 +651,13 @@ export default function MotoboyPage() {
                           debito: resumo.debito,
                           totalAPrestar: resumo.liquidoDinheiro + (sessao?.fundoTroco || 0) + resumo.pix + resumo.credito + resumo.debito,
                         },
-                        pedidosIds: entregues.map(p => p.id),
+                        pedidos_ids: entregues.map(p => p.id),
                       };
-                      try {
-                        const raw = localStorage.getItem(FECHAMENTOS_KEY);
-                        const lista = raw ? JSON.parse(raw) : [];
-                        lista.push(fechamento);
-                        localStorage.setItem(FECHAMENTOS_KEY, JSON.stringify(lista));
-                      } catch {}
-                      setFechamentoEnviado(true);
-                      toast.success("Fechamento solicitado! Aguarde o caixa conferir.", { duration: 3000 });
+                      supabase.from("motoboy_fechamentos").insert(fechamento as any).then(({ error }) => {
+                        if (error) { console.error("Erro ao salvar fechamento motoboy", error); toast.error("Erro ao solicitar fechamento"); return; }
+                        setFechamentoEnviado(true);
+                        toast.success("Fechamento solicitado! Aguarde o caixa conferir.", { duration: 3000 });
+                      });
                     }}
                   >
                     Solicitar fechamento de caixa

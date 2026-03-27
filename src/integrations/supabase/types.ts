@@ -114,8 +114,11 @@ export type Database = {
           aberto_em: string | null
           aberto_por: string | null
           created_at: string | null
+          diferenca_dinheiro: number | null
+          diferenca_motivo: string | null
           fechado_em: string | null
           fechado_por: string | null
+          fundo_proximo: number | null
           fundo_troco: number | null
           id: string
           store_id: string
@@ -126,8 +129,11 @@ export type Database = {
           aberto_em?: string | null
           aberto_por?: string | null
           created_at?: string | null
+          diferenca_dinheiro?: number | null
+          diferenca_motivo?: string | null
           fechado_em?: string | null
           fechado_por?: string | null
+          fundo_proximo?: number | null
           fundo_troco?: number | null
           id?: string
           store_id: string
@@ -138,8 +144,11 @@ export type Database = {
           aberto_em?: string | null
           aberto_por?: string | null
           created_at?: string | null
+          diferenca_dinheiro?: number | null
+          diferenca_motivo?: string | null
           fechado_em?: string | null
           fechado_por?: string | null
+          fundo_proximo?: number | null
           fundo_troco?: number | null
           id?: string
           store_id?: string
@@ -521,6 +530,72 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      motoboy_fechamentos: {
+        Row: {
+          conferido_em: string | null
+          conferido_por: string | null
+          created_at: string | null
+          id: string
+          motoboy_id: string
+          motoboy_nome: string
+          pedidos_ids: Json | null
+          resumo: Json | null
+          status: string
+          store_id: string
+        }
+        Insert: {
+          conferido_em?: string | null
+          conferido_por?: string | null
+          created_at?: string | null
+          id: string
+          motoboy_id: string
+          motoboy_nome?: string
+          pedidos_ids?: Json | null
+          resumo?: Json | null
+          status?: string
+          store_id: string
+        }
+        Update: {
+          conferido_em?: string | null
+          conferido_por?: string | null
+          created_at?: string | null
+          id?: string
+          motoboy_id?: string
+          motoboy_nome?: string
+          pedidos_ids?: Json | null
+          resumo?: Json | null
+          status?: string
+          store_id?: string
+        }
+        Relationships: []
+      }
+      motoboys: {
+        Row: {
+          ativo: boolean
+          created_at: string | null
+          id: string
+          nome: string
+          pin_hash: string
+          store_id: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string | null
+          id: string
+          nome: string
+          pin_hash?: string
+          store_id: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string | null
+          id?: string
+          nome?: string
+          pin_hash?: string
+          store_id?: string
+        }
+        Relationships: []
       }
       movimentacoes_caixa: {
         Row: {

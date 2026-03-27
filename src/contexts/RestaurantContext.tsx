@@ -196,7 +196,7 @@ interface RestaurantContextType {
   marcarPedidoPronto: (mesaId: string, pedidoId: string) => void;
   registrarMovimentacaoCaixa: (input: MovimentacaoInput) => void;
   abrirCaixa: (fundoTroco: number, usuario: OperationalUser) => void;
-  fecharCaixaDoDia: (usuario: OperationalUser) => void;
+  fecharCaixaDoDia: (usuario: OperationalUser, extras?: { diferenca_dinheiro?: number; diferenca_motivo?: string; fundo_proximo?: number }) => void;
   criarPedidoBalcao: (input: CriarPedidoBalcaoInput) => void;
   marcarPedidoBalcaoPronto: (pedidoId: string) => void;
   marcarBalcaoSaiu: (pedidoId: string, motoboyNome: string) => void;
@@ -436,7 +436,7 @@ const dbInsertMovimentacao = (m: MovimentacaoCaixa) => {
   });
 };
 
-const dbUpsertEstadoCaixa = (aberto: boolean, fundoTroco: number, nome: string) => {
+const dbUpsertEstadoCaixa = (aberto: boolean, fundoTroco: number, nome: string, extras?: { diferenca_dinheiro?: number; diferenca_motivo?: string; fundo_proximo?: number }) => {
   const sid = getActiveStoreId();
   if (!sid) return;
   supabase.from("estado_caixa").select("id").eq("store_id", sid).limit(1).then(({ data }) => {
@@ -444,9 +444,12 @@ const dbUpsertEstadoCaixa = (aberto: boolean, fundoTroco: number, nome: string) 
       const upd: Record<string, any> = { aberto, fundo_troco: fundoTroco, updated_at: new Date().toISOString() };
       if (aberto) { upd.aberto_por = nome; upd.aberto_em = new Date().toISOString(); }
       else { upd.fechado_por = nome; upd.fechado_em = new Date().toISOString(); }
+      if (extras?.diferenca_dinheiro !== undefined) upd.diferenca_dinheiro = extras.diferenca_dinheiro;
+      if (extras?.diferenca_motivo !== undefined) upd.diferenca_motivo = extras.diferenca_motivo;
+      if (extras?.fundo_proximo !== undefined) upd.fundo_proximo = extras.fundo_proximo;
       supabase.from("estado_caixa").update(upd).eq("id", data[0].id).then(({ error }) => { if (error) console.error("DB update caixa", error); });
     } else {
-      supabase.from("estado_caixa").insert({ store_id: sid, aberto, fundo_troco: fundoTroco, aberto_por: aberto ? nome : null, aberto_em: aberto ? new Date().toISOString() : null } as any).then(({ error }) => { if (error) console.error("DB insert caixa", error); });
+      supabase.from("estado_caixa").insert({ store_id: sid, aberto, fundo_troco: fundoTroco, aberto_por: aberto ? nome : null, aberto_em: aberto ? new Date().toISOString() : null, ...(extras ?? {}) } as any).then(({ error }) => { if (error) console.error("DB insert caixa", error); });
     }
   });
 };
@@ -985,8 +988,8 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }));
   }, []);
 
-  const fecharCaixaDoDia = useCallback((usuario: OperationalUser) => {
-    dbUpsertEstadoCaixa(false, 0, usuario.nome);
+  const fecharCaixaDoDia = useCallback((usuario: OperationalUser, extras?: { diferenca_dinheiro?: number; diferenca_motivo?: string; fundo_proximo?: number }) => {
+    dbUpsertEstadoCaixa(false, 0, usuario.nome, extras);
     setStore((prev) => {
       const now = new Date();
       const pedidosTotemAbertos = prev.pedidosBalcao.filter((p) => p.origem === "totem" && p.statusBalcao !== "pago" && p.statusBalcao !== "cancelado");

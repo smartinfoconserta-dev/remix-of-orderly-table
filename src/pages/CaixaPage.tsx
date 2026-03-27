@@ -69,13 +69,13 @@ import type { PaymentMethod, SplitPayment, UserRole } from "@/types/operations";
 import { getSistemaConfig } from "@/lib/adminStorage";
 import type { ItemCarrinho } from "@/contexts/RestaurantContext";
 import { findClienteDelivery, upsertClienteDelivery, getBairros, type ClienteDelivery } from "@/lib/deliveryStorage";
+import { supabase } from "@/integrations/supabase/client";
 
 /* ── helpers ── */
 const normStr = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
 const formatPrice = (v: number) => `R$ ${v.toFixed(2).replace(".", ",")}`;
-const FECHAMENTOS_MOTOBOY_KEY = "obsidian-motoboy-fechamentos-v1";
-const FUNDO_PROXIMO_KEY = "obsidian-caixa-fundo-proximo-v1";
-const DIFERENCAS_CAIXA_KEY = "obsidian-diferencas-caixa-v1";
+const FECHAMENTOS_MOTOBOY_KEY = "obsidian-motoboy-fechamentos-v1"; // legacy, still cleared on turno close
+const FUNDO_PROXIMO_KEY = "obsidian-caixa-fundo-proximo-v1"; // legacy fallback
 const toCents = (value: number) => Math.round(value * 100);
 
 const parseCurrencyInput = (value: string) => {
@@ -199,16 +199,23 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
   const [criticalReason, setCriticalReason] = useState("");
   const [criticalError, setCriticalError] = useState<string | null>(null);
   const [isAuthorizingCriticalAction, setIsAuthorizingCriticalAction] = useState(false);
-  const [fundoTrocoInput, setFundoTrocoInput] = useState(() => {
-    try {
-      const saved = localStorage.getItem(FUNDO_PROXIMO_KEY);
-      if (saved) {
-        const val = parseFloat(saved);
-        return Number.isFinite(val) ? val.toFixed(2).replace(".", ",") : "";
-      }
-    } catch {}
-    return "";
-  });
+  const [fundoTrocoInput, setFundoTrocoInput] = useState("");
+
+  // Load fundo_proximo from estado_caixa
+  useEffect(() => {
+    const getStoreId = (): string | null => {
+      try { const raw = sessionStorage.getItem("obsidian-op-session-v2"); if (raw) { const s = JSON.parse(raw); return s.storeId ?? null; } } catch {}
+      try { const saved = sessionStorage.getItem("orderly-active-store"); if (saved) return saved; } catch {}
+      return null;
+    };
+    const storeId = getStoreId();
+    if (!storeId) return;
+    supabase.from("estado_caixa").select("fundo_proximo").eq("store_id", storeId).order("updated_at", { ascending: false }).limit(1)
+      .then(({ data }) => {
+        const val = Number(data?.[0]?.fundo_proximo ?? 0);
+        if (val > 0) setFundoTrocoInput(val.toFixed(2).replace(".", ","));
+      });
+  }, []);
   const [turnoModalOpen, setTurnoModalOpen] = useState(false);
   const [turnoManagerName, setTurnoManagerName] = useState("");
   const [turnoManagerPin, setTurnoManagerPin] = useState("");
@@ -329,14 +336,18 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
     }
   }, []);
 
-  // Poll motoboy fechamentos every 5s
+  // Poll motoboy fechamentos from Supabase every 5s
   useEffect(() => {
-    const ler = () => {
-      try {
-        const raw = localStorage.getItem(FECHAMENTOS_MOTOBOY_KEY);
-        const lista = raw ? JSON.parse(raw) : [];
-        setFechamentosPendentes(lista.filter((f: any) => f.status === "aguardando"));
-      } catch {}
+    const getStoreId = (): string | null => {
+      try { const raw = sessionStorage.getItem("obsidian-op-session-v2"); if (raw) { const s = JSON.parse(raw); return s.storeId ?? null; } } catch {}
+      try { const saved = sessionStorage.getItem("orderly-active-store"); if (saved) return saved; } catch {}
+      return null;
+    };
+    const ler = async () => {
+      const storeId = getStoreId();
+      if (!storeId) return;
+      const { data } = await supabase.from("motoboy_fechamentos").select("*").eq("store_id", storeId).eq("status", "aguardando");
+      setFechamentosPendentes(data ?? []);
     };
     ler();
     const id = setInterval(ler, 5000);
@@ -344,18 +355,13 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
   }, []);
 
   const resumoDeliveryTurno = useMemo(() => {
-    try {
-      const raw = localStorage.getItem(FECHAMENTOS_MOTOBOY_KEY);
-      const todos = raw ? JSON.parse(raw) : [];
-      const doTurno = todos;
-      const conferidos = doTurno.filter((f: any) => f.status === "conferido");
-      const pendentes = doTurno.filter((f: any) => f.status === "aguardando");
-      const totalConferido = conferidos.reduce((s: number, f: any) => s + (f.resumo?.totalAPrestar || 0), 0);
-      const totalEntregas = conferidos.reduce((s: number, f: any) => s + (f.resumo?.totalEntregas || 0), 0);
-      const motoboyNomes = [...new Set(doTurno.map((f: any) => f.motoboyNome))] as string[];
-      return { conferidos: conferidos.length, pendentes: pendentes.length, totalConferido, totalEntregas, motoboyNomes };
-    } catch { return { conferidos: 0, pendentes: 0, totalConferido: 0, totalEntregas: 0, motoboyNomes: [] as string[] }; }
-  }, [caixaAberto, fechamentosPendentes]);
+    const conferidos = fechamentosPendentes.filter((f: any) => f.status === "conferido");
+    const pendentes = fechamentosPendentes.filter((f: any) => f.status === "aguardando");
+    const totalConferido = conferidos.reduce((s: number, f: any) => s + (f.resumo?.totalAPrestar || 0), 0);
+    const totalEntregas = conferidos.reduce((s: number, f: any) => s + (f.resumo?.totalEntregas || 0), 0);
+    const motoboyNomes = [...new Set([...conferidos, ...pendentes].map((f: any) => f.motoboy_nome))] as string[];
+    return { conferidos: conferidos.length, pendentes: pendentes.length, totalConferido, totalEntregas, motoboyNomes };
+  }, [fechamentosPendentes]);
 
 
   useEffect(() => {
@@ -1151,38 +1157,23 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
 
     // Save counted cash as next shift's fund
     const contadoFinal = parseCurrencyInput(dinheiroContado);
-    if (Number.isFinite(contadoFinal) && contadoFinal > 0) {
-      localStorage.setItem(FUNDO_PROXIMO_KEY, String(contadoFinal));
-    }
 
     // Calculate and log diff
     const esperado = fundoTroco + resumoFinanceiro.dinheiro + resumoFinanceiro.entradasExtras - resumoFinanceiro.saidas;
     const diff = Number.isFinite(contadoFinal) ? contadoFinal - esperado : 0;
     const diffLabel = diff === 0 ? "caixa conferido" : diff > 0 ? `sobra de ${formatPrice(diff)}` : `falta de ${formatPrice(Math.abs(diff))}`;
 
-    // Save cash difference to history
+    // Pass diferença data to estado_caixa via fecharCaixaDoDia
+    const extras: { diferenca_dinheiro?: number; diferenca_motivo?: string; fundo_proximo?: number } = {};
     if (Number.isFinite(diff) && diff !== 0) {
-      try {
-        const raw = localStorage.getItem(DIFERENCAS_CAIXA_KEY);
-        const lista = raw ? JSON.parse(raw) : [];
-        lista.push({
-          id: `diff-${Date.now()}`,
-          data: new Date().toISOString(),
-          dataFormatada: new Date().toLocaleString("pt-BR"),
-          operador: currentOperator?.nome ?? "Caixa",
-          gerente: turnoManagerName,
-          esperado,
-          contado: contadoFinal,
-          diferenca: diff,
-          motivo: motivoDiferenca.trim() || "Não informado",
-          tipo: diff > 0 ? "sobra" : "quebra",
-        });
-        const limitada = lista.slice(-200);
-        localStorage.setItem(DIFERENCAS_CAIXA_KEY, JSON.stringify(limitada));
-      } catch {}
+      extras.diferenca_dinheiro = diff;
+      extras.diferenca_motivo = motivoDiferenca.trim() || "Não informado";
+    }
+    if (Number.isFinite(contadoFinal) && contadoFinal > 0) {
+      extras.fundo_proximo = contadoFinal;
     }
 
-    fecharCaixaDoDia(currentOperator);
+    fecharCaixaDoDia(currentOperator, Object.keys(extras).length > 0 ? extras : undefined);
     // Clear operator shift tracking
     try { localStorage.removeItem("obsidian-caixa-operadores-v1"); } catch {}
     try { localStorage.removeItem("obsidian-caixa-modo-v1"); } catch {}
@@ -1730,14 +1721,14 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
                               className="w-full text-left rounded-xl border border-amber-500/25 bg-card p-3 hover:border-amber-500/60 transition-colors active:scale-[0.99]">
                               <div className="flex items-center justify-between">
                                 <div>
-                                  <p className="text-sm font-black text-foreground">🏍️ {f.motoboyNome}</p>
+                                  <p className="text-sm font-black text-foreground">🏍️ {f.motoboy_nome}</p>
                                   <p className="text-xs text-muted-foreground mt-0.5">
-                                    {f.resumo.totalEntregas} entregas · {new Date(f.timestamp).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                                    {f.resumo?.totalEntregas ?? 0} entregas · {new Date(f.created_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
                                   </p>
                                 </div>
                                 <div className="text-right">
                                   <p className="text-[10px] text-muted-foreground uppercase tracking-widest">Total a prestar</p>
-                                  <p className="text-xl font-black text-amber-400">R$ {f.resumo.totalAPrestar.toFixed(2)}</p>
+                                  <p className="text-xl font-black text-amber-400">R$ {(f.resumo?.totalAPrestar ?? 0).toFixed(2)}</p>
                                 </div>
                               </div>
                             </button>
@@ -4048,9 +4039,9 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
           <div className="w-full max-w-md rounded-2xl border border-border bg-card overflow-hidden shadow-2xl">
             <div className="px-5 py-4 border-b border-border bg-secondary/50">
               <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Conferência de fechamento</p>
-              <p className="text-xl font-black text-foreground mt-1">🏍️ {fechamentoSelecionado.motoboyNome}</p>
+              <p className="text-xl font-black text-foreground mt-1">🏍️ {fechamentoSelecionado.motoboy_nome}</p>
               <p className="text-xs text-muted-foreground">
-                {fechamentoSelecionado.resumo.totalEntregas} entregas · {new Date(fechamentoSelecionado.timestamp).toLocaleString("pt-BR")}
+                {fechamentoSelecionado.resumo?.totalEntregas ?? 0} entregas · {new Date(fechamentoSelecionado.created_at).toLocaleString("pt-BR")}
               </p>
             </div>
             <div className="px-5 py-4 space-y-3 max-h-[55vh] overflow-y-auto">
@@ -4129,8 +4120,8 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
 
                   const f = fechamentoSelecionado;
                   registrarFechamentoMotoboy({
-                    motoboyNome: f.motoboyNome,
-                    motoboyId: f.motoboyId,
+                    motoboyNome: f.motoboy_nome,
+                    motoboyId: f.motoboy_id,
                     dinheiro: f.resumo.dinheiroRecebido,
                     troco: f.resumo.trocoTotal,
                     fundoTroco: f.resumo.fundoTroco,
@@ -4138,22 +4129,18 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
                     credito: f.resumo.credito,
                     debito: f.resumo.debito,
                     totalEntregas: f.resumo.totalEntregas,
-                    pedidosIds: f.pedidosIds || [],
+                    pedidosIds: f.pedidos_ids || [],
                     conferidoPor: nomeGerente,
                   });
 
-                  // Mark as confirmed in localStorage
-                  try {
-                    const raw = localStorage.getItem(FECHAMENTOS_MOTOBOY_KEY);
-                    const lista = raw ? JSON.parse(raw) : [];
-                    const updated = lista.map((item: any) => item.id === f.id ? { ...item, status: "conferido" } : item);
-                    localStorage.setItem(FECHAMENTOS_MOTOBOY_KEY, JSON.stringify(updated));
-                    setFechamentosPendentes(updated.filter((item: any) => item.status === "aguardando"));
-                  } catch {}
+                  // Mark as confirmed in Supabase
+                  supabase.from("motoboy_fechamentos").update({ status: "conferido", conferido_por: nomeGerente, conferido_em: new Date().toISOString() }).eq("id", f.id)
+                    .then(({ error }) => { if (error) console.error("Erro ao atualizar fechamento motoboy", error); });
+                  setFechamentosPendentes(prev => prev.filter((item: any) => item.id !== f.id));
 
                   setFechamentoSelecionado(null);
                   setPinConferencia("");
-                  toast.success(`Fechamento de ${f.motoboyNome} conferido! ✓`, { duration: 3000 });
+                  toast.success(`Fechamento de ${f.motoboy_nome} conferido! ✓`, { duration: 3000 });
                 }}>
                 ✓ Confirmar fechamento
               </Button>
