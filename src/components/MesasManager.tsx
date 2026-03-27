@@ -212,7 +212,7 @@ const MesasManager = ({ storeId, storeName }: Props) => {
     setPinDialogOpen(true);
 
     // Fetch existing pins for this mesa
-    const { data } = await supabase
+    const { data } = await (supabase as any)
       .from("module_pins")
       .select("id, module, label, active")
       .eq("store_id", storeId)
