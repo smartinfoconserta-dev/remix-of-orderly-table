@@ -988,8 +988,8 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }));
   }, []);
 
-  const fecharCaixaDoDia = useCallback((usuario: OperationalUser) => {
-    dbUpsertEstadoCaixa(false, 0, usuario.nome);
+  const fecharCaixaDoDia = useCallback((usuario: OperationalUser, extras?: { diferenca_dinheiro?: number; diferenca_motivo?: string; fundo_proximo?: number }) => {
+    dbUpsertEstadoCaixa(false, 0, usuario.nome, extras);
     setStore((prev) => {
       const now = new Date();
       const pedidosTotemAbertos = prev.pedidosBalcao.filter((p) => p.origem === "totem" && p.statusBalcao !== "pago" && p.statusBalcao !== "cancelado");
