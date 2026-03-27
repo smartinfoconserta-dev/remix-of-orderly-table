@@ -54,6 +54,7 @@ import type { PaymentMethod } from "@/types/operations";
 import { getSistemaConfig } from "@/lib/adminStorage";
 import StorePinsManager from "@/components/StorePinsManager";
 import { useStore } from "@/contexts/StoreContext";
+import { supabase } from "@/integrations/supabase/client";
 
 /* ── helpers ── */
 const formatPrice = (v: number) => `R$ ${v.toFixed(2).replace(".", ",")}`;
