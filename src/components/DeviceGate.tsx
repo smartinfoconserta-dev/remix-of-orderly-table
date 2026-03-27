@@ -42,10 +42,20 @@ const DeviceGate = ({ type, children }: DeviceGateProps) => {
   // Activation form
   const [stores, setStores] = useState<StoreOption[]>([]);
   const [selectedStoreId, setSelectedStoreId] = useState("");
+  const [storeSearch, setStoreSearch] = useState("");
+  const [showStoreList, setShowStoreList] = useState(false);
   const [pin, setPin] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isActivating, setIsActivating] = useState(false);
   const [loadingStores, setLoadingStores] = useState(false);
+
+  const normalize = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+
+  const filteredStores = useMemo(() => {
+    if (!storeSearch.trim()) return stores;
+    const q = normalize(storeSearch);
+    return stores.filter((s) => normalize(s.name).includes(q) || normalize(s.slug).includes(q));
+  }, [stores, storeSearch]);
 
   // On mount, check if device is already registered
   useEffect(() => {
