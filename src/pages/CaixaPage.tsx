@@ -4032,9 +4032,9 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
           <div className="w-full max-w-md rounded-2xl border border-border bg-card overflow-hidden shadow-2xl">
             <div className="px-5 py-4 border-b border-border bg-secondary/50">
               <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Conferência de fechamento</p>
-              <p className="text-xl font-black text-foreground mt-1">🏍️ {fechamentoSelecionado.motoboyNome}</p>
+              <p className="text-xl font-black text-foreground mt-1">🏍️ {fechamentoSelecionado.motoboy_nome}</p>
               <p className="text-xs text-muted-foreground">
-                {fechamentoSelecionado.resumo.totalEntregas} entregas · {new Date(fechamentoSelecionado.timestamp).toLocaleString("pt-BR")}
+                {fechamentoSelecionado.resumo?.totalEntregas ?? 0} entregas · {new Date(fechamentoSelecionado.created_at).toLocaleString("pt-BR")}
               </p>
             </div>
             <div className="px-5 py-4 space-y-3 max-h-[55vh] overflow-y-auto">
