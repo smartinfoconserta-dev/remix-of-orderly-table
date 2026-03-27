@@ -129,6 +129,7 @@ const MasterPage = () => {
 
   const [avisoMensagem, setAvisoMensagem] = useState("");
   const [avisoTipo, setAvisoTipo] = useState<"info" | "alerta" | "urgente">("info");
+  const [avisoStoreId, setAvisoStoreId] = useState("");
 
   const [stores, setStores] = useState<{ id: string; name: string; slug: string }[]>([]);
   useEffect(() => {
