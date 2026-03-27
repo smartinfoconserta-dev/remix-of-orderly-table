@@ -145,6 +145,32 @@ Deno.serve(async (req) => {
       }
     }
 
+    // 4. If role is motoboy, sync to legacy motoboys table
+    if (role === "motoboy") {
+      // Reuse pin_hash from module_pins if available
+      let pinHash = "";
+      if (pin && /^\d{4,6}$/.test(pin)) {
+        const { data: pinRow } = await adminClient
+          .from("module_pins")
+          .select("pin_hash")
+          .eq("store_id", storeId)
+          .eq("created_by", userId)
+          .limit(1)
+          .maybeSingle();
+        pinHash = pinRow?.pin_hash || "";
+      }
+
+      // Delete existing motoboy entry for this user, then insert
+      await adminClient.from("motoboys").delete().eq("id", String(userId)).eq("store_id", storeId);
+      await adminClient.from("motoboys").insert({
+        id: String(userId),
+        nome: name,
+        store_id: storeId,
+        pin_hash: pinHash,
+        ativo: true,
+      });
+    }
+
     return new Response(
       JSON.stringify({ ok: true, userId }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
