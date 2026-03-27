@@ -115,7 +115,21 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
     dismissChamarGarcom,
   } = useRestaurant();
   const isExternalOrder = modo === "balcao" || modo === "delivery" || modo === "totem";
-  const dbCategorias = getCachedCategorias();
+
+  // Reactive product/category loading from Supabase cache
+  const [produtos, setProdutos] = useState<Produto[]>(() => getCachedProdutos());
+  const [dbCategorias, setDbCategorias] = useState<Categoria[]>(() => getCachedCategorias());
+
+  useEffect(() => {
+    let cancelled = false;
+    preloadProducts().then(() => {
+      if (cancelled) return;
+      setProdutos([...getCachedProdutos()]);
+      setDbCategorias([...getCachedCategorias()]);
+    });
+    return () => { cancelled = true; };
+  }, []);
+
   const customCats = useMemo(() => getCategoriasCustom(), []);
   const allCategorias: Categoria[] = useMemo(() => [
     ...dbCategorias,
@@ -170,7 +184,7 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
 
   const produtosDisponiveis = useMemo(() => {
     return produtos;
-  }, []);
+  }, [produtos]);
 
   const cartTotal = useMemo(
     () => carrinho.reduce((acc, item) => acc + item.precoUnitario * item.quantidade, 0),
