@@ -1,4 +1,5 @@
 import { Route, Routes, useLocation } from "react-router-dom";
+import { useEffect } from "react";
 import Index from "./pages/Index";
 
 import GarcomPage from "./pages/GarcomPage";
@@ -19,8 +20,28 @@ import TvPage from "./pages/TvPage";
 import NotFound from "./pages/NotFound";
 import SeedPage from "./pages/SeedPage";
 
+const ROUTE_TITLES: Record<string, string> = {
+  "/": "Login — Orderly Table",
+  "/master": "Master — Orderly Table",
+  "/admin": "Admin — Orderly Table",
+  "/garcom": "Garçom — Orderly Table",
+  "/caixa": "Caixa — Orderly Table",
+  "/delivery": "Delivery — Orderly Table",
+  "/gerente": "Gerente — Orderly Table",
+  "/cozinha": "Cozinha — Orderly Table",
+  "/motoboy": "Motoboy — Orderly Table",
+  "/totem": "Totem — Orderly Table",
+  "/tv": "TV — Orderly Table",
+  "/tablet": "Cardápio — Orderly Table",
+};
+
 const App = () => {
   const location = useLocation();
+
+  useEffect(() => {
+    const base = "/" + location.pathname.split("/")[1];
+    document.title = ROUTE_TITLES[base] || "Orderly Table";
+  }, [location.pathname]);
 
   return (
     <div key={location.pathname} className="route-fade-in">
