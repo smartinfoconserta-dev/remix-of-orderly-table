@@ -22,8 +22,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { categorias, produtos as baseProdutos, type Categoria, type Produto } from "@/data/menuData";
-import { getCardapioOverrides, getSistemaConfig, getProdutosDelivery, getCategoriasCustom } from "@/lib/adminStorage";
+import { categorias as defaultCategorias, type Categoria, type Produto } from "@/data/menuData";
+import { getSistemaConfig, getCategoriasCustom } from "@/lib/adminStorage";
+import { getCachedProdutos, getCachedCategorias, preloadProducts } from "@/hooks/useProducts";
 import { HOME_CAROUSEL_INTERVAL_MS, homeHeroSlides, homeShowcaseConfig } from "@/data/homeShowcaseData";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRestaurant, type ItemCarrinho } from "@/contexts/RestaurantContext";
@@ -63,28 +64,8 @@ const RESTAURANTE = {
   logoFallback: (sysConfig.nomeRestaurante || "Restaurante").slice(0, 2).toUpperCase(),
 };
 
-// Filter out inactive/removed products and merge custom products
-const cardapioOverrides = getCardapioOverrides();
-const customProducts = Object.values(cardapioOverrides).filter(
-  (ov) => !baseProdutos.some((bp) => bp.id === ov.id) && ov.ativo !== false && !ov.removido,
-);
-const produtosComOverrides = [
-  ...baseProdutos.filter((p) => {
-    const ov = cardapioOverrides[p.id];
-    if (ov && (ov.ativo === false || ov.removido)) return false;
-    return true;
-  }).map((p) => {
-    const ov = cardapioOverrides[p.id];
-    return ov ? { ...p, ...ov } : p;
-  }),
-  ...customProducts,
-];
-// Resolve image: prefer base64, then URL
-const produtos = produtosComOverrides.map((p) => {
-  const ov = cardapioOverrides[p.id];
-  const resolvedImagem = ov?.imagemBase64 || p.imagem;
-  return { ...p, imagem: resolvedImagem };
-});
+// Products now come from Supabase via cached service
+const produtos = getCachedProdutos();
 
 // Configurable banners from admin or fallback to defaults
 const configBanners = sysConfig.banners?.filter((b) => b.titulo && b.imagemUrl) ?? [];
@@ -135,15 +116,17 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
     dismissChamarGarcom,
   } = useRestaurant();
   const isExternalOrder = modo === "balcao" || modo === "delivery" || modo === "totem";
+  const dbCategorias = getCachedCategorias();
   const customCats = useMemo(() => getCategoriasCustom(), []);
   const allCategorias: Categoria[] = useMemo(() => [
-    ...categorias,
-    ...customCats.map((c) => ({ id: c.id, nome: c.nome, icone: c.icone })),
-  ], [customCats]);
+    ...dbCategorias,
+    ...customCats.filter((c) => !dbCategorias.some((dc) => dc.id === c.id)).map((c) => ({ id: c.id, nome: c.nome, icone: c.icone })),
+  ], [customCats, dbCategorias]);
   const navigationItems = useMemo(() => [HOME_TAB, ...allCategorias], [allCategorias]);
   const [localCarrinho, setLocalCarrinho] = useState<ItemCarrinho[]>([]);
-  const [categoriaAtiva, setCategoriaAtiva] = useState(isExternalOrder ? categorias[0]?.id ?? HOME_TAB_ID : HOME_TAB_ID);
-  const [categoriaExibida, setCategoriaExibida] = useState(isExternalOrder ? categorias[0]?.id ?? HOME_TAB_ID : HOME_TAB_ID);
+  const firstCatId = allCategorias[0]?.id ?? HOME_TAB_ID;
+  const [categoriaAtiva, setCategoriaAtiva] = useState(isExternalOrder ? firstCatId : HOME_TAB_ID);
+  const [categoriaExibida, setCategoriaExibida] = useState(isExternalOrder ? firstCatId : HOME_TAB_ID);
   const [categoryFadeKey, setCategoryFadeKey] = useState(0);
   const [selectedProductCardId, setSelectedProductCardId] = useState<string | null>(null);
   const [bannerIndex, setBannerIndex] = useState(0);
@@ -187,11 +170,8 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
   const shouldEnableClientIdle = modo === "cliente" && isTabletViewport;
 
   const produtosDisponiveis = useMemo(() => {
-    if (modo === "delivery") {
-      return getProdutosDelivery() as unknown as Produto[];
-    }
     return produtos;
-  }, [modo]);
+  }, []);
 
   const cartTotal = useMemo(
     () => carrinho.reduce((acc, item) => acc + item.precoUnitario * item.quantidade, 0),
@@ -1146,7 +1126,7 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
           </div>
         )}
         <nav className="mt-1 flex flex-col gap-2">
-          {[HOME_TAB, ...categorias].map((cat) => {
+          {[HOME_TAB, ...allCategorias].map((cat) => {
             const selected = categoriaAtiva === cat.id;
 
             return (

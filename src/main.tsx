@@ -9,11 +9,15 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { StoreProvider } from "@/contexts/StoreContext";
 import { RestaurantProvider } from "@/contexts/RestaurantContext";
 import { applyCustomPrimaryColor } from "@/lib/adminStorage";
+import { preloadProducts } from "@/hooks/useProducts";
 import App from "./App.tsx";
 import "./index.css";
 
 // Apply custom primary color on startup
 applyCustomPrimaryColor();
+
+// Preload products from DB
+preloadProducts();
 
 const queryClient = new QueryClient();
 
