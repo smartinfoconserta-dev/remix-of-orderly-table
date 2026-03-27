@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { LogOut, Bell } from "lucide-react";
-import { useSearchParams } from "react-router-dom";
+import { LogOut, Bell, TabletSmartphone } from "lucide-react";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import PedidoFlow from "@/components/PedidoFlow";
 import AppLayout from "@/components/AppLayout";
 import MesaCard from "@/components/MesaCard";
@@ -18,6 +18,7 @@ const GarcomPage = () => {
   const { currentGarcom, logout, authLevel } = useAuth();
   const isAdminAccess = authLevel === "admin" || authLevel === "master";
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   const mesaIdSelecionada = searchParams.get("mesa")?.trim() ?? "";
   const [filtro, setFiltro] = useState<Filtro>("todas");
   const [clock, setClock] = useState(() => new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }));
@@ -109,14 +110,28 @@ const GarcomPage = () => {
             className={`slide-up ${mesa.chamarGarcom ? "animate-pulse rounded-2xl ring-2 ring-destructive/60" : ""}`}
             style={{ animationDelay: `${Math.min(i * 30, 300)}ms`, animationFillMode: "both" }}
           >
-            <MesaCard
-              mesa={mesa}
-              showIndicators
-              onClick={() => {
-                dismissChamarGarcom(mesa.id);
-                setSearchParams({ mesa: mesa.id });
-              }}
-            />
+            <div className="relative">
+              <MesaCard
+                mesa={mesa}
+                showIndicators
+                onClick={() => {
+                  dismissChamarGarcom(mesa.id);
+                  setSearchParams({ mesa: mesa.id });
+                }}
+              />
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  dismissChamarGarcom(mesa.id);
+                  navigate(`/tablet?mesa=${mesa.id}`);
+                }}
+                title="Abrir como tablet (modo cliente)"
+                className="absolute right-1.5 top-1.5 flex h-7 w-7 items-center justify-center rounded-lg bg-secondary/80 text-muted-foreground backdrop-blur-sm transition-colors hover:bg-primary hover:text-primary-foreground"
+              >
+                <TabletSmartphone className="h-3.5 w-3.5" />
+              </button>
+            </div>
           </div>
         ))}
       </div>
