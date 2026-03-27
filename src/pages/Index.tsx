@@ -279,7 +279,8 @@ const Index = () => {
     if (authLevel === "master") navigate("/master", { replace: true });
     else if (authLevel === "admin") navigate("/admin", { replace: true });
     else if (authLevel === "operational" && operationalSession?.module) {
-      navigate(`/${operationalSession.module}`, { replace: true });
+      const moduleRouteMap: Record<string, string> = { tv_retirada: "tv", cliente: "tablet" };
+      navigate(`/${moduleRouteMap[operationalSession.module] ?? operationalSession.module}`, { replace: true });
     }
   }, [authLevel, operationalSession, isLoading, navigate]);
 
