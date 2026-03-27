@@ -1596,6 +1596,19 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
                     <span className="rounded-full px-1.5 py-0.5 text-[10px] font-black tabular-nums leading-none bg-orange-500 text-white">{pedidosTotemAtivos.length}</span>
                   )}
                 </button>
+                <button
+                  onClick={() => setCaixaView("historico")}
+                  className={`px-4 py-1.5 text-xs font-bold transition-colors border border-border rounded-t -mb-px relative flex items-center gap-1.5 ${
+                    caixaView === "historico"
+                      ? "bg-card text-foreground border-b-card z-10"
+                      : "bg-background text-muted-foreground"
+                  }`}
+                >
+                  📋 Histórico
+                  {fechamentos.length > 0 && (
+                    <span className="rounded-full px-1.5 py-0.5 text-[10px] font-black tabular-nums leading-none bg-primary text-primary-foreground">{fechamentos.length}</span>
+                  )}
+                </button>
                 <div className="flex-1 border-b border-border" />
               </div>
 
