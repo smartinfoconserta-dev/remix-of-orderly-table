@@ -170,11 +170,8 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
   const shouldEnableClientIdle = modo === "cliente" && isTabletViewport;
 
   const produtosDisponiveis = useMemo(() => {
-    if (modo === "delivery") {
-      return getProdutosDelivery() as unknown as Produto[];
-    }
     return produtos;
-  }, [modo]);
+  }, []);
 
   const cartTotal = useMemo(
     () => carrinho.reduce((acc, item) => acc + item.precoUnitario * item.quantidade, 0),
