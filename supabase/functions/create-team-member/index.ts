@@ -145,6 +145,24 @@ Deno.serve(async (req) => {
       }
     }
 
+    // 4. If role is motoboy, also upsert into legacy motoboys table
+    if (role === "motoboy") {
+      const pinHash = (pin && /^\d{4,6}$/.test(pin))
+        ? (await adminClient.rpc("create_module_pin", { _store_id: storeId, _module: "motoboy_legacy", _pin: pin, _label: name }), 
+           // We need the hash; let's generate it via SQL
+           "")
+        : "";
+      
+      // Use a direct approach: upsert by name+store
+      await adminClient.from("motoboys").upsert({
+        id: userId,
+        nome: name,
+        store_id: storeId,
+        pin_hash: pin ? pin : "",
+        ativo: true,
+      }, { onConflict: "id" });
+    }
+
     return new Response(
       JSON.stringify({ ok: true, userId }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
