@@ -74,8 +74,7 @@ import { supabase } from "@/integrations/supabase/client";
 /* ── helpers ── */
 const normStr = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
 const formatPrice = (v: number) => `R$ ${v.toFixed(2).replace(".", ",")}`;
-const FECHAMENTOS_MOTOBOY_KEY = "obsidian-motoboy-fechamentos-v1"; // legacy, still cleared on turno close
-const FUNDO_PROXIMO_KEY = "obsidian-caixa-fundo-proximo-v1"; // legacy fallback
+// Legacy localStorage keys removed — data now lives in Supabase
 const toCents = (value: number) => Math.round(value * 100);
 
 const parseCurrencyInput = (value: string) => {
@@ -364,13 +363,36 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
   }, [fechamentosPendentes]);
 
 
+  // Load master aviso from restaurant_config (Supabase)
   useEffect(() => {
-    const checkAviso = () => {
-      try {
-        const raw = localStorage.getItem("obsidian-master-aviso-v1");
-        if (!raw) { setMasterAviso(null); return; }
-        const aviso = JSON.parse(raw);
-        if (aviso.lido) { setMasterAviso(null); return; }
+    const getStoreId = (): string | null => {
+      try { const raw = sessionStorage.getItem("obsidian-op-session-v2"); if (raw) { const s = JSON.parse(raw); return s.storeId ?? null; } } catch {}
+      try { const saved = sessionStorage.getItem("orderly-active-store"); if (saved) return saved; } catch {}
+      return null;
+    };
+    const storeId = getStoreId();
+    if (!storeId) return;
+
+    const loadAviso = async () => {
+      const { data } = await supabase.from("restaurant_config").select("aviso_master").eq("store_id", storeId).limit(1);
+      const aviso = data?.[0]?.aviso_master as any;
+      if (!aviso || aviso.lido) { setMasterAviso(null); return; }
+      setMasterAviso(aviso);
+      if (aviso.tipo === "urgente") {
+        setAvisoCanDismiss(false);
+        setTimeout(() => setAvisoCanDismiss(true), 60000);
+      } else {
+        setAvisoCanDismiss(true);
+      }
+    };
+    loadAviso();
+
+    // Realtime subscription for aviso updates
+    const channel = supabase
+      .channel(`aviso-${storeId}`)
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "restaurant_config", filter: `store_id=eq.${storeId}` }, (payload) => {
+        const aviso = (payload.new as any).aviso_master;
+        if (!aviso || aviso.lido) { setMasterAviso(null); return; }
         setMasterAviso(aviso);
         if (aviso.tipo === "urgente") {
           setAvisoCanDismiss(false);
@@ -378,11 +400,9 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
         } else {
           setAvisoCanDismiss(true);
         }
-      } catch { setMasterAviso(null); }
-    };
-    checkAviso();
-    const id = setInterval(checkAviso, 30000);
-    return () => clearInterval(id);
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
   }, []);
 
   // Live clock + desktop detection
@@ -751,7 +771,7 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
       }
       localStorage.setItem("obsidian-caixa-modo-v1", modoOperacao);
       abrirCaixa(valor, currentOperator);
-      localStorage.removeItem(FUNDO_PROXIMO_KEY);
+      // fundo_proximo is now managed via estado_caixa in Supabase
       toast.success("Caixa aberto com sucesso!", { duration: 1200, icon: "✅" });
     };
 
@@ -1177,7 +1197,7 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
     // Clear operator shift tracking
     try { localStorage.removeItem("obsidian-caixa-operadores-v1"); } catch {}
     try { localStorage.removeItem("obsidian-caixa-modo-v1"); } catch {}
-    try { localStorage.removeItem(FECHAMENTOS_MOTOBOY_KEY); } catch {}
+    // motoboy fechamentos now managed in Supabase
     setTurnoModalOpen(false);
     setIsClosingTurno(false);
     setTurnoManagerName("");
@@ -1196,13 +1216,16 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
 
   const clockStr = currentTime.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
 
-  const dismissAviso = () => {
+  const dismissAviso = async () => {
     try {
-      const raw = localStorage.getItem("obsidian-master-aviso-v1");
-      if (raw) {
-        const aviso = JSON.parse(raw);
-        aviso.lido = true;
-        localStorage.setItem("obsidian-master-aviso-v1", JSON.stringify(aviso));
+      const getStoreId = (): string | null => {
+        try { const raw = sessionStorage.getItem("obsidian-op-session-v2"); if (raw) { const s = JSON.parse(raw); return s.storeId ?? null; } } catch {}
+        try { const saved = sessionStorage.getItem("orderly-active-store"); if (saved) return saved; } catch {}
+        return null;
+      };
+      const storeId = getStoreId();
+      if (storeId) {
+        await supabase.from("restaurant_config").update({ aviso_master: { ...masterAviso, lido: true } as any }).eq("store_id", storeId);
       }
     } catch {}
     setMasterAviso(null);

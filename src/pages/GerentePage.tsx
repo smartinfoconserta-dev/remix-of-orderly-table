@@ -54,6 +54,7 @@ import type { PaymentMethod } from "@/types/operations";
 import { getSistemaConfig } from "@/lib/adminStorage";
 import StorePinsManager from "@/components/StorePinsManager";
 import { useStore } from "@/contexts/StoreContext";
+import { supabase } from "@/integrations/supabase/client";
 
 /* ── helpers ── */
 const formatPrice = (v: number) => `R$ ${v.toFixed(2).replace(".", ",")}`;
@@ -191,31 +192,39 @@ const GerentePage = () => {
   const { storeId: ctxStoreId } = useStore();
   const equipeStoreId = operationalSession?.storeId ?? ctxStoreId;
 
-  // Fechamentos motoboy
-  const FECHAMENTOS_KEY = "obsidian-motoboy-fechamentos-v1";
-  const DIFERENCAS_CAIXA_KEY = "obsidian-diferencas-caixa-v1";
-  const [fechamentosMotoboy, setFechamentosMotoboy] = useState<any[]>(() => {
-    try {
-      const raw = localStorage.getItem(FECHAMENTOS_KEY);
-      return raw ? JSON.parse(raw) : [];
-    } catch { return []; }
-  });
-  const [diferencasCaixa, setDiferencasCaixa] = useState<any[]>(() => {
-    try {
-      const raw = localStorage.getItem(DIFERENCAS_CAIXA_KEY);
-      return raw ? JSON.parse(raw) : [];
-    } catch { return []; }
-  });
+  // Fechamentos motoboy (from Supabase)
+  const [fechamentosMotoboy, setFechamentosMotoboy] = useState<any[]>([]);
+  const [diferencasCaixa, setDiferencasCaixa] = useState<any[]>([]);
+
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(FECHAMENTOS_KEY);
-      setFechamentosMotoboy(raw ? JSON.parse(raw) : []);
-    } catch {}
-    try {
-      const raw2 = localStorage.getItem(DIFERENCAS_CAIXA_KEY);
-      setDiferencasCaixa(raw2 ? JSON.parse(raw2) : []);
-    } catch {}
-  }, []);
+    if (!equipeStoreId) return;
+    // Load motoboy fechamentos from DB
+    supabase.from("motoboy_fechamentos").select("*").eq("store_id", equipeStoreId)
+      .order("created_at", { ascending: false }).limit(500)
+      .then(({ data }) => {
+        setFechamentosMotoboy((data ?? []).map((f: any) => ({
+          motoboyId: f.motoboy_id,
+          motoboyNome: f.motoboy_nome,
+          status: f.status,
+          resumo: f.resumo ?? {},
+          timestamp: f.created_at,
+          pedidosIds: f.pedidos_ids ?? [],
+        })));
+      });
+    // Load diferenças de caixa from estado_caixa history (closed shifts with diferença)
+    supabase.from("estado_caixa").select("*").eq("store_id", equipeStoreId)
+      .not("diferenca_dinheiro", "is", null)
+      .order("fechado_em", { ascending: false }).limit(100)
+      .then(({ data }) => {
+        setDiferencasCaixa((data ?? []).filter((d: any) => d.diferenca_dinheiro !== 0 && d.diferenca_dinheiro !== null).map((d: any) => ({
+          data: d.fechado_em ?? d.updated_at,
+          diferenca: Number(d.diferenca_dinheiro ?? 0),
+          tipo: Number(d.diferenca_dinheiro ?? 0) > 0 ? "sobra" : "quebra",
+          motivo: d.diferenca_motivo ?? "",
+          operador: d.fechado_por ?? "",
+        })));
+      });
+  }, [equipeStoreId]);
 
   const handleVerificarPin = useCallback(async () => {
     if (!effectiveGerente || isAdminAccess) {
