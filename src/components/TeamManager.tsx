@@ -331,7 +331,8 @@ const TeamManager = ({ storeId }: Props) => {
             ))}
           </div>
         </div>
-      )}
+        );
+      })()}
 
       {/* Add Member Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
