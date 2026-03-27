@@ -218,26 +218,45 @@ const DeviceGate = ({ type, children }: DeviceGateProps) => {
           </div>
 
           <div className="space-y-4">
-            {/* Store select */}
+            {/* Store autocomplete */}
             <div className="space-y-2">
               <label className="text-sm font-semibold text-foreground">Empresa</label>
               <div className="relative">
-                <select
-                  value={selectedStoreId}
-                  onChange={(e) => setSelectedStoreId(e.target.value)}
+                <Input
+                  value={storeSearch}
+                  onChange={(e) => {
+                    setStoreSearch(e.target.value);
+                    setSelectedStoreId("");
+                    setShowStoreList(true);
+                  }}
+                  onFocus={() => setShowStoreList(true)}
+                  placeholder={loadingStores ? "Carregando..." : "Digite o nome da empresa"}
+                  autoComplete="off"
                   disabled={loadingStores}
-                  className="flex h-10 w-full appearance-none rounded-md border border-input bg-background px-3 py-2 pr-10 text-base ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
-                >
-                  <option value="">
-                    {loadingStores ? "Carregando..." : "Selecione a empresa"}
-                  </option>
-                  {stores.map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {s.name}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+                />
+                {showStoreList && filteredStores.length > 0 && !selectedStoreId && (
+                  <div className="absolute z-50 mt-1 w-full max-h-48 overflow-y-auto rounded-xl border border-border bg-popover shadow-lg">
+                    {filteredStores.map((s) => (
+                      <button
+                        key={s.id}
+                        type="button"
+                        onClick={() => {
+                          setSelectedStoreId(s.id);
+                          setStoreSearch(s.name);
+                          setShowStoreList(false);
+                        }}
+                        className="w-full px-4 py-2.5 text-left text-sm font-medium text-foreground hover:bg-accent transition-colors first:rounded-t-xl last:rounded-b-xl"
+                      >
+                        {s.name}
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {showStoreList && storeSearch.length > 0 && filteredStores.length === 0 && !selectedStoreId && (
+                  <div className="absolute z-50 mt-1 w-full rounded-xl border border-border bg-popover shadow-lg px-4 py-3">
+                    <p className="text-sm text-muted-foreground">Nenhuma empresa encontrada</p>
+                  </div>
+                )}
               </div>
             </div>
 
