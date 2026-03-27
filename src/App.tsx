@@ -17,6 +17,7 @@ import MotoboyPage from "./pages/MotoboyPage";
 import TotemPage from "./pages/TotemPage";
 import TvPage from "./pages/TvPage";
 import NotFound from "./pages/NotFound";
+import SeedPage from "./pages/SeedPage";
 
 const App = () => {
   const location = useLocation();
@@ -47,6 +48,7 @@ const App = () => {
         <Route path="/tablet" element={<TabletPage />} />
         <Route path="/cliente" element={<Navigate to="/tablet" replace />} />
 
+        <Route path="/seed" element={<SeedPage />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </div>
