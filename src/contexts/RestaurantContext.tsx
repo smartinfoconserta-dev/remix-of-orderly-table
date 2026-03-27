@@ -472,7 +472,13 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       today.setHours(0, 0, 0, 0);
       const iso = today.toISOString();
 
-      const [pedidosRes, estadoMesasRes, fechRes, evtRes, movRes, caixaRes, mesasDbRes] = await Promise.all([
+      // Historical data (last 30 days for allFechamentos)
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      thirtyDaysAgo.setHours(0, 0, 0, 0);
+      const isoHistory = thirtyDaysAgo.toISOString();
+
+      const [pedidosRes, estadoMesasRes, fechRes, evtRes, movRes, caixaRes, mesasDbRes, allFechRes] = await Promise.all([
         supabase.from("pedidos").select("*").eq("store_id", sid).gte("criado_em_iso", iso).order("criado_em_iso", { ascending: true }),
         supabase.from("estado_mesas").select("*").eq("store_id", sid),
         supabase.from("fechamentos").select("*").eq("store_id", sid).gte("criado_em_iso", iso).order("criado_em_iso", { ascending: false }),
@@ -480,6 +486,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         supabase.from("movimentacoes_caixa").select("*").eq("store_id", sid).gte("criado_em_iso", iso).order("criado_em_iso", { ascending: false }),
         supabase.from("estado_caixa").select("*").eq("store_id", sid).order("updated_at", { ascending: false }).limit(1),
         supabase.from("mesas").select("id,numero,nome,status").eq("store_id", sid).order("numero", { ascending: true }),
+        supabase.from("fechamentos").select("*").eq("store_id", sid).gte("criado_em_iso", isoHistory).order("criado_em_iso", { ascending: false }).limit(500),
       ]);
 
       const allPedidos = (pedidosRes.data ?? []).map(rowToPedido);
@@ -535,7 +542,8 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         fundoTroco: Number(caixaRow?.fundo_troco ?? 0),
         pedidosBalcao,
       });
-      setAllFechamentos(fechamentos);
+      const allFechamentos = (allFechRes.data ?? []).map(rowToFechamento);
+      setAllFechamentos(allFechamentos);
       setAllEventos(eventos);
       setAllMovimentacoesCaixa(movimentacoes);
     };
