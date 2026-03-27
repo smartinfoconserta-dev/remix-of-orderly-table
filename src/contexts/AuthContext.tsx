@@ -15,6 +15,12 @@ interface OperationalSession {
   pinLabel: string | null;
 }
 
+interface LoginUnifiedResult {
+  ok: boolean;
+  error?: string;
+  redirect?: string;
+}
+
 interface LoginResult {
   ok: boolean;
   error?: string;
@@ -23,12 +29,15 @@ interface LoginResult {
 interface AuthContextType {
   /** Current authentication level */
   authLevel: AuthLevel;
-  /** Supabase user (master/admin only) */
+  /** Supabase user (master/admin/store_member) */
   supabaseUser: User | null;
   /** True while checking initial session */
   isLoading: boolean;
 
-  /* ─── Level 1 & 2: Supabase Auth ─── */
+  /* ─── Unified login ─── */
+  loginUnified: (email: string, password: string) => Promise<LoginUnifiedResult>;
+
+  /* ─── Level 1 & 2: Supabase Auth (legacy, kept for backward compat) ─── */
   loginAsMaster: (email: string, password: string) => Promise<LoginResult>;
   loginAsAdmin: (email: string, password: string) => Promise<LoginResult>;
 
@@ -100,15 +109,65 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [operationalSession, setOperationalSession] = useState<OperationalSession | null>(readOpSession);
 
   /* ─── Resolve auth level from Supabase user ─── */
-  const resolveSupabaseLevel = useCallback(async (user: User): Promise<AuthLevel> => {
+  interface ResolvedAuth {
+    level: AuthLevel;
+    opSession?: OperationalSession;
+    redirect?: string;
+  }
+
+  const resolveSupabaseLevel = useCallback(async (user: User): Promise<ResolvedAuth> => {
+    // 1. Check user_roles (master / admin)
     const { data: roles } = await supabase
       .from("user_roles")
       .select("role")
       .eq("user_id", user.id);
 
-    if (roles?.some((r) => r.role === "master")) return "master";
-    if (roles?.some((r) => r.role === "admin")) return "admin";
-    return "unauthenticated";
+    if (roles?.some((r) => r.role === "master")) return { level: "master", redirect: "/master" };
+    if (roles?.some((r) => r.role === "admin")) return { level: "admin", redirect: "/admin" };
+
+    // 2. Check store_members for gerente/caixa/owner
+    const { data: members } = await supabase
+      .from("store_members")
+      .select("store_id, role_in_store, stores(id, name, slug)")
+      .eq("user_id", user.id);
+
+    if (members && members.length > 0) {
+      const m = members[0];
+      const store = m.stores as any;
+      const role = m.role_in_store;
+
+      // Owners are treated as admins
+      if (role === "owner") return { level: "admin", redirect: "/admin" };
+
+      // Gerente, caixa, etc → operational with auto-session
+      const moduleRouteMap: Record<string, string> = { tv_retirada: "tv", cliente: "tablet" };
+      const opSession: OperationalSession = {
+        storeId: store.id,
+        storeSlug: store.slug,
+        storeName: store.name,
+        module: role,
+        pinLabel: user.email ?? null,
+      };
+      return {
+        level: "operational",
+        opSession,
+        redirect: `/${moduleRouteMap[role] ?? role}`,
+      };
+    }
+
+    return { level: "unauthenticated" };
+  }, []);
+
+  /* ─── Apply resolved auth ─── */
+  const applyResolved = useCallback((resolved: ResolvedAuth) => {
+    setAuthLevel(resolved.level);
+    if (resolved.opSession) {
+      setOperationalSession(resolved.opSession);
+      writeOpSession(resolved.opSession);
+    } else if (resolved.level !== "unauthenticated") {
+      setOperationalSession(null);
+      writeOpSession(null);
+    }
   }, []);
 
   /* ─── Listen to auth state changes ─── */
@@ -117,8 +176,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (session?.user) {
         setSupabaseUser(session.user);
-        const level = await resolveSupabaseLevel(session.user);
-        setAuthLevel(level);
+        const resolved = await resolveSupabaseLevel(session.user);
+        applyResolved(resolved);
       } else {
         const opSession = readOpSession();
         if (opSession) {
@@ -133,14 +192,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session?.user) {
         setSupabaseUser(session.user);
-        // Fire-and-forget role resolution to avoid deadlock
-        resolveSupabaseLevel(session.user).then((level) => {
-          setAuthLevel(level);
-          if (level !== "unauthenticated") {
-            setOperationalSession(null);
-            writeOpSession(null);
-          }
-        });
+        resolveSupabaseLevel(session.user).then(applyResolved);
       } else {
         setSupabaseUser(null);
         const opSession = readOpSession();
@@ -151,47 +203,61 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
 
     return () => subscription.unsubscribe();
-  }, [resolveSupabaseLevel]);
+  }, [resolveSupabaseLevel, applyResolved]);
 
-  /* ─── Level 1: Master login ─── */
+  /* ─── Unified login (new) ─── */
+  const loginUnified = useCallback(async (email: string, password: string): Promise<LoginUnifiedResult> => {
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error || !data.user) {
+      return { ok: false, error: error?.message ?? "Credenciais inválidas" };
+    }
+
+    const resolved = await resolveSupabaseLevel(data.user);
+    if (resolved.level === "unauthenticated") {
+      await supabase.auth.signOut();
+      return { ok: false, error: "Usuário sem permissão de acesso ao sistema" };
+    }
+
+    setSupabaseUser(data.user);
+    applyResolved(resolved);
+    return { ok: true, redirect: resolved.redirect };
+  }, [resolveSupabaseLevel, applyResolved]);
+
+  /* ─── Level 1: Master login (legacy) ─── */
   const loginAsMaster = useCallback(async (email: string, password: string): Promise<LoginResult> => {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error || !data.user) {
       return { ok: false, error: error?.message ?? "Falha ao autenticar" };
     }
 
-    const level = await resolveSupabaseLevel(data.user);
-    if (level !== "master") {
+    const resolved = await resolveSupabaseLevel(data.user);
+    if (resolved.level !== "master") {
       await supabase.auth.signOut();
       return { ok: false, error: "Este usuário não possui permissão de Master" };
     }
 
     setSupabaseUser(data.user);
-    setAuthLevel("master");
-    setOperationalSession(null);
-    writeOpSession(null);
+    applyResolved(resolved);
     return { ok: true };
-  }, [resolveSupabaseLevel]);
+  }, [resolveSupabaseLevel, applyResolved]);
 
-  /* ─── Level 2: Admin login ─── */
+  /* ─── Level 2: Admin login (legacy) ─── */
   const loginAsAdmin = useCallback(async (email: string, password: string): Promise<LoginResult> => {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error || !data.user) {
       return { ok: false, error: error?.message ?? "Falha ao autenticar" };
     }
 
-    const level = await resolveSupabaseLevel(data.user);
-    if (level !== "admin" && level !== "master") {
+    const resolved = await resolveSupabaseLevel(data.user);
+    if (resolved.level !== "admin" && resolved.level !== "master") {
       await supabase.auth.signOut();
       return { ok: false, error: "Este usuário não possui permissão de Admin" };
     }
 
     setSupabaseUser(data.user);
-    setAuthLevel(level);
-    setOperationalSession(null);
-    writeOpSession(null);
+    applyResolved(resolved);
     return { ok: true };
-  }, [resolveSupabaseLevel]);
+  }, [resolveSupabaseLevel, applyResolved]);
 
   /* ─── Level 3: Operational PIN login ─── */
   const loginAsOperational = useCallback(async (storeSlug: string, module: string, pin: string): Promise<LoginResult> => {
@@ -386,6 +452,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     authLevel,
     supabaseUser,
     isLoading,
+    loginUnified,
     loginAsMaster,
     loginAsAdmin,
     loginAsOperational,
@@ -408,7 +475,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     logout_role,
   }), [
     authLevel, supabaseUser, isLoading, operationalSession,
-    loginAsMaster, loginAsAdmin, loginAsOperational, loginByPin, logout,
+    loginUnified, loginAsMaster, loginAsAdmin, loginAsOperational, loginByPin, logout,
     getProfilesByRole, getActiveProfilesByRole, loginWithPin,
     createUser, removeUser, deactivateUser, activateUser,
     verifyManagerAccess, verifyEmployeeAccess, logout_role,

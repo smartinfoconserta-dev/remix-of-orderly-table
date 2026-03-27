@@ -1,48 +1,18 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { KeyRound, Building2, Hash } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { LogIn } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
-/* ─── Store search hook ─── */
-
-interface StoreOption {
-  name: string;
-  slug: string;
-}
-
-const useStoreSearch = () => {
-  const [query, setQuery] = useState("");
-  const [results, setResults] = useState<StoreOption[]>([]);
-  const [isSearching, setIsSearching] = useState(false);
-
-  useEffect(() => {
-    if (query.trim().length < 2) {
-      setResults([]);
-      return;
-    }
-    const timeout = setTimeout(async () => {
-      setIsSearching(true);
-      const { data } = await supabase.rpc("search_stores", { query: query.trim() });
-      setResults((data as StoreOption[]) ?? []);
-      setIsSearching(false);
-    }, 300);
-    return () => clearTimeout(timeout);
-  }, [query]);
-
-  return { query, setQuery, results, isSearching };
-};
-
-/* ─── Admin Login Tab ─── */
+/* ─── Saved credentials ─── */
 
 const SAVED_CREDS_KEY = "orderly-saved-login-v1";
 
-const AdminLoginTab = () => {
+const Index = () => {
   const navigate = useNavigate();
-  const { loginAsMaster, loginAsAdmin } = useAuth();
+  const { authLevel, operationalSession, isLoading, loginUnified } = useAuth();
+
   const [email, setEmail] = useState(() => {
     try { return JSON.parse(localStorage.getItem(SAVED_CREDS_KEY) ?? "{}").email ?? ""; } catch { return ""; }
   });
@@ -54,6 +24,17 @@ const AdminLoginTab = () => {
   });
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  // Auto-redirect if already logged in
+  useEffect(() => {
+    if (isLoading) return;
+    const routeMap: Record<string, string> = { tv_retirada: "tv", cliente: "tablet" };
+    if (authLevel === "master") navigate("/master", { replace: true });
+    else if (authLevel === "admin") navigate("/admin", { replace: true });
+    else if (authLevel === "operational" && operationalSession?.module) {
+      navigate(`/${routeMap[operationalSession.module] ?? operationalSession.module}`, { replace: true });
+    }
+  }, [authLevel, operationalSession, isLoading, navigate]);
 
   const handleLogin = async () => {
     if (!email.trim() || !password) {
@@ -70,219 +51,20 @@ const AdminLoginTab = () => {
       localStorage.removeItem(SAVED_CREDS_KEY);
     }
 
-    // Try master first, then admin
-    const masterResult = await loginAsMaster(email.trim(), password);
-    if (masterResult.ok) {
-      navigate("/master");
-      return;
-    }
-
-    const adminResult = await loginAsAdmin(email.trim(), password);
-    if (adminResult.ok) {
-      navigate("/admin");
-      return;
-    }
-
-    setError(adminResult.error ?? "Credenciais inválidas ou sem permissão");
-    setLoading(false);
-  };
-
-  return (
-    <div className="flex flex-col gap-4 pt-2">
-      <div className="space-y-2">
-        <label className="text-sm font-semibold text-foreground">Email</label>
-        <Input
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="seu@email.com"
-          autoComplete="email"
-        />
-      </div>
-      <div className="space-y-2">
-        <label className="text-sm font-semibold text-foreground">Senha</label>
-        <Input
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          placeholder="••••••••"
-          autoComplete="current-password"
-          onKeyDown={(e) => e.key === "Enter" && handleLogin()}
-        />
-      </div>
-      <label className="flex items-center gap-2 cursor-pointer select-none">
-        <input
-          type="checkbox"
-          checked={rememberMe}
-          onChange={(e) => {
-            setRememberMe(e.target.checked);
-            if (!e.target.checked) localStorage.removeItem(SAVED_CREDS_KEY);
-          }}
-          className="h-4 w-4 rounded border-border accent-primary"
-        />
-        <span className="text-sm text-muted-foreground">Lembrar credenciais</span>
-      </label>
-      {error && (
-        <p className="rounded-xl border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive">
-          {error}
-        </p>
-      )}
-      <Button onClick={handleLogin} disabled={loading} className="h-11 rounded-xl text-base font-bold">
-        {loading ? "Entrando…" : "Entrar"}
-      </Button>
-    </div>
-  );
-};
-
-/* ─── Operational Login Tab ─── */
-
-const OperationalLoginTab = () => {
-  const navigate = useNavigate();
-  const { loginByPin } = useAuth();
-  const { query, setQuery, results, isSearching } = useStoreSearch();
-  const [selectedSlug, setSelectedSlug] = useState("");
-  const [selectedName, setSelectedName] = useState("");
-  const [showDropdown, setShowDropdown] = useState(false);
-  const [pin, setPin] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-
-  const handleSelectStore = (store: StoreOption) => {
-    setSelectedSlug(store.slug);
-    setSelectedName(store.name);
-    setQuery(store.name);
-    setShowDropdown(false);
-  };
-
-  const handleSubmit = async () => {
-    if (!selectedSlug) {
-      setError("Selecione uma empresa");
-      return;
-    }
-    if (!/^\d{4,6}$/.test(pin)) {
-      setError("O PIN deve ter entre 4 e 6 números");
-      return;
-    }
-
-    setLoading(true);
-    setError(null);
-
-    const result = await loginByPin(selectedSlug, pin);
+    const result = await loginUnified(email.trim(), password);
 
     if (!result.ok) {
-      setError(result.error ?? "Não foi possível entrar");
+      setError(result.error ?? "Credenciais inválidas");
       setLoading(false);
       return;
     }
 
-    const moduleRouteMap: Record<string, string> = { tv_retirada: "tv", cliente: "tablet" };
-    navigate(`/${moduleRouteMap[result.module!] ?? result.module}`);
-  };
-
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        setShowDropdown(false);
-      }
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, []);
-
-  return (
-    <div className="flex flex-col gap-4 pt-2">
-      <div className="space-y-2 relative" ref={dropdownRef}>
-        <label className="flex items-center gap-2 text-sm font-semibold text-foreground">
-          <Building2 className="h-4 w-4" />
-          Empresa
-        </label>
-        <Input
-          value={query}
-          onChange={(e) => {
-            setQuery(e.target.value);
-            setSelectedSlug("");
-            setSelectedName("");
-            setShowDropdown(true);
-          }}
-          onFocus={() => query.length >= 2 && setShowDropdown(true)}
-          placeholder="Digite o nome ou código da empresa"
-        />
-        {showDropdown && results.length > 0 && (
-          <div className="absolute top-full left-0 right-0 z-50 mt-1 rounded-xl border border-border bg-popover shadow-lg overflow-hidden">
-            {results.map((store) => (
-              <button
-                key={store.slug}
-                type="button"
-                onClick={() => handleSelectStore(store)}
-                className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm hover:bg-accent transition-colors"
-              >
-                <Building2 className="h-4 w-4 shrink-0 text-muted-foreground" />
-                <div>
-                  <span className="font-medium text-foreground">{store.name}</span>
-                  <span className="ml-2 text-xs text-muted-foreground">{store.slug}</span>
-                </div>
-              </button>
-            ))}
-          </div>
-        )}
-        {showDropdown && query.length >= 2 && results.length === 0 && !isSearching && (
-          <div className="absolute top-full left-0 right-0 z-50 mt-1 rounded-xl border border-border bg-popover px-4 py-3 text-sm text-muted-foreground shadow-lg">
-            Nenhuma empresa encontrada
-          </div>
-        )}
-        {selectedName && (
-          <p className="text-xs text-muted-foreground">
-            Selecionada: <span className="font-semibold text-foreground">{selectedName}</span>
-          </p>
-        )}
-      </div>
-
-      <div className="space-y-2">
-        <label className="flex items-center gap-2 text-sm font-semibold text-foreground">
-          <Hash className="h-4 w-4" />
-          PIN numérico
-        </label>
-        <Input
-          value={pin}
-          onChange={(e) => setPin(e.target.value.replace(/\D/g, "").slice(0, 6))}
-          placeholder="4 a 6 dígitos"
-          inputMode="numeric"
-          autoComplete="one-time-code"
-          onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
-        />
-      </div>
-
-      {error && (
-        <p className="rounded-xl border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive">
-          {error}
-        </p>
-      )}
-
-      <Button onClick={handleSubmit} disabled={loading} className="h-11 rounded-xl text-base font-bold">
-        {loading ? "Verificando…" : "Entrar"}
-      </Button>
-    </div>
-  );
-};
-
-/* ─── Main Page ─── */
-
-const Index = () => {
-  const navigate = useNavigate();
-  const { authLevel, operationalSession, isLoading } = useAuth();
-
-  // Auto-redirect if already logged in
-  useEffect(() => {
-    if (isLoading) return;
-    if (authLevel === "master") navigate("/master", { replace: true });
-    else if (authLevel === "admin") navigate("/admin", { replace: true });
-    else if (authLevel === "operational" && operationalSession?.module) {
-      const moduleRouteMap: Record<string, string> = { tv_retirada: "tv", cliente: "tablet" };
-      navigate(`/${moduleRouteMap[operationalSession.module] ?? operationalSession.module}`, { replace: true });
+    // Redirect to the resolved destination
+    if (result.redirect) {
+      navigate(result.redirect);
     }
-  }, [authLevel, operationalSession, isLoading, navigate]);
+    // If no redirect, the useEffect will handle it
+  };
 
   // PWA install prompt
   const [showInstallBanner, setShowInstallBanner] = useState(false);
@@ -327,24 +109,50 @@ const Index = () => {
 
       <div className="w-full max-w-sm">
         <div className="surface-card p-6 md:p-7">
-          <Tabs defaultValue="admin">
-            <TabsList className="grid w-full grid-cols-2 mb-4">
-              <TabsTrigger value="admin" className="gap-2">
-                <KeyRound className="h-4 w-4" />
-                Administração
-              </TabsTrigger>
-              <TabsTrigger value="operational" className="gap-2">
-                <Hash className="h-4 w-4" />
-                Operacional
-              </TabsTrigger>
-            </TabsList>
-            <TabsContent value="admin">
-              <AdminLoginTab />
-            </TabsContent>
-            <TabsContent value="operational">
-              <OperationalLoginTab />
-            </TabsContent>
-          </Tabs>
+          <div className="flex flex-col gap-4">
+            <div className="space-y-2">
+              <label className="text-sm font-semibold text-foreground">Email</label>
+              <Input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="seu@email.com"
+                autoComplete="email"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-semibold text-foreground">Senha</label>
+              <Input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                autoComplete="current-password"
+                onKeyDown={(e) => e.key === "Enter" && handleLogin()}
+              />
+            </div>
+            <label className="flex items-center gap-2 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={rememberMe}
+                onChange={(e) => {
+                  setRememberMe(e.target.checked);
+                  if (!e.target.checked) localStorage.removeItem(SAVED_CREDS_KEY);
+                }}
+                className="h-4 w-4 rounded border-border accent-primary"
+              />
+              <span className="text-sm text-muted-foreground">Lembrar credenciais</span>
+            </label>
+            {error && (
+              <p className="rounded-xl border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive">
+                {error}
+              </p>
+            )}
+            <Button onClick={handleLogin} disabled={loading} className="h-11 rounded-xl text-base font-bold gap-2">
+              <LogIn className="h-4 w-4" />
+              {loading ? "Entrando…" : "Entrar"}
+            </Button>
+          </div>
         </div>
       </div>
 
