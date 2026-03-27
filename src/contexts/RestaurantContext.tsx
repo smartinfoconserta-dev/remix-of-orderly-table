@@ -542,7 +542,8 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         fundoTroco: Number(caixaRow?.fundo_troco ?? 0),
         pedidosBalcao,
       });
-      setAllFechamentos(fechamentos);
+      const allFechamentos = (allFechRes.data ?? []).map(rowToFechamento);
+      setAllFechamentos(allFechamentos);
       setAllEventos(eventos);
       setAllMovimentacoesCaixa(movimentacoes);
     };
