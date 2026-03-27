@@ -85,10 +85,7 @@ const TeamManager = ({ storeId }: Props) => {
       const enriched: MemberRow[] = data
         .filter((m) => m.role_in_store !== "owner")
         .map((m) => {
-          // Try to find matching pin by matching user_id to created_by or by role
-          const pin = pins?.find(
-            (p) => p.created_by === m.user_id || (p.module === m.role_in_store && p.label)
-          );
+          const pin = pins?.find((p) => p.created_by === m.user_id);
           return {
             ...m,
             user_name: pin?.label ?? undefined,
