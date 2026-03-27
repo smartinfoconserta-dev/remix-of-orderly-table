@@ -64,8 +64,7 @@ const RESTAURANTE = {
   logoFallback: (sysConfig.nomeRestaurante || "Restaurante").slice(0, 2).toUpperCase(),
 };
 
-// Products now come from Supabase via cached service
-const produtos = getCachedProdutos();
+// Products are loaded reactively inside the component
 
 // Configurable banners from admin or fallback to defaults
 const configBanners = sysConfig.banners?.filter((b) => b.titulo && b.imagemUrl) ?? [];
