@@ -486,6 +486,34 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
 
   const mesasOrdenadas = useMemo(() => [...mesas].sort((a, b) => a.numero - b.numero), [mesas]);
 
+  // Dynamic QR code info cards (must be before early return to maintain hook order)
+  const qrInfoCards = useMemo(() => {
+    return [
+      {
+        id: "instagram",
+        title: "Visite nosso Instagram",
+        subtitle: "Aponte a câmera para acessar nosso perfil",
+        icon: Instagram,
+        badge: "Instagram",
+        qrUrl: sysConfig.instagramUrl
+          ? `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(sysConfig.instagramUrl)}`
+          : qrInstagramFallback,
+        bgImage: sysConfig.instagramBg || bgInstagramDefault,
+      },
+      {
+        id: "wifi",
+        title: "Conecte-se ao Wi‑Fi grátis",
+        subtitle: "Escaneie para acessar a rede da casa",
+        icon: Wifi,
+        badge: "Wi‑Fi",
+        qrUrl: sysConfig.senhaWifi
+          ? `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(`WIFI:T:WPA;S:${RESTAURANTE.nome};P:${sysConfig.senhaWifi};;`)}`
+          : qrWifiFallback,
+        bgImage: sysConfig.wifiBg || bgWifiDefault,
+      },
+    ];
+  }, []);
+
   const validatePendingCart = useCallback(() => {
     const possuiItemInvalido = carrinho.some((item) => item.quantidade <= 0);
 
@@ -820,33 +848,7 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
     </section>
   );
 
-  // Dynamic QR code info cards
-  const qrInfoCards = useMemo(() => {
-    return [
-      {
-        id: "instagram",
-        title: "Visite nosso Instagram",
-        subtitle: "Aponte a câmera para acessar nosso perfil",
-        icon: Instagram,
-        badge: "Instagram",
-        qrUrl: sysConfig.instagramUrl
-          ? `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(sysConfig.instagramUrl)}`
-          : qrInstagramFallback,
-        bgImage: sysConfig.instagramBg || bgInstagramDefault,
-      },
-      {
-        id: "wifi",
-        title: "Conecte-se ao Wi‑Fi grátis",
-        subtitle: "Escaneie para acessar a rede da casa",
-        icon: Wifi,
-        badge: "Wi‑Fi",
-        qrUrl: sysConfig.senhaWifi
-          ? `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(`WIFI:T:WPA;S:${RESTAURANTE.nome};P:${sysConfig.senhaWifi};;`)}`
-          : qrWifiFallback,
-        bgImage: sysConfig.wifiBg || bgWifiDefault,
-      },
-    ];
-  }, []);
+
 
   const categoryFadeClass = "";
 
