@@ -16,7 +16,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Plus, ShieldOff, ShieldCheck, Users } from "lucide-react";
+import { Plus, ShieldOff, ShieldCheck, Trash2, Users } from "lucide-react";
 import { toast } from "sonner";
 
 const ROLES = [
@@ -134,6 +134,34 @@ const TeamManager = ({ storeId }: Props) => {
     fetchMembers();
   };
 
+  const handleDelete = async (member: MemberRow) => {
+    const { error } = await supabase
+      .from("module_pins")
+      .delete()
+      .eq("id", member.id);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success(`${member.label || "Membro"} removido`);
+    fetchMembers();
+  };
+
+  const handleDeleteAllInactive = async () => {
+    const ids = members.filter((m) => !m.active).map((m) => m.id);
+    if (ids.length === 0) return;
+    const { error } = await supabase
+      .from("module_pins")
+      .delete()
+      .in("id", ids);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success(`${ids.length} membros inativos removidos`);
+    fetchMembers();
+  };
+
   const activeMembers = members.filter((m) => m.active);
   const inactiveMembers = members.filter((m) => !m.active);
 
@@ -235,9 +263,19 @@ const TeamManager = ({ storeId }: Props) => {
           {/* Inactive members */}
           {inactiveMembers.length > 0 && (
             <div className="space-y-2">
-              <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
-                Inativos ({inactiveMembers.length})
-              </p>
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
+                  Inativos ({inactiveMembers.length})
+                </p>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-destructive hover:text-destructive hover:bg-destructive/10 text-xs gap-1"
+                  onClick={handleDeleteAllInactive}
+                >
+                  <Trash2 className="h-3.5 w-3.5" /> Remover todos inativos
+                </Button>
+              </div>
               <div className="grid gap-2">
                 {inactiveMembers.map((m) => (
                   <div
@@ -271,6 +309,14 @@ const TeamManager = ({ storeId }: Props) => {
                         onClick={() => handleToggleActive(m)}
                       >
                         <ShieldCheck className="h-3.5 w-3.5 mr-1" /> Reativar
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-destructive hover:text-destructive hover:bg-destructive/10 text-xs"
+                        onClick={() => handleDelete(m)}
+                      >
+                        <Trash2 className="h-3.5 w-3.5 mr-1" /> Excluir
                       </Button>
                     </div>
                   </div>
