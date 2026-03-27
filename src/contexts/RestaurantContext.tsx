@@ -387,37 +387,49 @@ const rowToMovimentacao = (row: any): MovimentacaoCaixa => ({
   usuarioId: row.usuario_id ?? "", usuarioNome: row.usuario_nome ?? "",
 });
 
-// Fire-and-forget DB insert
+// Fire-and-forget DB insert with error visibility
 const dbInsertPedido = (p: PedidoRealizado) => {
   const sid = getActiveStoreId();
-  if (!sid) return;
-  supabase.from("pedidos").insert(pedidoToRow(p, sid) as any).then(({ error }) => { if (error) console.error("DB insert pedido", error); });
+  if (!sid) { console.warn("dbInsertPedido: storeId is null, skipping"); return; }
+  supabase.from("pedidos").insert(pedidoToRow(p, sid) as any).then(({ error }) => {
+    if (error) { console.error("DB insert pedido", error); toast.error("Erro ao salvar pedido no banco"); }
+  });
 };
 
 const dbUpdatePedido = (pedidoId: string, updates: Record<string, any>) => {
-  supabase.from("pedidos").update(updates).eq("id", pedidoId).then(({ error }) => { if (error) console.error("DB update pedido", error); });
+  supabase.from("pedidos").update(updates).eq("id", pedidoId).then(({ error }) => {
+    if (error) { console.error("DB update pedido", error); toast.error("Erro ao atualizar pedido"); }
+  });
 };
 
 const dbInsertFechamento = (f: FechamentoConta) => {
   const sid = getActiveStoreId();
-  if (!sid) return;
-  supabase.from("fechamentos").insert(fechamentoToRow(f, sid) as any).then(({ error }) => { if (error) console.error("DB insert fechamento", error); });
+  if (!sid) { console.warn("dbInsertFechamento: storeId is null, skipping"); return; }
+  supabase.from("fechamentos").insert(fechamentoToRow(f, sid) as any).then(({ error }) => {
+    if (error) { console.error("DB insert fechamento", error); toast.error("Erro ao salvar fechamento no banco"); }
+  });
 };
 
 const dbUpdateFechamento = (id: string, updates: Record<string, any>) => {
-  supabase.from("fechamentos").update(updates).eq("id", id).then(({ error }) => { if (error) console.error("DB update fechamento", error); });
+  supabase.from("fechamentos").update(updates).eq("id", id).then(({ error }) => {
+    if (error) { console.error("DB update fechamento", error); toast.error("Erro ao atualizar fechamento"); }
+  });
 };
 
 const dbInsertEvento = (e: EventoOperacional) => {
   const sid = getActiveStoreId();
   if (!sid) return;
-  supabase.from("eventos_operacionais").insert(eventoToRow(e, sid) as any).then(({ error }) => { if (error) console.error("DB insert evento", error); });
+  supabase.from("eventos_operacionais").insert(eventoToRow(e, sid) as any).then(({ error }) => {
+    if (error) console.error("DB insert evento", error);
+  });
 };
 
 const dbInsertMovimentacao = (m: MovimentacaoCaixa) => {
   const sid = getActiveStoreId();
-  if (!sid) return;
-  supabase.from("movimentacoes_caixa").insert(movToRow(m, sid) as any).then(({ error }) => { if (error) console.error("DB insert mov", error); });
+  if (!sid) { console.warn("dbInsertMovimentacao: storeId is null"); return; }
+  supabase.from("movimentacoes_caixa").insert(movToRow(m, sid) as any).then(({ error }) => {
+    if (error) { console.error("DB insert mov", error); toast.error("Erro ao salvar movimentação"); }
+  });
 };
 
 const dbUpsertEstadoCaixa = (aberto: boolean, fundoTroco: number, nome: string) => {
