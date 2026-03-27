@@ -38,23 +38,38 @@ const TabletsManager = ({ storeId }: Props) => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingTablet, setEditingTablet] = useState<TabletRow | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<TabletRow | null>(null);
-  const [detailTablet, setDetailTablet] = useState<TabletRow | null>(null);
-  const [detailPin, setDetailPin] = useState("");
-  const [regenerating, setRegenerating] = useState(false);
+
+  // Shared PIN state
+  const [sharedPin, setSharedPin] = useState<string | null>(null);
+  const [sharedPinId, setSharedPinId] = useState<string | null>(null);
+  const [regeneratingPin, setRegeneratingPin] = useState(false);
 
   const [formNome, setFormNome] = useState("");
   const [formMesaId, setFormMesaId] = useState<string>("none");
-  const [generatedPin, setGeneratedPin] = useState("");
   const [saving, setSaving] = useState(false);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
-    const [tabletsRes, mesasRes] = await Promise.all([
+    const [tabletsRes, mesasRes, pinsRes] = await Promise.all([
       supabase.from("tablets").select("*").eq("store_id", storeId).order("created_at", { ascending: true }),
       supabase.from("mesas").select("id, numero, nome").eq("store_id", storeId).order("numero", { ascending: true }),
+      supabase.from("module_pins").select("id, pin_hash, label").eq("store_id", storeId).eq("module", "cliente").eq("active", true).limit(1),
     ]);
     setTablets((tabletsRes.data as TabletRow[] | null) ?? []);
     setMesas((mesasRes.data as MesaRow[] | null) ?? []);
+
+    // Check for existing shared PIN
+    const existingPin = pinsRes.data?.[0];
+    if (existingPin) {
+      setSharedPinId(existingPin.id);
+      // Try to find pin_code from any tablet that references this pin
+      const tabletWithCode = (tabletsRes.data as TabletRow[] | null)?.find((t) => t.pin_id === existingPin.id && t.pin_code);
+      setSharedPin(tabletWithCode?.pin_code ?? null);
+    } else {
+      setSharedPinId(null);
+      setSharedPin(null);
+    }
+
     setLoading(false);
   }, [storeId]);
 
@@ -67,11 +82,58 @@ const TabletsManager = ({ storeId }: Props) => {
     return mesa.nome ? `${String(mesa.numero).padStart(2, "0")} – ${mesa.nome}` : String(mesa.numero).padStart(2, "0");
   };
 
+  // --- Shared PIN ---
+  const handleCreateOrRegeneratePin = async () => {
+    setRegeneratingPin(true);
+    const newPin = generatePin();
+
+    // Deactivate old PIN if exists
+    if (sharedPinId) {
+      await supabase.from("module_pins").update({ active: false }).eq("id", sharedPinId);
+    }
+
+    // Create new shared PIN
+    const { data: pinId, error } = await supabase.rpc("create_module_pin", {
+      _store_id: storeId,
+      _module: "cliente",
+      _pin: newPin,
+      _label: "Tablet (compartilhado)",
+    });
+
+    if (error || !pinId) {
+      toast.error("Erro ao gerar PIN");
+      setRegeneratingPin(false);
+      return;
+    }
+
+    // Update all tablets to reference the new shared PIN
+    const { error: updateError } = await supabase
+      .from("tablets")
+      .update({ pin_id: pinId, pin_code: newPin, updated_at: new Date().toISOString() })
+      .eq("store_id", storeId);
+
+    if (updateError) {
+      console.warn("Erro ao atualizar tablets com novo PIN:", updateError);
+    }
+
+    setSharedPinId(pinId);
+    setSharedPin(newPin);
+    setRegeneratingPin(false);
+    toast.success(sharedPinId ? "Novo PIN gerado!" : "PIN criado!");
+    fetchData();
+  };
+
+  const copyPin = () => {
+    if (!sharedPin) return;
+    navigator.clipboard.writeText(sharedPin);
+    toast.success("PIN copiado!");
+  };
+
+  // --- Tablets CRUD ---
   const openCreateDialog = () => {
     setEditingTablet(null);
     setFormNome("");
     setFormMesaId("none");
-    setGeneratedPin(generatePin());
     setDialogOpen(true);
   };
 
@@ -79,7 +141,6 @@ const TabletsManager = ({ storeId }: Props) => {
     setEditingTablet(tablet);
     setFormNome(tablet.nome);
     setFormMesaId(tablet.mesa_id ?? "none");
-    setGeneratedPin("");
     setDialogOpen(true);
   };
 
@@ -89,11 +150,9 @@ const TabletsManager = ({ storeId }: Props) => {
       return;
     }
     setSaving(true);
-
     const mesaIdValue = formMesaId === "none" ? null : formMesaId;
 
     if (editingTablet) {
-      // Update existing tablet
       const { error } = await supabase
         .from("tablets")
         .update({ nome: formNome.trim(), mesa_id: mesaIdValue, updated_at: new Date().toISOString() })
@@ -101,43 +160,24 @@ const TabletsManager = ({ storeId }: Props) => {
 
       if (error) {
         toast.error("Erro ao atualizar tablet");
-        console.error(error);
       } else {
         toast.success("Tablet atualizado");
       }
     } else {
-      // Create new tablet with auto-generated PIN
-      const { data: pinId, error: pinError } = await supabase.rpc("create_module_pin", {
-        _store_id: storeId,
-        _module: "cliente",
-        _pin: generatedPin,
-        _label: formNome.trim(),
-      });
-
-      if (pinError || !pinId) {
-        toast.error("Erro ao criar PIN do tablet");
-        console.error(pinError);
-        setSaving(false);
-        return;
-      }
-
-      const { data: newTablet, error } = await supabase.from("tablets").insert({
+      // Create tablet linked to shared PIN (if exists)
+      const { error } = await supabase.from("tablets").insert({
         store_id: storeId,
         nome: formNome.trim(),
         mesa_id: mesaIdValue,
-        pin_id: pinId,
-        pin_code: generatedPin,
+        pin_id: sharedPinId,
+        pin_code: sharedPin,
         ativo: true,
-      }).select("*").single();
+      });
 
-      if (error || !newTablet) {
+      if (error) {
         toast.error("Erro ao criar tablet");
-        console.error(error);
       } else {
         toast.success("Tablet criado!");
-        // Open detail popup showing the generated PIN
-        setDetailTablet(newTablet as TabletRow);
-        setDetailPin(generatedPin);
       }
     }
 
@@ -148,12 +188,6 @@ const TabletsManager = ({ storeId }: Props) => {
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
-
-    // Deactivate associated PIN
-    if (deleteTarget.pin_id) {
-      await supabase.from("module_pins").update({ active: false }).eq("id", deleteTarget.pin_id);
-    }
-
     const { error } = await supabase.from("tablets").delete().eq("id", deleteTarget.id);
     if (error) {
       toast.error("Erro ao excluir tablet");
@@ -167,56 +201,8 @@ const TabletsManager = ({ storeId }: Props) => {
   const toggleAtivo = async (tablet: TabletRow) => {
     const newAtivo = !tablet.ativo;
     await supabase.from("tablets").update({ ativo: newAtivo, updated_at: new Date().toISOString() }).eq("id", tablet.id);
-
-    // Also toggle associated PIN
-    if (tablet.pin_id) {
-      await supabase.from("module_pins").update({ active: newAtivo }).eq("id", tablet.pin_id);
-    }
-
     toast.success(newAtivo ? "Tablet ativado" : "Tablet desativado");
     fetchData();
-  };
-
-  const openDetail = (tablet: TabletRow) => {
-    setDetailTablet(tablet);
-    setDetailPin(tablet.pin_code ?? "");
-  };
-
-  const handleRegeneratePin = async () => {
-    if (!detailTablet) return;
-    setRegenerating(true);
-    const newPin = generatePin();
-
-    // Deactivate old PIN
-    if (detailTablet.pin_id) {
-      await supabase.from("module_pins").update({ active: false }).eq("id", detailTablet.pin_id);
-    }
-
-    // Create new PIN
-    const { data: pinId, error } = await supabase.rpc("create_module_pin", {
-      _store_id: storeId,
-      _module: "cliente",
-      _pin: newPin,
-      _label: detailTablet.nome,
-    });
-
-    if (error || !pinId) {
-      toast.error("Erro ao regenerar PIN");
-      setRegenerating(false);
-      return;
-    }
-
-    await supabase.from("tablets").update({ pin_id: pinId, pin_code: newPin, updated_at: new Date().toISOString() }).eq("id", detailTablet.id);
-    setDetailPin(newPin);
-    setDetailTablet({ ...detailTablet, pin_id: pinId });
-    setRegenerating(false);
-    toast.success("Novo PIN gerado!");
-    fetchData();
-  };
-
-  const copyPin = () => {
-    navigator.clipboard.writeText(detailPin);
-    toast.success("PIN copiado!");
   };
 
   if (loading) {
@@ -225,6 +211,7 @@ const TabletsManager = ({ storeId }: Props) => {
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-xl font-black text-foreground">Tablets</h2>
@@ -235,6 +222,47 @@ const TabletsManager = ({ storeId }: Props) => {
         </Button>
       </div>
 
+      {/* Shared PIN Section */}
+      <div className="surface-card space-y-3 p-5">
+        <div className="flex items-center gap-2">
+          <KeyRound className="h-5 w-5 text-primary" />
+          <h3 className="text-base font-bold text-foreground">PIN Único dos Tablets</h3>
+        </div>
+        <p className="text-sm text-muted-foreground">
+          Todos os tablets usam o mesmo PIN para acessar o sistema. Compartilhe este código com a equipe.
+        </p>
+
+        {sharedPin ? (
+          <div className="flex flex-col items-center gap-3 rounded-xl border border-primary/20 bg-primary/5 p-5">
+            <p className="text-4xl font-black tabular-nums tracking-[0.3em] text-primary">{sharedPin}</p>
+            <div className="flex gap-2">
+              <Button size="sm" variant="outline" onClick={copyPin} className="gap-1 rounded-lg text-xs">
+                <Copy className="h-3 w-3" /> Copiar
+              </Button>
+              <Button size="sm" variant="outline" onClick={handleCreateOrRegeneratePin} disabled={regeneratingPin} className="gap-1 rounded-lg text-xs">
+                <RefreshCw className={`h-3 w-3 ${regeneratingPin ? "animate-spin" : ""}`} />
+                Regenerar
+              </Button>
+            </div>
+            <p className="text-[11px] text-muted-foreground">Ao regenerar, o PIN anterior será desativado.</p>
+          </div>
+        ) : sharedPinId ? (
+          <div className="flex flex-col items-center gap-3 rounded-xl border border-border bg-secondary/30 p-5">
+            <p className="text-sm text-muted-foreground">PIN configurado (hash seguro armazenado)</p>
+            <Button size="sm" variant="outline" onClick={handleCreateOrRegeneratePin} disabled={regeneratingPin} className="gap-1 rounded-lg text-xs">
+              <RefreshCw className={`h-3 w-3 ${regeneratingPin ? "animate-spin" : ""}`} />
+              Regenerar PIN
+            </Button>
+          </div>
+        ) : (
+          <Button onClick={handleCreateOrRegeneratePin} disabled={regeneratingPin} className="h-11 w-full rounded-xl font-bold gap-2">
+            <KeyRound className="h-4 w-4" />
+            {regeneratingPin ? "Gerando…" : "Gerar PIN dos Tablets"}
+          </Button>
+        )}
+      </div>
+
+      {/* Tablets List */}
       {tablets.length === 0 ? (
         <div className="surface-card flex flex-col items-center gap-3 py-12 text-center">
           <TabletSmartphone className="h-10 w-10 text-muted-foreground/50" />
@@ -245,8 +273,7 @@ const TabletsManager = ({ storeId }: Props) => {
           {tablets.map((tablet) => (
             <div
               key={tablet.id}
-              className={`surface-card flex flex-col gap-3 p-4 cursor-pointer transition-colors hover:ring-1 hover:ring-primary/30 ${!tablet.ativo ? "opacity-50" : ""}`}
-              onClick={() => openDetail(tablet)}
+              className={`surface-card flex flex-col gap-3 p-4 ${!tablet.ativo ? "opacity-50" : ""}`}
             >
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-2">
@@ -258,12 +285,11 @@ const TabletsManager = ({ storeId }: Props) => {
                 </Badge>
               </div>
 
-              <div className="space-y-1 text-xs text-muted-foreground">
+              <div className="text-xs text-muted-foreground">
                 <p>Mesa: <span className="font-semibold text-foreground">{getMesaLabel(tablet.mesa_id)}</span></p>
-                <p>PIN: <span className="font-semibold text-foreground">{tablet.pin_id ? "✓ Configurado" : "✗ Sem PIN"}</span></p>
               </div>
 
-              <div className="flex gap-2 pt-1" onClick={(e) => e.stopPropagation()}>
+              <div className="flex gap-2 pt-1">
                 <Button size="sm" variant="outline" onClick={() => openEditDialog(tablet)} className="gap-1 rounded-lg text-xs">
                   <Pencil className="h-3 w-3" /> Editar
                 </Button>
@@ -314,14 +340,6 @@ const TabletsManager = ({ storeId }: Props) => {
               </Select>
             </div>
 
-            {!editingTablet && generatedPin && (
-              <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 text-center">
-                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">PIN gerado automaticamente</p>
-                <p className="mt-1 text-3xl font-black tabular-nums tracking-[0.3em] text-primary">{generatedPin}</p>
-                <p className="mt-2 text-[11px] text-muted-foreground">Anote este PIN. Ele será usado para acessar o tablet.</p>
-              </div>
-            )}
-
             <Button onClick={handleSave} disabled={saving} className="h-11 w-full rounded-xl font-bold">
               {saving ? "Salvando…" : editingTablet ? "Salvar alterações" : "Criar Tablet"}
             </Button>
@@ -335,7 +353,7 @@ const TabletsManager = ({ storeId }: Props) => {
           <AlertDialogHeader>
             <AlertDialogTitle>Excluir tablet?</AlertDialogTitle>
             <AlertDialogDescription>
-              O tablet "{deleteTarget?.nome}" será removido e seu PIN desativado. Esta ação não pode ser desfeita.
+              O tablet "{deleteTarget?.nome}" será removido. Esta ação não pode ser desfeita.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -346,68 +364,6 @@ const TabletsManager = ({ storeId }: Props) => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
-      {/* Detail / PIN dialog */}
-      <Dialog open={!!detailTablet} onOpenChange={(open) => !open && setDetailTablet(null)}>
-        <DialogContent className="sm:max-w-sm">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <TabletSmartphone className="h-5 w-5" />
-              {detailTablet?.nome}
-            </DialogTitle>
-          </DialogHeader>
-
-          <div className="space-y-4 pt-2">
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Mesa</span>
-                <span className="font-semibold text-foreground">{getMesaLabel(detailTablet?.mesa_id ?? null)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Status</span>
-                <Badge variant={detailTablet?.ativo ? "default" : "secondary"} className="text-[10px]">
-                  {detailTablet?.ativo ? "Ativo" : "Inativo"}
-                </Badge>
-              </div>
-            </div>
-
-            {/* PIN section */}
-            <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 text-center space-y-3">
-              <div className="flex items-center justify-center gap-2">
-                <KeyRound className="h-4 w-4 text-primary" />
-                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">PIN de Acesso</p>
-              </div>
-
-              {detailPin ? (
-                <>
-                  <p className="text-4xl font-black tabular-nums tracking-[0.3em] text-primary">{detailPin}</p>
-                  <Button size="sm" variant="outline" onClick={copyPin} className="gap-1 rounded-lg text-xs">
-                    <Copy className="h-3 w-3" /> Copiar PIN
-                  </Button>
-                </>
-              ) : (
-                <p className="text-sm text-muted-foreground">
-                  {detailTablet?.pin_id ? "PIN configurado (hash seguro)" : "Nenhum PIN configurado"}
-                </p>
-              )}
-            </div>
-
-            <Button
-              onClick={handleRegeneratePin}
-              disabled={regenerating}
-              variant="outline"
-              className="h-11 w-full rounded-xl font-bold gap-2"
-            >
-              <RefreshCw className={`h-4 w-4 ${regenerating ? "animate-spin" : ""}`} />
-              {regenerating ? "Gerando…" : detailTablet?.pin_id ? "Regenerar PIN" : "Gerar PIN"}
-            </Button>
-
-            <p className="text-[11px] text-muted-foreground text-center">
-              Ao regenerar, o PIN anterior será desativado e um novo será criado.
-            </p>
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };
