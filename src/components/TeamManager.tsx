@@ -134,6 +134,34 @@ const TeamManager = ({ storeId }: Props) => {
     fetchMembers();
   };
 
+  const handleDelete = async (member: MemberRow) => {
+    const { error } = await supabase
+      .from("module_pins")
+      .delete()
+      .eq("id", member.id);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success(`${member.label || "Membro"} removido`);
+    fetchMembers();
+  };
+
+  const handleDeleteAllInactive = async () => {
+    const ids = members.filter((m) => !m.active).map((m) => m.id);
+    if (ids.length === 0) return;
+    const { error } = await supabase
+      .from("module_pins")
+      .delete()
+      .in("id", ids);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success(`${ids.length} membros inativos removidos`);
+    fetchMembers();
+  };
+
   const activeMembers = members.filter((m) => m.active);
   const inactiveMembers = members.filter((m) => !m.active);
 
