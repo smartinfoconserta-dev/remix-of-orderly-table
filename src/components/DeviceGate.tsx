@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Monitor, TabletSmartphone, Tv, LockKeyhole, Loader2 } from "lucide-react";
+import { Monitor, TabletSmartphone, Tv, LockKeyhole, Loader2, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
@@ -28,14 +28,24 @@ const TYPE_ICONS: Record<DeviceType, React.ReactNode> = {
   tv: <Tv className="h-6 w-6" />,
 };
 
+interface StoreOption {
+  id: string;
+  name: string;
+  slug: string;
+}
+
 const DeviceGate = ({ type, children }: DeviceGateProps) => {
   const [status, setStatus] = useState<"loading" | "activate" | "ready" | "blocked">("loading");
   const [storeId, setStoreId] = useState<string | null>(null);
   const [mesaId, setMesaId] = useState<string | null>(null);
-  const [storeSlug, setStoreSlug] = useState("");
+
+  // Activation form
+  const [stores, setStores] = useState<StoreOption[]>([]);
+  const [selectedStoreId, setSelectedStoreId] = useState("");
   const [pin, setPin] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isActivating, setIsActivating] = useState(false);
+  const [loadingStores, setLoadingStores] = useState(false);
 
   // On mount, check if device is already registered
   useEffect(() => {
@@ -52,7 +62,6 @@ const DeviceGate = ({ type, children }: DeviceGateProps) => {
         setMesaId(result.mesaId ?? null);
         setStatus("ready");
       } else {
-        // Device invalid or deactivated
         clearStoredDeviceId();
         setError(result.error ?? null);
         setStatus(result.error?.includes("desativado") ? "blocked" : "activate");
@@ -61,14 +70,33 @@ const DeviceGate = ({ type, children }: DeviceGateProps) => {
     check();
   }, []);
 
+  // Load stores when activation screen shows
+  useEffect(() => {
+    if (status !== "activate") return;
+    const loadStores = async () => {
+      setLoadingStores(true);
+      try {
+        const { data } = await supabase
+          .from("stores")
+          .select("id, name, slug")
+          .order("name");
+        setStores(data ?? []);
+      } catch {
+        console.error("[DeviceGate] failed to load stores");
+      } finally {
+        setLoadingStores(false);
+      }
+    };
+    loadStores();
+  }, [status]);
+
   const handleActivate = useCallback(async () => {
     if (isActivating) return;
     setIsActivating(true);
     setError(null);
 
-    const slug = storeSlug.trim().toLowerCase();
-    if (!slug) {
-      setError("Informe o código da loja");
+    if (!selectedStoreId) {
+      setError("Selecione uma empresa");
       setIsActivating(false);
       return;
     }
@@ -79,16 +107,14 @@ const DeviceGate = ({ type, children }: DeviceGateProps) => {
     }
 
     try {
-      // 1. Find store by slug
-      const { data: storeRows } = await supabase.rpc("get_store_by_slug", { _slug: slug });
-      if (!storeRows || storeRows.length === 0) {
-        setError("Loja não encontrada");
+      const store = stores.find((s) => s.id === selectedStoreId);
+      if (!store) {
+        setError("Empresa não encontrada");
         setIsActivating(false);
         return;
       }
-      const store = storeRows[0];
 
-      // 2. Validate PIN against module_pins for this store
+      // Validate PIN against module_pins for this store
       const { data: pins } = await supabase
         .from("module_pins")
         .select("id, pin_hash, module")
@@ -96,7 +122,7 @@ const DeviceGate = ({ type, children }: DeviceGateProps) => {
         .eq("active", true);
 
       if (!pins || pins.length === 0) {
-        setError("Nenhum PIN cadastrado para esta loja");
+        setError("Nenhum PIN cadastrado para esta empresa");
         setIsActivating(false);
         return;
       }
@@ -119,7 +145,7 @@ const DeviceGate = ({ type, children }: DeviceGateProps) => {
         return;
       }
 
-      // 3. Activate device
+      // Activate device
       const result = await activateDevice(store.id, type, `${TYPE_LABELS[type]} - ${store.name}`);
       if (!result.ok) {
         setError(result.error ?? "Erro ao ativar");
@@ -135,7 +161,7 @@ const DeviceGate = ({ type, children }: DeviceGateProps) => {
     } finally {
       setIsActivating(false);
     }
-  }, [storeSlug, pin, type, isActivating]);
+  }, [selectedStoreId, pin, type, isActivating, stores]);
 
   // Loading
   if (status === "loading") {
@@ -187,21 +213,35 @@ const DeviceGate = ({ type, children }: DeviceGateProps) => {
             </div>
             <h1 className="text-2xl font-black text-foreground">Ativar {TYPE_LABELS[type]}</h1>
             <p className="text-sm text-muted-foreground">
-              Informe o código da loja e o PIN de ativação para registrar este dispositivo.
+              Selecione a empresa e informe o PIN para registrar este dispositivo.
             </p>
           </div>
 
           <div className="space-y-4">
+            {/* Store select */}
             <div className="space-y-2">
-              <label className="text-sm font-semibold text-foreground">Código da Loja</label>
-              <Input
-                value={storeSlug}
-                onChange={(e) => setStoreSlug(e.target.value.slice(0, 40))}
-                placeholder="Ex: minha-loja"
-                autoComplete="off"
-              />
+              <label className="text-sm font-semibold text-foreground">Empresa</label>
+              <div className="relative">
+                <select
+                  value={selectedStoreId}
+                  onChange={(e) => setSelectedStoreId(e.target.value)}
+                  disabled={loadingStores}
+                  className="flex h-10 w-full appearance-none rounded-md border border-input bg-background px-3 py-2 pr-10 text-base ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                >
+                  <option value="">
+                    {loadingStores ? "Carregando..." : "Selecione a empresa"}
+                  </option>
+                  {stores.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.name}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+              </div>
             </div>
 
+            {/* PIN */}
             <div className="space-y-2">
               <label className="text-sm font-semibold text-foreground">PIN de Ativação</label>
               <Input
@@ -244,7 +284,7 @@ const DeviceGate = ({ type, children }: DeviceGateProps) => {
     );
   }
 
-  // Ready — render children
+  // Ready
   if (storeId) {
     return <>{children({ storeId, mesaId })}</>;
   }
