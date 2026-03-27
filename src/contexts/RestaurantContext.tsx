@@ -1022,7 +1022,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       const statusInicial: PedidoRealizado["statusBalcao"] = input.origem === "delivery" && !input.skipConfirmacao ? "aguardando_confirmacao" : "aberto";
       const novoPedido: PedidoRealizado = {
         id: `pedido-${idPrefix}-${now.getTime()}-${Math.random().toString(36).slice(2, 7)}`,
-        numeroPedido: prev.pedidosBalcao.length + 1, itens: input.itens.map(cloneItem), total: totalPedido,
+        numeroPedido: proximoNumeroPedido(), itens: input.itens.map(cloneItem), total: totalPedido,
         criadoEm: formatClock(now), criadoEmIso: now.toISOString(), origem: input.origem, mesaId: mesaIdGerado,
         caixaId: input.operador.id, caixaNome: input.operador.nome,
         clienteNome: input.clienteNome, clienteTelefone: input.clienteTelefone,
