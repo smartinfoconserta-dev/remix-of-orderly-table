@@ -111,7 +111,7 @@ Deno.serve(async (req) => {
       user_id: userId,
       store_id: storeId,
       role_in_store: role,
-    }, { onConflict: "user_id,store_id" }).select().single();
+    }, { onConflict: "store_id,user_id" }).select().single();
 
     if (memberError) {
       // Cleanup: delete the auth user if membership fails
