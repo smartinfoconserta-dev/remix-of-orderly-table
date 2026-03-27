@@ -270,7 +270,7 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
   useEffect(() => {
     if (modoForced) setModoOperacao(modoForced);
   }, [modoForced]);
-  const [caixaView, setCaixaView] = useState<"mesas" | "delivery" | "totem">(() => {
+  const [caixaView, setCaixaView] = useState<"mesas" | "delivery" | "totem" | "historico">(() => {
     if (modoForced === "somente_delivery") return "delivery";
     if (modoForced === "somente_mesas") return "mesas";
     const savedModo = localStorage.getItem("obsidian-caixa-modo-v1");
