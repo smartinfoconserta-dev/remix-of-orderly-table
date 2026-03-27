@@ -1217,13 +1217,16 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
 
   const clockStr = currentTime.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
 
-  const dismissAviso = () => {
+  const dismissAviso = async () => {
     try {
-      const raw = localStorage.getItem("obsidian-master-aviso-v1");
-      if (raw) {
-        const aviso = JSON.parse(raw);
-        aviso.lido = true;
-        localStorage.setItem("obsidian-master-aviso-v1", JSON.stringify(aviso));
+      const getStoreId = (): string | null => {
+        try { const raw = sessionStorage.getItem("obsidian-op-session-v2"); if (raw) { const s = JSON.parse(raw); return s.storeId ?? null; } } catch {}
+        try { const saved = sessionStorage.getItem("orderly-active-store"); if (saved) return saved; } catch {}
+        return null;
+      };
+      const storeId = getStoreId();
+      if (storeId) {
+        await supabase.from("restaurant_config").update({ aviso_master: { ...masterAviso, lido: true } as any }).eq("store_id", storeId);
       }
     } catch {}
     setMasterAviso(null);
