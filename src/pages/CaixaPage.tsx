@@ -328,14 +328,18 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
     }
   }, []);
 
-  // Poll motoboy fechamentos every 5s
+  // Poll motoboy fechamentos from Supabase every 5s
   useEffect(() => {
-    const ler = () => {
-      try {
-        const raw = localStorage.getItem(FECHAMENTOS_MOTOBOY_KEY);
-        const lista = raw ? JSON.parse(raw) : [];
-        setFechamentosPendentes(lista.filter((f: any) => f.status === "aguardando"));
-      } catch {}
+    const getStoreId = (): string | null => {
+      try { const raw = sessionStorage.getItem("obsidian-op-session-v2"); if (raw) { const s = JSON.parse(raw); return s.storeId ?? null; } } catch {}
+      try { const saved = sessionStorage.getItem("orderly-active-store"); if (saved) return saved; } catch {}
+      return null;
+    };
+    const ler = async () => {
+      const storeId = getStoreId();
+      if (!storeId) return;
+      const { data } = await supabase.from("motoboy_fechamentos").select("*").eq("store_id", storeId).eq("status", "aguardando");
+      setFechamentosPendentes(data ?? []);
     };
     ler();
     const id = setInterval(ler, 5000);
@@ -343,18 +347,13 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
   }, []);
 
   const resumoDeliveryTurno = useMemo(() => {
-    try {
-      const raw = localStorage.getItem(FECHAMENTOS_MOTOBOY_KEY);
-      const todos = raw ? JSON.parse(raw) : [];
-      const doTurno = todos;
-      const conferidos = doTurno.filter((f: any) => f.status === "conferido");
-      const pendentes = doTurno.filter((f: any) => f.status === "aguardando");
-      const totalConferido = conferidos.reduce((s: number, f: any) => s + (f.resumo?.totalAPrestar || 0), 0);
-      const totalEntregas = conferidos.reduce((s: number, f: any) => s + (f.resumo?.totalEntregas || 0), 0);
-      const motoboyNomes = [...new Set(doTurno.map((f: any) => f.motoboyNome))] as string[];
-      return { conferidos: conferidos.length, pendentes: pendentes.length, totalConferido, totalEntregas, motoboyNomes };
-    } catch { return { conferidos: 0, pendentes: 0, totalConferido: 0, totalEntregas: 0, motoboyNomes: [] as string[] }; }
-  }, [caixaAberto, fechamentosPendentes]);
+    const conferidos = fechamentosPendentes.filter((f: any) => f.status === "conferido");
+    const pendentes = fechamentosPendentes.filter((f: any) => f.status === "aguardando");
+    const totalConferido = conferidos.reduce((s: number, f: any) => s + (f.resumo?.totalAPrestar || 0), 0);
+    const totalEntregas = conferidos.reduce((s: number, f: any) => s + (f.resumo?.totalEntregas || 0), 0);
+    const motoboyNomes = [...new Set([...conferidos, ...pendentes].map((f: any) => f.motoboy_nome))] as string[];
+    return { conferidos: conferidos.length, pendentes: pendentes.length, totalConferido, totalEntregas, motoboyNomes };
+  }, [fechamentosPendentes]);
 
 
   useEffect(() => {
