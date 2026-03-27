@@ -1150,38 +1150,23 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
 
     // Save counted cash as next shift's fund
     const contadoFinal = parseCurrencyInput(dinheiroContado);
-    if (Number.isFinite(contadoFinal) && contadoFinal > 0) {
-      localStorage.setItem(FUNDO_PROXIMO_KEY, String(contadoFinal));
-    }
 
     // Calculate and log diff
     const esperado = fundoTroco + resumoFinanceiro.dinheiro + resumoFinanceiro.entradasExtras - resumoFinanceiro.saidas;
     const diff = Number.isFinite(contadoFinal) ? contadoFinal - esperado : 0;
     const diffLabel = diff === 0 ? "caixa conferido" : diff > 0 ? `sobra de ${formatPrice(diff)}` : `falta de ${formatPrice(Math.abs(diff))}`;
 
-    // Save cash difference to history
+    // Pass diferença data to estado_caixa via fecharCaixaDoDia
+    const extras: { diferenca_dinheiro?: number; diferenca_motivo?: string; fundo_proximo?: number } = {};
     if (Number.isFinite(diff) && diff !== 0) {
-      try {
-        const raw = localStorage.getItem(DIFERENCAS_CAIXA_KEY);
-        const lista = raw ? JSON.parse(raw) : [];
-        lista.push({
-          id: `diff-${Date.now()}`,
-          data: new Date().toISOString(),
-          dataFormatada: new Date().toLocaleString("pt-BR"),
-          operador: currentOperator?.nome ?? "Caixa",
-          gerente: turnoManagerName,
-          esperado,
-          contado: contadoFinal,
-          diferenca: diff,
-          motivo: motivoDiferenca.trim() || "Não informado",
-          tipo: diff > 0 ? "sobra" : "quebra",
-        });
-        const limitada = lista.slice(-200);
-        localStorage.setItem(DIFERENCAS_CAIXA_KEY, JSON.stringify(limitada));
-      } catch {}
+      extras.diferenca_dinheiro = diff;
+      extras.diferenca_motivo = motivoDiferenca.trim() || "Não informado";
+    }
+    if (Number.isFinite(contadoFinal) && contadoFinal > 0) {
+      extras.fundo_proximo = contadoFinal;
     }
 
-    fecharCaixaDoDia(currentOperator);
+    fecharCaixaDoDia(currentOperator, Object.keys(extras).length > 0 ? extras : undefined);
     // Clear operator shift tracking
     try { localStorage.removeItem("obsidian-caixa-operadores-v1"); } catch {}
     try { localStorage.removeItem("obsidian-caixa-modo-v1"); } catch {}
