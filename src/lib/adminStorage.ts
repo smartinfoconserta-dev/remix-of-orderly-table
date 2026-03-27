@@ -228,6 +228,16 @@ export async function loadCardapioOverrides(
 // ─────────────────────────────────
 
 export function getMesasConfig(): MesasConfig {
+  return { totalMesas: 20 }; // fallback sync
+}
+
+export async function getMesasConfigAsync(storeId?: string | null): Promise<MesasConfig> {
+  try {
+    let query = supabase.from("mesas").select("id", { count: "exact", head: true });
+    if (storeId) query = query.eq("store_id", storeId);
+    const { count } = await query;
+    if (count !== null && count > 0) return { totalMesas: count };
+  } catch { /* fallback */ }
   return { totalMesas: 20 };
 }
 
