@@ -1165,6 +1165,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_manage_store_members: {
+        Args: { _store_id: string }
+        Returns: boolean
+      }
       create_module_pin: {
         Args: {
           _label?: string

@@ -84,7 +84,7 @@ const MesasManager = ({ storeId, storeName }: Props) => {
 
   const fetchMesas = useCallback(async () => {
     setLoading(true);
-    const { data } = await supabase
+    const { data } = await (supabase as any)
       .from("mesas")
       .select("*")
       .eq("store_id", storeId)
@@ -124,7 +124,7 @@ const MesasManager = ({ storeId, storeName }: Props) => {
     setSaving(true);
 
     if (editingMesa) {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from("mesas")
         .update({
           numero,
@@ -142,7 +142,7 @@ const MesasManager = ({ storeId, storeName }: Props) => {
       }
       toast.success(`Mesa ${numero} atualizada`);
     } else {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from("mesas")
         .insert({
           store_id: storeId,
@@ -180,7 +180,7 @@ const MesasManager = ({ storeId, storeName }: Props) => {
       status: "livre",
     }));
 
-    const { error } = await supabase.from("mesas").insert(rows);
+    const { error } = await (supabase as any).from("mesas").insert(rows);
     if (error) {
       toast.error(error.message);
       setBatchSaving(false);
@@ -195,7 +195,7 @@ const MesasManager = ({ storeId, storeName }: Props) => {
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
-    const { error } = await supabase.from("mesas").delete().eq("id", deleteTarget.id);
+    const { error } = await (supabase as any).from("mesas").delete().eq("id", deleteTarget.id);
     if (error) {
       toast.error(error.message);
       return;
@@ -212,7 +212,7 @@ const MesasManager = ({ storeId, storeName }: Props) => {
     setPinDialogOpen(true);
 
     // Fetch existing pins for this mesa
-    const { data } = await supabase
+    const { data } = await (supabase as any)
       .from("module_pins")
       .select("id, module, label, active")
       .eq("store_id", storeId)
@@ -248,7 +248,7 @@ const MesasManager = ({ storeId, storeName }: Props) => {
     setPinSaving(false);
 
     // Refresh pins
-    const { data } = await supabase
+    const { data } = await (supabase as any)
       .from("module_pins")
       .select("id, module, label, active")
       .eq("store_id", storeId)
@@ -258,7 +258,7 @@ const MesasManager = ({ storeId, storeName }: Props) => {
   };
 
   const handleDeactivatePin = async (pinId: string) => {
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from("module_pins")
       .update({ active: false })
       .eq("id", pinId);
