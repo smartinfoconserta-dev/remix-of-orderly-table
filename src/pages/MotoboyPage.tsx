@@ -74,9 +74,8 @@ export default function MotoboyPage() {
 
   // Load motoboys from Supabase
   useEffect(() => {
-    const storeId = getStoreIdFromSession();
-    if (!storeId) return;
-    supabase.from("motoboys").select("*").eq("store_id", storeId).eq("ativo", true)
+    if (!effectiveStoreId) return;
+    supabase.from("motoboys").select("*").eq("store_id", effectiveStoreId).eq("ativo", true)
       .then(({ data }) => {
         setMotoboys((data ?? []).map((r: any) => ({ id: r.id, nome: r.nome, pinHash: r.pin_hash, ativo: r.ativo })));
       });
