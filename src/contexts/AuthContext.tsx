@@ -109,15 +109,53 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [operationalSession, setOperationalSession] = useState<OperationalSession | null>(readOpSession);
 
   /* ─── Resolve auth level from Supabase user ─── */
-  const resolveSupabaseLevel = useCallback(async (user: User): Promise<AuthLevel> => {
+  interface ResolvedAuth {
+    level: AuthLevel;
+    opSession?: OperationalSession;
+    redirect?: string;
+  }
+
+  const resolveSupabaseLevel = useCallback(async (user: User): Promise<ResolvedAuth> => {
+    // 1. Check user_roles (master / admin)
     const { data: roles } = await supabase
       .from("user_roles")
       .select("role")
       .eq("user_id", user.id);
 
-    if (roles?.some((r) => r.role === "master")) return "master";
-    if (roles?.some((r) => r.role === "admin")) return "admin";
-    return "unauthenticated";
+    if (roles?.some((r) => r.role === "master")) return { level: "master", redirect: "/master" };
+    if (roles?.some((r) => r.role === "admin")) return { level: "admin", redirect: "/admin" };
+
+    // 2. Check store_members for gerente/caixa/owner
+    const { data: members } = await supabase
+      .from("store_members")
+      .select("store_id, role_in_store, stores(id, name, slug)")
+      .eq("user_id", user.id);
+
+    if (members && members.length > 0) {
+      const m = members[0];
+      const store = m.stores as any;
+      const role = m.role_in_store;
+
+      // Owners are treated as admins
+      if (role === "owner") return { level: "admin", redirect: "/admin" };
+
+      // Gerente, caixa, etc → operational with auto-session
+      const moduleRouteMap: Record<string, string> = { tv_retirada: "tv", cliente: "tablet" };
+      const opSession: OperationalSession = {
+        storeId: store.id,
+        storeSlug: store.slug,
+        storeName: store.name,
+        module: role,
+        pinLabel: user.email ?? null,
+      };
+      return {
+        level: "operational",
+        opSession,
+        redirect: `/${moduleRouteMap[role] ?? role}`,
+      };
+    }
+
+    return { level: "unauthenticated" };
   }, []);
 
   /* ─── Listen to auth state changes ─── */
