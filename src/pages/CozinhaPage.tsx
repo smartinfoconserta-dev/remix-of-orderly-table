@@ -90,7 +90,7 @@ const COZINHA_SETOR_KEY = "obsidian-cozinha-setor-v1";
 
 const CozinhaPage = () => {
   const { mesas, pedidosBalcao, marcarPedidoPronto, marcarPedidoBalcaoPronto, marcarBalcaoPreparando } = useRestaurant();
-  const { verifyEmployeeAccess, authLevel, logout } = useAuth();
+  const { verifyEmployeeAccess, authLevel, logout, operationalSession } = useAuth();
   const navigate = useNavigate();
   const isAdminAccess = authLevel === "admin" || authLevel === "master";
   const isOperationalCozinha = authLevel === "operational" && operationalSession?.module === "cozinha";
