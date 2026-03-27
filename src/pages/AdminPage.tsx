@@ -27,7 +27,7 @@ import {
   ExternalLink,
   TabletSmartphone,
 } from "lucide-react";
-import StorePinsManager from "@/components/StorePinsManager";
+import TeamManager from "@/components/TeamManager";
 import MesasManager from "@/components/MesasManager";
 import TabletsManager from "@/components/TabletsManager";
 import { useStore } from "@/contexts/StoreContext";
