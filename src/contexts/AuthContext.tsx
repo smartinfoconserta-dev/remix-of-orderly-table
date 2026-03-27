@@ -26,6 +26,19 @@ interface LoginResult {
   error?: string;
 }
 
+const STORE_ROLE_PRIORITY: Record<string, number> = {
+  owner: 100,
+  admin: 90,
+  gerente: 80,
+  caixa: 70,
+  cozinha: 60,
+  garcom: 50,
+  motoboy: 40,
+  totem: 30,
+  tv_retirada: 20,
+  cliente: 10,
+};
+
 interface AuthContextType {
   /** Current authentication level */
   authLevel: AuthLevel;
@@ -132,12 +145,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       .eq("user_id", user.id);
 
     if (members && members.length > 0) {
-      const m = members[0];
+      const sortedMembers = [...members].sort((a, b) => {
+        const priorityDiff = (STORE_ROLE_PRIORITY[b.role_in_store] ?? 0) - (STORE_ROLE_PRIORITY[a.role_in_store] ?? 0);
+        if (priorityDiff !== 0) return priorityDiff;
+        return new Date(a.created_at ?? 0).getTime() - new Date(b.created_at ?? 0).getTime();
+      });
+
+      const m = sortedMembers[0];
       const store = m.stores as any;
       const role = m.role_in_store;
 
       // Owners are treated as admins
-      if (role === "owner") return { level: "admin", redirect: "/admin" };
+      if (role === "owner" || role === "admin") return { level: "admin", redirect: "/admin" };
 
       // Gerente, caixa, etc → operational with auto-session
       const moduleRouteMap: Record<string, string> = { tv_retirada: "tv", cliente: "tablet" };
