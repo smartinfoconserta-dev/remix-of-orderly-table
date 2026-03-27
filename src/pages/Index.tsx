@@ -46,9 +46,9 @@ const Index = () => {
 
     // Save or clear credentials
     if (rememberMe) {
-      localStorage.setItem(SAVED_CREDS_KEY, JSON.stringify({ email: email.trim(), password }));
+      sessionStorage.setItem(SAVED_CREDS_KEY, JSON.stringify({ email: email.trim(), password }));
     } else {
-      localStorage.removeItem(SAVED_CREDS_KEY);
+      sessionStorage.removeItem(SAVED_CREDS_KEY);
     }
 
     const result = await loginUnified(email.trim(), password);
