@@ -176,7 +176,8 @@ const OperationalLoginTab = () => {
       return;
     }
 
-    navigate(`/${result.module}`);
+    const moduleRouteMap: Record<string, string> = { tv_retirada: "tv", cliente: "tablet" };
+    navigate(`/${moduleRouteMap[result.module!] ?? result.module}`);
   };
 
   // Close dropdown when clicking outside
