@@ -2,6 +2,7 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useR
 import type { CashMovementType, OperationalUser, PaymentMethod, SplitPayment } from "@/types/operations";
 import { getSistemaConfig } from "@/lib/adminStorage";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export interface ItemCarrinho {
   uid: string;
@@ -231,6 +232,10 @@ const RestaurantContext = _global.__restaurantCtx;
 let _contadorComanda = 0;
 const proximoNumeroComanda = () => { _contadorComanda += 1; return _contadorComanda; };
 
+// Global pedido number counter — loaded from DB on init
+let _nextPedidoNumber = 1;
+const proximoNumeroPedido = () => { const n = _nextPedidoNumber; _nextPedidoNumber += 1; return n; };
+
 function derivarStatus(m: Pick<Mesa, "carrinho" | "pedidos">): Mesa["status"] {
   if (m.pedidos.length > 0) return "consumo";
   if (m.carrinho.length > 0) return "pendente";
@@ -278,18 +283,21 @@ const resetMesa = (mesa: Mesa): Mesa => ({
 });
 
 // ── Supabase persistence helpers ──
+let _cachedStoreId: string | null = null;
+
 const getActiveStoreId = (): string | null => {
   // Try operational session first
   try {
     const raw = sessionStorage.getItem("obsidian-op-session-v2");
-    if (raw) { const s = JSON.parse(raw); if (s.storeId) return s.storeId; }
+    if (raw) { const s = JSON.parse(raw); if (s.storeId) { _cachedStoreId = s.storeId; return s.storeId; } }
   } catch {}
   // Try admin store
   try {
     const saved = sessionStorage.getItem("orderly-active-store");
-    if (saved) return saved;
+    if (saved) { _cachedStoreId = saved; return saved; }
   } catch {}
-  return null;
+  // Fallback to cached value (covers edge cases where session is briefly unavailable)
+  return _cachedStoreId;
 };
 
 // DB row converters for pedidos
@@ -383,37 +391,49 @@ const rowToMovimentacao = (row: any): MovimentacaoCaixa => ({
   usuarioId: row.usuario_id ?? "", usuarioNome: row.usuario_nome ?? "",
 });
 
-// Fire-and-forget DB insert
+// Fire-and-forget DB insert with error visibility
 const dbInsertPedido = (p: PedidoRealizado) => {
   const sid = getActiveStoreId();
-  if (!sid) return;
-  supabase.from("pedidos").insert(pedidoToRow(p, sid) as any).then(({ error }) => { if (error) console.error("DB insert pedido", error); });
+  if (!sid) { console.warn("dbInsertPedido: storeId is null, skipping"); return; }
+  supabase.from("pedidos").insert(pedidoToRow(p, sid) as any).then(({ error }) => {
+    if (error) { console.error("DB insert pedido", error); toast.error("Erro ao salvar pedido no banco"); }
+  });
 };
 
 const dbUpdatePedido = (pedidoId: string, updates: Record<string, any>) => {
-  supabase.from("pedidos").update(updates).eq("id", pedidoId).then(({ error }) => { if (error) console.error("DB update pedido", error); });
+  supabase.from("pedidos").update(updates).eq("id", pedidoId).then(({ error }) => {
+    if (error) { console.error("DB update pedido", error); toast.error("Erro ao atualizar pedido"); }
+  });
 };
 
 const dbInsertFechamento = (f: FechamentoConta) => {
   const sid = getActiveStoreId();
-  if (!sid) return;
-  supabase.from("fechamentos").insert(fechamentoToRow(f, sid) as any).then(({ error }) => { if (error) console.error("DB insert fechamento", error); });
+  if (!sid) { console.warn("dbInsertFechamento: storeId is null, skipping"); return; }
+  supabase.from("fechamentos").insert(fechamentoToRow(f, sid) as any).then(({ error }) => {
+    if (error) { console.error("DB insert fechamento", error); toast.error("Erro ao salvar fechamento no banco"); }
+  });
 };
 
 const dbUpdateFechamento = (id: string, updates: Record<string, any>) => {
-  supabase.from("fechamentos").update(updates).eq("id", id).then(({ error }) => { if (error) console.error("DB update fechamento", error); });
+  supabase.from("fechamentos").update(updates).eq("id", id).then(({ error }) => {
+    if (error) { console.error("DB update fechamento", error); toast.error("Erro ao atualizar fechamento"); }
+  });
 };
 
 const dbInsertEvento = (e: EventoOperacional) => {
   const sid = getActiveStoreId();
   if (!sid) return;
-  supabase.from("eventos_operacionais").insert(eventoToRow(e, sid) as any).then(({ error }) => { if (error) console.error("DB insert evento", error); });
+  supabase.from("eventos_operacionais").insert(eventoToRow(e, sid) as any).then(({ error }) => {
+    if (error) console.error("DB insert evento", error);
+  });
 };
 
 const dbInsertMovimentacao = (m: MovimentacaoCaixa) => {
   const sid = getActiveStoreId();
-  if (!sid) return;
-  supabase.from("movimentacoes_caixa").insert(movToRow(m, sid) as any).then(({ error }) => { if (error) console.error("DB insert mov", error); });
+  if (!sid) { console.warn("dbInsertMovimentacao: storeId is null"); return; }
+  supabase.from("movimentacoes_caixa").insert(movToRow(m, sid) as any).then(({ error }) => {
+    if (error) { console.error("DB insert mov", error); toast.error("Erro ao salvar movimentação"); }
+  });
 };
 
 const dbUpsertEstadoCaixa = (aberto: boolean, fundoTroco: number, nome: string) => {
@@ -459,14 +479,18 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const [allFechamentos, setAllFechamentos] = useState<FechamentoConta[]>([]);
   const [allEventos, setAllEventos] = useState<EventoOperacional[]>([]);
   const [allMovimentacoesCaixa, setAllMovimentacoesCaixa] = useState<MovimentacaoCaixa[]>([]);
-  const loadedRef = useRef(false);
+  const loadedStoreRef = useRef<string | null>(null);
 
-  // ── Load from Supabase on mount ──
+  // ── Load from Supabase — reactive to session changes ──
   useEffect(() => {
     const load = async () => {
       const sid = getActiveStoreId();
-      if (!sid || loadedRef.current) return;
-      loadedRef.current = true;
+      if (!sid) return;
+      // Already loaded for this store
+      if (loadedStoreRef.current === sid) return;
+      loadedStoreRef.current = sid;
+
+      console.log("[RestaurantContext] Loading data for store:", sid);
 
       const today = new Date();
       today.setHours(0, 0, 0, 0);
@@ -489,12 +513,23 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         supabase.from("fechamentos").select("*").eq("store_id", sid).gte("criado_em_iso", isoHistory).order("criado_em_iso", { ascending: false }).limit(500),
       ]);
 
+      // Get max numero_pedido for proper sequencing
+      const { data: maxPedidoData } = await supabase
+        .from("pedidos")
+        .select("numero_pedido")
+        .eq("store_id", sid)
+        .order("numero_pedido", { ascending: false })
+        .limit(1);
+      _nextPedidoNumber = (maxPedidoData?.[0]?.numero_pedido ?? 0) + 1;
+
       const allPedidos = (pedidosRes.data ?? []).map(rowToPedido);
       const pedidosMesa = allPedidos.filter(p => !["balcao", "delivery", "totem"].includes(p.origem));
       const pedidosBalcao = allPedidos.filter(p => ["balcao", "delivery", "totem"].includes(p.origem));
       const fechamentos = (fechRes.data ?? []).map(rowToFechamento);
       const eventos = (evtRes.data ?? []).map(rowToEvento);
       const movimentacoes = (movRes.data ?? []).map(rowToMovimentacao);
+
+      console.log(`[RestaurantContext] Loaded: ${allPedidos.length} pedidos, ${fechamentos.length} fechamentos, caixa: ${caixaRes.data?.[0]?.aberto ?? "N/A"}`);
 
       // Build mesa state from estado_mesas + pedidos
       const estadoMesasMap = new Map<string, any>();
@@ -542,12 +577,24 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         fundoTroco: Number(caixaRow?.fundo_troco ?? 0),
         pedidosBalcao,
       });
-      const allFechamentos = (allFechRes.data ?? []).map(rowToFechamento);
-      setAllFechamentos(allFechamentos);
+      const allFechs = (allFechRes.data ?? []).map(rowToFechamento);
+      setAllFechamentos(allFechs);
       setAllEventos(eventos);
       setAllMovimentacoesCaixa(movimentacoes);
     };
+
+    // Run immediately
     load();
+
+    // Retry periodically if storeId wasn't available yet (session may set later)
+    const retryInterval = setInterval(() => {
+      const sid = getActiveStoreId();
+      if (sid && loadedStoreRef.current !== sid) {
+        load();
+      }
+    }, 1500);
+
+    return () => clearInterval(retryInterval);
   }, []);
 
   // ── Realtime subscriptions ──
@@ -740,7 +787,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         const origem = meta?.modo === "garcom" || meta?.modo === "caixa" ? meta.modo : meta?.modo === "totem" ? "totem" : "cliente";
         const novoPedido: PedidoRealizado = {
           id: `pedido-${now.getTime()}-${Math.random().toString(36).slice(2, 7)}`,
-          numeroPedido: mesa.pedidos.length + 1, itens: snapshot, total: totalPedido,
+          numeroPedido: proximoNumeroPedido(), itens: snapshot, total: totalPedido,
           criadoEm: formatClock(now), criadoEmIso: now.toISOString(), origem, mesaId,
           garcomId: origem === "garcom" ? meta?.operador?.id : undefined,
           garcomNome: origem === "garcom" ? meta?.operador?.nome : undefined,
@@ -975,7 +1022,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       const statusInicial: PedidoRealizado["statusBalcao"] = input.origem === "delivery" && !input.skipConfirmacao ? "aguardando_confirmacao" : "aberto";
       const novoPedido: PedidoRealizado = {
         id: `pedido-${idPrefix}-${now.getTime()}-${Math.random().toString(36).slice(2, 7)}`,
-        numeroPedido: prev.pedidosBalcao.length + 1, itens: input.itens.map(cloneItem), total: totalPedido,
+        numeroPedido: proximoNumeroPedido(), itens: input.itens.map(cloneItem), total: totalPedido,
         criadoEm: formatClock(now), criadoEmIso: now.toISOString(), origem: input.origem, mesaId: mesaIdGerado,
         caixaId: input.operador.id, caixaNome: input.operador.nome,
         clienteNome: input.clienteNome, clienteTelefone: input.clienteTelefone,
