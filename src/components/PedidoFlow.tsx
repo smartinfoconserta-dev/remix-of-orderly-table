@@ -131,10 +131,14 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
   }, []);
 
   const customCats = useMemo(() => getCategoriasCustom(), []);
-  const allCategorias: Categoria[] = useMemo(() => [
-    ...dbCategorias,
-    ...customCats.filter((c) => !dbCategorias.some((dc) => dc.id === c.id)).map((c) => ({ id: c.id, nome: c.nome, icone: c.icone })),
-  ], [customCats, dbCategorias]);
+  const allCategorias: Categoria[] = useMemo(() => {
+    // If we have DB categories, use them exclusively; only add custom cats that don't exist in DB by name or id
+    if (dbCategorias.length > 0) return dbCategorias;
+    return [
+      ...dbCategorias,
+      ...customCats.filter((c) => !dbCategorias.some((dc) => dc.id === c.id || dc.nome === c.nome)).map((c) => ({ id: c.id, nome: c.nome, icone: c.icone })),
+    ];
+  }, [customCats, dbCategorias]);
   const navigationItems = useMemo(() => [HOME_TAB, ...allCategorias], [allCategorias]);
   const [localCarrinho, setLocalCarrinho] = useState<ItemCarrinho[]>([]);
   const firstCatId = allCategorias[0]?.id ?? HOME_TAB_ID;
