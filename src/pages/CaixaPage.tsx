@@ -364,13 +364,36 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
   }, [fechamentosPendentes]);
 
 
+  // Load master aviso from restaurant_config (Supabase)
   useEffect(() => {
-    const checkAviso = () => {
-      try {
-        const raw = localStorage.getItem("obsidian-master-aviso-v1");
-        if (!raw) { setMasterAviso(null); return; }
-        const aviso = JSON.parse(raw);
-        if (aviso.lido) { setMasterAviso(null); return; }
+    const getStoreId = (): string | null => {
+      try { const raw = sessionStorage.getItem("obsidian-op-session-v2"); if (raw) { const s = JSON.parse(raw); return s.storeId ?? null; } } catch {}
+      try { const saved = sessionStorage.getItem("orderly-active-store"); if (saved) return saved; } catch {}
+      return null;
+    };
+    const storeId = getStoreId();
+    if (!storeId) return;
+
+    const loadAviso = async () => {
+      const { data } = await supabase.from("restaurant_config").select("aviso_master").eq("store_id", storeId).limit(1);
+      const aviso = data?.[0]?.aviso_master as any;
+      if (!aviso || aviso.lido) { setMasterAviso(null); return; }
+      setMasterAviso(aviso);
+      if (aviso.tipo === "urgente") {
+        setAvisoCanDismiss(false);
+        setTimeout(() => setAvisoCanDismiss(true), 60000);
+      } else {
+        setAvisoCanDismiss(true);
+      }
+    };
+    loadAviso();
+
+    // Realtime subscription for aviso updates
+    const channel = supabase
+      .channel(`aviso-${storeId}`)
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "restaurant_config", filter: `store_id=eq.${storeId}` }, (payload) => {
+        const aviso = (payload.new as any).aviso_master;
+        if (!aviso || aviso.lido) { setMasterAviso(null); return; }
         setMasterAviso(aviso);
         if (aviso.tipo === "urgente") {
           setAvisoCanDismiss(false);
@@ -378,11 +401,9 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
         } else {
           setAvisoCanDismiss(true);
         }
-      } catch { setMasterAviso(null); }
-    };
-    checkAviso();
-    const id = setInterval(checkAviso, 30000);
-    return () => clearInterval(id);
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
   }, []);
 
   // Live clock + desktop detection
