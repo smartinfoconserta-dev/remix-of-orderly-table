@@ -45,10 +45,11 @@ export default function MotoboyPage() {
   const INITIALS = NOME_REST.slice(0, 2).toUpperCase();
 
   const { pedidosBalcao, marcarBalcaoSaiu, marcarBalcaoEntregue, cancelarEntregaMotoboy } = useRestaurant();
-  const { authLevel, operationalSession, logout } = useAuth();
+  const { authLevel, operationalSession, supabaseUser, logout } = useAuth();
   const { storeId: ctxStoreId } = useStore();
   const effectiveStoreId = operationalSession?.storeId ?? ctxStoreId ?? getStoreIdFromSession();
   const isAdminAccess = authLevel === "admin" || authLevel === "master";
+  const isAuthenticatedMotoboyAccess = !!supabaseUser && authLevel === "operational" && operationalSession?.module === "motoboy";
   const [sessao, setSessao] = useState<{ id: string; nome: string; fundoTroco: number } | null>(() =>
     isAdminAccess ? { id: "admin", nome: "Administrador", fundoTroco: 0 } : getSessao()
   );
@@ -71,6 +72,27 @@ export default function MotoboyPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [motoboys, setMotoboys] = useState<Motoboy[]>([]);
   const [fechamentoEnviado, setFechamentoEnviado] = useState(false);
+
+  useEffect(() => {
+    if (isAdminAccess) {
+      setSessao({ id: "admin", nome: "Administrador", fundoTroco: 0 });
+      return;
+    }
+
+    if (!isAuthenticatedMotoboyAccess || !operationalSession) return;
+
+    const nomeResolvido =
+      operationalSession.pinLabel ||
+      (typeof supabaseUser.user_metadata?.name === "string" ? supabaseUser.user_metadata.name : null) ||
+      supabaseUser.email?.split("@")[0] ||
+      "Motoboy";
+
+    setSessao((prev) => prev ?? {
+      id: supabaseUser.id,
+      nome: nomeResolvido,
+      fundoTroco: 0,
+    });
+  }, [isAdminAccess, isAuthenticatedMotoboyAccess, operationalSession, supabaseUser]);
 
   // Load motoboys from Supabase
   useEffect(() => {
