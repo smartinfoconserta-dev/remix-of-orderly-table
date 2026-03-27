@@ -235,9 +235,19 @@ const TeamManager = ({ storeId }: Props) => {
           {/* Inactive members */}
           {inactiveMembers.length > 0 && (
             <div className="space-y-2">
-              <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
-                Inativos ({inactiveMembers.length})
-              </p>
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
+                  Inativos ({inactiveMembers.length})
+                </p>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-destructive hover:text-destructive hover:bg-destructive/10 text-xs gap-1"
+                  onClick={handleDeleteAllInactive}
+                >
+                  <Trash2 className="h-3.5 w-3.5" /> Remover todos inativos
+                </Button>
+              </div>
               <div className="grid gap-2">
                 {inactiveMembers.map((m) => (
                   <div
