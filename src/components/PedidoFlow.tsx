@@ -206,7 +206,7 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
   }, [searchQuery, produtosDaCategoria, produtosDisponiveis]);
   const featuredProducts = useMemo(
     () => ["c1", "l2", "pr1"].map((id) => produtos.find((produto) => produto.id === id)).filter(Boolean) as Produto[],
-    [],
+    [produtos],
   );
 
   // Combo products for home section
