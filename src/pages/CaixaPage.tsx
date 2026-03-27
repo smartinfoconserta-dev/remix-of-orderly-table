@@ -199,16 +199,23 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
   const [criticalReason, setCriticalReason] = useState("");
   const [criticalError, setCriticalError] = useState<string | null>(null);
   const [isAuthorizingCriticalAction, setIsAuthorizingCriticalAction] = useState(false);
-  const [fundoTrocoInput, setFundoTrocoInput] = useState(() => {
-    try {
-      const saved = localStorage.getItem(FUNDO_PROXIMO_KEY);
-      if (saved) {
-        const val = parseFloat(saved);
-        return Number.isFinite(val) ? val.toFixed(2).replace(".", ",") : "";
-      }
-    } catch {}
-    return "";
-  });
+  const [fundoTrocoInput, setFundoTrocoInput] = useState("");
+
+  // Load fundo_proximo from estado_caixa
+  useEffect(() => {
+    const getStoreId = (): string | null => {
+      try { const raw = sessionStorage.getItem("obsidian-op-session-v2"); if (raw) { const s = JSON.parse(raw); return s.storeId ?? null; } } catch {}
+      try { const saved = sessionStorage.getItem("orderly-active-store"); if (saved) return saved; } catch {}
+      return null;
+    };
+    const storeId = getStoreId();
+    if (!storeId) return;
+    supabase.from("estado_caixa").select("fundo_proximo").eq("store_id", storeId).order("updated_at", { ascending: false }).limit(1)
+      .then(({ data }) => {
+        const val = Number(data?.[0]?.fundo_proximo ?? 0);
+        if (val > 0) setFundoTrocoInput(val.toFixed(2).replace(".", ","));
+      });
+  }, []);
   const [turnoModalOpen, setTurnoModalOpen] = useState(false);
   const [turnoManagerName, setTurnoManagerName] = useState("");
   const [turnoManagerPin, setTurnoManagerPin] = useState("");
