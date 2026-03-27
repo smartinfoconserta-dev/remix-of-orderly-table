@@ -14,13 +14,13 @@ const Index = () => {
   const { authLevel, operationalSession, isLoading, loginUnified } = useAuth();
 
   const [email, setEmail] = useState(() => {
-    try { return JSON.parse(localStorage.getItem(SAVED_CREDS_KEY) ?? "{}").email ?? ""; } catch { return ""; }
+    try { return JSON.parse(sessionStorage.getItem(SAVED_CREDS_KEY) ?? "{}").email ?? ""; } catch { return ""; }
   });
   const [password, setPassword] = useState(() => {
-    try { return JSON.parse(localStorage.getItem(SAVED_CREDS_KEY) ?? "{}").password ?? ""; } catch { return ""; }
+    try { return JSON.parse(sessionStorage.getItem(SAVED_CREDS_KEY) ?? "{}").password ?? ""; } catch { return ""; }
   });
   const [rememberMe, setRememberMe] = useState(() => {
-    try { return !!JSON.parse(localStorage.getItem(SAVED_CREDS_KEY) ?? "{}").email; } catch { return false; }
+    try { return !!JSON.parse(sessionStorage.getItem(SAVED_CREDS_KEY) ?? "{}").email; } catch { return false; }
   });
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
