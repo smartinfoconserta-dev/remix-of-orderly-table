@@ -664,6 +664,15 @@ const MasterPage = () => {
             <div className="rounded-2xl border bg-card p-5 space-y-4">
               <h2 className="text-lg font-black text-foreground flex items-center gap-2"><Send className="w-5 h-5" />Enviar aviso ao caixa</h2>
               <div className="space-y-3">
+                <div>
+                  <Label>Loja destino</Label>
+                  <Select value={avisoStoreId} onValueChange={setAvisoStoreId}>
+                    <SelectTrigger><SelectValue placeholder="Selecione a loja" /></SelectTrigger>
+                    <SelectContent container={document.body} position="popper" className="z-[80]">
+                      {stores.map((s) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
                 <div><Label>Mensagem</Label><Textarea placeholder="Escreva o aviso..." value={avisoMensagem} onChange={(e) => setAvisoMensagem(e.target.value)} rows={3} /></div>
                 <div>
                   <Label>Tipo</Label>
@@ -673,9 +682,10 @@ const MasterPage = () => {
                     ))}
                   </div>
                 </div>
-                <Button className="w-full" disabled={!avisoMensagem.trim()} onClick={() => {
+                <Button className="w-full" disabled={!avisoMensagem.trim() || !avisoStoreId} onClick={async () => {
                   const aviso = { mensagem: avisoMensagem.trim(), tipo: avisoTipo, enviadoEm: new Date().toISOString(), lido: false };
-                  localStorage.setItem("obsidian-master-aviso-v1", JSON.stringify(aviso));
+                  const { error } = await supabase.from("restaurant_config").update({ aviso_master: aviso as any }).eq("store_id", avisoStoreId);
+                  if (error) { toast.error("Erro ao enviar aviso"); console.error(error); return; }
                   toast.success("Aviso enviado ao caixa!");
                   setAvisoMensagem("");
                 }}>
