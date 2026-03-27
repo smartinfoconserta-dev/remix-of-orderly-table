@@ -66,6 +66,7 @@ import {
   getCardapioOverrides,
   saveCardapioOverrides,
   getMesasConfig,
+  getMesasConfigAsync,
   saveMesasConfig,
   getSistemaConfig,
   saveSistemaConfig,
