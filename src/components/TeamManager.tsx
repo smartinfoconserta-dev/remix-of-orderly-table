@@ -107,8 +107,13 @@ const TeamManager = ({ storeId }: Props) => {
       toast.error("Informe o nome do membro");
       return;
     }
-    if (!formEmail.trim()) {
+    const emailTrimmed = formEmail.trim().toLowerCase();
+    if (!emailTrimmed) {
       toast.error("Informe o email do membro");
+      return;
+    }
+    if (!/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(emailTrimmed)) {
+      toast.error("Email inválido. Use apenas letras sem acento (ex: garcom@teste.com)");
       return;
     }
     if (!formPassword || formPassword.length < 6) {
