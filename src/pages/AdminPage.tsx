@@ -61,7 +61,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useAuth } from "@/contexts/AuthContext";
-import { produtos as baseProdutos, categorias, type GrupoPersonalizacao, type OpcaoGrupo } from "@/data/menuData";
+import { type GrupoPersonalizacao, type OpcaoGrupo, type Produto } from "@/data/menuData";
+import {
+  fetchAllProducts,
+  upsertProduct,
+  softDeleteProduct,
+  toggleProductActive,
+  toggleProductDelivery,
+  reloadProducts,
+  getCachedCategorias,
+} from "@/hooks/useProducts";
 import {
   getCardapioOverrides,
   saveCardapioOverrides,
