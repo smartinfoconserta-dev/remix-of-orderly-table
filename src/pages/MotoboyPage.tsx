@@ -8,6 +8,7 @@ import { getSistemaConfig } from "@/lib/adminStorage";
 import { useRestaurant } from "@/contexts/RestaurantContext";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
+import { useStore } from "@/contexts/StoreContext";
 import { supabase } from "@/integrations/supabase/client";
 import jsQR from "jsqr";
 
@@ -44,7 +45,9 @@ export default function MotoboyPage() {
   const INITIALS = NOME_REST.slice(0, 2).toUpperCase();
 
   const { pedidosBalcao, marcarBalcaoSaiu, marcarBalcaoEntregue, cancelarEntregaMotoboy } = useRestaurant();
-  const { authLevel } = useAuth();
+  const { authLevel, operationalSession } = useAuth();
+  const { storeId: ctxStoreId } = useStore();
+  const effectiveStoreId = operationalSession?.storeId ?? ctxStoreId ?? getStoreIdFromSession();
   const isAdminAccess = authLevel === "admin" || authLevel === "master";
   const [sessao, setSessao] = useState<{ id: string; nome: string; fundoTroco: number } | null>(() =>
     isAdminAccess ? { id: "admin", nome: "Administrador", fundoTroco: 0 } : getSessao()
@@ -71,20 +74,18 @@ export default function MotoboyPage() {
 
   // Load motoboys from Supabase
   useEffect(() => {
-    const storeId = getStoreIdFromSession();
-    if (!storeId) return;
-    supabase.from("motoboys").select("*").eq("store_id", storeId).eq("ativo", true)
+    if (!effectiveStoreId) return;
+    supabase.from("motoboys").select("*").eq("store_id", effectiveStoreId).eq("ativo", true)
       .then(({ data }) => {
         setMotoboys((data ?? []).map((r: any) => ({ id: r.id, nome: r.nome, pinHash: r.pin_hash, ativo: r.ativo })));
       });
-  }, []);
+  }, [effectiveStoreId]);
 
   // Check if there's a pending fechamento in Supabase
   useEffect(() => {
     if (!sessao || sessao.id === "admin") return;
-    const storeId = getStoreIdFromSession();
-    if (!storeId) return;
-    supabase.from("motoboy_fechamentos").select("id,status").eq("store_id", storeId).eq("motoboy_id", sessao.id).eq("status", "aguardando")
+    if (!effectiveStoreId) return;
+    supabase.from("motoboy_fechamentos").select("id,status").eq("store_id", effectiveStoreId).eq("motoboy_id", sessao.id).eq("status", "aguardando")
       .then(({ data }) => { setFechamentoEnviado((data ?? []).length > 0); });
   }, [sessao]);
 
@@ -631,7 +632,7 @@ export default function MotoboyPage() {
                     className="w-full mt-2 font-black h-12 bg-primary hover:bg-primary/90"
                     onClick={() => {
                       if (entregues.length === 0) { toast.error("Nenhuma entrega para fechar."); return; }
-                      const storeId = getStoreIdFromSession();
+                      const storeId = effectiveStoreId;
                       if (!storeId) { toast.error("Erro: loja não identificada"); return; }
                       const fechamento = {
                         id: `fechamento-${Date.now()}`,
