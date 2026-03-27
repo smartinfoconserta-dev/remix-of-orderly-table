@@ -145,30 +145,30 @@ Deno.serve(async (req) => {
       }
     }
 
-    // 4. If role is motoboy, also upsert into legacy motoboys table
+    // 4. If role is motoboy, sync to legacy motoboys table
     if (role === "motoboy") {
-      // Generate pin hash via SQL if pin provided
+      // Reuse pin_hash from module_pins if available
       let pinHash = "";
       if (pin && /^\d{4,6}$/.test(pin)) {
-        const { data: hashResult } = await adminClient.rpc("verify_pin", { input_pin: pin, stored_hash: pin });
-        // Use raw SQL to get hash
-        const { data: hashData } = await adminClient
+        const { data: pinRow } = await adminClient
           .from("module_pins")
           .select("pin_hash")
           .eq("store_id", storeId)
           .eq("created_by", userId)
           .limit(1)
           .maybeSingle();
-        pinHash = hashData?.pin_hash || "";
+        pinHash = pinRow?.pin_hash || "";
       }
 
-      await adminClient.from("motoboys").upsert({
-        id: userId,
+      // Delete existing motoboy entry for this user, then insert
+      await adminClient.from("motoboys").delete().eq("id", String(userId)).eq("store_id", storeId);
+      await adminClient.from("motoboys").insert({
+        id: String(userId),
         nome: name,
         store_id: storeId,
         pin_hash: pinHash,
         ativo: true,
-      }, { onConflict: "id" });
+      });
     }
 
     return new Response(
