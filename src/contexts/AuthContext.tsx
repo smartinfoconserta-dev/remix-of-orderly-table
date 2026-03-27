@@ -452,6 +452,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     authLevel,
     supabaseUser,
     isLoading,
+    loginUnified,
     loginAsMaster,
     loginAsAdmin,
     loginAsOperational,
