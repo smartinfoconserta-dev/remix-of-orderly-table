@@ -275,7 +275,7 @@ const normalizeItem = (item: Partial<ItemCarrinho>, index = 0): ItemCarrinho => 
 });
 
 const estadoInicial = (): RestaurantStore => ({
-  mesas: criarMesasIniciais(), eventos: [], movimentacoesCaixa: [], fechamentos: [], caixaAberto: false, fundoTroco: 0, pedidosBalcao: [],
+  mesas: [], eventos: [], movimentacoesCaixa: [], fechamentos: [], caixaAberto: false, fundoTroco: 0, pedidosBalcao: [],
 });
 
 const resetMesa = (mesa: Mesa): Mesa => ({
@@ -552,7 +552,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       const mesasDb = mesasDbRes.data ?? [];
       const mesasList = mesasDb.length > 0
         ? mesasDb
-        : Array.from({ length: 20 }, (_, i) => ({ id: `mesa-${i + 1}`, numero: i + 1, nome: null, status: "livre" }));
+        : criarMesasIniciais();
 
       const mesas: Mesa[] = mesasList.map((mesaRow) => {
         const mesaId = `mesa-${mesaRow.numero}`;
