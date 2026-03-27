@@ -48,13 +48,13 @@ const StorePinsManager = ({ stores }: Props) => {
   const fetchPins = useCallback(async () => {
     if (!selectedStore) return;
     setLoading(true);
-    const { data } = await supabase
+    const { data } = await (supabase as any)
       .from("module_pins")
       .select("id, module, label, active, created_at")
       .eq("store_id", selectedStore)
       .order("module")
       .order("created_at", { ascending: false });
-    setPins(data ?? []);
+    setPins((data as PinRow[]) ?? []);
     setLoading(false);
   }, [selectedStore]);
 
