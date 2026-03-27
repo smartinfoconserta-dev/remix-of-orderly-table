@@ -282,6 +282,14 @@ const TeamManager = ({ storeId }: Props) => {
                       >
                         <ShieldCheck className="h-3.5 w-3.5 mr-1" /> Reativar
                       </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-destructive hover:text-destructive hover:bg-destructive/10 text-xs"
+                        onClick={() => handleDelete(m)}
+                      >
+                        <Trash2 className="h-3.5 w-3.5 mr-1" /> Excluir
+                      </Button>
                     </div>
                   </div>
                 ))}
