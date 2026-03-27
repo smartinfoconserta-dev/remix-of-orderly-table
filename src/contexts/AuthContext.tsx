@@ -158,14 +158,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return { level: "unauthenticated" };
   }, []);
 
+  /* ─── Apply resolved auth ─── */
+  const applyResolved = useCallback((resolved: ResolvedAuth) => {
+    setAuthLevel(resolved.level);
+    if (resolved.opSession) {
+      setOperationalSession(resolved.opSession);
+      writeOpSession(resolved.opSession);
+    } else if (resolved.level !== "unauthenticated") {
+      setOperationalSession(null);
+      writeOpSession(null);
+    }
+  }, []);
+
   /* ─── Listen to auth state changes ─── */
   useEffect(() => {
     // 1. Restore session from storage FIRST
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (session?.user) {
         setSupabaseUser(session.user);
-        const level = await resolveSupabaseLevel(session.user);
-        setAuthLevel(level);
+        const resolved = await resolveSupabaseLevel(session.user);
+        applyResolved(resolved);
       } else {
         const opSession = readOpSession();
         if (opSession) {
@@ -180,14 +192,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session?.user) {
         setSupabaseUser(session.user);
-        // Fire-and-forget role resolution to avoid deadlock
-        resolveSupabaseLevel(session.user).then((level) => {
-          setAuthLevel(level);
-          if (level !== "unauthenticated") {
-            setOperationalSession(null);
-            writeOpSession(null);
-          }
-        });
+        resolveSupabaseLevel(session.user).then(applyResolved);
       } else {
         setSupabaseUser(null);
         const opSession = readOpSession();
@@ -198,47 +203,61 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
 
     return () => subscription.unsubscribe();
-  }, [resolveSupabaseLevel]);
+  }, [resolveSupabaseLevel, applyResolved]);
 
-  /* ─── Level 1: Master login ─── */
+  /* ─── Unified login (new) ─── */
+  const loginUnified = useCallback(async (email: string, password: string): Promise<LoginUnifiedResult> => {
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error || !data.user) {
+      return { ok: false, error: error?.message ?? "Credenciais inválidas" };
+    }
+
+    const resolved = await resolveSupabaseLevel(data.user);
+    if (resolved.level === "unauthenticated") {
+      await supabase.auth.signOut();
+      return { ok: false, error: "Usuário sem permissão de acesso ao sistema" };
+    }
+
+    setSupabaseUser(data.user);
+    applyResolved(resolved);
+    return { ok: true, redirect: resolved.redirect };
+  }, [resolveSupabaseLevel, applyResolved]);
+
+  /* ─── Level 1: Master login (legacy) ─── */
   const loginAsMaster = useCallback(async (email: string, password: string): Promise<LoginResult> => {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error || !data.user) {
       return { ok: false, error: error?.message ?? "Falha ao autenticar" };
     }
 
-    const level = await resolveSupabaseLevel(data.user);
-    if (level !== "master") {
+    const resolved = await resolveSupabaseLevel(data.user);
+    if (resolved.level !== "master") {
       await supabase.auth.signOut();
       return { ok: false, error: "Este usuário não possui permissão de Master" };
     }
 
     setSupabaseUser(data.user);
-    setAuthLevel("master");
-    setOperationalSession(null);
-    writeOpSession(null);
+    applyResolved(resolved);
     return { ok: true };
-  }, [resolveSupabaseLevel]);
+  }, [resolveSupabaseLevel, applyResolved]);
 
-  /* ─── Level 2: Admin login ─── */
+  /* ─── Level 2: Admin login (legacy) ─── */
   const loginAsAdmin = useCallback(async (email: string, password: string): Promise<LoginResult> => {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error || !data.user) {
       return { ok: false, error: error?.message ?? "Falha ao autenticar" };
     }
 
-    const level = await resolveSupabaseLevel(data.user);
-    if (level !== "admin" && level !== "master") {
+    const resolved = await resolveSupabaseLevel(data.user);
+    if (resolved.level !== "admin" && resolved.level !== "master") {
       await supabase.auth.signOut();
       return { ok: false, error: "Este usuário não possui permissão de Admin" };
     }
 
     setSupabaseUser(data.user);
-    setAuthLevel(level);
-    setOperationalSession(null);
-    writeOpSession(null);
+    applyResolved(resolved);
     return { ok: true };
-  }, [resolveSupabaseLevel]);
+  }, [resolveSupabaseLevel, applyResolved]);
 
   /* ─── Level 3: Operational PIN login ─── */
   const loginAsOperational = useCallback(async (storeSlug: string, module: string, pin: string): Promise<LoginResult> => {
