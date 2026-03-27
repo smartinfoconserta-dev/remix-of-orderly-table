@@ -4113,8 +4113,8 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
 
                   const f = fechamentoSelecionado;
                   registrarFechamentoMotoboy({
-                    motoboyNome: f.motoboyNome,
-                    motoboyId: f.motoboyId,
+                    motoboyNome: f.motoboy_nome,
+                    motoboyId: f.motoboy_id,
                     dinheiro: f.resumo.dinheiroRecebido,
                     troco: f.resumo.trocoTotal,
                     fundoTroco: f.resumo.fundoTroco,
@@ -4122,22 +4122,18 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
                     credito: f.resumo.credito,
                     debito: f.resumo.debito,
                     totalEntregas: f.resumo.totalEntregas,
-                    pedidosIds: f.pedidosIds || [],
+                    pedidosIds: f.pedidos_ids || [],
                     conferidoPor: nomeGerente,
                   });
 
-                  // Mark as confirmed in localStorage
-                  try {
-                    const raw = localStorage.getItem(FECHAMENTOS_MOTOBOY_KEY);
-                    const lista = raw ? JSON.parse(raw) : [];
-                    const updated = lista.map((item: any) => item.id === f.id ? { ...item, status: "conferido" } : item);
-                    localStorage.setItem(FECHAMENTOS_MOTOBOY_KEY, JSON.stringify(updated));
-                    setFechamentosPendentes(updated.filter((item: any) => item.status === "aguardando"));
-                  } catch {}
+                  // Mark as confirmed in Supabase
+                  supabase.from("motoboy_fechamentos").update({ status: "conferido", conferido_por: nomeGerente, conferido_em: new Date().toISOString() }).eq("id", f.id)
+                    .then(({ error }) => { if (error) console.error("Erro ao atualizar fechamento motoboy", error); });
+                  setFechamentosPendentes(prev => prev.filter((item: any) => item.id !== f.id));
 
                   setFechamentoSelecionado(null);
                   setPinConferencia("");
-                  toast.success(`Fechamento de ${f.motoboyNome} conferido! ✓`, { duration: 3000 });
+                  toast.success(`Fechamento de ${f.motoboy_nome} conferido! ✓`, { duration: 3000 });
                 }}>
                 ✓ Confirmar fechamento
               </Button>
