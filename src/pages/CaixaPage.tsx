@@ -1714,9 +1714,9 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
                               className="w-full text-left rounded-xl border border-amber-500/25 bg-card p-3 hover:border-amber-500/60 transition-colors active:scale-[0.99]">
                               <div className="flex items-center justify-between">
                                 <div>
-                                  <p className="text-sm font-black text-foreground">🏍️ {f.motoboyNome}</p>
+                                  <p className="text-sm font-black text-foreground">🏍️ {f.motoboy_nome}</p>
                                   <p className="text-xs text-muted-foreground mt-0.5">
-                                    {f.resumo.totalEntregas} entregas · {new Date(f.timestamp).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                                    {f.resumo?.totalEntregas ?? 0} entregas · {new Date(f.created_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
                                   </p>
                                 </div>
                                 <div className="text-right">
