@@ -472,13 +472,14 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       today.setHours(0, 0, 0, 0);
       const iso = today.toISOString();
 
-      const [pedidosRes, estadoMesasRes, fechRes, evtRes, movRes, caixaRes] = await Promise.all([
+      const [pedidosRes, estadoMesasRes, fechRes, evtRes, movRes, caixaRes, mesasDbRes] = await Promise.all([
         supabase.from("pedidos").select("*").eq("store_id", sid).gte("criado_em_iso", iso).order("criado_em_iso", { ascending: true }),
         supabase.from("estado_mesas").select("*").eq("store_id", sid),
         supabase.from("fechamentos").select("*").eq("store_id", sid).gte("criado_em_iso", iso).order("criado_em_iso", { ascending: false }),
         supabase.from("eventos_operacionais").select("*").eq("store_id", sid).gte("criado_em_iso", iso).order("criado_em_iso", { ascending: false }).limit(300),
         supabase.from("movimentacoes_caixa").select("*").eq("store_id", sid).gte("criado_em_iso", iso).order("criado_em_iso", { ascending: false }),
         supabase.from("estado_caixa").select("*").eq("store_id", sid).order("updated_at", { ascending: false }).limit(1),
+        supabase.from("mesas").select("id,numero,nome,status").eq("store_id", sid).order("numero", { ascending: true }),
       ]);
 
       const allPedidos = (pedidosRes.data ?? []).map(rowToPedido);
@@ -503,15 +504,19 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         pedidosPorMesa.set(p.mesaId, arr);
       }
 
-      const totalMesas = 20;
-      const mesas: Mesa[] = Array.from({ length: totalMesas }, (_, i) => {
-        const mesaId = `mesa-${i + 1}`;
+      const mesasDb = mesasDbRes.data ?? [];
+      const mesasList = mesasDb.length > 0
+        ? mesasDb
+        : Array.from({ length: 20 }, (_, i) => ({ id: `mesa-${i + 1}`, numero: i + 1, nome: null, status: "livre" }));
+
+      const mesas: Mesa[] = mesasList.map((mesaRow) => {
+        const mesaId = `mesa-${mesaRow.numero}`;
         const estado = estadoMesasMap.get(mesaId);
         const pedidos = pedidosPorMesa.get(mesaId) ?? [];
         const carrinho: ItemCarrinho[] = estado?.carrinho && Array.isArray(estado.carrinho) ? estado.carrinho.map((it: any, idx: number) => normalizeItem(it, idx)) : [];
         const total = pedidos.reduce((acc, p) => acc + p.total, 0);
         return {
-          id: mesaId, numero: i + 1,
+          id: mesaId, numero: mesaRow.numero,
           status: derivarStatus({ carrinho, pedidos }),
           total, carrinho, pedidos,
           chamarGarcom: estado?.chamar_garcom ?? false,
