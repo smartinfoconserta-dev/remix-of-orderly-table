@@ -124,7 +124,7 @@ const MesasManager = ({ storeId, storeName }: Props) => {
     setSaving(true);
 
     if (editingMesa) {
-      const { error } = await (supabase
+      const { error } = await (supabase as any)
         .from("mesas")
         .update({
           numero,
@@ -132,8 +132,8 @@ const MesasManager = ({ storeId, storeName }: Props) => {
           capacidade: formCapacidade ? parseInt(formCapacidade) : null,
           status: formStatus,
           updated_at: new Date().toISOString(),
-        } as any)
-        .eq("id" as any, editingMesa.id) as any);
+        })
+        .eq("id", editingMesa.id);
 
       if (error) {
         toast.error(error.message.includes("unique") ? "Já existe uma mesa com esse número" : error.message);
