@@ -48,6 +48,7 @@ const App = () => {
         <Route path="/tablet" element={<TabletPage />} />
         <Route path="/cliente" element={<Navigate to="/tablet" replace />} />
 
+        <Route path="/seed" element={<SeedPage />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </div>
