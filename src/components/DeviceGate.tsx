@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useState } from "react";
-import { Monitor, TabletSmartphone, Tv, LockKeyhole, Loader2, ChevronDown } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Monitor, TabletSmartphone, Tv, LockKeyhole, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
