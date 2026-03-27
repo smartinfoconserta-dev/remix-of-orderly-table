@@ -64,28 +64,8 @@ const RESTAURANTE = {
   logoFallback: (sysConfig.nomeRestaurante || "Restaurante").slice(0, 2).toUpperCase(),
 };
 
-// Filter out inactive/removed products and merge custom products
-const cardapioOverrides = getCardapioOverrides();
-const customProducts = Object.values(cardapioOverrides).filter(
-  (ov) => !baseProdutos.some((bp) => bp.id === ov.id) && ov.ativo !== false && !ov.removido,
-);
-const produtosComOverrides = [
-  ...baseProdutos.filter((p) => {
-    const ov = cardapioOverrides[p.id];
-    if (ov && (ov.ativo === false || ov.removido)) return false;
-    return true;
-  }).map((p) => {
-    const ov = cardapioOverrides[p.id];
-    return ov ? { ...p, ...ov } : p;
-  }),
-  ...customProducts,
-];
-// Resolve image: prefer base64, then URL
-const produtos = produtosComOverrides.map((p) => {
-  const ov = cardapioOverrides[p.id];
-  const resolvedImagem = ov?.imagemBase64 || p.imagem;
-  return { ...p, imagem: resolvedImagem };
-});
+// Products now come from Supabase via cached service
+const produtos = getCachedProdutos();
 
 // Configurable banners from admin or fallback to defaults
 const configBanners = sysConfig.banners?.filter((b) => b.titulo && b.imagemUrl) ?? [];
