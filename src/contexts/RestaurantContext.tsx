@@ -503,8 +503,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         pedidosPorMesa.set(p.mesaId, arr);
       }
 
-      const config = getSistemaConfig();
-      const totalMesas = config.totalMesas || 20;
+      const totalMesas = 20;
       const mesas: Mesa[] = Array.from({ length: totalMesas }, (_, i) => {
         const mesaId = `mesa-${i + 1}`;
         const estado = estadoMesasMap.get(mesaId);
