@@ -89,18 +89,21 @@ export default function MotoboyPage() {
   }, [sessao]);
 
   // ── Login ──
-  const handleLogin = useCallback(() => {
+  const handleLogin = useCallback(async () => {
     setLoginError("");
+    setLoginLoading(true);
     const norm = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
     const motoboy = motoboys.find((m) => norm(m.nome) === norm(nomeInput));
-    if (!motoboy) { setLoginError("Nome ou PIN incorreto"); return; }
-    if (pinInput.length < 4) { setLoginError("Nome ou PIN incorreto"); return; }
-    const expectedHash = btoa("pin:" + pinInput);
-    if (motoboy.pinHash !== expectedHash) { setLoginError("Nome ou PIN incorreto"); return; }
+    if (!motoboy) { setLoginError("Nome ou PIN incorreto"); setLoginLoading(false); return; }
+    if (pinInput.length < 4) { setLoginError("Nome ou PIN incorreto"); setLoginLoading(false); return; }
+    // Verify PIN via Supabase RPC
+    const { data: pinOk } = await supabase.rpc("verify_pin", { input_pin: pinInput, stored_hash: motoboy.pinHash });
+    if (!pinOk) { setLoginError("Nome ou PIN incorreto"); setLoginLoading(false); return; }
     const fundoTroco = parseFloat(fundoInput.replace(",", ".")) || 0;
     const s = { id: motoboy.id, nome: motoboy.nome, fundoTroco };
     localStorage.setItem(SESSAO_KEY, JSON.stringify(s));
     setSessao(s);
+    setLoginLoading(false);
     toast.success(`Bem-vindo, ${motoboy.nome}!`);
   }, [nomeInput, pinInput, fundoInput, motoboys]);
 
