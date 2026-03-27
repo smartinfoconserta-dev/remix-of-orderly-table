@@ -180,7 +180,7 @@ const MesasManager = ({ storeId, storeName }: Props) => {
       status: "livre",
     }));
 
-    const { error } = await supabase.from("mesas").insert(rows);
+    const { error } = await (supabase.from("mesas").insert(rows as any) as any);
     if (error) {
       toast.error(error.message);
       setBatchSaving(false);
