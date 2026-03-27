@@ -79,7 +79,7 @@ export default function MotoboyPage() {
       .then(({ data }) => {
         setMotoboys((data ?? []).map((r: any) => ({ id: r.id, nome: r.nome, pinHash: r.pin_hash, ativo: r.ativo })));
       });
-  }, []);
+  }, [effectiveStoreId]);
 
   // Check if there's a pending fechamento in Supabase
   useEffect(() => {
