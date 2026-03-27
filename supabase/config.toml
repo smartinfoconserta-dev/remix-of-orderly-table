@@ -1,7 +1,1 @@
 project_id = "xtroaobjlvgprarcubfq"
-
-[functions.create-admin-account]
-verify_jwt = false
-
-[functions.update-admin-account]
-verify_jwt = false
