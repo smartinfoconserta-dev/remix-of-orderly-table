@@ -69,6 +69,7 @@ import type { PaymentMethod, SplitPayment, UserRole } from "@/types/operations";
 import { getSistemaConfig } from "@/lib/adminStorage";
 import type { ItemCarrinho } from "@/contexts/RestaurantContext";
 import { findClienteDelivery, upsertClienteDelivery, getBairros, type ClienteDelivery } from "@/lib/deliveryStorage";
+import { supabase } from "@/integrations/supabase/client";
 
 /* ── helpers ── */
 const normStr = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
