@@ -783,6 +783,7 @@ export type Database = {
       }
       restaurant_config: {
         Row: {
+          aviso_master: Json | null
           banners: Json | null
           cardapio_overrides: Json | null
           cor_primaria: string | null
@@ -819,6 +820,7 @@ export type Database = {
           wifi_bg: string | null
         }
         Insert: {
+          aviso_master?: Json | null
           banners?: Json | null
           cardapio_overrides?: Json | null
           cor_primaria?: string | null
@@ -855,6 +857,7 @@ export type Database = {
           wifi_bg?: string | null
         }
         Update: {
+          aviso_master?: Json | null
           banners?: Json | null
           cardapio_overrides?: Json | null
           cor_primaria?: string | null
