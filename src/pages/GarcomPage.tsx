@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { LogOut, Bell } from "lucide-react";
-import { useSearchParams } from "react-router-dom";
+import { LogOut, Bell, TabletSmartphone } from "lucide-react";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import PedidoFlow from "@/components/PedidoFlow";
 import AppLayout from "@/components/AppLayout";
 import MesaCard from "@/components/MesaCard";

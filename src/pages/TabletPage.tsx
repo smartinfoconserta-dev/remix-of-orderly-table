@@ -25,21 +25,23 @@ const TabletPage = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
-  // Detect if user arrived via operational login (Index page)
+  // Detect if user arrived via operational login (Index page) or garçom accessing tablet mode
   const arrivedViaOperational = authLevel === "operational" && operationalSession?.module === "cliente";
+  const arrivedViaGarcom = authLevel === "operational" && operationalSession?.module === "garcom";
+  const arrivedViaAuth = arrivedViaOperational || arrivedViaGarcom;
 
   const [mesaId, setMesaId] = useState<string | null>(() => {
     const savedMesa = getBoundTabletMesaId();
     const savedUser = getTabletLoginUser();
-    if (savedMesa && !savedUser && !arrivedViaOperational) {
+    if (savedMesa && !savedUser && !arrivedViaAuth) {
       clearBoundTabletMesaId();
       return null;
     }
     return savedMesa;
   });
   const [tabletUser, setTabletUser] = useState<string | null>(() => {
-    if (arrivedViaOperational && !getTabletLoginUser()) {
-      // Sync: mark tablet as logged in from operational session
+    if (arrivedViaAuth && !getTabletLoginUser()) {
+      // Sync: mark tablet as logged in from operational session (cliente or garçom)
       const label = operationalSession?.pinLabel ?? "Operador";
       setTabletLoginUser(label);
       return label;
