@@ -1699,15 +1699,15 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
                               {formatPrice(pb.total)}
                             </span>
                           </button>
-                          {/* Retirado button — only when pronto */}
+                          {/* Cobrar button — only when pronto */}
                           {isPronto && (
                             <button
                               type="button"
-                              onClick={(e) => { e.stopPropagation(); marcarBalcaoRetirado(pb.id); }}
+                              onClick={(e) => { e.stopPropagation(); handleSelecionarBalcao(pb.id); }}
                               className="mt-1.5 flex w-full items-center justify-center gap-1.5 rounded-lg bg-emerald-600 py-2 text-xs font-black text-white transition-all hover:bg-emerald-700 active:scale-[0.98]"
                             >
-                              <Check className="h-3.5 w-3.5" />
-                              Retirado
+                              <Wallet className="h-3.5 w-3.5" />
+                              Cobrar
                             </button>
                           )}
                         </div>
