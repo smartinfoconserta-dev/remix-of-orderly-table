@@ -212,7 +212,7 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
   // Combo products for home section
   const comboProducts = useMemo(
     () => produtos.filter((p) => p.categoria === "combos"),
-    [],
+    [produtos],
   );
 
   useEffect(() => {
