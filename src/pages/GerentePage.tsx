@@ -174,12 +174,14 @@ const GerentePage = () => {
     allMovimentacoesCaixa,
     pedidosBalcao,
   } = useRestaurant();
-  const { currentGerente, logout, verifyManagerAccess, authLevel, operationalSession } = useAuth();
+  const { currentGerente, logout, verifyManagerAccess, authLevel, operationalSession, supabaseUser } = useAuth();
   const isAdminAccess = authLevel === "admin" || authLevel === "master";
-  const effectiveGerente = currentGerente ?? (isAdminAccess ? { id: "admin", nome: "Administrador", role: "gerente" as const, criadoEm: "" } : null);
+  // Users who logged in via email/password (supabaseUser exists) should bypass PIN
+  const isAuthenticatedByPassword = !!supabaseUser;
+  const effectiveGerente = currentGerente ?? (isAdminAccess || isAuthenticatedByPassword ? { id: "admin", nome: "Administrador", role: "gerente" as const, criadoEm: "" } : null);
   useRouteLock("/gerente");
   const [logFilter, setLogFilter] = useState<LogCategory>("all");
-  const [pinVerificado, setPinVerificado] = useState(isAdminAccess);
+  const [pinVerificado, setPinVerificado] = useState(isAdminAccess || isAuthenticatedByPassword);
   const [pinInput, setPinInput] = useState("");
   const [pinError, setPinError] = useState("");
 
