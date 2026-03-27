@@ -84,11 +84,11 @@ const MesasManager = ({ storeId, storeName }: Props) => {
 
   const fetchMesas = useCallback(async () => {
     setLoading(true);
-    const { data } = await (supabase
+    const { data } = await (supabase as any)
       .from("mesas")
       .select("*")
-      .eq("store_id" as any, storeId)
-      .order("numero") as any);
+      .eq("store_id", storeId)
+      .order("numero");
     setMesas((data as Mesa[]) ?? []);
     setLoading(false);
   }, [storeId]);
