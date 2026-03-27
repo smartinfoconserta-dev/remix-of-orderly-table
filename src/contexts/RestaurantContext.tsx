@@ -552,7 +552,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       const mesasDb = mesasDbRes.data ?? [];
       const mesasList = mesasDb.length > 0
         ? mesasDb
-        : Array.from({ length: 20 }, (_, i) => ({ id: `mesa-${i + 1}`, numero: i + 1, nome: null, status: "livre" }));
+        : criarMesasIniciais();
 
       const mesas: Mesa[] = mesasList.map((mesaRow) => {
         const mesaId = `mesa-${mesaRow.numero}`;
