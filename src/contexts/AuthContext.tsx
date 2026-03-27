@@ -145,11 +145,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       .eq("user_id", user.id);
 
     if (members && members.length > 0) {
-      const sortedMembers = [...members].sort((a, b) => {
-        const priorityDiff = (STORE_ROLE_PRIORITY[b.role_in_store] ?? 0) - (STORE_ROLE_PRIORITY[a.role_in_store] ?? 0);
-        if (priorityDiff !== 0) return priorityDiff;
-        return new Date(a.created_at ?? 0).getTime() - new Date(b.created_at ?? 0).getTime();
-      });
+      const sortedMembers = [...members].sort(
+        (a, b) => (STORE_ROLE_PRIORITY[b.role_in_store] ?? 0) - (STORE_ROLE_PRIORITY[a.role_in_store] ?? 0)
+      );
 
       const m = sortedMembers[0];
       const store = m.stores as any;

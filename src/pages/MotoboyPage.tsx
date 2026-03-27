@@ -45,7 +45,7 @@ export default function MotoboyPage() {
   const INITIALS = NOME_REST.slice(0, 2).toUpperCase();
 
   const { pedidosBalcao, marcarBalcaoSaiu, marcarBalcaoEntregue, cancelarEntregaMotoboy } = useRestaurant();
-  const { authLevel, operationalSession } = useAuth();
+  const { authLevel, operationalSession, logout } = useAuth();
   const { storeId: ctxStoreId } = useStore();
   const effectiveStoreId = operationalSession?.storeId ?? ctxStoreId ?? getStoreIdFromSession();
   const isAdminAccess = authLevel === "admin" || authLevel === "master";
@@ -108,11 +108,14 @@ export default function MotoboyPage() {
     toast.success(`Bem-vindo, ${motoboy.nome}!`);
   }, [nomeInput, pinInput, fundoInput, motoboys]);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     localStorage.removeItem(SESSAO_KEY);
     setSessao(null);
     setNomeInput("");
     setPinInput("");
+    if (authLevel === "operational") {
+      await logout();
+    }
   };
 
   // ── QR scan ──
