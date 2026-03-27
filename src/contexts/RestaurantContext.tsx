@@ -232,6 +232,10 @@ const RestaurantContext = _global.__restaurantCtx;
 let _contadorComanda = 0;
 const proximoNumeroComanda = () => { _contadorComanda += 1; return _contadorComanda; };
 
+// Global pedido number counter — loaded from DB on init
+let _nextPedidoNumber = 1;
+const proximoNumeroPedido = () => { const n = _nextPedidoNumber; _nextPedidoNumber += 1; return n; };
+
 function derivarStatus(m: Pick<Mesa, "carrinho" | "pedidos">): Mesa["status"] {
   if (m.pedidos.length > 0) return "consumo";
   if (m.carrinho.length > 0) return "pendente";
