@@ -2147,7 +2147,12 @@ const AdminPage = () => {
         {tab === "tablets" && (
           <div className="space-y-6 fade-in">
             {storeId ? (
-              <TabletsManager storeId={storeId} />
+              <>
+                <DevicesManager storeId={storeId} />
+                <div className="border-t border-border pt-6">
+                  <TabletsManager storeId={storeId} />
+                </div>
+              </>
             ) : (
               <p className="text-sm text-muted-foreground py-8 text-center">Loja não identificada. Faça login novamente.</p>
             )}
