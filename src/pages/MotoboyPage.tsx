@@ -632,7 +632,7 @@ export default function MotoboyPage() {
                     className="w-full mt-2 font-black h-12 bg-primary hover:bg-primary/90"
                     onClick={() => {
                       if (entregues.length === 0) { toast.error("Nenhuma entrega para fechar."); return; }
-                      const storeId = getStoreIdFromSession();
+                      const storeId = effectiveStoreId;
                       if (!storeId) { toast.error("Erro: loja não identificada"); return; }
                       const fechamento = {
                         id: `fechamento-${Date.now()}`,
