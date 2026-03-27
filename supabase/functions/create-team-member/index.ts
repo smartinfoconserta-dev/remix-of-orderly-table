@@ -113,13 +113,6 @@ Deno.serve(async (req) => {
       role_in_store: role,
     }, { onConflict: "user_id,store_id" }).select().single();
 
-    // 2. Add store membership with role
-    const { error: memberError } = await adminClient.from("store_members").insert({
-      user_id: userId,
-      store_id: storeId,
-      role_in_store: role,
-    });
-
     if (memberError) {
       // Cleanup: delete the auth user if membership fails
       await adminClient.auth.admin.deleteUser(userId);
