@@ -631,11 +631,13 @@ export default function MotoboyPage() {
                     className="w-full mt-2 font-black h-12 bg-primary hover:bg-primary/90"
                     onClick={() => {
                       if (entregues.length === 0) { toast.error("Nenhuma entrega para fechar."); return; }
+                      const storeId = getStoreIdFromSession();
+                      if (!storeId) { toast.error("Erro: loja não identificada"); return; }
                       const fechamento = {
                         id: `fechamento-${Date.now()}`,
-                        motoboyId: sessao?.id || "",
-                        motoboyNome: sessao?.nome || "",
-                        timestamp: new Date().toISOString(),
+                        store_id: storeId,
+                        motoboy_id: sessao?.id || "",
+                        motoboy_nome: sessao?.nome || "",
                         status: "aguardando",
                         resumo: {
                           totalEntregas: resumo.count,
@@ -649,16 +651,13 @@ export default function MotoboyPage() {
                           debito: resumo.debito,
                           totalAPrestar: resumo.liquidoDinheiro + (sessao?.fundoTroco || 0) + resumo.pix + resumo.credito + resumo.debito,
                         },
-                        pedidosIds: entregues.map(p => p.id),
+                        pedidos_ids: entregues.map(p => p.id),
                       };
-                      try {
-                        const raw = localStorage.getItem(FECHAMENTOS_KEY);
-                        const lista = raw ? JSON.parse(raw) : [];
-                        lista.push(fechamento);
-                        localStorage.setItem(FECHAMENTOS_KEY, JSON.stringify(lista));
-                      } catch {}
-                      setFechamentoEnviado(true);
-                      toast.success("Fechamento solicitado! Aguarde o caixa conferir.", { duration: 3000 });
+                      supabase.from("motoboy_fechamentos").insert(fechamento as any).then(({ error }) => {
+                        if (error) { console.error("Erro ao salvar fechamento motoboy", error); toast.error("Erro ao solicitar fechamento"); return; }
+                        setFechamentoEnviado(true);
+                        toast.success("Fechamento solicitado! Aguarde o caixa conferir.", { duration: 3000 });
+                      });
                     }}
                   >
                     Solicitar fechamento de caixa
