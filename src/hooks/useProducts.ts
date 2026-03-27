@@ -5,7 +5,7 @@ import { categorias as defaultCategorias } from "@/data/menuData";
 
 // ─── In-memory cache ───
 let _produtosCache: Produto[] = [];
-let _categoriasCache: Categoria[] = [...defaultCategorias];
+let _categoriasCache: Categoria[] = [];
 let _loaded = false;
 let _loadPromise: Promise<void> | null = null;
 
