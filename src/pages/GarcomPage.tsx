@@ -110,14 +110,28 @@ const GarcomPage = () => {
             className={`slide-up ${mesa.chamarGarcom ? "animate-pulse rounded-2xl ring-2 ring-destructive/60" : ""}`}
             style={{ animationDelay: `${Math.min(i * 30, 300)}ms`, animationFillMode: "both" }}
           >
-            <MesaCard
-              mesa={mesa}
-              showIndicators
-              onClick={() => {
-                dismissChamarGarcom(mesa.id);
-                setSearchParams({ mesa: mesa.id });
-              }}
-            />
+            <div className="relative">
+              <MesaCard
+                mesa={mesa}
+                showIndicators
+                onClick={() => {
+                  dismissChamarGarcom(mesa.id);
+                  setSearchParams({ mesa: mesa.id });
+                }}
+              />
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  dismissChamarGarcom(mesa.id);
+                  navigate(`/tablet?mesa=${mesa.id}`);
+                }}
+                title="Abrir como tablet (modo cliente)"
+                className="absolute right-1.5 top-1.5 flex h-7 w-7 items-center justify-center rounded-lg bg-secondary/80 text-muted-foreground backdrop-blur-sm transition-colors hover:bg-primary hover:text-primary-foreground"
+              >
+                <TabletSmartphone className="h-3.5 w-3.5" />
+              </button>
+            </div>
           </div>
         ))}
       </div>
