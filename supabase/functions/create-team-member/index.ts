@@ -106,7 +106,12 @@ Deno.serve(async (req) => {
       userId = newUser.user!.id;
     }
 
-    const userId = newUser.user.id;
+    // 2. Add store membership (upsert to handle re-adding)
+    const { error: memberError } = await adminClient.from("store_members").upsert({
+      user_id: userId,
+      store_id: storeId,
+      role_in_store: role,
+    }, { onConflict: "user_id,store_id" }).select().single();
 
     // 2. Add store membership with role
     const { error: memberError } = await adminClient.from("store_members").insert({
