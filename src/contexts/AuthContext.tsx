@@ -29,12 +29,15 @@ interface LoginResult {
 interface AuthContextType {
   /** Current authentication level */
   authLevel: AuthLevel;
-  /** Supabase user (master/admin only) */
+  /** Supabase user (master/admin/store_member) */
   supabaseUser: User | null;
   /** True while checking initial session */
   isLoading: boolean;
 
-  /* ─── Level 1 & 2: Supabase Auth ─── */
+  /* ─── Unified login ─── */
+  loginUnified: (email: string, password: string) => Promise<LoginUnifiedResult>;
+
+  /* ─── Level 1 & 2: Supabase Auth (legacy, kept for backward compat) ─── */
   loginAsMaster: (email: string, password: string) => Promise<LoginResult>;
   loginAsAdmin: (email: string, password: string) => Promise<LoginResult>;
 
