@@ -475,14 +475,18 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const [allFechamentos, setAllFechamentos] = useState<FechamentoConta[]>([]);
   const [allEventos, setAllEventos] = useState<EventoOperacional[]>([]);
   const [allMovimentacoesCaixa, setAllMovimentacoesCaixa] = useState<MovimentacaoCaixa[]>([]);
-  const loadedRef = useRef(false);
+  const loadedStoreRef = useRef<string | null>(null);
 
-  // ── Load from Supabase on mount ──
+  // ── Load from Supabase — reactive to session changes ──
   useEffect(() => {
     const load = async () => {
       const sid = getActiveStoreId();
-      if (!sid || loadedRef.current) return;
-      loadedRef.current = true;
+      if (!sid) return;
+      // Already loaded for this store
+      if (loadedStoreRef.current === sid) return;
+      loadedStoreRef.current = sid;
+
+      console.log("[RestaurantContext] Loading data for store:", sid);
 
       const today = new Date();
       today.setHours(0, 0, 0, 0);
@@ -505,12 +509,23 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         supabase.from("fechamentos").select("*").eq("store_id", sid).gte("criado_em_iso", isoHistory).order("criado_em_iso", { ascending: false }).limit(500),
       ]);
 
+      // Get max numero_pedido for proper sequencing
+      const { data: maxPedidoData } = await supabase
+        .from("pedidos")
+        .select("numero_pedido")
+        .eq("store_id", sid)
+        .order("numero_pedido", { ascending: false })
+        .limit(1);
+      _nextPedidoNumber = (maxPedidoData?.[0]?.numero_pedido ?? 0) + 1;
+
       const allPedidos = (pedidosRes.data ?? []).map(rowToPedido);
       const pedidosMesa = allPedidos.filter(p => !["balcao", "delivery", "totem"].includes(p.origem));
       const pedidosBalcao = allPedidos.filter(p => ["balcao", "delivery", "totem"].includes(p.origem));
       const fechamentos = (fechRes.data ?? []).map(rowToFechamento);
       const eventos = (evtRes.data ?? []).map(rowToEvento);
       const movimentacoes = (movRes.data ?? []).map(rowToMovimentacao);
+
+      console.log(`[RestaurantContext] Loaded: ${allPedidos.length} pedidos, ${fechamentos.length} fechamentos, caixa: ${caixaRes.data?.[0]?.aberto ?? "N/A"}`);
 
       // Build mesa state from estado_mesas + pedidos
       const estadoMesasMap = new Map<string, any>();
@@ -558,12 +573,24 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         fundoTroco: Number(caixaRow?.fundo_troco ?? 0),
         pedidosBalcao,
       });
-      const allFechamentos = (allFechRes.data ?? []).map(rowToFechamento);
-      setAllFechamentos(allFechamentos);
+      const allFechs = (allFechRes.data ?? []).map(rowToFechamento);
+      setAllFechamentos(allFechs);
       setAllEventos(eventos);
       setAllMovimentacoesCaixa(movimentacoes);
     };
+
+    // Run immediately
     load();
+
+    // Retry periodically if storeId wasn't available yet (session may set later)
+    const retryInterval = setInterval(() => {
+      const sid = getActiveStoreId();
+      if (sid && loadedStoreRef.current !== sid) {
+        load();
+      }
+    }, 1500);
+
+    return () => clearInterval(retryInterval);
   }, []);
 
   // ── Realtime subscriptions ──
