@@ -195,7 +195,7 @@ const MesasManager = ({ storeId, storeName }: Props) => {
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
-    const { error } = await (supabase.from("mesas").delete().eq("id" as any, deleteTarget.id) as any);
+    const { error } = await (supabase as any).from("mesas").delete().eq("id", deleteTarget.id);
     if (error) {
       toast.error(error.message);
       return;
