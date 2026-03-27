@@ -152,68 +152,68 @@ const AdminPage = () => {
   const [tab, setTab] = useState<AdminTab>("dashboard");
   const [configSection, setConfigSection] = useState<"inicio" | "identidade" | "delivery" | "salao" | "operacao" | "modulos" | "sistema">("inicio");
 
-  // --- Cardápio state ---
-  const [overrides, setOverrides] = useState<Record<string, ProdutoOverride>>(getCardapioOverrides);
-  const [editProduct, setEditProduct] = useState<ProdutoOverride | null>(null);
+  // --- Cardápio state (from Supabase produtos table) ---
+  type AdminProduct = Produto & { ativo: boolean; removido: boolean; disponivelDelivery: boolean; imagemBase64?: string };
+  const [allProducts, setAllProducts] = useState<AdminProduct[]>([]);
+  const [editProduct, setEditProduct] = useState<AdminProduct | null>(null);
   const [isNewProduct, setIsNewProduct] = useState(false);
   const [editForm, setEditForm] = useState({ nome: "", descricao: "", preco: "", categoria: "", imagem: "", imagemBase64: "", permiteLevar: true });
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [catFilter, setCatFilter] = useState<string>("todas");
-  const [removeTarget, setRemoveTarget] = useState<ProdutoOverride | null>(null);
+  const [removeTarget, setRemoveTarget] = useState<AdminProduct | null>(null);
   const [categoriasCustom, setCategoriasCustom] = useState<CategoriaCustom[]>(getCategoriasCustom);
   const [catDialogOpen, setCatDialogOpen] = useState(false);
   const [catEditando, setCatEditando] = useState<CategoriaCustom | null>(null);
   const [catNomeInput, setCatNomeInput] = useState("");
   const [catIconeInput, setCatIconeInput] = useState("tag");
 
-  const todasCategorias = useMemo(() => {
-    const baseCats = categorias.map((c, i) => ({ ...c, ordem: i, _isDefault: true as const }));
-    const customCats = categoriasCustom.map((c) => ({ ...c, _isDefault: false as const }));
-    return [...baseCats, ...customCats];
-  }, [categoriasCustom]);
+  // Load products from DB
+  const loadProducts = useCallback(async () => {
+    if (!storeId) return;
+    const prods = await fetchAllProducts(storeId);
+    setAllProducts(prods as AdminProduct[]);
+  }, [storeId]);
 
-  const allProducts: ProdutoOverride[] = useMemo(() => {
-    // Base products with overrides
-    const base = baseProdutos.map((p) => {
-      const ov = overrides[p.id];
-      if (ov) return { ...p, ...ov };
-      return { ...p, ativo: true };
-    });
-    // Custom products (added via admin)
-    const customIds = Object.keys(overrides).filter((id) => !baseProdutos.some((p) => p.id === id));
-    const custom = customIds.map((id) => overrides[id]);
-    return [...base, ...custom].filter((p) => !p.removido);
-  }, [overrides]);
+  useEffect(() => {
+    loadProducts();
+  }, [loadProducts]);
+
+  const dbCategorias = getCachedCategorias();
+  const todasCategorias = useMemo(() => {
+    const dbCats = dbCategorias.map((c, i) => ({ ...c, ordem: i, _isDefault: false as const }));
+    const customCats = categoriasCustom
+      .filter((c) => !dbCategorias.some((dc) => dc.id === c.id))
+      .map((c) => ({ ...c, _isDefault: false as const }));
+    return [...dbCats, ...customCats];
+  }, [categoriasCustom, dbCategorias]);
 
   const filteredProducts = useMemo(() => {
     if (catFilter === "todas") return allProducts;
     return allProducts.filter((p) => p.categoria === catFilter);
   }, [allProducts, catFilter]);
 
-  const toggleAtivo = useCallback((id: string) => {
-    setOverrides((prev) => {
-      const product = baseProdutos.find((p) => p.id === id) || prev[id];
-      if (!product) return prev;
-      const existing = prev[id] || { ...product, ativo: true };
-      const next = { ...prev, [id]: { ...existing, ativo: !existing.ativo } };
-      saveCardapioOverrides(next);
-      return next;
-    });
-  }, []);
+  const toggleAtivo = useCallback(async (id: string) => {
+    const product = allProducts.find((p) => p.id === id);
+    if (!product) return;
+    const newAtivo = !product.ativo;
+    try {
+      await toggleProductActive(id, newAtivo);
+      setAllProducts((prev) => prev.map((p) => p.id === id ? { ...p, ativo: newAtivo } : p));
+      await reloadProducts(storeId);
+    } catch { toast.error("Erro ao alterar status"); }
+  }, [allProducts, storeId]);
 
-  const toggleDelivery = useCallback((id: string) => {
-    setOverrides((prev) => {
-      const product = baseProdutos.find((p) => p.id === id) || prev[id];
-      if (!product) return prev;
-      const existing = prev[id] || { ...product, ativo: true };
-      const current = existing.disponivelDelivery !== false;
-      const next = { ...prev, [id]: { ...existing, disponivelDelivery: !current } };
-      saveCardapioOverrides(next);
-      return next;
-    });
-  }, []);
+  const toggleDelivery = useCallback(async (id: string) => {
+    const product = allProducts.find((p) => p.id === id);
+    if (!product) return;
+    const newVal = !product.disponivelDelivery;
+    try {
+      await toggleProductDelivery(id, newVal);
+      setAllProducts((prev) => prev.map((p) => p.id === id ? { ...p, disponivelDelivery: newVal } : p));
+    } catch { toast.error("Erro ao alterar delivery"); }
+  }, [allProducts, storeId]);
 
-  const openEdit = useCallback((product: ProdutoOverride) => {
+  const openEdit = useCallback((product: AdminProduct) => {
     setEditProduct({ ...product });
     setIsNewProduct(false);
     setEditForm({
@@ -228,23 +228,24 @@ const AdminPage = () => {
   }, []);
 
   const openNewProduct = useCallback(() => {
-    const newId = `produto-${Date.now()}`;
-    const newProduct: ProdutoOverride = {
-      id: newId,
+    const newProduct: AdminProduct = {
+      id: crypto.randomUUID(),
       nome: "",
       descricao: "",
       preco: 0,
-      categoria: todasCategorias[0]?.id ?? categorias[0]?.id ?? "lanches",
+      categoria: todasCategorias[0]?.id ?? "lanches",
       imagem: "",
       ativo: true,
+      removido: false,
+      disponivelDelivery: true,
     };
     setEditProduct(newProduct);
     setIsNewProduct(true);
     setEditForm({ nome: "", descricao: "", preco: "", categoria: newProduct.categoria, imagem: "", imagemBase64: "", permiteLevar: true });
-  }, []);
+  }, [todasCategorias]);
 
-  const saveEdit = useCallback(() => {
-    if (!editProduct) return;
+  const saveEdit = useCallback(async () => {
+    if (!editProduct || !storeId) return;
     const preco = parseFloat(editForm.preco);
     if (isNaN(preco) || preco < 0) {
       toast.error("Preço inválido");
@@ -254,33 +255,27 @@ const AdminPage = () => {
       toast.error("Nome é obrigatório");
       return;
     }
-    setOverrides((prev) => {
-      const base = baseProdutos.find((p) => p.id === editProduct.id) || editProduct;
-      const existing = prev[editProduct.id] || { ...base, ativo: true };
-      const updated: Record<string, ProdutoOverride> = {
-        ...prev,
-        [editProduct.id]: {
-          ...existing,
-          id: editProduct.id,
-          nome: editForm.nome.trim(),
-          descricao: editForm.descricao.trim(),
-          preco,
-          categoria: editForm.categoria,
-          imagem: editForm.imagem.trim(),
-          imagemBase64: editForm.imagemBase64 || undefined,
-          ativo: existing.ativo ?? true,
-          disponivelDelivery: editProduct.disponivelDelivery,
-          grupos: editProduct.grupos,
-          permiteLevar: editForm.permiteLevar,
-          setor: editProduct.setor ?? "cozinha",
-        },
+    try {
+      const productToSave: AdminProduct = {
+        ...editProduct,
+        nome: editForm.nome.trim(),
+        descricao: editForm.descricao.trim(),
+        preco,
+        categoria: editForm.categoria,
+        imagem: editForm.imagem.trim(),
+        imagemBase64: editForm.imagemBase64 || undefined,
+        permiteLevar: editForm.permiteLevar,
+        setor: editProduct.setor ?? "cozinha",
       };
-      saveCardapioOverrides(updated);
-      return updated;
-    });
-    setEditProduct(null);
-    toast.success(isNewProduct ? "Produto criado" : "Produto atualizado");
-  }, [editProduct, editForm, isNewProduct]);
+      await upsertProduct(productToSave, storeId);
+      await loadProducts();
+      await reloadProducts(storeId);
+      setEditProduct(null);
+      toast.success(isNewProduct ? "Produto criado" : "Produto atualizado");
+    } catch {
+      toast.error("Erro ao salvar produto");
+    }
+  }, [editProduct, editForm, isNewProduct, storeId, loadProducts]);
 
   const handleFileUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -298,16 +293,18 @@ const AdminPage = () => {
     e.target.value = "";
   }, []);
 
-  const confirmRemove = useCallback(() => {
+  const confirmRemove = useCallback(async () => {
     if (!removeTarget) return;
-    setOverrides((prev) => {
-      const existing = prev[removeTarget.id] || { ...removeTarget };
-      const next = { ...prev, [removeTarget.id]: { ...existing, removido: true } };
-      saveCardapioOverrides(next);
-      return next;
-    });
-    setRemoveTarget(null);
-    toast.success("Produto removido do cardápio");
+    try {
+      await softDeleteProduct(removeTarget.id);
+      await loadProducts();
+      await reloadProducts(storeId);
+      setRemoveTarget(null);
+      toast.success("Produto removido do cardápio");
+    } catch {
+      toast.error("Erro ao remover produto");
+    }
+  }, [removeTarget, storeId, loadProducts]);
   }, [removeTarget]);
 
   // --- Mesas state ---
