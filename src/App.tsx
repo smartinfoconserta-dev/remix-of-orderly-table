@@ -17,6 +17,7 @@ import MotoboyPage from "./pages/MotoboyPage";
 import TotemPage from "./pages/TotemPage";
 import TvPage from "./pages/TvPage";
 import NotFound from "./pages/NotFound";
+import SeedPage from "./pages/SeedPage";
 
 const App = () => {
   const location = useLocation();
