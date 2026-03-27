@@ -1126,7 +1126,7 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
           </div>
         )}
         <nav className="mt-1 flex flex-col gap-2">
-          {[HOME_TAB, ...categorias].map((cat) => {
+          {[HOME_TAB, ...allCategorias].map((cat) => {
             const selected = categoriaAtiva === cat.id;
 
             return (
