@@ -22,8 +22,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { categorias, produtos as baseProdutos, type Categoria, type Produto } from "@/data/menuData";
-import { getCardapioOverrides, getSistemaConfig, getProdutosDelivery, getCategoriasCustom } from "@/lib/adminStorage";
+import { categorias as defaultCategorias, type Categoria, type Produto } from "@/data/menuData";
+import { getSistemaConfig, getCategoriasCustom } from "@/lib/adminStorage";
+import { getCachedProdutos, getCachedCategorias, preloadProducts } from "@/hooks/useProducts";
 import { HOME_CAROUSEL_INTERVAL_MS, homeHeroSlides, homeShowcaseConfig } from "@/data/homeShowcaseData";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRestaurant, type ItemCarrinho } from "@/contexts/RestaurantContext";
