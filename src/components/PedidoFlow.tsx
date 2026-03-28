@@ -65,6 +65,7 @@ const RESTAURANTE = {
   logoUrl: sysConfig.logoBase64 || sysConfig.logoUrl || "",
   logoFallback: (sysConfig.nomeRestaurante || "Restaurante").slice(0, 2).toUpperCase(),
 };
+console.log("LOGO:", sysConfig.logoBase64?.slice(0, 50), sysConfig.logoUrl);
 
 // Products are loaded reactively inside the component
 
