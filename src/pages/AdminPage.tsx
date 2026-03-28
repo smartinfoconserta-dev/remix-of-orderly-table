@@ -3216,6 +3216,13 @@ ${topRows ? `<h2>Top 5 produtos</h2><table><thead><tr><th>#</th><th>Produto</th>
             )}
           </div>
         )}
+
+        {/* ═══ IFOOD ═══ */}
+        {tab === "ifood" && (
+          <div className="space-y-4 fade-in">
+            <IfoodPainel />
+          </div>
+        )}
       </main>
       </div>
       <LicenseBanner context="admin" />
