@@ -296,6 +296,11 @@ const getActiveStoreId = (): string | null => {
     const saved = sessionStorage.getItem("orderly-active-store");
     if (saved) { _cachedStoreId = saved; return saved; }
   } catch {}
+  // Try device store (tablet/totem/tv activated via DeviceGate)
+  try {
+    const deviceStore = sessionStorage.getItem("orderly-device-store-id");
+    if (deviceStore) { _cachedStoreId = deviceStore; return deviceStore; }
+  } catch {}
   // Fallback to cached value (covers edge cases where session is briefly unavailable)
   return _cachedStoreId;
 };
