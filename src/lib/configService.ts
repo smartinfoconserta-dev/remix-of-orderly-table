@@ -181,7 +181,8 @@ export async function saveConfig(config: SistemaConfig, storeId?: string | null)
       await supabase.from("restaurant_config").insert(row as any);
     }
     clearPendingSync("config");
-  } catch {
+  } catch (err) {
+    console.error("[configService] erro:", err);
     markPendingSync("config");
   }
 }
