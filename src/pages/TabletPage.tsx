@@ -118,20 +118,24 @@ const TabletInner = ({ storeId, initialMesaId }: { storeId: string; initialMesaI
         return;
       }
 
-      setAuthUserEmail(authEmail.trim());
+      // Salva email ANTES do signOut
+      const userEmail = authEmail.trim();
+      
+      // SignOut IMEDIATO para não contaminar AuthContext
+      await supabase.auth.signOut();
+      
+      setAuthUserEmail(userEmail);
       setAuthOpen(false);
       setAuthLoading(false);
 
       if (authAction === "deactivate") {
-        await logEvento(storeId, "tablet_desativado", authEmail.trim(), `Dispositivo desativado por ${authEmail.trim()}`);
-        await supabase.auth.signOut();
+        await logEvento(storeId, "tablet_desativado", userEmail, `Dispositivo desativado por ${userEmail}`);
         updateDeviceMesa(null);
         clearMesaFromStorage();
         clearStoredDeviceId();
         toast.success("Dispositivo desativado", { duration: 1500 });
         window.location.reload();
       } else {
-        // Mesa selection: set authenticated, signOut happens after mesa selection
         setAuthenticated(true);
       }
     } catch {
@@ -150,7 +154,6 @@ const TabletInner = ({ storeId, initialMesaId }: { storeId: string; initialMesaI
       authUserEmail,
       `Mesa ${mesaNum ?? "?"} vinculada por ${authUserEmail}`
     );
-    await supabase.auth.signOut();
     setAuthenticated(false);
     setAuthUserEmail("");
     toast.success(`Mesa ${String(mesaNum ?? "").padStart(2, "0")} vinculada`, { duration: 1200 });
