@@ -880,7 +880,7 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
     }
   }
 
-  function handleDeliveryConfirm(avisarCliente = false) {
+  async function handleDeliveryConfirm(avisarCliente = false) {
     upsertClienteDelivery({
       nome: balcaoClienteNome.trim(),
       cpf: balcaoCpf.trim(),
