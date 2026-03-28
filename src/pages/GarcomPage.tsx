@@ -51,9 +51,10 @@ const GarcomPage = () => {
   const chamadoCount = mesas.filter((m) => m.chamarGarcom).length;
 
   const mesasFiltradas = mesas.filter((m) => {
-    if (filtro === "consumo") return m.status === "consumo";
-    if (filtro === "livres") return m.status === "livre";
-    if (filtro === "chamado") return m.chamarGarcom;
+    if (filtro === "consumo" && m.status !== "consumo") return false;
+    if (filtro === "livres" && m.status !== "livre") return false;
+    if (filtro === "chamado" && !m.chamarGarcom) return false;
+    if (mesaBusca && !String(m.numero).includes(mesaBusca)) return false;
     return true;
   });
 
