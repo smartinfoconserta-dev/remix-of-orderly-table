@@ -581,6 +581,7 @@ const GerentePage = () => {
             { value: "relatorio", icon: BarChart3, label: "Relatório" },
             { value: "logs", icon: ScrollText, label: "Logs" },
             { value: "equipe", icon: Users, label: "Equipe" },
+            { value: "ifood", icon: Truck, label: "iFood" },
           ].map((t) => {
             const Icon = t.icon;
             return (
