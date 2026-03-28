@@ -30,6 +30,7 @@ import {
   XCircle,
   MoreHorizontal,
   MessageCircle,
+  QrCode,
 } from "lucide-react";
 import {
   DropdownMenu,
