@@ -208,7 +208,8 @@ export async function fetchLicenca(storeId?: string | null): Promise<LicencaConf
 
     const cached = getLocalCache<LicencaConfig>(LICENCA_CACHE_KEY);
     return cached ?? { nomeCliente: "", dataVencimento: "", ativo: true };
-  } catch {
+  } catch (err) {
+    console.error("[configService] erro:", err);
     const cached = getLocalCache<LicencaConfig>(LICENCA_CACHE_KEY);
     return cached ?? { nomeCliente: "", dataVencimento: "", ativo: true };
   }
