@@ -1322,6 +1322,33 @@ export type Database = {
       }
       is_master: { Args: { _user_id: string }; Returns: boolean }
       next_order_number: { Args: { _store_id: string }; Returns: number }
+      rpc_get_operational_pedidos: {
+        Args: { _store_id: string }
+        Returns: {
+          caixa_id: string
+          caixa_nome: string
+          cancelado: boolean
+          cancelado_em: string
+          cancelado_motivo: string
+          cancelado_por: string
+          cliente_nome: string
+          criado_em: string
+          criado_em_iso: string
+          garcom_id: string
+          garcom_nome: string
+          id: string
+          itens: Json
+          mesa_id: string
+          motoboy_nome: string
+          numero_pedido: number
+          observacao_geral: string
+          origem: string
+          para_viagem: boolean
+          pronto: boolean
+          status_balcao: string
+          total: number
+        }[]
+      }
       rpc_get_preferencias: {
         Args: { _modulo: string; _store_id: string }
         Returns: {
