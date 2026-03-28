@@ -158,18 +158,20 @@ export function useSupabaseOrders(storeId: string | null) {
     return () => { supabase.removeChannel(channel); };
   }, [storeId]);
 
-  // Insert pedido
+  // Insert pedido via SECURITY DEFINER RPC
   const insertPedido = useCallback(async (pedido: PedidoRealizado) => {
     const sid = storeIdRef.current;
     if (!sid) return;
     const row = pedidoToRow(pedido, sid);
-    const { error } = await supabase.from("pedidos").insert(row as any);
+    const { error } = await supabase.rpc("rpc_insert_pedido" as any, { _data: row });
     if (error) console.error("insertPedido error", error);
   }, []);
 
-  // Update pedido fields
+  // Update pedido fields via SECURITY DEFINER RPC
   const updatePedido = useCallback(async (pedidoId: string, updates: Partial<Record<string, any>>) => {
-    const { error } = await supabase.from("pedidos").update(updates).eq("id", pedidoId);
+    const sid = storeIdRef.current;
+    if (!sid) return;
+    const { error } = await supabase.rpc("rpc_update_pedido" as any, { _id: pedidoId, _store_id: sid, _updates: updates });
     if (error) console.error("updatePedido error", error);
   }, []);
 

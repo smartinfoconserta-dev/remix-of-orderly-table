@@ -172,66 +172,60 @@ export function useSupabaseCaixa(storeId: string | null) {
     return () => { supabase.removeChannel(channel); };
   }, [storeId]);
 
-  // Insert fechamento
+  // Insert fechamento via SECURITY DEFINER RPC
   const insertFechamento = useCallback(async (f: FechamentoConta) => {
     const sid = storeIdRef.current;
     if (!sid) return;
-    const { error } = await supabase.from("fechamentos").insert(fechamentoToRow(f, sid) as any);
+    const { error } = await supabase.rpc("rpc_insert_fechamento" as any, { _data: fechamentoToRow(f, sid) });
     if (error) console.error("insertFechamento error", error);
   }, []);
 
-  // Update fechamento
+  // Update fechamento via SECURITY DEFINER RPC
   const updateFechamento = useCallback(async (id: string, updates: Record<string, any>) => {
-    const { error } = await supabase.from("fechamentos").update(updates).eq("id", id);
+    const sid = storeIdRef.current;
+    if (!sid) return;
+    const { error } = await supabase.rpc("rpc_update_fechamento" as any, { _id: id, _store_id: sid, _updates: updates });
     if (error) console.error("updateFechamento error", error);
   }, []);
 
-  // Insert evento
+  // Insert evento via SECURITY DEFINER RPC
   const insertEvento = useCallback(async (e: EventoOperacional) => {
     const sid = storeIdRef.current;
     if (!sid) return;
-    const { error } = await supabase.from("eventos_operacionais").insert(eventoToRow(e, sid) as any);
+    const { error } = await supabase.rpc("rpc_insert_evento" as any, { _data: eventoToRow(e, sid) });
     if (error) console.error("insertEvento error", error);
   }, []);
 
-  // Insert movimentação
+  // Insert movimentação via SECURITY DEFINER RPC
   const insertMovimentacao = useCallback(async (m: MovimentacaoCaixa) => {
     const sid = storeIdRef.current;
     if (!sid) return;
-    const { error } = await supabase.from("movimentacoes_caixa").insert(movimentacaoToRow(m, sid) as any);
+    const { error } = await supabase.rpc("rpc_insert_movimentacao" as any, { _data: movimentacaoToRow(m, sid) });
     if (error) console.error("insertMovimentacao error", error);
   }, []);
 
-  // Abrir caixa
+  // Abrir caixa via SECURITY DEFINER RPC
   const abrirCaixaDB = useCallback(async (fundo: number, apertoPor: string) => {
     const sid = storeIdRef.current;
     if (!sid) return;
-    // Upsert — check if row exists
-    const { data: existing } = await supabase.from("estado_caixa").select("id").eq("store_id", sid).limit(1);
-    if (existing && existing.length > 0) {
-      await supabase.from("estado_caixa").update({
-        aberto: true, fundo_troco: fundo, aberto_por: apertoPor, aberto_em: new Date().toISOString(),
-        fechado_por: null, fechado_em: null, updated_at: new Date().toISOString(),
-      }).eq("id", existing[0].id);
-    } else {
-      await supabase.from("estado_caixa").insert({
-        store_id: sid, aberto: true, fundo_troco: fundo, aberto_por: apertoPor, aberto_em: new Date().toISOString(),
-      } as any);
-    }
+    const { error } = await supabase.rpc("rpc_upsert_estado_caixa" as any, {
+      _store_id: sid,
+      _data: { aberto: true, fundo_troco: fundo, aberto_por: apertoPor, aberto_em: new Date().toISOString() },
+    });
+    if (error) console.error("abrirCaixaDB error", error);
     setCaixaAberto(true);
     setFundoTroco(fundo);
   }, []);
 
-  // Fechar caixa
+  // Fechar caixa via SECURITY DEFINER RPC
   const fecharCaixaDB = useCallback(async (fechadoPor: string) => {
     const sid = storeIdRef.current;
     if (!sid) return;
-    const { data: existing } = await supabase.from("estado_caixa").select("id").eq("store_id", sid).limit(1);
-    if (existing && existing.length > 0) {
-      await supabase.from("estado_caixa").update({
-        aberto: false, fechado_por: fechadoPor, fechado_em: new Date().toISOString(), updated_at: new Date().toISOString(),
-      }).eq("id", existing[0].id);
-    }
+    const { error } = await supabase.rpc("rpc_upsert_estado_caixa" as any, {
+      _store_id: sid,
+      _data: { aberto: false, fechado_por: fechadoPor, fechado_em: new Date().toISOString() },
+    });
+    if (error) console.error("fecharCaixaDB error", error);
     setCaixaAberto(false);
     setFundoTroco(0);
   }, []);
