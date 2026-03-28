@@ -113,7 +113,7 @@ function getStoreId(): string | null {
   try {
     const device = localStorage.getItem("orderly-device-store-id");
     if (device) return device;
-  } catch {}
+  } catch (err) { console.error("[useProducts] erro:", err); }
   return null;
 }
 
