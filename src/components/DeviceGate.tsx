@@ -76,6 +76,8 @@ const DeviceGate = ({ type, children }: DeviceGateProps) => {
         setStoreId(result.storeId);
         setMesaId(result.mesaId ?? null);
         // Persist storeId so RestaurantContext can find it (devices have no auth session)
+        // Use localStorage so it survives browser restarts (not just sessionStorage)
+        localStorage.setItem("orderly-device-store-id", result.storeId);
         sessionStorage.setItem("orderly-device-store-id", result.storeId);
         setStatus("ready");
       } else {
