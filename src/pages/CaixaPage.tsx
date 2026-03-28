@@ -898,7 +898,7 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
     const totalItens = deliveryPendingItens.reduce((s, it) => s + it.precoUnitario * it.quantidade, 0);
     const totalFinal = totalItens + taxa;
 
-    const numeroPedido = criarPedidoBalcao({
+    const numeroPedido = await criarPedidoBalcao({
       itens: deliveryPendingItens,
       origem: "delivery",
       operador: currentOperator,
