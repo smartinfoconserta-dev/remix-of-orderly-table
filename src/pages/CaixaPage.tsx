@@ -936,7 +936,7 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
   }
 
   if (balcaoFlowAtivo) {
-    const handleBalcaoConfirmado = (itens: ItemCarrinho[], paraViagem: boolean) => {
+    const handleBalcaoConfirmado = async (itens: ItemCarrinho[], paraViagem: boolean) => {
       if (balcaoTipo === "delivery") {
         setDeliveryPendingItens(itens);
         setDeliveryPendingParaViagem(paraViagem);
