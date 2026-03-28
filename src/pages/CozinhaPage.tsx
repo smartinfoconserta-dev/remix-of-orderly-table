@@ -121,7 +121,7 @@ const CozinhaPage = () => {
   const prevIdsRef = useRef<Set<string> | null>(null);
   const printedIdsRef = useRef<Set<string> | null>(null);
   const initialLoadRef = useRef(true);
-  const [filtroOrigem, setFiltroOrigem] = useState<"todos" | "mesa" | "delivery" | "balcao">("todos");
+  const [filtroOrigem, setFiltroOrigem] = useState<"todos" | "mesa" | "delivery" | "balcao" | "ifood">("todos");
   const [setorMonitor, setSetorMonitor] = useState<"tudo" | "cozinha" | "bar" | null>(() => {
     try { return (localStorage.getItem(COZINHA_SETOR_KEY) as any) || null; } catch { return null; }
   });
