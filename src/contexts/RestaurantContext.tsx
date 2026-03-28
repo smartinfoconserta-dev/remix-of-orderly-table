@@ -103,6 +103,7 @@ export interface FechamentoConta {
   canceladoMotivo?: string;
   canceladoPor?: string;
   origem?: "mesa" | "balcao" | "delivery" | "totem" | "motoboy";
+  cpfNota?: string;
 }
 
 export interface Mesa {
