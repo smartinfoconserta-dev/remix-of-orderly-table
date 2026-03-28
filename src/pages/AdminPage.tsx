@@ -768,6 +768,9 @@ th{background:#f5f5f5;padding:8px 12px;border:1px solid #ddd;text-align:left;fon
                           <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-400" />
                         </span>
                       )}
+                      {!dashError && dashCaixaAberto === false && (
+                        <span className="h-2 w-2 rounded-full bg-destructive inline-block" />
+                      )}
                       <p className={`text-xl font-black ${dashError ? "text-muted-foreground" : dashCaixaAberto === true ? "text-emerald-400" : dashCaixaAberto === false ? "text-destructive" : "text-muted-foreground"}`}>
                         {dashError ? "—" : dashCaixaAberto === true ? "Aberto" : dashCaixaAberto === false ? "Fechado" : "—"}
                       </p>
