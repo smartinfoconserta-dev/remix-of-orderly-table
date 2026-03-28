@@ -1494,7 +1494,8 @@ const AdminPage = () => {
                   );
                 })()}
 
-
+                {/* Horário de funcionamento */}
+                {(() => {
                   const DIAS: { key: keyof HorariosSemana; label: string }[] = [
                     { key: "seg", label: "Segunda" },
                     { key: "ter", label: "Terça" },
