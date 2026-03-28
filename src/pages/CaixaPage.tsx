@@ -1677,7 +1677,7 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
                 <div className="flex-1 overflow-y-auto p-5 lg:p-6 scrollbar-hide bg-background">
                 {caixaView === "mesas" ? (
                   <>
-                  <div className="grid gap-3 fade-in" style={{ gridTemplateColumns: "repeat(5, 1fr)" }}>
+                  <div className="grid gap-3 fade-in" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))" }}>
                     {mesas.map((item, i) => (
                       <div key={item.id} className="slide-up" style={{ animationDelay: `${Math.min(i * 30, 300)}ms`, animationFillMode: 'both' }}>
                         <MesaCard
