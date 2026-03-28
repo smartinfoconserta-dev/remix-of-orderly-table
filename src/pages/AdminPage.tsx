@@ -2916,7 +2916,7 @@ ${topRows ? `<h2>Top 5 produtos</h2><table><thead><tr><th>#</th><th>Produto</th>
 
           const handleModuleToggle = (moduleKey: string, value: boolean) => {
             const updated = { ...currentConfig, modulos: { ...currentConfig.modulos, [moduleKey]: value } };
-            saveSistemaConfig(updated);
+            saveSistemaConfig(updated, storeId);
             setSistemaConfig(updated);
             toast.success(`Módulo ${value ? "ativado" : "desativado"}`);
           };
