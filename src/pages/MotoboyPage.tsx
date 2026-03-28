@@ -311,7 +311,7 @@ export default function MotoboyPage() {
     newOrdem.splice(fromIdx, 1);
     newOrdem.splice(toIdx, 0, draggingId);
     setOrdem(newOrdem);
-    saveOrdem(newOrdem);
+    saveOrdem(newOrdem, effectiveStoreId);
     setDraggingId(null);
     dragOverId.current = null;
   };
