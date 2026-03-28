@@ -297,6 +297,7 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
   const [confirmTempo, setConfirmTempo] = useState("");
   const [confirmTempoCustom, setConfirmTempoCustom] = useState("");
   const [confirmTaxaEntrega, setConfirmTaxaEntrega] = useState("");
+  const [deliveryTempoEstimado, setDeliveryTempoEstimado] = useState("");
   const [buscaDelivery, setBuscaDelivery] = useState("");
   const [mostrarEntregues, setMostrarEntregues] = useState(false);
   const [filtroMotoboy, setFiltroMotoboy] = useState<string | null>(null);
@@ -867,7 +868,7 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
     }
   }
 
-  function handleDeliveryConfirm() {
+  function handleDeliveryConfirm(avisarCliente = false) {
     upsertClienteDelivery({
       nome: balcaoClienteNome.trim(),
       cpf: balcaoCpf.trim(),
@@ -878,7 +879,14 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
       complemento: balcaoComplemento.trim(),
       referencia: balcaoReferencia.trim(),
     });
-    criarPedidoBalcao({
+
+    const bairrosDisp = getBairros().filter((b) => b.ativo);
+    const matchBairro = balcaoBairro.trim() ? bairrosDisp.find((b) => normStr(b.nome) === normStr(balcaoBairro)) : null;
+    const taxa = matchBairro ? matchBairro.taxa : 0;
+    const totalItens = deliveryPendingItens.reduce((s, it) => s + it.precoUnitario * it.quantidade, 0);
+    const totalFinal = totalItens + taxa;
+
+    const numeroPedido = criarPedidoBalcao({
       itens: deliveryPendingItens,
       origem: "delivery",
       operador: currentOperator,
@@ -889,16 +897,29 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
       referencia: balcaoReferencia || undefined,
       formaPagamentoDelivery: balcaoFormaPag,
       trocoParaQuanto: balcaoFormaPag === "dinheiro" ? parseCurrencyInput(balcaoTroco) || undefined : undefined,
-      taxaEntrega: (() => {
-        const bairrosDisp = getBairros().filter((b) => b.ativo);
-        const match = balcaoBairro.trim() ? bairrosDisp.find((b) => normStr(b.nome) === normStr(balcaoBairro)) : null;
-        return match ? match.taxa : 0;
-      })(),
+      taxaEntrega: taxa,
       skipConfirmacao: true,
     });
+
     toast.success(`Pedido delivery enviado para ${balcaoClienteNome}`, { duration: 1600, icon: "🍽️" });
+
+    if (avisarCliente && balcaoTelefone.trim()) {
+      const tel = balcaoTelefone.replace(/\D/g, "");
+      const formasPag: Record<string, string> = { dinheiro: "Dinheiro", credito: "Cartão de Crédito", debito: "Cartão de Débito", pix: "PIX" };
+      const tempo = deliveryTempoEstimado.trim() || sistemaConfig.tempoEntrega || "40";
+      const msg = [
+        `Olá ${balcaoClienteNome.trim()}! Seu pedido #${numeroPedido} foi confirmado.`,
+        `🛵 Tempo estimado: ${tempo} minutos.`,
+        `💰 Total: ${formatPrice(totalFinal)}${taxa > 0 ? ` (inclui taxa de entrega de ${formatPrice(taxa)})` : ""}.`,
+        `Forma de pagamento: ${formasPag[balcaoFormaPag] || balcaoFormaPag}.`,
+        `Obrigado! 😊`,
+      ].join("\n");
+      window.open(`https://wa.me/55${tel}?text=${encodeURIComponent(msg)}`, "_blank");
+    }
+
     setDeliveryConfirmOpen(false);
     setDeliveryPendingItens([]);
+    setDeliveryTempoEstimado("");
     resetBalcaoStates();
   }
 
@@ -4001,13 +4022,30 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
                 </div>
               )}
             </div>
+
+            {/* Tempo estimado */}
+            <div className="rounded-xl border border-border bg-card p-3 space-y-1">
+              <label className="text-xs font-black text-foreground uppercase tracking-widest">🕐 Tempo estimado (minutos)</label>
+              <Input
+                value={deliveryTempoEstimado}
+                onChange={(e) => setDeliveryTempoEstimado(e.target.value.replace(/\D/g, ""))}
+                placeholder={sistemaConfig.tempoEntrega || "40"}
+                inputMode="numeric"
+              />
+            </div>
           </div>
-          <DialogFooter className="gap-3 sm:gap-0">
-            <Button variant="outline" onClick={() => { setDeliveryConfirmOpen(false); setBalcaoFlowAtivo(true); }} className="rounded-xl font-bold">← Voltar ao cardápio</Button>
-            <Button onClick={handleDeliveryConfirm} className="rounded-xl font-black gap-1.5">
+          <DialogFooter className="flex-col gap-2 sm:flex-col">
+            <Button variant="outline" onClick={() => { setDeliveryConfirmOpen(false); setBalcaoFlowAtivo(true); }} className="rounded-xl font-bold w-full">← Voltar ao cardápio</Button>
+            <Button onClick={() => handleDeliveryConfirm(false)} className="rounded-xl font-black gap-1.5 w-full">
               <Check className="h-4 w-4" />
               Confirmar e enviar para cozinha
             </Button>
+            {balcaoTelefone.trim() && (
+              <Button onClick={() => handleDeliveryConfirm(true)} variant="outline" className="rounded-xl font-black gap-1.5 w-full border-green-500/30 text-green-600 hover:bg-green-500/10">
+                <Smartphone className="h-4 w-4" />
+                Confirmar e avisar cliente
+              </Button>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>
