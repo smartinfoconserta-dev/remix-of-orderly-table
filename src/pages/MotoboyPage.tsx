@@ -25,7 +25,10 @@ const getSessao = (): { id: string; nome: string; fundoTroco: number } | null =>
 const getOrdem = (): string[] => {
   try { const raw = localStorage.getItem(ORDEM_KEY); return raw ? JSON.parse(raw) : []; } catch { return []; }
 };
-const saveOrdem = (ids: string[]) => localStorage.setItem(ORDEM_KEY, JSON.stringify(ids));
+const saveOrdem = (ids: string[], storeId?: string | null) => {
+  localStorage.setItem(ORDEM_KEY, JSON.stringify(ids));
+  if (storeId) savePreferencia(storeId, "motoboy", "ordem", JSON.stringify(ids));
+};
 
 const getStoreIdFromSession = (): string | null => {
   try {
