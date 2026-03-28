@@ -402,22 +402,15 @@ const rowToMovimentacao = (row: any): MovimentacaoCaixa => ({
   usuarioId: row.usuario_id ?? "", usuarioNome: row.usuario_nome ?? "",
 });
 
-// DB insert with atomic numbering — returns the real number from DB
-// Callers pass a callback to update in-memory state with the real number
-const dbInsertPedido = async (p: PedidoRealizado, onNumeroResolved?: (pedidoId: string, realNum: number) => void) => {
+// DB insert — number is already resolved by the caller
+const dbInsertPedido = async (p: PedidoRealizado) => {
   const sid = getActiveStoreId();
   if (!sid) { console.warn("dbInsertPedido: storeId is null, skipping"); return; }
   try {
-    const { data: nextNum, error: rpcError } = await supabase.rpc("next_order_number" as any, { _store_id: sid });
-    if (rpcError) { console.error("next_order_number RPC error", rpcError); }
-    const atomicNum = typeof nextNum === "number" ? nextNum : p.numeroPedido;
-    if (atomicNum >= _nextPedidoNumber) _nextPedidoNumber = atomicNum + 1;
-    const row = pedidoToRow({ ...p, numeroPedido: atomicNum }, sid);
+    if (p.numeroPedido >= _nextPedidoNumber) _nextPedidoNumber = p.numeroPedido + 1;
+    const row = pedidoToRow(p, sid);
     const { error } = await supabase.rpc("rpc_insert_pedido" as any, { _data: row });
     if (error) { console.error("DB insert pedido", error); toast.error("Erro ao salvar pedido no banco"); }
-    else if (onNumeroResolved && atomicNum !== p.numeroPedido) {
-      onNumeroResolved(p.id, atomicNum);
-    }
   } catch (err) {
     console.error("dbInsertPedido unexpected error", err);
     const fallbackRow = pedidoToRow(p, sid);
