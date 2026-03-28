@@ -97,6 +97,9 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
   } = useRestaurant();
   const isExternalOrder = modo === "balcao" || modo === "delivery" || modo === "totem";
 
+  // ── sysConfig as reactive state (loads from DB) ──
+  const [sysConfig, setSysConfig] = useState<SistemaConfig>(() => getSistemaConfig());
+
   // Reactive product/category loading from Supabase cache
   const [produtos, setProdutos] = useState<Produto[]>(() => getCachedProdutos());
   const [dbCategorias, setDbCategorias] = useState<Categoria[]>(() => getCachedCategorias());
@@ -118,6 +121,39 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
     });
     return () => { cancelled = true; };
   }, [deviceStoreId]);
+
+  // Load config from DB
+  useEffect(() => {
+    import("@/lib/configService").then(({ fetchConfig }) => {
+      fetchConfig(deviceStoreId).then((config) => {
+        if (config) setSysConfig(config);
+      });
+    });
+  }, [deviceStoreId]);
+
+  const logoEstilo = sysConfig.logoEstilo || "quadrada";
+  const logoRadius = logoEstilo === "circular" ? "rounded-full" : "rounded-xl";
+  const logoRadiusSm = logoEstilo === "circular" ? "rounded-full" : "rounded-lg";
+  const cardapioHeaderEstilo = sysConfig.cardapioHeaderEstilo || "padrao";
+  const cardapioBannerBase64 = sysConfig.cardapioBannerBase64 || "";
+  const RESTAURANTE = {
+    nome: sysConfig.nomeRestaurante || "Restaurante",
+    logoUrl: sysConfig.logoBase64 || sysConfig.logoUrl || "",
+    logoFallback: (sysConfig.nomeRestaurante || "Restaurante").slice(0, 2).toUpperCase(),
+  };
+
+  const configBanners = sysConfig.banners?.filter((b) => b.titulo && b.imagemUrl) ?? [];
+  const activeBannerSlides = configBanners.length > 0
+    ? configBanners.map((b, i) => ({
+        id: b.id || `cb-${i}`,
+        image: b.imagemUrl,
+        label: "",
+        title: b.titulo,
+        description: b.subtitulo,
+        price: b.preco,
+        alt: b.titulo,
+      }))
+    : homeHeroSlides;
 
   const customCats = useMemo(() => getCategoriasCustom(), []);
   const allCategorias: Categoria[] = useMemo(() => {
