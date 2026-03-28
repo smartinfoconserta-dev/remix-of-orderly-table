@@ -904,6 +904,36 @@ export default function MotoboyPage() {
           </div>
         </div>
       )}
+      {/* USB QR Scanner Dialog */}
+      <Dialog open={usbScanOpen} onOpenChange={(o) => { setUsbScanOpen(o); if (!o) setUsbScanInput(""); }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Escanear pedido</DialogTitle>
+            <DialogDescription>Escaneie o QR Code do pedido ou digite o código</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <Input
+              ref={usbScanInputRef}
+              autoFocus
+              value={usbScanInput}
+              onChange={(e) => setUsbScanInput(e.target.value)}
+              placeholder="Aguardando leitura..."
+              className="text-lg font-mono h-12"
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  handleUsbQrScan(usbScanInput);
+                  setUsbScanInput("");
+                  setTimeout(() => usbScanInputRef.current?.focus(), 50);
+                }
+              }}
+            />
+            <p className="text-xs text-muted-foreground text-center">O leitor USB envia os dados como digitação. Pressione Enter ou escaneie.</p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setUsbScanOpen(false); setUsbScanInput(""); }}>Fechar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       <LicenseBanner context="operational" />
     </div>
   );
