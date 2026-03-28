@@ -2479,8 +2479,8 @@ ${topRows ? `<h2>Top 5 produtos</h2><table><thead><tr><th>#</th><th>Produto</th>
                             modoOperacao: modoOperacaoPendente,
                           };
                           setSistemaConfig(next);
-                          saveSistemaConfig(next);
-                          saveSistemaConfigAsync(next);
+                          saveSistemaConfig(next, storeId);
+                          saveSistemaConfigAsync(next, storeId);
                           toast.success(modoOperacaoPendente === "fast_food" ? "Modo Fast Food ativado" : "Modo Restaurante ativado");
                           setModoOperacaoPendente(null);
                         }
