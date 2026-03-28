@@ -1438,6 +1438,13 @@ const GerentePage = () => {
           </div>
           )}
         </TabsContent>
+
+        {/* ═══ TAB 5: iFood ═══ */}
+        <TabsContent value="ifood" className="flex-1 overflow-y-auto p-4 md:p-6 mt-0">
+          <div className="mx-auto max-w-2xl">
+            <IfoodPainel />
+          </div>
+        </TabsContent>
       </Tabs>
 
       {/* Status bar — Windows style */}
