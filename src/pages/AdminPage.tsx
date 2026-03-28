@@ -2099,7 +2099,7 @@ ${topRows ? `<h2>Top 5 produtos</h2><table><thead><tr><th>#</th><th>Produto</th>
                       onCheckedChange={(v) => {
                         const next = { ...sistemaConfig, deliveryAtivo: v };
                         setSistemaConfig(next);
-                        saveSistemaConfig(next);
+                        saveSistemaConfig(next, storeId);
                         toast.success(v ? "Delivery ativado" : "Delivery desativado");
                       }}
                     />
