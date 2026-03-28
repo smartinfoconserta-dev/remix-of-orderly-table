@@ -348,9 +348,9 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
 
   useRouteLock(accessMode === "gerente" ? "/gerente" : "/caixa");
 
-  // Load saved modo operacao
+  // Load saved modo operacao (skip if fast_food global overrides)
   useEffect(() => {
-    if (modoForced) return;
+    if (modoForced || isFastFoodGlobal) return;
     const savedModo = localStorage.getItem("obsidian-caixa-modo-v1");
     if (savedModo === "somente_mesas" || savedModo === "somente_delivery" || savedModo === "completo") {
       setModoOperacao(savedModo);
