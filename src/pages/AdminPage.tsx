@@ -1618,7 +1618,7 @@ const AdminPage = () => {
                         if (isNaN(taxa) || taxa < 0) { toast.error("Taxa inválida"); return; }
                         const novo: Bairro = { id: `bairro-${Date.now()}`, nome: novoBairroNome.trim(), taxa, ativo: true };
                         const next = [...bairros, novo];
-                        saveBairros(next);
+                        saveBairros(next, storeId);
                         setBairros(next);
                         setNovoBairroNome("");
                         setNovoBairroTaxa("");
