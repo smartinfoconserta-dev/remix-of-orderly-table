@@ -634,6 +634,23 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
     </div>
   ) : cardapioHeaderEstilo === "banner" && cardapioBannerBase64 && (modo === "cliente" || modo === "totem") ? (
     null // banner mode — identity is rendered in custom banner header below
+  ) : RESTAURANTE.logoUrl && logoEstilo === "quadrada" ? (
+    <div className="flex w-full items-center justify-between">
+      <img
+        src={RESTAURANTE.logoUrl}
+        alt={RESTAURANTE.nome}
+        className="h-10 w-10 rounded-xl object-cover border border-border shadow-sm select-none touch-none"
+        onPointerDown={handleLogoPointerDown}
+        onPointerUp={handleLogoPointerUp}
+        onPointerLeave={handleLogoPointerUp}
+        onContextMenu={(e) => modo === "cliente" && e.preventDefault()}
+        draggable={false}
+      />
+      <div className="flex-1" />
+      {mesaLabel && (
+        <p className="text-sm font-bold text-foreground">{mesaLabel}</p>
+      )}
+    </div>
   ) : (
     <div className="flex min-w-0 items-center gap-3">
       <Avatar
