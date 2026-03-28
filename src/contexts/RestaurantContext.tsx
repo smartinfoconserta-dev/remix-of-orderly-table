@@ -968,6 +968,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
             caixaId: input.usuario.id, caixaNome: input.usuario.nome,
             troco: input.troco ?? 0, subtotal: mesa.total, desconto: input?.desconto ?? 0,
             couvert: input?.couvert ?? 0, numeroPessoas: input?.numeroPessoas ?? 0,
+            cpfNota: input?.cpfNota,
           };
           dbInsertFechamento(fechamento);
           eventInput = { tipo: "caixa", descricao: `Caixa ${input.usuario.nome} fechou conta da ${formatMesaNumero(mesa.numero)} com ${resumoPagamento}`, mesaId, usuarioId: input.usuario.id, usuarioNome: input.usuario.nome, acao: "fechar_conta", valor: mesa.total };
