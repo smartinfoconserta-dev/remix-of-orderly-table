@@ -188,6 +188,8 @@ const DeviceGate = ({ type, children }: DeviceGateProps) => {
       }
 
       setStoreId(foundStoreId);
+      // Persist storeId so RestaurantContext can find it
+      sessionStorage.setItem("orderly-device-store-id", foundStoreId);
       setStatus("ready");
     } catch (err) {
       console.error("[DeviceGate] activation error:", err);
