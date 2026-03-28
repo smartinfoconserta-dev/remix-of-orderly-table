@@ -880,7 +880,7 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
     }
   }
 
-  function handleDeliveryConfirm(avisarCliente = false) {
+  async function handleDeliveryConfirm(avisarCliente = false) {
     upsertClienteDelivery({
       nome: balcaoClienteNome.trim(),
       cpf: balcaoCpf.trim(),
@@ -898,7 +898,7 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
     const totalItens = deliveryPendingItens.reduce((s, it) => s + it.precoUnitario * it.quantidade, 0);
     const totalFinal = totalItens + taxa;
 
-    const numeroPedido = criarPedidoBalcao({
+    const numeroPedido = await criarPedidoBalcao({
       itens: deliveryPendingItens,
       origem: "delivery",
       operador: currentOperator,
@@ -936,7 +936,7 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
   }
 
   if (balcaoFlowAtivo) {
-    const handleBalcaoConfirmado = (itens: ItemCarrinho[], paraViagem: boolean) => {
+    const handleBalcaoConfirmado = async (itens: ItemCarrinho[], paraViagem: boolean) => {
       if (balcaoTipo === "delivery") {
         setDeliveryPendingItens(itens);
         setDeliveryPendingParaViagem(paraViagem);
@@ -946,7 +946,7 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
         setDeliveryConfirmOpen(true);
         return;
       }
-      criarPedidoBalcao({
+      await criarPedidoBalcao({
         itens,
         origem: "balcao",
         operador: currentOperator,

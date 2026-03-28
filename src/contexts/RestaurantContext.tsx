@@ -198,7 +198,7 @@ interface RestaurantContextType {
   registrarMovimentacaoCaixa: (input: MovimentacaoInput) => void;
   abrirCaixa: (fundoTroco: number, usuario: OperationalUser) => void;
   fecharCaixaDoDia: (usuario: OperationalUser, extras?: { diferenca_dinheiro?: number; diferenca_motivo?: string; fundo_proximo?: number }) => void;
-  criarPedidoBalcao: (input: CriarPedidoBalcaoInput) => number;
+  criarPedidoBalcao: (input: CriarPedidoBalcaoInput) => Promise<number>;
   marcarPedidoBalcaoPronto: (pedidoId: string) => void;
   marcarBalcaoSaiu: (pedidoId: string, motoboyNome: string) => void;
   marcarBalcaoEntregue: (pedidoId: string) => void;
@@ -402,22 +402,15 @@ const rowToMovimentacao = (row: any): MovimentacaoCaixa => ({
   usuarioId: row.usuario_id ?? "", usuarioNome: row.usuario_nome ?? "",
 });
 
-// DB insert with atomic numbering — returns the real number from DB
-// Callers pass a callback to update in-memory state with the real number
-const dbInsertPedido = async (p: PedidoRealizado, onNumeroResolved?: (pedidoId: string, realNum: number) => void) => {
+// DB insert — number is already resolved by the caller
+const dbInsertPedido = async (p: PedidoRealizado) => {
   const sid = getActiveStoreId();
   if (!sid) { console.warn("dbInsertPedido: storeId is null, skipping"); return; }
   try {
-    const { data: nextNum, error: rpcError } = await supabase.rpc("next_order_number" as any, { _store_id: sid });
-    if (rpcError) { console.error("next_order_number RPC error", rpcError); }
-    const atomicNum = typeof nextNum === "number" ? nextNum : p.numeroPedido;
-    if (atomicNum >= _nextPedidoNumber) _nextPedidoNumber = atomicNum + 1;
-    const row = pedidoToRow({ ...p, numeroPedido: atomicNum }, sid);
+    if (p.numeroPedido >= _nextPedidoNumber) _nextPedidoNumber = p.numeroPedido + 1;
+    const row = pedidoToRow(p, sid);
     const { error } = await supabase.rpc("rpc_insert_pedido" as any, { _data: row });
     if (error) { console.error("DB insert pedido", error); toast.error("Erro ao salvar pedido no banco"); }
-    else if (onNumeroResolved && atomicNum !== p.numeroPedido) {
-      onNumeroResolved(p.id, atomicNum);
-    }
   } catch (err) {
     console.error("dbInsertPedido unexpected error", err);
     const fallbackRow = pedidoToRow(p, sid);
@@ -1065,47 +1058,47 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     });
   }, []);
 
-  const criarPedidoBalcao = useCallback((input: CriarPedidoBalcaoInput): number => {
-    const numeroPedido = proximoNumeroPedido();
-    setStore((prev) => {
-      const now = new Date();
-      const totalPedido = calcularTotalItens(input.itens) + (input.origem === "delivery" ? (input.taxaEntrega ?? 0) : 0);
-      const label = input.origem === "delivery" ? `DELIVERY — ${input.clienteNome ?? ""}` : input.origem === "totem" ? "TOTEM" : "BALCÃO";
-      const idPrefix = input.origem === "totem" ? "totem" : input.origem === "delivery" ? "delivery" : "balcao";
-      const mesaIdGerado = `${idPrefix}-${now.getTime()}`;
-      const statusInicial: PedidoRealizado["statusBalcao"] = input.origem === "delivery" && !input.skipConfirmacao ? "aguardando_confirmacao" : "aberto";
-      const novoPedido: PedidoRealizado = {
-        id: `pedido-${idPrefix}-${now.getTime()}-${Math.random().toString(36).slice(2, 7)}`,
-        numeroPedido, itens: input.itens.map(cloneItem), total: totalPedido,
-        criadoEm: formatClock(now), criadoEmIso: now.toISOString(), origem: input.origem, mesaId: mesaIdGerado,
-        caixaId: input.operador.id, caixaNome: input.operador.nome,
-        clienteNome: input.clienteNome, clienteTelefone: input.clienteTelefone,
-        enderecoCompleto: input.enderecoCompleto, bairro: input.bairro, referencia: input.referencia,
-        formaPagamentoDelivery: input.formaPagamentoDelivery, trocoParaQuanto: input.trocoParaQuanto,
-        observacaoGeral: input.observacaoGeral, statusBalcao: statusInicial, pronto: false,
-      };
-      dbInsertPedido(novoPedido, (pedidoId, realNum) => {
-        setStore((s) => ({
-          ...s,
-          pedidosBalcao: s.pedidosBalcao.map((p) => p.id === pedidoId ? { ...p, numeroPedido: realNum } : p),
-        }));
-      });
-      const totemPayMethod = input.formaPagamentoTotem ?? "pix";
-      const fechamentoTotem: FechamentoConta | null = input.origem === "totem" ? {
-        id: `fechamento-totem-${now.getTime()}-${Math.random().toString(36).slice(2, 7)}`,
-        numeroComanda: proximoNumeroComanda(), mesaId: mesaIdGerado, mesaNumero: 0, origem: "totem" as const, total: totalPedido,
-        formaPagamento: totemPayMethod, pagamentos: [{ id: `pag-totem-${now.getTime()}`, formaPagamento: totemPayMethod, valor: totalPedido }],
-        itens: input.itens.map(cloneItem), criadoEm: formatDateTime(now), criadoEmIso: now.toISOString(),
-        caixaId: "totem-auto", caixaNome: "Totem Autoatendimento", troco: 0, subtotal: totalPedido, desconto: 0,
-      } : null;
-      if (fechamentoTotem) dbInsertFechamento(fechamentoTotem);
-      return {
-        ...prev,
-        pedidosBalcao: [...prev.pedidosBalcao, novoPedido],
-        fechamentos: fechamentoTotem ? [fechamentoTotem, ...prev.fechamentos] : prev.fechamentos,
-        eventos: appendEventAndPersist(prev.eventos, { tipo: "caixa", descricao: `${input.origem === "totem" ? "Totem" : `Caixa ${input.operador.nome}`} criou pedido ${label}`, usuarioId: input.operador.id, usuarioNome: input.operador.nome, acao: "lancar_pedido", valor: totalPedido }),
-      };
-    });
+  const criarPedidoBalcao = useCallback(async (input: CriarPedidoBalcaoInput): Promise<number> => {
+    const sid = getActiveStoreId();
+    const fallback = proximoNumeroPedido();
+    let numeroPedido = fallback;
+    try {
+      const { data: nextNum } = await supabase.rpc("next_order_number", { _store_id: sid });
+      if (typeof nextNum === "number") numeroPedido = nextNum;
+    } catch { /* use fallback */ }
+
+    const now = new Date();
+    const totalPedido = calcularTotalItens(input.itens) + (input.origem === "delivery" ? (input.taxaEntrega ?? 0) : 0);
+    const label = input.origem === "delivery" ? `DELIVERY — ${input.clienteNome ?? ""}` : input.origem === "totem" ? "TOTEM" : "BALCÃO";
+    const idPrefix = input.origem === "totem" ? "totem" : input.origem === "delivery" ? "delivery" : "balcao";
+    const mesaIdGerado = `${idPrefix}-${now.getTime()}`;
+    const statusInicial: PedidoRealizado["statusBalcao"] = input.origem === "delivery" && !input.skipConfirmacao ? "aguardando_confirmacao" : "aberto";
+    const novoPedido: PedidoRealizado = {
+      id: `pedido-${idPrefix}-${now.getTime()}-${Math.random().toString(36).slice(2, 7)}`,
+      numeroPedido, itens: input.itens.map(cloneItem), total: totalPedido,
+      criadoEm: formatClock(now), criadoEmIso: now.toISOString(), origem: input.origem, mesaId: mesaIdGerado,
+      caixaId: input.operador.id, caixaNome: input.operador.nome,
+      clienteNome: input.clienteNome, clienteTelefone: input.clienteTelefone,
+      enderecoCompleto: input.enderecoCompleto, bairro: input.bairro, referencia: input.referencia,
+      formaPagamentoDelivery: input.formaPagamentoDelivery, trocoParaQuanto: input.trocoParaQuanto,
+      observacaoGeral: input.observacaoGeral, statusBalcao: statusInicial, pronto: false,
+    };
+    dbInsertPedido(novoPedido);
+    const totemPayMethod = input.formaPagamentoTotem ?? "pix";
+    const fechamentoTotem: FechamentoConta | null = input.origem === "totem" ? {
+      id: `fechamento-totem-${now.getTime()}-${Math.random().toString(36).slice(2, 7)}`,
+      numeroComanda: proximoNumeroComanda(), mesaId: mesaIdGerado, mesaNumero: 0, origem: "totem" as const, total: totalPedido,
+      formaPagamento: totemPayMethod, pagamentos: [{ id: `pag-totem-${now.getTime()}`, formaPagamento: totemPayMethod, valor: totalPedido }],
+      itens: input.itens.map(cloneItem), criadoEm: formatDateTime(now), criadoEmIso: now.toISOString(),
+      caixaId: "totem-auto", caixaNome: "Totem Autoatendimento", troco: 0, subtotal: totalPedido, desconto: 0,
+    } : null;
+    if (fechamentoTotem) dbInsertFechamento(fechamentoTotem);
+    setStore((prev) => ({
+      ...prev,
+      pedidosBalcao: [...prev.pedidosBalcao, novoPedido],
+      fechamentos: fechamentoTotem ? [fechamentoTotem, ...prev.fechamentos] : prev.fechamentos,
+      eventos: appendEventAndPersist(prev.eventos, { tipo: "caixa", descricao: `${input.origem === "totem" ? "Totem" : `Caixa ${input.operador.nome}`} criou pedido ${label}`, usuarioId: input.operador.id, usuarioNome: input.operador.nome, acao: "lancar_pedido", valor: totalPedido }),
+    }));
     return numeroPedido;
   }, []);
 
