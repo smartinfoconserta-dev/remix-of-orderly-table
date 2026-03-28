@@ -103,6 +103,7 @@ export interface FechamentoConta {
   canceladoMotivo?: string;
   canceladoPor?: string;
   origem?: "mesa" | "balcao" | "delivery" | "totem" | "motoboy";
+  cpfNota?: string;
 }
 
 export interface Mesa {
@@ -141,6 +142,7 @@ export interface FecharContaInput {
   desconto?: number;
   couvert?: number;
   numeroPessoas?: number;
+  cpfNota?: string;
 }
 
 interface RestaurantStore {
@@ -355,6 +357,7 @@ const fechamentoToRow = (f: FechamentoConta, storeId: string) => ({
   cancelado: f.cancelado ?? false, cancelado_em: f.canceladoEm || null,
   cancelado_motivo: f.canceladoMotivo || null, cancelado_por: f.canceladoPor || null,
   criado_em: f.criadoEm || null, criado_em_iso: f.criadoEmIso,
+  cpf_nota: f.cpfNota || null,
 });
 
 const eventoToRow = (e: EventoOperacional, storeId: string) => ({
@@ -384,6 +387,7 @@ const rowToFechamento = (row: any): FechamentoConta => ({
   numeroPessoas: row.numero_pessoas ?? 0, cancelado: row.cancelado ?? false,
   canceladoEm: row.cancelado_em ?? undefined, canceladoMotivo: row.cancelado_motivo ?? undefined,
   canceladoPor: row.cancelado_por ?? undefined, origem: row.origem ?? "mesa",
+  cpfNota: row.cpf_nota ?? undefined,
 });
 
 const rowToEvento = (row: any): EventoOperacional => ({
@@ -964,6 +968,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
             caixaId: input.usuario.id, caixaNome: input.usuario.nome,
             troco: input.troco ?? 0, subtotal: mesa.total, desconto: input?.desconto ?? 0,
             couvert: input?.couvert ?? 0, numeroPessoas: input?.numeroPessoas ?? 0,
+            cpfNota: input?.cpfNota,
           };
           dbInsertFechamento(fechamento);
           eventInput = { tipo: "caixa", descricao: `Caixa ${input.usuario.nome} fechou conta da ${formatMesaNumero(mesa.numero)} com ${resumoPagamento}`, mesaId, usuarioId: input.usuario.id, usuarioNome: input.usuario.nome, acao: "fechar_conta", valor: mesa.total };
@@ -1259,6 +1264,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         caixaId: input.usuario.id, caixaNome: input.usuario.nome,
         troco: input.troco ?? 0, subtotal: pedido.total, desconto: input.desconto ?? 0,
         couvert: input.couvert ?? 0, numeroPessoas: input.numeroPessoas ?? 0,
+        cpfNota: input.cpfNota,
       };
       dbInsertFechamento(fechamento);
       dbUpdatePedido(pedidoId, { status_balcao: "pago" });

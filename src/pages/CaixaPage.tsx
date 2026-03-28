@@ -78,6 +78,13 @@ const normStr = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, ""
 const formatPrice = (v: number) => `R$ ${v.toFixed(2).replace(".", ",")}`;
 // Legacy localStorage keys removed — data now lives in Supabase
 const toCents = (value: number) => Math.round(value * 100);
+const formatCpfMask = (value: string) => {
+  const digits = value.replace(/\D/g, "").slice(0, 11);
+  if (digits.length <= 3) return digits;
+  if (digits.length <= 6) return `${digits.slice(0, 3)}.${digits.slice(3)}`;
+  if (digits.length <= 9) return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6)}`;
+  return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9)}`;
+};
 
 const parseCurrencyInput = (value: string) => {
   const sanitized = value.trim().replace(/[^\d,.-]/g, "");
@@ -241,6 +248,10 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
   const [descontoAplicado, setDescontoAplicado] = useState(0);
   const [couvertPessoas, setCouvertPessoas] = useState(0);
   const [couvertDispensado, setCouvertDispensado] = useState(false);
+  const [cpfNotaMesa, setCpfNotaMesa] = useState("");
+  const [cpfNotaMesaOpen, setCpfNotaMesaOpen] = useState(false);
+  const [cpfNotaBalcao, setCpfNotaBalcao] = useState("");
+  const [cpfNotaBalcaoOpen, setCpfNotaBalcaoOpen] = useState(false);
   const [estornoModalOpen, setEstornoModalOpen] = useState(false);
   const [estornoFechamentoId, setEstornoFechamentoId] = useState<string | null>(null);
   const [estornoMotivo, setEstornoMotivo] = useState("");
@@ -598,6 +609,8 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
     setDescontoError(null);
     setCouvertPessoas(0);
     setCouvertDispensado(false);
+    setCpfNotaMesa("");
+    setCpfNotaMesaOpen(false);
   }, []);
 
   const handleVoltar = useCallback(() => {
@@ -610,6 +623,8 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
     setBalcaoPaymentMethod("dinheiro");
     setBalcaoPaymentValue("");
     setBalcaoValorEntregue("");
+    setCpfNotaBalcao("");
+    setCpfNotaBalcaoOpen(false);
   }, [resetCloseAccountState]);
 
   const handleSelecionarMesa = useCallback(
@@ -706,6 +721,10 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
     desconto?: number;
     couvert?: number;
     numeroPessoas?: number;
+    origem?: string;
+    clienteNome?: string;
+    endereco?: string;
+    cpfNota?: string;
   }) => {
     let el = document.getElementById("comanda-print");
     if (!el) {
@@ -733,11 +752,44 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
       : "";
     const now = new Date();
     const footerDate = `${String(now.getDate()).padStart(2,"0")}/${String(now.getMonth()+1).padStart(2,"0")}/${now.getFullYear()} ${String(now.getHours()).padStart(2,"0")}:${String(now.getMinutes()).padStart(2,"0")}`;
+
+    const isBalcaoTotem = data.origem === "balcao" || data.origem === "totem";
+    const isDelivery = data.origem === "delivery";
+    const cpfHtml = data.cpfNota ? `<p style="text-align:center;font-size:11px;margin-top:8px">CPF: ${data.cpfNota}</p>` : "";
+
+    let headerHtml = "";
+    if (isDelivery) {
+      headerHtml = `
+        <h2>${nomeRest}</h2>
+        <div style="text-align:center;padding:12px 0;border:3px solid #000;margin-bottom:12px;background:#f0f0f0">
+          <p style="font-size:42px;font-weight:900;line-height:1;margin:0">#${String(data.numero).padStart(3,"0")}</p>
+          <p style="font-size:14px;font-weight:bold;margin-top:4px">DELIVERY</p>
+          <p style="font-size:16px;font-weight:bold;margin-top:2px">${data.clienteNome || ""}</p>
+        </div>
+        ${data.endereco ? `<div style="font-weight:bold;font-size:12px;border-bottom:1px solid #000;padding-bottom:8px;margin-bottom:8px">${data.endereco}</div>` : ""}
+        <div class="print-center" style="font-size:10px">${data.dataHora}</div>
+      `;
+    } else if (isBalcaoTotem) {
+      headerHtml = `
+        <h2>${nomeRest}</h2>
+        <div style="text-align:center;padding:16px 0;border-bottom:3px solid #000;margin-bottom:12px">
+          <p style="font-size:48px;font-weight:900;line-height:1;margin:0">#${String(data.numero).padStart(3,"0")}</p>
+          <p style="font-size:12px;margin-top:4px">Seu número de pedido</p>
+        </div>
+        <div class="print-center">${data.tipo}</div>
+        <div class="print-center" style="font-size:10px">${data.dataHora}</div>
+      `;
+    } else {
+      headerHtml = `
+        <h2>${nomeRest}</h2>
+        <div class="print-center">${data.tipo}</div>
+        <div class="print-pedido-num">#${data.numero}</div>
+        <div class="print-center" style="font-size:10px">${data.dataHora}</div>
+      `;
+    }
+
     el.innerHTML = `
-      <h2>${nomeRest}</h2>
-      <div class="print-center">${data.tipo}</div>
-      <div class="print-pedido-num">#${data.numero}</div>
-      <div class="print-center" style="font-size:10px">${data.dataHora}</div>
+      ${headerHtml}
       ${paraLevarHtml}
       ${SEP}
       ${data.itens.map((it) => `<div class="print-item"><span>${it.quantidade}x ${it.nome}</span><span>R$ ${(it.preco * it.quantidade).toFixed(2).replace(".", ",")}</span></div>`).join("")}
@@ -748,6 +800,7 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
       ${SEP}
       ${pagHtml}
       <div style="text-align:center;margin:12px 0"><img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=RETIRADA:${data.numero}" style="width:120px;height:120px" /><p style="font-size:10px;margin-top:4px">Apresente para retirar</p></div>
+      ${cpfHtml}
       <div class="print-footer">${footerDate}</div>
       <div class="print-footer">Obrigado pela preferencia!</div>
     `;
@@ -1099,7 +1152,7 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
       toast.error("O fechamento só pode ser confirmado quando o total pago for igual ao total da conta", { duration: 1600 });
       return;
     }
-    fecharConta(mesaSelecionada, { usuario: currentOperator, pagamentos: closingPayments, troco: trocoRegistrado, desconto: descontoAplicado, couvert: couvertTotal, numeroPessoas: couvertPessoas });
+    fecharConta(mesaSelecionada, { usuario: currentOperator, pagamentos: closingPayments, troco: trocoRegistrado, desconto: descontoAplicado, couvert: couvertTotal, numeroPessoas: couvertPessoas, cpfNota: cpfNotaMesa.trim() || undefined });
     toast.success(
       trocoRegistrado > 0
         ? `Conta fechada — Troco: ${formatPrice(trocoRegistrado)}`
@@ -1138,7 +1191,7 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
       toast.error("O total pago deve ser igual ao total da conta", { duration: 1600 });
       return;
     }
-    fecharContaBalcao(balcaoPedidoSelecionado, { usuario: currentOperator, pagamentos: balcaoPayments, troco: trocoRegistrado, desconto: descontoAplicado });
+    fecharContaBalcao(balcaoPedidoSelecionado, { usuario: currentOperator, pagamentos: balcaoPayments, troco: trocoRegistrado, desconto: descontoAplicado, cpfNota: cpfNotaBalcao.trim() || undefined });
     const trocoFinal = trocoRegistrado;
     toast.success(
       trocoFinal > 0
@@ -1596,6 +1649,9 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
                       total: balcaoPedido.total,
                       formaPagamento: balcaoPedido.formaPagamentoDelivery ? getPaymentMethodLabel(balcaoPedido.formaPagamentoDelivery as PaymentMethod) : undefined,
                       paraViagem: (balcaoPedido as any).paraViagem === true,
+                      origem: balcaoPedido.origem,
+                      clienteNome: balcaoPedido.clienteNome,
+                      endereco: balcaoPedido.enderecoCompleto,
                     });
                   }} className="rounded-xl font-bold gap-1.5">
                     <Printer className="h-3.5 w-3.5" />
@@ -3055,6 +3111,24 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
                   )}
                 </div>
 
+                {/* CPF na nota */}
+                <div className="border-t border-border px-3 pt-3">
+                  <button onClick={() => setCpfNotaMesaOpen(!cpfNotaMesaOpen)} className="text-xs font-bold text-muted-foreground hover:text-foreground transition-colors">
+                    {cpfNotaMesa ? `CPF: ${cpfNotaMesa}` : "📄 CPF na nota?"}
+                  </button>
+                  {cpfNotaMesaOpen && (
+                    <div className="mt-2">
+                      <Input
+                        value={cpfNotaMesa}
+                        onChange={(e) => setCpfNotaMesa(formatCpfMask(e.target.value))}
+                        placeholder="000.000.000-00"
+                        inputMode="numeric"
+                        className="rounded-xl text-sm"
+                      />
+                    </div>
+                  )}
+                </div>
+
                 {/* Sticky bottom: confirm */}
                 <div className="border-t border-border p-3 bg-card space-y-2">
                   <Button
@@ -3360,6 +3434,24 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
                           </div>
                         );
                       })}
+                    </div>
+                  )}
+                </div>
+
+                {/* CPF na nota */}
+                <div className="border-t border-border px-5 pt-3">
+                  <button onClick={() => setCpfNotaBalcaoOpen(!cpfNotaBalcaoOpen)} className="text-xs font-bold text-muted-foreground hover:text-foreground transition-colors">
+                    {cpfNotaBalcao ? `CPF: ${cpfNotaBalcao}` : "📄 CPF na nota?"}
+                  </button>
+                  {cpfNotaBalcaoOpen && (
+                    <div className="mt-2">
+                      <Input
+                        value={cpfNotaBalcao}
+                        onChange={(e) => setCpfNotaBalcao(formatCpfMask(e.target.value))}
+                        placeholder="000.000.000-00"
+                        inputMode="numeric"
+                        className="rounded-xl text-sm"
+                      />
                     </div>
                   )}
                 </div>
