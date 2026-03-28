@@ -108,7 +108,8 @@ export async function getClientesDeliveryAsync(storeId?: string | null): Promise
       ultimoPedido: r.ultimo_pedido ?? new Date().toISOString(),
       senhaHash: r.senha_hash ?? undefined,
     }));
-  } catch {
+  } catch (err) {
+    console.error("[deliveryStorage] erro:", err);
     return [];
   }
 }
