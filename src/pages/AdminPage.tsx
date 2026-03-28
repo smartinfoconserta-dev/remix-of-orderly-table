@@ -148,6 +148,7 @@ const AdminPage = () => {
   const navigate = useNavigate();
   const [tab, setTab] = useState<AdminTab>("dashboard");
   const [configSection, setConfigSection] = useState<"inicio" | "identidade" | "delivery" | "salao" | "operacao" | "modulos" | "sistema">("inicio");
+  const [modoOperacaoPendente, setModoOperacaoPendente] = useState<"restaurante" | "fast_food" | null>(null);
 
   // --- Cardápio state (from Supabase produtos table) ---
   type AdminProduct = Produto & { ativo: boolean; removido: boolean; disponivelDelivery: boolean; imagemBase64?: string };
