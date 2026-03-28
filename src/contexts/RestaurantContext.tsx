@@ -142,6 +142,7 @@ export interface FecharContaInput {
   desconto?: number;
   couvert?: number;
   numeroPessoas?: number;
+  cpfNota?: string;
 }
 
 interface RestaurantStore {
