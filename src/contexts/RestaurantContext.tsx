@@ -609,8 +609,8 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       _nextPedidoNumber = (maxPedidoData?.[0]?.numero_pedido ?? 0) + 1;
 
       const allPedidos = (pedidosRes.data ?? []).map(rowToPedido);
-      const pedidosMesa = allPedidos.filter(p => !["balcao", "delivery", "totem"].includes(p.origem));
-      const pedidosBalcao = allPedidos.filter(p => ["balcao", "delivery", "totem"].includes(p.origem));
+      const pedidosMesa = allPedidos.filter(p => !["balcao", "delivery", "totem", "ifood"].includes(p.origem));
+      const pedidosBalcao = allPedidos.filter(p => ["balcao", "delivery", "totem", "ifood"].includes(p.origem));
       const fechamentos = (fechRes.data ?? []).map(rowToFechamento);
       const maxComanda = fechamentos.reduce((max, f) => Math.max(max, f.numeroComanda ?? 0), 0);
       _contadorComanda = maxComanda;
