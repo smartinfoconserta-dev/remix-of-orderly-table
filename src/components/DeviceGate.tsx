@@ -112,14 +112,14 @@ const DeviceGate = ({ type, children }: DeviceGateProps) => {
 
     try {
       // Find store by CNPJ in master_clientes
-      const { data: cliente } = await supabase
-        .from("master_clientes")
-        .select("id")
-        .eq("cnpj", cnpjDigits)
-        .eq("ativo", true)
-        .maybeSingle();
+      // Find store by CNPJ using secure server-side function
+      const { data: storeResult } = await supabase.rpc("get_store_by_cnpj" as any, {
+        _cnpj: cnpjDigits,
+      });
 
-      if (!cliente) {
+      const storeRow = Array.isArray(storeResult) ? storeResult[0] : null;
+
+      if (!storeRow) {
         const newAttempts = attempts + 1;
         setAttempts(newAttempts);
         if (newAttempts >= MAX_ATTEMPTS) {
@@ -133,66 +133,8 @@ const DeviceGate = ({ type, children }: DeviceGateProps) => {
         return;
       }
 
-      // master_clientes.id is the store slug-like key. Find actual store.
-      // The master_clientes stores the store id reference or we search by CNPJ.
-      // We need to find the store_id. master_clientes has an id that matches store records.
-      // Let's search stores by checking restaurant_config or master_clientes linkage.
-      // Actually master_clientes.id is a text id. We need to find the store linked to it.
-      // The linkage is: master_clientes row is created alongside a store. The store_id is stored in restaurant_license.
-      // Let's look up the store via restaurant_config or restaurant_license that has the same store.
-      // Actually, the CNPJ is in master_clientes. The master_clientes.id corresponds to a text key.
-      // The store is linked via: when creating a client in Master, a store is created simultaneously.
-      // Let's find the store by checking which store has a matching master_clientes entry.
-      // The simplest approach: search stores and match via master_clientes.
-      // master_clientes doesn't have a direct store_id FK. But restaurant_config has store_id.
-      // Actually let me re-think: the CNPJ is stored in master_clientes table with cnpj field.
-      // We need to find the store_id. The restaurant_config table has store_id.
-      // The master panel creates store + master_clientes simultaneously with the same conceptual link.
-      // Let me check if master_clientes has any reference to store...
-      // Looking at the schema: master_clientes has no store_id column.
-      // But restaurant_config has store_id. And restaurant_license has store_id.
-      // The link is: master_clientes.id is used as a reference key.
-      // When create-admin-account edge function runs, it creates a store and a master_clientes entry.
-      // We need another approach: store the CNPJ in restaurant_config or match by name.
-      
-      // Better approach: query restaurant_config to find by cnpj from master_clientes matching nome_restaurante to stores.name
-      // Actually the simplest: master_clientes table stores nome_restaurante. We can match stores.name.
-      // But that's fragile. Let me look at the actual data flow...
-      // 
-      // Actually, I'll add CNPJ lookup to the stores table via a search. The master_clientes stores 
-      // restaurant info and the edge function creates both. The link is usually through the store name or 
-      // we can search restaurant_config by joining.
-      //
-      // Simplest reliable approach: store CNPJ in restaurant_config or use master_clientes + restaurant matching.
-      // For now, let's match by nome_restaurante between master_clientes and stores.
-
-      const { data: mcData } = await supabase
-        .from("master_clientes")
-        .select("nome_restaurante")
-        .eq("cnpj", cnpjDigits)
-        .eq("ativo", true)
-        .maybeSingle();
-
-      if (!mcData) {
-        setError("Empresa não encontrada");
-        setIsActivating(false);
-        return;
-      }
-
-      // Find store by name match
-      const { data: storeData } = await supabase
-        .from("stores")
-        .select("id, name")
-        .ilike("name", mcData.nome_restaurante)
-        .maybeSingle();
-
-      if (!storeData) {
-        setError("Loja não configurada para esta empresa");
-        setIsActivating(false);
-        return;
-      }
-
-      const foundStoreId = storeData.id;
+      const foundStoreId = (storeRow as any).store_id;
+      const foundStoreName = (storeRow as any).store_name;
 
       // Validate PIN for this specific device type
       const moduleKey = type; // "tablet" | "totem" | "tv"
@@ -236,7 +178,7 @@ const DeviceGate = ({ type, children }: DeviceGateProps) => {
       }
 
       // Activate device
-      const result = await activateDevice(foundStoreId, type, `${TYPE_LABELS[type]} - ${storeData.name}`);
+      const result = await activateDevice(foundStoreId, type, `${TYPE_LABELS[type]} - ${foundStoreName}`);
       if (!result.ok) {
         setError(result.error ?? "Erro ao ativar");
         setIsActivating(false);
