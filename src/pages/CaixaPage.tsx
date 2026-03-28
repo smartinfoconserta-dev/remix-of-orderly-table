@@ -443,15 +443,16 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
         if (!audioCtxRef.current) audioCtxRef.current = new AudioContext();
         const ctx = audioCtxRef.current;
         if (ctx.state === "suspended") ctx.resume();
-        for (let i = 0; i < 2; i++) {
+        for (let i = 0; i < 3; i++) {
           const osc = ctx.createOscillator();
           const gain = ctx.createGain();
-          osc.frequency.value = 440;
+          osc.frequency.value = 1046;
           osc.type = "sine";
           gain.gain.value = 0.3;
           osc.connect(gain).connect(ctx.destination);
-          osc.start(ctx.currentTime + i * 0.35);
-          osc.stop(ctx.currentTime + i * 0.35 + 0.3);
+          const start = ctx.currentTime + i * 0.35;
+          osc.start(start);
+          osc.stop(start + 0.15);
         }
       } catch {}
     }
