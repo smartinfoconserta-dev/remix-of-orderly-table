@@ -144,7 +144,7 @@ const formatPrice = (v: number) => `R$ ${v.toFixed(2).replace(".", ",")}`;
 
 const AdminPage = () => {
   const { logout } = useAuth();
-  const { storeId, storeName: ctxStoreName } = useStore();
+  const { storeId, storeName: ctxStoreName, stores } = useStore();
   const navigate = useNavigate();
   const [tab, setTab] = useState<AdminTab>("dashboard");
   const [configSection, setConfigSection] = useState<"inicio" | "identidade" | "delivery" | "salao" | "operacao" | "modulos" | "sistema">("inicio");
