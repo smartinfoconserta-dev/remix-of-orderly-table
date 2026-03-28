@@ -3070,7 +3070,14 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
                   {balcaoPedido.origem === "delivery" && (
                     <div className="rounded-xl border border-border bg-secondary/30 p-3 space-y-1 text-xs">
                       <p className="font-black text-foreground">Dados do delivery</p>
-                      {balcaoPedido.clienteTelefone && <p className="text-muted-foreground">Tel: {balcaoPedido.clienteTelefone}</p>}
+                      {balcaoPedido.clienteTelefone && (
+                        <div className="flex items-center gap-1">
+                          <p className="text-muted-foreground">Tel: {balcaoPedido.clienteTelefone}</p>
+                          <a href={`https://wa.me/55${balcaoPedido.clienteTelefone.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer" title="Abrir WhatsApp" className="inline-flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground hover:text-emerald-500 hover:bg-secondary transition-colors">
+                            <MessageCircle className="h-3.5 w-3.5" />
+                          </a>
+                        </div>
+                      )}
                       {balcaoPedido.enderecoCompleto && <p className="text-muted-foreground">End: {balcaoPedido.enderecoCompleto}</p>}
                       {balcaoPedido.bairro && <p className="text-muted-foreground">Bairro: {balcaoPedido.bairro}</p>}
                       {balcaoPedido.referencia && <p className="text-muted-foreground">Ref: {balcaoPedido.referencia}</p>}
