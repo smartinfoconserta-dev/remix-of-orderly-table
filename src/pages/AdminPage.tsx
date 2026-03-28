@@ -33,7 +33,10 @@ import {
   Wallet,
   Printer,
   Clock,
+  BarChart3,
 } from "lucide-react";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
+import { Skeleton } from "@/components/ui/skeleton";
 import TeamManager from "@/components/TeamManager";
 import MesasManager from "@/components/MesasManager";
 import DevicesManager from "@/components/DevicesManager";
