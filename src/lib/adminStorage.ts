@@ -364,26 +364,6 @@ export function isDeliveryAberto(): {
 }
 
 // ─────────────────────────────────
-// PRODUTOS DELIVERY (calculado)
-// ─────────────────────────────────
-
-export function getProdutosDelivery(): ProdutoOverride[] {
-  const overrides = getCardapioOverrides();
-  const base = baseProdutos.map((p) => {
-    const ov = overrides[p.id];
-    if (ov) return { ...p, ...ov };
-    return { ...p, ativo: true } as ProdutoOverride;
-  });
-  const customIds = Object.keys(overrides).filter(
-    (id) => !baseProdutos.some((p) => p.id === id)
-  );
-  const custom = customIds.map((id) => overrides[id]);
-  return [...base, ...custom].filter(
-    (p) => p.ativo === true && p.removido !== true && p.disponivelDelivery !== false
-  );
-}
-
-// ─────────────────────────────────
 // EXPORTS ASSÍNCRONOS (Supabase)
 // ─────────────────────────────────
 
