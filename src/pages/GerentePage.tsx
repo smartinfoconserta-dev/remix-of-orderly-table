@@ -12,12 +12,15 @@ import {
   Download,
   LockKeyhole,
   LogOut,
+  Monitor,
   Printer,
   ScrollText,
   ShieldCheck,
+  ShoppingBag,
   Smartphone,
   Timer,
   TrendingUp,
+  Truck,
   Wallet,
   Users,
   Tag,
@@ -713,6 +716,42 @@ const GerentePage = () => {
                 </div>
               );
             })()}
+
+            {/* ── Vendas por origem ── */}
+            {(() => {
+              const origemData = [
+                { key: "mesa", label: "Mesas", icon: UtensilsCrossed },
+                { key: "totem", label: "Totem", icon: Monitor },
+                { key: "delivery", label: "Delivery", icon: Truck },
+                { key: "balcao", label: "Balcão", icon: ShoppingBag },
+              ];
+              const grouped = origemData.map(o => {
+                const items = fechFiltrados.filter(f => !f.cancelado && f.origem === o.key);
+                return { ...o, count: items.length, total: items.reduce((a, f) => a + f.total, 0) };
+              });
+              return (
+                <div className="space-y-2">
+                  <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">Vendas por origem</p>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    {grouped.map(g => {
+                      const Icon = g.icon;
+                      const empty = g.count === 0;
+                      return (
+                        <div key={g.key} className={`rounded-xl border border-border bg-card p-3 space-y-1 ${empty ? "opacity-50" : ""}`}>
+                          <div className="flex items-center gap-1.5 text-muted-foreground">
+                            <Icon className="h-3.5 w-3.5" />
+                            <span className="text-xs font-bold">{g.label}</span>
+                          </div>
+                          <p className="text-sm font-bold text-foreground">{g.count} pedidos</p>
+                          <p className="text-base font-black text-foreground">{formatPrice(g.total)}</p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })()}
+
             {/* ── Header with Print ── */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 text-sm font-black uppercase tracking-widest text-muted-foreground">
