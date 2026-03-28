@@ -108,7 +108,6 @@ import {
   type HorariosSemana,
   type HorarioFuncionamento,
   type PlanoModulos,
-  type PlanoModulos,
   getLicenseLevel,
 } from "@/lib/adminStorage";
 import { getBairrosAsync, saveBairros, type Bairro } from "@/lib/deliveryStorage";
