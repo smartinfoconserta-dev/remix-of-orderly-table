@@ -71,6 +71,7 @@ const App = () => {
         <Route path="/tablet" element={<TabletPage />} />
         <Route path="/cliente" element={<Navigate to="/tablet" replace />} />
         <Route path="/pedido/:slug" element={<PedidoPage />} />
+        <Route path="/cardapio/:slug" element={<CardapioPublico />} />
 
         
         <Route path="*" element={<NotFound />} />
