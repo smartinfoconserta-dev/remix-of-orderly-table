@@ -476,7 +476,7 @@ const MasterPage = () => {
                     <div className="flex flex-col md:flex-row md:items-start gap-2 justify-between">
                       <div className="space-y-1">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <p className="font-black text-lg text-foreground cursor-pointer hover:underline" onClick={() => openDetail(c)}>{c.nomeRestaurante}</p>
+                          <p className="font-black text-xl text-foreground cursor-pointer hover:underline" onClick={() => openDetail(c)}>{c.nomeRestaurante}</p>
                           {c.plano && <Badge className={PLANO_BADGE_CLASS[c.plano] || "bg-muted text-muted-foreground"}>{PLANO_LABELS[c.plano] || c.plano}</Badge>}
                           {c.planoModulos && <Badge className={PLANO_MODULOS_BADGE[c.planoModulos] || "bg-muted text-muted-foreground"}>{PLANO_MODULOS_LABELS[c.planoModulos] || c.planoModulos}</Badge>}
                           <Badge className={c.ativo ? "bg-emerald-600 hover:bg-emerald-600 text-white" : "bg-destructive hover:bg-destructive text-destructive-foreground"}>{c.ativo ? "Ativo" : "Bloqueado"}</Badge>
@@ -491,11 +491,11 @@ const MasterPage = () => {
                         <Button variant="ghost" size="icon" className="text-destructive" onClick={() => setRemoveId(c.id)}><Trash2 className="w-4 h-4" /></Button>
                       </div>
                     </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 text-sm text-muted-foreground">
+                    <div className="bg-muted/30 rounded-lg p-3 mt-2 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 text-sm text-muted-foreground">
                       <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5" />{c.cidade && c.estado ? `${c.cidade} - ${c.estado}` : "—"}</span>
                       <span className="flex items-center gap-1"><Phone className="w-3.5 h-3.5" />{c.telefone || "—"}</span>
                       <span className="flex items-center gap-1"><Mail className="w-3.5 h-3.5" />{c.email || "—"}</span>
-                      <span className="flex items-center gap-1 font-semibold text-foreground"><DollarSign className="w-3.5 h-3.5" />R$ {(c.valorMensalidade || 0).toFixed(2)}</span>
+                      <span className="flex items-center gap-1 text-lg font-black text-primary"><DollarSign className="w-3.5 h-3.5" />R$ {(c.valorMensalidade || 0).toFixed(2)}</span>
                     </div>
                     <div className="flex items-center gap-4 text-xs text-muted-foreground">
                       <span>{c.nomeContato}</span>
