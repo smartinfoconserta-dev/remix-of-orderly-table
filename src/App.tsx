@@ -13,6 +13,7 @@ import GerentePage from "./pages/GerentePage";
 import CozinhaPage from "./pages/CozinhaPage";
 import AdminPage from "./pages/AdminPage";
 import MasterPage from "./pages/MasterPage";
+import PedidoPage from "./pages/PedidoPage";
 
 import MotoboyPage from "./pages/MotoboyPage";
 import TotemPage from "./pages/TotemPage";
@@ -68,6 +69,7 @@ const App = () => {
         <Route path="/tv" element={<TvPage />} />
         <Route path="/tablet" element={<TabletPage />} />
         <Route path="/cliente" element={<Navigate to="/tablet" replace />} />
+        <Route path="/pedido/:slug" element={<PedidoPage />} />
 
         <Route path="/seed" element={<SeedPage />} />
         <Route path="*" element={<NotFound />} />

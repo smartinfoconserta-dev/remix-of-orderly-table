@@ -1,58 +1,94 @@
-import { useState, useCallback } from "react";
-import { CheckCircle, Search, Loader2, ArrowLeft, LockKeyhole } from "lucide-react";
+import { useState, useCallback, useEffect } from "react";
+import { useParams } from "react-router-dom";
+import { CheckCircle, Search, Loader2, ArrowLeft, LockKeyhole, AlertTriangle } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { getSistemaConfig, isDeliveryAberto, getHorariosFuncionamento } from "@/lib/adminStorage";
-import { findClienteDelivery, upsertClienteDelivery, getBairros, getClientesDelivery, type ClienteDelivery, type Bairro } from "@/lib/deliveryStorage";
-import { useRestaurant, type ItemCarrinho } from "@/contexts/RestaurantContext";
+import { supabase } from "@/integrations/supabase/client";
 import PedidoFlow from "@/components/PedidoFlow";
 import { toast } from "sonner";
+import type { ItemCarrinho } from "@/contexts/RestaurantContext";
+import type { Bairro } from "@/lib/deliveryStorage";
+import type { HorariosSemana, HorarioFuncionamento, SistemaConfig } from "@/lib/adminStorage";
+import { preloadProducts } from "@/hooks/useProducts";
 
 const normStr = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
 
-const getStaticConfig = () => {
-  const sc = getSistemaConfig();
-  return {
-    nome: sc.nomeRestaurante || "Restaurante",
-    logo: sc.logoUrl || "",
-    initials: (sc.nomeRestaurante || "Restaurante").slice(0, 2).toUpperCase(),
-  };
-};
-const { nome: RESTAURANTE_NOME, logo: RESTAURANTE_LOGO, initials: RESTAURANTE_INITIALS } = getStaticConfig();
-
 // ── Etapas por modo ──
-// Visitante: cardapio → identificacao → confirmacao → sucesso
-// Cadastro: login → (cadastro) → cardapio → confirmacao → sucesso
 type Etapa = "login" | "cadastro" | "identificacao" | "cardapio" | "confirmacao" | "sucesso";
 
-const etapaProgressVisitante: Record<string, number> = {
-  cardapio: 25,
-  identificacao: 50,
-  confirmacao: 75,
-  sucesso: 100,
-};
-
-const etapaProgressCadastro: Record<string, number> = {
-  login: 10,
-  cadastro: 25,
-  cardapio: 50,
-  confirmacao: 75,
-  sucesso: 100,
-};
+const etapaProgressVisitante: Record<string, number> = { cardapio: 25, identificacao: 50, confirmacao: 75, sucesso: 100 };
+const etapaProgressCadastro: Record<string, number> = { login: 10, cadastro: 25, cardapio: 50, confirmacao: 75, sucesso: 100 };
 
 const etapaLabel: Record<Etapa, string> = {
-  login: "Login",
-  cadastro: "Cadastro",
-  identificacao: "Identificação",
-  cardapio: "Cardápio",
-  confirmacao: "Confirmação",
-  sucesso: "Pedido enviado",
+  login: "Login", cadastro: "Cadastro", identificacao: "Identificação",
+  cardapio: "Cardápio", confirmacao: "Confirmação", sucesso: "Pedido enviado",
 };
 
+interface ClienteDelivery {
+  id: string; nome: string; cpf: string; telefone: string;
+  endereco: string; numero: string; bairro: string;
+  complemento: string; referencia: string; senhaHash?: string;
+}
+
+const defaultHorario: HorarioFuncionamento = { ativo: true, abertura: "18:00", fechamento: "23:00" };
+const defaultHorariosSemana: HorariosSemana = {
+  dom: { ...defaultHorario, ativo: false }, seg: { ...defaultHorario }, ter: { ...defaultHorario },
+  qua: { ...defaultHorario }, qui: { ...defaultHorario }, sex: { ...defaultHorario }, sab: { ...defaultHorario },
+};
+
+function checkDeliveryAberto(horarios: HorariosSemana) {
+  const agora = new Date();
+  const diasSemana: (keyof HorariosSemana)[] = ["dom", "seg", "ter", "qua", "qui", "sex", "sab"];
+  const diaAtual = diasSemana[agora.getDay()];
+  const horarioDia = horarios[diaAtual];
+  const nomes = ["domingo", "segunda", "terça", "quarta", "quinta", "sexta", "sábado"];
+
+  const calcularHorasAte = (targetHora: string, diasAdiante = 0): number => {
+    const [h, m] = targetHora.split(":").map(Number);
+    const target = new Date(agora);
+    target.setDate(target.getDate() + diasAdiante);
+    target.setHours(h, m, 0, 0);
+    return Math.max(0, Math.round((target.getTime() - agora.getTime()) / 3600000));
+  };
+
+  const buscarProximoDia = (): { texto: string; horas: number } => {
+    for (let i = 1; i <= 7; i++) {
+      const proximoDia = diasSemana[(agora.getDay() + i) % 7];
+      const h = horarios[proximoDia];
+      if (h.ativo) {
+        const horas = calcularHorasAte(h.abertura, i);
+        const nomeDia = nomes[(agora.getDay() + i) % 7];
+        return { texto: `Abrimos ${nomeDia} às ${h.abertura}`, horas };
+      }
+    }
+    return { texto: "", horas: 0 };
+  };
+
+  if (!horarioDia.ativo) {
+    const proximo = buscarProximoDia();
+    return { aberto: false, mensagem: "Fechados hoje", proximoHorario: proximo.texto, horasRestantes: proximo.horas };
+  }
+
+  const [hAb, mAb] = horarioDia.abertura.split(":").map(Number);
+  const [hFe, mFe] = horarioDia.fechamento.split(":").map(Number);
+  const minutosAgora = agora.getHours() * 60 + agora.getMinutes();
+
+  if (minutosAgora < hAb * 60 + mAb) {
+    const horas = calcularHorasAte(horarioDia.abertura);
+    return { aberto: false, mensagem: "Ainda não abrimos", proximoHorario: `Abrimos às ${horarioDia.abertura}`, horasRestantes: horas };
+  }
+  if (minutosAgora >= hFe * 60 + mFe) {
+    const proximo = buscarProximoDia();
+    return { aberto: false, mensagem: "Já encerramos por hoje", proximoHorario: proximo.texto, horasRestantes: proximo.horas };
+  }
+  return { aberto: true, mensagem: `Aberto até ${horarioDia.fechamento}`, proximoHorario: "", horasRestantes: 0 };
+}
+
+// ── Confirmação sub-component ──
 function ConfirmacaoEtapa({ nome, endereco, numero, complemento, bairro, itens, taxaEntrega, totalPedido, formaPag, setFormaPag, troco, setTroco, onVoltar, onConfirmar, editEndereco }: {
   nome: string; endereco: string; numero: string; complemento: string; bairro: string;
   itens: ItemCarrinho[]; taxaEntrega: number; totalPedido: number;
@@ -93,13 +129,11 @@ function ConfirmacaoEtapa({ nome, endereco, numero, complemento, bairro, itens, 
         ))}
         {taxaEntrega > 0 && (
           <div className="flex justify-between text-sm text-muted-foreground">
-            <span>Taxa de entrega</span>
-            <span>R$ {taxaEntrega.toFixed(2)}</span>
+            <span>Taxa de entrega</span><span>R$ {taxaEntrega.toFixed(2)}</span>
           </div>
         )}
         <div className="border-t border-border pt-2 flex justify-between font-bold">
-          <span>Total</span>
-          <span>R$ {totalPedido.toFixed(2)}</span>
+          <span>Total</span><span>R$ {totalPedido.toFixed(2)}</span>
         </div>
       </CardContent></Card>
       <div className="space-y-2">
@@ -121,30 +155,150 @@ function ConfirmacaoEtapa({ nome, endereco, numero, complemento, bairro, itens, 
         <Checkbox id="confirmo" checked={confirmado} onCheckedChange={(v) => setConfirmado(v === true)} />
         <label htmlFor="confirmo" className="text-sm cursor-pointer">Confirmo que as informações estão corretas</label>
       </div>
-      <Button className="w-full" size="lg" onClick={onConfirmar} disabled={!confirmado}>
-        Confirmar pedido
-      </Button>
+      <Button className="w-full" size="lg" onClick={onConfirmar} disabled={!confirmado}>Confirmar pedido</Button>
     </div>
   );
 }
 
-export default function PedidoPage() {
-  const { criarPedidoBalcao, pedidosBalcao } = useRestaurant();
+// ═══════════════════════════════════════════
+// MAIN COMPONENT
+// ═══════════════════════════════════════════
 
-  // Read config inside component so it reacts to admin changes
-  const sysConfig = getSistemaConfig();
-  const MODO_ID = sysConfig.modoIdentificacaoDelivery || "visitante";
-  const deliveryAtivo = sysConfig.deliveryAtivo !== false;
-  const isCadastro = MODO_ID === "cadastro";
+export default function PedidoPage() {
+  const { slug } = useParams<{ slug: string }>();
+
+  // Store resolution
+  const [storeId, setStoreId] = useState<string | null>(null);
+  const [storeNotFound, setStoreNotFound] = useState(false);
+  const [loadingStore, setLoadingStore] = useState(true);
+
+  // Config loaded from DB for this specific store
+  const [storeConfig, setStoreConfig] = useState<{
+    nome: string; logo: string; telefone: string;
+    deliveryAtivo: boolean; modoIdentificacao: string;
+    taxaEntrega: number; mensagemFechado: string;
+    mensagemBoasVindas: string; horarios: HorariosSemana;
+  } | null>(null);
+
+  const [bairrosDisponiveis, setBairrosDisponiveis] = useState<Bairro[]>([]);
+
+  // Resolve slug → storeId + load config
+  useEffect(() => {
+    if (!slug) { setStoreNotFound(true); setLoadingStore(false); return; }
+
+    const resolve = async () => {
+      try {
+        const { data: storeResult } = await supabase.rpc("get_store_by_slug", { _slug: slug });
+        const row = Array.isArray(storeResult) ? storeResult[0] : null;
+        if (!row) { setStoreNotFound(true); setLoadingStore(false); return; }
+
+        const foundStoreId = row.id;
+        setStoreId(foundStoreId);
+
+        // Load config for this store
+        const { data: configData } = await supabase
+          .from("restaurant_config")
+          .select("*")
+          .eq("store_id", foundStoreId)
+          .maybeSingle();
+
+        const horarios = (configData?.horario_funcionamento as unknown as HorariosSemana) ?? defaultHorariosSemana;
+
+        setStoreConfig({
+          nome: configData?.nome_restaurante || row.name || "Restaurante",
+          logo: configData?.logo_base64 || configData?.logo_url || "",
+          telefone: configData?.telefone || "",
+          deliveryAtivo: configData?.delivery_ativo !== false,
+          modoIdentificacao: configData?.modo_identificacao_delivery || "visitante",
+          taxaEntrega: Number(configData?.taxa_entrega ?? 0),
+          mensagemFechado: configData?.mensagem_fechado || "",
+          mensagemBoasVindas: configData?.mensagem_boas_vindas || "",
+          horarios,
+        });
+
+        // Load bairros
+        const { data: bairrosData } = await supabase
+          .from("bairros_delivery")
+          .select("*")
+          .eq("store_id", foundStoreId)
+          .order("nome");
+        setBairrosDisponiveis((bairrosData ?? []).filter((b: any) => b.ativo !== false).map((b: any) => ({
+          id: b.id, nome: b.nome, taxa: Number(b.taxa ?? 0), ativo: b.ativo ?? true,
+        })));
+
+        // Preload products for this store
+        await preloadProducts(foundStoreId);
+
+        setLoadingStore(false);
+      } catch (err) {
+        console.error("[PedidoPage] resolve slug error:", err);
+        setStoreNotFound(true);
+        setLoadingStore(false);
+      }
+    };
+    resolve();
+  }, [slug]);
+
+  // ── Loading state ──
+  if (loadingStore) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-sm font-medium text-muted-foreground">Carregando cardápio...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Store not found ──
+  if (storeNotFound || !storeConfig || !storeId) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6 text-center space-y-6">
+        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-destructive/10 text-destructive">
+          <AlertTriangle className="h-8 w-8" />
+        </div>
+        <div className="space-y-2">
+          <h1 className="text-2xl font-black text-foreground">Restaurante não encontrado</h1>
+          <p className="text-sm text-muted-foreground max-w-sm">
+            O link que você acessou não corresponde a nenhum restaurante cadastrado. Verifique o endereço e tente novamente.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  return <PedidoPageInner storeId={storeId} config={storeConfig} bairros={bairrosDisponiveis} />;
+}
+
+// ═══════════════════════════════════════════
+// INNER COMPONENT (with resolved store)
+// ═══════════════════════════════════════════
+
+function PedidoPageInner({ storeId, config, bairros }: {
+  storeId: string;
+  config: {
+    nome: string; logo: string; telefone: string;
+    deliveryAtivo: boolean; modoIdentificacao: string;
+    taxaEntrega: number; mensagemFechado: string;
+    mensagemBoasVindas: string; horarios: HorariosSemana;
+  };
+  bairros: Bairro[];
+}) {
+  const RESTAURANTE_NOME = config.nome;
+  const RESTAURANTE_LOGO = config.logo;
+  const RESTAURANTE_INITIALS = RESTAURANTE_NOME.slice(0, 2).toUpperCase();
+  const isCadastro = config.modoIdentificacao === "cadastro";
+
   const [etapa, setEtapa] = useState<Etapa>(() => isCadastro ? "login" : "cardapio");
 
-  // Login state (cadastro mode)
+  // Login state
   const [loginTel, setLoginTel] = useState("");
   const [loginSenha, setLoginSenha] = useState("");
   const [loginError, setLoginError] = useState("");
   const [loggedClient, setLoggedClient] = useState<ClienteDelivery | null>(null);
 
-  // Identification (visitante mode)
+  // Identification
   const [busca, setBusca] = useState("");
   const [clienteEncontrado, setClienteEncontrado] = useState<ClienteDelivery | null>(null);
   const [buscaFeita, setBuscaFeita] = useState(false);
@@ -164,50 +318,78 @@ export default function PedidoPage() {
   const [cepLoading, setCepLoading] = useState(false);
   const [cepErro, setCepErro] = useState("");
 
-  // Cadastro mode - registration fields
+  // Registration
   const [regSenha, setRegSenha] = useState("");
   const [regSenhaConfirm, setRegSenhaConfirm] = useState("");
 
   // Bairros
-  const [bairrosDisponiveis] = useState<Bairro[]>(() => getBairros().filter((b) => b.ativo));
   const [bairroSelecionadoId, setBairroSelecionadoId] = useState("");
   const [bairroNaoAtendido, setBairroNaoAtendido] = useState(false);
-  const deliveryModo = (() => { try { const v = localStorage.getItem("obsidian-delivery-modo-v1"); return v === "cadastrados" ? "cadastrados" : "todos"; } catch { return "todos" as const; } })();
 
   // Order
   const [itens, setItens] = useState<ItemCarrinho[]>([]);
-  const [paraViagem, setParaViagem] = useState(false);
   const [formaPag, setFormaPag] = useState("pix");
   const [troco, setTroco] = useState("");
   const [numeroPedido, setNumeroPedido] = useState(0);
 
   const progress = isCadastro ? (etapaProgressCadastro[etapa] ?? 0) : (etapaProgressVisitante[etapa] ?? 0);
 
-  // ── Login handler (cadastro mode) ──
-  const handleLogin = useCallback(() => {
+  // ── Helper: find/upsert cliente in DB ──
+  const findCliente = useCallback(async (query: string): Promise<ClienteDelivery[]> => {
+    const norm = query.replace(/\D/g, "");
+    let q = supabase.from("clientes_delivery").select("*").eq("store_id", storeId);
+    if (norm.length >= 10) {
+      q = q.or(`cpf.eq.${norm},telefone.eq.${norm}`);
+    } else {
+      q = q.ilike("nome", `%${query}%`);
+    }
+    const { data } = await q.limit(5);
+    return (data ?? []).map((r: any) => ({
+      id: r.id, nome: r.nome, cpf: r.cpf || "", telefone: r.telefone || "",
+      endereco: r.endereco || "", numero: r.numero || "", bairro: r.bairro || "",
+      complemento: r.complemento || "", referencia: r.referencia || "",
+      senhaHash: r.senha_hash || undefined,
+    }));
+  }, [storeId]);
+
+  const upsertCliente = useCallback(async (c: Omit<ClienteDelivery, "id"> & { senhaHash?: string }): Promise<ClienteDelivery> => {
+    const telNorm = c.telefone.replace(/\D/g, "");
+    // Try to find existing
+    const { data: existing } = await supabase.from("clientes_delivery")
+      .select("id").eq("store_id", storeId).eq("telefone", telNorm).limit(1).maybeSingle();
+
+    const id = existing?.id || crypto.randomUUID();
+    const row: any = {
+      id, store_id: storeId, nome: c.nome, cpf: c.cpf, telefone: telNorm,
+      endereco: c.endereco, numero: c.numero, bairro: c.bairro,
+      complemento: c.complemento, referencia: c.referencia,
+      ultimo_pedido: new Date().toISOString(),
+    };
+    if (c.senhaHash) row.senha_hash = c.senhaHash;
+
+    await supabase.from("clientes_delivery").upsert(row as any);
+    return { ...c, id, telefone: telNorm };
+  }, [storeId]);
+
+  // ── Login handler ──
+  const handleLogin = useCallback(async () => {
     const telNorm = loginTel.replace(/\D/g, "");
     if (!telNorm) { setLoginError("Informe o telefone"); return; }
     if (!loginSenha) { setLoginError("Informe a senha"); return; }
-    const clientes = getClientesDelivery();
-    const found = clientes.find((c) => c.telefone.replace(/\D/g, "") === telNorm);
+    const results = await findCliente(telNorm);
+    const found = results.find((c) => c.telefone.replace(/\D/g, "") === telNorm);
     if (!found || !found.senhaHash) { setLoginError("Telefone ou senha incorretos"); return; }
     const expectedHash = btoa(telNorm + ":" + loginSenha);
     if (found.senhaHash !== expectedHash) { setLoginError("Telefone ou senha incorretos"); return; }
     setLoggedClient(found);
-    setNome(found.nome);
-    setTelefone(found.telefone);
-    setCpf(found.cpf);
-    setEndereco(found.endereco);
-    setNumero(found.numero);
-    setBairro(found.bairro);
-    setComplemento(found.complemento);
-    setReferencia(found.referencia);
-    setLoginError("");
-    setEtapa("cardapio");
+    setNome(found.nome); setTelefone(found.telefone); setCpf(found.cpf);
+    setEndereco(found.endereco); setNumero(found.numero); setBairro(found.bairro);
+    setComplemento(found.complemento); setReferencia(found.referencia);
+    setLoginError(""); setEtapa("cardapio");
     toast.success(`Bem-vindo de volta, ${found.nome}!`);
-  }, [loginTel, loginSenha]);
+  }, [loginTel, loginSenha, findCliente]);
 
-  // ── Registration handler (cadastro mode) ──
+  // ── Registration handler ──
   const handleRegistrar = useCallback(async () => {
     if (!nome.trim() || !telefone.trim() || !cpf.trim() || !regSenha) {
       toast.error("Preencha todos os campos obrigatórios"); return;
@@ -216,29 +398,23 @@ export default function PedidoPage() {
     if (regSenha.length < 4) { toast.error("Senha deve ter pelo menos 4 caracteres"); return; }
     const telNorm = telefone.replace(/\D/g, "");
     const senhaHash = btoa(telNorm + ":" + regSenha);
-    const cliente = await upsertClienteDelivery({
+    const cliente = await upsertCliente({
       nome: nome.trim(), cpf: cpf.trim(), telefone: telefone.trim(),
       endereco: endereco.trim(), numero: numero.trim(), bairro: bairro.trim(),
-      complemento: complemento.trim(), referencia: referencia.trim(),
-      senhaHash,
+      complemento: complemento.trim(), referencia: referencia.trim(), senhaHash,
     });
-    setLoggedClient({ ...cliente, senhaHash });
-    setEtapa("cardapio");
+    setLoggedClient({ ...cliente, senhaHash }); setEtapa("cardapio");
     toast.success("Conta criada com sucesso!");
-  }, [nome, telefone, cpf, regSenha, regSenhaConfirm, endereco, numero, bairro, complemento, referencia]);
+  }, [nome, telefone, cpf, regSenha, regSenhaConfirm, endereco, numero, bairro, complemento, referencia, upsertCliente]);
 
   // ── Visitante busca ──
   const handleBuscar = useCallback(async () => {
     if (!busca.trim()) return;
-    const results = await findClienteDelivery(busca.trim());
+    const results = await findCliente(busca.trim());
     setBuscaFeita(true);
-    if (results.length > 0) {
-      setClienteEncontrado(results[0]);
-      setShowForm(false);
-    } else {
-      setClienteEncontrado(null);
-    }
-  }, [busca]);
+    if (results.length > 0) { setClienteEncontrado(results[0]); setShowForm(false); }
+    else { setClienteEncontrado(null); }
+  }, [busca, findCliente]);
 
   const preencherDoCliente = (c: ClienteDelivery) => {
     setNome(c.nome); setTelefone(c.telefone); setCpf(c.cpf);
@@ -264,12 +440,12 @@ export default function PedidoPage() {
           setEndereco(data.logradouro || "");
           const bairroViaCep = data.bairro || "";
           setBairro(bairroViaCep); setCidade(data.localidade || "");
-          if (bairrosDisponiveis.length > 0 && bairroViaCep) {
+          if (bairros.length > 0 && bairroViaCep) {
             const norm = normStr(bairroViaCep);
-            const match = bairrosDisponiveis.find((b) => normStr(b.nome) === norm);
+            const match = bairros.find((b) => normStr(b.nome) === norm);
             if (match) { setBairroSelecionadoId(match.id); setBairroNaoAtendido(false); }
-            else { setBairroSelecionadoId(""); setBairroNaoAtendido(deliveryModo === "cadastrados"); }
-          } else { setBairroSelecionadoId(""); setBairroNaoAtendido(false); }
+            else { setBairroSelecionadoId(""); setBairroNaoAtendido(true); }
+          }
         }
       } catch { setCepErro("Erro ao buscar CEP"); }
       finally { setCepLoading(false); }
@@ -284,44 +460,81 @@ export default function PedidoPage() {
   };
 
   const handlePedidoConfirmado = (itensPedido: ItemCarrinho[], pv: boolean) => {
-    const statusAgora = isDeliveryAberto();
+    const statusAgora = checkDeliveryAberto(config.horarios);
     if (!statusAgora.aberto) {
       toast.error(`${statusAgora.mensagem}. ${statusAgora.proximoHorario || ""}`);
       return;
     }
-    setItens(itensPedido); setParaViagem(pv);
-    if (isCadastro) { setEtapa("confirmacao"); }
-    else { setEtapa("identificacao"); }
+    setItens(itensPedido);
+    setEtapa(isCadastro ? "confirmacao" : "identificacao");
   };
 
-  // Visitante: after identification, go to confirmacao is handled by handleSalvarIdentificacao
-
-  const bairroSel = bairrosDisponiveis.find((b) => b.id === bairroSelecionadoId);
-  const taxaEntrega = bairroSel ? bairroSel.taxa : (sysConfig.taxaEntrega ?? 0);
+  const bairroSel = bairros.find((b) => b.id === bairroSelecionadoId);
+  const taxaEntrega = bairroSel ? bairroSel.taxa : config.taxaEntrega;
   const totalPedido = itens.reduce((s, i) => s + i.precoUnitario * i.quantidade, 0) + taxaEntrega;
 
   const handleConfirmarPedido = async () => {
-    const statusAgora = isDeliveryAberto();
+    const statusAgora = checkDeliveryAberto(config.horarios);
     if (!statusAgora.aberto) {
       toast.error(statusAgora.mensagem + (statusAgora.proximoHorario ? `. ${statusAgora.proximoHorario}` : ""));
       return;
     }
-    const cliente = await upsertClienteDelivery({
+    const cliente = await upsertCliente({
       nome: nome.trim(), cpf: cpf.trim(), telefone: telefone.trim(),
       endereco: endereco.trim(), numero: numero.trim(), bairro: bairro.trim(),
       complemento: complemento.trim(), referencia: referencia.trim(),
     });
-    criarPedidoBalcao({
-      itens, origem: "delivery",
-      operador: { id: cliente.id, nome: cliente.nome, role: "garcom", criadoEm: new Date().toISOString() },
-      clienteNome: nome.trim(), clienteTelefone: telefone.trim(),
-      enderecoCompleto: `${endereco}, ${numero}${complemento ? ` - ${complemento}` : ""}`,
-      bairro: bairro.trim(), referencia: referencia.trim(),
-      formaPagamentoDelivery: formaPag,
-      trocoParaQuanto: formaPag === "dinheiro" && troco ? parseFloat(troco.replace(",", ".")) : undefined,
-      taxaEntrega,
-    });
-    setNumeroPedido(pedidosBalcao.length + 1);
+
+    // Create order directly in pedidos table
+    const now = new Date();
+    const criadoEm = now.toLocaleString("pt-BR");
+    const criadoEmIso = now.toISOString();
+
+    // Get next order number
+    const { data: lastOrder } = await supabase
+      .from("pedidos")
+      .select("numero_pedido")
+      .eq("store_id", storeId)
+      .order("numero_pedido", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    const nextNum = (lastOrder?.numero_pedido ?? 0) + 1;
+
+    const pedidoRow = {
+      id: crypto.randomUUID(),
+      store_id: storeId,
+      numero_pedido: nextNum,
+      itens: itens.map((i) => ({
+        uid: i.uid, produtoId: i.produtoId, nome: i.nome,
+        precoBase: i.precoBase, quantidade: i.quantidade,
+        removidos: i.removidos, adicionais: i.adicionais,
+        bebida: i.bebida, tipo: i.tipo, embalagem: i.embalagem,
+        observacoes: i.observacoes, precoUnitario: i.precoUnitario,
+        gruposEscolhidos: i.gruposEscolhidos, setor: i.setor,
+      })),
+      total: totalPedido,
+      criado_em: criadoEm,
+      criado_em_iso: criadoEmIso,
+      origem: "delivery",
+      cliente_nome: nome.trim(),
+      cliente_telefone: telefone.trim(),
+      endereco_completo: `${endereco}, ${numero}${complemento ? ` - ${complemento}` : ""}`,
+      bairro: bairro.trim(),
+      referencia: referencia.trim(),
+      forma_pagamento_delivery: formaPag,
+      troco_para_quanto: formaPag === "dinheiro" && troco ? parseFloat(troco.replace(",", ".")) : null,
+      status_balcao: "aberto",
+    };
+
+    const { error } = await supabase.from("pedidos").insert(pedidoRow as any);
+    if (error) {
+      console.error("[PedidoPage] insert error:", error);
+      toast.error("Erro ao enviar pedido");
+      return;
+    }
+
+    setNumeroPedido(nextNum);
     setEtapa("sucesso");
     toast.success("Pedido enviado com sucesso!");
   };
@@ -331,57 +544,49 @@ export default function PedidoPage() {
     setNome(""); setTelefone(""); setCpf(""); setCep(""); setEndereco(""); setNumero("");
     setBairro(""); setCidade(""); setComplemento(""); setReferencia("");
     setBairroSelecionadoId(""); setBairroNaoAtendido(false); setItens([]);
-    setParaViagem(false); setFormaPag("pix"); setTroco("");
+    setFormaPag("pix"); setTroco("");
     setLoginTel(""); setLoginSenha(""); setLoginError(""); setLoggedClient(null);
     setRegSenha(""); setRegSenhaConfirm("");
     setEtapa(isCadastro ? "login" : "cardapio");
   };
 
   // ── Delivery desativado ──
-  if (!deliveryAtivo) {
+  if (!config.deliveryAtivo) {
     return (
       <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center p-6 text-center space-y-6">
         {RESTAURANTE_LOGO ? (
           <img src={RESTAURANTE_LOGO} alt={RESTAURANTE_NOME} className="w-20 h-20 rounded-2xl object-cover border border-border" />
         ) : (
-          <div className="w-20 h-20 rounded-2xl bg-secondary border border-border flex items-center justify-center text-2xl font-black text-foreground">
-            {RESTAURANTE_INITIALS}
-          </div>
+          <div className="w-20 h-20 rounded-2xl bg-secondary border border-border flex items-center justify-center text-2xl font-black text-foreground">{RESTAURANTE_INITIALS}</div>
         )}
         <div className="space-y-2">
           <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">{RESTAURANTE_NOME}</p>
           <h1 className="text-3xl font-black text-foreground">Delivery indisponível</h1>
-          <p className="text-sm text-muted-foreground">{sysConfig.mensagemFechado || "Voltamos em breve!"}</p>
+          <p className="text-sm text-muted-foreground">{config.mensagemFechado || "Voltamos em breve!"}</p>
         </div>
       </div>
     );
   }
 
   // ── Horário de funcionamento ──
-  const statusHorario = isDeliveryAberto();
+  const statusHorario = checkDeliveryAberto(config.horarios);
 
   if (!statusHorario.aberto) {
-    const horarios = getHorariosFuncionamento();
-    const diaAtual = (["dom","seg","ter","qua","qui","sex","sab"] as const)[new Date().getDay()];
-    const horarioDia = horarios[diaAtual];
+    const diaAtual = (["dom", "seg", "ter", "qua", "qui", "sex", "sab"] as const)[new Date().getDay()];
+    const horarioDia = config.horarios[diaAtual];
     const horarioDiaTexto = horarioDia.ativo ? `${horarioDia.abertura} — ${horarioDia.fechamento}` : "";
 
     return (
       <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center p-6 text-center space-y-6">
         {RESTAURANTE_LOGO ? (
-          <img src={RESTAURANTE_LOGO} alt={RESTAURANTE_NOME}
-            className="w-20 h-20 rounded-2xl object-cover border border-border" />
+          <img src={RESTAURANTE_LOGO} alt={RESTAURANTE_NOME} className="w-20 h-20 rounded-2xl object-cover border border-border" />
         ) : (
-          <div className="w-20 h-20 rounded-2xl bg-secondary border border-border flex items-center justify-center text-2xl font-black">
-            {RESTAURANTE_INITIALS}
-          </div>
+          <div className="w-20 h-20 rounded-2xl bg-secondary border border-border flex items-center justify-center text-2xl font-black">{RESTAURANTE_INITIALS}</div>
         )}
         <div className="space-y-2">
           <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">{RESTAURANTE_NOME}</p>
           <h1 className="text-3xl font-black">{statusHorario.mensagem}</h1>
-          {statusHorario.proximoHorario && (
-            <p className="text-sm text-muted-foreground">{statusHorario.proximoHorario}</p>
-          )}
+          {statusHorario.proximoHorario && <p className="text-sm text-muted-foreground">{statusHorario.proximoHorario}</p>}
         </div>
         {horarioDiaTexto && statusHorario.horasRestantes && statusHorario.horasRestantes > 0 && (
           <div className="rounded-2xl border border-border bg-card px-8 py-5 space-y-1">
@@ -390,35 +595,33 @@ export default function PedidoPage() {
             <p className="text-xs text-primary font-bold">Em aproximadamente {statusHorario.horasRestantes}h</p>
           </div>
         )}
-        {sysConfig.telefoneRestaurante && (
+        {config.telefone && (
           <button
-            onClick={() => window.open(`https://wa.me/55${sysConfig.telefoneRestaurante}`, "_blank")}
+            onClick={() => window.open(`https://wa.me/55${config.telefone}`, "_blank")}
             className="flex items-center gap-3 rounded-2xl bg-[#25D366] px-6 py-3.5 text-white font-black text-base active:scale-95 transition-transform"
           >
             <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
-              <path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.554 4.11 1.522 5.836L.057 23.99l6.304-1.654A11.954 11.954 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 01-5.002-1.366l-.358-.213-3.722.976.994-3.636-.234-.373A9.818 9.818 0 1112 21.818z"/>
+              <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z" />
+              <path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.554 4.11 1.522 5.836L.057 23.99l6.304-1.654A11.954 11.954 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 01-5.002-1.366l-.358-.213-3.722.976.994-3.636-.234-.373A9.818 9.818 0 1112 21.818z" />
             </svg>
             Falar no WhatsApp
           </button>
         )}
-        <p className="text-xs text-muted-foreground/60">
-          Delivery indisponível fora do horário de funcionamento
-        </p>
+        <p className="text-xs text-muted-foreground/60">Delivery indisponível fora do horário de funcionamento</p>
       </div>
     );
   }
 
-  // ── Cardápio (full screen PedidoFlow) ──
+  // ── Cardápio ──
   if (etapa === "cardapio") {
     return (
       <div className="min-h-screen bg-background">
-        
         <PedidoFlow
           modo="delivery"
           clienteNome={nome || loggedClient?.nome || ""}
           onPedidoConfirmado={handlePedidoConfirmado}
-          onBack={() => setEtapa(isCadastro ? (loggedClient ? "login" : "login") : "identificacao")}
+          onBack={() => setEtapa(isCadastro ? "login" : "identificacao")}
+          deviceStoreId={storeId}
         />
       </div>
     );
@@ -426,15 +629,12 @@ export default function PedidoPage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
-      
       {/* Header */}
       <div className="shrink-0 flex items-center gap-3 px-4 py-3 border-b border-border">
         {RESTAURANTE_LOGO ? (
           <img src={RESTAURANTE_LOGO} alt={RESTAURANTE_NOME} className="w-10 h-10 rounded-full object-cover" />
         ) : (
-          <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold text-sm">
-            {RESTAURANTE_INITIALS}
-          </div>
+          <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold text-sm">{RESTAURANTE_INITIALS}</div>
         )}
         <span className="font-semibold text-lg">{RESTAURANTE_NOME}</span>
       </div>
@@ -442,8 +642,7 @@ export default function PedidoPage() {
       {/* Progress */}
       <div className="shrink-0 px-4 py-3 space-y-1">
         <div className="flex justify-between text-xs text-muted-foreground">
-          <span>{etapaLabel[etapa]}</span>
-          <span>{progress}%</span>
+          <span>{etapaLabel[etapa]}</span><span>{progress}%</span>
         </div>
         <Progress value={progress} className="h-2" />
       </div>
@@ -451,7 +650,7 @@ export default function PedidoPage() {
       {/* Content */}
       <div className="flex-1 overflow-y-auto px-4 pb-8">
 
-        {/* ═══ MODO CADASTRO: LOGIN ═══ */}
+        {/* ═══ LOGIN ═══ */}
         {etapa === "login" && (
           <div className="max-w-md mx-auto space-y-6 pt-4">
             <div className="text-center space-y-1">
@@ -469,14 +668,12 @@ export default function PedidoPage() {
               <Button className="w-full" size="lg" onClick={handleLogin}>Entrar</Button>
             </div>
             <div className="text-center">
-              <Button variant="link" onClick={() => { setEtapa("cadastro"); }}>
-                Não tenho cadastro
-              </Button>
+              <Button variant="link" onClick={() => setEtapa("cadastro")}>Não tenho cadastro</Button>
             </div>
           </div>
         )}
 
-        {/* ═══ MODO CADASTRO: REGISTRO ═══ */}
+        {/* ═══ CADASTRO ═══ */}
         {etapa === "cadastro" && (
           <div className="max-w-md mx-auto space-y-6 pt-4">
             <Button variant="ghost" size="sm" onClick={() => setEtapa("login")} className="gap-1">
@@ -510,7 +707,7 @@ export default function PedidoPage() {
           </div>
         )}
 
-        {/* ═══ MODO VISITANTE: IDENTIFICAÇÃO (após cardápio) ═══ */}
+        {/* ═══ IDENTIFICAÇÃO ═══ */}
         {etapa === "identificacao" && (
           <div className="max-w-md mx-auto space-y-6 pt-4">
             <Button variant="ghost" size="sm" onClick={() => setEtapa("cardapio")} className="gap-1">
@@ -520,16 +717,11 @@ export default function PedidoPage() {
               <h1 className="text-xl font-bold">Seus dados</h1>
               <p className="text-sm text-muted-foreground">Informe seu CPF ou telefone para buscar seus dados</p>
             </div>
-
             <div className="flex gap-2">
               <Input placeholder="CPF ou Telefone" value={busca} onChange={(e) => setBusca(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleBuscar()} />
-              <Button onClick={handleBuscar} size="icon" variant="secondary">
-                <Search className="w-4 h-4" />
-              </Button>
+              <Button onClick={handleBuscar} size="icon" variant="secondary"><Search className="w-4 h-4" /></Button>
             </div>
-
-            {/* Cliente encontrado */}
             {buscaFeita && clienteEncontrado && !showForm && (
               <Card className="border-primary/30 bg-primary/5">
                 <CardContent className="p-4 space-y-3">
@@ -547,15 +739,11 @@ export default function PedidoPage() {
                   </div>
                   <div className="flex gap-2">
                     <Button className="flex-1" onClick={handleSelecionarCliente}>Sou eu, continuar</Button>
-                    <Button variant="outline" className="flex-1" onClick={() => {
-                      setClienteEncontrado(null); setShowForm(true);
-                    }}>Não sou eu</Button>
+                    <Button variant="outline" className="flex-1" onClick={() => { setClienteEncontrado(null); setShowForm(true); }}>Não sou eu</Button>
                   </div>
                 </CardContent>
               </Card>
             )}
-
-            {/* Não encontrado */}
             {buscaFeita && !clienteEncontrado && !showForm && (
               <Card>
                 <CardContent className="p-4 text-center space-y-3">
@@ -564,9 +752,7 @@ export default function PedidoPage() {
                 </CardContent>
               </Card>
             )}
-
-            {/* Formulário */}
-            {(showForm || (!buscaFeita)) && (
+            {(showForm || !buscaFeita) && (
               <div className="space-y-3">
                 {!buscaFeita && <p className="text-xs text-muted-foreground text-center">Ou preencha seus dados abaixo</p>}
                 <Input placeholder="Nome completo *" value={nome} onChange={(e) => setNome(e.target.value)} />
@@ -582,18 +768,18 @@ export default function PedidoPage() {
                   <Input placeholder="Número *" value={numero} onChange={(e) => setNumero(e.target.value)} />
                   <Input placeholder="Bairro" value={bairro} onChange={(e) => {
                     setBairro(e.target.value);
-                    if (bairrosDisponiveis.length > 0 && e.target.value.trim()) {
+                    if (bairros.length > 0 && e.target.value.trim()) {
                       const norm = normStr(e.target.value);
-                      const match = bairrosDisponiveis.find((b) => normStr(b.nome) === norm);
+                      const match = bairros.find((b) => normStr(b.nome) === norm);
                       if (match) { setBairroSelecionadoId(match.id); setBairroNaoAtendido(false); }
-                      else { setBairroSelecionadoId(""); setBairroNaoAtendido(deliveryModo === "cadastrados"); }
+                      else { setBairroSelecionadoId(""); setBairroNaoAtendido(true); }
                     } else { setBairroSelecionadoId(""); setBairroNaoAtendido(false); }
                   }} readOnly={!!bairroSelecionadoId} className={bairroSelecionadoId ? "bg-muted" : ""} />
                 </div>
-                {bairrosDisponiveis.length > 0 && bairro.trim() && (
+                {bairros.length > 0 && bairro.trim() && (
                   bairroSelecionadoId ? (
                     <p className="text-xs font-semibold" style={{ color: "hsl(var(--primary))" }}>
-                      ✓ Taxa de entrega: R$ {(bairrosDisponiveis.find((b) => b.id === bairroSelecionadoId)?.taxa ?? 0).toFixed(2).replace(".", ",")}
+                      ✓ Taxa de entrega: R$ {(bairros.find((b) => b.id === bairroSelecionadoId)?.taxa ?? 0).toFixed(2).replace(".", ",")}
                     </p>
                   ) : bairroNaoAtendido ? (
                     <p className="text-xs font-semibold text-orange-500">
@@ -604,9 +790,7 @@ export default function PedidoPage() {
                 {cidade && <Input placeholder="Cidade" value={cidade} readOnly className="bg-muted" />}
                 <Input placeholder="Complemento" value={complemento} onChange={(e) => setComplemento(e.target.value)} />
                 <Input placeholder="Referência" value={referencia} onChange={(e) => setReferencia(e.target.value)} />
-                <Button className="w-full" disabled={!formValido} onClick={handleSalvarIdentificacao}>
-                  Continuar para confirmação
-                </Button>
+                <Button className="w-full" disabled={!formValido} onClick={handleSalvarIdentificacao}>Continuar para confirmação</Button>
               </div>
             )}
           </div>
@@ -615,20 +799,10 @@ export default function PedidoPage() {
         {/* ═══ CONFIRMAÇÃO ═══ */}
         {etapa === "confirmacao" && (
           <ConfirmacaoEtapa
-            nome={nome}
-            endereco={endereco}
-            numero={numero}
-            complemento={complemento}
-            bairro={bairro}
-            itens={itens}
-            taxaEntrega={taxaEntrega}
-            totalPedido={totalPedido}
-            formaPag={formaPag}
-            setFormaPag={setFormaPag}
-            troco={troco}
-            setTroco={setTroco}
-            onVoltar={() => setEtapa("cardapio")}
-            onConfirmar={handleConfirmarPedido}
+            nome={nome} endereco={endereco} numero={numero} complemento={complemento} bairro={bairro}
+            itens={itens} taxaEntrega={taxaEntrega} totalPedido={totalPedido}
+            formaPag={formaPag} setFormaPag={setFormaPag} troco={troco} setTroco={setTroco}
+            onVoltar={() => setEtapa("cardapio")} onConfirmar={handleConfirmarPedido}
             editEndereco={isCadastro ? { endereco, numero, complemento, bairro, setEndereco, setNumero, setComplemento, setBairro } : null}
           />
         )}

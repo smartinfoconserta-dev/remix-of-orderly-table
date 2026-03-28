@@ -52,6 +52,7 @@ interface PedidoFlowProps {
   clienteNome?: string;
   onBack?: () => void;
   onPedidoConfirmado?: (itens: ItemCarrinho[], paraViagem: boolean) => void;
+  deviceStoreId?: string | null;
 }
 
 const sysConfig = getSistemaConfig();
@@ -99,7 +100,7 @@ const formatMesaLabel = (mesaId: string) => {
   return `Mesa ${numeroMesa.padStart(2, "0")}`;
 };
 
-const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, onBack, onPedidoConfirmado }: PedidoFlowProps) => {
+const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, onBack, onPedidoConfirmado, deviceStoreId: propStoreId }: PedidoFlowProps) => {
   const isTotem = modo === "totem";
   const navigate = useNavigate();
   const isMobile = useIsMobile();
@@ -120,12 +121,13 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
   const [produtos, setProdutos] = useState<Produto[]>(() => getCachedProdutos());
   const [dbCategorias, setDbCategorias] = useState<Categoria[]>(() => getCachedCategorias());
 
-  // Get storeId from sessionStorage for device-based modes (totem/tablet)
+  // Get storeId from prop (delivery), sessionStorage (device), or null
   const deviceStoreId = useMemo(() => {
+    if (propStoreId) return propStoreId;
     try {
       return sessionStorage.getItem("orderly-device-store-id") || localStorage.getItem("orderly-device-store-id") || null;
     } catch { return null; }
-  }, []);
+  }, [propStoreId]);
 
   useEffect(() => {
     let cancelled = false;
