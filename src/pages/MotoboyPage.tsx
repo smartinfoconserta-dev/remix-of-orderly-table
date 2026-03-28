@@ -263,7 +263,7 @@ export default function MotoboyPage() {
     const merged = [...cleaned, ...missing];
     if (JSON.stringify(merged) !== JSON.stringify(ordem)) {
       setOrdem(merged);
-      saveOrdem(merged);
+      saveOrdem(merged, effectiveStoreId);
     }
   }, [emRota]);
 
