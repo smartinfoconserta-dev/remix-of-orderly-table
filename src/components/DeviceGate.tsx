@@ -71,7 +71,7 @@ const DeviceGate = ({ type, children }: DeviceGateProps) => {
         setStatus("activate");
         return;
       }
-      const result = await validateDevice(deviceId);
+      const result = await validateDevice(deviceId, type);
       if (result.ok && result.storeId) {
         setStoreId(result.storeId);
         setMesaId(result.mesaId ?? null);
