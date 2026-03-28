@@ -4,38 +4,49 @@ import PedidoFlow from "@/components/PedidoFlow";
 import { Button } from "@/components/ui/button";
 import { useRestaurant } from "@/contexts/RestaurantContext";
 import DeviceGate from "@/components/DeviceGate";
-import {
-  getBoundTabletMesaId,
-  setBoundTabletMesaId,
-  clearBoundTabletMesaId,
-} from "@/lib/tabletBinding";
+import { getStoredDeviceId } from "@/lib/deviceAuth";
 import { clearStoredDeviceId } from "@/lib/deviceAuth";
+import { supabase } from "@/integrations/supabase/client";
+
+/** Update mesa_id on the devices table for this device */
+async function updateDeviceMesa(mesaId: string | null) {
+  const deviceId = getStoredDeviceId();
+  if (!deviceId) return;
+  try {
+    await supabase
+      .from("devices")
+      .update({ mesa_id: mesaId } as any)
+      .eq("device_id", deviceId);
+  } catch (err) {
+    console.error("[TabletPage] updateDeviceMesa error:", err);
+  }
+}
 
 const TabletInner = ({ storeId, initialMesaId }: { storeId: string; initialMesaId?: string | null }) => {
   const { mesas } = useRestaurant();
   const [searchParams] = useSearchParams();
 
   const [mesaId, setMesaId] = useState<string | null>(() => {
-    // Priority: URL param > device mesa > saved binding
+    // Priority: URL param > device mesa from DB
     const fromUrl = searchParams.get("mesa");
     if (fromUrl) return fromUrl;
     if (initialMesaId) return initialMesaId;
-    return getBoundTabletMesaId();
+    return null;
   });
 
+  // When mesaId changes, persist to DB
   useEffect(() => {
-    if (mesaId) setBoundTabletMesaId(mesaId);
+    if (mesaId) updateDeviceMesa(mesaId);
   }, [mesaId]);
 
   const mesasOrdenadas = useMemo(() => [...mesas].sort((a, b) => a.numero - b.numero), [mesas]);
 
   const handleSelectMesa = (selectedMesaId: string) => {
-    setBoundTabletMesaId(selectedMesaId);
     setMesaId(selectedMesaId);
   };
 
   const handleExit = () => {
-    clearBoundTabletMesaId();
+    updateDeviceMesa(null);
     clearStoredDeviceId();
     setMesaId(null);
     window.location.reload();
@@ -45,7 +56,7 @@ const TabletInner = ({ storeId, initialMesaId }: { storeId: string; initialMesaI
     return (
       <div className="relative">
         <button
-          onClick={() => { clearBoundTabletMesaId(); setMesaId(null); }}
+          onClick={() => { updateDeviceMesa(null); setMesaId(null); }}
           className="fixed right-2 top-2 z-[9999] rounded-lg bg-destructive px-3 py-1.5 text-xs font-bold text-destructive-foreground opacity-60 transition-opacity hover:opacity-100"
         >
           Trocar mesa
