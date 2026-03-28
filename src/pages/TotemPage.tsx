@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import PedidoFlow from "@/components/PedidoFlow";
 import { RestaurantProvider, useRestaurant } from "@/contexts/RestaurantContext";
-import { CheckCircle2, CreditCard, QrCode, Smartphone } from "lucide-react";
+import { CheckCircle2, CreditCard, QrCode, Smartphone, User } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import type { ItemCarrinho } from "@/contexts/RestaurantContext";
 import DeviceGate from "@/components/DeviceGate";
@@ -9,7 +9,7 @@ import type { PaymentMethod } from "@/types/operations";
 
 const AUTO_RESET_MS = 10_000;
 
-type TotemStep = "menu" | "payment" | "confirmed";
+type TotemStep = "menu" | "name" | "payment" | "confirmed";
 
 const TotemInner = ({ storeId }: { storeId: string }) => {
   const { criarPedidoBalcao } = useRestaurant();
@@ -19,6 +19,11 @@ const TotemInner = ({ storeId }: { storeId: string }) => {
   const [pendingTotal, setPendingTotal] = useState(0);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Fast Food identification
+  const [modoOperacao, setModoOperacao] = useState<string>("restaurante");
+  const [identificacaoFastFood, setIdentificacaoFastFood] = useState<string>("codigo");
+  const [clienteNome, setClienteNome] = useState("");
+
   // Reactive restaurant name & logo from DB
   const [nomeRestaurante, setNomeRestaurante] = useState("");
   const [logoBase64, setLogoBase64] = useState("");
@@ -27,12 +32,14 @@ const TotemInner = ({ storeId }: { storeId: string }) => {
     const loadConfig = async () => {
       const { data } = await supabase
         .from("restaurant_config")
-        .select("nome_restaurante, logo_base64, logo_url")
+        .select("nome_restaurante, logo_base64, logo_url, modo_operacao, identificacao_fast_food")
         .eq("store_id", storeId)
         .maybeSingle();
       if (data) {
         setNomeRestaurante(data.nome_restaurante);
         setLogoBase64(data.logo_base64 || data.logo_url || "");
+        setModoOperacao(data.modo_operacao ?? "restaurante");
+        setIdentificacaoFastFood(data.identificacao_fast_food ?? "codigo");
       }
     };
     loadConfig();
@@ -50,6 +57,8 @@ const TotemInner = ({ storeId }: { storeId: string }) => {
         if (row) {
           setNomeRestaurante(row.nome_restaurante || "");
           setLogoBase64(row.logo_base64 || row.logo_url || "");
+          setModoOperacao(row.modo_operacao ?? "restaurante");
+          setIdentificacaoFastFood(row.identificacao_fast_food ?? "codigo");
         }
       })
       .subscribe();
@@ -64,6 +73,7 @@ const TotemInner = ({ storeId }: { storeId: string }) => {
       setStep("menu");
       setPedidoConfirmado(null);
       setPendingItens([]);
+      setClienteNome("");
     }, AUTO_RESET_MS);
     return () => { if (timerRef.current) clearTimeout(timerRef.current); };
   }, [step]);
@@ -72,28 +82,101 @@ const TotemInner = ({ storeId }: { storeId: string }) => {
   const handlePedidoConfirmado = useCallback((itens: ItemCarrinho[]) => {
     setPendingItens(itens);
     setPendingTotal(itens.reduce((acc, item) => acc + item.precoUnitario * item.quantidade, 0));
+
+    // In fast_food mode with nome_cliente identification, ask for name first
+    if (modoOperacao === "fast_food" && identificacaoFastFood === "nome_cliente") {
+      setStep("name");
+    } else {
+      setStep("payment");
+    }
+  }, [modoOperacao, identificacaoFastFood]);
+
+  const handleNameConfirmed = useCallback(() => {
+    if (!clienteNome.trim()) return;
     setStep("payment");
-  }, []);
+  }, [clienteNome]);
 
   // Called when customer picks a payment method
   const handlePaymentSelected = useCallback(async (method: PaymentMethod) => {
+    const nome = modoOperacao === "fast_food" && identificacaoFastFood === "nome_cliente" && clienteNome.trim()
+      ? clienteNome.trim()
+      : "Totem";
+
     const numeroPedido = await criarPedidoBalcao({
       itens: pendingItens,
       origem: "totem",
       operador: { id: "totem-auto", nome: "Totem", role: "caixa", criadoEm: new Date().toISOString() },
-      clienteNome: "Totem",
+      clienteNome: nome,
       formaPagamentoTotem: method,
     });
     setPedidoConfirmado(numeroPedido);
     setStep("confirmed");
-  }, [criarPedidoBalcao, pendingItens]);
+  }, [criarPedidoBalcao, pendingItens, modoOperacao, identificacaoFastFood, clienteNome]);
 
   const handleBackToMenu = useCallback(() => {
     setStep("menu");
     setPendingItens([]);
+    setClienteNome("");
   }, []);
 
   const formatPrice = (v: number) => `R$ ${v.toFixed(2).replace(".", ",")}`;
+
+  const isFastFoodCodigo = modoOperacao === "fast_food" && identificacaoFastFood === "codigo";
+  const isFastFoodNome = modoOperacao === "fast_food" && identificacaoFastFood === "nome_cliente";
+
+  // ─── Name input screen (fast food nome_cliente) ───
+  if (step === "name") {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center gap-8 p-8" style={{ background: "#FFFFFF" }}>
+        <div className="flex flex-col items-center gap-4 text-center">
+          {logoBase64 && (
+            <img src={logoBase64} alt={nomeRestaurante} className="h-16 w-16 rounded-xl object-contain" />
+          )}
+          <div className="h-20 w-20 rounded-full flex items-center justify-center" style={{ background: "#FF6B00" }}>
+            <User className="h-10 w-10 text-white" />
+          </div>
+          <h1 className="text-3xl font-black" style={{ color: "#1A1A1A" }}>Qual é o seu nome?</h1>
+          <p className="text-base font-medium" style={{ color: "#666" }}>
+            Vamos chamar você quando o pedido estiver pronto
+          </p>
+        </div>
+
+        <div className="w-full max-w-md space-y-4">
+          <input
+            type="text"
+            value={clienteNome}
+            onChange={(e) => setClienteNome(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter") handleNameConfirmed(); }}
+            placeholder="Digite seu nome..."
+            autoFocus
+            className="w-full h-16 text-2xl font-bold text-center rounded-2xl border-2 outline-none transition-colors"
+            style={{
+              borderColor: clienteNome.trim() ? "#FF6B00" : "#E0E0E0",
+              background: clienteNome.trim() ? "#FFF8F0" : "#FAFAFA",
+              color: "#1A1A1A",
+            }}
+          />
+
+          <button
+            onClick={handleNameConfirmed}
+            disabled={!clienteNome.trim()}
+            className="w-full h-16 rounded-2xl text-xl font-black text-white transition-all active:scale-[0.98] disabled:opacity-40"
+            style={{ background: "#FF6B00" }}
+          >
+            Continuar →
+          </button>
+        </div>
+
+        <button
+          onClick={handleBackToMenu}
+          className="mt-2 text-sm font-bold underline"
+          style={{ color: "#999" }}
+        >
+          ← Voltar ao cardápio
+        </button>
+      </div>
+    );
+  }
 
   // ─── Payment screen ───
   if (step === "payment") {
@@ -107,6 +190,11 @@ const TotemInner = ({ storeId }: { storeId: string }) => {
           <p className="text-xl font-bold" style={{ color: "#FF6B00" }}>
             Total: {formatPrice(pendingTotal)}
           </p>
+          {isFastFoodNome && clienteNome.trim() && (
+            <p className="text-base font-bold" style={{ color: "#666" }}>
+              Pedido de: <span style={{ color: "#1A1A1A" }}>{clienteNome.trim()}</span>
+            </p>
+          )}
         </div>
 
         <div className="flex flex-col gap-4 w-full max-w-md">
@@ -157,11 +245,11 @@ const TotemInner = ({ storeId }: { storeId: string }) => {
         </div>
 
         <button
-          onClick={handleBackToMenu}
+          onClick={() => isFastFoodNome ? setStep("name") : handleBackToMenu()}
           className="mt-4 text-sm font-bold underline"
           style={{ color: "#999" }}
         >
-          ← Voltar ao cardápio
+          ← {isFastFoodNome ? "Voltar" : "Voltar ao cardápio"}
         </button>
       </div>
     );
@@ -176,10 +264,37 @@ const TotemInner = ({ storeId }: { storeId: string }) => {
             <CheckCircle2 className="h-16 w-16 text-white" strokeWidth={2.5} />
           </div>
           <h1 className="text-5xl font-black" style={{ color: "#1A1A1A" }}>Pedido realizado!</h1>
-          <p className="text-[120px] leading-none font-black tabular-nums" style={{ color: "#FF6B00" }}>
-            #{String(pedidoConfirmado).padStart(3, "0")}
-          </p>
-          <p className="text-xl font-bold mt-2" style={{ color: "#1A1A1A" }}>Retire quando aparecer na tela</p>
+
+          {isFastFoodCodigo && (
+            <>
+              <p className="text-lg font-bold mt-2" style={{ color: "#666" }}>Retire com o código abaixo</p>
+              <p className="text-[140px] leading-none font-black tabular-nums" style={{ color: "#FF6B00" }}>
+                #{String(pedidoConfirmado).padStart(3, "0")}
+              </p>
+            </>
+          )}
+
+          {isFastFoodNome && clienteNome.trim() && (
+            <>
+              <p className="text-lg font-bold mt-2" style={{ color: "#666" }}>Vamos chamar você pelo nome</p>
+              <p className="text-[80px] leading-none font-black" style={{ color: "#FF6B00" }}>
+                {clienteNome.trim()}
+              </p>
+              <p className="text-2xl font-bold tabular-nums mt-2" style={{ color: "#999" }}>
+                Pedido #{String(pedidoConfirmado).padStart(3, "0")}
+              </p>
+            </>
+          )}
+
+          {!isFastFoodCodigo && !isFastFoodNome && (
+            <>
+              <p className="text-[120px] leading-none font-black tabular-nums" style={{ color: "#FF6B00" }}>
+                #{String(pedidoConfirmado).padStart(3, "0")}
+              </p>
+              <p className="text-xl font-bold mt-2" style={{ color: "#1A1A1A" }}>Retire quando aparecer na tela</p>
+            </>
+          )}
+
           {nomeRestaurante && (
             <p className="text-lg font-bold" style={{ color: "#FF6B00" }}>{nomeRestaurante}</p>
           )}
