@@ -68,7 +68,7 @@ const getTipoOptions = (produto: Produto | null): string[] => {
   return [];
 };
 
-const categoriasComEmbalagem = ["lanches", "combos"];
+
 
 const isComboProduct = (produto: Produto | null) => produto?.categoria === "combos";
 
