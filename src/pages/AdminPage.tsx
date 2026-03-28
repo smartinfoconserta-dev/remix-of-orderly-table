@@ -363,7 +363,50 @@ const AdminPage = () => {
       toast.error("Erro ao remover produto");
     }
   }, [removeTarget, storeId, loadProducts]);
-  
+
+  // Fetch 7-day revenue chart data
+  useEffect(() => {
+    if (tab !== "dashboard" || !storeId) return;
+    let cancelled = false;
+    const DIAS_SEMANA = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+    const load7dias = async () => {
+      setDash7diasLoading(true);
+      try {
+        const dias: { inicio: string; fim: string; label: string }[] = [];
+        for (let i = 6; i >= 0; i--) {
+          const d = new Date();
+          d.setHours(0, 0, 0, 0);
+          d.setDate(d.getDate() - i);
+          const inicio = d.toISOString();
+          const fim = new Date(d.getTime() + 86400000 - 1).toISOString();
+          dias.push({ inicio, fim, label: DIAS_SEMANA[d.getDay()] });
+        }
+        const results = await Promise.all(
+          dias.map(({ inicio, fim }) =>
+            supabase
+              .from("fechamentos")
+              .select("total")
+              .eq("store_id", storeId)
+              .eq("cancelado", false)
+              .gte("criado_em_iso", inicio)
+              .lte("criado_em_iso", fim)
+          )
+        );
+        if (cancelled) return;
+        const chartData = dias.map((d, i) => ({
+          dia: d.label,
+          total: (results[i].data ?? []).reduce((s, f) => s + (Number(f.total) || 0), 0),
+        }));
+        setDash7dias(chartData);
+      } catch (err) {
+        console.error("[AdminPage] erro ao carregar gráfico 7 dias:", err);
+      } finally {
+        if (!cancelled) setDash7diasLoading(false);
+      }
+    };
+    load7dias();
+    return () => { cancelled = true; };
+  }, [tab, storeId]);
 
   // --- Mesas state ---
   const [mesasConfig, setMesasConfig] = useState<MesasConfig>(getMesasConfig);
