@@ -1702,7 +1702,7 @@ ${topRows ? `<h2>Top 5 produtos</h2><table><thead><tr><th>#</th><th>Produto</th>
                       if (!catNomeInput.trim()) return;
                       if (catEditando) {
                         const next = categoriasCustom.map((c) => c.id === catEditando.id ? { ...c, nome: catNomeInput.trim(), icone: catIconeInput } : c);
-                        saveCategoriasCustom(next);
+                        saveCategoriasCustom(next, storeId);
                         setCategoriasCustom(next);
                         toast.success("Categoria atualizada");
                       } else {
