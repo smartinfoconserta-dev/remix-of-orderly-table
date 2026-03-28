@@ -528,7 +528,7 @@ const AdminPage = () => {
   const handleMesasApply = useCallback(() => {
     const val = Math.max(1, Math.min(50, parseInt(mesasInput) || 1));
     const next = { totalMesas: val };
-    saveMesasConfig(next);
+    saveMesasConfig(next, storeId);
     setMesasConfig(next);
     setMesasInput(String(val));
     toast.success(`Configurado para ${val} mesas. Aplica ao reabrir o caixa.`);
