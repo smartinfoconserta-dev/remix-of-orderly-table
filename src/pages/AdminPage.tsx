@@ -151,6 +151,47 @@ const AdminPage = () => {
   const [configSection, setConfigSection] = useState<"inicio" | "identidade" | "delivery" | "salao" | "operacao" | "modulos" | "sistema">("inicio");
   const [modoOperacaoPendente, setModoOperacaoPendente] = useState<"restaurante" | "fast_food" | null>(null);
 
+  // --- Dashboard "Hoje" data ---
+  const [dashLoading, setDashLoading] = useState(false);
+  const [dashPedidosHoje, setDashPedidosHoje] = useState(0);
+  const [dashFaturamento, setDashFaturamento] = useState(0);
+  const [dashTotalFechamentos, setDashTotalFechamentos] = useState(0);
+  const [dashCaixaAberto, setDashCaixaAberto] = useState<boolean | null>(null);
+  const [dashUltimosFechamentos, setDashUltimosFechamentos] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (tab !== "dashboard" || !storeId) return;
+    let cancelled = false;
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+    const hojeISO = hoje.toISOString();
+
+    const load = async () => {
+      setDashLoading(true);
+      try {
+        const [pedidosRes, fechRes, caixaRes] = await Promise.all([
+          supabase.from("pedidos").select("id", { count: "exact", head: true }).eq("store_id", storeId).gte("criado_em_iso", hojeISO),
+          supabase.from("fechamentos").select("total, origem, mesa_numero, forma_pagamento, criado_em, criado_em_iso").eq("store_id", storeId).eq("cancelado", false).gte("criado_em_iso", hojeISO).order("criado_em_iso", { ascending: false }).limit(100),
+          supabase.from("estado_caixa").select("aberto").eq("store_id", storeId).limit(1).maybeSingle(),
+        ]);
+        if (cancelled) return;
+        setDashPedidosHoje(pedidosRes.count ?? 0);
+        const fechamentos = fechRes.data ?? [];
+        const fat = fechamentos.reduce((s, f) => s + (Number(f.total) || 0), 0);
+        setDashFaturamento(fat);
+        setDashTotalFechamentos(fechamentos.length);
+        setDashCaixaAberto(caixaRes.data?.aberto ?? null);
+        setDashUltimosFechamentos(fechamentos.slice(0, 10));
+      } catch (err) {
+        console.error("[AdminPage] erro ao carregar dashboard:", err);
+      } finally {
+        if (!cancelled) setDashLoading(false);
+      }
+    };
+    load();
+    return () => { cancelled = true; };
+  }, [tab, storeId]);
+
   // --- Cardápio state (from Supabase produtos table) ---
   type AdminProduct = Produto & { ativo: boolean; removido: boolean; disponivelDelivery: boolean; imagemBase64?: string };
   const [allProducts, setAllProducts] = useState<AdminProduct[]>([]);
