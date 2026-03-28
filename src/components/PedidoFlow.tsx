@@ -448,8 +448,8 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
       longPressTimerRef.current = null;
       setAdminModalOpen(true);
       setAdminAuthenticated(false);
-      setAdminNome("");
-      setAdminPin("");
+      setAdminEmail("");
+      setAdminPassword("");
       setAdminError(null);
       setShowMesaSelector(false);
     }, LONG_PRESS_DURATION_MS);
