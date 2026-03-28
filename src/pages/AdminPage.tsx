@@ -1709,7 +1709,7 @@ ${topRows ? `<h2>Top 5 produtos</h2><table><thead><tr><th>#</th><th>Produto</th>
                         const slug = catNomeInput.trim().toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
                         const nova: CategoriaCustom = { id: `${slug}-${Date.now()}`, nome: catNomeInput.trim(), icone: catIconeInput, ordem: todasCategorias.length };
                         const next = [...categoriasCustom, nova];
-                        saveCategoriasCustom(next);
+                        saveCategoriasCustom(next, storeId);
                         setCategoriasCustom(next);
                         toast.success("Categoria criada");
                       }
