@@ -1786,25 +1786,6 @@ const AdminPage = () => {
                   </AlertDialogContent>
                 </AlertDialog>
 
-                {/* Toggle cozinha */}
-                <div className="surface-card rounded-2xl p-6 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-bold text-foreground">{sistemaConfig.cozinhaAtiva !== false ? "Tela da cozinha ativa" : "Tela da cozinha desativada"}</p>
-                      <p className="text-xs text-muted-foreground">Quando desativada, pedidos vão direto para "pronto"</p>
-                    </div>
-                    <Switch
-                      checked={sistemaConfig.cozinhaAtiva !== false}
-                      onCheckedChange={(v) => {
-                        const next = { ...sistemaConfig, cozinhaAtiva: v };
-                        setSistemaConfig(next);
-                        saveSistemaConfig(next);
-                        toast.success(v ? "Cozinha ativada" : "Cozinha desativada — pedidos vão direto para pronto");
-                      }}
-                    />
-                  </div>
-                </div>
-
                 {/* TV de Retirada — Modo */}
                 <div className="surface-card rounded-2xl p-6 space-y-3">
                   <div>
