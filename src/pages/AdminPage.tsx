@@ -27,6 +27,10 @@ import {
   Tv,
   ExternalLink,
   TabletSmartphone,
+  TrendingUp,
+  DollarSign,
+  Receipt,
+  Wallet,
 } from "lucide-react";
 import TeamManager from "@/components/TeamManager";
 import MesasManager from "@/components/MesasManager";
