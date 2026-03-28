@@ -16,12 +16,6 @@ export interface CategoriaCustom {
   ordem: number;
 }
 
-export interface ProdutoOverride extends Produto {
-  ativo: boolean;
-  removido?: boolean;
-  imagemBase64?: string;
-  disponivelDelivery?: boolean;
-}
 
 export interface MesasConfig {
   totalMesas: number;
