@@ -148,6 +148,7 @@ const AdminPage = () => {
   const navigate = useNavigate();
   const [tab, setTab] = useState<AdminTab>("dashboard");
   const [configSection, setConfigSection] = useState<"inicio" | "identidade" | "delivery" | "salao" | "operacao" | "modulos" | "sistema">("inicio");
+  const [modoOperacaoPendente, setModoOperacaoPendente] = useState<"restaurante" | "fast_food" | null>(null);
 
   // --- Cardápio state (from Supabase produtos table) ---
   type AdminProduct = Produto & { ativo: boolean; removido: boolean; disponivelDelivery: boolean; imagemBase64?: string };
@@ -1680,6 +1681,111 @@ const AdminPage = () => {
             {/* OPERAÇÃO */}
             {configSection === "operacao" && (
               <div className="space-y-4 max-w-lg">
+                {/* Modo de Operação */}
+                <div className="surface-card rounded-2xl p-6 space-y-4">
+                  <div>
+                    <p className="text-sm font-black text-foreground">🏪 Modo de Operação</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">Define como o sistema organiza os pedidos</p>
+                  </div>
+                  <div className="space-y-2">
+                    <button type="button" onClick={() => {
+                      if (sistemaConfig.modoOperacao === "fast_food") {
+                        setModoOperacaoPendente("restaurante");
+                      }
+                    }} className={`w-full text-left rounded-xl border p-4 transition-colors ${(sistemaConfig.modoOperacao || "restaurante") === "restaurante" ? "border-primary bg-primary/10" : "border-border bg-card hover:border-primary/40"}`}>
+                      <p className="text-sm font-bold text-foreground">🍽️ Restaurante</p>
+                      <p className="text-xs text-muted-foreground mt-1">Pedidos vinculados à mesa • Comanda imprime número da mesa • TV de retirada desativada por padrão</p>
+                    </button>
+                    <button type="button" onClick={() => {
+                      if ((sistemaConfig.modoOperacao || "restaurante") === "restaurante") {
+                        setModoOperacaoPendente("fast_food");
+                      }
+                    }} className={`w-full text-left rounded-xl border p-4 transition-colors ${sistemaConfig.modoOperacao === "fast_food" ? "border-primary bg-primary/10" : "border-border bg-card hover:border-primary/40"}`}>
+                      <p className="text-sm font-bold text-foreground">🍔 Fast Food</p>
+                      <p className="text-xs text-muted-foreground mt-1">Pedidos sem mesa • Código numérico ou nome do cliente na comanda • TV mostra balcão e totem quando fica pronto</p>
+                    </button>
+                  </div>
+
+                  {/* Sub-opção Fast Food: identificação */}
+                  {sistemaConfig.modoOperacao === "fast_food" && (
+                    <div className="border-t border-border pt-4 space-y-2">
+                      <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">Identificação do pedido</p>
+                      <label className="flex items-center gap-3 cursor-pointer" onClick={() => {
+                        const next = { ...sistemaConfig, identificacaoFastFood: "codigo" as const };
+                        setSistemaConfig(next);
+                        saveSistemaConfig(next);
+                      }}>
+                        <span className={`h-5 w-5 rounded-full border-2 flex items-center justify-center ${(sistemaConfig.identificacaoFastFood || "codigo") === "codigo" ? "border-primary" : "border-muted-foreground/40"}`}>
+                          {(sistemaConfig.identificacaoFastFood || "codigo") === "codigo" && <span className="h-2.5 w-2.5 rounded-full bg-primary" />}
+                        </span>
+                        <div>
+                          <span className={`text-sm font-semibold ${(sistemaConfig.identificacaoFastFood || "codigo") === "codigo" ? "text-foreground" : "text-muted-foreground"}`}>Código numérico</span>
+                          <p className="text-[10px] text-muted-foreground">Cada pedido recebe um número sequencial automático</p>
+                        </div>
+                      </label>
+                      <label className="flex items-center gap-3 cursor-pointer" onClick={() => {
+                        const next = { ...sistemaConfig, identificacaoFastFood: "nome_cliente" as const };
+                        setSistemaConfig(next);
+                        saveSistemaConfig(next);
+                      }}>
+                        <span className={`h-5 w-5 rounded-full border-2 flex items-center justify-center ${sistemaConfig.identificacaoFastFood === "nome_cliente" ? "border-primary" : "border-muted-foreground/40"}`}>
+                          {sistemaConfig.identificacaoFastFood === "nome_cliente" && <span className="h-2.5 w-2.5 rounded-full bg-primary" />}
+                        </span>
+                        <div>
+                          <span className={`text-sm font-semibold ${sistemaConfig.identificacaoFastFood === "nome_cliente" ? "text-foreground" : "text-muted-foreground"}`}>Nome do cliente</span>
+                          <p className="text-[10px] text-muted-foreground">Comanda exibe o nome informado pelo cliente</p>
+                        </div>
+                      </label>
+                    </div>
+                  )}
+                </div>
+
+                {/* Confirmation dialog for mode change */}
+                <AlertDialog open={!!modoOperacaoPendente} onOpenChange={(open) => !open && setModoOperacaoPendente(null)}>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Trocar modo de operação?</AlertDialogTitle>
+                      <AlertDialogDescription className="space-y-2">
+                        {modoOperacaoPendente === "fast_food" ? (
+                          <>
+                            <span className="block">Você está trocando para <strong>Fast Food</strong>. O que vai mudar:</span>
+                            <span className="block">• Pedidos não serão mais vinculados a mesas</span>
+                            <span className="block">• Cada pedido receberá um código ou nome do cliente</span>
+                            <span className="block">• A TV de retirada será ativada por padrão</span>
+                          </>
+                        ) : (
+                          <>
+                            <span className="block">Você está trocando para <strong>Restaurante</strong>. O que vai mudar:</span>
+                            <span className="block">• Pedidos voltarão a ser vinculados a mesas</span>
+                            <span className="block">• Comanda imprimirá o número da mesa</span>
+                            <span className="block">• A TV de retirada será desativada por padrão</span>
+                          </>
+                        )}
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                      <AlertDialogAction onClick={() => {
+                        if (modoOperacaoPendente) {
+                          const tvMode = modoOperacaoPendente === "fast_food" ? "padrao" : "padrao";
+                          const next = {
+                            ...sistemaConfig,
+                            modoOperacao: modoOperacaoPendente,
+                            modoTV: tvMode as "padrao" | "completo",
+                          };
+                          setSistemaConfig(next);
+                          saveSistemaConfig(next);
+                          saveSistemaConfigAsync(next);
+                          toast.success(modoOperacaoPendente === "fast_food" ? "Modo Fast Food ativado" : "Modo Restaurante ativado");
+                          setModoOperacaoPendente(null);
+                        }
+                      }}>
+                        Confirmar troca
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+
                 {/* Toggle cozinha */}
                 <div className="surface-card rounded-2xl p-6 space-y-3">
                   <div className="flex items-center justify-between">
