@@ -29,7 +29,7 @@ export interface PedidoRealizado {
   total: number;
   criadoEm: string;
   criadoEmIso: string;
-  origem: "mesa" | "cliente" | "garcom" | "caixa" | "balcao" | "delivery" | "totem";
+  origem: "mesa" | "cliente" | "garcom" | "caixa" | "balcao" | "delivery" | "totem" | "ifood";
   mesaId: string;
   garcomId?: string;
   garcomNome?: string;
