@@ -52,6 +52,7 @@ interface PedidoFlowProps {
   clienteNome?: string;
   onBack?: () => void;
   onPedidoConfirmado?: (itens: ItemCarrinho[], paraViagem: boolean) => void;
+  deviceStoreId?: string | null;
 }
 
 const sysConfig = getSistemaConfig();
