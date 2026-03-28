@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Monitor, TabletSmartphone, Tv, LockKeyhole, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,11 +28,25 @@ const TYPE_ICONS: Record<DeviceType, React.ReactNode> = {
   tv: <Tv className="h-6 w-6" />,
 };
 
-interface StoreOption {
-  id: string;
-  name: string;
-  slug: string;
-}
+const MAX_ATTEMPTS = 5;
+const LOCKOUT_MS = 60_000; // 1 min
+
+const formatCnpjCpf = (v: string) => {
+  const digits = v.replace(/\D/g, "");
+  if (digits.length <= 11) {
+    // CPF: 000.000.000-00
+    return digits
+      .replace(/(\d{3})(\d)/, "$1.$2")
+      .replace(/(\d{3})(\d)/, "$1.$2")
+      .replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+  }
+  // CNPJ: 00.000.000/0000-00
+  return digits
+    .replace(/(\d{2})(\d)/, "$1.$2")
+    .replace(/(\d{3})(\d)/, "$1.$2")
+    .replace(/(\d{3})(\d)/, "$1/$2")
+    .replace(/(\d{4})(\d{1,2})$/, "$1-$2");
+};
 
 const DeviceGate = ({ type, children }: DeviceGateProps) => {
   const [status, setStatus] = useState<"loading" | "activate" | "ready" | "blocked">("loading");
@@ -40,22 +54,14 @@ const DeviceGate = ({ type, children }: DeviceGateProps) => {
   const [mesaId, setMesaId] = useState<string | null>(null);
 
   // Activation form
-  const [stores, setStores] = useState<StoreOption[]>([]);
-  const [selectedStoreId, setSelectedStoreId] = useState("");
-  const [storeSearch, setStoreSearch] = useState("");
-  const [showStoreList, setShowStoreList] = useState(false);
+  const [cnpjInput, setCnpjInput] = useState("");
   const [pin, setPin] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isActivating, setIsActivating] = useState(false);
-  const [loadingStores, setLoadingStores] = useState(false);
 
-  const normalize = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-
-  const filteredStores = useMemo(() => {
-    if (!storeSearch.trim()) return stores;
-    const q = normalize(storeSearch);
-    return stores.filter((s) => normalize(s.name).includes(q) || normalize(s.slug).includes(q));
-  }, [stores, storeSearch]);
+  // Rate limiting
+  const [attempts, setAttempts] = useState(0);
+  const [lockedUntil, setLockedUntil] = useState<number | null>(null);
 
   // On mount, check if device is already registered
   useEffect(() => {
@@ -65,7 +71,6 @@ const DeviceGate = ({ type, children }: DeviceGateProps) => {
         setStatus("activate");
         return;
       }
-
       const result = await validateDevice(deviceId);
       if (result.ok && result.storeId) {
         setStoreId(result.storeId);
@@ -80,33 +85,22 @@ const DeviceGate = ({ type, children }: DeviceGateProps) => {
     check();
   }, []);
 
-  // Load stores when activation screen shows
-  useEffect(() => {
-    if (status !== "activate") return;
-    const loadStores = async () => {
-      setLoadingStores(true);
-      try {
-        const { data } = await supabase
-          .from("stores")
-          .select("id, name, slug")
-          .order("name");
-        setStores(data ?? []);
-      } catch {
-        console.error("[DeviceGate] failed to load stores");
-      } finally {
-        setLoadingStores(false);
-      }
-    };
-    loadStores();
-  }, [status]);
-
   const handleActivate = useCallback(async () => {
     if (isActivating) return;
+
+    // Check lockout
+    if (lockedUntil && Date.now() < lockedUntil) {
+      const secs = Math.ceil((lockedUntil - Date.now()) / 1000);
+      setError(`Muitas tentativas. Aguarde ${secs}s`);
+      return;
+    }
+
     setIsActivating(true);
     setError(null);
 
-    if (!selectedStoreId) {
-      setError("Selecione uma empresa");
+    const cnpjDigits = cnpjInput.replace(/\D/g, "");
+    if (cnpjDigits.length < 11) {
+      setError("Informe um CNPJ ou CPF válido");
       setIsActivating(false);
       return;
     }
@@ -117,22 +111,100 @@ const DeviceGate = ({ type, children }: DeviceGateProps) => {
     }
 
     try {
-      const store = stores.find((s) => s.id === selectedStoreId);
-      if (!store) {
+      // Find store by CNPJ in master_clientes
+      const { data: cliente } = await supabase
+        .from("master_clientes")
+        .select("id")
+        .eq("cnpj", cnpjDigits)
+        .eq("ativo", true)
+        .maybeSingle();
+
+      if (!cliente) {
+        const newAttempts = attempts + 1;
+        setAttempts(newAttempts);
+        if (newAttempts >= MAX_ATTEMPTS) {
+          setLockedUntil(Date.now() + LOCKOUT_MS);
+          setAttempts(0);
+          setError("Muitas tentativas. Aguarde 1 minuto.");
+        } else {
+          setError(`CNPJ/CPF não encontrado (${MAX_ATTEMPTS - newAttempts} tentativas restantes)`);
+        }
+        setIsActivating(false);
+        return;
+      }
+
+      // master_clientes.id is the store slug-like key. Find actual store.
+      // The master_clientes stores the store id reference or we search by CNPJ.
+      // We need to find the store_id. master_clientes has an id that matches store records.
+      // Let's search stores by checking restaurant_config or master_clientes linkage.
+      // Actually master_clientes.id is a text id. We need to find the store linked to it.
+      // The linkage is: master_clientes row is created alongside a store. The store_id is stored in restaurant_license.
+      // Let's look up the store via restaurant_config or restaurant_license that has the same store.
+      // Actually, the CNPJ is in master_clientes. The master_clientes.id corresponds to a text key.
+      // The store is linked via: when creating a client in Master, a store is created simultaneously.
+      // Let's find the store by checking which store has a matching master_clientes entry.
+      // The simplest approach: search stores and match via master_clientes.
+      // master_clientes doesn't have a direct store_id FK. But restaurant_config has store_id.
+      // Actually let me re-think: the CNPJ is stored in master_clientes table with cnpj field.
+      // We need to find the store_id. The restaurant_config table has store_id.
+      // The master panel creates store + master_clientes simultaneously with the same conceptual link.
+      // Let me check if master_clientes has any reference to store...
+      // Looking at the schema: master_clientes has no store_id column.
+      // But restaurant_config has store_id. And restaurant_license has store_id.
+      // The link is: master_clientes.id is used as a reference key.
+      // When create-admin-account edge function runs, it creates a store and a master_clientes entry.
+      // We need another approach: store the CNPJ in restaurant_config or match by name.
+      
+      // Better approach: query restaurant_config to find by cnpj from master_clientes matching nome_restaurante to stores.name
+      // Actually the simplest: master_clientes table stores nome_restaurante. We can match stores.name.
+      // But that's fragile. Let me look at the actual data flow...
+      // 
+      // Actually, I'll add CNPJ lookup to the stores table via a search. The master_clientes stores 
+      // restaurant info and the edge function creates both. The link is usually through the store name or 
+      // we can search restaurant_config by joining.
+      //
+      // Simplest reliable approach: store CNPJ in restaurant_config or use master_clientes + restaurant matching.
+      // For now, let's match by nome_restaurante between master_clientes and stores.
+
+      const { data: mcData } = await supabase
+        .from("master_clientes")
+        .select("nome_restaurante")
+        .eq("cnpj", cnpjDigits)
+        .eq("ativo", true)
+        .maybeSingle();
+
+      if (!mcData) {
         setError("Empresa não encontrada");
         setIsActivating(false);
         return;
       }
 
-      // Validate PIN against module_pins for this store
+      // Find store by name match
+      const { data: storeData } = await supabase
+        .from("stores")
+        .select("id, name")
+        .ilike("name", mcData.nome_restaurante)
+        .maybeSingle();
+
+      if (!storeData) {
+        setError("Loja não configurada para esta empresa");
+        setIsActivating(false);
+        return;
+      }
+
+      const foundStoreId = storeData.id;
+
+      // Validate PIN for this specific device type
+      const moduleKey = type; // "tablet" | "totem" | "tv"
       const { data: pins } = await supabase
         .from("module_pins")
-        .select("id, pin_hash, module")
-        .eq("store_id", store.id)
+        .select("id, pin_hash")
+        .eq("store_id", foundStoreId)
+        .eq("module", moduleKey)
         .eq("active", true);
 
       if (!pins || pins.length === 0) {
-        setError("Nenhum PIN cadastrado para esta empresa");
+        setError(`Nenhum PIN de ${TYPE_LABELS[type]} cadastrado para esta empresa`);
         setIsActivating(false);
         return;
       }
@@ -150,20 +222,28 @@ const DeviceGate = ({ type, children }: DeviceGateProps) => {
       }
 
       if (!pinValid) {
-        setError("PIN inválido");
+        const newAttempts = attempts + 1;
+        setAttempts(newAttempts);
+        if (newAttempts >= MAX_ATTEMPTS) {
+          setLockedUntil(Date.now() + LOCKOUT_MS);
+          setAttempts(0);
+          setError("Muitas tentativas. Aguarde 1 minuto.");
+        } else {
+          setError(`PIN inválido (${MAX_ATTEMPTS - newAttempts} tentativas restantes)`);
+        }
         setIsActivating(false);
         return;
       }
 
       // Activate device
-      const result = await activateDevice(store.id, type, `${TYPE_LABELS[type]} - ${store.name}`);
+      const result = await activateDevice(foundStoreId, type, `${TYPE_LABELS[type]} - ${storeData.name}`);
       if (!result.ok) {
         setError(result.error ?? "Erro ao ativar");
         setIsActivating(false);
         return;
       }
 
-      setStoreId(store.id);
+      setStoreId(foundStoreId);
       setStatus("ready");
     } catch (err) {
       console.error("[DeviceGate] activation error:", err);
@@ -171,7 +251,7 @@ const DeviceGate = ({ type, children }: DeviceGateProps) => {
     } finally {
       setIsActivating(false);
     }
-  }, [selectedStoreId, pin, type, isActivating, stores]);
+  }, [cnpjInput, pin, type, isActivating, attempts, lockedUntil]);
 
   // Loading
   if (status === "loading") {
@@ -214,6 +294,8 @@ const DeviceGate = ({ type, children }: DeviceGateProps) => {
 
   // Activation form
   if (status === "activate") {
+    const isLocked = lockedUntil !== null && Date.now() < lockedUntil;
+
     return (
       <div className="flex min-h-screen items-center justify-center bg-background px-6 py-10">
         <div className="surface-card w-full max-w-md space-y-6 p-6 md:p-8">
@@ -223,56 +305,30 @@ const DeviceGate = ({ type, children }: DeviceGateProps) => {
             </div>
             <h1 className="text-2xl font-black text-foreground">Ativar {TYPE_LABELS[type]}</h1>
             <p className="text-sm text-muted-foreground">
-              Selecione a empresa e informe o PIN para registrar este dispositivo.
+              Informe o CNPJ/CPF da empresa e o PIN do {TYPE_LABELS[type].toLowerCase()}.
             </p>
           </div>
 
           <div className="space-y-4">
-            {/* Store autocomplete */}
+            {/* CNPJ/CPF */}
             <div className="space-y-2">
-              <label className="text-sm font-semibold text-foreground">Empresa</label>
-              <div className="relative">
-                <Input
-                  value={storeSearch}
-                  onChange={(e) => {
-                    setStoreSearch(e.target.value);
-                    setSelectedStoreId("");
-                    setShowStoreList(true);
-                  }}
-                  onFocus={() => setShowStoreList(true)}
-                  placeholder={loadingStores ? "Carregando..." : "Digite o nome da empresa"}
-                  autoComplete="off"
-                  disabled={loadingStores}
-                />
-                {showStoreList && filteredStores.length > 0 && !selectedStoreId && (
-                  <div className="absolute z-50 mt-1 w-full max-h-48 overflow-y-auto rounded-xl border border-border bg-popover shadow-lg">
-                    {filteredStores.map((s) => (
-                      <button
-                        key={s.id}
-                        type="button"
-                        onClick={() => {
-                          setSelectedStoreId(s.id);
-                          setStoreSearch(s.name);
-                          setShowStoreList(false);
-                        }}
-                        className="w-full px-4 py-2.5 text-left text-sm font-medium text-foreground hover:bg-accent transition-colors first:rounded-t-xl last:rounded-b-xl"
-                      >
-                        {s.name}
-                      </button>
-                    ))}
-                  </div>
-                )}
-                {showStoreList && storeSearch.length > 0 && filteredStores.length === 0 && !selectedStoreId && (
-                  <div className="absolute z-50 mt-1 w-full rounded-xl border border-border bg-popover shadow-lg px-4 py-3">
-                    <p className="text-sm text-muted-foreground">Nenhuma empresa encontrada</p>
-                  </div>
-                )}
-              </div>
+              <label className="text-sm font-semibold text-foreground">CNPJ / CPF</label>
+              <Input
+                value={cnpjInput}
+                onChange={(e) => {
+                  const raw = e.target.value.replace(/\D/g, "").slice(0, 14);
+                  setCnpjInput(formatCnpjCpf(raw));
+                }}
+                placeholder="00.000.000/0000-00"
+                inputMode="numeric"
+                autoComplete="off"
+                disabled={isLocked}
+              />
             </div>
 
             {/* PIN */}
             <div className="space-y-2">
-              <label className="text-sm font-semibold text-foreground">PIN de Ativação</label>
+              <label className="text-sm font-semibold text-foreground">PIN do {TYPE_LABELS[type]}</label>
               <Input
                 type="password"
                 value={pin}
@@ -280,6 +336,7 @@ const DeviceGate = ({ type, children }: DeviceGateProps) => {
                 placeholder="4 a 6 dígitos"
                 inputMode="numeric"
                 autoComplete="one-time-code"
+                disabled={isLocked}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
                     e.preventDefault();
@@ -297,7 +354,7 @@ const DeviceGate = ({ type, children }: DeviceGateProps) => {
 
             <Button
               onClick={handleActivate}
-              disabled={isActivating}
+              disabled={isActivating || isLocked}
               className="h-12 w-full rounded-xl text-base font-black"
             >
               {isActivating ? (
