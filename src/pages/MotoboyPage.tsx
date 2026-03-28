@@ -74,6 +74,26 @@ export default function MotoboyPage() {
   const [motoboys, setMotoboys] = useState<Motoboy[]>([]);
   const [fechamentoEnviado, setFechamentoEnviado] = useState(false);
 
+  // Load preferences from DB on mount
+  useEffect(() => {
+    if (!effectiveStoreId) return;
+    loadPreferencias(effectiveStoreId, "motoboy").then(prefs => {
+      if (prefs.sessao && !isAdminAccess) {
+        try {
+          const s = JSON.parse(prefs.sessao);
+          setSessao(s);
+          localStorage.setItem(SESSAO_KEY, prefs.sessao);
+        } catch {}
+      }
+      if (prefs.ordem) {
+        try {
+          const o = JSON.parse(prefs.ordem);
+          if (Array.isArray(o)) { setOrdem(o); localStorage.setItem(ORDEM_KEY, JSON.stringify(o)); }
+        } catch {}
+      }
+    });
+  }, [effectiveStoreId]);
+
   useEffect(() => {
     if (isAdminAccess) {
       setSessao({ id: "admin", nome: "Administrador", fundoTroco: 0 });
