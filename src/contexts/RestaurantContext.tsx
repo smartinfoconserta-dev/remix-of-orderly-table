@@ -402,23 +402,24 @@ const rowToMovimentacao = (row: any): MovimentacaoCaixa => ({
   usuarioId: row.usuario_id ?? "", usuarioNome: row.usuario_nome ?? "",
 });
 
-// Fire-and-forget DB insert — uses atomic next_order_number RPC to avoid duplicates
-const dbInsertPedido = async (p: PedidoRealizado) => {
+// DB insert with atomic numbering — returns the real number from DB
+// Callers pass a callback to update in-memory state with the real number
+const dbInsertPedido = async (p: PedidoRealizado, onNumeroResolved?: (pedidoId: string, realNum: number) => void) => {
   const sid = getActiveStoreId();
   if (!sid) { console.warn("dbInsertPedido: storeId is null, skipping"); return; }
   try {
-    // Get atomic order number from DB
     const { data: nextNum, error: rpcError } = await supabase.rpc("next_order_number" as any, { _store_id: sid });
     if (rpcError) { console.error("next_order_number RPC error", rpcError); }
     const atomicNum = typeof nextNum === "number" ? nextNum : p.numeroPedido;
-    // Update local counter to stay in sync
     if (atomicNum >= _nextPedidoNumber) _nextPedidoNumber = atomicNum + 1;
     const row = pedidoToRow({ ...p, numeroPedido: atomicNum }, sid);
     const { error } = await supabase.from("pedidos").insert(row as any);
     if (error) { console.error("DB insert pedido", error); toast.error("Erro ao salvar pedido no banco"); }
+    else if (onNumeroResolved && atomicNum !== p.numeroPedido) {
+      onNumeroResolved(p.id, atomicNum);
+    }
   } catch (err) {
     console.error("dbInsertPedido unexpected error", err);
-    // Fallback: insert with optimistic number
     supabase.from("pedidos").insert(pedidoToRow(p, sid) as any).then(({ error }) => {
       if (error) console.error("DB insert pedido fallback", error);
     });
@@ -823,8 +824,16 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           caixaNome: origem === "caixa" ? meta?.operador?.nome : undefined,
           paraViagem: meta?.paraViagem || false,
         };
-        // Persist to DB
-        dbInsertPedido(novoPedido);
+        // Persist to DB — patch in-memory number when real number arrives
+        dbInsertPedido(novoPedido, (pedidoId, realNum) => {
+          setStore((s) => ({
+            ...s,
+            mesas: s.mesas.map((m) => ({
+              ...m,
+              pedidos: m.pedidos.map((p) => p.id === pedidoId ? { ...p, numeroPedido: realNum } : p),
+            })),
+          }));
+        });
         eventInput = origem === "garcom"
           ? { tipo: "pedido", descricao: `Garçom ${meta?.operador?.nome ?? "identificado"} lançou pedido na ${formatMesaNumero(mesa.numero)}`, mesaId, usuarioId: meta?.operador?.id, usuarioNome: meta?.operador?.nome, acao: "lancar_pedido" }
           : origem === "caixa"
@@ -1059,7 +1068,12 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         formaPagamentoDelivery: input.formaPagamentoDelivery, trocoParaQuanto: input.trocoParaQuanto,
         observacaoGeral: input.observacaoGeral, statusBalcao: statusInicial, pronto: false,
       };
-      dbInsertPedido(novoPedido);
+      dbInsertPedido(novoPedido, (pedidoId, realNum) => {
+        setStore((s) => ({
+          ...s,
+          pedidosBalcao: s.pedidosBalcao.map((p) => p.id === pedidoId ? { ...p, numeroPedido: realNum } : p),
+        }));
+      });
       const totemPayMethod = input.formaPagamentoTotem ?? "pix";
       const fechamentoTotem: FechamentoConta | null = input.origem === "totem" ? {
         id: `fechamento-totem-${now.getTime()}-${Math.random().toString(36).slice(2, 7)}`,
