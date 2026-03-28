@@ -105,16 +105,16 @@ const TotemInner = ({ storeId }: { storeId: string }) => {
   }, [clienteNome]);
 
   // Called when customer picks a payment method — go to CPF step
+  const skipCpfRef = useRef(false);
   const handlePaymentSelected = useCallback((method: PaymentMethod) => {
     setPendingPaymentMethod(method);
     if (cpfNotaAtivo) {
       setStep("cpf");
     } else {
-      // Skip CPF step — create order directly
       setCpfWanted(false);
       setClienteCpf("");
-      // We set a flag so useEffect below can trigger order creation
-      setSkipCpfTrigger(method);
+      skipCpfRef.current = true;
+      setStep("cpf");
     }
   }, [cpfNotaAtivo]);
 
