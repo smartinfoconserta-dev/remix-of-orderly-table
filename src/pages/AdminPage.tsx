@@ -2420,7 +2420,7 @@ ${topRows ? `<h2>Top 5 produtos</h2><table><thead><tr><th>#</th><th>Produto</th>
                       <label className="flex items-center gap-3 cursor-pointer" onClick={() => {
                         const next = { ...sistemaConfig, identificacaoFastFood: "codigo" as const };
                         setSistemaConfig(next);
-                        saveSistemaConfig(next);
+                        saveSistemaConfig(next, storeId);
                       }}>
                         <span className={`h-5 w-5 rounded-full border-2 flex items-center justify-center ${(sistemaConfig.identificacaoFastFood || "codigo") === "codigo" ? "border-primary" : "border-muted-foreground/40"}`}>
                           {(sistemaConfig.identificacaoFastFood || "codigo") === "codigo" && <span className="h-2.5 w-2.5 rounded-full bg-primary" />}
