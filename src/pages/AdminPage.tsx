@@ -1220,6 +1220,9 @@ const AdminPage = () => {
           </div>
         )}
 
+        {/* ═══ CAIXAS ═══ */}
+        {tab === "caixas" && <CaixasSection storeId={storeId} formatPrice={formatPrice} />}
+
         {/* ═══ CONFIGURAÇÕES ═══ */}
         {tab === "configuracoes" && (
           <div className="space-y-5 fade-in">
