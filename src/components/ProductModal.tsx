@@ -68,7 +68,7 @@ const getTipoOptions = (produto: Produto | null): string[] => {
   return [];
 };
 
-const categoriasComEmbalagem = ["lanches", "combos"];
+
 
 const isComboProduct = (produto: Produto | null) => produto?.categoria === "combos";
 
@@ -79,15 +79,14 @@ const isBaseStepAvailable = (produto: Produto | null, step: ProductStep, skipEmb
   if (step === "remover") return Boolean(produto.ingredientesRemoviveis?.length);
   if (step === "tipo") return getTipoOptions(produto).length > 0;
   if (step === "embalagem") {
+    if (skipEmbalagemDefault) return false;
     if (produto.embalagemOptions?.length) {
       const isDefault = produto.embalagemOptions.length === 2
         && produto.embalagemOptions.includes("Consumir na mesa")
         && produto.embalagemOptions.includes("Para viagem");
       if (!isDefault) return true;
     }
-    if (skipEmbalagemDefault) return false;
-    if (produto.permiteLevar === false) return false;
-    return categoriasComEmbalagem.includes(produto.categoria);
+    return produto.permiteLevar !== false;
   }
   if (step === "quantidade") return true;
   return false;
