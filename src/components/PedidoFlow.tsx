@@ -700,11 +700,11 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
     null // banner mode — identity is rendered in custom banner header below
   ) : RESTAURANTE.logoUrl && logoEstilo === "quadrada" ? (
     <>
-      <div className="w-[11rem] lg:w-[13rem] shrink-0 -ml-4 md:-ml-6 overflow-hidden" style={{ height: "56px", marginTop: "-12px", marginBottom: "-12px" }}>
+      <div className="w-[11rem] lg:w-[13rem] shrink-0 absolute left-0 top-0 bottom-0 overflow-hidden z-10">
         <img
           src={RESTAURANTE.logoUrl}
           alt={RESTAURANTE.nome}
-          className="w-full object-cover select-none touch-none" style={{ height: "56px" }}
+          className="block w-full h-full object-cover select-none touch-none"
           onPointerDown={handleLogoPointerDown}
           onPointerUp={handleLogoPointerUp}
           onPointerLeave={handleLogoPointerUp}
@@ -712,6 +712,7 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
           draggable={false}
         />
       </div>
+      <div className="w-[11rem] lg:w-[13rem] shrink-0" />
       <div className="flex-1" />
       {mesaLabel && (
         <p className="text-sm font-bold text-foreground">{mesaLabel}</p>
@@ -761,7 +762,7 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
 
   const header = (
     <header
-      className={`sticky top-0 z-50 flex items-center justify-between gap-3 border-b ${
+      className={`sticky top-0 z-50 flex items-center justify-between gap-3 border-b relative ${
         isTotem ? "border-gray-200 bg-white" : "border-border bg-background/95 backdrop-blur-md"
       } ${
         isGarcomMobile ? "px-4 py-4" : "px-4 py-3 md:px-6"
