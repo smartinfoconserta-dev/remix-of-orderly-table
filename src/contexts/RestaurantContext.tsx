@@ -505,6 +505,23 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const [allEventos, setAllEventos] = useState<EventoOperacional[]>([]);
   const [allMovimentacoesCaixa, setAllMovimentacoesCaixa] = useState<MovimentacaoCaixa[]>([]);
   const loadedStoreRef = useRef<string | null>(null);
+  const [activeStoreId, setActiveStoreId] = useState<string | null>(getActiveStoreId);
+
+  // Poll for storeId changes (covers session/localStorage updates from other components)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const current = getActiveStoreId();
+      setActiveStoreId(prev => prev !== current ? current : prev);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Reset loadedStoreRef when activeStoreId changes to force reload
+  useEffect(() => {
+    if (activeStoreId && loadedStoreRef.current !== activeStoreId) {
+      loadedStoreRef.current = null;
+    }
+  }, [activeStoreId]);
 
   // ── Load from Supabase — reactive to session changes ──
   useEffect(() => {
