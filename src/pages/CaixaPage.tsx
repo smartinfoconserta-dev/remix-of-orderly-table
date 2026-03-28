@@ -1148,7 +1148,7 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
       toast.error("O fechamento só pode ser confirmado quando o total pago for igual ao total da conta", { duration: 1600 });
       return;
     }
-    fecharConta(mesaSelecionada, { usuario: currentOperator, pagamentos: closingPayments, troco: trocoRegistrado, desconto: descontoAplicado, couvert: couvertTotal, numeroPessoas: couvertPessoas });
+    fecharConta(mesaSelecionada, { usuario: currentOperator, pagamentos: closingPayments, troco: trocoRegistrado, desconto: descontoAplicado, couvert: couvertTotal, numeroPessoas: couvertPessoas, cpfNota: cpfNotaMesa.trim() || undefined });
     toast.success(
       trocoRegistrado > 0
         ? `Conta fechada — Troco: ${formatPrice(trocoRegistrado)}`
