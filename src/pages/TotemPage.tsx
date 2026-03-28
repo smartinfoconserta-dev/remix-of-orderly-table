@@ -36,7 +36,7 @@ const TotemInner = ({ storeId }: { storeId: string }) => {
     const loadConfig = async () => {
       const { data } = await supabase
         .from("restaurant_config")
-        .select("nome_restaurante, logo_base64, logo_url, modo_operacao, identificacao_fast_food")
+        .select("nome_restaurante, logo_base64, logo_url, modo_operacao, identificacao_fast_food, cpf_nota_ativo")
         .eq("store_id", storeId)
         .maybeSingle();
       if (data) {
