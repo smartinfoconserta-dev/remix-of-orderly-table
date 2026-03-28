@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import {
   ClipboardList,
@@ -149,6 +150,47 @@ const AdminPage = () => {
   const [tab, setTab] = useState<AdminTab>("dashboard");
   const [configSection, setConfigSection] = useState<"inicio" | "identidade" | "delivery" | "salao" | "operacao" | "modulos" | "sistema">("inicio");
   const [modoOperacaoPendente, setModoOperacaoPendente] = useState<"restaurante" | "fast_food" | null>(null);
+
+  // --- Dashboard "Hoje" data ---
+  const [dashLoading, setDashLoading] = useState(false);
+  const [dashPedidosHoje, setDashPedidosHoje] = useState(0);
+  const [dashFaturamento, setDashFaturamento] = useState(0);
+  const [dashTotalFechamentos, setDashTotalFechamentos] = useState(0);
+  const [dashCaixaAberto, setDashCaixaAberto] = useState<boolean | null>(null);
+  const [dashUltimosFechamentos, setDashUltimosFechamentos] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (tab !== "dashboard" || !storeId) return;
+    let cancelled = false;
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+    const hojeISO = hoje.toISOString();
+
+    const load = async () => {
+      setDashLoading(true);
+      try {
+        const [pedidosRes, fechRes, caixaRes] = await Promise.all([
+          supabase.from("pedidos").select("id", { count: "exact", head: true }).eq("store_id", storeId).gte("criado_em_iso", hojeISO),
+          supabase.from("fechamentos").select("total, origem, mesa_numero, forma_pagamento, criado_em, criado_em_iso").eq("store_id", storeId).eq("cancelado", false).gte("criado_em_iso", hojeISO).order("criado_em_iso", { ascending: false }).limit(100),
+          supabase.from("estado_caixa").select("aberto").eq("store_id", storeId).limit(1).maybeSingle(),
+        ]);
+        if (cancelled) return;
+        setDashPedidosHoje(pedidosRes.count ?? 0);
+        const fechamentos = fechRes.data ?? [];
+        const fat = fechamentos.reduce((s, f) => s + (Number(f.total) || 0), 0);
+        setDashFaturamento(fat);
+        setDashTotalFechamentos(fechamentos.length);
+        setDashCaixaAberto(caixaRes.data?.aberto ?? null);
+        setDashUltimosFechamentos(fechamentos.slice(0, 10));
+      } catch (err) {
+        console.error("[AdminPage] erro ao carregar dashboard:", err);
+      } finally {
+        if (!cancelled) setDashLoading(false);
+      }
+    };
+    load();
+    return () => { cancelled = true; };
+  }, [tab, storeId]);
 
   // --- Cardápio state (from Supabase produtos table) ---
   type AdminProduct = Produto & { ativo: boolean; removido: boolean; disponivelDelivery: boolean; imagemBase64?: string };
@@ -545,6 +587,97 @@ const AdminPage = () => {
                 ))}
               </div>
             </div>
+
+            {/* ── Hoje ── */}
+            <div className="space-y-4">
+              <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Hoje</p>
+              {dashLoading ? (
+                <div className="flex items-center gap-2 text-xs text-muted-foreground py-4">
+                  <span className="h-4 w-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                  Carregando...
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div className="rounded-xl border border-border bg-card p-5 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Pedidos hoje</p>
+                      <div className="h-7 w-7 rounded-lg bg-primary/15 flex items-center justify-center">
+                        <ClipboardList className="h-3.5 w-3.5 text-primary" />
+                      </div>
+                    </div>
+                    <p className="text-3xl font-black text-foreground">{dashPedidosHoje}</p>
+                    <p className="text-xs text-muted-foreground">registrados no dia</p>
+                  </div>
+                  <div className="rounded-xl border border-border bg-card p-5 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Faturamento</p>
+                      <div className="h-7 w-7 rounded-lg bg-emerald-500/15 flex items-center justify-center">
+                        <CreditCard className="h-3.5 w-3.5 text-emerald-400" />
+                      </div>
+                    </div>
+                    <p className="text-3xl font-black text-emerald-400">{formatPrice(dashFaturamento)}</p>
+                    <p className="text-xs text-muted-foreground">em fechamentos</p>
+                  </div>
+                  <div className="rounded-xl border border-border bg-card p-5 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Ticket médio</p>
+                      <div className="h-7 w-7 rounded-lg bg-primary/15 flex items-center justify-center">
+                        <CreditCard className="h-3.5 w-3.5 text-primary" />
+                      </div>
+                    </div>
+                    <p className="text-3xl font-black text-foreground">
+                      {dashTotalFechamentos > 0 ? formatPrice(dashFaturamento / dashTotalFechamentos) : "—"}
+                    </p>
+                    <p className="text-xs text-muted-foreground">{dashTotalFechamentos} fechamentos</p>
+                  </div>
+                  <div className="rounded-xl border border-border bg-card p-5 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Caixa</p>
+                      <div className="h-7 w-7 rounded-lg bg-primary/15 flex items-center justify-center">
+                        <CreditCard className="h-3.5 w-3.5 text-primary" />
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {dashCaixaAberto === true && (
+                        <span className="relative flex h-2.5 w-2.5">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                          <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-400" />
+                        </span>
+                      )}
+                      <p className={`text-xl font-black ${dashCaixaAberto === true ? "text-emerald-400" : dashCaixaAberto === false ? "text-destructive" : "text-muted-foreground"}`}>
+                        {dashCaixaAberto === true ? "Aberto" : dashCaixaAberto === false ? "Fechado" : "—"}
+                      </p>
+                    </div>
+                    <p className="text-xs text-muted-foreground">status do turno</p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* ── Últimos fechamentos ── */}
+            {!dashLoading && dashUltimosFechamentos.length > 0 && (
+              <div className="space-y-4">
+                <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Últimos fechamentos</p>
+                <div className="rounded-xl border border-border bg-card divide-y divide-border">
+                  {dashUltimosFechamentos.map((f, i) => {
+                    const hora = f.criado_em ? String(f.criado_em).split(" ").pop()?.slice(0, 5) || "" : "";
+                    const origemLabel = f.origem === "mesa" ? `Mesa ${f.mesa_numero || "?"}` : f.origem === "balcao" ? "Balcão" : f.origem === "totem" ? "Totem" : f.origem === "delivery" ? "Delivery" : f.origem || "—";
+                    return (
+                      <div key={i} className="flex items-center justify-between px-5 py-3">
+                        <div className="flex items-center gap-4">
+                          <span className="text-xs font-mono text-muted-foreground w-12">{hora}</span>
+                          <span className="text-sm font-bold text-foreground">{origemLabel}</span>
+                        </div>
+                        <div className="flex items-center gap-4">
+                          <span className="text-xs text-muted-foreground">{f.forma_pagamento || "—"}</span>
+                          <span className="text-sm font-black text-foreground">{formatPrice(Number(f.total) || 0)}</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
