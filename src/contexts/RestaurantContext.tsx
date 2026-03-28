@@ -198,7 +198,7 @@ interface RestaurantContextType {
   registrarMovimentacaoCaixa: (input: MovimentacaoInput) => void;
   abrirCaixa: (fundoTroco: number, usuario: OperationalUser) => void;
   fecharCaixaDoDia: (usuario: OperationalUser, extras?: { diferenca_dinheiro?: number; diferenca_motivo?: string; fundo_proximo?: number }) => void;
-  criarPedidoBalcao: (input: CriarPedidoBalcaoInput) => number;
+  criarPedidoBalcao: (input: CriarPedidoBalcaoInput) => Promise<number>;
   marcarPedidoBalcaoPronto: (pedidoId: string) => void;
   marcarBalcaoSaiu: (pedidoId: string, motoboyNome: string) => void;
   marcarBalcaoEntregue: (pedidoId: string) => void;
