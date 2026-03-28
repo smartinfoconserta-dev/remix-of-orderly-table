@@ -24,15 +24,18 @@ const TvInner = ({ storeId }: { storeId: string }) => {
   useEffect(() => {
     supabase
       .from("restaurant_config")
-      .select("nome_restaurante, logo_base64, logo_url")
+      .select("nome_restaurante, logo_base64, logo_url, modo_operacao")
       .eq("store_id", storeId)
       .maybeSingle()
       .then(({ data }) => {
-        if (data) setConfig({
-          nomeRestaurante: data.nome_restaurante,
-          logoBase64: data.logo_base64 ?? "",
-          logoUrl: data.logo_url ?? "",
-        });
+        if (data) {
+          setConfig({
+            nomeRestaurante: data.nome_restaurante,
+            logoBase64: data.logo_base64 ?? "",
+            logoUrl: data.logo_url ?? "",
+          });
+          setModoOperacao(data.modo_operacao ?? "restaurante");
+        }
       });
   }, [storeId]);
 
