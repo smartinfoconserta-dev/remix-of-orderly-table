@@ -32,6 +32,7 @@ import {
   Receipt,
   Wallet,
   Printer,
+  Clock,
 } from "lucide-react";
 import TeamManager from "@/components/TeamManager";
 import MesasManager from "@/components/MesasManager";
@@ -607,10 +608,15 @@ const AdminPage = () => {
               </div>
             </div>
 
+            <hr className="border-border my-6" />
+
             {/* ── Hoje ── */}
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Hoje</p>
+                <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-1.5">
+                  <Clock className="h-3.5 w-3.5" />
+                  Hoje
+                </p>
                 {!dashLoading && !dashError && (
                   <Button
                     size="sm"
@@ -733,7 +739,7 @@ th{background:#f5f5f5;padding:8px 12px;border:1px solid #ddd;text-align:left;fon
                         <DollarSign className="h-3.5 w-3.5 text-emerald-400" />
                       </div>
                     </div>
-                    <p className="text-3xl font-black text-emerald-400">{dashError ? "—" : formatPrice(dashFaturamento)}</p>
+                    <p className="text-3xl font-black text-primary">{dashError ? "—" : formatPrice(dashFaturamento)}</p>
                     <p className="text-xs text-muted-foreground">{dashError ? "Erro ao carregar" : "em fechamentos"}</p>
                   </div>
                   <div className="rounded-xl border border-border bg-card p-5 space-y-2">
@@ -743,7 +749,7 @@ th{background:#f5f5f5;padding:8px 12px;border:1px solid #ddd;text-align:left;fon
                         <Receipt className="h-3.5 w-3.5 text-primary" />
                       </div>
                     </div>
-                    <p className="text-3xl font-black text-foreground">
+                    <p className="text-3xl font-black text-primary">
                       {dashError ? "—" : dashTotalFechamentos > 0 ? formatPrice(dashFaturamento / dashTotalFechamentos) : formatPrice(0)}
                     </p>
                     <p className="text-xs text-muted-foreground">{dashError ? "Erro ao carregar" : `${dashTotalFechamentos} fechamentos`}</p>
@@ -761,6 +767,9 @@ th{background:#f5f5f5;padding:8px 12px;border:1px solid #ddd;text-align:left;fon
                           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
                           <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-400" />
                         </span>
+                      )}
+                      {!dashError && dashCaixaAberto === false && (
+                        <span className="h-2 w-2 rounded-full bg-destructive inline-block" />
                       )}
                       <p className={`text-xl font-black ${dashError ? "text-muted-foreground" : dashCaixaAberto === true ? "text-emerald-400" : dashCaixaAberto === false ? "text-destructive" : "text-muted-foreground"}`}>
                         {dashError ? "—" : dashCaixaAberto === true ? "Aberto" : dashCaixaAberto === false ? "Fechado" : "—"}
