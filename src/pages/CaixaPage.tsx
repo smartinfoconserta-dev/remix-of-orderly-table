@@ -1639,6 +1639,7 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
                   )}
                 </button>
                 )}
+                {(sistemaConfig.modulos?.totem === true || pedidosTotemAtivos.length > 0) && (
                 <button
                   onClick={() => setCaixaView("totem")}
                   className={`px-4 py-1.5 text-xs font-bold transition-colors border border-border rounded-t -mb-px relative flex items-center gap-1.5 ${
@@ -1652,6 +1653,7 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
                     <span className="rounded-full px-1.5 py-0.5 text-[10px] font-black tabular-nums leading-none bg-orange-500 text-white">{pedidosTotemAtivos.length}</span>
                   )}
                 </button>
+                )}
                 <button
                   onClick={() => setCaixaView("historico")}
                   className={`px-4 py-1.5 text-xs font-bold transition-colors border border-border rounded-t -mb-px relative flex items-center gap-1.5 ${
