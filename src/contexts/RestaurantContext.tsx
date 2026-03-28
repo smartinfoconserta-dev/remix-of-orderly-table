@@ -444,7 +444,9 @@ const dbInsertFechamento = (f: FechamentoConta) => {
 };
 
 const dbUpdateFechamento = (id: string, updates: Record<string, any>) => {
-  supabase.from("fechamentos").update(updates).eq("id", id).then(({ error }) => {
+  const sid = getActiveStoreId();
+  if (!sid) { console.warn("dbUpdateFechamento: storeId is null"); return; }
+  supabase.rpc("rpc_update_fechamento" as any, { _id: id, _store_id: sid, _updates: updates }).then(({ error }: any) => {
     if (error) { console.error("DB update fechamento", error); toast.error("Erro ao atualizar fechamento"); }
   });
 };
