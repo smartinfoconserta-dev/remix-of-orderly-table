@@ -1984,7 +1984,7 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
                                       setConfirmTempoId(pb.id);
                                       setConfirmTempo("");
                                       setConfirmTempoCustom("");
-                                      const bairros = getBairros().filter((b) => b.ativo);
+                                      const bairros = bairrosCache.filter((b) => b.ativo);
                                       const bairroPedido = pb.bairro || "";
                                       const match = bairroPedido ? bairros.find((b) => normStr(b.nome) === normStr(bairroPedido)) : null;
                                       setConfirmTaxaEntrega(match ? match.taxa.toFixed(2).replace(".", ",") : "");
