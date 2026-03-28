@@ -1570,43 +1570,43 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
                 <button
                   onClick={() => setBalcaoOpen(true)}
                   className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded text-xs border border-border bg-secondary text-foreground hover:bg-primary/15 transition-colors"
-                  style={{ minWidth: 64 }}
+                  style={{ minWidth: 76 }}
                 >
-                  <ReceiptText className="h-4 w-4" />
-                  <span className="text-[10px] font-bold">Novo pedido</span>
+                  <ReceiptText className="h-5 w-5" />
+                  <span className="text-xs font-bold">Novo pedido</span>
                 </button>
                 <button
                   onClick={() => setMovModalOpen(true)}
                   className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded text-xs border border-border bg-secondary text-foreground hover:bg-primary/15 transition-colors"
-                  style={{ minWidth: 64 }}
+                  style={{ minWidth: 76 }}
                 >
-                  <Banknote className="h-4 w-4" />
-                  <span className="text-[10px] font-bold">Sangria</span>
+                  <Banknote className="h-5 w-5" />
+                  <span className="text-xs font-bold">Sangria</span>
                 </button>
                 <div className="w-px h-8 mx-1 bg-border" />
                 <button
                   onClick={() => setTurnoReportOpen(true)}
                   className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded text-xs border border-destructive/50 bg-secondary text-destructive hover:bg-destructive/15 transition-colors"
-                  style={{ minWidth: 64 }}
+                  style={{ minWidth: 76 }}
                 >
-                  <LockKeyhole className="h-4 w-4" />
-                  <span className="text-[10px] font-bold">Fechar turno</span>
+                  <LockKeyhole className="h-5 w-5" />
+                  <span className="text-xs font-bold">Fechar turno</span>
                 </button>
                 <button
                   onClick={() => setBuscaComandaOpen(true)}
                   className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded text-xs border border-border bg-secondary text-foreground hover:bg-primary/15 transition-colors"
-                  style={{ minWidth: 64 }}
+                  style={{ minWidth: 76 }}
                 >
-                  <Search className="h-4 w-4" />
-                  <span className="text-[10px] font-bold">Buscar</span>
+                  <Search className="h-5 w-5" />
+                  <span className="text-xs font-bold">Buscar</span>
                 </button>
                 <button
                   onClick={() => logout(accessMode)}
                   className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded text-xs border border-border bg-secondary text-foreground hover:bg-primary/15 transition-colors"
-                  style={{ minWidth: 64 }}
+                  style={{ minWidth: 76 }}
                 >
-                  <LogOut className="h-4 w-4" />
-                  <span className="text-[10px] font-bold">Sair</span>
+                  <LogOut className="h-5 w-5" />
+                  <span className="text-xs font-bold">Sair</span>
                 </button>
               </div>
 
