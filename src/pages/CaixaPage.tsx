@@ -609,6 +609,8 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
     setDescontoError(null);
     setCouvertPessoas(0);
     setCouvertDispensado(false);
+    setCpfNotaMesa("");
+    setCpfNotaMesaOpen(false);
   }, []);
 
   const handleVoltar = useCallback(() => {
