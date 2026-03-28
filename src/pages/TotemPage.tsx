@@ -102,27 +102,48 @@ const TotemInner = ({ storeId }: { storeId: string }) => {
     setStep("payment");
   }, [clienteNome]);
 
-  // Called when customer picks a payment method
-  const handlePaymentSelected = useCallback(async (method: PaymentMethod) => {
+  // Called when customer picks a payment method — go to CPF step
+  const handlePaymentSelected = useCallback((method: PaymentMethod) => {
+    setPendingPaymentMethod(method);
+    setStep("cpf");
+  }, []);
+
+  // CPF mask helper
+  const formatCpfMask = (value: string) => {
+    const digits = value.replace(/\D/g, "").slice(0, 11);
+    if (digits.length <= 3) return digits;
+    if (digits.length <= 6) return `${digits.slice(0, 3)}.${digits.slice(3)}`;
+    if (digits.length <= 9) return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6)}`;
+    return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9)}`;
+  };
+
+  // Called after CPF step (with or without CPF)
+  const handleCpfConfirmed = useCallback(async () => {
     const nome = modoOperacao === "fast_food" && identificacaoFastFood === "nome_cliente" && clienteNome.trim()
       ? clienteNome.trim()
       : "Totem";
+
+    const observacaoCpf = clienteCpf.trim() ? `CPF: ${clienteCpf.trim()}` : undefined;
 
     const numeroPedido = await criarPedidoBalcao({
       itens: pendingItens,
       origem: "totem",
       operador: { id: "totem-auto", nome: "Totem", role: "caixa", criadoEm: new Date().toISOString() },
       clienteNome: nome,
-      formaPagamentoTotem: method,
+      formaPagamentoTotem: pendingPaymentMethod ?? "pix",
+      observacaoGeral: observacaoCpf,
     });
     setPedidoConfirmado(numeroPedido);
     setStep("confirmed");
-  }, [criarPedidoBalcao, pendingItens, modoOperacao, identificacaoFastFood, clienteNome]);
+  }, [criarPedidoBalcao, pendingItens, modoOperacao, identificacaoFastFood, clienteNome, clienteCpf, pendingPaymentMethod]);
 
   const handleBackToMenu = useCallback(() => {
     setStep("menu");
     setPendingItens([]);
     setClienteNome("");
+    setClienteCpf("");
+    setCpfWanted(null);
+    setPendingPaymentMethod(null);
   }, []);
 
   const formatPrice = (v: number) => `R$ ${v.toFixed(2).replace(".", ",")}`;
