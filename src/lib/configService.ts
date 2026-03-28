@@ -232,7 +232,8 @@ export async function saveLicenca(lic: LicencaConfig, storeId?: string | null): 
       await supabase.from("restaurant_license").insert(row);
     }
     clearPendingSync("licenca");
-  } catch {
+  } catch (err) {
+    console.error("[configService] erro:", err);
     markPendingSync("licenca");
   }
 }
