@@ -1637,6 +1637,7 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
                       : `Balcão — ${balcaoPedido.clienteNome || ""}`;
                     handlePrintComanda({
                       tipo,
+                      tipo,
                       numero: balcaoPedido.numeroPedido,
                       dataHora: new Date().toLocaleString("pt-BR"),
                       itens: balcaoPedido.itens.map((it) => ({ quantidade: it.quantidade, nome: it.nome, preco: it.precoUnitario })),
@@ -1645,6 +1646,9 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
                       total: balcaoPedido.total,
                       formaPagamento: balcaoPedido.formaPagamentoDelivery ? getPaymentMethodLabel(balcaoPedido.formaPagamentoDelivery as PaymentMethod) : undefined,
                       paraViagem: (balcaoPedido as any).paraViagem === true,
+                      origem: balcaoPedido.origem,
+                      clienteNome: balcaoPedido.clienteNome,
+                      endereco: balcaoPedido.enderecoCompleto,
                     });
                   }} className="rounded-xl font-bold gap-1.5">
                     <Printer className="h-3.5 w-3.5" />
