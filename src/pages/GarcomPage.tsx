@@ -83,6 +83,17 @@ const GarcomPage = () => {
         <p className="text-sm text-muted-foreground">Selecione uma mesa para lançar pedidos.</p>
       </div>
 
+      {/* Busca */}
+      <div className="relative mb-3" style={{ maxWidth: 200 }}>
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input
+          placeholder="Buscar mesa..."
+          value={mesaBusca}
+          onChange={(e) => setMesaBusca(e.target.value)}
+          className="h-10 rounded-xl pl-9"
+        />
+      </div>
+
       {/* Filtros */}
       <div className="flex gap-2 overflow-x-auto pb-3 mb-3 scrollbar-hide">
         {filtros.map((f) => (
