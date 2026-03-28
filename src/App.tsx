@@ -71,7 +71,7 @@ const App = () => {
         <Route path="/cliente" element={<Navigate to="/tablet" replace />} />
         <Route path="/pedido/:slug" element={<PedidoPage />} />
 
-        <Route path="/seed" element={<SeedPage />} />
+        
         <Route path="*" element={<NotFound />} />
       </Routes>
     </div>

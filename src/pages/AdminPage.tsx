@@ -331,7 +331,8 @@ const AdminPage = () => {
   const [horariosFuncionamento, setHorariosFuncionamento] = useState<HorariosSemana>(getHorariosFuncionamento);
 
   // --- Bairros state ---
-  const [bairros, setBairros] = useState<Bairro[]>(getBairros);
+  const [bairros, setBairros] = useState<Bairro[]>([]);
+  useEffect(() => { if (storeId) getBairrosAsync(storeId).then(setBairros); }, [storeId]);
   const [novoBairroNome, setNovoBairroNome] = useState("");
   const [novoBairroTaxa, setNovoBairroTaxa] = useState("");
   const [deliveryModo, setDeliveryModo] = useState<"todos" | "cadastrados">(() => {
