@@ -69,7 +69,7 @@ export interface SistemaConfig {
   mensagemBoasVindas?: string;
   deliveryAtivo?: boolean;
   modoIdentificacaoDelivery?: "visitante" | "cadastro";
-  cozinhaAtiva?: boolean;
+  
   couvertAtivo?: boolean;
   couvertValor?: number;
   couvertObrigatorio?: boolean;
@@ -131,7 +131,7 @@ const defaultSistemaConfig: SistemaConfig = {
   banners: [],
   instagramUrl: "",
   senhaWifi: "",
-  cozinhaAtiva: false,
+  
   couvertAtivo: false,
   couvertValor: 0,
   couvertObrigatorio: false,

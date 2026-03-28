@@ -56,7 +56,7 @@ function dbRowToConfig(row: any): SistemaConfig {
     mensagemBoasVindas: row.mensagem_boas_vindas ?? "",
     deliveryAtivo: row.delivery_ativo ?? true,
     modoIdentificacaoDelivery: row.modo_identificacao_delivery ?? "visitante",
-    cozinhaAtiva: row.cozinha_ativa ?? false,
+    
     couvertAtivo: row.couvert_ativo ?? false,
     couvertValor: Number(row.couvert_valor ?? 0),
     couvertObrigatorio: row.couvert_obrigatorio ?? false,
@@ -90,7 +90,7 @@ function configToDbRow(config: SistemaConfig) {
     mensagem_boas_vindas: config.mensagemBoasVindas ?? "",
     delivery_ativo: config.deliveryAtivo ?? true,
     modo_identificacao_delivery: config.modoIdentificacaoDelivery ?? "visitante",
-    cozinha_ativa: config.cozinhaAtiva ?? false,
+    
     couvert_ativo: config.couvertAtivo ?? false,
     couvert_valor: config.couvertValor ?? 0,
     couvert_obrigatorio: config.couvertObrigatorio ?? false,

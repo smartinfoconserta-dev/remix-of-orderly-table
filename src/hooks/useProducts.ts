@@ -110,6 +110,10 @@ function getStoreId(): string | null {
     const saved = sessionStorage.getItem("orderly-active-store");
     if (saved) return saved;
   } catch {}
+  try {
+    const device = localStorage.getItem("orderly-device-store-id");
+    if (device) return device;
+  } catch {}
   return null;
 }
 
