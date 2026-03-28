@@ -718,7 +718,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, []);
+  }, [activeStoreId]);
 
   // Merge allFechamentos
   useEffect(() => {
