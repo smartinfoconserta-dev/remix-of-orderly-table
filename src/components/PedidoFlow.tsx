@@ -463,20 +463,29 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
   }, []);
 
   const handleAdminLogin = useCallback(async () => {
-    if (isAdminLoggingIn) return;
+    if (isAdminLoggingIn || !adminEmail.trim() || !adminPassword) return;
     setIsAdminLoggingIn(true);
     setAdminError(null);
-    const result = await verifyEmployeeAccess(adminNome.trim(), adminPin);
-    if (!result.ok) {
-      setAdminError(result.error ?? "Credenciais inválidas");
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email: adminEmail.trim(),
+        password: adminPassword,
+      });
+      if (error) {
+        setAdminError("Email ou senha inválidos");
+        setIsAdminLoggingIn(false);
+        return;
+      }
+      setAdminAuthenticated(true);
+      setAdminUserEmail(adminEmail.trim());
+      setAdminPassword("");
+      setAdminError(null);
       setIsAdminLoggingIn(false);
-      return;
+    } catch {
+      setAdminError("Erro ao autenticar");
+      setIsAdminLoggingIn(false);
     }
-    setAdminAuthenticated(true);
-    setAdminPin("");
-    setAdminError(null);
-    setIsAdminLoggingIn(false);
-  }, [adminNome, adminPin, isAdminLoggingIn, verifyEmployeeAccess]);
+  }, [adminEmail, adminPassword, isAdminLoggingIn]);
 
   const handleAdminTrocarMesa = useCallback(() => {
     setShowMesaSelector(true);
