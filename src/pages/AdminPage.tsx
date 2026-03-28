@@ -554,11 +554,12 @@ const AdminPage = () => {
 
   // Load from Supabase on mount
   useEffect(() => {
-    getSistemaConfigAsync().then((c) => setSistemaConfig(c));
-    getLicencaConfigAsync().then((l) => setLicencaConfig(l));
-    getCategoriasCustomAsync().then((cats) => setCategoriasCustom(cats));
+    if (!storeId) return;
+    getSistemaConfigAsync(storeId).then((c) => setSistemaConfig(c));
+    getLicencaConfigAsync(storeId).then((l) => setLicencaConfig(l));
+    getCategoriasCustomAsync(storeId).then((cats) => setCategoriasCustom(cats));
     syncPendingChanges();
-  }, []);
+  }, [storeId]);
 
   const saveSistema = useCallback(() => {
     saveSistemaConfig(sistemaConfig, storeId);
