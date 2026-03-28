@@ -4497,7 +4497,7 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
         </div>
       )}
 
-      <LicenseBanner blockMode={accessMode === "caixa"} />
+      <LicenseBanner context="operational" />
     </>
   );
 };

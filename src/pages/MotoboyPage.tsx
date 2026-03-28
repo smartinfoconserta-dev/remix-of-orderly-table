@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import LicenseBanner from "@/components/LicenseBanner";
 import { Bike, LogOut, MapPin, Phone, DollarSign, Clock, Map, Navigation, QrCode, GripVertical, CheckCircle2, Package, XCircle, Camera, X } from "lucide-react";
 import { savePreferencia, loadPreferencias } from "@/hooks/usePreferencias";
 import { Button } from "@/components/ui/button";
@@ -873,6 +874,7 @@ export default function MotoboyPage() {
           </div>
         </div>
       )}
+      <LicenseBanner context="operational" />
     </div>
   );
 }

@@ -108,10 +108,12 @@ import {
   type HorariosSemana,
   type HorarioFuncionamento,
   type PlanoModulos,
+  getLicenseLevel,
 } from "@/lib/adminStorage";
 import { getBairrosAsync, saveBairros, type Bairro } from "@/lib/deliveryStorage";
 import { toast } from "sonner";
 import CaixasSection from "@/components/CaixasSection";
+import LicenseBanner from "@/components/LicenseBanner";
 
 type AdminTab = "dashboard" | "cardapio" | "mesas" | "tablets" | "equipe" | "caixas" | "configuracoes" | "licenca";
 
@@ -450,15 +452,22 @@ const AdminPage = () => {
           {sidebarSections.map((s) => {
             const Icon = s.icon;
             const active = tab === s.id;
+            const licLevel = getLicenseLevel();
+            const reportsOnly = licLevel === "reports_only";
+            const allowedInReportsOnly = ["dashboard", "caixas", "licenca"];
+            const isDisabled = reportsOnly && !allowedInReportsOnly.includes(s.id);
             return (
               <button
                 key={s.id}
                 type="button"
-                onClick={() => { setTab(s.id); setConfigSection("inicio"); }}
+                disabled={isDisabled}
+                onClick={() => { if (!isDisabled) { setTab(s.id); setConfigSection("inicio"); } }}
                 className={`flex w-full items-center gap-3 px-3 py-2 text-sm rounded-lg transition-colors ${
-                  active
-                    ? "bg-primary/15 text-primary font-bold"
-                    : "text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground font-medium"
+                  isDisabled
+                    ? "opacity-50 cursor-not-allowed text-muted-foreground"
+                    : active
+                      ? "bg-primary/15 text-primary font-bold"
+                      : "text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground font-medium"
                 }`}
               >
                 <Icon className="h-4 w-4 shrink-0" />
@@ -2520,6 +2529,7 @@ th{background:#f5f5f5;padding:8px 12px;border:1px solid #ddd;text-align:left;fon
         )}
       </main>
       </div>
+      <LicenseBanner context="admin" />
     </div>
   );
 };

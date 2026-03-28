@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
+import LicenseBanner from "@/components/LicenseBanner";
 import { Bike } from "lucide-react";
 import {
   AlertTriangle,
@@ -1373,6 +1374,7 @@ const GerentePage = () => {
         <span className="px-3 py-1 border-r border-border">Fechamentos: {fechamentos.length}</span>
         <span className="px-3 py-1">Mesas ativas: {mesas.filter(m => m.status === "consumo").length}</span>
       </div>
+      <LicenseBanner context="gerente" />
     </div>
   );
 };

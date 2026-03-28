@@ -142,7 +142,7 @@ const GarcomPage = () => {
         </div>
       )}
 
-      <LicenseBanner blockMode />
+      <LicenseBanner context="operational" />
     </AppLayout>
   );
 };
