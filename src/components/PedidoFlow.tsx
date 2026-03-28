@@ -23,7 +23,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { categorias as defaultCategorias, type Categoria, type Produto } from "@/data/menuData";
-import { getSistemaConfig, getCategoriasCustom } from "@/lib/adminStorage";
+import { getSistemaConfig, getCategoriasCustom, type SistemaConfig } from "@/lib/adminStorage";
 import { getCachedProdutos, getCachedCategorias, preloadProducts } from "@/hooks/useProducts";
 import { HOME_CAROUSEL_INTERVAL_MS, homeHeroSlides, homeShowcaseConfig } from "@/data/homeShowcaseData";
 import { useAuth } from "@/contexts/AuthContext";
@@ -54,34 +54,12 @@ interface PedidoFlowProps {
   deviceStoreId?: string | null;
 }
 
-const sysConfig = getSistemaConfig();
-const logoEstilo = sysConfig.logoEstilo || "quadrada";
-const logoRadius = logoEstilo === "circular" ? "rounded-full" : "rounded-xl";
-const logoRadiusSm = logoEstilo === "circular" ? "rounded-full" : "rounded-lg";
-const cardapioHeaderEstilo = sysConfig.cardapioHeaderEstilo || "padrao";
-const cardapioBannerBase64 = sysConfig.cardapioBannerBase64 || "";
-const RESTAURANTE = {
-  nome: sysConfig.nomeRestaurante || "Restaurante",
-  logoUrl: sysConfig.logoBase64 || sysConfig.logoUrl || "",
-  logoFallback: (sysConfig.nomeRestaurante || "Restaurante").slice(0, 2).toUpperCase(),
-};
+// sysConfig moved inside component as state
 
 
 // Products are loaded reactively inside the component
 
-// Configurable banners from admin or fallback to defaults
-const configBanners = sysConfig.banners?.filter((b) => b.titulo && b.imagemUrl) ?? [];
-const activeBannerSlides = configBanners.length > 0
-  ? configBanners.map((b, i) => ({
-      id: b.id || `cb-${i}`,
-      image: b.imagemUrl,
-      label: "",
-      title: b.titulo,
-      description: b.subtitulo,
-      price: b.preco,
-      alt: b.titulo,
-    }))
-  : homeHeroSlides;
+// activeBannerSlides moved inside component
 
 const HOME_TAB_ID = "inicio";
 const HOME_TAB: Categoria = { id: HOME_TAB_ID, nome: "Início", icone: "house" };
@@ -119,6 +97,9 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
   } = useRestaurant();
   const isExternalOrder = modo === "balcao" || modo === "delivery" || modo === "totem";
 
+  // ── sysConfig as reactive state (loads from DB) ──
+  const [sysConfig, setSysConfig] = useState<SistemaConfig>(() => getSistemaConfig());
+
   // Reactive product/category loading from Supabase cache
   const [produtos, setProdutos] = useState<Produto[]>(() => getCachedProdutos());
   const [dbCategorias, setDbCategorias] = useState<Categoria[]>(() => getCachedCategorias());
@@ -140,6 +121,39 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
     });
     return () => { cancelled = true; };
   }, [deviceStoreId]);
+
+  // Load config from DB
+  useEffect(() => {
+    import("@/lib/configService").then(({ fetchConfig }) => {
+      fetchConfig(deviceStoreId).then((config) => {
+        if (config) setSysConfig(config);
+      });
+    });
+  }, [deviceStoreId]);
+
+  const logoEstilo = sysConfig.logoEstilo || "quadrada";
+  const logoRadius = logoEstilo === "circular" ? "rounded-full" : "rounded-xl";
+  const logoRadiusSm = logoEstilo === "circular" ? "rounded-full" : "rounded-lg";
+  const cardapioHeaderEstilo = sysConfig.cardapioHeaderEstilo || "padrao";
+  const cardapioBannerBase64 = sysConfig.cardapioBannerBase64 || "";
+  const RESTAURANTE = {
+    nome: sysConfig.nomeRestaurante || "Restaurante",
+    logoUrl: sysConfig.logoBase64 || sysConfig.logoUrl || "",
+    logoFallback: (sysConfig.nomeRestaurante || "Restaurante").slice(0, 2).toUpperCase(),
+  };
+
+  const configBanners = sysConfig.banners?.filter((b) => b.titulo && b.imagemUrl) ?? [];
+  const activeBannerSlides = configBanners.length > 0
+    ? configBanners.map((b, i) => ({
+        id: b.id || `cb-${i}`,
+        image: b.imagemUrl,
+        label: "",
+        title: b.titulo,
+        description: b.subtitulo,
+        price: b.preco,
+        alt: b.titulo,
+      }))
+    : homeHeroSlides;
 
   const customCats = useMemo(() => getCategoriasCustom(), []);
   const allCategorias: Categoria[] = useMemo(() => {
