@@ -121,7 +121,7 @@ const CozinhaPage = () => {
   const prevIdsRef = useRef<Set<string> | null>(null);
   const printedIdsRef = useRef<Set<string> | null>(null);
   const initialLoadRef = useRef(true);
-  const [filtroOrigem, setFiltroOrigem] = useState<"todos" | "mesa" | "delivery" | "balcao">("todos");
+  const [filtroOrigem, setFiltroOrigem] = useState<"todos" | "mesa" | "delivery" | "balcao" | "ifood">("todos");
   const [setorMonitor, setSetorMonitor] = useState<"tudo" | "cozinha" | "bar" | null>(() => {
     try { return (localStorage.getItem(COZINHA_SETOR_KEY) as any) || null; } catch { return null; }
   });
@@ -210,8 +210,9 @@ const CozinhaPage = () => {
 
   const pedidosFiltrados = useMemo(() => {
     if (filtroOrigem === "todos") return activePedidosFiltradosPorSetor;
-    if (filtroOrigem === "delivery") return activePedidosFiltradosPorSetor.filter(p => p.origem === "delivery" || p.origem === "ifood");
-    if (filtroOrigem === "balcao") return activePedidosFiltradosPorSetor.filter(p => p.origem === "balcao" || p.isBalcao);
+    if (filtroOrigem === "ifood") return activePedidosFiltradosPorSetor.filter(p => p.origem === "ifood");
+    if (filtroOrigem === "delivery") return activePedidosFiltradosPorSetor.filter(p => p.origem === "delivery");
+    if (filtroOrigem === "balcao") return activePedidosFiltradosPorSetor.filter(p => p.origem === "balcao" || (p.isBalcao && p.origem !== "ifood" && p.origem !== "delivery"));
     return activePedidosFiltradosPorSetor.filter(p => p.origem !== "delivery" && p.origem !== "ifood" && !p.isBalcao);
   }, [activePedidosFiltradosPorSetor, filtroOrigem]);
 
@@ -578,6 +579,7 @@ ${itensSetorHtml}
           { id: "todos", label: "Todos" },
           { id: "mesa", label: "🍽️ Mesas" },
           { id: "delivery", label: "🛵 Delivery" },
+          { id: "ifood", label: "🔴 iFood" },
           { id: "balcao", label: "🏪 Balcão" },
         ] as const).map(f => (
           <button
