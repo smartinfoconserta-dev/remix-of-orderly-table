@@ -72,6 +72,8 @@ function dbRowToConfig(row: any): SistemaConfig {
     modoOperacao: row.modo_operacao ?? "restaurante",
     identificacaoFastFood: row.identificacao_fast_food ?? "codigo",
     cpfNotaAtivo: row.cpf_nota_ativo ?? false,
+    cardapioHeaderEstilo: row.cardapio_header_estilo ?? "padrao",
+    cardapioBannerBase64: row.cardapio_banner_base64 ?? "",
   };
 }
 
@@ -107,6 +109,8 @@ function configToDbRow(config: SistemaConfig) {
     modo_operacao: config.modoOperacao ?? "restaurante",
     identificacao_fast_food: config.identificacaoFastFood ?? "codigo",
     cpf_nota_ativo: config.cpfNotaAtivo ?? false,
+    cardapio_header_estilo: config.cardapioHeaderEstilo ?? "padrao",
+    cardapio_banner_base64: config.cardapioBannerBase64 ?? "",
     total_mesas: 20,
     updated_at: new Date().toISOString(),
   };

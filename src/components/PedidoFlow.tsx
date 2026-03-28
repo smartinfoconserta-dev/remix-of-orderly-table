@@ -58,6 +58,8 @@ const sysConfig = getSistemaConfig();
 const logoEstilo = sysConfig.logoEstilo || "quadrada";
 const logoRadius = logoEstilo === "circular" ? "rounded-full" : "rounded-xl";
 const logoRadiusSm = logoEstilo === "circular" ? "rounded-full" : "rounded-lg";
+const cardapioHeaderEstilo = sysConfig.cardapioHeaderEstilo || "padrao";
+const cardapioBannerBase64 = sysConfig.cardapioBannerBase64 || "";
 const RESTAURANTE = {
   nome: sysConfig.nomeRestaurante || "Restaurante",
   logoUrl: sysConfig.logoBase64 || sysConfig.logoUrl || "",
@@ -629,6 +631,8 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
     <div className="min-w-0">
       <p className="truncate text-xl font-black tracking-tight text-foreground">{mesaLabel}</p>
     </div>
+  ) : cardapioHeaderEstilo === "banner" && cardapioBannerBase64 && (modo === "cliente" || modo === "totem") ? (
+    null // banner mode — identity is rendered in custom banner header below
   ) : (
     <div className="flex min-w-0 items-center gap-3">
       <Avatar
@@ -652,6 +656,24 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
       </div>
     </div>
   );
+
+  const useBannerHeader = cardapioHeaderEstilo === "banner" && cardapioBannerBase64 && (modo === "cliente" || modo === "totem");
+
+  const bannerHeader = useBannerHeader ? (
+    <div className="sticky top-0 z-50">
+      <div style={{ backgroundImage: `url(${cardapioBannerBase64})`, backgroundSize: "cover", backgroundPosition: "center", height: "90px", position: "relative" }}>
+        <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: "50%", background: "linear-gradient(to bottom, transparent, hsl(var(--background)))" }} />
+        {RESTAURANTE.logoUrl && (
+          <img src={RESTAURANTE.logoUrl} alt={RESTAURANTE.nome} className="absolute left-3 top-3 h-10 w-10 rounded-xl object-contain bg-black/40 p-1" />
+        )}
+        {mesaLabel && (
+          <div className="absolute right-3 top-3 rounded-lg bg-black/50 px-3 py-1 text-sm font-bold text-white">
+            {mesaLabel}
+          </div>
+        )}
+      </div>
+    </div>
+  ) : null;
 
   const header = (
     <header
@@ -1193,7 +1215,7 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
   return (
     <>
       <div className={`flex flex-col ${isTotem ? "bg-white max-w-[480px] mx-auto" : "bg-background"}`} style={{ minHeight: '100dvh' }}>
-        {header}
+        {useBannerHeader ? bannerHeader : header}
         {garcomBanner}
         {(isMobile || modo === "garcom" || modo === "delivery" || isTotem) ? mobileContent : desktopContent}
         <ProductModal produto={produtoSelecionado} onClose={handleCloseProductModal} onAdd={handleAddToCart} isGarcomMobile={isGarcomMobile} skipEmbalagemDefault={modo === "delivery"} />

@@ -967,6 +967,8 @@ export type Database = {
         Row: {
           aviso_master: Json | null
           banners: Json | null
+          cardapio_banner_base64: string | null
+          cardapio_header_estilo: string | null
           cardapio_overrides: Json | null
           cor_primaria: string | null
           couvert_ativo: boolean | null
@@ -1007,6 +1009,8 @@ export type Database = {
         Insert: {
           aviso_master?: Json | null
           banners?: Json | null
+          cardapio_banner_base64?: string | null
+          cardapio_header_estilo?: string | null
           cardapio_overrides?: Json | null
           cor_primaria?: string | null
           couvert_ativo?: boolean | null
@@ -1047,6 +1051,8 @@ export type Database = {
         Update: {
           aviso_master?: Json | null
           banners?: Json | null
+          cardapio_banner_base64?: string | null
+          cardapio_header_estilo?: string | null
           cardapio_overrides?: Json | null
           cor_primaria?: string | null
           couvert_ativo?: boolean | null
