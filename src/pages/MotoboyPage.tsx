@@ -341,7 +341,7 @@ export default function MotoboyPage() {
       return;
     }
     setOrdem(newOrdem);
-    saveOrdem(newOrdem);
+    saveOrdem(newOrdem, effectiveStoreId);
     touchItemId.current = null;
   };
 
