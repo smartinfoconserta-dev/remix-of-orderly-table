@@ -1239,8 +1239,8 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
   );
 
   const desktopContent = (
-    <div className={`flex flex-1 items-start transition-all duration-500 ${isClientIdle ? "brightness-[0.2] saturate-50" : "brightness-100 saturate-100"}`}>
-      <aside className={`w-[11rem] shrink-0 overflow-y-auto border-r border-border bg-card/95 px-3 lg:w-[13rem] self-start sticky top-[73px] max-h-[calc(100vh-73px)] scrollbar-hide flex flex-col ${[HOME_TAB, ...allCategorias].length <= 8 ? "justify-center" : "justify-start py-3"}`} style={{ scrollbarWidth: "none" }}>
+    <div className={`flex flex-1 items-stretch transition-all duration-500 ${isClientIdle ? "brightness-[0.2] saturate-50" : "brightness-100 saturate-100"}`}>
+      <aside className={`w-[11rem] shrink-0 overflow-y-auto border-r border-border bg-card/95 px-3 py-4 lg:w-[13rem] sticky top-[73px] max-h-[calc(100vh-73px)] scrollbar-hide flex flex-col ${[HOME_TAB, ...allCategorias].length <= 8 ? "justify-center" : "justify-start"}`} style={{ scrollbarWidth: "none" }}>
         <nav className="flex flex-col gap-2">
           {[HOME_TAB, ...allCategorias].map((cat) => {
             const selected = categoriaAtiva === cat.id;
