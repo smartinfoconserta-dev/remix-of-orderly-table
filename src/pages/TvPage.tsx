@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRestaurant } from "@/contexts/RestaurantContext";
 import { supabase } from "@/integrations/supabase/client";
 import DeviceGate from "@/components/DeviceGate";
@@ -65,6 +65,34 @@ const TvInner = ({ storeId }: { storeId: string }) => {
     list.sort((a, b) => a.timestamp.localeCompare(b.timestamp));
     return list;
   }, [pedidosBalcao]);
+
+  // Audio alert when a new pedido becomes "pronto"
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const prevProntosCountRef = useRef(pedidosProntos.length);
+
+  useEffect(() => {
+    if (pedidosProntos.length > prevProntosCountRef.current) {
+      // Play two short beeps at 880Hz
+      if (!audioCtxRef.current) {
+        audioCtxRef.current = new AudioContext();
+      }
+      const ctx = audioCtxRef.current;
+      const playBeep = (startTime: number) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.frequency.value = 880;
+        gain.gain.value = 0.3;
+        osc.start(startTime);
+        osc.stop(startTime + 0.15);
+      };
+      const now = ctx.currentTime;
+      playBeep(now);
+      playBeep(now + 0.35);
+    }
+    prevProntosCountRef.current = pedidosProntos.length;
+  }, [pedidosProntos.length]);
 
   const logoUrl = config.logoBase64 || config.logoUrl || "";
 

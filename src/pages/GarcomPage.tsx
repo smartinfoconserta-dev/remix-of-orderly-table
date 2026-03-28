@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { LogOut, Bell, TabletSmartphone } from "lucide-react";
+import { LogOut, Bell, TabletSmartphone, Search } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import PedidoFlow from "@/components/PedidoFlow";
 import AppLayout from "@/components/AppLayout";
@@ -21,6 +22,7 @@ const GarcomPage = () => {
   const navigate = useNavigate();
   const mesaIdSelecionada = searchParams.get("mesa")?.trim() ?? "";
   const [filtro, setFiltro] = useState<Filtro>("todas");
+  const [mesaBusca, setMesaBusca] = useState("");
   const [clock, setClock] = useState(() => new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }));
 
   useRouteLock("/garcom");
@@ -49,9 +51,10 @@ const GarcomPage = () => {
   const chamadoCount = mesas.filter((m) => m.chamarGarcom).length;
 
   const mesasFiltradas = mesas.filter((m) => {
-    if (filtro === "consumo") return m.status === "consumo";
-    if (filtro === "livres") return m.status === "livre";
-    if (filtro === "chamado") return m.chamarGarcom;
+    if (filtro === "consumo" && m.status !== "consumo") return false;
+    if (filtro === "livres" && m.status !== "livre") return false;
+    if (filtro === "chamado" && !m.chamarGarcom) return false;
+    if (mesaBusca && !String(m.numero).includes(mesaBusca)) return false;
     return true;
   });
 
@@ -78,6 +81,17 @@ const GarcomPage = () => {
       <div className="mb-4 rounded-xl border border-border bg-card px-4 py-3">
         <p className="text-base font-bold text-foreground">{garcomNome}</p>
         <p className="text-sm text-muted-foreground">Selecione uma mesa para lançar pedidos.</p>
+      </div>
+
+      {/* Busca */}
+      <div className="relative mb-3" style={{ maxWidth: 200 }}>
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input
+          placeholder="Buscar mesa..."
+          value={mesaBusca}
+          onChange={(e) => setMesaBusca(e.target.value)}
+          className="h-10 rounded-xl pl-9"
+        />
       </div>
 
       {/* Filtros */}
