@@ -773,6 +773,38 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     return () => { supabase.removeChannel(channel); };
   }, [activeStoreId]);
 
+  // ── Polling fallback for pedidos (catches missed Realtime events) ──
+  useEffect(() => {
+    const sid = getActiveStoreId();
+    if (!sid) return;
+
+    const pollPedidos = async () => {
+      const { data, error } = await supabase.rpc("rpc_get_operational_pedidos" as any, { _store_id: sid });
+      if (error || !data) return;
+      const freshPedidos = (data as any[]).map(rowToPedido);
+      const freshBalcao = freshPedidos.filter(p => ["balcao", "delivery", "totem", "ifood"].includes(p.origem));
+
+      setStore(prev => {
+        const existingIds = new Set(prev.pedidosBalcao.map(p => p.id));
+        const newOnes = freshBalcao.filter(p => !existingIds.has(p.id));
+        // Also update existing ones that may have changed status
+        const updatedBalcao = prev.pedidosBalcao.map(existing => {
+          const fresh = freshBalcao.find(f => f.id === existing.id);
+          return fresh ?? existing;
+        });
+        if (newOnes.length > 0) {
+          return { ...prev, pedidosBalcao: [...updatedBalcao, ...newOnes] };
+        }
+        // Check if any status changed
+        const changed = updatedBalcao.some((p, i) => p.statusBalcao !== prev.pedidosBalcao[i]?.statusBalcao);
+        return changed ? { ...prev, pedidosBalcao: updatedBalcao } : prev;
+      });
+    };
+
+    const interval = setInterval(pollPedidos, 10_000);
+    return () => clearInterval(interval);
+  }, [activeStoreId]);
+
   // Merge allFechamentos
   useEffect(() => {
     setAllFechamentos(prev => {
