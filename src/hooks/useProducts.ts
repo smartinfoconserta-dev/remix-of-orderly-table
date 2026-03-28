@@ -28,6 +28,9 @@ function rowToProduto(row: any): Produto {
     embalagemOptions: Array.isArray(row.embalagem_options) ? row.embalagem_options : [],
     permiteLevar: row.permite_levar ?? false,
     setor: row.setor ?? "cozinha",
+    controleEstoque: row.controle_estoque ?? false,
+    quantidadeEstoque: row.quantidade_estoque ?? 0,
+    estoqueMinimo: row.estoque_minimo ?? 0,
   };
 }
 
