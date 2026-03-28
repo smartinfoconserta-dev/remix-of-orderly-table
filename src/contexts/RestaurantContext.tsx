@@ -696,7 +696,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         if (payload.eventType === "INSERT") {
           const p = rowToPedido(payload.new);
           setStore(prev => {
-            if (["balcao", "delivery", "totem"].includes(p.origem)) {
+            if (["balcao", "delivery", "totem", "ifood"].includes(p.origem)) {
               if (prev.pedidosBalcao.find(x => x.id === p.id)) return prev;
               return { ...prev, pedidosBalcao: [...prev.pedidosBalcao, p] };
             } else {

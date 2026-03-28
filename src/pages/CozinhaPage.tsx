@@ -181,7 +181,7 @@ const CozinhaPage = () => {
     }
     for (const pedido of pedidosBalcao) {
       const st = pedido.statusBalcao;
-      if (st === "pago" || st === "aguardando_confirmacao" || st === "cancelado" || st === "retirado") continue;
+      if (st === "pago" || st === "aguardando_confirmacao" || st === "cancelado" || st === "retirado" || st === "pendente_ifood") continue;
       all.push({ ...pedido, mesaNumero: 0, isBalcao: true });
     }
     all.sort((a, b) => new Date(a.criadoEmIso).getTime() - new Date(b.criadoEmIso).getTime());
