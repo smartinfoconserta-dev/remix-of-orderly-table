@@ -58,6 +58,8 @@ const sysConfig = getSistemaConfig();
 const logoEstilo = sysConfig.logoEstilo || "quadrada";
 const logoRadius = logoEstilo === "circular" ? "rounded-full" : "rounded-xl";
 const logoRadiusSm = logoEstilo === "circular" ? "rounded-full" : "rounded-lg";
+const cardapioHeaderEstilo = sysConfig.cardapioHeaderEstilo || "padrao";
+const cardapioBannerBase64 = sysConfig.cardapioBannerBase64 || "";
 const RESTAURANTE = {
   nome: sysConfig.nomeRestaurante || "Restaurante",
   logoUrl: sysConfig.logoBase64 || sysConfig.logoUrl || "",
