@@ -890,7 +890,7 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
       referencia: balcaoReferencia.trim(),
     });
 
-    const bairrosDisp = getBairros().filter((b) => b.ativo);
+    const bairrosDisp = bairrosCache.filter((b) => b.ativo);
     const matchBairro = balcaoBairro.trim() ? bairrosDisp.find((b) => normStr(b.nome) === normStr(balcaoBairro)) : null;
     const taxa = matchBairro ? matchBairro.taxa : 0;
     const totalItens = deliveryPendingItens.reduce((s, it) => s + it.precoUnitario * it.quantidade, 0);
