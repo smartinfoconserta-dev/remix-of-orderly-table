@@ -29,8 +29,8 @@ import {
 } from "lucide-react";
 import TeamManager from "@/components/TeamManager";
 import MesasManager from "@/components/MesasManager";
-import TabletsManager from "@/components/TabletsManager";
 import DevicesManager from "@/components/DevicesManager";
+import DevicePinsManager from "@/components/DevicePinsManager";
 import { useStore } from "@/contexts/StoreContext";
 import CategoryIcon from "@/components/CategoryIcon";
 import { Button } from "@/components/ui/button";
@@ -134,7 +134,7 @@ const sidebarSections = [
   { id: "dashboard" as const, label: "Início", icon: LayoutDashboard },
   { id: "cardapio" as const, label: "Cardápio", icon: ClipboardList },
   { id: "mesas" as const, label: "Mesas", icon: Grid3X3 },
-  { id: "tablets" as const, label: "Tablets", icon: TabletSmartphone },
+  { id: "tablets" as const, label: "Dispositivos", icon: TabletSmartphone },
   { id: "equipe" as const, label: "Equipe", icon: Users },
   { id: "configuracoes" as const, label: "Configurações", icon: Settings },
   { id: "licenca" as const, label: "Meu Plano", icon: Shield },
@@ -2143,14 +2143,14 @@ const AdminPage = () => {
           )
         )}
 
-        {/* ═══ TABLETS ═══ */}
+        {/* ═══ DISPOSITIVOS ═══ */}
         {tab === "tablets" && (
           <div className="space-y-6 fade-in">
             {storeId ? (
               <>
-                <DevicesManager storeId={storeId} />
+                <DevicePinsManager storeId={storeId} />
                 <div className="border-t border-border pt-6">
-                  <TabletsManager storeId={storeId} />
+                  <DevicesManager storeId={storeId} />
                 </div>
               </>
             ) : (
