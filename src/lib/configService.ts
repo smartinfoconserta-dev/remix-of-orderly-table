@@ -295,7 +295,8 @@ export async function saveCategorias(cats: CategoriaCustom[], storeId?: string |
       await supabase.from("restaurant_categories").insert(rows);
     }
     clearPendingSync("categorias");
-  } catch {
+  } catch (err) {
+    console.error("[configService] erro:", err);
     markPendingSync("categorias");
   }
 }
