@@ -851,7 +851,7 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
                   ))}
                 </div>
               </div>
-              {!modoForced && (
+              {!modoForced && !isFastFoodGlobal && (
               <div className="space-y-2">
                 <label className="text-sm font-bold text-foreground">Modo de operação</label>
                 <div className="grid grid-cols-3 gap-2">
