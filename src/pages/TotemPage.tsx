@@ -23,6 +23,9 @@ const TotemInner = ({ storeId }: { storeId: string }) => {
   const [modoOperacao, setModoOperacao] = useState<string>("restaurante");
   const [identificacaoFastFood, setIdentificacaoFastFood] = useState<string>("codigo");
   const [clienteNome, setClienteNome] = useState("");
+  const [clienteCpf, setClienteCpf] = useState("");
+  const [cpfWanted, setCpfWanted] = useState<boolean | null>(null);
+  const [pendingPaymentMethod, setPendingPaymentMethod] = useState<PaymentMethod | null>(null);
 
   // Reactive restaurant name & logo from DB
   const [nomeRestaurante, setNomeRestaurante] = useState("");
