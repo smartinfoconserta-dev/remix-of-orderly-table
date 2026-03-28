@@ -109,7 +109,7 @@ function getStoreId(): string | null {
   try {
     const saved = sessionStorage.getItem("orderly-active-store");
     if (saved) return saved;
-  } catch {}
+  } catch (err) { console.error("[useProducts] erro:", err); }
   try {
     const device = localStorage.getItem("orderly-device-store-id");
     if (device) return device;
