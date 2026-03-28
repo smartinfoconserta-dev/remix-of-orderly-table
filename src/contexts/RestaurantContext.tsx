@@ -824,8 +824,16 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           caixaNome: origem === "caixa" ? meta?.operador?.nome : undefined,
           paraViagem: meta?.paraViagem || false,
         };
-        // Persist to DB
-        dbInsertPedido(novoPedido);
+        // Persist to DB — patch in-memory number when real number arrives
+        dbInsertPedido(novoPedido, (pedidoId, realNum) => {
+          setStore((s) => ({
+            ...s,
+            mesas: s.mesas.map((m) => ({
+              ...m,
+              pedidos: m.pedidos.map((p) => p.id === pedidoId ? { ...p, numeroPedido: realNum } : p),
+            })),
+          }));
+        });
         eventInput = origem === "garcom"
           ? { tipo: "pedido", descricao: `Garçom ${meta?.operador?.nome ?? "identificado"} lançou pedido na ${formatMesaNumero(mesa.numero)}`, mesaId, usuarioId: meta?.operador?.id, usuarioNome: meta?.operador?.nome, acao: "lancar_pedido" }
           : origem === "caixa"
