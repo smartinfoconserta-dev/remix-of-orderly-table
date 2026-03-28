@@ -1,0 +1,4 @@
+ALTER TABLE public.produtos
+  ADD COLUMN IF NOT EXISTS controle_estoque BOOLEAN DEFAULT false,
+  ADD COLUMN IF NOT EXISTS quantidade_estoque INTEGER DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS estoque_minimo INTEGER DEFAULT 0;

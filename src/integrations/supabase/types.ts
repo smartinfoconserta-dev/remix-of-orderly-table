@@ -844,10 +844,12 @@ export type Database = {
           ativo: boolean | null
           bebida_options: Json | null
           categoria_id: string
+          controle_estoque: boolean | null
           created_at: string | null
           descricao: string | null
           disponivel_delivery: boolean | null
           embalagem_options: Json | null
+          estoque_minimo: number | null
           etapas_fluxo: Json | null
           grupos: Json | null
           id: string
@@ -858,6 +860,7 @@ export type Database = {
           ordem: number | null
           permite_levar: boolean | null
           preco: number
+          quantidade_estoque: number | null
           removido: boolean | null
           setor: string | null
           store_id: string
@@ -869,10 +872,12 @@ export type Database = {
           ativo?: boolean | null
           bebida_options?: Json | null
           categoria_id: string
+          controle_estoque?: boolean | null
           created_at?: string | null
           descricao?: string | null
           disponivel_delivery?: boolean | null
           embalagem_options?: Json | null
+          estoque_minimo?: number | null
           etapas_fluxo?: Json | null
           grupos?: Json | null
           id?: string
@@ -883,6 +888,7 @@ export type Database = {
           ordem?: number | null
           permite_levar?: boolean | null
           preco?: number
+          quantidade_estoque?: number | null
           removido?: boolean | null
           setor?: string | null
           store_id: string
@@ -894,10 +900,12 @@ export type Database = {
           ativo?: boolean | null
           bebida_options?: Json | null
           categoria_id?: string
+          controle_estoque?: boolean | null
           created_at?: string | null
           descricao?: string | null
           disponivel_delivery?: boolean | null
           embalagem_options?: Json | null
+          estoque_minimo?: number | null
           etapas_fluxo?: Json | null
           grupos?: Json | null
           id?: string
@@ -908,6 +916,7 @@ export type Database = {
           ordem?: number | null
           permite_levar?: boolean | null
           preco?: number
+          quantidade_estoque?: number | null
           removido?: boolean | null
           setor?: string | null
           store_id?: string
