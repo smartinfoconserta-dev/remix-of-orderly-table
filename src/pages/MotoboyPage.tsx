@@ -513,6 +513,9 @@ export default function MotoboyPage() {
             <Button className="flex-1 h-12 gap-2 font-bold" variant="outline" onClick={() => handleScanQR()}>
               <Camera className="w-5 h-5" /> Escanear QR
             </Button>
+            <Button className="flex-1 h-12 gap-2 font-bold" variant="outline" onClick={() => { setUsbScanOpen(true); setUsbScanInput(""); }}>
+              <QrCode className="w-5 h-5" /> Leitor USB
+            </Button>
             <Button
               className="flex-1 h-12 gap-2 font-bold"
               variant="outline"
