@@ -115,7 +115,7 @@ export function getModulosDoPlano(plano: PlanoModulos): {
 
 let _configCache: SistemaConfig | null = null;
 let _licencaCache: LicencaConfig | null = null;
-let _cardapioCache: Record<string, ProdutoOverride> | null = null;
+
 
 const defaultSistemaConfig: SistemaConfig = {
   nomeRestaurante: "Obsidian",
