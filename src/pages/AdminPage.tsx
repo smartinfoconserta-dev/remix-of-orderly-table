@@ -571,10 +571,10 @@ const AdminPage = () => {
   const [licencaConfig, setLicencaConfig] = useState<LicencaConfig>(getLicencaConfig);
 
   const saveLicenca = useCallback(() => {
-    saveLicencaConfig(licencaConfig);
-    saveLicencaConfigAsync(licencaConfig);
+    saveLicencaConfig(licencaConfig, storeId);
+    saveLicencaConfigAsync(licencaConfig, storeId);
     toast.success("Licença salva");
-  }, [licencaConfig]);
+  }, [licencaConfig, storeId]);
 
 
   const nomeRestaurante = getSistemaConfig().nomeRestaurante || "Restaurante";
