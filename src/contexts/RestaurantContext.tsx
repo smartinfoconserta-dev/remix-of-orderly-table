@@ -45,7 +45,7 @@ export interface PedidoRealizado {
   formaPagamentoDelivery?: string;
   trocoParaQuanto?: number;
   observacaoGeral?: string;
-  statusBalcao?: "aberto" | "preparando" | "pronto" | "retirado" | "pago" | "saiu" | "entregue" | "aguardando_confirmacao" | "devolvido" | "cancelado";
+  statusBalcao?: "aberto" | "preparando" | "pronto" | "retirado" | "pago" | "saiu" | "entregue" | "aguardando_confirmacao" | "devolvido" | "cancelado" | "pendente_ifood";
   motoboyNome?: string;
   cancelado?: boolean;
   canceladoEm?: string;
@@ -609,8 +609,8 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       _nextPedidoNumber = (maxPedidoData?.[0]?.numero_pedido ?? 0) + 1;
 
       const allPedidos = (pedidosRes.data ?? []).map(rowToPedido);
-      const pedidosMesa = allPedidos.filter(p => !["balcao", "delivery", "totem"].includes(p.origem));
-      const pedidosBalcao = allPedidos.filter(p => ["balcao", "delivery", "totem"].includes(p.origem));
+      const pedidosMesa = allPedidos.filter(p => !["balcao", "delivery", "totem", "ifood"].includes(p.origem));
+      const pedidosBalcao = allPedidos.filter(p => ["balcao", "delivery", "totem", "ifood"].includes(p.origem));
       const fechamentos = (fechRes.data ?? []).map(rowToFechamento);
       const maxComanda = fechamentos.reduce((max, f) => Math.max(max, f.numeroComanda ?? 0), 0);
       _contadorComanda = maxComanda;
@@ -696,7 +696,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         if (payload.eventType === "INSERT") {
           const p = rowToPedido(payload.new);
           setStore(prev => {
-            if (["balcao", "delivery", "totem"].includes(p.origem)) {
+            if (["balcao", "delivery", "totem", "ifood"].includes(p.origem)) {
               if (prev.pedidosBalcao.find(x => x.id === p.id)) return prev;
               return { ...prev, pedidosBalcao: [...prev.pedidosBalcao, p] };
             } else {
