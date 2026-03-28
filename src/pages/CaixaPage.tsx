@@ -241,6 +241,10 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
   const [descontoAplicado, setDescontoAplicado] = useState(0);
   const [couvertPessoas, setCouvertPessoas] = useState(0);
   const [couvertDispensado, setCouvertDispensado] = useState(false);
+  const [cpfNotaMesa, setCpfNotaMesa] = useState("");
+  const [cpfNotaMesaOpen, setCpfNotaMesaOpen] = useState(false);
+  const [cpfNotaBalcao, setCpfNotaBalcao] = useState("");
+  const [cpfNotaBalcaoOpen, setCpfNotaBalcaoOpen] = useState(false);
   const [estornoModalOpen, setEstornoModalOpen] = useState(false);
   const [estornoFechamentoId, setEstornoFechamentoId] = useState<string | null>(null);
   const [estornoMotivo, setEstornoMotivo] = useState("");
