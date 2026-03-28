@@ -454,7 +454,7 @@ const dbUpdateFechamento = (id: string, updates: Record<string, any>) => {
 const dbInsertEvento = (e: EventoOperacional) => {
   const sid = getActiveStoreId();
   if (!sid) return;
-  supabase.from("eventos_operacionais").insert(eventoToRow(e, sid) as any).then(({ error }) => {
+  supabase.rpc("rpc_insert_evento" as any, { _data: eventoToRow(e, sid) }).then(({ error }: any) => {
     if (error) console.error("DB insert evento", error);
   });
 };
