@@ -27,6 +27,10 @@ import {
   Tv,
   ExternalLink,
   TabletSmartphone,
+  TrendingUp,
+  DollarSign,
+  Receipt,
+  Wallet,
 } from "lucide-react";
 import TeamManager from "@/components/TeamManager";
 import MesasManager from "@/components/MesasManager";
@@ -153,6 +157,7 @@ const AdminPage = () => {
 
   // --- Dashboard "Hoje" data ---
   const [dashLoading, setDashLoading] = useState(false);
+  const [dashError, setDashError] = useState(false);
   const [dashPedidosHoje, setDashPedidosHoje] = useState(0);
   const [dashFaturamento, setDashFaturamento] = useState(0);
   const [dashTotalFechamentos, setDashTotalFechamentos] = useState(0);
@@ -168,9 +173,10 @@ const AdminPage = () => {
 
     const load = async () => {
       setDashLoading(true);
+      setDashError(false);
       try {
         const [pedidosRes, fechRes, caixaRes] = await Promise.all([
-          supabase.from("pedidos").select("id", { count: "exact", head: true }).eq("store_id", storeId).gte("criado_em_iso", hojeISO),
+          supabase.from("pedidos").select("id", { count: "exact", head: true }).eq("store_id", storeId).eq("cancelado", false).gte("criado_em_iso", hojeISO),
           supabase.from("fechamentos").select("total, origem, mesa_numero, forma_pagamento, criado_em, criado_em_iso").eq("store_id", storeId).eq("cancelado", false).gte("criado_em_iso", hojeISO).order("criado_em_iso", { ascending: false }).limit(100),
           supabase.from("estado_caixa").select("aberto").eq("store_id", storeId).limit(1).maybeSingle(),
         ]);
@@ -184,6 +190,7 @@ const AdminPage = () => {
         setDashUltimosFechamentos(fechamentos.slice(0, 10));
       } catch (err) {
         console.error("[AdminPage] erro ao carregar dashboard:", err);
+        if (!cancelled) setDashError(true);
       } finally {
         if (!cancelled) setDashLoading(false);
       }
@@ -602,53 +609,53 @@ const AdminPage = () => {
                     <div className="flex items-center justify-between">
                       <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Pedidos hoje</p>
                       <div className="h-7 w-7 rounded-lg bg-primary/15 flex items-center justify-center">
-                        <ClipboardList className="h-3.5 w-3.5 text-primary" />
+                        <TrendingUp className="h-3.5 w-3.5 text-primary" />
                       </div>
                     </div>
-                    <p className="text-3xl font-black text-foreground">{dashPedidosHoje}</p>
-                    <p className="text-xs text-muted-foreground">registrados no dia</p>
+                    <p className="text-3xl font-black text-foreground">{dashError ? "—" : dashPedidosHoje}</p>
+                    <p className="text-xs text-muted-foreground">{dashError ? "Erro ao carregar" : "registrados no dia"}</p>
                   </div>
                   <div className="rounded-xl border border-border bg-card p-5 space-y-2">
                     <div className="flex items-center justify-between">
                       <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Faturamento</p>
                       <div className="h-7 w-7 rounded-lg bg-emerald-500/15 flex items-center justify-center">
-                        <CreditCard className="h-3.5 w-3.5 text-emerald-400" />
+                        <DollarSign className="h-3.5 w-3.5 text-emerald-400" />
                       </div>
                     </div>
-                    <p className="text-3xl font-black text-emerald-400">{formatPrice(dashFaturamento)}</p>
-                    <p className="text-xs text-muted-foreground">em fechamentos</p>
+                    <p className="text-3xl font-black text-emerald-400">{dashError ? "—" : formatPrice(dashFaturamento)}</p>
+                    <p className="text-xs text-muted-foreground">{dashError ? "Erro ao carregar" : "em fechamentos"}</p>
                   </div>
                   <div className="rounded-xl border border-border bg-card p-5 space-y-2">
                     <div className="flex items-center justify-between">
                       <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Ticket médio</p>
                       <div className="h-7 w-7 rounded-lg bg-primary/15 flex items-center justify-center">
-                        <CreditCard className="h-3.5 w-3.5 text-primary" />
+                        <Receipt className="h-3.5 w-3.5 text-primary" />
                       </div>
                     </div>
                     <p className="text-3xl font-black text-foreground">
-                      {dashTotalFechamentos > 0 ? formatPrice(dashFaturamento / dashTotalFechamentos) : "—"}
+                      {dashError ? "—" : dashTotalFechamentos > 0 ? formatPrice(dashFaturamento / dashTotalFechamentos) : formatPrice(0)}
                     </p>
-                    <p className="text-xs text-muted-foreground">{dashTotalFechamentos} fechamentos</p>
+                    <p className="text-xs text-muted-foreground">{dashError ? "Erro ao carregar" : `${dashTotalFechamentos} fechamentos`}</p>
                   </div>
                   <div className="rounded-xl border border-border bg-card p-5 space-y-2">
                     <div className="flex items-center justify-between">
-                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Caixa</p>
+                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Caixa agora</p>
                       <div className="h-7 w-7 rounded-lg bg-primary/15 flex items-center justify-center">
-                        <CreditCard className="h-3.5 w-3.5 text-primary" />
+                        <Wallet className="h-3.5 w-3.5 text-primary" />
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      {dashCaixaAberto === true && (
+                      {!dashError && dashCaixaAberto === true && (
                         <span className="relative flex h-2.5 w-2.5">
                           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
                           <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-400" />
                         </span>
                       )}
-                      <p className={`text-xl font-black ${dashCaixaAberto === true ? "text-emerald-400" : dashCaixaAberto === false ? "text-destructive" : "text-muted-foreground"}`}>
-                        {dashCaixaAberto === true ? "Aberto" : dashCaixaAberto === false ? "Fechado" : "—"}
+                      <p className={`text-xl font-black ${dashError ? "text-muted-foreground" : dashCaixaAberto === true ? "text-emerald-400" : dashCaixaAberto === false ? "text-destructive" : "text-muted-foreground"}`}>
+                        {dashError ? "—" : dashCaixaAberto === true ? "Aberto" : dashCaixaAberto === false ? "Fechado" : "—"}
                       </p>
                     </div>
-                    <p className="text-xs text-muted-foreground">status do turno</p>
+                    <p className="text-xs text-muted-foreground">{dashError ? "Erro ao carregar" : "status do turno"}</p>
                   </div>
                 </div>
               )}
