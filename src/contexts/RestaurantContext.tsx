@@ -413,7 +413,7 @@ const dbInsertPedido = async (p: PedidoRealizado, onNumeroResolved?: (pedidoId: 
     const atomicNum = typeof nextNum === "number" ? nextNum : p.numeroPedido;
     if (atomicNum >= _nextPedidoNumber) _nextPedidoNumber = atomicNum + 1;
     const row = pedidoToRow({ ...p, numeroPedido: atomicNum }, sid);
-    const { error } = await supabase.from("pedidos").insert(row as any);
+    const { error } = await supabase.rpc("rpc_insert_pedido" as any, { _data: row });
     if (error) { console.error("DB insert pedido", error); toast.error("Erro ao salvar pedido no banco"); }
     else if (onNumeroResolved && atomicNum !== p.numeroPedido) {
       onNumeroResolved(p.id, atomicNum);
