@@ -561,11 +561,11 @@ const AdminPage = () => {
   }, []);
 
   const saveSistema = useCallback(() => {
-    saveSistemaConfig(sistemaConfig);
-    saveSistemaConfigAsync(sistemaConfig);
+    saveSistemaConfig(sistemaConfig, storeId);
+    saveSistemaConfigAsync(sistemaConfig, storeId);
     applyCustomPrimaryColor();
     toast.success("Configurações salvas");
-  }, [sistemaConfig]);
+  }, [sistemaConfig, storeId]);
 
   // --- Licença state ---
   const [licencaConfig, setLicencaConfig] = useState<LicencaConfig>(getLicencaConfig);
