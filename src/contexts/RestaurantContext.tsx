@@ -589,7 +589,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       const isoHistory = thirtyDaysAgo.toISOString();
 
       const [pedidosRes, estadoMesasRes, fechRes, evtRes, movRes, caixaRes, mesasDbRes, allFechRes] = await Promise.all([
-        supabase.from("pedidos").select("*").eq("store_id", sid).gte("criado_em_iso", iso).order("criado_em_iso", { ascending: true }),
+        supabase.rpc("rpc_get_operational_pedidos" as any, { _store_id: sid }),
         supabase.from("estado_mesas").select("*").eq("store_id", sid),
         supabase.from("fechamentos").select("*").eq("store_id", sid).gte("criado_em_iso", iso).order("criado_em_iso", { ascending: false }),
         supabase.from("eventos_operacionais").select("*").eq("store_id", sid).gte("criado_em_iso", iso).order("criado_em_iso", { ascending: false }).limit(300),
