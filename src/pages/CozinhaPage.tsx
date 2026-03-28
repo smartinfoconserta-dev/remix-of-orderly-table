@@ -28,7 +28,7 @@ const formatElapsed = (mins: number) => {
 const formatTime = (d: Date) =>
   d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
 const origemLabel = (origem: string) =>
-  origem === "garcom" ? "Garçom" : origem === "caixa" ? "Caixa" : origem === "balcao" ? "Balcão" : origem === "delivery" ? "Delivery" : "Cliente";
+  origem === "garcom" ? "Garçom" : origem === "caixa" ? "Caixa" : origem === "balcao" ? "Balcão" : origem === "delivery" ? "Delivery" : origem === "ifood" ? "iFood" : "Cliente";
 
 type SomOrigem = "mesa" | "delivery" | "balcao";
 
