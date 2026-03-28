@@ -210,8 +210,9 @@ const CozinhaPage = () => {
 
   const pedidosFiltrados = useMemo(() => {
     if (filtroOrigem === "todos") return activePedidosFiltradosPorSetor;
-    if (filtroOrigem === "delivery") return activePedidosFiltradosPorSetor.filter(p => p.origem === "delivery" || p.origem === "ifood");
-    if (filtroOrigem === "balcao") return activePedidosFiltradosPorSetor.filter(p => p.origem === "balcao" || p.isBalcao);
+    if (filtroOrigem === "ifood") return activePedidosFiltradosPorSetor.filter(p => p.origem === "ifood");
+    if (filtroOrigem === "delivery") return activePedidosFiltradosPorSetor.filter(p => p.origem === "delivery");
+    if (filtroOrigem === "balcao") return activePedidosFiltradosPorSetor.filter(p => p.origem === "balcao" || (p.isBalcao && p.origem !== "ifood" && p.origem !== "delivery"));
     return activePedidosFiltradosPorSetor.filter(p => p.origem !== "delivery" && p.origem !== "ifood" && !p.isBalcao);
   }, [activePedidosFiltradosPorSetor, filtroOrigem]);
 
