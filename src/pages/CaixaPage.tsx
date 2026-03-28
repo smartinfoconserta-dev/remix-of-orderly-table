@@ -1187,7 +1187,7 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
       toast.error("O total pago deve ser igual ao total da conta", { duration: 1600 });
       return;
     }
-    fecharContaBalcao(balcaoPedidoSelecionado, { usuario: currentOperator, pagamentos: balcaoPayments, troco: trocoRegistrado, desconto: descontoAplicado });
+    fecharContaBalcao(balcaoPedidoSelecionado, { usuario: currentOperator, pagamentos: balcaoPayments, troco: trocoRegistrado, desconto: descontoAplicado, cpfNota: cpfNotaBalcao.trim() || undefined });
     const trocoFinal = trocoRegistrado;
     toast.success(
       trocoFinal > 0
