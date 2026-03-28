@@ -264,7 +264,8 @@ export async function fetchCategorias(storeId?: string | null): Promise<Categori
 
     const cached = getLocalCache<CategoriaCustom[]>(CATEGORIAS_CACHE_KEY);
     return cached ?? [];
-  } catch {
+  } catch (err) {
+    console.error("[configService] erro:", err);
     const cached = getLocalCache<CategoriaCustom[]>(CATEGORIAS_CACHE_KEY);
     return cached ?? [];
   }
