@@ -387,6 +387,7 @@ const rowToFechamento = (row: any): FechamentoConta => ({
   numeroPessoas: row.numero_pessoas ?? 0, cancelado: row.cancelado ?? false,
   canceladoEm: row.cancelado_em ?? undefined, canceladoMotivo: row.cancelado_motivo ?? undefined,
   canceladoPor: row.cancelado_por ?? undefined, origem: row.origem ?? "mesa",
+  cpfNota: row.cpf_nota ?? undefined,
 });
 
 const rowToEvento = (row: any): EventoOperacional => ({
