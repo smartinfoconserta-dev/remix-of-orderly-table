@@ -1235,6 +1235,13 @@ export type Database = {
         }
         Returns: string
       }
+      get_store_by_cnpj: {
+        Args: { _cnpj: string }
+        Returns: {
+          store_id: string
+          store_name: string
+        }[]
+      }
       get_store_by_slug: {
         Args: { _slug: string }
         Returns: {
