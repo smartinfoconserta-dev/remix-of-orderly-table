@@ -1432,6 +1432,44 @@ ${topRows ? `<h2>Top 5 produtos</h2><table><thead><tr><th>#</th><th>Produto</th>
                     />
                   </div>
 
+                  {/* Estoque */}
+                  <div className="space-y-3 border-t border-border pt-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-xs font-bold text-muted-foreground">Controlar estoque</p>
+                        <p className="text-[10px] text-muted-foreground leading-tight mt-0.5">Ative para monitorar a quantidade disponível deste produto.</p>
+                      </div>
+                      <Switch
+                        checked={editForm.controleEstoque}
+                        onCheckedChange={(v) => setEditForm(prev => ({ ...prev, controleEstoque: v }))}
+                      />
+                    </div>
+                    {editForm.controleEstoque && (
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-bold text-muted-foreground">Quantidade atual</label>
+                          <Input
+                            type="number"
+                            min={0}
+                            value={editForm.quantidadeEstoque}
+                            onChange={(e) => setEditForm(prev => ({ ...prev, quantidadeEstoque: parseInt(e.target.value) || 0 }))}
+                            className="rounded-xl"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-bold text-muted-foreground">Estoque mínimo (alerta)</label>
+                          <Input
+                            type="number"
+                            min={0}
+                            value={editForm.estoqueMinimo}
+                            onChange={(e) => setEditForm(prev => ({ ...prev, estoqueMinimo: parseInt(e.target.value) || 0 }))}
+                            className="rounded-xl"
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
                   {/* Setor de preparo */}
                   <div className="space-y-1.5 border-t border-border pt-4">
                     <label className="text-xs font-bold text-muted-foreground">Setor de preparo</label>
