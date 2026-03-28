@@ -9,7 +9,7 @@ import type { PaymentMethod } from "@/types/operations";
 
 const AUTO_RESET_MS = 10_000;
 
-type TotemStep = "menu" | "name" | "payment" | "confirmed";
+type TotemStep = "menu" | "name" | "cpf" | "payment" | "confirmed";
 
 const TotemInner = ({ storeId }: { storeId: string }) => {
   const { criarPedidoBalcao } = useRestaurant();
