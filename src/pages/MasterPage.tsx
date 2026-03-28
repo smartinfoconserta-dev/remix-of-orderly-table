@@ -280,10 +280,10 @@ const MasterPage = () => {
     if (form.planoModulos) {
       const lic = getLicencaConfig();
       lic.plano = form.planoModulos;
-      await saveLicencaConfigAsync(lic);
+      await saveLicencaConfigAsync(lic); // TODO: passar storeId do cliente
       const cfg = getSistemaConfig();
       cfg.plano = form.planoModulos;
-      await saveSistemaConfigAsync(cfg);
+      await saveSistemaConfigAsync(cfg); // TODO: passar storeId do cliente
     }
     setDialogOpen(false);
     await refresh();
@@ -303,10 +303,10 @@ const MasterPage = () => {
     if (c.planoModulos) {
       const lic = getLicencaConfig();
       lic.plano = c.planoModulos;
-      await saveLicencaConfigAsync(lic);
+      await saveLicencaConfigAsync(lic); // TODO: passar storeId do cliente
       const cfg = getSistemaConfig();
       cfg.plano = c.planoModulos;
-      await saveSistemaConfigAsync(cfg);
+      await saveSistemaConfigAsync(cfg); // TODO: passar storeId do cliente
     }
     await refresh();
   };

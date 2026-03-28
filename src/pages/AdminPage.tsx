@@ -528,7 +528,7 @@ const AdminPage = () => {
   const handleMesasApply = useCallback(() => {
     const val = Math.max(1, Math.min(50, parseInt(mesasInput) || 1));
     const next = { totalMesas: val };
-    saveMesasConfig(next);
+    saveMesasConfig(next, storeId);
     setMesasConfig(next);
     setMesasInput(String(val));
     toast.success(`Configurado para ${val} mesas. Aplica ao reabrir o caixa.`);
@@ -561,20 +561,20 @@ const AdminPage = () => {
   }, []);
 
   const saveSistema = useCallback(() => {
-    saveSistemaConfig(sistemaConfig);
-    saveSistemaConfigAsync(sistemaConfig);
+    saveSistemaConfig(sistemaConfig, storeId);
+    saveSistemaConfigAsync(sistemaConfig, storeId);
     applyCustomPrimaryColor();
     toast.success("Configurações salvas");
-  }, [sistemaConfig]);
+  }, [sistemaConfig, storeId]);
 
   // --- Licença state ---
   const [licencaConfig, setLicencaConfig] = useState<LicencaConfig>(getLicencaConfig);
 
   const saveLicenca = useCallback(() => {
-    saveLicencaConfig(licencaConfig);
-    saveLicencaConfigAsync(licencaConfig);
+    saveLicencaConfig(licencaConfig, storeId);
+    saveLicencaConfigAsync(licencaConfig, storeId);
     toast.success("Licença salva");
-  }, [licencaConfig]);
+  }, [licencaConfig, storeId]);
 
 
   const nomeRestaurante = getSistemaConfig().nomeRestaurante || "Restaurante";
@@ -2099,7 +2099,7 @@ ${topRows ? `<h2>Top 5 produtos</h2><table><thead><tr><th>#</th><th>Produto</th>
                       onCheckedChange={(v) => {
                         const next = { ...sistemaConfig, deliveryAtivo: v };
                         setSistemaConfig(next);
-                        saveSistemaConfig(next);
+                        saveSistemaConfig(next, storeId);
                         toast.success(v ? "Delivery ativado" : "Delivery desativado");
                       }}
                     />
@@ -2217,7 +2217,7 @@ ${topRows ? `<h2>Top 5 produtos</h2><table><thead><tr><th>#</th><th>Produto</th>
                   const horarios = horariosFuncionamento;
                   const updateDia = (dia: keyof HorariosSemana, patch: Partial<HorarioFuncionamento>) => {
                     const next = { ...horarios, [dia]: { ...horarios[dia], ...patch } };
-                    saveHorariosFuncionamento(next);
+                    saveHorariosFuncionamento(next, storeId);
                     setHorariosFuncionamento(next);
                   };
                   return (
@@ -2420,7 +2420,7 @@ ${topRows ? `<h2>Top 5 produtos</h2><table><thead><tr><th>#</th><th>Produto</th>
                       <label className="flex items-center gap-3 cursor-pointer" onClick={() => {
                         const next = { ...sistemaConfig, identificacaoFastFood: "codigo" as const };
                         setSistemaConfig(next);
-                        saveSistemaConfig(next);
+                        saveSistemaConfig(next, storeId);
                       }}>
                         <span className={`h-5 w-5 rounded-full border-2 flex items-center justify-center ${(sistemaConfig.identificacaoFastFood || "codigo") === "codigo" ? "border-primary" : "border-muted-foreground/40"}`}>
                           {(sistemaConfig.identificacaoFastFood || "codigo") === "codigo" && <span className="h-2.5 w-2.5 rounded-full bg-primary" />}
@@ -2433,7 +2433,7 @@ ${topRows ? `<h2>Top 5 produtos</h2><table><thead><tr><th>#</th><th>Produto</th>
                       <label className="flex items-center gap-3 cursor-pointer" onClick={() => {
                         const next = { ...sistemaConfig, identificacaoFastFood: "nome_cliente" as const };
                         setSistemaConfig(next);
-                        saveSistemaConfig(next);
+                        saveSistemaConfig(next, storeId);
                       }}>
                         <span className={`h-5 w-5 rounded-full border-2 flex items-center justify-center ${sistemaConfig.identificacaoFastFood === "nome_cliente" ? "border-primary" : "border-muted-foreground/40"}`}>
                           {sistemaConfig.identificacaoFastFood === "nome_cliente" && <span className="h-2.5 w-2.5 rounded-full bg-primary" />}
@@ -2479,8 +2479,8 @@ ${topRows ? `<h2>Top 5 produtos</h2><table><thead><tr><th>#</th><th>Produto</th>
                             modoOperacao: modoOperacaoPendente,
                           };
                           setSistemaConfig(next);
-                          saveSistemaConfig(next);
-                          saveSistemaConfigAsync(next);
+                          saveSistemaConfig(next, storeId);
+                          saveSistemaConfigAsync(next, storeId);
                           toast.success(modoOperacaoPendente === "fast_food" ? "Modo Fast Food ativado" : "Modo Restaurante ativado");
                           setModoOperacaoPendente(null);
                         }
@@ -2580,7 +2580,7 @@ ${topRows ? `<h2>Top 5 produtos</h2><table><thead><tr><th>#</th><th>Produto</th>
                   <label className="flex items-center gap-3 cursor-pointer" onClick={() => {
                     const next = { ...sistemaConfig, modoIdentificacaoDelivery: "visitante" as const };
                     setSistemaConfig(next);
-                    saveSistemaConfig(next);
+                    saveSistemaConfig(next, storeId);
                   }}>
                     <span className={`h-5 w-5 rounded-full border-2 flex items-center justify-center ${(sistemaConfig.modoIdentificacaoDelivery || "visitante") === "visitante" ? "border-primary" : "border-muted-foreground/40"}`}>
                       {(sistemaConfig.modoIdentificacaoDelivery || "visitante") === "visitante" && <span className="h-2.5 w-2.5 rounded-full bg-primary" />}
@@ -2593,7 +2593,7 @@ ${topRows ? `<h2>Top 5 produtos</h2><table><thead><tr><th>#</th><th>Produto</th>
                   <label className="flex items-center gap-3 cursor-pointer" onClick={() => {
                     const next = { ...sistemaConfig, modoIdentificacaoDelivery: "cadastro" as const };
                     setSistemaConfig(next);
-                    saveSistemaConfig(next);
+                    saveSistemaConfig(next, storeId);
                   }}>
                     <span className={`h-5 w-5 rounded-full border-2 flex items-center justify-center ${sistemaConfig.modoIdentificacaoDelivery === "cadastro" ? "border-primary" : "border-muted-foreground/40"}`}>
                       {sistemaConfig.modoIdentificacaoDelivery === "cadastro" && <span className="h-2.5 w-2.5 rounded-full bg-primary" />}
@@ -2635,7 +2635,7 @@ ${topRows ? `<h2>Top 5 produtos</h2><table><thead><tr><th>#</th><th>Produto</th>
                             onCheckedChange={(v) => {
                               const next = { ...sistemaConfig, modulos: { ...sistemaConfig.modulos, [mod.id]: v } };
                               setSistemaConfig(next);
-                              saveSistemaConfig(next);
+                              saveSistemaConfig(next, storeId);
                               toast.success(v ? `${mod.label} ativado` : `${mod.label} desativado`);
                             }}
                           />
@@ -2916,7 +2916,7 @@ ${topRows ? `<h2>Top 5 produtos</h2><table><thead><tr><th>#</th><th>Produto</th>
 
           const handleModuleToggle = (moduleKey: string, value: boolean) => {
             const updated = { ...currentConfig, modulos: { ...currentConfig.modulos, [moduleKey]: value } };
-            saveSistemaConfig(updated);
+            saveSistemaConfig(updated, storeId);
             setSistemaConfig(updated);
             toast.success(`Módulo ${value ? "ativado" : "desativado"}`);
           };
