@@ -156,6 +156,14 @@ const TotemInner = ({ storeId }: { storeId: string }) => {
     setPendingPaymentMethod(null);
   }, []);
 
+  // Auto-skip CPF step when cpfNotaAtivo is off
+  useEffect(() => {
+    if (step === "cpf" && skipCpfRef.current) {
+      skipCpfRef.current = false;
+      handleCpfConfirmed();
+    }
+  }, [step, handleCpfConfirmed]);
+
   const formatPrice = (v: number) => `R$ ${v.toFixed(2).replace(".", ",")}`;
 
   const isFastFoodCodigo = modoOperacao === "fast_food" && identificacaoFastFood === "codigo";
