@@ -71,6 +71,7 @@ function dbRowToConfig(row: any): SistemaConfig {
     plano: row.plano ?? "basico",
     modoOperacao: row.modo_operacao ?? "restaurante",
     identificacaoFastFood: row.identificacao_fast_food ?? "codigo",
+    cpfNotaAtivo: row.cpf_nota_ativo ?? false,
   };
 }
 
