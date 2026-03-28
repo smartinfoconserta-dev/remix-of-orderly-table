@@ -371,6 +371,9 @@ const AdminPage = () => {
       imagem: product.imagem,
       imagemBase64: product.imagemBase64 || "",
       permiteLevar: product.permiteLevar !== false,
+      controleEstoque: product.controleEstoque ?? false,
+      quantidadeEstoque: product.quantidadeEstoque ?? 0,
+      estoqueMinimo: product.estoqueMinimo ?? 0,
     });
   }, []);
 
