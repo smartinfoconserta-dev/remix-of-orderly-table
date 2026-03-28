@@ -435,7 +435,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       let query = supabase
         .from("module_pins")
-        .select("pin_hash, label, module")
+        .select("pin_hash, label, module, store_id, stores(id, name, slug)")
         .eq("active", true);
       if (storeId) query = query.eq("store_id", storeId);
       const { data: pins } = await query;
@@ -448,6 +448,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           stored_hash: p.pin_hash,
         });
         if (isValid) {
+          const store = p.stores as { id: string; name: string; slug: string } | null;
+          if (store?.id && store.slug && store.name) {
+            const opSession: OperationalSession = {
+              storeId: store.id,
+              storeSlug: store.slug,
+              storeName: store.name,
+              module: p.module,
+              pinLabel: p.label,
+            };
+            setOperationalSession(opSession);
+            writeOpSession(opSession);
+            setAuthLevel("operational");
+          }
           return {
             ok: true,
             user: { id: "emp-op", nome: p.label ?? "Operador", role: (p.module as UserRole) ?? "caixa", criadoEm: "" },

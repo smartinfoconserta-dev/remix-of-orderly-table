@@ -153,6 +153,7 @@ const CozinhaPage = () => {
     setAutenticado(sessao);
     setLoginNome("");
     setLoginPin("");
+    window.dispatchEvent(new StorageEvent("storage", { key: "obsidian-op-session-v2" }));
     setLoginLoading(false);
   };
 
