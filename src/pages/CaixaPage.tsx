@@ -890,7 +890,7 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
       bairro: balcaoBairro.trim(),
       complemento: balcaoComplemento.trim(),
       referencia: balcaoReferencia.trim(),
-    });
+    }, caixaStoreIdRef.current);
 
     const bairrosDisp = bairrosCache.filter((b) => b.ativo);
     const matchBairro = balcaoBairro.trim() ? bairrosDisp.find((b) => normStr(b.nome) === normStr(balcaoBairro)) : null;
