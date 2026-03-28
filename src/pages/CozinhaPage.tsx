@@ -551,6 +551,7 @@ ${itensSetorHtml}
             onClick={() => {
               localStorage.removeItem(COZINHA_SETOR_KEY);
               setSetorMonitor(null);
+              if (effectiveStoreId) savePreferencia(effectiveStoreId, "cozinha", "setor", "");
             }}
             className="text-xs text-muted-foreground hover:text-foreground border border-border rounded-lg px-2 py-1"
           >
