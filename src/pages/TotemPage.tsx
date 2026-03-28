@@ -110,15 +110,11 @@ const TotemInner = ({ storeId }: { storeId: string }) => {
     if (cpfNotaAtivo) {
       setStep("cpf");
     } else {
-      // Skip CPF step — go straight to confirmed
+      // Skip CPF step — create order directly
       setCpfWanted(false);
       setClienteCpf("");
-      // Trigger order creation directly
-      setTimeout(() => {
-        // We need to call handleCpfConfirmed logic, but since it depends on pendingPaymentMethod
-        // we set state and let the effect handle it
-      }, 0);
-      setStep("cpf"); // briefly pass through cpf which auto-confirms
+      // We set a flag so useEffect below can trigger order creation
+      setSkipCpfTrigger(method);
     }
   }, [cpfNotaAtivo]);
 
