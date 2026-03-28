@@ -1637,7 +1637,7 @@ const AdminPage = () => {
                           <div className="flex items-center gap-3">
                             <Switch checked={b.ativo} onCheckedChange={(v) => {
                               const next = bairros.map((x) => x.id === b.id ? { ...x, ativo: v } : x);
-                              saveBairros(next);
+                              saveBairros(next, storeId);
                               setBairros(next);
                             }} />
                             <span className={`text-sm font-semibold ${b.ativo ? "text-foreground" : "text-muted-foreground line-through"}`}>{b.nome}</span>
