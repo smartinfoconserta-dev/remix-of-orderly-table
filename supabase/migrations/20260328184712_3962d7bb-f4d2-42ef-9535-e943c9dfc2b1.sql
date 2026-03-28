@@ -1,0 +1,1 @@
+UPDATE produtos SET permite_levar = true WHERE permite_levar IS NULL;
