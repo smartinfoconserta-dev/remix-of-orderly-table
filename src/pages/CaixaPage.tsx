@@ -2389,6 +2389,11 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
                     )}
                   </div>
                 )}
+                {caixaView === "ifood" && (
+                  <div className="space-y-4 fade-in p-1">
+                    <IfoodPainel />
+                  </div>
+                )}
                 {caixaView === "historico" && (
                   <div className="space-y-4 fade-in">
                     <div className="flex items-center gap-3">
