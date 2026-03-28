@@ -2492,6 +2492,20 @@ ${topRows ? `<h2>Top 5 produtos</h2><table><thead><tr><th>#</th><th>Produto</th>
                   </AlertDialogContent>
                 </AlertDialog>
 
+                {/* CPF na nota */}
+                <div className="surface-card rounded-2xl p-6 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-black text-foreground">📄 Solicitar CPF na nota</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">Quando ativado, o sistema pergunta se o cliente deseja informar CPF. Necessário para emissão de nota fiscal.</p>
+                    </div>
+                    <Switch
+                      checked={sistemaConfig.cpfNotaAtivo ?? false}
+                      onCheckedChange={(v) => setSistemaConfig((prev) => ({ ...prev, cpfNotaAtivo: v }))}
+                    />
+                  </div>
+                </div>
+
                 <div className="surface-card rounded-2xl p-6 space-y-3">
                   <div className="flex items-center justify-between">
                     <div>

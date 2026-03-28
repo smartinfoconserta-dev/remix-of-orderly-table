@@ -3112,6 +3112,7 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
                 </div>
 
                 {/* CPF na nota */}
+                {sistemaConfig.cpfNotaAtivo && (
                 <div className="border-t border-border px-3 pt-3">
                   <button onClick={() => setCpfNotaMesaOpen(!cpfNotaMesaOpen)} className="text-xs font-bold text-muted-foreground hover:text-foreground transition-colors">
                     {cpfNotaMesa ? `CPF: ${cpfNotaMesa}` : "📄 CPF na nota?"}
@@ -3128,6 +3129,7 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
                     </div>
                   )}
                 </div>
+                )}
 
                 {/* Sticky bottom: confirm */}
                 <div className="border-t border-border p-3 bg-card space-y-2">
@@ -3439,6 +3441,7 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
                 </div>
 
                 {/* CPF na nota */}
+                {sistemaConfig.cpfNotaAtivo && (
                 <div className="border-t border-border px-5 pt-3">
                   <button onClick={() => setCpfNotaBalcaoOpen(!cpfNotaBalcaoOpen)} className="text-xs font-bold text-muted-foreground hover:text-foreground transition-colors">
                     {cpfNotaBalcao ? `CPF: ${cpfNotaBalcao}` : "📄 CPF na nota?"}
@@ -3455,6 +3458,7 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
                     </div>
                   )}
                 </div>
+                )}
 
                 <div className="border-t border-border p-5 bg-card space-y-2">
                   <Button

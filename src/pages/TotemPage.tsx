@@ -25,6 +25,7 @@ const TotemInner = ({ storeId }: { storeId: string }) => {
   const [clienteNome, setClienteNome] = useState("");
   const [clienteCpf, setClienteCpf] = useState("");
   const [cpfWanted, setCpfWanted] = useState<boolean | null>(null);
+  const [cpfNotaAtivo, setCpfNotaAtivo] = useState(false);
   const [pendingPaymentMethod, setPendingPaymentMethod] = useState<PaymentMethod | null>(null);
 
   // Reactive restaurant name & logo from DB
@@ -35,7 +36,7 @@ const TotemInner = ({ storeId }: { storeId: string }) => {
     const loadConfig = async () => {
       const { data } = await supabase
         .from("restaurant_config")
-        .select("nome_restaurante, logo_base64, logo_url, modo_operacao, identificacao_fast_food")
+        .select("nome_restaurante, logo_base64, logo_url, modo_operacao, identificacao_fast_food, cpf_nota_ativo")
         .eq("store_id", storeId)
         .maybeSingle();
       if (data) {
@@ -43,6 +44,7 @@ const TotemInner = ({ storeId }: { storeId: string }) => {
         setLogoBase64(data.logo_base64 || data.logo_url || "");
         setModoOperacao(data.modo_operacao ?? "restaurante");
         setIdentificacaoFastFood(data.identificacao_fast_food ?? "codigo");
+        setCpfNotaAtivo(data.cpf_nota_ativo ?? false);
       }
     };
     loadConfig();
@@ -103,10 +105,18 @@ const TotemInner = ({ storeId }: { storeId: string }) => {
   }, [clienteNome]);
 
   // Called when customer picks a payment method — go to CPF step
+  const skipCpfRef = useRef(false);
   const handlePaymentSelected = useCallback((method: PaymentMethod) => {
     setPendingPaymentMethod(method);
-    setStep("cpf");
-  }, []);
+    if (cpfNotaAtivo) {
+      setStep("cpf");
+    } else {
+      setCpfWanted(false);
+      setClienteCpf("");
+      skipCpfRef.current = true;
+      setStep("cpf");
+    }
+  }, [cpfNotaAtivo]);
 
   // CPF mask helper
   const formatCpfMask = (value: string) => {
@@ -145,6 +155,14 @@ const TotemInner = ({ storeId }: { storeId: string }) => {
     setCpfWanted(null);
     setPendingPaymentMethod(null);
   }, []);
+
+  // Auto-skip CPF step when cpfNotaAtivo is off
+  useEffect(() => {
+    if (step === "cpf" && skipCpfRef.current) {
+      skipCpfRef.current = false;
+      handleCpfConfirmed();
+    }
+  }, [step, handleCpfConfirmed]);
 
   const formatPrice = (v: number) => `R$ ${v.toFixed(2).replace(".", ",")}`;
 

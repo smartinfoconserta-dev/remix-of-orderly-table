@@ -71,6 +71,7 @@ function dbRowToConfig(row: any): SistemaConfig {
     plano: row.plano ?? "basico",
     modoOperacao: row.modo_operacao ?? "restaurante",
     identificacaoFastFood: row.identificacao_fast_food ?? "codigo",
+    cpfNotaAtivo: row.cpf_nota_ativo ?? false,
   };
 }
 
@@ -105,6 +106,7 @@ function configToDbRow(config: SistemaConfig) {
     plano: config.plano ?? "basico",
     modo_operacao: config.modoOperacao ?? "restaurante",
     identificacao_fast_food: config.identificacaoFastFood ?? "codigo",
+    cpf_nota_ativo: config.cpfNotaAtivo ?? false,
     total_mesas: 20,
     updated_at: new Date().toISOString(),
   };

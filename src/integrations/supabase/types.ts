@@ -973,6 +973,7 @@ export type Database = {
           couvert_obrigatorio: boolean | null
           couvert_valor: number | null
           cozinha_ativa: boolean | null
+          cpf_nota_ativo: boolean | null
           created_at: string | null
           delivery_ativo: boolean | null
           horario_funcionamento: Json | null
@@ -1012,6 +1013,7 @@ export type Database = {
           couvert_obrigatorio?: boolean | null
           couvert_valor?: number | null
           cozinha_ativa?: boolean | null
+          cpf_nota_ativo?: boolean | null
           created_at?: string | null
           delivery_ativo?: boolean | null
           horario_funcionamento?: Json | null
@@ -1051,6 +1053,7 @@ export type Database = {
           couvert_obrigatorio?: boolean | null
           couvert_valor?: number | null
           cozinha_ativa?: boolean | null
+          cpf_nota_ativo?: boolean | null
           created_at?: string | null
           delivery_ativo?: boolean | null
           horario_funcionamento?: Json | null
