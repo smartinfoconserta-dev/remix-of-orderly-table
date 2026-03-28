@@ -116,8 +116,14 @@ function getStoreId(): string | null {
 /** Preload products into memory cache. Call early in app lifecycle. */
 export async function preloadProducts(storeId?: string | null): Promise<void> {
   const sid = storeId ?? getStoreId();
+  // If already loaded for a different store, force reload
+  if (_loaded && sid && _loadedStoreId && sid !== _loadedStoreId) {
+    _loaded = false;
+    _loadPromise = null;
+  }
   if (_loadPromise) return _loadPromise;
-  _loadPromise = loadFromDb(sid);
+  if (_loaded && sid === _loadedStoreId) return;
+  _loadPromise = loadFromDb(sid).then(() => { _loadedStoreId = sid; });
   await _loadPromise;
   _loadPromise = null;
 }
