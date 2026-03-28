@@ -470,7 +470,7 @@ const dbUpsertEstadoCaixa = (aberto: boolean, fundoTroco: number, nome: string, 
   if (extras?.diferenca_motivo !== undefined) data.diferenca_motivo = extras.diferenca_motivo;
   if (extras?.fundo_proximo !== undefined) data.fundo_proximo = extras.fundo_proximo;
   supabase.rpc("rpc_upsert_estado_caixa" as any, { _store_id: sid, _data: data }).then(({ error }: any) => {
-    if (error) console.error("DB upsert caixa", error);
+    if (error) { console.error("DB upsert caixa", error); toast.error("Erro ao atualizar caixa"); }
   });
 };
 
