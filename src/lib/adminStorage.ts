@@ -84,6 +84,8 @@ export interface SistemaConfig {
   identificacaoFastFood?: "codigo" | "nome_cliente";
   impressoras?: ImpressoraConfig[];
   cpfNotaAtivo?: boolean;
+  cardapioHeaderEstilo?: "padrao" | "banner";
+  cardapioBannerBase64?: string;
 }
 
 export interface ImpressoraConfig {

@@ -1,0 +1,2 @@
+ALTER TABLE public.restaurant_config ADD COLUMN IF NOT EXISTS cardapio_header_estilo TEXT DEFAULT 'padrao';
+ALTER TABLE public.restaurant_config ADD COLUMN IF NOT EXISTS cardapio_banner_base64 TEXT DEFAULT '';
