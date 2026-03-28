@@ -121,6 +121,7 @@ import { getBairrosAsync, saveBairros, type Bairro } from "@/lib/deliveryStorage
 import { toast } from "sonner";
 import CaixasSection from "@/components/CaixasSection";
 import LicenseBanner from "@/components/LicenseBanner";
+import IfoodPainel from "@/components/IfoodPainel";
 
 type AdminTab = "dashboard" | "cardapio" | "mesas" | "tablets" | "equipe" | "caixas" | "configuracoes" | "licenca" | "ifood";
 
