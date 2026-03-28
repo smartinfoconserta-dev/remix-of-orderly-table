@@ -69,7 +69,7 @@ export interface SistemaConfig {
   mensagemBoasVindas?: string;
   deliveryAtivo?: boolean;
   modoIdentificacaoDelivery?: "visitante" | "cadastro";
-  cozinhaAtiva?: boolean;
+  
   couvertAtivo?: boolean;
   couvertValor?: number;
   couvertObrigatorio?: boolean;
