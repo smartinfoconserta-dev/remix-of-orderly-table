@@ -36,6 +36,7 @@ import {
   BarChart3,
   CalendarDays,
   FileText,
+  ShoppingBag,
 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -120,8 +121,9 @@ import { getBairrosAsync, saveBairros, type Bairro } from "@/lib/deliveryStorage
 import { toast } from "sonner";
 import CaixasSection from "@/components/CaixasSection";
 import LicenseBanner from "@/components/LicenseBanner";
+import IfoodPainel from "@/components/IfoodPainel";
 
-type AdminTab = "dashboard" | "cardapio" | "mesas" | "tablets" | "equipe" | "caixas" | "configuracoes" | "licenca";
+type AdminTab = "dashboard" | "cardapio" | "mesas" | "tablets" | "equipe" | "caixas" | "configuracoes" | "licenca" | "ifood";
 
 const PLANO_MODULOS: Record<string, string[]> = {
   basico: ["cozinha"],
@@ -152,6 +154,7 @@ const sidebarSections = [
   { id: "tablets" as const, label: "Dispositivos", icon: TabletSmartphone },
   { id: "equipe" as const, label: "Equipe", icon: Users },
   { id: "caixas" as const, label: "Caixas", icon: Wallet },
+  { id: "ifood" as const, label: "iFood", icon: ShoppingBag },
   { id: "configuracoes" as const, label: "Configurações", icon: Settings },
   { id: "licenca" as const, label: "Meu Plano", icon: Shield },
 ];
@@ -3212,6 +3215,13 @@ ${topRows ? `<h2>Top 5 produtos</h2><table><thead><tr><th>#</th><th>Produto</th>
             ) : (
               <p className="text-sm text-muted-foreground py-8 text-center">Loja não identificada. Faça login novamente.</p>
             )}
+          </div>
+        )}
+
+        {/* ═══ IFOOD ═══ */}
+        {tab === "ifood" && (
+          <div className="space-y-4 fade-in">
+            <IfoodPainel />
           </div>
         )}
       </main>
