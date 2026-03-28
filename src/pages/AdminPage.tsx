@@ -1448,8 +1448,53 @@ const AdminPage = () => {
                   )}
                 </div>
 
-                {/* Horário de funcionamento */}
+                {/* Link do delivery */}
                 {(() => {
+                  const currentStore = stores.find((s) => s.id === storeId);
+                  const storeSlug = currentStore?.slug;
+                  const baseUrl = window.location.origin;
+                  const deliveryLink = storeSlug ? `${baseUrl}/pedido/${storeSlug}` : null;
+
+                  if (!deliveryLink) return null;
+
+                  return (
+                    <div className="surface-card rounded-2xl p-6 space-y-3">
+                      <div>
+                        <p className="text-sm font-black text-foreground flex items-center gap-2">🔗 Link do Delivery</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">Compartilhe este link no WhatsApp Business da sua empresa</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Input
+                          value={deliveryLink}
+                          readOnly
+                          className="text-xs font-mono bg-muted"
+                        />
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="shrink-0"
+                          onClick={() => {
+                            navigator.clipboard.writeText(deliveryLink);
+                            toast.success("Link copiado!");
+                          }}
+                        >
+                          Copiar
+                        </Button>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="gap-2 text-xs"
+                        onClick={() => window.open(deliveryLink, "_blank")}
+                      >
+                        <ExternalLink className="h-3.5 w-3.5" />
+                        Abrir link
+                      </Button>
+                    </div>
+                  );
+                })()}
+
+
                   const DIAS: { key: keyof HorariosSemana; label: string }[] = [
                     { key: "seg", label: "Segunda" },
                     { key: "ter", label: "Terça" },
