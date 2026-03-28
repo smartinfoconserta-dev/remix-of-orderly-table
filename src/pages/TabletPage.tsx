@@ -161,7 +161,7 @@ const TabletInner = ({ storeId, initialMesaId }: { storeId: string; initialMesaI
 
   // If mesa is set, show PedidoFlow directly
   if (mesaId) {
-    return <PedidoFlow modo="cliente" mesaId={mesaId} />;
+    return <PedidoFlow modo="cliente" mesaId={mesaId} deviceStoreId={storeId} />;
   }
 
   // No mesa yet: need auth before showing mesa grid
