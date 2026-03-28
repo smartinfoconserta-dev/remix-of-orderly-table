@@ -2662,17 +2662,17 @@ ${topRows ? `<h2>Top 5 produtos</h2><table><thead><tr><th>#</th><th>Produto</th>
                 setImpEditando(imp); setImpFormNome(imp.nome); setImpFormSetor(imp.setor); setImpFormTipo(imp.tipo); setImpFormIp(imp.ip); setImpFormLargura(imp.largura); setImpFormAtiva(imp.ativa); setImpShowForm(true);
               };
               const salvar = async () => {
-                if (!formNome.trim()) { toast.error("Informe o nome da impressora"); return; }
+                if (!impFormNome.trim()) { toast.error("Informe o nome da impressora"); return; }
                 const nova: import("@/lib/adminStorage").ImpressoraConfig = {
-                  id: editando?.id ?? crypto.randomUUID(),
-                  nome: formNome.trim(), setor: formSetor, tipo: formTipo, ip: formIp.trim(), largura: formLargura, ativa: formAtiva,
+                  id: impEditando?.id ?? crypto.randomUUID(),
+                  nome: impFormNome.trim(), setor: impFormSetor, tipo: impFormTipo, ip: impFormIp.trim(), largura: impFormLargura, ativa: impFormAtiva,
                 };
-                const novaLista = editando ? impressoras.map(i => i.id === editando.id ? nova : i) : [...impressoras, nova];
+                const novaLista = impEditando ? impressoras.map(i => i.id === impEditando.id ? nova : i) : [...impressoras, nova];
                 const updated = { ...sistemaConfig, impressoras: novaLista };
                 setSistemaConfig(updated);
                 await saveSistemaConfig(updated, storeId);
-                toast.success(editando ? "Impressora atualizada" : "Impressora adicionada");
-                setShowForm(false); resetForm();
+                toast.success(impEditando ? "Impressora atualizada" : "Impressora adicionada");
+                setImpShowForm(false); resetForm();
               };
               const excluir = async (id: string) => {
                 const novaLista = impressoras.filter(i => i.id !== id);
@@ -2711,23 +2711,23 @@ ${topRows ? `<h2>Top 5 produtos</h2><table><thead><tr><th>#</th><th>Produto</th>
                     </p>
                   </div>
 
-                  {!showForm && (
+                  {!impShowForm && (
                     <Button onClick={openNew} className="w-full rounded-xl font-bold gap-2">
                       <Plus className="h-4 w-4" /> Adicionar impressora
                     </Button>
                   )}
 
-                  {showForm && (
+                  {impShowForm && (
                     <div className="surface-card space-y-4 rounded-2xl p-6">
-                      <h3 className="text-sm font-bold text-foreground">{editando ? "Editar impressora" : "Nova impressora"}</h3>
+                      <h3 className="text-sm font-bold text-foreground">{impEditando ? "Editar impressora" : "Nova impressora"}</h3>
                       <div className="space-y-3">
                         <div>
                           <label className="text-xs font-bold text-muted-foreground">Nome</label>
-                          <Input value={formNome} onChange={e => setFormNome(e.target.value)} placeholder='Ex: Cozinha Principal' className="rounded-xl mt-1" />
+                          <Input value={impFormNome} onChange={e => setImpFormNome(e.target.value)} placeholder='Ex: Cozinha Principal' className="rounded-xl mt-1" />
                         </div>
                         <div>
                           <label className="text-xs font-bold text-muted-foreground">Setor</label>
-                          <Select value={formSetor} onValueChange={v => setFormSetor(v as any)}>
+                          <Select value={impFormSetor} onValueChange={v => setImpFormSetor(v as any)}>
                             <SelectTrigger className="rounded-xl mt-1"><SelectValue /></SelectTrigger>
                             <SelectContent>
                               <SelectItem value="caixa">Caixa</SelectItem>
@@ -2739,7 +2739,7 @@ ${topRows ? `<h2>Top 5 produtos</h2><table><thead><tr><th>#</th><th>Produto</th>
                         </div>
                         <div>
                           <label className="text-xs font-bold text-muted-foreground">Tipo de conexão</label>
-                          <Select value={formTipo} onValueChange={v => setFormTipo(v as any)}>
+                          <Select value={impFormTipo} onValueChange={v => setImpFormTipo(v as any)}>
                             <SelectTrigger className="rounded-xl mt-1"><SelectValue /></SelectTrigger>
                             <SelectContent>
                               <SelectItem value="rede">Rede (IP)</SelectItem>
@@ -2748,15 +2748,15 @@ ${topRows ? `<h2>Top 5 produtos</h2><table><thead><tr><th>#</th><th>Produto</th>
                             </SelectContent>
                           </Select>
                         </div>
-                        {formTipo === "rede" && (
+                        {impFormTipo === "rede" && (
                           <div>
                             <label className="text-xs font-bold text-muted-foreground">Endereço IP</label>
-                            <Input value={formIp} onChange={e => setFormIp(e.target.value)} placeholder="192.168.1.100" className="rounded-xl mt-1" />
+                            <Input value={impFormIp} onChange={e => setImpFormIp(e.target.value)} placeholder="192.168.1.100" className="rounded-xl mt-1" />
                           </div>
                         )}
                         <div>
                           <label className="text-xs font-bold text-muted-foreground">Largura do papel</label>
-                          <Select value={formLargura} onValueChange={v => setFormLargura(v as any)}>
+                          <Select value={impFormLargura} onValueChange={v => setImpFormLargura(v as any)}>
                             <SelectTrigger className="rounded-xl mt-1"><SelectValue /></SelectTrigger>
                             <SelectContent>
                               <SelectItem value="58mm">58mm</SelectItem>
@@ -2766,17 +2766,17 @@ ${topRows ? `<h2>Top 5 produtos</h2><table><thead><tr><th>#</th><th>Produto</th>
                         </div>
                         <div className="flex items-center justify-between">
                           <label className="text-xs font-bold text-muted-foreground">Ativa</label>
-                          <Switch checked={formAtiva} onCheckedChange={setFormAtiva} />
+                          <Switch checked={impFormAtiva} onCheckedChange={setImpFormAtiva} />
                         </div>
                       </div>
                       <div className="flex gap-2">
                         <Button onClick={salvar} className="flex-1 rounded-xl font-bold gap-2"><Save className="h-4 w-4" /> Salvar</Button>
-                        <Button variant="outline" onClick={() => { setShowForm(false); resetForm(); }} className="rounded-xl"><X className="h-4 w-4" /></Button>
+                        <Button variant="outline" onClick={() => { setImpShowForm(false); resetForm(); }} className="rounded-xl"><X className="h-4 w-4" /></Button>
                       </div>
                     </div>
                   )}
 
-                  {impressoras.length === 0 && !showForm && (
+                  {impressoras.length === 0 && !impShowForm && (
                     <p className="text-center text-sm text-muted-foreground py-8">Nenhuma impressora cadastrada</p>
                   )}
 
