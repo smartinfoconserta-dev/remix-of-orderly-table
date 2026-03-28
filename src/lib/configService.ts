@@ -35,7 +35,7 @@ function clearPendingSync(entity: string) {
     const pending = JSON.parse(localStorage.getItem(SYNC_PENDING_KEY) || "{}");
     delete pending[entity];
     localStorage.setItem(SYNC_PENDING_KEY, JSON.stringify(pending));
-  } catch { /* ignore */ }
+  } catch (err) { console.error("[configService] erro:", err); }
 }
 
 // ── Map DB row → SistemaConfig ──
