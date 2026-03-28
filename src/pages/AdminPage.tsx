@@ -2217,7 +2217,7 @@ ${topRows ? `<h2>Top 5 produtos</h2><table><thead><tr><th>#</th><th>Produto</th>
                   const horarios = horariosFuncionamento;
                   const updateDia = (dia: keyof HorariosSemana, patch: Partial<HorarioFuncionamento>) => {
                     const next = { ...horarios, [dia]: { ...horarios[dia], ...patch } };
-                    saveHorariosFuncionamento(next);
+                    saveHorariosFuncionamento(next, storeId);
                     setHorariosFuncionamento(next);
                   };
                   return (
