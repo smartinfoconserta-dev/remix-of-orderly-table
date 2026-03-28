@@ -65,6 +65,9 @@ export function produtoToRow(p: Produto & { ativo?: boolean; removido?: boolean;
     ativo: (p as any).ativo ?? true,
     removido: (p as any).removido ?? false,
     disponivel_delivery: (p as any).disponivelDelivery ?? true,
+    controle_estoque: p.controleEstoque ?? false,
+    quantidade_estoque: p.quantidadeEstoque ?? 0,
+    estoque_minimo: p.estoqueMinimo ?? 0,
   };
 }
 
