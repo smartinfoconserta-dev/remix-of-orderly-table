@@ -712,6 +712,7 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
       document.body.appendChild(el);
     }
     const nomeRest = sistemaConfig.nomeRestaurante || "Restaurante";
+    const SEP = '<div class="print-sep">--------------------------------</div>';
     const taxaHtml = (data.taxaEntrega ?? 0) > 0
       ? `<div class="print-item"><span>Taxa de entrega</span><span>R$ ${data.taxaEntrega!.toFixed(2).replace(".", ",")}</span></div>`
       : "";
@@ -719,29 +720,32 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
       ? `<div class="print-center">${data.formaPagamento}</div>`
       : "";
     const descontoHtml = (data.desconto ?? 0) > 0
-      ? `<div class="print-item" style="color:#c85b0a"><span>🎁 Desconto aplicado</span><span>- R$ ${data.desconto!.toFixed(2).replace(".", ",")}</span></div>`
+      ? `<div class="print-item"><span>Desconto</span><span>- R$ ${data.desconto!.toFixed(2).replace(".", ",")}</span></div>`
       : "";
     const couvertHtml = (data.couvert ?? 0) > 0
-      ? `<div class="print-item" style="color:#059669"><span>🍽️ Couvert (${data.numeroPessoas ?? 0} pessoa${(data.numeroPessoas ?? 0) !== 1 ? "s" : ""})</span><span>+ R$ ${data.couvert!.toFixed(2).replace(".", ",")}</span></div>`
+      ? `<div class="print-item"><span>Couvert (${data.numeroPessoas ?? 0}p)</span><span>+ R$ ${data.couvert!.toFixed(2).replace(".", ",")}</span></div>`
       : "";
     const paraLevarHtml = data.paraViagem
-      ? `<div class="print-divider"></div><div class="print-center" style="font-size:18px;font-weight:900;letter-spacing:2px">*** PARA LEVAR — EMBALAR ***</div><div class="print-divider"></div>`
+      ? `${SEP}<div class="print-center" style="font-size:14px;font-weight:900;letter-spacing:1px">*** PARA LEVAR ***</div>${SEP}`
       : "";
+    const now = new Date();
+    const footerDate = `${String(now.getDate()).padStart(2,"0")}/${String(now.getMonth()+1).padStart(2,"0")}/${now.getFullYear()} ${String(now.getHours()).padStart(2,"0")}:${String(now.getMinutes()).padStart(2,"0")}`;
     el.innerHTML = `
       <h2>${nomeRest}</h2>
       <div class="print-center">${data.tipo}</div>
-      <div class="print-center">Pedido #${data.numero} — ${data.dataHora}</div>
+      <div class="print-pedido-num">#${data.numero}</div>
+      <div class="print-center" style="font-size:10px">${data.dataHora}</div>
       ${paraLevarHtml}
-      <div class="print-divider"></div>
+      ${SEP}
       ${data.itens.map((it) => `<div class="print-item"><span>${it.quantidade}x ${it.nome}</span><span>R$ ${(it.preco * it.quantidade).toFixed(2).replace(".", ",")}</span></div>`).join("")}
-      <div class="print-divider"></div>
+      ${SEP}
       <div class="print-item"><span>Subtotal</span><span>R$ ${data.subtotal.toFixed(2).replace(".", ",")}</span></div>
-      ${taxaHtml}
-      ${descontoHtml}${couvertHtml}
+      ${taxaHtml}${descontoHtml}${couvertHtml}
       <div class="print-total"><span>TOTAL</span><span>R$ ${data.total.toFixed(2).replace(".", ",")}</span></div>
-      <div class="print-divider"></div>
+      ${SEP}
       ${pagHtml}
-      <div class="print-center" style="margin-top:8px;font-size:10px">Obrigado pela preferência!</div>
+      <div class="print-footer">${footerDate}</div>
+      <div class="print-footer">Obrigado pela preferencia!</div>
     `;
     el.style.display = "block";
     window.print();

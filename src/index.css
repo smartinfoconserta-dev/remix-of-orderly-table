@@ -195,6 +195,7 @@
 
 /* ── Print receipt styles ── */
 @media print {
+  @page { margin: 0; size: 80mm auto; }
   body > *:not(#comanda-print) {
     display: none !important;
   }
@@ -205,23 +206,32 @@
     z-index: 99999;
     background: white;
     color: black;
-    padding: 8mm;
+    padding: 4mm 2mm;
     font-family: 'Courier New', monospace;
-    font-size: 12px;
+    font-size: 11px;
     line-height: 1.4;
-    width: 80mm;
-    max-width: 80mm;
+    width: 280px;
+    max-width: 280px;
     margin: 0 auto;
   }
   #comanda-print h2 {
-    font-size: 16px;
+    font-size: 13px;
     text-align: center;
-    margin-bottom: 4px;
+    margin-bottom: 2px;
     font-weight: 900;
   }
-  #comanda-print .print-divider {
-    border-top: 1px dashed #000;
-    margin: 6px 0;
+  #comanda-print .print-pedido-num {
+    font-size: 18px;
+    font-weight: 900;
+    text-align: center;
+    margin: 4px 0;
+  }
+  #comanda-print .print-sep {
+    text-align: center;
+    font-size: 11px;
+    line-height: 1;
+    margin: 4px 0;
+    letter-spacing: -0.5px;
   }
   #comanda-print .print-item {
     display: flex;
@@ -236,5 +246,10 @@
   }
   #comanda-print .print-center {
     text-align: center;
+  }
+  #comanda-print .print-footer {
+    text-align: center;
+    font-size: 10px;
+    margin-top: 6px;
   }
 }
