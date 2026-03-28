@@ -28,6 +28,9 @@ function rowToProduto(row: any): Produto {
     embalagemOptions: Array.isArray(row.embalagem_options) ? row.embalagem_options : [],
     permiteLevar: row.permite_levar ?? false,
     setor: row.setor ?? "cozinha",
+    controleEstoque: row.controle_estoque ?? false,
+    quantidadeEstoque: row.quantidade_estoque ?? 0,
+    estoqueMinimo: row.estoque_minimo ?? 0,
   };
 }
 
@@ -62,6 +65,9 @@ export function produtoToRow(p: Produto & { ativo?: boolean; removido?: boolean;
     ativo: (p as any).ativo ?? true,
     removido: (p as any).removido ?? false,
     disponivel_delivery: (p as any).disponivelDelivery ?? true,
+    controle_estoque: p.controleEstoque ?? false,
+    quantidade_estoque: p.quantidadeEstoque ?? 0,
+    estoque_minimo: p.estoqueMinimo ?? 0,
   };
 }
 
@@ -178,6 +184,9 @@ export async function fetchAllProducts(storeId: string): Promise<(Produto & { at
     removido: row.removido ?? false,
     disponivelDelivery: row.disponivel_delivery ?? true,
     imagemBase64: row.imagem_base64 ?? undefined,
+    controleEstoque: row.controle_estoque ?? false,
+    quantidadeEstoque: row.quantidade_estoque ?? 0,
+    estoqueMinimo: row.estoque_minimo ?? 0,
   }));
 }
 

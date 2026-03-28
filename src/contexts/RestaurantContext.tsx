@@ -411,12 +411,52 @@ const dbInsertPedido = async (p: PedidoRealizado) => {
     const row = pedidoToRow(p, sid);
     const { error } = await supabase.rpc("rpc_insert_pedido" as any, { _data: row });
     if (error) { console.error("DB insert pedido", error); toast.error("Erro ao salvar pedido no banco"); }
+    else {
+      // Decrement stock for items with controle_estoque
+      decrementStock(p.itens, sid);
+    }
   } catch (err) {
     console.error("dbInsertPedido unexpected error", err);
     const fallbackRow = pedidoToRow(p, sid);
     supabase.rpc("rpc_insert_pedido" as any, { _data: fallbackRow }).then(({ error }: any) => {
       if (error) { console.error("DB insert pedido fallback", error); toast.error("Erro ao salvar pedido"); }
+      else { decrementStock(p.itens, sid); }
     });
+  }
+};
+
+const decrementStock = async (itens: any[], storeId: string) => {
+  try {
+    // Get product IDs from items
+    const prodIds = [...new Set(itens.map((item: any) => item.produtoId || item.id).filter(Boolean))];
+    if (prodIds.length === 0) return;
+    // Fetch which products have stock control enabled
+    const { data: prods } = await supabase
+      .from("produtos")
+      .select("id, controle_estoque, quantidade_estoque")
+      .eq("store_id", storeId)
+      .in("id", prodIds)
+      .eq("controle_estoque", true);
+    if (!prods || prods.length === 0) return;
+    const prodMap = new Map(prods.map(p => [p.id, p]));
+    // Count quantities per product in the order
+    const qtdMap = new Map<string, number>();
+    for (const item of itens) {
+      const pid = item.produtoId || item.id;
+      if (pid && prodMap.has(pid)) {
+        qtdMap.set(pid, (qtdMap.get(pid) || 0) + (Number(item.quantidade) || Number(item.qtd) || 1));
+      }
+    }
+    // Update each product
+    for (const [pid, qtd] of qtdMap) {
+      const prod = prodMap.get(pid)!;
+      const newQtd = Math.max(0, (prod.quantidade_estoque ?? 0) - qtd);
+      supabase.from("produtos").update({ quantidade_estoque: newQtd } as any).eq("id", pid).then(({ error }) => {
+        if (error) console.error("Erro ao decrementar estoque:", error);
+      });
+    }
+  } catch (err) {
+    console.error("decrementStock error:", err);
   }
 };
 

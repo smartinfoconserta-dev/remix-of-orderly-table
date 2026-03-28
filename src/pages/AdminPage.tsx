@@ -300,11 +300,11 @@ const AdminPage = () => {
   }, [tab, storeId]);
 
   // --- Cardápio state (from Supabase produtos table) ---
-  type AdminProduct = Produto & { ativo: boolean; removido: boolean; disponivelDelivery: boolean; imagemBase64?: string };
+  type AdminProduct = Produto & { ativo: boolean; removido: boolean; disponivelDelivery: boolean; imagemBase64?: string; controleEstoque?: boolean; quantidadeEstoque?: number; estoqueMinimo?: number };
   const [allProducts, setAllProducts] = useState<AdminProduct[]>([]);
   const [editProduct, setEditProduct] = useState<AdminProduct | null>(null);
   const [isNewProduct, setIsNewProduct] = useState(false);
-  const [editForm, setEditForm] = useState({ nome: "", descricao: "", preco: "", categoria: "", imagem: "", imagemBase64: "", permiteLevar: true });
+  const [editForm, setEditForm] = useState({ nome: "", descricao: "", preco: "", categoria: "", imagem: "", imagemBase64: "", permiteLevar: true, controleEstoque: false, quantidadeEstoque: 0, estoqueMinimo: 0 });
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [catFilter, setCatFilter] = useState<string>("todas");
   const [removeTarget, setRemoveTarget] = useState<AdminProduct | null>(null);
@@ -371,6 +371,9 @@ const AdminPage = () => {
       imagem: product.imagem,
       imagemBase64: product.imagemBase64 || "",
       permiteLevar: product.permiteLevar !== false,
+      controleEstoque: product.controleEstoque ?? false,
+      quantidadeEstoque: product.quantidadeEstoque ?? 0,
+      estoqueMinimo: product.estoqueMinimo ?? 0,
     });
   }, []);
 
@@ -388,7 +391,7 @@ const AdminPage = () => {
     };
     setEditProduct(newProduct);
     setIsNewProduct(true);
-    setEditForm({ nome: "", descricao: "", preco: "", categoria: newProduct.categoria, imagem: "", imagemBase64: "", permiteLevar: true });
+    setEditForm({ nome: "", descricao: "", preco: "", categoria: newProduct.categoria, imagem: "", imagemBase64: "", permiteLevar: true, controleEstoque: false, quantidadeEstoque: 0, estoqueMinimo: 0 });
   }, [todasCategorias]);
 
   const saveEdit = useCallback(async () => {
@@ -413,6 +416,9 @@ const AdminPage = () => {
         imagemBase64: editForm.imagemBase64 || undefined,
         permiteLevar: editForm.permiteLevar,
         setor: editProduct.setor ?? "cozinha",
+        controleEstoque: editForm.controleEstoque,
+        quantidadeEstoque: editForm.quantidadeEstoque,
+        estoqueMinimo: editForm.estoqueMinimo,
       };
       await upsertProduct(productToSave, storeId);
       await loadProducts();
@@ -1294,7 +1300,17 @@ ${topRows ? `<h2>Top 5 produtos</h2><table><thead><tr><th>#</th><th>Produto</th>
                               <div className="h-10 w-10 rounded-lg bg-secondary border border-border flex items-center justify-center shrink-0"><span className="text-lg">🍽️</span></div>
                             )}
                           </td>
-                          <td className="px-4 py-3 font-semibold text-foreground">{p.nome}</td>
+                          <td className="px-4 py-3 font-semibold text-foreground">
+                            <div className="flex items-center gap-2">
+                              {p.nome}
+                              {p.controleEstoque && p.quantidadeEstoque !== undefined && p.quantidadeEstoque <= 0 && (
+                                <span className="px-1.5 py-0.5 rounded text-[9px] font-black bg-destructive text-destructive-foreground">Esgotado</span>
+                              )}
+                              {p.controleEstoque && p.quantidadeEstoque !== undefined && p.estoqueMinimo !== undefined && p.quantidadeEstoque > 0 && p.quantidadeEstoque <= p.estoqueMinimo && (
+                                <span className="px-1.5 py-0.5 rounded text-[9px] font-black bg-destructive text-destructive-foreground">Estoque baixo</span>
+                              )}
+                            </div>
+                          </td>
                           <td className="px-4 py-3 text-muted-foreground">{cat?.nome ?? p.categoria}</td>
                           <td className="px-4 py-3 text-right font-bold text-foreground">{formatPrice(p.preco)}</td>
                           <td className="px-4 py-3 text-center">
@@ -1414,6 +1430,44 @@ ${topRows ? `<h2>Top 5 produtos</h2><table><thead><tr><th>#</th><th>Produto</th>
                       checked={editForm.permiteLevar}
                       onCheckedChange={(v) => setEditForm(prev => ({ ...prev, permiteLevar: v }))}
                     />
+                  </div>
+
+                  {/* Estoque */}
+                  <div className="space-y-3 border-t border-border pt-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-xs font-bold text-muted-foreground">Controlar estoque</p>
+                        <p className="text-[10px] text-muted-foreground leading-tight mt-0.5">Ative para monitorar a quantidade disponível deste produto.</p>
+                      </div>
+                      <Switch
+                        checked={editForm.controleEstoque}
+                        onCheckedChange={(v) => setEditForm(prev => ({ ...prev, controleEstoque: v }))}
+                      />
+                    </div>
+                    {editForm.controleEstoque && (
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-bold text-muted-foreground">Quantidade atual</label>
+                          <Input
+                            type="number"
+                            min={0}
+                            value={editForm.quantidadeEstoque}
+                            onChange={(e) => setEditForm(prev => ({ ...prev, quantidadeEstoque: parseInt(e.target.value) || 0 }))}
+                            className="rounded-xl"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-bold text-muted-foreground">Estoque mínimo (alerta)</label>
+                          <Input
+                            type="number"
+                            min={0}
+                            value={editForm.estoqueMinimo}
+                            onChange={(e) => setEditForm(prev => ({ ...prev, estoqueMinimo: parseInt(e.target.value) || 0 }))}
+                            className="rounded-xl"
+                          />
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   {/* Setor de preparo */}
