@@ -1300,7 +1300,17 @@ ${topRows ? `<h2>Top 5 produtos</h2><table><thead><tr><th>#</th><th>Produto</th>
                               <div className="h-10 w-10 rounded-lg bg-secondary border border-border flex items-center justify-center shrink-0"><span className="text-lg">🍽️</span></div>
                             )}
                           </td>
-                          <td className="px-4 py-3 font-semibold text-foreground">{p.nome}</td>
+                          <td className="px-4 py-3 font-semibold text-foreground">
+                            <div className="flex items-center gap-2">
+                              {p.nome}
+                              {p.controleEstoque && p.quantidadeEstoque !== undefined && p.quantidadeEstoque <= 0 && (
+                                <span className="px-1.5 py-0.5 rounded text-[9px] font-black bg-destructive text-destructive-foreground">Esgotado</span>
+                              )}
+                              {p.controleEstoque && p.quantidadeEstoque !== undefined && p.estoqueMinimo !== undefined && p.quantidadeEstoque > 0 && p.quantidadeEstoque <= p.estoqueMinimo && (
+                                <span className="px-1.5 py-0.5 rounded text-[9px] font-black bg-destructive text-destructive-foreground">Estoque baixo</span>
+                              )}
+                            </div>
+                          </td>
                           <td className="px-4 py-3 text-muted-foreground">{cat?.nome ?? p.categoria}</td>
                           <td className="px-4 py-3 text-right font-bold text-foreground">{formatPrice(p.preco)}</td>
                           <td className="px-4 py-3 text-center">
