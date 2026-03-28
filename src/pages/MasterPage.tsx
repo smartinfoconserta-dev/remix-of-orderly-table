@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { LogOut, Plus, Pencil, Trash2, Phone, Mail, MapPin, DollarSign, Users, TrendingUp, TrendingDown, Receipt, Eye, AlertTriangle, ShieldOff, RefreshCw, Search, Send, Bell, KeyRound } from "lucide-react";
+import { LogOut, Plus, Pencil, Trash2, Phone, Mail, MapPin, DollarSign, Users, TrendingUp, TrendingDown, Receipt, Eye, AlertTriangle, ShieldOff, RefreshCw, Search, Send, Bell, KeyRound, Shield } from "lucide-react";
 import StorePinsManager from "@/components/StorePinsManager";
 import { supabase } from "@/integrations/supabase/client";
 import type { Pagamento } from "@/lib/masterStorage";
@@ -416,8 +416,11 @@ const MasterPage = () => {
   return (
     <div className="min-h-screen bg-background p-4 md:p-8">
       <div className="max-w-5xl mx-auto space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl md:text-3xl font-black text-foreground">Painel Master</h1>
+        <div className="flex items-start justify-between">
+          <div>
+            <h1 className="text-3xl font-black text-foreground flex items-center gap-2"><Shield className="h-7 w-7" />Painel Master</h1>
+            <p className="text-sm text-muted-foreground mt-1">{clientes.filter(c => c.ativo).length} clientes ativos de {clientes.length}</p>
+          </div>
           <Button variant="outline" size="sm" onClick={() => logout()}><LogOut className="w-4 h-4 mr-1" /> Sair</Button>
         </div>
 
