@@ -1748,6 +1748,7 @@ ${topRows ? `<h2>Top 5 produtos</h2><table><thead><tr><th>#</th><th>Produto</th>
                   {configSection === "operacao" && "⚙️ Operação"}
                   {configSection === "modulos" && "🧩 Módulos"}
                   {configSection === "sistema" && "💾 Sistema"}
+                  {configSection === "impressoras" && "🖨️ Impressoras"}
                 </h2>
                 {configSection === "inicio" && (
                   <p className="text-sm text-muted-foreground">Toque em um bloco para configurar</p>
