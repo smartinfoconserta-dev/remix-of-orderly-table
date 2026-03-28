@@ -1,0 +1,1 @@
+ALTER TABLE public.restaurant_config ADD COLUMN IF NOT EXISTS cpf_nota_ativo BOOLEAN DEFAULT false;

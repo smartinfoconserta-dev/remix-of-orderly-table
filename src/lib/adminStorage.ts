@@ -83,6 +83,7 @@ export interface SistemaConfig {
   modoOperacao?: "restaurante" | "fast_food";
   identificacaoFastFood?: "codigo" | "nome_cliente";
   impressoras?: ImpressoraConfig[];
+  cpfNotaAtivo?: boolean;
 }
 
 export interface ImpressoraConfig {
