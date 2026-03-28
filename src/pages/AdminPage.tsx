@@ -600,7 +600,106 @@ const AdminPage = () => {
 
             {/* ── Hoje ── */}
             <div className="space-y-4">
-              <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Hoje</p>
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Hoje</p>
+                {!dashLoading && !dashError && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="rounded-xl font-bold text-xs gap-1.5"
+                    onClick={() => {
+                      // Build payment summary from fechamentos
+                      const porForma: Record<string, number> = {};
+                      for (const f of dashUltimosFechamentos) {
+                        const forma = (f.forma_pagamento || "outro").toLowerCase();
+                        porForma[forma] = (porForma[forma] || 0) + (Number(f.total) || 0);
+                      }
+                      // We need ALL fechamentos, not just 10. Re-fetch for report.
+                      const hoje = new Date();
+                      hoje.setHours(0, 0, 0, 0);
+                      const hojeISO = hoje.toISOString();
+                      const nomeRest = sistemaConfig.nomeRestaurante || "Restaurante";
+                      const dataFormatada = new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+
+                      supabase
+                        .from("fechamentos")
+                        .select("total, origem, mesa_numero, forma_pagamento, criado_em")
+                        .eq("store_id", storeId!)
+                        .eq("cancelado", false)
+                        .gte("criado_em_iso", hojeISO)
+                        .order("criado_em_iso", { ascending: false })
+                        .limit(500)
+                        .then(({ data }) => {
+                          const fechamentos = data ?? [];
+                          const totalFat = fechamentos.reduce((s, f) => s + (Number(f.total) || 0), 0);
+                          const formas: Record<string, number> = {};
+                          for (const f of fechamentos) {
+                            const k = (f.forma_pagamento || "outro").toLowerCase();
+                            formas[k] = (formas[k] || 0) + (Number(f.total) || 0);
+                          }
+                          const ticketMedio = fechamentos.length > 0 ? totalFat / fechamentos.length : 0;
+
+                          const formasRows = ["dinheiro", "crédito", "débito", "pix"]
+                            .map((f) => `<tr><td style="padding:6px 12px;border:1px solid #ddd;">${f.charAt(0).toUpperCase() + f.slice(1)}</td><td style="padding:6px 12px;border:1px solid #ddd;text-align:right;">R$ ${(formas[f] || 0).toFixed(2).replace(".", ",")}</td></tr>`)
+                            .join("");
+                          // Add "outros" if any
+                          const outrasFormas = Object.entries(formas).filter(([k]) => !["dinheiro", "crédito", "débito", "pix"].includes(k));
+                          const outrasRows = outrasFormas.map(([k, v]) => `<tr><td style="padding:6px 12px;border:1px solid #ddd;">${k.charAt(0).toUpperCase() + k.slice(1)}</td><td style="padding:6px 12px;border:1px solid #ddd;text-align:right;">R$ ${v.toFixed(2).replace(".", ",")}</td></tr>`).join("");
+
+                          const fechRows = fechamentos.map((f) => {
+                            const hora = f.criado_em ? String(f.criado_em).split(" ").pop()?.slice(0, 5) || "" : "";
+                            const origem = f.origem === "mesa" ? `Mesa ${f.mesa_numero || "?"}` : f.origem === "balcao" ? "Balcão" : f.origem === "totem" ? "Totem" : f.origem === "delivery" ? "Delivery" : f.origem || "—";
+                            return `<tr><td style="padding:6px 12px;border:1px solid #ddd;">${hora}</td><td style="padding:6px 12px;border:1px solid #ddd;">${origem}</td><td style="padding:6px 12px;border:1px solid #ddd;text-align:right;">R$ ${(Number(f.total) || 0).toFixed(2).replace(".", ",")}</td><td style="padding:6px 12px;border:1px solid #ddd;">${f.forma_pagamento || "—"}</td></tr>`;
+                          }).join("");
+
+                          const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Relatório do Dia - ${nomeRest}</title><style>
+body{font-family:Arial,sans-serif;font-size:12px;color:#222;padding:24px;max-width:800px;margin:0 auto;}
+h1{font-size:18px;margin-bottom:4px;}
+h2{font-size:14px;margin-top:24px;margin-bottom:8px;border-bottom:2px solid #222;padding-bottom:4px;}
+.subtitle{color:#666;font-size:12px;margin-bottom:20px;}
+table{border-collapse:collapse;width:100%;margin-bottom:16px;}
+th{background:#f5f5f5;padding:8px 12px;border:1px solid #ddd;text-align:left;font-weight:bold;}
+.summary{display:flex;gap:32px;flex-wrap:wrap;margin-bottom:8px;}
+.summary-item{min-width:140px;}
+.summary-item .label{color:#666;font-size:11px;text-transform:uppercase;}
+.summary-item .value{font-size:20px;font-weight:bold;}
+.print-btn{margin-bottom:20px;padding:8px 16px;background:#222;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px;}
+@media print{.print-btn{display:none !important;}}
+</style></head><body>
+<button class="print-btn" onclick="window.print()">🖨️ Imprimir</button>
+<h1>${nomeRest}</h1>
+<p class="subtitle">Relatório do dia — ${dataFormatada}</p>
+
+<h2>Resumo financeiro</h2>
+<div class="summary">
+<div class="summary-item"><div class="label">Faturamento total</div><div class="value">R$ ${totalFat.toFixed(2).replace(".", ",")}</div></div>
+<div class="summary-item"><div class="label">Pedidos</div><div class="value">${dashPedidosHoje}</div></div>
+<div class="summary-item"><div class="label">Ticket médio</div><div class="value">R$ ${ticketMedio.toFixed(2).replace(".", ",")}</div></div>
+<div class="summary-item"><div class="label">Fechamentos</div><div class="value">${fechamentos.length}</div></div>
+</div>
+
+<h2>Vendas por forma de pagamento</h2>
+<table><thead><tr><th>Forma</th><th style="text-align:right;">Total</th></tr></thead><tbody>${formasRows}${outrasRows}</tbody></table>
+
+<h2>Fechamentos do dia (${fechamentos.length})</h2>
+<table><thead><tr><th>Horário</th><th>Origem</th><th style="text-align:right;">Total</th><th>Pagamento</th></tr></thead><tbody>${fechRows || '<tr><td colspan="4" style="padding:12px;text-align:center;color:#999;">Nenhum fechamento</td></tr>'}</tbody></table>
+
+<p style="color:#999;font-size:10px;margin-top:24px;text-align:center;">Gerado automaticamente em ${new Date().toLocaleString("pt-BR")}</p>
+</body></html>`;
+
+                          const w = window.open("", "_blank");
+                          if (w) {
+                            w.document.write(html);
+                            w.document.close();
+                          }
+                        });
+                    }}
+                  >
+                    <Printer className="h-3.5 w-3.5" />
+                    Exportar PDF
+                  </Button>
+                )}
+              </div>
               {dashLoading ? (
                 <div className="flex items-center gap-2 text-xs text-muted-foreground py-4">
                   <span className="h-4 w-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
