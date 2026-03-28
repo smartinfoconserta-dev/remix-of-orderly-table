@@ -1295,8 +1295,8 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
           if (!open) {
             setAdminModalOpen(false);
             setAdminAuthenticated(false);
-            setAdminNome("");
-            setAdminPin("");
+            setAdminEmail("");
+            setAdminPassword("");
             setAdminError(null);
             setShowMesaSelector(false);
           }
@@ -1310,30 +1310,30 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
               <DialogDescription className="text-muted-foreground">
                 {adminAuthenticated
                   ? "Escolha a ação desejada para este terminal."
-                  : "Faça login com suas credenciais de funcionário para continuar."}
+                  : "Insira suas credenciais para continuar."}
               </DialogDescription>
             </DialogHeader>
 
             {!adminAuthenticated ? (
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <label className="text-sm font-semibold text-foreground">Nome</label>
+                  <label className="text-sm font-semibold text-foreground">Email</label>
                   <Input
-                    value={adminNome}
-                    onChange={(e) => setAdminNome(e.target.value.slice(0, 40))}
-                    placeholder="Seu nome de funcionário"
-                    autoComplete="username"
+                    type="email"
+                    value={adminEmail}
+                    onChange={(e) => setAdminEmail(e.target.value)}
+                    placeholder="funcionario@empresa.com"
+                    autoComplete="email"
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-semibold text-foreground">PIN</label>
+                  <label className="text-sm font-semibold text-foreground">Senha</label>
                   <Input
                     type="password"
-                    value={adminPin}
-                    onChange={(e) => setAdminPin(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                    placeholder="4 a 6 dígitos"
-                    inputMode="numeric"
-                    autoComplete="one-time-code"
+                    value={adminPassword}
+                    onChange={(e) => setAdminPassword(e.target.value)}
+                    placeholder="••••••••"
+                    autoComplete="current-password"
                     onKeyDown={(e) => {
                       if (e.key === "Enter") {
                         e.preventDefault();
@@ -1345,7 +1345,7 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
                 {adminError && <p className="rounded-xl border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive">{adminError}</p>}
                 <Button onClick={handleAdminLogin} disabled={isAdminLoggingIn} className="h-11 w-full rounded-xl font-black">
                   <LockKeyhole className="h-4 w-4" />
-                  Autenticar
+                  {isAdminLoggingIn ? "Autenticando..." : "Entrar"}
                 </Button>
               </div>
             ) : showMesaSelector ? (
