@@ -154,7 +154,6 @@ const TabletInner = ({ storeId, initialMesaId }: { storeId: string; initialMesaI
       authUserEmail,
       `Mesa ${mesaNum ?? "?"} vinculada por ${authUserEmail}`
     );
-    await supabase.auth.signOut();
     setAuthenticated(false);
     setAuthUserEmail("");
     toast.success(`Mesa ${String(mesaNum ?? "").padStart(2, "0")} vinculada`, { duration: 1200 });
