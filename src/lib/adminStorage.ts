@@ -175,49 +175,6 @@ export function isSystemBlocked(): boolean {
 }
 
 // ─────────────────────────────────
-// CARDÁPIO OVERRIDES
-// ─────────────────────────────────
-
-export function getCardapioOverrides(): Record<string, ProdutoOverride> {
-  return _cardapioCache ?? {};
-}
-
-export async function saveCardapioOverrides(
-  overrides: Record<string, ProdutoOverride>,
-  storeId?: string | null
-): Promise<void> {
-  _cardapioCache = overrides;
-  try {
-    let existingQuery = supabase.from("restaurant_config").select("id").limit(1);
-    if (storeId) existingQuery = existingQuery.eq("store_id", storeId);
-    const { data: existing } = await existingQuery.maybeSingle();
-    if (existing) {
-      await supabase
-        .from("restaurant_config")
-        .update({ cardapio_overrides: overrides as any })
-        .eq("id", existing.id);
-    }
-  } catch (err) {
-    console.error("Erro ao salvar cardápio:", err);
-  }
-}
-
-export async function loadCardapioOverrides(
-  storeId?: string | null
-): Promise<Record<string, ProdutoOverride>> {
-  try {
-    let query = supabase.from("restaurant_config").select("cardapio_overrides").limit(1);
-    if (storeId) query = query.eq("store_id", storeId);
-    const { data } = await query.maybeSingle();
-    const overrides = (data?.cardapio_overrides as unknown as Record<string, ProdutoOverride>) ?? {};
-    _cardapioCache = overrides;
-    return overrides;
-  } catch {
-    return {};
-  }
-}
-
-// ─────────────────────────────────
 // MESAS CONFIG
 // ─────────────────────────────────
 
