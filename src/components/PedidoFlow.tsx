@@ -491,26 +491,66 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
     setShowMesaSelector(true);
   }, []);
 
-  const handleAdminSelectNewMesa = useCallback((newMesaId: string) => {
-    // Update mesa_id on the device in DB
+  const handleAdminSelectNewMesa = useCallback(async (newMesaId: string) => {
     const deviceId = getStoredDeviceId();
     if (deviceId) {
-      supabase.from("devices").update({ mesa_id: newMesaId } as any).eq("device_id", deviceId).then();
+      await supabase.from("devices").update({ mesa_id: newMesaId } as any).eq("device_id", deviceId);
     }
+    // Save to sessionStorage
+    try { sessionStorage.setItem("orderly-tablet-mesa", newMesaId); } catch {}
+    // Find mesa numbers for logging
+    const oldMesaNum = mesas.find((m) => m.id === mesaId)?.numero;
+    const newMesaNum = mesas.find((m) => m.id === newMesaId)?.numero;
+    // Log event
+    if (deviceStoreId) {
+      try {
+        await supabase.rpc("rpc_insert_evento", {
+          _data: {
+            id: crypto.randomUUID(),
+            store_id: deviceStoreId,
+            tipo: "tablet_mesa_trocada",
+            usuario_nome: adminUserEmail,
+            descricao: `Mesa trocada de ${oldMesaNum ?? "?"} para ${newMesaNum ?? "?"} por ${adminUserEmail}`,
+            criado_em: new Date().toLocaleString("pt-BR"),
+            criado_em_iso: new Date().toISOString(),
+          },
+        });
+      } catch {}
+    }
+    await supabase.auth.signOut();
     setAdminModalOpen(false);
     toast.success("Mesa trocada com sucesso", { duration: 1200, icon: "🔄" });
     window.location.reload();
-  }, []);
+  }, [mesas, mesaId, deviceStoreId, adminUserEmail]);
 
-  const handleAdminDesvincular = useCallback(() => {
+  const handleAdminDesvincular = useCallback(async () => {
     const deviceId = getStoredDeviceId();
     if (deviceId) {
-      supabase.from("devices").update({ mesa_id: null } as any).eq("device_id", deviceId).then();
+      await supabase.from("devices").update({ mesa_id: null } as any).eq("device_id", deviceId);
     }
+    // Clear sessionStorage
+    try { sessionStorage.removeItem("orderly-tablet-mesa"); } catch {}
+    // Log event
+    if (deviceStoreId) {
+      try {
+        await supabase.rpc("rpc_insert_evento", {
+          _data: {
+            id: crypto.randomUUID(),
+            store_id: deviceStoreId,
+            tipo: "tablet_desvinculado",
+            usuario_nome: adminUserEmail,
+            descricao: `Tablet desvinculado por ${adminUserEmail}`,
+            criado_em: new Date().toLocaleString("pt-BR"),
+            criado_em_iso: new Date().toISOString(),
+          },
+        });
+      } catch {}
+    }
+    await supabase.auth.signOut();
     clearTabletLoginUser();
     setAdminModalOpen(false);
     toast.success("Tablet desvinculado", { duration: 1200, icon: "📱" });
-  }, []);
+  }, [deviceStoreId, adminUserEmail]);
 
   const mesasOrdenadas = useMemo(() => [...mesas].sort((a, b) => a.numero - b.numero), [mesas]);
 
