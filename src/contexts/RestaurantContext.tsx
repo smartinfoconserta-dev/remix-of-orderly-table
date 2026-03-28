@@ -415,7 +415,7 @@ const dbInsertPedido = async (p: PedidoRealizado) => {
     console.error("dbInsertPedido unexpected error", err);
     const fallbackRow = pedidoToRow(p, sid);
     supabase.rpc("rpc_insert_pedido" as any, { _data: fallbackRow }).then(({ error }: any) => {
-      if (error) console.error("DB insert pedido fallback", error);
+      if (error) { console.error("DB insert pedido fallback", error); toast.error("Erro ao salvar pedido"); }
     });
   }
 };
