@@ -1767,11 +1767,9 @@ const AdminPage = () => {
                       <AlertDialogCancel>Cancelar</AlertDialogCancel>
                       <AlertDialogAction onClick={() => {
                         if (modoOperacaoPendente) {
-                          const tvMode = modoOperacaoPendente === "fast_food" ? "padrao" : "padrao";
                           const next = {
                             ...sistemaConfig,
                             modoOperacao: modoOperacaoPendente,
-                            modoTV: tvMode as "padrao" | "completo",
                           };
                           setSistemaConfig(next);
                           saveSistemaConfig(next);
