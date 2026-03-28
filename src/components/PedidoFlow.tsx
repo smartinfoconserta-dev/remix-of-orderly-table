@@ -54,17 +54,7 @@ interface PedidoFlowProps {
   deviceStoreId?: string | null;
 }
 
-const sysConfig = getSistemaConfig();
-const logoEstilo = sysConfig.logoEstilo || "quadrada";
-const logoRadius = logoEstilo === "circular" ? "rounded-full" : "rounded-xl";
-const logoRadiusSm = logoEstilo === "circular" ? "rounded-full" : "rounded-lg";
-const cardapioHeaderEstilo = sysConfig.cardapioHeaderEstilo || "padrao";
-const cardapioBannerBase64 = sysConfig.cardapioBannerBase64 || "";
-const RESTAURANTE = {
-  nome: sysConfig.nomeRestaurante || "Restaurante",
-  logoUrl: sysConfig.logoBase64 || sysConfig.logoUrl || "",
-  logoFallback: (sysConfig.nomeRestaurante || "Restaurante").slice(0, 2).toUpperCase(),
-};
+// sysConfig moved inside component as state
 
 
 // Products are loaded reactively inside the component
