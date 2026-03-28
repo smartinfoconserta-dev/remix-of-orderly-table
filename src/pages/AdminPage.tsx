@@ -1517,14 +1517,19 @@ ${topRows ? `<h2>Top 5 produtos</h2><table><thead><tr><th>#</th><th>Produto</th>
                         const novoGrupo: GrupoPersonalizacao = {
                           id: `grp-${Date.now()}`,
                           nome: "",
-                          obrigatorio: false,
-                          tipo: "adicional",
+                          obrigatorio: true,
+                          tipo: "escolha",
                           opcoes: [],
                         };
                         setEditProduct((prev) => prev ? { ...prev, grupos: [...(prev.grupos || []), novoGrupo] } : prev);
                       }}>
                         <Plus className="h-3 w-3" /> Criar grupo
                       </Button>
+                    </div>
+                    <div className="text-[10px] text-muted-foreground space-y-0.5">
+                      <p><strong>Escolha obrigatória</strong> = cliente tem que escolher 1 opção (ex: tamanho, refri do combo)</p>
+                      <p><strong>Adicional</strong> = cliente pode adicionar itens com preço extra (ex: bacon, borda)</p>
+                      <p><strong>Retirar</strong> = cliente marca o que não quer, sem cobrar nada (ex: sem cebola)</p>
                     </div>
                     {(editProduct?.grupos || []).map((grupo, gi) => (
                       <div key={grupo.id} className="rounded-lg border border-border bg-secondary/30 p-3 space-y-2">
