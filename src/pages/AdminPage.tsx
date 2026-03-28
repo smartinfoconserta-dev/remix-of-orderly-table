@@ -2143,14 +2143,14 @@ const AdminPage = () => {
           )
         )}
 
-        {/* ═══ TABLETS ═══ */}
+        {/* ═══ DISPOSITIVOS ═══ */}
         {tab === "tablets" && (
           <div className="space-y-6 fade-in">
             {storeId ? (
               <>
-                <DevicesManager storeId={storeId} />
+                <DevicePinsManager storeId={storeId} />
                 <div className="border-t border-border pt-6">
-                  <TabletsManager storeId={storeId} />
+                  <DevicesManager storeId={storeId} />
                 </div>
               </>
             ) : (
