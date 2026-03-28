@@ -39,11 +39,10 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import {
-  clearBoundTabletMesaId,
   clearTabletLoginUser,
-  getBoundTabletMesaId,
-  setBoundTabletMesaId,
 } from "@/lib/tabletBinding";
+import { getStoredDeviceId } from "@/lib/deviceAuth";
+import { supabase } from "@/integrations/supabase/client";
 
 interface PedidoFlowProps {
   modo: "cliente" | "garcom" | "caixa" | "balcao" | "delivery" | "totem";
