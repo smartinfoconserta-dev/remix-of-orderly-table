@@ -607,10 +607,15 @@ const AdminPage = () => {
               </div>
             </div>
 
+            <hr className="border-border my-6" />
+
             {/* ── Hoje ── */}
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Hoje</p>
+                <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-1.5">
+                  <Clock className="h-3.5 w-3.5" />
+                  Hoje
+                </p>
                 {!dashLoading && !dashError && (
                   <Button
                     size="sm"
