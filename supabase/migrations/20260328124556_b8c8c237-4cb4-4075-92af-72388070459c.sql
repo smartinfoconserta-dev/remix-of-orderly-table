@@ -1,0 +1,1 @@
+ALTER TABLE public.fechamentos ADD COLUMN IF NOT EXISTS cpf_nota TEXT DEFAULT NULL;

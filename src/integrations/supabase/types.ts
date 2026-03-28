@@ -326,6 +326,7 @@ export type Database = {
           cancelado_motivo: string | null
           cancelado_por: string | null
           couvert: number | null
+          cpf_nota: string | null
           created_at: string | null
           criado_em: string | null
           criado_em_iso: string | null
@@ -352,6 +353,7 @@ export type Database = {
           cancelado_motivo?: string | null
           cancelado_por?: string | null
           couvert?: number | null
+          cpf_nota?: string | null
           created_at?: string | null
           criado_em?: string | null
           criado_em_iso?: string | null
@@ -378,6 +380,7 @@ export type Database = {
           cancelado_motivo?: string | null
           cancelado_por?: string | null
           couvert?: number | null
+          cpf_nota?: string | null
           created_at?: string | null
           criado_em?: string | null
           criado_em_iso?: string | null
