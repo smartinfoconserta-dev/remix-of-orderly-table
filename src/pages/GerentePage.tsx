@@ -681,6 +681,38 @@ const GerentePage = () => {
           {!pinVerificado ? pinGateUI : (
           <div className="space-y-6">
 
+            {/* ── KPIs do dia ── */}
+            {(() => {
+              const hoje = new Date();
+              hoje.setHours(0, 0, 0, 0);
+              const amanha = new Date(hoje);
+              amanha.setDate(amanha.getDate() + 1);
+              const fechHoje = allFechamentos.filter(f => !f.cancelado && new Date(f.criadoEmIso) >= hoje && new Date(f.criadoEmIso) < amanha);
+              const fatHoje = fechHoje.reduce((a, f) => a + f.total, 0);
+              const pedidosHojeCount = pedidosBalcao.filter(p => new Date(p.criadoEmIso) >= hoje && new Date(p.criadoEmIso) < amanha).length
+                + mesas.reduce((a, m) => a + m.pedidos.filter(p => { const d = new Date(p.criadoEmIso); return d >= hoje && d < amanha; }).length, 0);
+              const ticketHoje = fechHoje.length > 0 ? fatHoje / fechHoje.length : 0;
+              const mesasEmUso = mesas.filter(m => m.status === "consumo").length;
+              const kpis = [
+                { label: "Pedidos hoje", value: String(pedidosHojeCount), icon: ClipboardList },
+                { label: "Faturamento hoje", value: formatPrice(fatHoje), icon: Banknote, highlight: true },
+                { label: "Ticket médio", value: formatPrice(ticketHoje), icon: TrendingUp, highlight: true },
+                { label: "Mesas em uso", value: String(mesasEmUso), icon: UtensilsCrossed },
+              ];
+              return (
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  {kpis.map((k) => (
+                    <div key={k.label} className="rounded-xl border border-border bg-card p-3 space-y-1">
+                      <div className="flex items-center gap-1.5 text-muted-foreground">
+                        <k.icon className="h-3.5 w-3.5" />
+                        <span className="text-[11px] font-bold uppercase tracking-wide">{k.label}</span>
+                      </div>
+                      <p className={`text-lg font-black tabular-nums ${k.highlight ? "text-primary" : "text-foreground"}`}>{k.value}</p>
+                    </div>
+                  ))}
+                </div>
+              );
+            })()}
             {/* ── Header with Print ── */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 text-sm font-black uppercase tracking-widest text-muted-foreground">
