@@ -12,7 +12,8 @@ function getLocalCache<T>(key: string): T | null {
   try {
     const raw = localStorage.getItem(key);
     return raw ? JSON.parse(raw) : null;
-  } catch {
+  } catch (err) {
+    console.error("[configService] erro:", err);
     return null;
   }
 }
