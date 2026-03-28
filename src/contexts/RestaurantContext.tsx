@@ -420,7 +420,8 @@ const dbInsertPedido = async (p: PedidoRealizado, onNumeroResolved?: (pedidoId: 
     }
   } catch (err) {
     console.error("dbInsertPedido unexpected error", err);
-    supabase.from("pedidos").insert(pedidoToRow(p, sid) as any).then(({ error }) => {
+    const fallbackRow = pedidoToRow(p, sid);
+    supabase.rpc("rpc_insert_pedido" as any, { _data: fallbackRow }).then(({ error }: any) => {
       if (error) console.error("DB insert pedido fallback", error);
     });
   }
