@@ -149,6 +149,7 @@ export default function MotoboyPage() {
     const fundoTroco = parseFloat(fundoInput.replace(",", ".")) || 0;
     const s = { id: motoboy.id, nome: motoboy.nome, fundoTroco };
     localStorage.setItem(SESSAO_KEY, JSON.stringify(s));
+    if (effectiveStoreId) savePreferencia(effectiveStoreId, "motoboy", "sessao", JSON.stringify(s));
     setSessao(s);
     setLoginLoading(false);
     toast.success(`Bem-vindo, ${motoboy.nome}!`);
