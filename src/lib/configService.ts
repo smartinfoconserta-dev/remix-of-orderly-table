@@ -102,7 +102,6 @@ function configToDbRow(config: SistemaConfig) {
     nome_impressora_bar: config.nomeImpressoraBar ?? null,
     modulos: (config.modulos ?? {}) as unknown as null,
     plano: config.plano ?? "basico",
-    modo_tv: config.modoTV ?? "padrao",
     modo_operacao: config.modoOperacao ?? "restaurante",
     identificacao_fast_food: config.identificacaoFastFood ?? "codigo",
     total_mesas: 20,

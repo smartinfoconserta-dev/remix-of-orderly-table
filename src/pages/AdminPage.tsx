@@ -1784,34 +1784,6 @@ const AdminPage = () => {
                   </AlertDialogContent>
                 </AlertDialog>
 
-                {/* TV de Retirada — Modo */}
-                <div className="surface-card rounded-2xl p-6 space-y-3">
-                  <div>
-                    <p className="text-sm font-black text-foreground">TV de Retirada — Modo de exibição</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">Controla quais pedidos aparecem na TV</p>
-                  </div>
-                  <div className="space-y-2">
-                    <button type="button" onClick={() => {
-                      const next = { ...sistemaConfig, modoTV: "padrao" as const };
-                      setSistemaConfig(next);
-                      saveSistemaConfig(next);
-                      toast.success("TV em modo Padrão");
-                    }} className={`w-full text-left rounded-xl border p-3 transition-colors ${(sistemaConfig.modoTV || "padrao") === "padrao" ? "border-primary bg-primary/10" : "border-border bg-card hover:border-primary/40"}`}>
-                      <p className="text-sm font-bold text-foreground">Padrão</p>
-                      <p className="text-xs text-muted-foreground">Exibe Balcão e Totem</p>
-                    </button>
-                    <button type="button" onClick={() => {
-                      const next = { ...sistemaConfig, modoTV: "completo" as const };
-                      setSistemaConfig(next);
-                      saveSistemaConfig(next);
-                      toast.success("TV em modo Completo");
-                    }} className={`w-full text-left rounded-xl border p-3 transition-colors ${sistemaConfig.modoTV === "completo" ? "border-primary bg-primary/10" : "border-border bg-card hover:border-primary/40"}`}>
-                      <p className="text-sm font-bold text-foreground">Completo</p>
-                      <p className="text-xs text-muted-foreground">Exibe também Mesas (para eventos)</p>
-                    </button>
-                  </div>
-                </div>
-
                 <div className="surface-card rounded-2xl p-6 space-y-3">
                   <div className="flex items-center justify-between">
                     <div>
