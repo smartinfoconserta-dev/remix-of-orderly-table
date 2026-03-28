@@ -415,7 +415,7 @@ const dbInsertPedido = async (p: PedidoRealizado) => {
     console.error("dbInsertPedido unexpected error", err);
     const fallbackRow = pedidoToRow(p, sid);
     supabase.rpc("rpc_insert_pedido" as any, { _data: fallbackRow }).then(({ error }: any) => {
-      if (error) console.error("DB insert pedido fallback", error);
+      if (error) { console.error("DB insert pedido fallback", error); toast.error("Erro ao salvar pedido"); }
     });
   }
 };
@@ -448,7 +448,7 @@ const dbInsertEvento = (e: EventoOperacional) => {
   const sid = getActiveStoreId();
   if (!sid) return;
   supabase.rpc("rpc_insert_evento" as any, { _data: eventoToRow(e, sid) }).then(({ error }: any) => {
-    if (error) console.error("DB insert evento", error);
+    if (error) { console.error("DB insert evento", error); toast.error("Erro ao registrar evento"); }
   });
 };
 
@@ -470,7 +470,7 @@ const dbUpsertEstadoCaixa = (aberto: boolean, fundoTroco: number, nome: string, 
   if (extras?.diferenca_motivo !== undefined) data.diferenca_motivo = extras.diferenca_motivo;
   if (extras?.fundo_proximo !== undefined) data.fundo_proximo = extras.fundo_proximo;
   supabase.rpc("rpc_upsert_estado_caixa" as any, { _store_id: sid, _data: data }).then(({ error }: any) => {
-    if (error) console.error("DB upsert caixa", error);
+    if (error) { console.error("DB upsert caixa", error); toast.error("Erro ao atualizar caixa"); }
   });
 };
 
@@ -485,7 +485,7 @@ const dbSyncEstadoMesa = (mesa: Mesa) => {
     store_id: sid,
   };
   supabase.rpc("rpc_upsert_estado_mesa" as any, { _data: row }).then(({ error }: any) => {
-    if (error) console.error("DB sync mesa via RPC", error);
+    if (error) { console.error("DB sync mesa via RPC", error); toast.error("Erro ao sincronizar mesa"); }
   });
 };
 
