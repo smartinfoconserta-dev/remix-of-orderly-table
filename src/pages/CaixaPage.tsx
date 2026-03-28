@@ -4022,13 +4022,30 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
                 </div>
               )}
             </div>
+
+            {/* Tempo estimado */}
+            <div className="rounded-xl border border-border bg-card p-3 space-y-1">
+              <label className="text-xs font-black text-foreground uppercase tracking-widest">🕐 Tempo estimado (minutos)</label>
+              <Input
+                value={deliveryTempoEstimado}
+                onChange={(e) => setDeliveryTempoEstimado(e.target.value.replace(/\D/g, ""))}
+                placeholder={sistemaConfig.tempoEntrega || "40"}
+                inputMode="numeric"
+              />
+            </div>
           </div>
-          <DialogFooter className="gap-3 sm:gap-0">
-            <Button variant="outline" onClick={() => { setDeliveryConfirmOpen(false); setBalcaoFlowAtivo(true); }} className="rounded-xl font-bold">← Voltar ao cardápio</Button>
-            <Button onClick={handleDeliveryConfirm} className="rounded-xl font-black gap-1.5">
+          <DialogFooter className="flex-col gap-2 sm:flex-col">
+            <Button variant="outline" onClick={() => { setDeliveryConfirmOpen(false); setBalcaoFlowAtivo(true); }} className="rounded-xl font-bold w-full">← Voltar ao cardápio</Button>
+            <Button onClick={() => handleDeliveryConfirm(false)} className="rounded-xl font-black gap-1.5 w-full">
               <Check className="h-4 w-4" />
               Confirmar e enviar para cozinha
             </Button>
+            {balcaoTelefone.trim() && (
+              <Button onClick={() => handleDeliveryConfirm(true)} variant="outline" className="rounded-xl font-black gap-1.5 w-full border-green-500/30 text-green-600 hover:bg-green-500/10">
+                <Smartphone className="h-4 w-4" />
+                Confirmar e avisar cliente
+              </Button>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>
