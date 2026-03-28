@@ -1264,6 +1264,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         caixaId: input.usuario.id, caixaNome: input.usuario.nome,
         troco: input.troco ?? 0, subtotal: pedido.total, desconto: input.desconto ?? 0,
         couvert: input.couvert ?? 0, numeroPessoas: input.numeroPessoas ?? 0,
+        cpfNota: input.cpfNota,
       };
       dbInsertFechamento(fechamento);
       dbUpdatePedido(pedidoId, { status_balcao: "pago" });
