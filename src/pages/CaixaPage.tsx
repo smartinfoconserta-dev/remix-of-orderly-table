@@ -272,11 +272,20 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
   const [balcaoPaymentValue, setBalcaoPaymentValue] = useState("");
   const [balcaoValorEntregue, setBalcaoValorEntregue] = useState("");
   const [balcaoFlowAtivo, setBalcaoFlowAtivo] = useState(false);
-  const [modoOperacao, setModoOperacao] = useState<"completo" | "somente_mesas" | "somente_delivery">("completo");
+  const globalModoOp = useMemo(() => getSistemaConfig()?.modoOperacao, []);
+  const isFastFoodGlobal = globalModoOp === "fast_food";
+  const [modoOperacao, setModoOperacao] = useState<"completo" | "somente_mesas" | "somente_delivery">(() => {
+    if (isFastFoodGlobal) return "somente_delivery";
+    if (modoForced) return modoForced;
+    const savedModo = localStorage.getItem("obsidian-caixa-modo-v1");
+    if (savedModo === "somente_mesas" || savedModo === "somente_delivery" || savedModo === "completo") return savedModo;
+    return "completo";
+  });
   useEffect(() => {
     if (modoForced) setModoOperacao(modoForced);
   }, [modoForced]);
   const [caixaView, setCaixaView] = useState<"mesas" | "delivery" | "totem" | "historico">(() => {
+    if (isFastFoodGlobal) return "totem";
     if (modoForced === "somente_delivery") return "delivery";
     if (modoForced === "somente_mesas") return "mesas";
     const savedModo = localStorage.getItem("obsidian-caixa-modo-v1");
@@ -339,9 +348,9 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
 
   useRouteLock(accessMode === "gerente" ? "/gerente" : "/caixa");
 
-  // Load saved modo operacao
+  // Load saved modo operacao (skip if fast_food global overrides)
   useEffect(() => {
-    if (modoForced) return;
+    if (modoForced || isFastFoodGlobal) return;
     const savedModo = localStorage.getItem("obsidian-caixa-modo-v1");
     if (savedModo === "somente_mesas" || savedModo === "somente_delivery" || savedModo === "completo") {
       setModoOperacao(savedModo);
@@ -842,7 +851,7 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
                   ))}
                 </div>
               </div>
-              {!modoForced && (
+              {!modoForced && !isFastFoodGlobal && (
               <div className="space-y-2">
                 <label className="text-sm font-bold text-foreground">Modo de operação</label>
                 <div className="grid grid-cols-3 gap-2">
@@ -1603,7 +1612,7 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
 
               {/* ── Windows-style Tabs ── */}
               <div className="flex items-end px-3 pt-1 shrink-0 bg-card">
-                {modoOperacao !== "somente_delivery" && (
+                {modoOperacao !== "somente_delivery" && !isFastFoodGlobal && (
                 <button
                   onClick={() => setCaixaView("mesas")}
                   className={`px-4 py-1.5 text-xs font-bold transition-colors border border-border rounded-t -mb-px relative ${

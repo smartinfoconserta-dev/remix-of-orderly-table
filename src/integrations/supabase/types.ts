@@ -803,6 +803,41 @@ export type Database = {
           },
         ]
       }
+      preferencias_operacionais: {
+        Row: {
+          chave: string
+          id: string
+          modulo: string
+          store_id: string
+          updated_at: string
+          valor: string | null
+        }
+        Insert: {
+          chave: string
+          id?: string
+          modulo: string
+          store_id: string
+          updated_at?: string
+          valor?: string | null
+        }
+        Update: {
+          chave?: string
+          id?: string
+          modulo?: string
+          store_id?: string
+          updated_at?: string
+          valor?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "preferencias_operacionais_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       produtos: {
         Row: {
           adicionais: Json | null
@@ -1266,6 +1301,13 @@ export type Database = {
       }
       is_master: { Args: { _user_id: string }; Returns: boolean }
       next_order_number: { Args: { _store_id: string }; Returns: number }
+      rpc_get_preferencias: {
+        Args: { _modulo: string; _store_id: string }
+        Returns: {
+          chave: string
+          valor: string
+        }[]
+      }
       rpc_insert_evento: { Args: { _data: Json }; Returns: undefined }
       rpc_insert_fechamento: { Args: { _data: Json }; Returns: undefined }
       rpc_insert_movimentacao: { Args: { _data: Json }; Returns: undefined }
@@ -1280,6 +1322,15 @@ export type Database = {
       }
       rpc_upsert_estado_caixa: {
         Args: { _data: Json; _store_id: string }
+        Returns: undefined
+      }
+      rpc_upsert_preferencia: {
+        Args: {
+          _chave: string
+          _modulo: string
+          _store_id: string
+          _valor: string
+        }
         Returns: undefined
       }
       search_stores: {

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Bike, LogOut, MapPin, Phone, DollarSign, Clock, Map, Navigation, QrCode, GripVertical, CheckCircle2, Package, XCircle, Camera, X } from "lucide-react";
+import { savePreferencia, loadPreferencias } from "@/hooks/usePreferencias";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -24,7 +25,10 @@ const getSessao = (): { id: string; nome: string; fundoTroco: number } | null =>
 const getOrdem = (): string[] => {
   try { const raw = localStorage.getItem(ORDEM_KEY); return raw ? JSON.parse(raw) : []; } catch { return []; }
 };
-const saveOrdem = (ids: string[]) => localStorage.setItem(ORDEM_KEY, JSON.stringify(ids));
+const saveOrdem = (ids: string[], storeId?: string | null) => {
+  localStorage.setItem(ORDEM_KEY, JSON.stringify(ids));
+  if (storeId) savePreferencia(storeId, "motoboy", "ordem", JSON.stringify(ids));
+};
 
 const getStoreIdFromSession = (): string | null => {
   try {
@@ -72,6 +76,26 @@ export default function MotoboyPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [motoboys, setMotoboys] = useState<Motoboy[]>([]);
   const [fechamentoEnviado, setFechamentoEnviado] = useState(false);
+
+  // Load preferences from DB on mount
+  useEffect(() => {
+    if (!effectiveStoreId) return;
+    loadPreferencias(effectiveStoreId, "motoboy").then(prefs => {
+      if (prefs.sessao && !isAdminAccess) {
+        try {
+          const s = JSON.parse(prefs.sessao);
+          setSessao(s);
+          localStorage.setItem(SESSAO_KEY, prefs.sessao);
+        } catch {}
+      }
+      if (prefs.ordem) {
+        try {
+          const o = JSON.parse(prefs.ordem);
+          if (Array.isArray(o)) { setOrdem(o); localStorage.setItem(ORDEM_KEY, JSON.stringify(o)); }
+        } catch {}
+      }
+    });
+  }, [effectiveStoreId]);
 
   useEffect(() => {
     if (isAdminAccess) {
@@ -125,6 +149,7 @@ export default function MotoboyPage() {
     const fundoTroco = parseFloat(fundoInput.replace(",", ".")) || 0;
     const s = { id: motoboy.id, nome: motoboy.nome, fundoTroco };
     localStorage.setItem(SESSAO_KEY, JSON.stringify(s));
+    if (effectiveStoreId) savePreferencia(effectiveStoreId, "motoboy", "sessao", JSON.stringify(s));
     setSessao(s);
     setLoginLoading(false);
     toast.success(`Bem-vindo, ${motoboy.nome}!`);
@@ -238,7 +263,7 @@ export default function MotoboyPage() {
     const merged = [...cleaned, ...missing];
     if (JSON.stringify(merged) !== JSON.stringify(ordem)) {
       setOrdem(merged);
-      saveOrdem(merged);
+      saveOrdem(merged, effectiveStoreId);
     }
   }, [emRota]);
 
@@ -286,7 +311,7 @@ export default function MotoboyPage() {
     newOrdem.splice(fromIdx, 1);
     newOrdem.splice(toIdx, 0, draggingId);
     setOrdem(newOrdem);
-    saveOrdem(newOrdem);
+    saveOrdem(newOrdem, effectiveStoreId);
     setDraggingId(null);
     dragOverId.current = null;
   };
@@ -316,7 +341,7 @@ export default function MotoboyPage() {
       return;
     }
     setOrdem(newOrdem);
-    saveOrdem(newOrdem);
+    saveOrdem(newOrdem, effectiveStoreId);
     touchItemId.current = null;
   };
 

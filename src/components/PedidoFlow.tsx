@@ -39,11 +39,10 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import {
-  clearBoundTabletMesaId,
   clearTabletLoginUser,
-  getBoundTabletMesaId,
-  setBoundTabletMesaId,
 } from "@/lib/tabletBinding";
+import { getStoredDeviceId } from "@/lib/deviceAuth";
+import { supabase } from "@/integrations/supabase/client";
 
 interface PedidoFlowProps {
   modo: "cliente" | "garcom" | "caixa" | "balcao" | "delivery" | "totem";
@@ -480,14 +479,21 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
   }, []);
 
   const handleAdminSelectNewMesa = useCallback((newMesaId: string) => {
-    setBoundTabletMesaId(newMesaId);
+    // Update mesa_id on the device in DB
+    const deviceId = getStoredDeviceId();
+    if (deviceId) {
+      supabase.from("devices").update({ mesa_id: newMesaId } as any).eq("device_id", deviceId).then();
+    }
     setAdminModalOpen(false);
     toast.success("Mesa trocada com sucesso", { duration: 1200, icon: "🔄" });
     window.location.reload();
   }, []);
 
   const handleAdminDesvincular = useCallback(() => {
-    clearBoundTabletMesaId();
+    const deviceId = getStoredDeviceId();
+    if (deviceId) {
+      supabase.from("devices").update({ mesa_id: null } as any).eq("device_id", deviceId).then();
+    }
     clearTabletLoginUser();
     setAdminModalOpen(false);
     toast.success("Tablet desvinculado", { duration: 1200, icon: "📱" });

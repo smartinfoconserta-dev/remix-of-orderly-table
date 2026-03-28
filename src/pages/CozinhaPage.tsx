@@ -5,6 +5,8 @@ import { useRestaurant } from "@/contexts/RestaurantContext";
 import type { PedidoRealizado } from "@/contexts/RestaurantContext";
 import { getSistemaConfig } from "@/lib/adminStorage";
 import { useAuth } from "@/contexts/AuthContext";
+import { useStore } from "@/contexts/StoreContext";
+import { savePreferencia, loadPreferencias } from "@/hooks/usePreferencias";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -90,6 +92,7 @@ const COZINHA_SETOR_KEY = "obsidian-cozinha-setor-v1";
 
 const CozinhaPage = () => {
   const { mesas, pedidosBalcao, marcarPedidoPronto, marcarPedidoBalcaoPronto, marcarBalcaoPreparando } = useRestaurant();
+  const { storeId: ctxStoreId } = useStore();
   const { verifyEmployeeAccess, authLevel, logout, operationalSession } = useAuth();
   const navigate = useNavigate();
   const isAdminAccess = authLevel === "admin" || authLevel === "master";
@@ -121,6 +124,18 @@ const CozinhaPage = () => {
   const [setorMonitor, setSetorMonitor] = useState<"tudo" | "cozinha" | "bar" | null>(() => {
     try { return (localStorage.getItem(COZINHA_SETOR_KEY) as any) || null; } catch { return null; }
   });
+
+  // Load setor preference from DB
+  const effectiveStoreId = operationalSession?.storeId ?? ctxStoreId ?? null;
+  useEffect(() => {
+    if (!effectiveStoreId) return;
+    loadPreferencias(effectiveStoreId, "cozinha").then(prefs => {
+      if (prefs.setor) {
+        setSetorMonitor(prefs.setor as any);
+        try { localStorage.setItem(COZINHA_SETOR_KEY, prefs.setor); } catch {}
+      }
+    });
+  }, [effectiveStoreId]);
 
   const handleLoginCozinha = async () => {
     if (loginLoading) return;
@@ -505,6 +520,7 @@ ${itensSetorHtml}
               onClick={() => {
                 localStorage.setItem(COZINHA_SETOR_KEY, s.id);
                 setSetorMonitor(s.id);
+                if (effectiveStoreId) savePreferencia(effectiveStoreId, "cozinha", "setor", s.id);
               }}
               className="rounded-2xl border-2 border-border bg-card hover:border-primary hover:bg-primary/5 p-5 text-left transition-colors"
             >
@@ -535,6 +551,7 @@ ${itensSetorHtml}
             onClick={() => {
               localStorage.removeItem(COZINHA_SETOR_KEY);
               setSetorMonitor(null);
+              if (effectiveStoreId) savePreferencia(effectiveStoreId, "cozinha", "setor", "");
             }}
             className="text-xs text-muted-foreground hover:text-foreground border border-border rounded-lg px-2 py-1"
           >
