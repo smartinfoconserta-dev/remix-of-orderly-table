@@ -551,13 +551,28 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const loadedStoreRef = useRef<string | null>(null);
   const [activeStoreId, setActiveStoreId] = useState<string | null>(getActiveStoreId);
 
-  // Poll for storeId changes (covers session/localStorage updates from other components)
+  // Sync active store changes from auth/device sessions with a polling fallback
   useEffect(() => {
-    const interval = setInterval(() => {
+    const syncActiveStoreId = () => {
       const current = getActiveStoreId();
       setActiveStoreId(prev => prev !== current ? current : prev);
-    }, 1000);
-    return () => clearInterval(interval);
+      if (!current) {
+        loadedStoreRef.current = null;
+        setStore(estadoInicial());
+      }
+    };
+
+    syncActiveStoreId();
+    const handleCustomSync = () => syncActiveStoreId();
+    window.addEventListener("storage", handleCustomSync);
+    window.addEventListener("obsidian-store-context-changed", handleCustomSync);
+
+    const interval = setInterval(syncActiveStoreId, 1000);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("storage", handleCustomSync);
+      window.removeEventListener("obsidian-store-context-changed", handleCustomSync);
+    };
   }, []);
 
   // Reset loadedStoreRef when activeStoreId changes to force reload

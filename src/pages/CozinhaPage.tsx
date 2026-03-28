@@ -97,18 +97,16 @@ const CozinhaPage = () => {
   const { verifyEmployeeAccess, authLevel, logout, operationalSession } = useAuth();
   const navigate = useNavigate();
   const isAdminAccess = authLevel === "admin" || authLevel === "master";
+  const hasOperationalAccess = authLevel === "operational" && Boolean(operationalSession?.storeId);
   const isOperationalCozinha = authLevel === "operational" && operationalSession?.module === "cozinha";
   const [autenticado, setAutenticado] = useState<{ nome: string } | null>(() => {
-    if (isAdminAccess || isOperationalCozinha) {
+    if (isAdminAccess || hasOperationalAccess) {
       const nome = operationalSession?.pinLabel ?? "Administrador";
       const sessao = { nome };
       try { localStorage.setItem(COZINHA_SESSAO_KEY, JSON.stringify(sessao)); } catch {}
       return sessao;
     }
-    try {
-      const saved = localStorage.getItem(COZINHA_SESSAO_KEY);
-      return saved ? JSON.parse(saved) : null;
-    } catch { return null; }
+    return null;
   });
   const [loginNome, setLoginNome] = useState("");
   const [loginPin, setLoginPin] = useState("");
@@ -125,6 +123,19 @@ const CozinhaPage = () => {
   const [setorMonitor, setSetorMonitor] = useState<"tudo" | "cozinha" | "bar" | null>(() => {
     try { return (localStorage.getItem(COZINHA_SETOR_KEY) as any) || null; } catch { return null; }
   });
+
+  useEffect(() => {
+    if (isAdminAccess || hasOperationalAccess) {
+      const nome = operationalSession?.pinLabel ?? "Administrador";
+      const sessao = { nome };
+      setAutenticado(sessao);
+      try { localStorage.setItem(COZINHA_SESSAO_KEY, JSON.stringify(sessao)); } catch {}
+      return;
+    }
+
+    try { localStorage.removeItem(COZINHA_SESSAO_KEY); } catch {}
+    setAutenticado(null);
+  }, [hasOperationalAccess, isAdminAccess, operationalSession?.pinLabel]);
 
   // Load setor preference from DB
   const effectiveStoreId = operationalSession?.storeId ?? ctxStoreId ?? null;
@@ -154,6 +165,7 @@ const CozinhaPage = () => {
     setLoginNome("");
     setLoginPin("");
     window.dispatchEvent(new StorageEvent("storage", { key: "obsidian-op-session-v2" }));
+    window.dispatchEvent(new Event("obsidian-store-context-changed"));
     setLoginLoading(false);
   };
 
@@ -162,6 +174,7 @@ const CozinhaPage = () => {
     localStorage.removeItem(COZINHA_SETOR_KEY);
     setAutenticado(null);
     await logout();
+    window.dispatchEvent(new Event("obsidian-store-context-changed"));
     navigate("/", { replace: true });
   };
 
