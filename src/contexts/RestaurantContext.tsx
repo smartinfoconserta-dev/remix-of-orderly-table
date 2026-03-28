@@ -714,7 +714,16 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         } else if (payload.eventType === "UPDATE") {
           const p = rowToPedido(payload.new);
           setStore(prev => {
-            const pedidosBalcao = prev.pedidosBalcao.map(x => x.id === p.id ? p : x);
+            const isBalcaoOrigin = ["balcao", "delivery", "totem", "ifood"].includes(p.origem);
+            let pedidosBalcao = prev.pedidosBalcao;
+            if (isBalcaoOrigin) {
+              const exists = prev.pedidosBalcao.some(x => x.id === p.id);
+              pedidosBalcao = exists
+                ? prev.pedidosBalcao.map(x => x.id === p.id ? p : x)
+                : [...prev.pedidosBalcao, p];
+            } else {
+              pedidosBalcao = prev.pedidosBalcao.map(x => x.id === p.id ? p : x);
+            }
             const mesas = prev.mesas.map(m => ({
               ...m,
               pedidos: m.pedidos.map(x => x.id === p.id ? p : x),
