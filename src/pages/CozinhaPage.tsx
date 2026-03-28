@@ -578,6 +578,7 @@ ${itensSetorHtml}
           { id: "todos", label: "Todos" },
           { id: "mesa", label: "🍽️ Mesas" },
           { id: "delivery", label: "🛵 Delivery" },
+          { id: "ifood", label: "🔴 iFood" },
           { id: "balcao", label: "🏪 Balcão" },
         ] as const).map(f => (
           <button
