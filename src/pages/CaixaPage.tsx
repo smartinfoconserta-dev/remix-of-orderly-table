@@ -1552,16 +1552,16 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
             <div className="flex flex-col h-full view-fade-in">
 
               {/* ── Windows-style Title Bar ── */}
-              <div className="flex items-center px-4 py-2 shrink-0" style={{ background: '#1e3a5f' }}>
-                <p className="text-sm font-black text-white truncate">{sistemaConfig.nomeRestaurante || "Orderly"}</p>
+               <div className="flex items-center px-4 py-2.5 shrink-0 border-b border-border bg-card">
+                <p className="text-sm font-black text-foreground truncate">{sistemaConfig.nomeRestaurante || "Orderly"}</p>
                 <div className="flex-1" />
-                <p className="text-xs text-white/70">
+                <p className="text-xs text-muted-foreground">
                   {currentOperator.nome} • {accessMode === "gerente" ? "Acesso completo" : "Operador de caixa"}
                 </p>
                 <div className="flex-1" />
                 <div className="flex items-center gap-1.5">
-                  <Clock className="h-3.5 w-3.5 text-white/70" />
-                  <span className="text-sm font-black tabular-nums text-white">{clockStr}</span>
+                  <Clock className="h-3.5 w-3.5 text-muted-foreground" />
+                  <span className="text-sm font-black tabular-nums text-foreground">{clockStr}</span>
                 </div>
               </div>
 
