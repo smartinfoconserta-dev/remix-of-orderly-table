@@ -416,6 +416,9 @@ const AdminPage = () => {
         imagemBase64: editForm.imagemBase64 || undefined,
         permiteLevar: editForm.permiteLevar,
         setor: editProduct.setor ?? "cozinha",
+        controleEstoque: editForm.controleEstoque,
+        quantidadeEstoque: editForm.quantidadeEstoque,
+        estoqueMinimo: editForm.estoqueMinimo,
       };
       await upsertProduct(productToSave, storeId);
       await loadProducts();
