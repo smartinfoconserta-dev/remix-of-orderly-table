@@ -125,7 +125,8 @@ export async function findClienteDelivery(busca: string, storeId?: string | null
         c.telefone.replace(/\D/g, "").includes(term.replace(/\D/g, "")) ||
         c.cpf.replace(/\D/g, "").includes(term.replace(/\D/g, ""))
     );
-  } catch {
+  } catch (err) {
+    console.error("[deliveryStorage] erro:", err);
     return [];
   }
 }

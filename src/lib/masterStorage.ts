@@ -163,7 +163,8 @@ export async function getDespesas(): Promise<Despesa[]> {
       categoria: r.categoria ?? "",
       data: r.data ?? "",
     }));
-  } catch {
+  } catch (err) {
+    console.error("[masterStorage] erro:", err);
     return [];
   }
 }

@@ -103,7 +103,8 @@ export const activateDevice = async (
 
     saveDeviceId(deviceId);
     return { ok: true, deviceId };
-  } catch {
+  } catch (err) {
+    console.error("[deviceAuth] erro:", err);
     return { ok: false, error: "Erro ao ativar dispositivo" };
   }
 };

@@ -455,7 +455,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       }
       return { ok: false, error: "PIN inválido" };
-    } catch {
+    } catch (err) {
+      console.error("[AuthContext] erro:", err);
       return { ok: false, error: "Erro ao verificar PIN" };
     }
   }, [operationalSession]);

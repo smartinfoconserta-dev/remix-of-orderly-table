@@ -188,7 +188,7 @@ export async function getMesasConfigAsync(storeId?: string | null): Promise<Mesa
     if (storeId) query = query.eq("store_id", storeId);
     const { count } = await query;
     if (count !== null && count > 0) return { totalMesas: count };
-  } catch { /* fallback */ }
+  } catch (err) { console.error("[adminStorage] erro:", err); }
   return { totalMesas: 20 };
 }
 

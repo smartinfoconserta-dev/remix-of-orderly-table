@@ -320,5 +320,5 @@ export async function syncPending(): Promise<void> {
       const cats = getLocalCache<CategoriaCustom[]>(CATEGORIAS_CACHE_KEY);
       if (cats) await saveCategorias(cats);
     }
-  } catch { /* silent */ }
+  } catch (err) { console.error("[configService] erro:", err); }
 }
