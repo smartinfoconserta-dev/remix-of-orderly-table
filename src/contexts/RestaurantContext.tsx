@@ -462,7 +462,7 @@ const dbInsertEvento = (e: EventoOperacional) => {
 const dbInsertMovimentacao = (m: MovimentacaoCaixa) => {
   const sid = getActiveStoreId();
   if (!sid) { console.warn("dbInsertMovimentacao: storeId is null"); return; }
-  supabase.from("movimentacoes_caixa").insert(movToRow(m, sid) as any).then(({ error }) => {
+  supabase.rpc("rpc_insert_movimentacao" as any, { _data: movToRow(m, sid) }).then(({ error }: any) => {
     if (error) { console.error("DB insert mov", error); toast.error("Erro ao salvar movimentação"); }
   });
 };
