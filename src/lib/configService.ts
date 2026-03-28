@@ -72,6 +72,8 @@ function dbRowToConfig(row: any): SistemaConfig {
     modoOperacao: row.modo_operacao ?? "restaurante",
     identificacaoFastFood: row.identificacao_fast_food ?? "codigo",
     cpfNotaAtivo: row.cpf_nota_ativo ?? false,
+    cardapioHeaderEstilo: row.cardapio_header_estilo ?? "padrao",
+    cardapioBannerBase64: row.cardapio_banner_base64 ?? "",
   };
 }
 
