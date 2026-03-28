@@ -1765,6 +1765,7 @@ ${topRows ? `<h2>Top 5 produtos</h2><table><thead><tr><th>#</th><th>Produto</th>
                   { id: "salao", icon: "🍽️", label: "Salão", desc: "Boas-vindas, Wi-Fi, Instagram" },
                   { id: "operacao", icon: "⚙️", label: "Operação", desc: "Cozinha, couvert, modos" },
                   { id: "modulos", icon: "🧩", label: "Módulos", desc: "Ativar e desativar funcionalidades" },
+                  { id: "impressoras", icon: "🖨️", label: "Impressoras", desc: "Impressoras térmicas" },
                   { id: "sistema", icon: "💾", label: "Sistema", desc: "Backup e restauração" },
                 ].map(card => (
                   <button key={card.id} onClick={() => setConfigSection(card.id as any)}
