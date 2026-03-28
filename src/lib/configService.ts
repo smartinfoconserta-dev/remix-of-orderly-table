@@ -56,7 +56,7 @@ function dbRowToConfig(row: any): SistemaConfig {
     mensagemBoasVindas: row.mensagem_boas_vindas ?? "",
     deliveryAtivo: row.delivery_ativo ?? true,
     modoIdentificacaoDelivery: row.modo_identificacao_delivery ?? "visitante",
-    cozinhaAtiva: row.cozinha_ativa ?? false,
+    
     couvertAtivo: row.couvert_ativo ?? false,
     couvertValor: Number(row.couvert_valor ?? 0),
     couvertObrigatorio: row.couvert_obrigatorio ?? false,
