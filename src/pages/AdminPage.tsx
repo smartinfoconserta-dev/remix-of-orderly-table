@@ -31,6 +31,7 @@ import {
   DollarSign,
   Receipt,
   Wallet,
+  Printer,
 } from "lucide-react";
 import TeamManager from "@/components/TeamManager";
 import MesasManager from "@/components/MesasManager";
