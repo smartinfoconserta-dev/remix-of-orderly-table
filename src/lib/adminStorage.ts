@@ -166,12 +166,29 @@ export function getLicencaDaysLeft(): number | null {
   return Math.ceil((exp.getTime() - today.getTime()) / 86400000);
 }
 
-export function isSystemBlocked(): boolean {
+export type LicenseLevel = "ok" | "warning" | "expired" | "partial_block" | "reports_only" | "full_block";
+
+export function getLicenseLevel(): LicenseLevel {
   const lic = getLicencaConfig();
-  if (!lic.ativo) return true;
+  if (!lic.ativo) return "full_block";
   const days = getLicencaDaysLeft();
-  if (days !== null && days < 0) return true;
-  return false;
+  if (days === null) return "ok";
+  if (days > 5) return "ok";
+  if (days > 0) return "warning";
+  if (days > -7) return "expired";
+  if (days > -30) return "partial_block";
+  if (days > -45) return "reports_only";
+  return "full_block";
+}
+
+export function isSystemBlocked(): boolean {
+  const level = getLicenseLevel();
+  return level === "full_block";
+}
+
+export function isOperationBlocked(): boolean {
+  const level = getLicenseLevel();
+  return ["partial_block", "reports_only", "full_block"].includes(level);
 }
 
 // ─────────────────────────────────
