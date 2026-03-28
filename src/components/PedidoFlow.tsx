@@ -65,7 +65,7 @@ const RESTAURANTE = {
   logoUrl: sysConfig.logoBase64 || sysConfig.logoUrl || "",
   logoFallback: (sysConfig.nomeRestaurante || "Restaurante").slice(0, 2).toUpperCase(),
 };
-console.log("LOGO:", sysConfig.logoBase64?.slice(0, 50), sysConfig.logoUrl);
+
 
 // Products are loaded reactively inside the component
 
@@ -171,11 +171,12 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
   // Hidden admin modal state
   const [adminModalOpen, setAdminModalOpen] = useState(false);
   const [adminAuthenticated, setAdminAuthenticated] = useState(false);
-  const [adminNome, setAdminNome] = useState("");
-  const [adminPin, setAdminPin] = useState("");
+  const [adminEmail, setAdminEmail] = useState("");
+  const [adminPassword, setAdminPassword] = useState("");
   const [adminError, setAdminError] = useState<string | null>(null);
   const [isAdminLoggingIn, setIsAdminLoggingIn] = useState(false);
   const [showMesaSelector, setShowMesaSelector] = useState(false);
+  const [adminUserEmail, setAdminUserEmail] = useState("");
 
   const longPressTimerRef = useRef<number | null>(null);
   const openProductTimerRef = useRef<number | null>(null);
@@ -447,8 +448,8 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
       longPressTimerRef.current = null;
       setAdminModalOpen(true);
       setAdminAuthenticated(false);
-      setAdminNome("");
-      setAdminPin("");
+      setAdminEmail("");
+      setAdminPassword("");
       setAdminError(null);
       setShowMesaSelector(false);
     }, LONG_PRESS_DURATION_MS);
@@ -462,45 +463,94 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
   }, []);
 
   const handleAdminLogin = useCallback(async () => {
-    if (isAdminLoggingIn) return;
+    if (isAdminLoggingIn || !adminEmail.trim() || !adminPassword) return;
     setIsAdminLoggingIn(true);
     setAdminError(null);
-    const result = await verifyEmployeeAccess(adminNome.trim(), adminPin);
-    if (!result.ok) {
-      setAdminError(result.error ?? "Credenciais inválidas");
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email: adminEmail.trim(),
+        password: adminPassword,
+      });
+      if (error) {
+        setAdminError("Email ou senha inválidos");
+        setIsAdminLoggingIn(false);
+        return;
+      }
+      setAdminAuthenticated(true);
+      setAdminUserEmail(adminEmail.trim());
+      setAdminPassword("");
+      setAdminError(null);
       setIsAdminLoggingIn(false);
-      return;
+    } catch {
+      setAdminError("Erro ao autenticar");
+      setIsAdminLoggingIn(false);
     }
-    setAdminAuthenticated(true);
-    setAdminPin("");
-    setAdminError(null);
-    setIsAdminLoggingIn(false);
-  }, [adminNome, adminPin, isAdminLoggingIn, verifyEmployeeAccess]);
+  }, [adminEmail, adminPassword, isAdminLoggingIn]);
 
   const handleAdminTrocarMesa = useCallback(() => {
     setShowMesaSelector(true);
   }, []);
 
-  const handleAdminSelectNewMesa = useCallback((newMesaId: string) => {
-    // Update mesa_id on the device in DB
+  const handleAdminSelectNewMesa = useCallback(async (newMesaId: string) => {
     const deviceId = getStoredDeviceId();
     if (deviceId) {
-      supabase.from("devices").update({ mesa_id: newMesaId } as any).eq("device_id", deviceId).then();
+      await supabase.from("devices").update({ mesa_id: newMesaId } as any).eq("device_id", deviceId);
     }
+    // Save to sessionStorage
+    try { sessionStorage.setItem("orderly-tablet-mesa", newMesaId); } catch {}
+    // Find mesa numbers for logging
+    const oldMesaNum = mesas.find((m) => m.id === mesaId)?.numero;
+    const newMesaNum = mesas.find((m) => m.id === newMesaId)?.numero;
+    // Log event
+    if (deviceStoreId) {
+      try {
+        await supabase.rpc("rpc_insert_evento", {
+          _data: {
+            id: crypto.randomUUID(),
+            store_id: deviceStoreId,
+            tipo: "tablet_mesa_trocada",
+            usuario_nome: adminUserEmail,
+            descricao: `Mesa trocada de ${oldMesaNum ?? "?"} para ${newMesaNum ?? "?"} por ${adminUserEmail}`,
+            criado_em: new Date().toLocaleString("pt-BR"),
+            criado_em_iso: new Date().toISOString(),
+          },
+        });
+      } catch {}
+    }
+    await supabase.auth.signOut();
     setAdminModalOpen(false);
     toast.success("Mesa trocada com sucesso", { duration: 1200, icon: "🔄" });
     window.location.reload();
-  }, []);
+  }, [mesas, mesaId, deviceStoreId, adminUserEmail]);
 
-  const handleAdminDesvincular = useCallback(() => {
+  const handleAdminDesvincular = useCallback(async () => {
     const deviceId = getStoredDeviceId();
     if (deviceId) {
-      supabase.from("devices").update({ mesa_id: null } as any).eq("device_id", deviceId).then();
+      await supabase.from("devices").update({ mesa_id: null } as any).eq("device_id", deviceId);
     }
+    // Clear sessionStorage
+    try { sessionStorage.removeItem("orderly-tablet-mesa"); } catch {}
+    // Log event
+    if (deviceStoreId) {
+      try {
+        await supabase.rpc("rpc_insert_evento", {
+          _data: {
+            id: crypto.randomUUID(),
+            store_id: deviceStoreId,
+            tipo: "tablet_desvinculado",
+            usuario_nome: adminUserEmail,
+            descricao: `Tablet desvinculado por ${adminUserEmail}`,
+            criado_em: new Date().toLocaleString("pt-BR"),
+            criado_em_iso: new Date().toISOString(),
+          },
+        });
+      } catch {}
+    }
+    await supabase.auth.signOut();
     clearTabletLoginUser();
     setAdminModalOpen(false);
     toast.success("Tablet desvinculado", { duration: 1200, icon: "📱" });
-  }, []);
+  }, [deviceStoreId, adminUserEmail]);
 
   const mesasOrdenadas = useMemo(() => [...mesas].sort((a, b) => a.numero - b.numero), [mesas]);
 
@@ -1245,8 +1295,8 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
           if (!open) {
             setAdminModalOpen(false);
             setAdminAuthenticated(false);
-            setAdminNome("");
-            setAdminPin("");
+            setAdminEmail("");
+            setAdminPassword("");
             setAdminError(null);
             setShowMesaSelector(false);
           }
@@ -1260,30 +1310,30 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
               <DialogDescription className="text-muted-foreground">
                 {adminAuthenticated
                   ? "Escolha a ação desejada para este terminal."
-                  : "Faça login com suas credenciais de funcionário para continuar."}
+                  : "Insira suas credenciais para continuar."}
               </DialogDescription>
             </DialogHeader>
 
             {!adminAuthenticated ? (
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <label className="text-sm font-semibold text-foreground">Nome</label>
+                  <label className="text-sm font-semibold text-foreground">Email</label>
                   <Input
-                    value={adminNome}
-                    onChange={(e) => setAdminNome(e.target.value.slice(0, 40))}
-                    placeholder="Seu nome de funcionário"
-                    autoComplete="username"
+                    type="email"
+                    value={adminEmail}
+                    onChange={(e) => setAdminEmail(e.target.value)}
+                    placeholder="funcionario@empresa.com"
+                    autoComplete="email"
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-semibold text-foreground">PIN</label>
+                  <label className="text-sm font-semibold text-foreground">Senha</label>
                   <Input
                     type="password"
-                    value={adminPin}
-                    onChange={(e) => setAdminPin(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                    placeholder="4 a 6 dígitos"
-                    inputMode="numeric"
-                    autoComplete="one-time-code"
+                    value={adminPassword}
+                    onChange={(e) => setAdminPassword(e.target.value)}
+                    placeholder="••••••••"
+                    autoComplete="current-password"
                     onKeyDown={(e) => {
                       if (e.key === "Enter") {
                         e.preventDefault();
@@ -1295,7 +1345,7 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
                 {adminError && <p className="rounded-xl border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive">{adminError}</p>}
                 <Button onClick={handleAdminLogin} disabled={isAdminLoggingIn} className="h-11 w-full rounded-xl font-black">
                   <LockKeyhole className="h-4 w-4" />
-                  Autenticar
+                  {isAdminLoggingIn ? "Autenticando..." : "Entrar"}
                 </Button>
               </div>
             ) : showMesaSelector ? (
