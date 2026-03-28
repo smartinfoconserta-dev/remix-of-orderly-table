@@ -171,11 +171,12 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
   // Hidden admin modal state
   const [adminModalOpen, setAdminModalOpen] = useState(false);
   const [adminAuthenticated, setAdminAuthenticated] = useState(false);
-  const [adminNome, setAdminNome] = useState("");
-  const [adminPin, setAdminPin] = useState("");
+  const [adminEmail, setAdminEmail] = useState("");
+  const [adminPassword, setAdminPassword] = useState("");
   const [adminError, setAdminError] = useState<string | null>(null);
   const [isAdminLoggingIn, setIsAdminLoggingIn] = useState(false);
   const [showMesaSelector, setShowMesaSelector] = useState(false);
+  const [adminUserEmail, setAdminUserEmail] = useState("");
 
   const longPressTimerRef = useRef<number | null>(null);
   const openProductTimerRef = useRef<number | null>(null);
