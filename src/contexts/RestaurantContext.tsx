@@ -1051,7 +1051,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         return f;
       });
       // Reset mesas in DB
-      const mesasReset = criarMesasIniciais();
+      const mesasReset = prev.mesas.map(m => resetMesa(m));
       mesasReset.forEach(m => dbSyncEstadoMesa(m));
       return {
         mesas: mesasReset,
