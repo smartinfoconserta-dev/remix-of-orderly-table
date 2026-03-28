@@ -948,6 +948,171 @@ th{background:#f5f5f5;padding:8px 12px;border:1px solid #ddd;text-align:left;fon
               </div>
             )}
 
+            {/* ── Relatório por período ── */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between flex-wrap gap-3">
+                <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-1.5">
+                  <CalendarDays className="h-3.5 w-3.5" />
+                  Relatório por período
+                </p>
+                <div className="flex items-center gap-2 flex-wrap">
+                  {(["hoje", "7dias", "30dias", "custom"] as const).map((opt) => {
+                    const labels: Record<PeriodoOption, string> = { hoje: "Hoje", "7dias": "7 dias", "30dias": "30 dias", custom: "Personalizado" };
+                    return (
+                      <button
+                        key={opt}
+                        type="button"
+                        onClick={() => setRelPeriodo(opt)}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${
+                          relPeriodo === opt
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-secondary text-muted-foreground hover:text-foreground"
+                        }`}
+                      >
+                        {labels[opt]}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+              {relPeriodo === "custom" && (
+                <div className="flex items-center gap-3 flex-wrap">
+                  <label className="text-xs text-muted-foreground">De:</label>
+                  <input type="date" value={relCustomInicio} onChange={(e) => setRelCustomInicio(e.target.value)} className="rounded-lg border border-border bg-card px-3 py-1.5 text-xs text-foreground" />
+                  <label className="text-xs text-muted-foreground">Até:</label>
+                  <input type="date" value={relCustomFim} onChange={(e) => setRelCustomFim(e.target.value)} className="rounded-lg border border-border bg-card px-3 py-1.5 text-xs text-foreground" />
+                </div>
+              )}
+              {relLoading ? (
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                  {[1,2,3,4].map(i => <Skeleton key={i} className="h-[100px] rounded-xl" />)}
+                </div>
+              ) : relData ? (
+                <div className="space-y-4">
+                  {/* Summary cards */}
+                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div className="rounded-xl border border-border bg-card p-5 space-y-2">
+                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Faturamento</p>
+                      <p className="text-2xl font-black text-primary">{formatPrice(relData.faturamento)}</p>
+                    </div>
+                    <div className="rounded-xl border border-border bg-card p-5 space-y-2">
+                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Fechamentos</p>
+                      <p className="text-2xl font-black text-foreground">{relData.totalFechamentos}</p>
+                    </div>
+                    <div className="rounded-xl border border-border bg-card p-5 space-y-2">
+                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Ticket médio</p>
+                      <p className="text-2xl font-black text-primary">{formatPrice(relData.ticketMedio)}</p>
+                    </div>
+                    <div className="rounded-xl border border-border bg-card p-5 space-y-2">
+                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Formas pgto</p>
+                      <p className="text-2xl font-black text-foreground">{Object.keys(relData.porForma).length}</p>
+                    </div>
+                  </div>
+
+                  {/* Payment breakdown */}
+                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                    {["dinheiro", "crédito", "débito", "pix"].map((forma) => (
+                      <div key={forma} className="rounded-xl border border-border bg-card p-4 space-y-1">
+                        <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">{forma.charAt(0).toUpperCase() + forma.slice(1)}</p>
+                        <p className="text-lg font-black text-foreground">{formatPrice(relData.porForma[forma] || 0)}</p>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Top 5 products */}
+                  {relData.topProdutos.length > 0 && (
+                    <div className="rounded-xl border border-border bg-card p-5 space-y-3">
+                      <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Top 5 produtos</p>
+                      <div className="divide-y divide-border">
+                        {relData.topProdutos.map((p, i) => (
+                          <div key={p.nome} className="flex items-center justify-between py-2.5">
+                            <div className="flex items-center gap-3">
+                              <span className="h-6 w-6 rounded-full bg-primary/15 flex items-center justify-center text-[10px] font-black text-primary">{i + 1}</span>
+                              <span className="text-sm font-bold text-foreground">{p.nome}</span>
+                            </div>
+                            <div className="flex items-center gap-4">
+                              <span className="text-xs text-muted-foreground">{p.qtd}x</span>
+                              <span className="text-sm font-black text-foreground">{formatPrice(p.valor)}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Export button */}
+                  <div className="flex justify-end">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="rounded-xl font-bold text-xs gap-1.5"
+                      onClick={() => {
+                        const nomeRest = sistemaConfig.nomeRestaurante || "Restaurante";
+                        const { inicio, fim } = getRelPeriodoDates();
+                        const periodoLabel = relPeriodo === "hoje" ? "Hoje"
+                          : relPeriodo === "7dias" ? "Últimos 7 dias"
+                          : relPeriodo === "30dias" ? "Últimos 30 dias"
+                          : `${relCustomInicio} a ${relCustomFim}`;
+
+                        const formasRows = ["dinheiro", "crédito", "débito", "pix"]
+                          .map((f) => `<tr><td style="padding:6px 12px;border:1px solid #ddd;">${f.charAt(0).toUpperCase() + f.slice(1)}</td><td style="padding:6px 12px;border:1px solid #ddd;text-align:right;">R$ ${(relData.porForma[f] || 0).toFixed(2).replace(".", ",")}</td></tr>`)
+                          .join("");
+                        const outrasFormas = Object.entries(relData.porForma).filter(([k]) => !["dinheiro", "crédito", "débito", "pix"].includes(k));
+                        const outrasRows = outrasFormas.map(([k, v]) => `<tr><td style="padding:6px 12px;border:1px solid #ddd;">${k.charAt(0).toUpperCase() + k.slice(1)}</td><td style="padding:6px 12px;border:1px solid #ddd;text-align:right;">R$ ${v.toFixed(2).replace(".", ",")}</td></tr>`).join("");
+
+                        const topRows = relData.topProdutos.map((p, i) =>
+                          `<tr><td style="padding:6px 12px;border:1px solid #ddd;">${i+1}</td><td style="padding:6px 12px;border:1px solid #ddd;">${p.nome}</td><td style="padding:6px 12px;border:1px solid #ddd;text-align:right;">${p.qtd}</td><td style="padding:6px 12px;border:1px solid #ddd;text-align:right;">R$ ${p.valor.toFixed(2).replace(".", ",")}</td></tr>`
+                        ).join("");
+
+                        const fechRows = relData.fechamentos.map((f) => {
+                          const hora = f.criado_em ? String(f.criado_em).split(" ").pop()?.slice(0, 5) || "" : "";
+                          const origem = f.origem === "mesa" ? `Mesa ${f.mesa_numero || "?"}` : f.origem === "balcao" ? "Balcão" : f.origem === "totem" ? "Totem" : f.origem === "delivery" ? "Delivery" : f.origem || "—";
+                          return `<tr><td style="padding:6px 12px;border:1px solid #ddd;">${hora}</td><td style="padding:6px 12px;border:1px solid #ddd;">${origem}</td><td style="padding:6px 12px;border:1px solid #ddd;text-align:right;">R$ ${(Number(f.total) || 0).toFixed(2).replace(".", ",")}</td><td style="padding:6px 12px;border:1px solid #ddd;">${f.forma_pagamento || "—"}</td></tr>`;
+                        }).join("");
+
+                        const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Relatório - ${nomeRest}</title><style>
+body{font-family:Arial,sans-serif;font-size:12px;color:#222;padding:24px;max-width:800px;margin:0 auto;}
+h1{font-size:18px;margin-bottom:4px;}
+h2{font-size:14px;margin-top:24px;margin-bottom:8px;border-bottom:2px solid #222;padding-bottom:4px;}
+.subtitle{color:#666;font-size:12px;margin-bottom:20px;}
+table{border-collapse:collapse;width:100%;margin-bottom:16px;}
+th{background:#f5f5f5;padding:8px 12px;border:1px solid #ddd;text-align:left;font-weight:bold;}
+.summary{display:flex;gap:32px;flex-wrap:wrap;margin-bottom:8px;}
+.summary-item{min-width:140px;}
+.summary-item .label{color:#666;font-size:11px;text-transform:uppercase;}
+.summary-item .value{font-size:20px;font-weight:bold;}
+.print-btn{margin-bottom:20px;padding:8px 16px;background:#222;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px;}
+@media print{.print-btn{display:none !important;}}
+</style></head><body>
+<button class="print-btn" onclick="window.print()">🖨️ Imprimir</button>
+<h1>${nomeRest}</h1>
+<p class="subtitle">Relatório — ${periodoLabel}</p>
+<h2>Resumo financeiro</h2>
+<div class="summary">
+<div class="summary-item"><div class="label">Faturamento total</div><div class="value">R$ ${relData.faturamento.toFixed(2).replace(".", ",")}</div></div>
+<div class="summary-item"><div class="label">Fechamentos</div><div class="value">${relData.totalFechamentos}</div></div>
+<div class="summary-item"><div class="label">Ticket médio</div><div class="value">R$ ${relData.ticketMedio.toFixed(2).replace(".", ",")}</div></div>
+</div>
+<h2>Vendas por forma de pagamento</h2>
+<table><thead><tr><th>Forma</th><th style="text-align:right;">Total</th></tr></thead><tbody>${formasRows}${outrasRows}</tbody></table>
+${topRows ? `<h2>Top 5 produtos</h2><table><thead><tr><th>#</th><th>Produto</th><th style="text-align:right;">Qtd</th><th style="text-align:right;">Total</th></tr></thead><tbody>${topRows}</tbody></table>` : ""}
+<h2>Fechamentos (${relData.totalFechamentos})</h2>
+<table><thead><tr><th>Horário</th><th>Origem</th><th style="text-align:right;">Total</th><th>Pagamento</th></tr></thead><tbody>${fechRows || '<tr><td colspan="4" style="padding:12px;text-align:center;color:#999;">Nenhum</td></tr>'}</tbody></table>
+<p style="color:#999;font-size:10px;margin-top:24px;text-align:center;">Gerado em ${new Date().toLocaleString("pt-BR")}</p>
+</body></html>`;
+
+                        const w = window.open("", "_blank");
+                        if (w) { w.document.write(html); w.document.close(); }
+                      }}
+                    >
+                      <Printer className="h-3.5 w-3.5" />
+                      Exportar PDF
+                    </Button>
+                  </div>
+                </div>
+              ) : null}
+            </div>
+
             {/* ── Últimos fechamentos ── */}
             {!dashLoading && dashUltimosFechamentos.length > 0 && (
               <div className="space-y-4">
