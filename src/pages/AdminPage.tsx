@@ -300,11 +300,11 @@ const AdminPage = () => {
   }, [tab, storeId]);
 
   // --- Cardápio state (from Supabase produtos table) ---
-  type AdminProduct = Produto & { ativo: boolean; removido: boolean; disponivelDelivery: boolean; imagemBase64?: string };
+  type AdminProduct = Produto & { ativo: boolean; removido: boolean; disponivelDelivery: boolean; imagemBase64?: string; controleEstoque?: boolean; quantidadeEstoque?: number; estoqueMinimo?: number };
   const [allProducts, setAllProducts] = useState<AdminProduct[]>([]);
   const [editProduct, setEditProduct] = useState<AdminProduct | null>(null);
   const [isNewProduct, setIsNewProduct] = useState(false);
-  const [editForm, setEditForm] = useState({ nome: "", descricao: "", preco: "", categoria: "", imagem: "", imagemBase64: "", permiteLevar: true });
+  const [editForm, setEditForm] = useState({ nome: "", descricao: "", preco: "", categoria: "", imagem: "", imagemBase64: "", permiteLevar: true, controleEstoque: false, quantidadeEstoque: 0, estoqueMinimo: 0 });
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [catFilter, setCatFilter] = useState<string>("todas");
   const [removeTarget, setRemoveTarget] = useState<AdminProduct | null>(null);
