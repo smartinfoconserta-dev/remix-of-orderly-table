@@ -1249,13 +1249,13 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
               <button
                 key={cat.id}
                 onClick={() => handleSelectCategoria(cat.id)}
-                className={`flex items-center gap-3 rounded-[1.15rem] border px-3 py-2 text-left text-sm font-semibold transition-all duration-300 ease-out ${
+                className={`flex items-center gap-3 rounded-xl border px-3 py-2.5 text-left text-sm font-semibold transition-all duration-200 ${
                   selected
-                    ? "border-primary/35 bg-secondary text-foreground shadow-[0_18px_40px_-28px_hsl(var(--primary)/0.9),inset_0_0_0_1px_hsl(var(--primary)/0.28)]"
-                    : "border-transparent bg-transparent text-muted-foreground hover:border-border hover:bg-secondary/45 hover:text-foreground"
+                    ? "border-primary/40 bg-primary/10 text-foreground"
+                    : "border-transparent bg-transparent text-muted-foreground hover:bg-secondary/50 hover:text-foreground"
                 }`}
               >
-                <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-xl border ${selected ? "border-primary/35 bg-primary/10 text-primary" : "border-border bg-secondary/55 text-foreground"}`}>
+                <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${selected ? "bg-primary/15 text-primary" : "bg-secondary/60 text-muted-foreground"}`}>
                   <CategoryIcon name={cat.icone} className="h-3.5 w-3.5" />
                 </div>
                 <span className="truncate">{cat.nome}</span>
