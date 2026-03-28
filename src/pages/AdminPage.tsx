@@ -32,6 +32,7 @@ import {
   Receipt,
   Wallet,
   Printer,
+  Clock,
 } from "lucide-react";
 import TeamManager from "@/components/TeamManager";
 import MesasManager from "@/components/MesasManager";
