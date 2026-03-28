@@ -36,7 +36,7 @@ export interface DeviceValidationResult {
 }
 
 /** Validate device against backend */
-export const validateDevice = async (deviceId: string): Promise<DeviceValidationResult> => {
+export const validateDevice = async (deviceId: string, expectedType?: DeviceType): Promise<DeviceValidationResult> => {
   try {
     const { data, error } = await supabase
       .from("devices" as any)
@@ -50,6 +50,11 @@ export const validateDevice = async (deviceId: string): Promise<DeviceValidation
 
     if (!(data as any).active) {
       return { ok: false, error: "Dispositivo desativado pelo administrador" };
+    }
+
+    // Verify device type matches expected route
+    if (expectedType && (data as any).type !== expectedType) {
+      return { ok: false, error: "Dispositivo registrado como outro tipo" };
     }
 
     // Update last_seen_at
