@@ -2655,19 +2655,11 @@ ${topRows ? `<h2>Top 5 produtos</h2><table><thead><tr><th>#</th><th>Produto</th>
             {/* IMPRESSORAS */}
             {configSection === "impressoras" && (() => {
               const impressoras: import("@/lib/adminStorage").ImpressoraConfig[] = (sistemaConfig as any).impressoras ?? [];
-              const [editando, setEditando] = useState<import("@/lib/adminStorage").ImpressoraConfig | null>(null);
-              const [formNome, setFormNome] = useState("");
-              const [formSetor, setFormSetor] = useState<"caixa" | "cozinha" | "bar" | "delivery">("cozinha");
-              const [formTipo, setFormTipo] = useState<"rede" | "usb" | "bluetooth">("rede");
-              const [formIp, setFormIp] = useState("");
-              const [formLargura, setFormLargura] = useState<"58mm" | "80mm">("80mm");
-              const [formAtiva, setFormAtiva] = useState(true);
-              const [showForm, setShowForm] = useState(false);
 
-              const resetForm = () => { setFormNome(""); setFormSetor("cozinha"); setFormTipo("rede"); setFormIp(""); setFormLargura("80mm"); setFormAtiva(true); setEditando(null); };
-              const openNew = () => { resetForm(); setShowForm(true); };
+              const resetForm = () => { setImpFormNome(""); setImpFormSetor("cozinha"); setImpFormTipo("rede"); setImpFormIp(""); setImpFormLargura("80mm"); setImpFormAtiva(true); setImpEditando(null); };
+              const openNew = () => { resetForm(); setImpShowForm(true); };
               const openEdit = (imp: import("@/lib/adminStorage").ImpressoraConfig) => {
-                setEditando(imp); setFormNome(imp.nome); setFormSetor(imp.setor); setFormTipo(imp.tipo); setFormIp(imp.ip); setFormLargura(imp.largura); setFormAtiva(imp.ativa); setShowForm(true);
+                setImpEditando(imp); setImpFormNome(imp.nome); setImpFormSetor(imp.setor); setImpFormTipo(imp.tipo); setImpFormIp(imp.ip); setImpFormLargura(imp.largura); setImpFormAtiva(imp.ativa); setImpShowForm(true);
               };
               const salvar = async () => {
                 if (!formNome.trim()) { toast.error("Informe o nome da impressora"); return; }
