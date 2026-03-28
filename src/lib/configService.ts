@@ -27,7 +27,7 @@ function markPendingSync(entity: string) {
     const pending = JSON.parse(localStorage.getItem(SYNC_PENDING_KEY) || "{}");
     pending[entity] = Date.now();
     localStorage.setItem(SYNC_PENDING_KEY, JSON.stringify(pending));
-  } catch { /* ignore */ }
+  } catch (err) { console.error("[configService] erro:", err); }
 }
 
 function clearPendingSync(entity: string) {
