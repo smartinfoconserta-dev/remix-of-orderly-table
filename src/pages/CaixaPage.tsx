@@ -3441,6 +3441,7 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
                 </div>
 
                 {/* CPF na nota */}
+                {sistemaConfig.cpfNotaAtivo && (
                 <div className="border-t border-border px-5 pt-3">
                   <button onClick={() => setCpfNotaBalcaoOpen(!cpfNotaBalcaoOpen)} className="text-xs font-bold text-muted-foreground hover:text-foreground transition-colors">
                     {cpfNotaBalcao ? `CPF: ${cpfNotaBalcao}` : "📄 CPF na nota?"}
@@ -3457,6 +3458,7 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
                     </div>
                   )}
                 </div>
+                )}
 
                 <div className="border-t border-border p-5 bg-card space-y-2">
                   <Button

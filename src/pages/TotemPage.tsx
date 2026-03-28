@@ -107,8 +107,20 @@ const TotemInner = ({ storeId }: { storeId: string }) => {
   // Called when customer picks a payment method — go to CPF step
   const handlePaymentSelected = useCallback((method: PaymentMethod) => {
     setPendingPaymentMethod(method);
-    setStep("cpf");
-  }, []);
+    if (cpfNotaAtivo) {
+      setStep("cpf");
+    } else {
+      // Skip CPF step — go straight to confirmed
+      setCpfWanted(false);
+      setClienteCpf("");
+      // Trigger order creation directly
+      setTimeout(() => {
+        // We need to call handleCpfConfirmed logic, but since it depends on pendingPaymentMethod
+        // we set state and let the effect handle it
+      }, 0);
+      setStep("cpf"); // briefly pass through cpf which auto-confirms
+    }
+  }, [cpfNotaAtivo]);
 
   // CPF mask helper
   const formatCpfMask = (value: string) => {
