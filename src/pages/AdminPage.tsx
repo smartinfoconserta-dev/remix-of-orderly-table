@@ -2529,6 +2529,7 @@ th{background:#f5f5f5;padding:8px 12px;border:1px solid #ddd;text-align:left;fon
         )}
       </main>
       </div>
+      <LicenseBanner context="admin" />
     </div>
   );
 };
