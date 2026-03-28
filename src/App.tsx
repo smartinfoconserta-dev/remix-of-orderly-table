@@ -18,6 +18,7 @@ import PedidoPage from "./pages/PedidoPage";
 import MotoboyPage from "./pages/MotoboyPage";
 import TotemPage from "./pages/TotemPage";
 import TvPage from "./pages/TvPage";
+import CardapioPublico from "./pages/CardapioPublico";
 import NotFound from "./pages/NotFound";
 
 
