@@ -3431,6 +3431,24 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
                   )}
                 </div>
 
+                {/* CPF na nota */}
+                <div className="border-t border-border px-5 pt-3">
+                  <button onClick={() => setCpfNotaBalcaoOpen(!cpfNotaBalcaoOpen)} className="text-xs font-bold text-muted-foreground hover:text-foreground transition-colors">
+                    {cpfNotaBalcao ? `CPF: ${cpfNotaBalcao}` : "📄 CPF na nota?"}
+                  </button>
+                  {cpfNotaBalcaoOpen && (
+                    <div className="mt-2">
+                      <Input
+                        value={cpfNotaBalcao}
+                        onChange={(e) => setCpfNotaBalcao(formatCpfMask(e.target.value))}
+                        placeholder="000.000.000-00"
+                        inputMode="numeric"
+                        className="rounded-xl text-sm"
+                      />
+                    </div>
+                  )}
+                </div>
+
                 <div className="border-t border-border p-5 bg-card space-y-2">
                   <Button
                     onClick={handleFecharBalcao}
