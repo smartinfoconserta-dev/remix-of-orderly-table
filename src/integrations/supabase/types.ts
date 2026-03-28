@@ -1324,6 +1324,7 @@ export type Database = {
         Args: { _data: Json; _store_id: string }
         Returns: undefined
       }
+      rpc_upsert_estado_mesa: { Args: { _data: Json }; Returns: undefined }
       rpc_upsert_preferencia: {
         Args: {
           _chave: string
