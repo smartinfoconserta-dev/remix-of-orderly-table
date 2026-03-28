@@ -163,8 +163,18 @@ const AdminPage = () => {
   const { storeId, storeName: ctxStoreName, stores } = useStore();
   const navigate = useNavigate();
   const [tab, setTab] = useState<AdminTab>("dashboard");
-  const [configSection, setConfigSection] = useState<"inicio" | "identidade" | "delivery" | "salao" | "operacao" | "modulos" | "sistema">("inicio");
+  const [configSection, setConfigSection] = useState<"inicio" | "identidade" | "delivery" | "salao" | "operacao" | "modulos" | "sistema" | "impressoras">("inicio");
   const [modoOperacaoPendente, setModoOperacaoPendente] = useState<"restaurante" | "fast_food" | null>(null);
+
+  // --- Impressoras form state ---
+  const [impEditando, setImpEditando] = useState<import("@/lib/adminStorage").ImpressoraConfig | null>(null);
+  const [impFormNome, setImpFormNome] = useState("");
+  const [impFormSetor, setImpFormSetor] = useState<"caixa" | "cozinha" | "bar" | "delivery">("cozinha");
+  const [impFormTipo, setImpFormTipo] = useState<"rede" | "usb" | "bluetooth">("rede");
+  const [impFormIp, setImpFormIp] = useState("");
+  const [impFormLargura, setImpFormLargura] = useState<"58mm" | "80mm">("80mm");
+  const [impFormAtiva, setImpFormAtiva] = useState(true);
+  const [impShowForm, setImpShowForm] = useState(false);
 
   // --- Dashboard "Hoje" data ---
   const [dashLoading, setDashLoading] = useState(false);
@@ -1748,6 +1758,7 @@ ${topRows ? `<h2>Top 5 produtos</h2><table><thead><tr><th>#</th><th>Produto</th>
                   {configSection === "operacao" && "⚙️ Operação"}
                   {configSection === "modulos" && "🧩 Módulos"}
                   {configSection === "sistema" && "💾 Sistema"}
+                  {configSection === "impressoras" && "🖨️ Impressoras"}
                 </h2>
                 {configSection === "inicio" && (
                   <p className="text-sm text-muted-foreground">Toque em um bloco para configurar</p>
@@ -1764,6 +1775,7 @@ ${topRows ? `<h2>Top 5 produtos</h2><table><thead><tr><th>#</th><th>Produto</th>
                   { id: "salao", icon: "🍽️", label: "Salão", desc: "Boas-vindas, Wi-Fi, Instagram" },
                   { id: "operacao", icon: "⚙️", label: "Operação", desc: "Cozinha, couvert, modos" },
                   { id: "modulos", icon: "🧩", label: "Módulos", desc: "Ativar e desativar funcionalidades" },
+                  { id: "impressoras", icon: "🖨️", label: "Impressoras", desc: "Impressoras térmicas" },
                   { id: "sistema", icon: "💾", label: "Sistema", desc: "Backup e restauração" },
                 ].map(card => (
                   <button key={card.id} onClick={() => setConfigSection(card.id as any)}
@@ -2639,6 +2651,165 @@ ${topRows ? `<h2>Top 5 produtos</h2><table><thead><tr><th>#</th><th>Produto</th>
                 })}
               </div>
             )}
+
+            {/* IMPRESSORAS */}
+            {configSection === "impressoras" && (() => {
+              const impressoras: import("@/lib/adminStorage").ImpressoraConfig[] = (sistemaConfig as any).impressoras ?? [];
+
+              const resetForm = () => { setImpFormNome(""); setImpFormSetor("cozinha"); setImpFormTipo("rede"); setImpFormIp(""); setImpFormLargura("80mm"); setImpFormAtiva(true); setImpEditando(null); };
+              const openNew = () => { resetForm(); setImpShowForm(true); };
+              const openEdit = (imp: import("@/lib/adminStorage").ImpressoraConfig) => {
+                setImpEditando(imp); setImpFormNome(imp.nome); setImpFormSetor(imp.setor); setImpFormTipo(imp.tipo); setImpFormIp(imp.ip); setImpFormLargura(imp.largura); setImpFormAtiva(imp.ativa); setImpShowForm(true);
+              };
+              const salvar = async () => {
+                if (!impFormNome.trim()) { toast.error("Informe o nome da impressora"); return; }
+                const nova: import("@/lib/adminStorage").ImpressoraConfig = {
+                  id: impEditando?.id ?? crypto.randomUUID(),
+                  nome: impFormNome.trim(), setor: impFormSetor, tipo: impFormTipo, ip: impFormIp.trim(), largura: impFormLargura, ativa: impFormAtiva,
+                };
+                const novaLista = impEditando ? impressoras.map(i => i.id === impEditando.id ? nova : i) : [...impressoras, nova];
+                const updated = { ...sistemaConfig, impressoras: novaLista };
+                setSistemaConfig(updated);
+                await saveSistemaConfig(updated, storeId);
+                toast.success(impEditando ? "Impressora atualizada" : "Impressora adicionada");
+                setImpShowForm(false); resetForm();
+              };
+              const excluir = async (id: string) => {
+                const novaLista = impressoras.filter(i => i.id !== id);
+                const updated = { ...sistemaConfig, impressoras: novaLista };
+                setSistemaConfig(updated);
+                await saveSistemaConfig(updated, storeId);
+                toast.success("Impressora removida");
+              };
+              const testarImpressao = (imp: import("@/lib/adminStorage").ImpressoraConfig) => {
+                const agora = new Date();
+                const dataStr = agora.toLocaleDateString("pt-BR") + " " + agora.toLocaleTimeString("pt-BR");
+                const w = window.open("", "_blank", "width=400,height=600");
+                if (!w) return;
+                w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Teste</title><style>@page{margin:0;size:${imp.largura === "58mm" ? "58mm" : "80mm"} auto}*{margin:0;padding:0;box-sizing:border-box}body{font-family:monospace;font-size:11px;width:${imp.largura === "58mm" ? "200px" : "280px"};padding:8px}h1{font-size:18px;font-weight:bold;text-align:center;margin-bottom:8px}.sep{text-align:center;margin:6px 0}.center{text-align:center}</style></head><body>`);
+                w.document.write(`<h1>TESTE DE IMPRESSÃO</h1><div class="sep">--------------------------------</div>`);
+                w.document.write(`<p class="center" style="font-weight:bold">${imp.nome}</p>`);
+                w.document.write(`<p class="center">Setor: ${imp.setor}</p>`);
+                w.document.write(`<p class="center">Tipo: ${imp.tipo}${imp.tipo === "rede" ? ` (${imp.ip || "sem IP"})` : ""}</p>`);
+                w.document.write(`<p class="center">Largura: ${imp.largura}</p>`);
+                w.document.write(`<div class="sep">--------------------------------</div>`);
+                w.document.write(`<p class="center">${dataStr}</p>`);
+                w.document.write(`<div class="sep">--------------------------------</div>`);
+                w.document.write(`<p class="center" style="margin-top:8px">✅ Impressora funcionando!</p>`);
+                w.document.write(`<script>window.onload=function(){window.print();window.close();}<\/script></body></html>`);
+                w.document.close();
+              };
+
+              const setorLabels: Record<string, string> = { caixa: "Caixa", cozinha: "Cozinha", bar: "Bar", delivery: "Delivery" };
+              const tipoLabels: Record<string, string> = { rede: "Rede (IP)", usb: "USB", bluetooth: "Bluetooth" };
+
+              return (
+                <div className="space-y-4 max-w-lg">
+                  <div className="rounded-xl border border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950/30 p-4">
+                    <p className="text-sm text-blue-700 dark:text-blue-300">
+                      Configure suas impressoras térmicas. A impressão por rede (IP) estará disponível em breve. Por enquanto, o sistema usa a impressão do navegador.
+                    </p>
+                  </div>
+
+                  {!impShowForm && (
+                    <Button onClick={openNew} className="w-full rounded-xl font-bold gap-2">
+                      <Plus className="h-4 w-4" /> Adicionar impressora
+                    </Button>
+                  )}
+
+                  {impShowForm && (
+                    <div className="surface-card space-y-4 rounded-2xl p-6">
+                      <h3 className="text-sm font-bold text-foreground">{impEditando ? "Editar impressora" : "Nova impressora"}</h3>
+                      <div className="space-y-3">
+                        <div>
+                          <label className="text-xs font-bold text-muted-foreground">Nome</label>
+                          <Input value={impFormNome} onChange={e => setImpFormNome(e.target.value)} placeholder='Ex: Cozinha Principal' className="rounded-xl mt-1" />
+                        </div>
+                        <div>
+                          <label className="text-xs font-bold text-muted-foreground">Setor</label>
+                          <Select value={impFormSetor} onValueChange={v => setImpFormSetor(v as any)}>
+                            <SelectTrigger className="rounded-xl mt-1"><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="caixa">Caixa</SelectItem>
+                              <SelectItem value="cozinha">Cozinha</SelectItem>
+                              <SelectItem value="bar">Bar</SelectItem>
+                              <SelectItem value="delivery">Delivery</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <label className="text-xs font-bold text-muted-foreground">Tipo de conexão</label>
+                          <Select value={impFormTipo} onValueChange={v => setImpFormTipo(v as any)}>
+                            <SelectTrigger className="rounded-xl mt-1"><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="rede">Rede (IP)</SelectItem>
+                              <SelectItem value="usb">USB</SelectItem>
+                              <SelectItem value="bluetooth">Bluetooth</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        {impFormTipo === "rede" && (
+                          <div>
+                            <label className="text-xs font-bold text-muted-foreground">Endereço IP</label>
+                            <Input value={impFormIp} onChange={e => setImpFormIp(e.target.value)} placeholder="192.168.1.100" className="rounded-xl mt-1" />
+                          </div>
+                        )}
+                        <div>
+                          <label className="text-xs font-bold text-muted-foreground">Largura do papel</label>
+                          <Select value={impFormLargura} onValueChange={v => setImpFormLargura(v as any)}>
+                            <SelectTrigger className="rounded-xl mt-1"><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="58mm">58mm</SelectItem>
+                              <SelectItem value="80mm">80mm</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <label className="text-xs font-bold text-muted-foreground">Ativa</label>
+                          <Switch checked={impFormAtiva} onCheckedChange={setImpFormAtiva} />
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button onClick={salvar} className="flex-1 rounded-xl font-bold gap-2"><Save className="h-4 w-4" /> Salvar</Button>
+                        <Button variant="outline" onClick={() => { setImpShowForm(false); resetForm(); }} className="rounded-xl"><X className="h-4 w-4" /></Button>
+                      </div>
+                    </div>
+                  )}
+
+                  {impressoras.length === 0 && !impShowForm && (
+                    <p className="text-center text-sm text-muted-foreground py-8">Nenhuma impressora cadastrada</p>
+                  )}
+
+                  {impressoras.map(imp => (
+                    <div key={imp.id} className="surface-card rounded-2xl p-5 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <Printer className="h-5 w-5 text-muted-foreground" />
+                          <div>
+                            <p className="text-sm font-bold text-foreground">{imp.nome}</p>
+                            <p className="text-xs text-muted-foreground">{setorLabels[imp.setor]} · {tipoLabels[imp.tipo]}{imp.tipo === "rede" && imp.ip ? ` · ${imp.ip}` : ""} · {imp.largura}</p>
+                          </div>
+                        </div>
+                        <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${imp.ativa ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400" : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"}`}>
+                          {imp.ativa ? "Ativa" : "Inativa"}
+                        </span>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button variant="outline" size="sm" className="rounded-xl gap-1.5 flex-1" onClick={() => openEdit(imp)}>
+                          <Pencil className="h-3.5 w-3.5" /> Editar
+                        </Button>
+                        <Button variant="outline" size="sm" className="rounded-xl gap-1.5 flex-1" onClick={() => testarImpressao(imp)}>
+                          <Printer className="h-3.5 w-3.5" /> Imprimir teste
+                        </Button>
+                        <Button variant="outline" size="sm" className="rounded-xl gap-1.5 text-destructive hover:text-destructive" onClick={() => excluir(imp.id)}>
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              );
+            })()}
 
             {/* SISTEMA */}
             {configSection === "sistema" && (

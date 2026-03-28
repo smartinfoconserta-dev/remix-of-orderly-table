@@ -82,6 +82,17 @@ export interface SistemaConfig {
   plano?: "basico" | "medio" | "pro" | "premium";
   modoOperacao?: "restaurante" | "fast_food";
   identificacaoFastFood?: "codigo" | "nome_cliente";
+  impressoras?: ImpressoraConfig[];
+}
+
+export interface ImpressoraConfig {
+  id: string;
+  nome: string;
+  setor: "caixa" | "cozinha" | "bar" | "delivery";
+  tipo: "rede" | "usb" | "bluetooth";
+  ip: string;
+  largura: "58mm" | "80mm";
+  ativa: boolean;
 }
 
 export interface LicencaConfig {
