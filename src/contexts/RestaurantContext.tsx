@@ -438,7 +438,7 @@ const dbUpdatePedido = (pedidoId: string, updates: Record<string, any>) => {
 const dbInsertFechamento = (f: FechamentoConta) => {
   const sid = getActiveStoreId();
   if (!sid) { console.warn("dbInsertFechamento: storeId is null, skipping"); return; }
-  supabase.from("fechamentos").insert(fechamentoToRow(f, sid) as any).then(({ error }) => {
+  supabase.rpc("rpc_insert_fechamento" as any, { _data: fechamentoToRow(f, sid) }).then(({ error }: any) => {
     if (error) { console.error("DB insert fechamento", error); toast.error("Erro ao salvar fechamento no banco"); }
   });
 };
