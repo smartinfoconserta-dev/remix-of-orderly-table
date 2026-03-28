@@ -299,6 +299,16 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
   const [confirmTaxaEntrega, setConfirmTaxaEntrega] = useState("");
   const [deliveryTempoEstimado, setDeliveryTempoEstimado] = useState("");
   const [buscaDelivery, setBuscaDelivery] = useState("");
+  const [bairrosCache, setBairrosCache] = useState<Bairro[]>([]);
+  useEffect(() => {
+    const getStoreId = (): string | null => {
+      try { const raw = sessionStorage.getItem("obsidian-op-session-v2"); if (raw) { const s = JSON.parse(raw); return s.storeId ?? null; } } catch {}
+      try { const saved = sessionStorage.getItem("orderly-active-store"); if (saved) return saved; } catch {}
+      return null;
+    };
+    const sid = getStoreId();
+    if (sid) getBairrosAsync(sid).then(setBairrosCache);
+  }, []);
   const [mostrarEntregues, setMostrarEntregues] = useState(false);
   const [filtroMotoboy, setFiltroMotoboy] = useState<string | null>(null);
   const [fechamentosPendentes, setFechamentosPendentes] = useState<any[]>([]);
