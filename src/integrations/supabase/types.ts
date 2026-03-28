@@ -1259,6 +1259,7 @@ export type Database = {
         Returns: boolean
       }
       is_master: { Args: { _user_id: string }; Returns: boolean }
+      next_order_number: { Args: { _store_id: string }; Returns: number }
       search_stores: {
         Args: { query: string }
         Returns: {
