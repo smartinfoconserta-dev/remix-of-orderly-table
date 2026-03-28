@@ -1342,7 +1342,14 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
                 <span className="truncate">{pb.enderecoCompleto}{pb.bairro ? ` — ${pb.bairro}` : ""}</span>
               </p>
             )}
-            {pb.clienteTelefone && <p className="text-xs text-muted-foreground mt-0.5">{pb.clienteTelefone}</p>}
+            {pb.clienteTelefone && (
+              <div className="flex items-center gap-1 mt-0.5">
+                <p className="text-xs text-muted-foreground">{pb.clienteTelefone}</p>
+                <a href={`https://wa.me/55${pb.clienteTelefone.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer" title="Abrir WhatsApp" className="inline-flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground hover:text-emerald-500 hover:bg-secondary transition-colors">
+                  <MessageCircle className="h-3.5 w-3.5" />
+                </a>
+              </div>
+            )}
             {pb.motoboyNome && (
               <div className="flex items-center gap-1.5 mt-1">
                 <span className="text-sm">🏍️</span>
