@@ -153,6 +153,7 @@ export function isProductsLoaded(): boolean {
 export async function reloadProducts(storeId?: string | null): Promise<void> {
   _loaded = false;
   _loadPromise = null;
+  _loadedStoreId = null;
   await preloadProducts(storeId);
 }
 

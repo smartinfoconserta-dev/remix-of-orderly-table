@@ -20,11 +20,11 @@ const MenuOverlay = ({ open, onClose, onAddItem, storeId }: Props) => {
   const [produtoSelecionado, setProdutoSelecionado] = useState<Produto | null>(null);
 
   useEffect(() => {
-    preloadProducts().then(() => {
+    preloadProducts(storeId).then(() => {
       setCategorias([...getCachedCategorias()]);
       setProdutos([...getCachedProdutos()]);
     });
-  }, []);
+  }, [storeId]);
 
   const produtosFiltrados = produtos.filter((p) => p.categoria === categoriaAtiva);
 
