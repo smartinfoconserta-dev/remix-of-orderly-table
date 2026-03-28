@@ -163,7 +163,7 @@ const AdminPage = () => {
   const { storeId, storeName: ctxStoreName, stores } = useStore();
   const navigate = useNavigate();
   const [tab, setTab] = useState<AdminTab>("dashboard");
-  const [configSection, setConfigSection] = useState<"inicio" | "identidade" | "delivery" | "salao" | "operacao" | "modulos" | "sistema">("inicio");
+  const [configSection, setConfigSection] = useState<"inicio" | "identidade" | "delivery" | "salao" | "operacao" | "modulos" | "sistema" | "impressoras">("inicio");
   const [modoOperacaoPendente, setModoOperacaoPendente] = useState<"restaurante" | "fast_food" | null>(null);
 
   // --- Dashboard "Hoje" data ---
