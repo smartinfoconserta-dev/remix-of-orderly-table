@@ -699,17 +699,19 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
   ) : cardapioHeaderEstilo === "banner" && cardapioBannerBase64 && (modo === "cliente" || modo === "totem") ? (
     null // banner mode — identity is rendered in custom banner header below
   ) : RESTAURANTE.logoUrl && logoEstilo === "quadrada" ? (
-    <div className="flex w-full items-center justify-between">
-      <img
-        src={RESTAURANTE.logoUrl}
-        alt={RESTAURANTE.nome}
-        className="w-full rounded-xl object-cover select-none touch-none" style={{ height: "60px", maxWidth: "220px" }}
-        onPointerDown={handleLogoPointerDown}
-        onPointerUp={handleLogoPointerUp}
-        onPointerLeave={handleLogoPointerUp}
-        onContextMenu={(e) => modo === "cliente" && e.preventDefault()}
-        draggable={false}
-      />
+    <div className="flex w-full items-center">
+      <div className="w-[11rem] lg:w-[13rem] shrink-0 flex items-center justify-center border-r border-border bg-card/95 -ml-4 pl-4" style={{ height: "60px" }}>
+        <img
+          src={RESTAURANTE.logoUrl}
+          alt={RESTAURANTE.nome}
+          className="h-full w-full rounded-none object-cover select-none touch-none"
+          onPointerDown={handleLogoPointerDown}
+          onPointerUp={handleLogoPointerUp}
+          onPointerLeave={handleLogoPointerUp}
+          onContextMenu={(e) => modo === "cliente" && e.preventDefault()}
+          draggable={false}
+        />
+      </div>
       <div className="flex-1" />
       {mesaLabel && (
         <p className="text-sm font-bold text-foreground">{mesaLabel}</p>
