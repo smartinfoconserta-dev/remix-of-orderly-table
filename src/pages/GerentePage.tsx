@@ -59,6 +59,7 @@ import { getSistemaConfig } from "@/lib/adminStorage";
 import StorePinsManager from "@/components/StorePinsManager";
 import { useStore } from "@/contexts/StoreContext";
 import { supabase } from "@/integrations/supabase/client";
+import IfoodPainel from "@/components/IfoodPainel";
 
 /* ── helpers ── */
 const formatPrice = (v: number) => `R$ ${v.toFixed(2).replace(".", ",")}`;
@@ -580,6 +581,7 @@ const GerentePage = () => {
             { value: "relatorio", icon: BarChart3, label: "Relatório" },
             { value: "logs", icon: ScrollText, label: "Logs" },
             { value: "equipe", icon: Users, label: "Equipe" },
+            { value: "ifood", icon: Truck, label: "iFood" },
           ].map((t) => {
             const Icon = t.icon;
             return (
@@ -1435,6 +1437,13 @@ const GerentePage = () => {
             )}
           </div>
           )}
+        </TabsContent>
+
+        {/* ═══ TAB 5: iFood ═══ */}
+        <TabsContent value="ifood" className="flex-1 overflow-y-auto p-4 md:p-6 mt-0">
+          <div className="mx-auto max-w-2xl">
+            <IfoodPainel />
+          </div>
         </TabsContent>
       </Tabs>
 
