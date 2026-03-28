@@ -77,6 +77,9 @@ const TotemInner = ({ storeId }: { storeId: string }) => {
       setPedidoConfirmado(null);
       setPendingItens([]);
       setClienteNome("");
+      setClienteCpf("");
+      setCpfWanted(null);
+      setPendingPaymentMethod(null);
     }, AUTO_RESET_MS);
     return () => { if (timerRef.current) clearTimeout(timerRef.current); };
   }, [step]);
