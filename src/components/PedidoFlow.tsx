@@ -700,11 +700,11 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
     null // banner mode — identity is rendered in custom banner header below
   ) : RESTAURANTE.logoUrl && logoEstilo === "quadrada" ? (
     <>
-      <div className="w-[11rem] lg:w-[13rem] shrink-0 -ml-4 md:-ml-6 -my-3 flex items-center overflow-hidden">
+      <div className="w-[11rem] lg:w-[13rem] shrink-0 -ml-4 md:-ml-6 overflow-hidden" style={{ height: "56px", marginTop: "-12px", marginBottom: "-12px" }}>
         <img
           src={RESTAURANTE.logoUrl}
           alt={RESTAURANTE.nome}
-          className="h-full w-full object-cover select-none touch-none"
+          className="w-full object-cover select-none touch-none" style={{ height: "56px" }}
           onPointerDown={handleLogoPointerDown}
           onPointerUp={handleLogoPointerUp}
           onPointerLeave={handleLogoPointerUp}
