@@ -1652,6 +1652,14 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
                   <span className="text-xs font-bold">Buscar</span>
                 </button>
                 <button
+                  onClick={() => { setQrScanOpen(true); setQrScanInput(""); }}
+                  className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded text-xs border border-border bg-secondary text-foreground hover:bg-primary/15 transition-colors"
+                  style={{ minWidth: 76 }}
+                >
+                  <QrCode className="h-5 w-5" />
+                  <span className="text-xs font-bold">QR Code</span>
+                </button>
+                <button
                   onClick={() => logout(accessMode)}
                   className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded text-xs border border-border bg-secondary text-foreground hover:bg-primary/15 transition-colors"
                   style={{ minWidth: 76 }}
