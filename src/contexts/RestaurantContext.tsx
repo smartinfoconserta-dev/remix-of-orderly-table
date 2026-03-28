@@ -448,7 +448,7 @@ const dbInsertEvento = (e: EventoOperacional) => {
   const sid = getActiveStoreId();
   if (!sid) return;
   supabase.rpc("rpc_insert_evento" as any, { _data: eventoToRow(e, sid) }).then(({ error }: any) => {
-    if (error) console.error("DB insert evento", error);
+    if (error) { console.error("DB insert evento", error); toast.error("Erro ao registrar evento"); }
   });
 };
 
