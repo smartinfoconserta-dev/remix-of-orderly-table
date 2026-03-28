@@ -186,7 +186,7 @@ interface RestaurantContextType {
   addToCart: (mesaId: string, item: ItemCarrinho) => void;
   updateCartItemQty: (mesaId: string, uid: string, delta: number, audit?: ActionAuditInput) => void;
   removeFromCart: (mesaId: string, uid: string, audit?: ActionAuditInput) => void;
-  confirmarPedido: (mesaId: string, meta?: PedidoMeta) => void;
+  confirmarPedido: (mesaId: string, meta?: PedidoMeta) => Promise<void>;
   chamarGarcom: (mesaId: string) => void;
   dismissChamarGarcom: (mesaId: string) => void;
   fecharConta: (mesaId: string, input?: FecharContaInput) => void;
