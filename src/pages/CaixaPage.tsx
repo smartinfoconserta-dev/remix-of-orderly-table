@@ -946,7 +946,7 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
         setDeliveryConfirmOpen(true);
         return;
       }
-      criarPedidoBalcao({
+      await criarPedidoBalcao({
         itens,
         origem: "balcao",
         operador: currentOperator,

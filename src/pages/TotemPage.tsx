@@ -76,8 +76,8 @@ const TotemInner = ({ storeId }: { storeId: string }) => {
   }, []);
 
   // Called when customer picks a payment method
-  const handlePaymentSelected = useCallback((method: PaymentMethod) => {
-    const numeroPedido = criarPedidoBalcao({
+  const handlePaymentSelected = useCallback(async (method: PaymentMethod) => {
+    const numeroPedido = await criarPedidoBalcao({
       itens: pendingItens,
       origem: "totem",
       operador: { id: "totem-auto", nome: "Totem", role: "caixa", criadoEm: new Date().toISOString() },
