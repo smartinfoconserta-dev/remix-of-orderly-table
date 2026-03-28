@@ -1,4 +1,3 @@
-import { type Produto, produtos as baseProdutos } from "@/data/menuData";
 import {
   fetchConfig,
   saveConfig,
