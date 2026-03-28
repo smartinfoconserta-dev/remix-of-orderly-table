@@ -10,20 +10,21 @@ interface Props {
   open: boolean;
   onClose: () => void;
   onAddItem: (item: ItemCarrinho) => void;
+  storeId?: string | null;
 }
 
-const MenuOverlay = ({ open, onClose, onAddItem }: Props) => {
+const MenuOverlay = ({ open, onClose, onAddItem, storeId }: Props) => {
   const [categorias, setCategorias] = useState(() => getCachedCategorias());
   const [produtos, setProdutos] = useState(() => getCachedProdutos());
   const [categoriaAtiva, setCategoriaAtiva] = useState(categorias[0]?.id ?? "");
   const [produtoSelecionado, setProdutoSelecionado] = useState<Produto | null>(null);
 
   useEffect(() => {
-    preloadProducts().then(() => {
+    preloadProducts(storeId).then(() => {
       setCategorias([...getCachedCategorias()]);
       setProdutos([...getCachedProdutos()]);
     });
-  }, []);
+  }, [storeId]);
 
   const produtosFiltrados = produtos.filter((p) => p.categoria === categoriaAtiva);
 

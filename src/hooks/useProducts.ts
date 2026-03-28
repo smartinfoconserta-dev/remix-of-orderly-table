@@ -8,6 +8,7 @@ let _produtosCache: Produto[] = [];
 let _categoriasCache: Categoria[] = [];
 let _loaded = false;
 let _loadPromise: Promise<void> | null = null;
+let _loadedStoreId: string | null = null;
 
 // ─── DB row → Produto ───
 function rowToProduto(row: any): Produto {
@@ -115,8 +116,14 @@ function getStoreId(): string | null {
 /** Preload products into memory cache. Call early in app lifecycle. */
 export async function preloadProducts(storeId?: string | null): Promise<void> {
   const sid = storeId ?? getStoreId();
+  // If already loaded for a different store, force reload
+  if (_loaded && sid && _loadedStoreId && sid !== _loadedStoreId) {
+    _loaded = false;
+    _loadPromise = null;
+  }
   if (_loadPromise) return _loadPromise;
-  _loadPromise = loadFromDb(sid);
+  if (_loaded && sid === _loadedStoreId) return;
+  _loadPromise = loadFromDb(sid).then(() => { _loadedStoreId = sid; });
   await _loadPromise;
   _loadPromise = null;
 }
@@ -146,6 +153,7 @@ export function isProductsLoaded(): boolean {
 export async function reloadProducts(storeId?: string | null): Promise<void> {
   _loaded = false;
   _loadPromise = null;
+  _loadedStoreId = null;
   await preloadProducts(storeId);
 }
 
