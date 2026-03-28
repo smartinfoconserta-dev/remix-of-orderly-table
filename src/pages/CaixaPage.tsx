@@ -1782,6 +1782,16 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
                 </button>
                 )}
                 <button
+                  onClick={() => setCaixaView("ifood")}
+                  className={`px-4 py-1.5 text-xs font-bold transition-colors border border-border rounded-t -mb-px relative flex items-center gap-1.5 ${
+                    caixaView === "ifood"
+                      ? "bg-card text-foreground border-b-card z-10"
+                      : "bg-background text-muted-foreground"
+                  }`}
+                >
+                  🔴 iFood
+                </button>
+                <button
                   onClick={() => setCaixaView("historico")}
                   className={`px-4 py-1.5 text-xs font-bold transition-colors border border-border rounded-t -mb-px relative flex items-center gap-1.5 ${
                     caixaView === "historico"
