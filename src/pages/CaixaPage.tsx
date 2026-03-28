@@ -297,7 +297,7 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
   useEffect(() => {
     if (modoForced) setModoOperacao(modoForced);
   }, [modoForced]);
-  const [caixaView, setCaixaView] = useState<"mesas" | "delivery" | "totem" | "historico">(() => {
+  const [caixaView, setCaixaView] = useState<"mesas" | "delivery" | "totem" | "historico" | "ifood">(() => {
     if (isFastFoodGlobal) return "totem";
     if (modoForced === "somente_delivery") return "delivery";
     if (modoForced === "somente_mesas") return "mesas";
