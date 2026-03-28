@@ -97,7 +97,8 @@ const readOpSession = (): OperationalSession | null => {
   try {
     const raw = sessionStorage.getItem(OP_SESSION_KEY);
     return raw ? (JSON.parse(raw) as OperationalSession) : null;
-  } catch {
+  } catch (err) {
+    console.error("[AuthContext] erro:", err);
     return null;
   }
 };
