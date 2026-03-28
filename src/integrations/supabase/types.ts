@@ -930,6 +930,7 @@ export type Database = {
           delivery_ativo: boolean | null
           horario_funcionamento: Json | null
           id: string
+          identificacao_fast_food: string
           impressao_por_setor: boolean | null
           instagram_bg: string | null
           instagram_url: string | null
@@ -939,6 +940,7 @@ export type Database = {
           mensagem_boas_vindas: string | null
           mensagem_fechado: string | null
           modo_identificacao_delivery: string | null
+          modo_operacao: string
           modo_tv: string | null
           modulos: Json | null
           nome_impressora_bar: string | null
@@ -967,6 +969,7 @@ export type Database = {
           delivery_ativo?: boolean | null
           horario_funcionamento?: Json | null
           id?: string
+          identificacao_fast_food?: string
           impressao_por_setor?: boolean | null
           instagram_bg?: string | null
           instagram_url?: string | null
@@ -976,6 +979,7 @@ export type Database = {
           mensagem_boas_vindas?: string | null
           mensagem_fechado?: string | null
           modo_identificacao_delivery?: string | null
+          modo_operacao?: string
           modo_tv?: string | null
           modulos?: Json | null
           nome_impressora_bar?: string | null
@@ -1004,6 +1008,7 @@ export type Database = {
           delivery_ativo?: boolean | null
           horario_funcionamento?: Json | null
           id?: string
+          identificacao_fast_food?: string
           impressao_por_setor?: boolean | null
           instagram_bg?: string | null
           instagram_url?: string | null
@@ -1013,6 +1018,7 @@ export type Database = {
           mensagem_boas_vindas?: string | null
           mensagem_fechado?: string | null
           modo_identificacao_delivery?: string | null
+          modo_operacao?: string
           modo_tv?: string | null
           modulos?: Json | null
           nome_impressora_bar?: string | null

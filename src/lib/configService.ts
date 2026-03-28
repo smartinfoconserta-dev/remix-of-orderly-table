@@ -104,6 +104,8 @@ function configToDbRow(config: SistemaConfig) {
     modulos: (config.modulos ?? {}) as unknown as null,
     plano: config.plano ?? "basico",
     modo_tv: config.modoTV ?? "padrao",
+    modo_operacao: config.modoOperacao ?? "restaurante",
+    identificacao_fast_food: config.identificacaoFastFood ?? "codigo",
     total_mesas: 20,
     updated_at: new Date().toISOString(),
   };
