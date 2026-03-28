@@ -157,6 +157,7 @@ const AdminPage = () => {
 
   // --- Dashboard "Hoje" data ---
   const [dashLoading, setDashLoading] = useState(false);
+  const [dashError, setDashError] = useState(false);
   const [dashPedidosHoje, setDashPedidosHoje] = useState(0);
   const [dashFaturamento, setDashFaturamento] = useState(0);
   const [dashTotalFechamentos, setDashTotalFechamentos] = useState(0);
