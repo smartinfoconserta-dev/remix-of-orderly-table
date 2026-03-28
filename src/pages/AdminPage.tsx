@@ -829,6 +829,36 @@ th{background:#f5f5f5;padding:8px 12px;border:1px solid #ddd;text-align:left;fon
               )}
             </div>
 
+            {/* ── Gráfico 7 dias ── */}
+            {!dashLoading && (
+              <div className="rounded-xl border border-border bg-card p-5">
+                <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-4 flex items-center gap-1.5">
+                  <BarChart3 className="h-3.5 w-3.5" />
+                  Faturamento — últimos 7 dias
+                </p>
+                {dash7diasLoading ? (
+                  <div className="space-y-2">
+                    <Skeleton className="h-[220px] w-full rounded-lg" />
+                  </div>
+                ) : dash7dias.length > 0 ? (
+                  <ResponsiveContainer width="100%" height={220}>
+                    <BarChart data={dash7dias}>
+                      <XAxis dataKey="dia" tick={{ fontSize: 12 }} tickLine={false} axisLine={false} />
+                      <YAxis tick={{ fontSize: 11 }} tickLine={false} axisLine={false} tickFormatter={(v: number) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : String(v)} width={45} />
+                      <Tooltip
+                        formatter={(value: number) => [`R$ ${value.toFixed(2).replace(".", ",")}`, "Faturamento"]}
+                        contentStyle={{ borderRadius: "8px", border: "1px solid hsl(var(--border))", background: "hsl(var(--card))", fontSize: "12px" }}
+                        labelStyle={{ fontWeight: "bold", marginBottom: "4px" }}
+                      />
+                      <Bar dataKey="total" fill="hsl(var(--primary))" radius={[6, 6, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <p className="text-xs text-muted-foreground py-8 text-center">Sem dados de faturamento</p>
+                )}
+              </div>
+            )}
+
             {/* ── Últimos fechamentos ── */}
             {!dashLoading && dashUltimosFechamentos.length > 0 && (
               <div className="space-y-4">
