@@ -482,9 +482,11 @@ const dbSyncEstadoMesa = (mesa: Mesa) => {
     total: mesa.total, carrinho: JSON.parse(JSON.stringify(mesa.carrinho)),
     pedidos: JSON.parse(JSON.stringify(mesa.pedidos)),
     chamar_garcom: mesa.chamarGarcom, chamado_em: mesa.chamadoEm,
-    store_id: sid, updated_at: new Date().toISOString(),
+    store_id: sid,
   };
-  supabase.from("estado_mesas").upsert(row as any, { onConflict: "id" }).then(({ error }) => { if (error) console.error("DB sync mesa", error); });
+  supabase.rpc("rpc_upsert_estado_mesa" as any, { _data: row }).then(({ error }: any) => {
+    if (error) console.error("DB sync mesa via RPC", error);
+  });
 };
 
 // ── Enhanced appendEvent that also persists ──
