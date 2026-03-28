@@ -1204,7 +1204,7 @@ ${topRows ? `<h2>Top 5 produtos</h2><table><thead><tr><th>#</th><th>Produto</th>
                             const next = [...categoriasCustom];
                             [next[idx - 1], next[idx]] = [next[idx], next[idx - 1]];
                             next.forEach((cc, i) => cc.ordem = i);
-                            saveCategoriasCustom(next);
+                            saveCategoriasCustom(next, storeId);
                             setCategoriasCustom(next);
                           }}>
                             <span className="text-[10px]">▲</span>
@@ -1215,7 +1215,7 @@ ${topRows ? `<h2>Top 5 produtos</h2><table><thead><tr><th>#</th><th>Produto</th>
                             const next = [...categoriasCustom];
                             [next[idx], next[idx + 1]] = [next[idx + 1], next[idx]];
                             next.forEach((cc, i) => cc.ordem = i);
-                            saveCategoriasCustom(next);
+                            saveCategoriasCustom(next, storeId);
                             setCategoriasCustom(next);
                           }}>
                             <span className="text-[10px]">▼</span>
@@ -1223,7 +1223,7 @@ ${topRows ? `<h2>Top 5 produtos</h2><table><thead><tr><th>#</th><th>Produto</th>
                           <Button variant="ghost" size="icon" className="h-5 w-5 text-destructive hover:bg-destructive/10" onClick={() => {
                             if (count > 0) { toast.error("Remova os produtos desta categoria primeiro"); return; }
                             const next = categoriasCustom.filter((cc) => cc.id !== c.id);
-                            saveCategoriasCustom(next);
+                            saveCategoriasCustom(next, storeId);
                             setCategoriasCustom(next);
                             toast.success("Categoria removida");
                           }}>
@@ -1713,14 +1713,14 @@ ${topRows ? `<h2>Top 5 produtos</h2><table><thead><tr><th>#</th><th>Produto</th>
                       if (!catNomeInput.trim()) return;
                       if (catEditando) {
                         const next = categoriasCustom.map((c) => c.id === catEditando.id ? { ...c, nome: catNomeInput.trim(), icone: catIconeInput } : c);
-                        saveCategoriasCustom(next);
+                        saveCategoriasCustom(next, storeId);
                         setCategoriasCustom(next);
                         toast.success("Categoria atualizada");
                       } else {
                         const slug = catNomeInput.trim().toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
                         const nova: CategoriaCustom = { id: `${slug}-${Date.now()}`, nome: catNomeInput.trim(), icone: catIconeInput, ordem: todasCategorias.length };
                         const next = [...categoriasCustom, nova];
-                        saveCategoriasCustom(next);
+                        saveCategoriasCustom(next, storeId);
                         setCategoriasCustom(next);
                         toast.success("Categoria criada");
                       }
