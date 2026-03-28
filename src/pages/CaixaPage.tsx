@@ -758,6 +758,42 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
   const [qrRetiradaPedidoId, setQrRetiradaPedidoId] = useState<string | null>(null);
   const qrRetiradaTimerRef = useRef<number | null>(null);
 
+  // QR scanner dialog state
+  const [qrScanOpen, setQrScanOpen] = useState(false);
+  const [qrScanInput, setQrScanInput] = useState("");
+  const qrScanInputRef = useRef<HTMLInputElement>(null);
+
+  const handleQrScan = useCallback((raw: string) => {
+    const value = raw.trim();
+    if (!value) return;
+    let numeroBuscado: number | null = null;
+    if (value.startsWith("RETIRADA:")) {
+      const after = value.replace("RETIRADA:", "");
+      numeroBuscado = parseInt(after, 10);
+    } else {
+      numeroBuscado = parseInt(value, 10);
+    }
+    if (!numeroBuscado || isNaN(numeroBuscado)) {
+      toast.error("Código inválido");
+      return;
+    }
+    const pedido = pedidosBalcao.find((p) => p.numeroPedido === numeroBuscado);
+    if (!pedido) {
+      toast.error("Pedido não encontrado");
+      return;
+    }
+    if (pedido.statusBalcao === "retirado") {
+      toast("Pedido já foi retirado");
+      return;
+    }
+    if (pedido.statusBalcao !== "pronto") {
+      toast.error("Pedido não está pronto para retirada");
+      return;
+    }
+    marcarBalcaoRetirado(pedido.id);
+    toast.success(`Pedido #${String(numeroBuscado).padStart(3, "0")} retirado!`);
+  }, [pedidosBalcao, marcarBalcaoRetirado]);
+
 
   if (!currentOperator || !hasCaixaAccess) {
     return (
