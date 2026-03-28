@@ -34,6 +34,8 @@ import {
   Printer,
   Clock,
   BarChart3,
+  CalendarDays,
+  FileText,
 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { Skeleton } from "@/components/ui/skeleton";
