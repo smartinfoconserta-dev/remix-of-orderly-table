@@ -172,6 +172,8 @@ const AdminPage = () => {
   const [dashTotalFechamentos, setDashTotalFechamentos] = useState(0);
   const [dashCaixaAberto, setDashCaixaAberto] = useState<boolean | null>(null);
   const [dashUltimosFechamentos, setDashUltimosFechamentos] = useState<any[]>([]);
+  const [dash7dias, setDash7dias] = useState<{ dia: string; total: number }[]>([]);
+  const [dash7diasLoading, setDash7diasLoading] = useState(false);
 
   useEffect(() => {
     if (tab !== "dashboard" || !storeId) return;
