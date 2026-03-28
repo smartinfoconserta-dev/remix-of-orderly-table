@@ -700,18 +700,7 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
     null // banner mode — identity is rendered in custom banner header below
   ) : RESTAURANTE.logoUrl && logoEstilo === "quadrada" ? (
     <div className="flex w-full items-center">
-      <div className="w-[11rem] lg:w-[13rem] shrink-0 flex items-center justify-center border-r border-border bg-card/95 -ml-4 pl-4" style={{ height: "60px" }}>
-        <img
-          src={RESTAURANTE.logoUrl}
-          alt={RESTAURANTE.nome}
-          className="h-full w-full rounded-none object-cover select-none touch-none"
-          onPointerDown={handleLogoPointerDown}
-          onPointerUp={handleLogoPointerUp}
-          onPointerLeave={handleLogoPointerUp}
-          onContextMenu={(e) => modo === "cliente" && e.preventDefault()}
-          draggable={false}
-        />
-      </div>
+      <div className="w-[11rem] lg:w-[13rem] shrink-0" />
       <div className="flex-1" />
       {mesaLabel && (
         <p className="text-sm font-bold text-foreground">{mesaLabel}</p>
@@ -1240,6 +1229,21 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
   const desktopContent = (
     <div className={`flex flex-1 items-start transition-all duration-500 ${isClientIdle ? "brightness-[0.2] saturate-50" : "brightness-100 saturate-100"}`}>
       <aside className={`w-[11rem] shrink-0 overflow-y-auto border-r border-border bg-card/95 px-3 lg:w-[13rem] self-start sticky top-[73px] max-h-[calc(100vh-73px)] scrollbar-hide flex flex-col ${[HOME_TAB, ...allCategorias].length <= 8 ? "justify-center" : "justify-start py-3"}`}>
+        {RESTAURANTE.logoUrl && logoEstilo === "quadrada" && (
+          <div className="mb-3 -mx-3 -mt-0">
+            <img
+              src={RESTAURANTE.logoUrl}
+              alt={RESTAURANTE.nome}
+              className="w-full object-cover select-none touch-none"
+              style={{ height: "70px" }}
+              onPointerDown={handleLogoPointerDown}
+              onPointerUp={handleLogoPointerUp}
+              onPointerLeave={handleLogoPointerUp}
+              onContextMenu={(e) => modo === "cliente" && e.preventDefault()}
+              draggable={false}
+            />
+          </div>
+        )}
         <nav className="flex flex-col gap-2">
           {[HOME_TAB, ...allCategorias].map((cat) => {
             const selected = categoriaAtiva === cat.id;
