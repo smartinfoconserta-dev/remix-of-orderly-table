@@ -76,7 +76,8 @@ export async function getClientes(): Promise<Cliente[]> {
       dataTermino: r.data_termino ?? "",
       planoModulos: (r.plano_modulos as Cliente["planoModulos"]) ?? "basico",
     }));
-  } catch {
+  } catch (err) {
+    console.error("[masterStorage] erro:", err);
     return [];
   }
 }
