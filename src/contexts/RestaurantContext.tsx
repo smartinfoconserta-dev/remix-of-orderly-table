@@ -639,7 +639,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }, 1500);
 
     return () => clearInterval(retryInterval);
-  }, []);
+  }, [activeStoreId]);
 
   // ── Realtime subscriptions ──
   useEffect(() => {
