@@ -8,6 +8,7 @@ let _produtosCache: Produto[] = [];
 let _categoriasCache: Categoria[] = [];
 let _loaded = false;
 let _loadPromise: Promise<void> | null = null;
+let _loadedStoreId: string | null = null;
 
 // ─── DB row → Produto ───
 function rowToProduto(row: any): Produto {
