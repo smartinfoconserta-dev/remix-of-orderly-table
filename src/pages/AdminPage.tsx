@@ -134,7 +134,7 @@ const sidebarSections = [
   { id: "dashboard" as const, label: "Início", icon: LayoutDashboard },
   { id: "cardapio" as const, label: "Cardápio", icon: ClipboardList },
   { id: "mesas" as const, label: "Mesas", icon: Grid3X3 },
-  { id: "tablets" as const, label: "Tablets", icon: TabletSmartphone },
+  { id: "tablets" as const, label: "Dispositivos", icon: TabletSmartphone },
   { id: "equipe" as const, label: "Equipe", icon: Users },
   { id: "configuracoes" as const, label: "Configurações", icon: Settings },
   { id: "licenca" as const, label: "Meu Plano", icon: Shield },
