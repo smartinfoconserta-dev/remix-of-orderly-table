@@ -1909,7 +1909,7 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
                                       className="h-8 text-xs rounded-lg"
                                     />
                                     {(() => {
-                                      const bairros = getBairros().filter((b) => b.ativo);
+                                      const bairros = bairrosCache.filter((b) => b.ativo);
                                       const bairroPedido = pb.bairro || "";
                                       const match = bairroPedido ? bairros.find((b) => normStr(b.nome) === normStr(bairroPedido)) : null;
                                       if (match && parseCurrencyInput(confirmTaxaEntrega) > 0) {
