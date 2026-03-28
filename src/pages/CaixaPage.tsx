@@ -72,6 +72,7 @@ import { getSistemaConfig } from "@/lib/adminStorage";
 import type { ItemCarrinho } from "@/contexts/RestaurantContext";
 import { findClienteDelivery, upsertClienteDelivery, getBairrosAsync, type Bairro, type ClienteDelivery } from "@/lib/deliveryStorage";
 import { supabase } from "@/integrations/supabase/client";
+import IfoodPainel from "@/components/IfoodPainel";
 
 /* ── helpers ── */
 const normStr = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
@@ -297,7 +298,7 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
   useEffect(() => {
     if (modoForced) setModoOperacao(modoForced);
   }, [modoForced]);
-  const [caixaView, setCaixaView] = useState<"mesas" | "delivery" | "totem" | "historico">(() => {
+  const [caixaView, setCaixaView] = useState<"mesas" | "delivery" | "totem" | "historico" | "ifood">(() => {
     if (isFastFoodGlobal) return "totem";
     if (modoForced === "somente_delivery") return "delivery";
     if (modoForced === "somente_mesas") return "mesas";
@@ -1781,6 +1782,16 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
                 </button>
                 )}
                 <button
+                  onClick={() => setCaixaView("ifood")}
+                  className={`px-4 py-1.5 text-xs font-bold transition-colors border border-border rounded-t -mb-px relative flex items-center gap-1.5 ${
+                    caixaView === "ifood"
+                      ? "bg-card text-foreground border-b-card z-10"
+                      : "bg-background text-muted-foreground"
+                  }`}
+                >
+                  🔴 iFood
+                </button>
+                <button
                   onClick={() => setCaixaView("historico")}
                   className={`px-4 py-1.5 text-xs font-bold transition-colors border border-border rounded-t -mb-px relative flex items-center gap-1.5 ${
                     caixaView === "historico"
@@ -2376,6 +2387,11 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
                         </div>
                       </div>
                     )}
+                  </div>
+                )}
+                {caixaView === "ifood" && (
+                  <div className="space-y-4 fade-in p-1">
+                    <IfoodPainel />
                   </div>
                 )}
                 {caixaView === "historico" && (
