@@ -155,8 +155,8 @@ export async function fetchConfig(storeId?: string | null): Promise<SistemaConfi
     // No row yet — return local cache or defaults
     const cached = getLocalCache<SistemaConfig>(CONFIG_CACHE_KEY);
     return cached ?? { nomeRestaurante: "Obsidian", logoUrl: "", corPrimaria: "" };
-  } catch {
-    // Offline fallback
+  } catch (err) {
+    console.error("[configService] erro:", err);
     const cached = getLocalCache<SistemaConfig>(CONFIG_CACHE_KEY);
     return cached ?? { nomeRestaurante: "Obsidian", logoUrl: "", corPrimaria: "" };
   }
