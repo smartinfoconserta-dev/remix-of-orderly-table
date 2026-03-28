@@ -120,15 +120,22 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
   const [produtos, setProdutos] = useState<Produto[]>(() => getCachedProdutos());
   const [dbCategorias, setDbCategorias] = useState<Categoria[]>(() => getCachedCategorias());
 
+  // Get storeId from sessionStorage for device-based modes (totem/tablet)
+  const deviceStoreId = useMemo(() => {
+    try {
+      return sessionStorage.getItem("orderly-device-store-id") || localStorage.getItem("orderly-device-store-id") || null;
+    } catch { return null; }
+  }, []);
+
   useEffect(() => {
     let cancelled = false;
-    preloadProducts().then(() => {
+    preloadProducts(deviceStoreId).then(() => {
       if (cancelled) return;
       setProdutos([...getCachedProdutos()]);
       setDbCategorias([...getCachedCategorias()]);
     });
     return () => { cancelled = true; };
-  }, []);
+  }, [deviceStoreId]);
 
   const customCats = useMemo(() => getCategoriasCustom(), []);
   const allCategorias: Categoria[] = useMemo(() => {

@@ -167,6 +167,7 @@ interface CriarPedidoBalcaoInput {
   observacaoGeral?: string;
   taxaEntrega?: number;
   skipConfirmacao?: boolean;
+  formaPagamentoTotem?: PaymentMethod;
 }
 
 interface RestaurantContextType {
@@ -197,7 +198,7 @@ interface RestaurantContextType {
   registrarMovimentacaoCaixa: (input: MovimentacaoInput) => void;
   abrirCaixa: (fundoTroco: number, usuario: OperationalUser) => void;
   fecharCaixaDoDia: (usuario: OperationalUser, extras?: { diferenca_dinheiro?: number; diferenca_motivo?: string; fundo_proximo?: number }) => void;
-  criarPedidoBalcao: (input: CriarPedidoBalcaoInput) => void;
+  criarPedidoBalcao: (input: CriarPedidoBalcaoInput) => number;
   marcarPedidoBalcaoPronto: (pedidoId: string) => void;
   marcarBalcaoSaiu: (pedidoId: string, motoboyNome: string) => void;
   marcarBalcaoEntregue: (pedidoId: string) => void;
@@ -296,10 +297,15 @@ const getActiveStoreId = (): string | null => {
     const saved = sessionStorage.getItem("orderly-active-store");
     if (saved) { _cachedStoreId = saved; return saved; }
   } catch {}
-  // Try device store (tablet/totem/tv activated via DeviceGate)
+  // Try device store (tablet/totem/tv activated via DeviceGate) — check both storages
   try {
-    const deviceStore = sessionStorage.getItem("orderly-device-store-id");
-    if (deviceStore) { _cachedStoreId = deviceStore; return deviceStore; }
+    const deviceStore = sessionStorage.getItem("orderly-device-store-id") || localStorage.getItem("orderly-device-store-id");
+    if (deviceStore) {
+      // Ensure sessionStorage is synced for current tab
+      sessionStorage.setItem("orderly-device-store-id", deviceStore);
+      _cachedStoreId = deviceStore;
+      return deviceStore;
+    }
   } catch {}
   // Fallback to cached value (covers edge cases where session is briefly unavailable)
   return _cachedStoreId;
@@ -1020,7 +1026,8 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     });
   }, []);
 
-  const criarPedidoBalcao = useCallback((input: CriarPedidoBalcaoInput) => {
+  const criarPedidoBalcao = useCallback((input: CriarPedidoBalcaoInput): number => {
+    const numeroPedido = proximoNumeroPedido();
     setStore((prev) => {
       const now = new Date();
       const totalPedido = calcularTotalItens(input.itens) + (input.origem === "delivery" ? (input.taxaEntrega ?? 0) : 0);
@@ -1030,7 +1037,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       const statusInicial: PedidoRealizado["statusBalcao"] = input.origem === "delivery" && !input.skipConfirmacao ? "aguardando_confirmacao" : "aberto";
       const novoPedido: PedidoRealizado = {
         id: `pedido-${idPrefix}-${now.getTime()}-${Math.random().toString(36).slice(2, 7)}`,
-        numeroPedido: proximoNumeroPedido(), itens: input.itens.map(cloneItem), total: totalPedido,
+        numeroPedido, itens: input.itens.map(cloneItem), total: totalPedido,
         criadoEm: formatClock(now), criadoEmIso: now.toISOString(), origem: input.origem, mesaId: mesaIdGerado,
         caixaId: input.operador.id, caixaNome: input.operador.nome,
         clienteNome: input.clienteNome, clienteTelefone: input.clienteTelefone,
@@ -1039,10 +1046,11 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         observacaoGeral: input.observacaoGeral, statusBalcao: statusInicial, pronto: false,
       };
       dbInsertPedido(novoPedido);
+      const totemPayMethod = input.formaPagamentoTotem ?? "pix";
       const fechamentoTotem: FechamentoConta | null = input.origem === "totem" ? {
         id: `fechamento-totem-${now.getTime()}-${Math.random().toString(36).slice(2, 7)}`,
         numeroComanda: proximoNumeroComanda(), mesaId: mesaIdGerado, mesaNumero: 0, origem: "totem" as const, total: totalPedido,
-        formaPagamento: "pix" as const, pagamentos: [{ id: `pag-totem-${now.getTime()}`, formaPagamento: "pix" as const, valor: totalPedido }],
+        formaPagamento: totemPayMethod, pagamentos: [{ id: `pag-totem-${now.getTime()}`, formaPagamento: totemPayMethod, valor: totalPedido }],
         itens: input.itens.map(cloneItem), criadoEm: formatDateTime(now), criadoEmIso: now.toISOString(),
         caixaId: "totem-auto", caixaNome: "Totem Autoatendimento", troco: 0, subtotal: totalPedido, desconto: 0,
       } : null;
@@ -1054,6 +1062,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         eventos: appendEventAndPersist(prev.eventos, { tipo: "caixa", descricao: `${input.origem === "totem" ? "Totem" : `Caixa ${input.operador.nome}`} criou pedido ${label}`, usuarioId: input.operador.id, usuarioNome: input.operador.nome, acao: "lancar_pedido", valor: totalPedido }),
       };
     });
+    return numeroPedido;
   }, []);
 
   const marcarPedidoBalcaoPronto = useCallback((pedidoId: string) => {
