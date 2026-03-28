@@ -1545,7 +1545,11 @@ ${topRows ? `<h2>Top 5 produtos</h2><table><thead><tr><th>#</th><th>Produto</th>
                                 return { ...prev, grupos: g };
                               });
                             }}
-                            placeholder="Nome do grupo (ex: Ponto da carne)"
+                            placeholder={
+                              grupo.tipo === "escolha" ? "Ex: Tamanho, Sabor do refri, Ponto da carne..." :
+                              grupo.tipo === "retirar" ? "Ex: Tirar ingredientes, Sem o quê..." :
+                              "Ex: Adicionais, Extras, Borda recheada..."
+                            }
                             className="text-sm h-8 flex-1"
                           />
                           <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => {
