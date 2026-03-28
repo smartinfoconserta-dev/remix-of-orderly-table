@@ -485,7 +485,7 @@ const dbSyncEstadoMesa = (mesa: Mesa) => {
     store_id: sid,
   };
   supabase.rpc("rpc_upsert_estado_mesa" as any, { _data: row }).then(({ error }: any) => {
-    if (error) console.error("DB sync mesa via RPC", error);
+    if (error) { console.error("DB sync mesa via RPC", error); toast.error("Erro ao sincronizar mesa"); }
   });
 };
 
