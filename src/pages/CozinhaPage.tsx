@@ -125,6 +125,18 @@ const CozinhaPage = () => {
     try { return (localStorage.getItem(COZINHA_SETOR_KEY) as any) || null; } catch { return null; }
   });
 
+  // Load setor preference from DB
+  const effectiveStoreId = operationalSession?.storeId ?? ctxStoreId ?? null;
+  useEffect(() => {
+    if (!effectiveStoreId) return;
+    loadPreferencias(effectiveStoreId, "cozinha").then(prefs => {
+      if (prefs.setor) {
+        setSetorMonitor(prefs.setor as any);
+        try { localStorage.setItem(COZINHA_SETOR_KEY, prefs.setor); } catch {}
+      }
+    });
+  }, [effectiveStoreId]);
+
   const handleLoginCozinha = async () => {
     if (loginLoading) return;
     setLoginLoading(true);
