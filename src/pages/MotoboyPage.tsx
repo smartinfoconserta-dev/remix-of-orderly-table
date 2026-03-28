@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { getSistemaConfig } from "@/lib/adminStorage";
 import { useRestaurant } from "@/contexts/RestaurantContext";
 import { toast } from "sonner";
@@ -77,6 +78,32 @@ export default function MotoboyPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [motoboys, setMotoboys] = useState<Motoboy[]>([]);
   const [fechamentoEnviado, setFechamentoEnviado] = useState(false);
+
+  // USB QR scanner dialog
+  const [usbScanOpen, setUsbScanOpen] = useState(false);
+  const [usbScanInput, setUsbScanInput] = useState("");
+  const usbScanInputRef = useRef<HTMLInputElement>(null);
+
+  const handleUsbQrScan = useCallback((raw: string) => {
+    const value = raw.trim();
+    if (!value) return;
+    let pedidoId: string | null = null;
+    if (value.startsWith("MOTOBOY:")) {
+      pedidoId = value.replace("MOTOBOY:", "");
+    } else if (value.startsWith("RETIRADA:")) {
+      // Also accept RETIRADA format — extract number and find by id
+      pedidoId = value.replace("RETIRADA:", "");
+    } else {
+      pedidoId = value;
+    }
+    if (!pedidoId) { toast.error("Código inválido"); return; }
+    const pedido = pedidosBalcao.find((p) => p.id === pedidoId && p.origem === "delivery");
+    if (!pedido) { toast.error("Pedido não encontrado"); return; }
+    if (pedido.statusBalcao === "saiu") { toast("Pedido já está em rota"); return; }
+    if (pedido.statusBalcao !== "pronto") { toast.error("Pedido não está pronto para retirada"); return; }
+    marcarBalcaoSaiu(pedido.id, sessao?.nome || "Motoboy");
+    toast.success(`Pedido #${String(pedido.numeroPedido).padStart(3, "0")} — saindo para entrega!`);
+  }, [pedidosBalcao, marcarBalcaoSaiu, sessao]);
 
   // Load preferences from DB on mount
   useEffect(() => {
@@ -486,6 +513,9 @@ export default function MotoboyPage() {
             <Button className="flex-1 h-12 gap-2 font-bold" variant="outline" onClick={() => handleScanQR()}>
               <Camera className="w-5 h-5" /> Escanear QR
             </Button>
+            <Button className="flex-1 h-12 gap-2 font-bold" variant="outline" onClick={() => { setUsbScanOpen(true); setUsbScanInput(""); }}>
+              <QrCode className="w-5 h-5" /> Leitor USB
+            </Button>
             <Button
               className="flex-1 h-12 gap-2 font-bold"
               variant="outline"
@@ -874,6 +904,36 @@ export default function MotoboyPage() {
           </div>
         </div>
       )}
+      {/* USB QR Scanner Dialog */}
+      <Dialog open={usbScanOpen} onOpenChange={(o) => { setUsbScanOpen(o); if (!o) setUsbScanInput(""); }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Escanear pedido</DialogTitle>
+            <DialogDescription>Escaneie o QR Code do pedido ou digite o código</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <Input
+              ref={usbScanInputRef}
+              autoFocus
+              value={usbScanInput}
+              onChange={(e) => setUsbScanInput(e.target.value)}
+              placeholder="Aguardando leitura..."
+              className="text-lg font-mono h-12"
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  handleUsbQrScan(usbScanInput);
+                  setUsbScanInput("");
+                  setTimeout(() => usbScanInputRef.current?.focus(), 50);
+                }
+              }}
+            />
+            <p className="text-xs text-muted-foreground text-center">O leitor USB envia os dados como digitação. Pressione Enter ou escaneie.</p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setUsbScanOpen(false); setUsbScanInput(""); }}>Fechar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       <LicenseBanner context="operational" />
     </div>
   );
