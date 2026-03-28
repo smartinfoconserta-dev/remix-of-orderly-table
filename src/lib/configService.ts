@@ -69,6 +69,8 @@ function dbRowToConfig(row: any): SistemaConfig {
     modulos: row.modulos ?? {},
     plano: row.plano ?? "basico",
     modoTV: row.modo_tv ?? "padrao",
+    modoOperacao: row.modo_operacao ?? "restaurante",
+    identificacaoFastFood: row.identificacao_fast_food ?? "codigo",
   };
 }
 
