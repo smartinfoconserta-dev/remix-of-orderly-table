@@ -520,6 +520,7 @@ ${itensSetorHtml}
               onClick={() => {
                 localStorage.setItem(COZINHA_SETOR_KEY, s.id);
                 setSetorMonitor(s.id);
+                if (effectiveStoreId) savePreferencia(effectiveStoreId, "cozinha", "setor", s.id);
               }}
               className="rounded-2xl border-2 border-border bg-card hover:border-primary hover:bg-primary/5 p-5 text-left transition-colors"
             >
