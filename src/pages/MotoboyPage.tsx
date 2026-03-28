@@ -873,6 +873,7 @@ export default function MotoboyPage() {
           </div>
         </div>
       )}
+      <LicenseBanner context="operational" />
     </div>
   );
 }
