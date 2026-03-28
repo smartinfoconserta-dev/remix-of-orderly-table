@@ -110,6 +110,7 @@ import {
 } from "@/lib/adminStorage";
 import { getBairrosAsync, saveBairros, type Bairro } from "@/lib/deliveryStorage";
 import { toast } from "sonner";
+import CaixasSection from "@/components/CaixasSection";
 
 type AdminTab = "dashboard" | "cardapio" | "mesas" | "tablets" | "equipe" | "caixas" | "configuracoes" | "licenca";
 
