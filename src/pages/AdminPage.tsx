@@ -177,6 +177,93 @@ const AdminPage = () => {
   const [dash7dias, setDash7dias] = useState<{ dia: string; total: number }[]>([]);
   const [dash7diasLoading, setDash7diasLoading] = useState(false);
 
+  // --- Relatório por período ---
+  type PeriodoOption = "hoje" | "7dias" | "30dias" | "custom";
+  const [relPeriodo, setRelPeriodo] = useState<PeriodoOption>("hoje");
+  const [relCustomInicio, setRelCustomInicio] = useState(() => { const d = new Date(); d.setHours(0,0,0,0); return d.toISOString().slice(0,10); });
+  const [relCustomFim, setRelCustomFim] = useState(() => new Date().toISOString().slice(0,10));
+  const [relLoading, setRelLoading] = useState(false);
+  const [relData, setRelData] = useState<{
+    faturamento: number;
+    totalFechamentos: number;
+    ticketMedio: number;
+    porForma: Record<string, number>;
+    topProdutos: { nome: string; qtd: number; valor: number }[];
+    fechamentos: any[];
+  } | null>(null);
+
+  const getRelPeriodoDates = useCallback(() => {
+    const agora = new Date();
+    let inicio: Date;
+    let fim = new Date(agora);
+    fim.setHours(23, 59, 59, 999);
+    switch (relPeriodo) {
+      case "hoje":
+        inicio = new Date(agora); inicio.setHours(0, 0, 0, 0); break;
+      case "7dias":
+        inicio = new Date(agora); inicio.setDate(inicio.getDate() - 6); inicio.setHours(0, 0, 0, 0); break;
+      case "30dias":
+        inicio = new Date(agora); inicio.setDate(inicio.getDate() - 29); inicio.setHours(0, 0, 0, 0); break;
+      case "custom":
+        inicio = new Date(relCustomInicio + "T00:00:00");
+        fim = new Date(relCustomFim + "T23:59:59.999");
+        break;
+      default:
+        inicio = new Date(agora); inicio.setHours(0, 0, 0, 0);
+    }
+    return { inicio: inicio.toISOString(), fim: fim.toISOString() };
+  }, [relPeriodo, relCustomInicio, relCustomFim]);
+
+  useEffect(() => {
+    if (tab !== "dashboard" || !storeId) return;
+    let cancelled = false;
+    const loadRel = async () => {
+      setRelLoading(true);
+      try {
+        const { inicio, fim } = getRelPeriodoDates();
+        const { data: fechamentos, error } = await supabase
+          .from("fechamentos")
+          .select("total, origem, mesa_numero, forma_pagamento, criado_em, itens")
+          .eq("store_id", storeId)
+          .eq("cancelado", false)
+          .gte("criado_em_iso", inicio)
+          .lte("criado_em_iso", fim)
+          .order("criado_em_iso", { ascending: false })
+          .limit(1000);
+        if (cancelled) return;
+        if (error) { console.error("[AdminPage] erro relatório período:", error); setRelLoading(false); return; }
+        const fech = fechamentos ?? [];
+        const fat = fech.reduce((s, f) => s + (Number(f.total) || 0), 0);
+        const porForma: Record<string, number> = {};
+        const prodMap: Record<string, { qtd: number; valor: number }> = {};
+        for (const f of fech) {
+          const forma = (f.forma_pagamento || "outro").toLowerCase();
+          porForma[forma] = (porForma[forma] || 0) + (Number(f.total) || 0);
+          const itens = Array.isArray(f.itens) ? f.itens : [];
+          for (const item of itens) {
+            const nome = (item as any)?.nome || (item as any)?.name || "Desconhecido";
+            const qtd = Number((item as any)?.quantidade || (item as any)?.qtd || 1);
+            const val = Number((item as any)?.preco || (item as any)?.price || 0) * qtd;
+            if (!prodMap[nome]) prodMap[nome] = { qtd: 0, valor: 0 };
+            prodMap[nome].qtd += qtd;
+            prodMap[nome].valor += val;
+          }
+        }
+        const topProdutos = Object.entries(prodMap)
+          .map(([nome, d]) => ({ nome, ...d }))
+          .sort((a, b) => b.valor - a.valor)
+          .slice(0, 5);
+        setRelData({ faturamento: fat, totalFechamentos: fech.length, ticketMedio: fech.length > 0 ? fat / fech.length : 0, porForma, topProdutos, fechamentos: fech });
+      } catch (err) {
+        console.error("[AdminPage] erro relatório período:", err);
+      } finally {
+        if (!cancelled) setRelLoading(false);
+      }
+    };
+    loadRel();
+    return () => { cancelled = true; };
+  }, [tab, storeId, relPeriodo, relCustomInicio, relCustomFim, getRelPeriodoDates]);
+
   useEffect(() => {
     if (tab !== "dashboard" || !storeId) return;
     let cancelled = false;
