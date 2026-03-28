@@ -13,6 +13,7 @@ import GerentePage from "./pages/GerentePage";
 import CozinhaPage from "./pages/CozinhaPage";
 import AdminPage from "./pages/AdminPage";
 import MasterPage from "./pages/MasterPage";
+import PedidoPage from "./pages/PedidoPage";
 
 import MotoboyPage from "./pages/MotoboyPage";
 import TotemPage from "./pages/TotemPage";
