@@ -1260,6 +1260,22 @@ export type Database = {
       }
       is_master: { Args: { _user_id: string }; Returns: boolean }
       next_order_number: { Args: { _store_id: string }; Returns: number }
+      rpc_insert_evento: { Args: { _data: Json }; Returns: undefined }
+      rpc_insert_fechamento: { Args: { _data: Json }; Returns: undefined }
+      rpc_insert_movimentacao: { Args: { _data: Json }; Returns: undefined }
+      rpc_insert_pedido: { Args: { _data: Json }; Returns: undefined }
+      rpc_update_fechamento: {
+        Args: { _id: string; _store_id: string; _updates: Json }
+        Returns: undefined
+      }
+      rpc_update_pedido: {
+        Args: { _id: string; _store_id: string; _updates: Json }
+        Returns: undefined
+      }
+      rpc_upsert_estado_caixa: {
+        Args: { _data: Json; _store_id: string }
+        Returns: undefined
+      }
       search_stores: {
         Args: { query: string }
         Returns: {

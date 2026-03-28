@@ -413,21 +413,24 @@ const dbInsertPedido = async (p: PedidoRealizado, onNumeroResolved?: (pedidoId: 
     const atomicNum = typeof nextNum === "number" ? nextNum : p.numeroPedido;
     if (atomicNum >= _nextPedidoNumber) _nextPedidoNumber = atomicNum + 1;
     const row = pedidoToRow({ ...p, numeroPedido: atomicNum }, sid);
-    const { error } = await supabase.from("pedidos").insert(row as any);
+    const { error } = await supabase.rpc("rpc_insert_pedido" as any, { _data: row });
     if (error) { console.error("DB insert pedido", error); toast.error("Erro ao salvar pedido no banco"); }
     else if (onNumeroResolved && atomicNum !== p.numeroPedido) {
       onNumeroResolved(p.id, atomicNum);
     }
   } catch (err) {
     console.error("dbInsertPedido unexpected error", err);
-    supabase.from("pedidos").insert(pedidoToRow(p, sid) as any).then(({ error }) => {
+    const fallbackRow = pedidoToRow(p, sid);
+    supabase.rpc("rpc_insert_pedido" as any, { _data: fallbackRow }).then(({ error }: any) => {
       if (error) console.error("DB insert pedido fallback", error);
     });
   }
 };
 
 const dbUpdatePedido = (pedidoId: string, updates: Record<string, any>) => {
-  supabase.from("pedidos").update(updates).eq("id", pedidoId).then(({ error }) => {
+  const sid = getActiveStoreId();
+  if (!sid) { console.warn("dbUpdatePedido: storeId is null"); return; }
+  supabase.rpc("rpc_update_pedido" as any, { _id: pedidoId, _store_id: sid, _updates: updates }).then(({ error }: any) => {
     if (error) { console.error("DB update pedido", error); toast.error("Erro ao atualizar pedido"); }
   });
 };
@@ -435,13 +438,15 @@ const dbUpdatePedido = (pedidoId: string, updates: Record<string, any>) => {
 const dbInsertFechamento = (f: FechamentoConta) => {
   const sid = getActiveStoreId();
   if (!sid) { console.warn("dbInsertFechamento: storeId is null, skipping"); return; }
-  supabase.from("fechamentos").insert(fechamentoToRow(f, sid) as any).then(({ error }) => {
+  supabase.rpc("rpc_insert_fechamento" as any, { _data: fechamentoToRow(f, sid) }).then(({ error }: any) => {
     if (error) { console.error("DB insert fechamento", error); toast.error("Erro ao salvar fechamento no banco"); }
   });
 };
 
 const dbUpdateFechamento = (id: string, updates: Record<string, any>) => {
-  supabase.from("fechamentos").update(updates).eq("id", id).then(({ error }) => {
+  const sid = getActiveStoreId();
+  if (!sid) { console.warn("dbUpdateFechamento: storeId is null"); return; }
+  supabase.rpc("rpc_update_fechamento" as any, { _id: id, _store_id: sid, _updates: updates }).then(({ error }: any) => {
     if (error) { console.error("DB update fechamento", error); toast.error("Erro ao atualizar fechamento"); }
   });
 };
@@ -449,7 +454,7 @@ const dbUpdateFechamento = (id: string, updates: Record<string, any>) => {
 const dbInsertEvento = (e: EventoOperacional) => {
   const sid = getActiveStoreId();
   if (!sid) return;
-  supabase.from("eventos_operacionais").insert(eventoToRow(e, sid) as any).then(({ error }) => {
+  supabase.rpc("rpc_insert_evento" as any, { _data: eventoToRow(e, sid) }).then(({ error }: any) => {
     if (error) console.error("DB insert evento", error);
   });
 };
@@ -457,7 +462,7 @@ const dbInsertEvento = (e: EventoOperacional) => {
 const dbInsertMovimentacao = (m: MovimentacaoCaixa) => {
   const sid = getActiveStoreId();
   if (!sid) { console.warn("dbInsertMovimentacao: storeId is null"); return; }
-  supabase.from("movimentacoes_caixa").insert(movToRow(m, sid) as any).then(({ error }) => {
+  supabase.rpc("rpc_insert_movimentacao" as any, { _data: movToRow(m, sid) }).then(({ error }: any) => {
     if (error) { console.error("DB insert mov", error); toast.error("Erro ao salvar movimentação"); }
   });
 };
@@ -465,18 +470,14 @@ const dbInsertMovimentacao = (m: MovimentacaoCaixa) => {
 const dbUpsertEstadoCaixa = (aberto: boolean, fundoTroco: number, nome: string, extras?: { diferenca_dinheiro?: number; diferenca_motivo?: string; fundo_proximo?: number }) => {
   const sid = getActiveStoreId();
   if (!sid) return;
-  supabase.from("estado_caixa").select("id").eq("store_id", sid).limit(1).then(({ data }) => {
-    if (data && data.length > 0) {
-      const upd: Record<string, any> = { aberto, fundo_troco: fundoTroco, updated_at: new Date().toISOString() };
-      if (aberto) { upd.aberto_por = nome; upd.aberto_em = new Date().toISOString(); }
-      else { upd.fechado_por = nome; upd.fechado_em = new Date().toISOString(); }
-      if (extras?.diferenca_dinheiro !== undefined) upd.diferenca_dinheiro = extras.diferenca_dinheiro;
-      if (extras?.diferenca_motivo !== undefined) upd.diferenca_motivo = extras.diferenca_motivo;
-      if (extras?.fundo_proximo !== undefined) upd.fundo_proximo = extras.fundo_proximo;
-      supabase.from("estado_caixa").update(upd).eq("id", data[0].id).then(({ error }) => { if (error) console.error("DB update caixa", error); });
-    } else {
-      supabase.from("estado_caixa").insert({ store_id: sid, aberto, fundo_troco: fundoTroco, aberto_por: aberto ? nome : null, aberto_em: aberto ? new Date().toISOString() : null, ...(extras ?? {}) } as any).then(({ error }) => { if (error) console.error("DB insert caixa", error); });
-    }
+  const data: Record<string, any> = { aberto, fundo_troco: fundoTroco };
+  if (aberto) { data.aberto_por = nome; data.aberto_em = new Date().toISOString(); }
+  else { data.fechado_por = nome; data.fechado_em = new Date().toISOString(); }
+  if (extras?.diferenca_dinheiro !== undefined) data.diferenca_dinheiro = extras.diferenca_dinheiro;
+  if (extras?.diferenca_motivo !== undefined) data.diferenca_motivo = extras.diferenca_motivo;
+  if (extras?.fundo_proximo !== undefined) data.fundo_proximo = extras.fundo_proximo;
+  supabase.rpc("rpc_upsert_estado_caixa" as any, { _store_id: sid, _data: data }).then(({ error }: any) => {
+    if (error) console.error("DB upsert caixa", error);
   });
 };
 

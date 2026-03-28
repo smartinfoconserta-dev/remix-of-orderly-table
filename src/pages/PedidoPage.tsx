@@ -524,7 +524,7 @@ function PedidoPageInner({ storeId, config, bairros }: {
       status_balcao: "aberto",
     };
 
-    const { error } = await supabase.from("pedidos").insert(pedidoRow as any);
+    const { error } = await supabase.rpc("rpc_insert_pedido" as any, { _data: pedidoRow });
     if (error) {
       console.error("[PedidoPage] insert error:", error);
       toast.error("Erro ao enviar pedido");
