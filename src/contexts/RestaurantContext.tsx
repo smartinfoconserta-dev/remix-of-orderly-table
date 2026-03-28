@@ -357,6 +357,7 @@ const fechamentoToRow = (f: FechamentoConta, storeId: string) => ({
   cancelado: f.cancelado ?? false, cancelado_em: f.canceladoEm || null,
   cancelado_motivo: f.canceladoMotivo || null, cancelado_por: f.canceladoPor || null,
   criado_em: f.criadoEm || null, criado_em_iso: f.criadoEmIso,
+  cpf_nota: f.cpfNota || null,
 });
 
 const eventoToRow = (e: EventoOperacional, storeId: string) => ({
