@@ -29,6 +29,7 @@ import {
   X,
   XCircle,
   MoreHorizontal,
+  MessageCircle,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -1341,7 +1342,14 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
                 <span className="truncate">{pb.enderecoCompleto}{pb.bairro ? ` — ${pb.bairro}` : ""}</span>
               </p>
             )}
-            {pb.clienteTelefone && <p className="text-xs text-muted-foreground mt-0.5">{pb.clienteTelefone}</p>}
+            {pb.clienteTelefone && (
+              <div className="flex items-center gap-1 mt-0.5">
+                <p className="text-xs text-muted-foreground">{pb.clienteTelefone}</p>
+                <a href={`https://wa.me/55${pb.clienteTelefone.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer" title="Abrir WhatsApp" className="inline-flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground hover:text-emerald-500 hover:bg-secondary transition-colors">
+                  <MessageCircle className="h-3.5 w-3.5" />
+                </a>
+              </div>
+            )}
             {pb.motoboyNome && (
               <div className="flex items-center gap-1.5 mt-1">
                 <span className="text-sm">🏍️</span>
@@ -1893,7 +1901,14 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
                                     <span className="truncate">{pb.enderecoCompleto}{pb.bairro ? ` — ${pb.bairro}` : ""}</span>
                                   </p>
                                 )}
-                                {pb.clienteTelefone && <p className="text-xs text-muted-foreground mt-0.5">{pb.clienteTelefone}</p>}
+                                {pb.clienteTelefone && (
+                                  <div className="flex items-center gap-1 mt-0.5">
+                                    <p className="text-xs text-muted-foreground">{pb.clienteTelefone}</p>
+                                    <a href={`https://wa.me/55${pb.clienteTelefone.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer" title="Abrir WhatsApp" className="inline-flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground hover:text-emerald-500 hover:bg-secondary transition-colors">
+                                      <MessageCircle className="h-3.5 w-3.5" />
+                                    </a>
+                                  </div>
+                                )}
                                 {(() => {
                                   const mins = Math.floor((Date.now() - new Date(pb.criadoEmIso).getTime()) / 60000);
                                   const cor = mins >= 15 ? "text-red-500 font-black animate-pulse" : mins >= 8 ? "text-amber-400 font-bold" : "text-muted-foreground";
@@ -3055,7 +3070,14 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
                   {balcaoPedido.origem === "delivery" && (
                     <div className="rounded-xl border border-border bg-secondary/30 p-3 space-y-1 text-xs">
                       <p className="font-black text-foreground">Dados do delivery</p>
-                      {balcaoPedido.clienteTelefone && <p className="text-muted-foreground">Tel: {balcaoPedido.clienteTelefone}</p>}
+                      {balcaoPedido.clienteTelefone && (
+                        <div className="flex items-center gap-1">
+                          <p className="text-muted-foreground">Tel: {balcaoPedido.clienteTelefone}</p>
+                          <a href={`https://wa.me/55${balcaoPedido.clienteTelefone.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer" title="Abrir WhatsApp" className="inline-flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground hover:text-emerald-500 hover:bg-secondary transition-colors">
+                            <MessageCircle className="h-3.5 w-3.5" />
+                          </a>
+                        </div>
+                      )}
                       {balcaoPedido.enderecoCompleto && <p className="text-muted-foreground">End: {balcaoPedido.enderecoCompleto}</p>}
                       {balcaoPedido.bairro && <p className="text-muted-foreground">Bairro: {balcaoPedido.bairro}</p>}
                       {balcaoPedido.referencia && <p className="text-muted-foreground">Ref: {balcaoPedido.referencia}</p>}
