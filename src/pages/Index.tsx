@@ -5,23 +5,16 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
-/* ─── Saved credentials ─── */
-
-const SAVED_CREDS_KEY = "orderly-saved-login-v1";
+const SAVED_EMAIL_KEY = "orderly-saved-email-v1";
 
 const Index = () => {
   const navigate = useNavigate();
   const { authLevel, operationalSession, isLoading, loginUnified } = useAuth();
 
   const [email, setEmail] = useState(() => {
-    try { return JSON.parse(sessionStorage.getItem(SAVED_CREDS_KEY) ?? "{}").email ?? ""; } catch { return ""; }
+    try { return localStorage.getItem(SAVED_EMAIL_KEY) ?? ""; } catch { return ""; }
   });
-  const [password, setPassword] = useState(() => {
-    try { return JSON.parse(sessionStorage.getItem(SAVED_CREDS_KEY) ?? "{}").password ?? ""; } catch { return ""; }
-  });
-  const [rememberMe, setRememberMe] = useState(() => {
-    try { return !!JSON.parse(sessionStorage.getItem(SAVED_CREDS_KEY) ?? "{}").email; } catch { return false; }
-  });
+  const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -44,12 +37,11 @@ const Index = () => {
     setLoading(true);
     setError(null);
 
-    // Save or clear credentials
-    if (rememberMe) {
-      sessionStorage.setItem(SAVED_CREDS_KEY, JSON.stringify({ email: email.trim(), password }));
-    } else {
-      sessionStorage.removeItem(SAVED_CREDS_KEY);
-    }
+    // Remember email only (never password)
+    try { localStorage.setItem(SAVED_EMAIL_KEY, email.trim()); } catch {}
+
+    // Clean up legacy credential storage
+    try { sessionStorage.removeItem("orderly-saved-login-v1"); } catch {}
 
     const result = await loginUnified(email.trim(), password);
 
@@ -131,18 +123,6 @@ const Index = () => {
                 onKeyDown={(e) => e.key === "Enter" && handleLogin()}
               />
             </div>
-            <label className="flex items-center gap-2 cursor-pointer select-none">
-              <input
-                type="checkbox"
-                checked={rememberMe}
-                onChange={(e) => {
-                  setRememberMe(e.target.checked);
-                  if (!e.target.checked) sessionStorage.removeItem(SAVED_CREDS_KEY);
-                }}
-                className="h-4 w-4 rounded border-border accent-primary"
-              />
-              <span className="text-sm text-muted-foreground">Lembrar credenciais</span>
-            </label>
             {error && (
               <p className="rounded-xl border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive">
                 {error}
