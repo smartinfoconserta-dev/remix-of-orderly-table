@@ -87,7 +87,6 @@ export interface SistemaConfig {
     motoboy?: boolean;
   };
   plano?: "basico" | "medio" | "pro" | "premium";
-  modoTV?: "padrao" | "completo";
   modoOperacao?: "restaurante" | "fast_food";
   identificacaoFastFood?: "codigo" | "nome_cliente";
 }

@@ -14,6 +14,7 @@ type PedidoTV = {
 const TvInner = ({ storeId }: { storeId: string }) => {
   const { pedidosBalcao } = useRestaurant();
   const [clock, setClock] = useState(() => new Date());
+  const [modoOperacao, setModoOperacao] = useState<string>("restaurante");
   const [config, setConfig] = useState<{ nomeRestaurante: string; logoBase64: string; logoUrl: string }>({
     nomeRestaurante: "",
     logoBase64: "",
@@ -23,15 +24,18 @@ const TvInner = ({ storeId }: { storeId: string }) => {
   useEffect(() => {
     supabase
       .from("restaurant_config")
-      .select("nome_restaurante, logo_base64, logo_url")
+      .select("nome_restaurante, logo_base64, logo_url, modo_operacao")
       .eq("store_id", storeId)
       .maybeSingle()
       .then(({ data }) => {
-        if (data) setConfig({
-          nomeRestaurante: data.nome_restaurante,
-          logoBase64: data.logo_base64 ?? "",
-          logoUrl: data.logo_url ?? "",
-        });
+        if (data) {
+          setConfig({
+            nomeRestaurante: data.nome_restaurante,
+            logoBase64: data.logo_base64 ?? "",
+            logoUrl: data.logo_url ?? "",
+          });
+          setModoOperacao(data.modo_operacao ?? "restaurante");
+        }
       });
   }, [storeId]);
 
@@ -79,6 +83,18 @@ const TvInner = ({ storeId }: { storeId: string }) => {
       <p className="text-2xl font-bold" style={{ color: "#D4D4D4" }}>{text}</p>
     </div>
   );
+
+  if (modoOperacao === "restaurante") {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center" style={{ background: "#FFFFFF" }}>
+        {logoUrl && <img src={logoUrl} alt="" className="h-24 w-24 rounded-2xl object-cover mb-6" />}
+        <h1 className="text-4xl font-black" style={{ color: "#FF6B00" }}>{config.nomeRestaurante || "Restaurante"}</h1>
+        <p className="text-xl font-bold mt-4" style={{ color: "#999" }}>Modo Restaurante — TV em standby</p>
+        <p className="text-base mt-2" style={{ color: "#BBB" }}>Ative o modo Fast Food para exibir o painel de retirada</p>
+        <p className="text-3xl font-black tabular-nums mt-8" style={{ color: "#FF6B00" }}>{clock.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: "#FFFFFF" }}>
