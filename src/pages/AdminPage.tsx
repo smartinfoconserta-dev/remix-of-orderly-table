@@ -173,9 +173,10 @@ const AdminPage = () => {
 
     const load = async () => {
       setDashLoading(true);
+      setDashError(false);
       try {
         const [pedidosRes, fechRes, caixaRes] = await Promise.all([
-          supabase.from("pedidos").select("id", { count: "exact", head: true }).eq("store_id", storeId).gte("criado_em_iso", hojeISO),
+          supabase.from("pedidos").select("id", { count: "exact", head: true }).eq("store_id", storeId).eq("cancelado", false).gte("criado_em_iso", hojeISO),
           supabase.from("fechamentos").select("total, origem, mesa_numero, forma_pagamento, criado_em, criado_em_iso").eq("store_id", storeId).eq("cancelado", false).gte("criado_em_iso", hojeISO).order("criado_em_iso", { ascending: false }).limit(100),
           supabase.from("estado_caixa").select("aberto").eq("store_id", storeId).limit(1).maybeSingle(),
         ]);
@@ -189,6 +190,7 @@ const AdminPage = () => {
         setDashUltimosFechamentos(fechamentos.slice(0, 10));
       } catch (err) {
         console.error("[AdminPage] erro ao carregar dashboard:", err);
+        if (!cancelled) setDashError(true);
       } finally {
         if (!cancelled) setDashLoading(false);
       }
