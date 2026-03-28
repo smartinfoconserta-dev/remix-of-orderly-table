@@ -79,6 +79,32 @@ export default function MotoboyPage() {
   const [motoboys, setMotoboys] = useState<Motoboy[]>([]);
   const [fechamentoEnviado, setFechamentoEnviado] = useState(false);
 
+  // USB QR scanner dialog
+  const [usbScanOpen, setUsbScanOpen] = useState(false);
+  const [usbScanInput, setUsbScanInput] = useState("");
+  const usbScanInputRef = useRef<HTMLInputElement>(null);
+
+  const handleUsbQrScan = useCallback((raw: string) => {
+    const value = raw.trim();
+    if (!value) return;
+    let pedidoId: string | null = null;
+    if (value.startsWith("MOTOBOY:")) {
+      pedidoId = value.replace("MOTOBOY:", "");
+    } else if (value.startsWith("RETIRADA:")) {
+      // Also accept RETIRADA format — extract number and find by id
+      pedidoId = value.replace("RETIRADA:", "");
+    } else {
+      pedidoId = value;
+    }
+    if (!pedidoId) { toast.error("Código inválido"); return; }
+    const pedido = pedidosBalcao.find((p) => p.id === pedidoId && p.origem === "delivery");
+    if (!pedido) { toast.error("Pedido não encontrado"); return; }
+    if (pedido.statusBalcao === "saiu") { toast("Pedido já está em rota"); return; }
+    if (pedido.statusBalcao !== "pronto") { toast.error("Pedido não está pronto para retirada"); return; }
+    marcarBalcaoSaiu(pedido.id, sessao?.nome || "Motoboy");
+    toast.success(`Pedido #${String(pedido.numeroPedido).padStart(3, "0")} — saindo para entrega!`);
+  }, [pedidosBalcao, marcarBalcaoSaiu, sessao]);
+
   // Load preferences from DB on mount
   useEffect(() => {
     if (!effectiveStoreId) return;
