@@ -1068,7 +1068,12 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         formaPagamentoDelivery: input.formaPagamentoDelivery, trocoParaQuanto: input.trocoParaQuanto,
         observacaoGeral: input.observacaoGeral, statusBalcao: statusInicial, pronto: false,
       };
-      dbInsertPedido(novoPedido);
+      dbInsertPedido(novoPedido, (pedidoId, realNum) => {
+        setStore((s) => ({
+          ...s,
+          pedidosBalcao: s.pedidosBalcao.map((p) => p.id === pedidoId ? { ...p, numeroPedido: realNum } : p),
+        }));
+      });
       const totemPayMethod = input.formaPagamentoTotem ?? "pix";
       const fechamentoTotem: FechamentoConta | null = input.origem === "totem" ? {
         id: `fechamento-totem-${now.getTime()}-${Math.random().toString(36).slice(2, 7)}`,
