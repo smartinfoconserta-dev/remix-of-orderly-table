@@ -30,6 +30,7 @@ import {
   XCircle,
   MoreHorizontal,
   MessageCircle,
+  QrCode,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -746,6 +747,7 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
       <div class="print-total"><span>TOTAL</span><span>R$ ${data.total.toFixed(2).replace(".", ",")}</span></div>
       ${SEP}
       ${pagHtml}
+      <div style="text-align:center;margin:12px 0"><img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=RETIRADA:${data.numero}" style="width:120px;height:120px" /><p style="font-size:10px;margin-top:4px">Apresente para retirar</p></div>
       <div class="print-footer">${footerDate}</div>
       <div class="print-footer">Obrigado pela preferencia!</div>
     `;
@@ -755,6 +757,42 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
   }, [sistemaConfig.nomeRestaurante]);
   const [qrRetiradaPedidoId, setQrRetiradaPedidoId] = useState<string | null>(null);
   const qrRetiradaTimerRef = useRef<number | null>(null);
+
+  // QR scanner dialog state
+  const [qrScanOpen, setQrScanOpen] = useState(false);
+  const [qrScanInput, setQrScanInput] = useState("");
+  const qrScanInputRef = useRef<HTMLInputElement>(null);
+
+  const handleQrScan = useCallback((raw: string) => {
+    const value = raw.trim();
+    if (!value) return;
+    let numeroBuscado: number | null = null;
+    if (value.startsWith("RETIRADA:")) {
+      const after = value.replace("RETIRADA:", "");
+      numeroBuscado = parseInt(after, 10);
+    } else {
+      numeroBuscado = parseInt(value, 10);
+    }
+    if (!numeroBuscado || isNaN(numeroBuscado)) {
+      toast.error("Código inválido");
+      return;
+    }
+    const pedido = pedidosBalcao.find((p) => p.numeroPedido === numeroBuscado);
+    if (!pedido) {
+      toast.error("Pedido não encontrado");
+      return;
+    }
+    if (pedido.statusBalcao === "retirado") {
+      toast("Pedido já foi retirado");
+      return;
+    }
+    if (pedido.statusBalcao !== "pronto") {
+      toast.error("Pedido não está pronto para retirada");
+      return;
+    }
+    marcarBalcaoRetirado(pedido.id);
+    toast.success(`Pedido #${String(numeroBuscado).padStart(3, "0")} retirado!`);
+  }, [pedidosBalcao, marcarBalcaoRetirado]);
 
 
   if (!currentOperator || !hasCaixaAccess) {
@@ -1612,6 +1650,14 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
                 >
                   <Search className="h-5 w-5" />
                   <span className="text-xs font-bold">Buscar</span>
+                </button>
+                <button
+                  onClick={() => { setQrScanOpen(true); setQrScanInput(""); }}
+                  className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded text-xs border border-border bg-secondary text-foreground hover:bg-primary/15 transition-colors"
+                  style={{ minWidth: 76 }}
+                >
+                  <QrCode className="h-5 w-5" />
+                  <span className="text-xs font-bold">QR Code</span>
                 </button>
                 <button
                   onClick={() => logout(accessMode)}
@@ -4523,6 +4569,41 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
           </div>
         </div>
       )}
+
+      {/* ── QR SCANNER DIALOG ── */}
+      <Dialog open={qrScanOpen} onOpenChange={(o) => { setQrScanOpen(o); if (!o) setQrScanInput(""); }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Leitura de QR Code</DialogTitle>
+            <DialogDescription>
+              Escaneie o cupom do cliente ou digite o código
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <Input
+              ref={qrScanInputRef}
+              autoFocus
+              value={qrScanInput}
+              onChange={(e) => setQrScanInput(e.target.value)}
+              placeholder="Aguardando leitura..."
+              className="text-lg font-mono h-12"
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  handleQrScan(qrScanInput);
+                  setQrScanInput("");
+                  setTimeout(() => qrScanInputRef.current?.focus(), 50);
+                }
+              }}
+            />
+            <p className="text-xs text-muted-foreground text-center">
+              O leitor USB envia os dados como digitação. Pressione Enter ou escaneie.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setQrScanOpen(false); setQrScanInput(""); }}>Fechar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <LicenseBanner context="operational" />
     </>

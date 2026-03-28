@@ -295,6 +295,16 @@ const TotemInner = ({ storeId }: { storeId: string }) => {
             </>
           )}
 
+          {/* QR Code for pickup */}
+          <div className="flex flex-col items-center gap-2 mt-4">
+            <img
+              src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=RETIRADA:${pedidoConfirmado}`}
+              alt="QR Code para retirada"
+              className="w-32 h-32"
+            />
+            <p className="text-sm font-bold" style={{ color: "#666" }}>Apresente este código ao retirar seu pedido</p>
+          </div>
+
           {nomeRestaurante && (
             <p className="text-lg font-bold" style={{ color: "#FF6B00" }}>{nomeRestaurante}</p>
           )}
