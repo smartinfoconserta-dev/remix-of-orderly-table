@@ -184,6 +184,9 @@ export async function fetchAllProducts(storeId: string): Promise<(Produto & { at
     removido: row.removido ?? false,
     disponivelDelivery: row.disponivel_delivery ?? true,
     imagemBase64: row.imagem_base64 ?? undefined,
+    controleEstoque: row.controle_estoque ?? false,
+    quantidadeEstoque: row.quantidade_estoque ?? 0,
+    estoqueMinimo: row.estoque_minimo ?? 0,
   }));
 }
 

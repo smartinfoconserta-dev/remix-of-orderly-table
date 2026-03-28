@@ -36,6 +36,9 @@ export interface Produto {
   grupos?: GrupoPersonalizacao[];
   permiteLevar?: boolean;
   setor?: "cozinha" | "bar" | "ambos";
+  controleEstoque?: boolean;
+  quantidadeEstoque?: number;
+  estoqueMinimo?: number;
 }
 
 export interface Categoria {
