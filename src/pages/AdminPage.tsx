@@ -166,6 +166,16 @@ const AdminPage = () => {
   const [configSection, setConfigSection] = useState<"inicio" | "identidade" | "delivery" | "salao" | "operacao" | "modulos" | "sistema" | "impressoras">("inicio");
   const [modoOperacaoPendente, setModoOperacaoPendente] = useState<"restaurante" | "fast_food" | null>(null);
 
+  // --- Impressoras form state ---
+  const [impEditando, setImpEditando] = useState<import("@/lib/adminStorage").ImpressoraConfig | null>(null);
+  const [impFormNome, setImpFormNome] = useState("");
+  const [impFormSetor, setImpFormSetor] = useState<"caixa" | "cozinha" | "bar" | "delivery">("cozinha");
+  const [impFormTipo, setImpFormTipo] = useState<"rede" | "usb" | "bluetooth">("rede");
+  const [impFormIp, setImpFormIp] = useState("");
+  const [impFormLargura, setImpFormLargura] = useState<"58mm" | "80mm">("80mm");
+  const [impFormAtiva, setImpFormAtiva] = useState(true);
+  const [impShowForm, setImpShowForm] = useState(false);
+
   // --- Dashboard "Hoje" data ---
   const [dashLoading, setDashLoading] = useState(false);
   const [dashError, setDashError] = useState(false);
