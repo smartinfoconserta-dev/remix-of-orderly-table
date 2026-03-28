@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { AlertTriangle, ShieldOff, LogOut, MessageCircle } from "lucide-react";
-import { getLicencaDaysLeft, getLicenseLevel, getLicencaConfig, getSistemaConfig, type LicenseLevel } from "@/lib/adminStorage";
+import { getLicenseLevel, getLicencaConfig, getSistemaConfig } from "@/lib/adminStorage";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 
