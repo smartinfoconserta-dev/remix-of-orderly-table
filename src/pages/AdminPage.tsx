@@ -749,7 +749,7 @@ th{background:#f5f5f5;padding:8px 12px;border:1px solid #ddd;text-align:left;fon
                         <Receipt className="h-3.5 w-3.5 text-primary" />
                       </div>
                     </div>
-                    <p className="text-3xl font-black text-foreground">
+                    <p className="text-3xl font-black text-primary">
                       {dashError ? "—" : dashTotalFechamentos > 0 ? formatPrice(dashFaturamento / dashTotalFechamentos) : formatPrice(0)}
                     </p>
                     <p className="text-xs text-muted-foreground">{dashError ? "Erro ao carregar" : `${dashTotalFechamentos} fechamentos`}</p>
