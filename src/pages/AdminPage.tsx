@@ -122,7 +122,7 @@ import { toast } from "sonner";
 import CaixasSection from "@/components/CaixasSection";
 import LicenseBanner from "@/components/LicenseBanner";
 
-type AdminTab = "dashboard" | "cardapio" | "mesas" | "tablets" | "equipe" | "caixas" | "configuracoes" | "licenca";
+type AdminTab = "dashboard" | "cardapio" | "mesas" | "tablets" | "equipe" | "caixas" | "configuracoes" | "licenca" | "ifood";
 
 const PLANO_MODULOS: Record<string, string[]> = {
   basico: ["cozinha"],
