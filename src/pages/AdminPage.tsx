@@ -103,7 +103,7 @@ import {
   type HorarioFuncionamento,
   type PlanoModulos,
 } from "@/lib/adminStorage";
-import { getBairros, saveBairros, type Bairro } from "@/lib/deliveryStorage";
+import { getBairrosAsync, saveBairros, type Bairro } from "@/lib/deliveryStorage";
 import { toast } from "sonner";
 
 type AdminTab = "dashboard" | "cardapio" | "mesas" | "tablets" | "equipe" | "configuracoes" | "licenca";
