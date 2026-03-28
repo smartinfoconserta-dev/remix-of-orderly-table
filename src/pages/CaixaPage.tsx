@@ -272,11 +272,21 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
   const [balcaoPaymentValue, setBalcaoPaymentValue] = useState("");
   const [balcaoValorEntregue, setBalcaoValorEntregue] = useState("");
   const [balcaoFlowAtivo, setBalcaoFlowAtivo] = useState(false);
-  const [modoOperacao, setModoOperacao] = useState<"completo" | "somente_mesas" | "somente_delivery">("completo");
+  const [modoOperacao, setModoOperacao] = useState<"completo" | "somente_mesas" | "somente_delivery">(() => {
+    // Global mode from DB overrides local preference
+    const globalMode = sistemaConfig?.modoOperacao;
+    if (globalMode === "fast_food") return "somente_delivery";
+    if (modoForced) return modoForced;
+    const savedModo = localStorage.getItem("obsidian-caixa-modo-v1");
+    if (savedModo === "somente_mesas" || savedModo === "somente_delivery" || savedModo === "completo") return savedModo;
+    return "completo";
+  });
   useEffect(() => {
     if (modoForced) setModoOperacao(modoForced);
   }, [modoForced]);
+  const isFastFoodGlobal = sistemaConfig?.modoOperacao === "fast_food";
   const [caixaView, setCaixaView] = useState<"mesas" | "delivery" | "totem" | "historico">(() => {
+    if (isFastFoodGlobal) return "totem";
     if (modoForced === "somente_delivery") return "delivery";
     if (modoForced === "somente_mesas") return "mesas";
     const savedModo = localStorage.getItem("obsidian-caixa-modo-v1");
