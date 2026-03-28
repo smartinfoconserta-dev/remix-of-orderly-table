@@ -739,7 +739,7 @@ th{background:#f5f5f5;padding:8px 12px;border:1px solid #ddd;text-align:left;fon
                         <DollarSign className="h-3.5 w-3.5 text-emerald-400" />
                       </div>
                     </div>
-                    <p className="text-3xl font-black text-emerald-400">{dashError ? "—" : formatPrice(dashFaturamento)}</p>
+                    <p className="text-3xl font-black text-primary">{dashError ? "—" : formatPrice(dashFaturamento)}</p>
                     <p className="text-xs text-muted-foreground">{dashError ? "Erro ao carregar" : "em fechamentos"}</p>
                   </div>
                   <div className="rounded-xl border border-border bg-card p-5 space-y-2">
