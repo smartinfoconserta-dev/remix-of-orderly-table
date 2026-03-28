@@ -703,7 +703,7 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
       <img
         src={RESTAURANTE.logoUrl}
         alt={RESTAURANTE.nome}
-        className="h-12 rounded-xl object-contain select-none touch-none" style={{ maxWidth: "160px" }}
+        className="w-full rounded-xl object-cover select-none touch-none" style={{ height: "60px", maxWidth: "220px" }}
         onPointerDown={handleLogoPointerDown}
         onPointerUp={handleLogoPointerUp}
         onPointerLeave={handleLogoPointerUp}
