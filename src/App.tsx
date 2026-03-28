@@ -18,6 +18,7 @@ import PedidoPage from "./pages/PedidoPage";
 import MotoboyPage from "./pages/MotoboyPage";
 import TotemPage from "./pages/TotemPage";
 import TvPage from "./pages/TvPage";
+import CardapioPublico from "./pages/CardapioPublico";
 import NotFound from "./pages/NotFound";
 
 
@@ -70,6 +71,7 @@ const App = () => {
         <Route path="/tablet" element={<TabletPage />} />
         <Route path="/cliente" element={<Navigate to="/tablet" replace />} />
         <Route path="/pedido/:slug" element={<PedidoPage />} />
+        <Route path="/cardapio/:slug" element={<CardapioPublico />} />
 
         
         <Route path="*" element={<NotFound />} />

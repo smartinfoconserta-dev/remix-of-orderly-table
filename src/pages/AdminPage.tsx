@@ -2145,6 +2145,52 @@ ${topRows ? `<h2>Top 5 produtos</h2><table><thead><tr><th>#</th><th>Produto</th>
                   );
                 })()}
 
+                {/* Cardápio Digital público */}
+                {(() => {
+                  const currentStore = stores.find((s) => s.id === storeId);
+                  const storeSlug = currentStore?.slug;
+                  const baseUrl = window.location.origin;
+                  const cardapioLink = storeSlug ? `${baseUrl}/cardapio/${storeSlug}` : null;
+
+                  if (!cardapioLink) return null;
+
+                  return (
+                    <div className="surface-card rounded-2xl p-6 space-y-3">
+                      <div>
+                        <p className="text-sm font-black text-foreground flex items-center gap-2">📖 Cardápio Digital</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">Link público do cardápio — compartilhe via QR Code ou redes sociais</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Input
+                          value={cardapioLink}
+                          readOnly
+                          className="text-xs font-mono bg-muted"
+                        />
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="shrink-0"
+                          onClick={() => {
+                            navigator.clipboard.writeText(cardapioLink);
+                            toast.success("Link copiado!");
+                          }}
+                        >
+                          Copiar
+                        </Button>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="gap-2 text-xs"
+                        onClick={() => window.open(cardapioLink, "_blank")}
+                      >
+                        <ExternalLink className="h-3.5 w-3.5" />
+                        Abrir cardápio
+                      </Button>
+                    </div>
+                  );
+                })()}
+
                 {/* Horário de funcionamento */}
                 {(() => {
                   const DIAS: { key: keyof HorariosSemana; label: string }[] = [
