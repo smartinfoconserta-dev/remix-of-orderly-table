@@ -32,7 +32,8 @@ export const getBairrosAsync = async (storeId?: string | null): Promise<Bairro[]
     }));
     _bairrosCache = mapped;
     return mapped;
-  } catch {
+  } catch (err) {
+    console.error("[deliveryStorage] erro:", err);
     return _bairrosCache;
   }
 };
