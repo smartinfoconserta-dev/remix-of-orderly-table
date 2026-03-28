@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
+import LicenseBanner from "@/components/LicenseBanner";
 import { Bike } from "lucide-react";
 import {
   AlertTriangle,
