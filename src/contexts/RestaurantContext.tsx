@@ -428,7 +428,9 @@ const dbInsertPedido = async (p: PedidoRealizado, onNumeroResolved?: (pedidoId: 
 };
 
 const dbUpdatePedido = (pedidoId: string, updates: Record<string, any>) => {
-  supabase.from("pedidos").update(updates).eq("id", pedidoId).then(({ error }) => {
+  const sid = getActiveStoreId();
+  if (!sid) { console.warn("dbUpdatePedido: storeId is null"); return; }
+  supabase.rpc("rpc_update_pedido" as any, { _id: pedidoId, _store_id: sid, _updates: updates }).then(({ error }: any) => {
     if (error) { console.error("DB update pedido", error); toast.error("Erro ao atualizar pedido"); }
   });
 };
