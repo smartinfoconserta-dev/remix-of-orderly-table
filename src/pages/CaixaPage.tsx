@@ -78,6 +78,13 @@ const normStr = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, ""
 const formatPrice = (v: number) => `R$ ${v.toFixed(2).replace(".", ",")}`;
 // Legacy localStorage keys removed — data now lives in Supabase
 const toCents = (value: number) => Math.round(value * 100);
+const formatCpfMask = (value: string) => {
+  const digits = value.replace(/\D/g, "").slice(0, 11);
+  if (digits.length <= 3) return digits;
+  if (digits.length <= 6) return `${digits.slice(0, 3)}.${digits.slice(3)}`;
+  if (digits.length <= 9) return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6)}`;
+  return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9)}`;
+};
 
 const parseCurrencyInput = (value: string) => {
   const sanitized = value.trim().replace(/[^\d,.-]/g, "");
