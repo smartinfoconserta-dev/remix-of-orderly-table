@@ -59,19 +59,7 @@ interface PedidoFlowProps {
 
 // Products are loaded reactively inside the component
 
-// Configurable banners from admin or fallback to defaults
-const configBanners = sysConfig.banners?.filter((b) => b.titulo && b.imagemUrl) ?? [];
-const activeBannerSlides = configBanners.length > 0
-  ? configBanners.map((b, i) => ({
-      id: b.id || `cb-${i}`,
-      image: b.imagemUrl,
-      label: "",
-      title: b.titulo,
-      description: b.subtitulo,
-      price: b.preco,
-      alt: b.titulo,
-    }))
-  : homeHeroSlides;
+// activeBannerSlides moved inside component
 
 const HOME_TAB_ID = "inicio";
 const HOME_TAB: Categoria = { id: HOME_TAB_ID, nome: "Início", icone: "house" };
