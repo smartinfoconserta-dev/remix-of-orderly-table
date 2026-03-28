@@ -753,6 +753,7 @@ ${itensSetorHtml}
           );
         })}
       </div>
+      <LicenseBanner context="operational" />
     </div>
   );
 };
