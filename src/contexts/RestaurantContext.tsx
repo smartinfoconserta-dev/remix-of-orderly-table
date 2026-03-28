@@ -167,6 +167,7 @@ interface CriarPedidoBalcaoInput {
   observacaoGeral?: string;
   taxaEntrega?: number;
   skipConfirmacao?: boolean;
+  formaPagamentoTotem?: PaymentMethod;
 }
 
 interface RestaurantContextType {
