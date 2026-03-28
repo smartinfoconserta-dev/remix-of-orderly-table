@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import PedidoFlow from "@/components/PedidoFlow";
 import { RestaurantProvider, useRestaurant } from "@/contexts/RestaurantContext";
-import { CheckCircle2, CreditCard, QrCode, Smartphone, User } from "lucide-react";
+import { CheckCircle2, CreditCard, FileText, QrCode, Smartphone, User } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import type { ItemCarrinho } from "@/contexts/RestaurantContext";
 import DeviceGate from "@/components/DeviceGate";
