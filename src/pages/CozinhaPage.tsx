@@ -5,6 +5,8 @@ import { useRestaurant } from "@/contexts/RestaurantContext";
 import type { PedidoRealizado } from "@/contexts/RestaurantContext";
 import { getSistemaConfig } from "@/lib/adminStorage";
 import { useAuth } from "@/contexts/AuthContext";
+import { useStore } from "@/contexts/StoreContext";
+import { savePreferencia, loadPreferencias } from "@/hooks/usePreferencias";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
