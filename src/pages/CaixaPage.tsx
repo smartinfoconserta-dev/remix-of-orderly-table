@@ -1637,7 +1637,6 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
                       : `Balcão — ${balcaoPedido.clienteNome || ""}`;
                     handlePrintComanda({
                       tipo,
-                      tipo,
                       numero: balcaoPedido.numeroPedido,
                       dataHora: new Date().toLocaleString("pt-BR"),
                       itens: balcaoPedido.itens.map((it) => ({ quantidade: it.quantidade, nome: it.nome, preco: it.precoUnitario })),
