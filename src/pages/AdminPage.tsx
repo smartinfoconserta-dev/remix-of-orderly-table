@@ -1646,7 +1646,7 @@ const AdminPage = () => {
                             <span className="text-sm font-bold text-foreground">R$ {b.taxa.toFixed(2).replace(".", ",")}</span>
                             <Button variant="ghost" size="icon" className="text-destructive hover:bg-destructive/10 h-8 w-8" onClick={() => {
                               const next = bairros.filter((x) => x.id !== b.id);
-                              saveBairros(next);
+                              saveBairros(next, storeId);
                               setBairros(next);
                               toast.success(`Bairro "${b.nome}" removido`);
                             }}>
