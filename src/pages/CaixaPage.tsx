@@ -867,7 +867,7 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
     }
   }
 
-  function handleDeliveryConfirm() {
+  function handleDeliveryConfirm(avisarCliente = false) {
     upsertClienteDelivery({
       nome: balcaoClienteNome.trim(),
       cpf: balcaoCpf.trim(),
@@ -878,7 +878,14 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
       complemento: balcaoComplemento.trim(),
       referencia: balcaoReferencia.trim(),
     });
-    criarPedidoBalcao({
+
+    const bairrosDisp = getBairros().filter((b) => b.ativo);
+    const matchBairro = balcaoBairro.trim() ? bairrosDisp.find((b) => normStr(b.nome) === normStr(balcaoBairro)) : null;
+    const taxa = matchBairro ? matchBairro.taxa : 0;
+    const totalItens = deliveryPendingItens.reduce((s, it) => s + it.precoUnitario * it.quantidade, 0);
+    const totalFinal = totalItens + taxa;
+
+    const numeroPedido = criarPedidoBalcao({
       itens: deliveryPendingItens,
       origem: "delivery",
       operador: currentOperator,
@@ -889,16 +896,29 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
       referencia: balcaoReferencia || undefined,
       formaPagamentoDelivery: balcaoFormaPag,
       trocoParaQuanto: balcaoFormaPag === "dinheiro" ? parseCurrencyInput(balcaoTroco) || undefined : undefined,
-      taxaEntrega: (() => {
-        const bairrosDisp = getBairros().filter((b) => b.ativo);
-        const match = balcaoBairro.trim() ? bairrosDisp.find((b) => normStr(b.nome) === normStr(balcaoBairro)) : null;
-        return match ? match.taxa : 0;
-      })(),
+      taxaEntrega: taxa,
       skipConfirmacao: true,
     });
+
     toast.success(`Pedido delivery enviado para ${balcaoClienteNome}`, { duration: 1600, icon: "🍽️" });
+
+    if (avisarCliente && balcaoTelefone.trim()) {
+      const tel = balcaoTelefone.replace(/\D/g, "");
+      const formasPag: Record<string, string> = { dinheiro: "Dinheiro", credito: "Cartão de Crédito", debito: "Cartão de Débito", pix: "PIX" };
+      const tempo = deliveryTempoEstimado.trim() || sistemaConfig.tempoEntrega || "40";
+      const msg = [
+        `Olá ${balcaoClienteNome.trim()}! Seu pedido #${numeroPedido} foi confirmado.`,
+        `🛵 Tempo estimado: ${tempo} minutos.`,
+        `💰 Total: ${formatPrice(totalFinal)}${taxa > 0 ? ` (inclui taxa de entrega de ${formatPrice(taxa)})` : ""}.`,
+        `Forma de pagamento: ${formasPag[balcaoFormaPag] || balcaoFormaPag}.`,
+        `Obrigado! 😊`,
+      ].join("\n");
+      window.open(`https://wa.me/55${tel}?text=${encodeURIComponent(msg)}`, "_blank");
+    }
+
     setDeliveryConfirmOpen(false);
     setDeliveryPendingItens([]);
+    setDeliveryTempoEstimado("");
     resetBalcaoStates();
   }
 
