@@ -806,47 +806,62 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     });
   }, []);
 
-  const confirmarPedido = useCallback((mesaId: string, meta?: PedidoMeta) => {
+  const confirmarPedido = useCallback(async (mesaId: string, meta?: PedidoMeta) => {
+    // Get current mesa state
+    const currentStore = store;
+    const mesa = currentStore.mesas.find(m => m.id === mesaId);
+    if (!mesa || mesa.carrinho.length === 0) return;
+
+    const totalPedido = calcularTotalItens(mesa.carrinho);
+    const snapshot = mesa.carrinho.map(cloneItem);
+    const now = new Date();
+    const origem = meta?.modo === "garcom" || meta?.modo === "caixa" ? meta.modo : meta?.modo === "totem" ? "totem" : "cliente";
+
+    // Get atomic number from DB BEFORE creating the pedido
+    const sid = getActiveStoreId();
+    let realNum = proximoNumeroPedido(); // fallback
+    if (sid) {
+      try {
+        const { data: nextNum } = await supabase.rpc("next_order_number" as any, { _store_id: sid });
+        if (typeof nextNum === "number") { realNum = nextNum; if (nextNum >= _nextPedidoNumber) _nextPedidoNumber = nextNum + 1; }
+      } catch (err) { console.error("confirmarPedido: next_order_number error", err); }
+    }
+
+    const novoPedido: PedidoRealizado = {
+      id: `pedido-${now.getTime()}-${Math.random().toString(36).slice(2, 7)}`,
+      numeroPedido: realNum, itens: snapshot, total: totalPedido,
+      criadoEm: formatClock(now), criadoEmIso: now.toISOString(), origem, mesaId,
+      garcomId: origem === "garcom" ? meta?.operador?.id : undefined,
+      garcomNome: origem === "garcom" ? meta?.operador?.nome : undefined,
+      caixaId: origem === "caixa" ? meta?.operador?.id : undefined,
+      caixaNome: origem === "caixa" ? meta?.operador?.nome : undefined,
+      paraViagem: meta?.paraViagem || false,
+    };
+
+    // Persist to DB via RPC (number already resolved)
+    if (sid) {
+      const row = pedidoToRow(novoPedido, sid);
+      supabase.rpc("rpc_insert_pedido" as any, { _data: row }).then(({ error }: any) => {
+        if (error) { console.error("DB insert pedido", error); toast.error("Erro ao salvar pedido no banco"); }
+      });
+    }
+
+    const eventInput: Omit<EventoOperacional, "id" | "criadoEm" | "criadoEmIso"> = origem === "garcom"
+      ? { tipo: "pedido", descricao: `Garçom ${meta?.operador?.nome ?? "identificado"} lançou pedido na ${formatMesaNumero(mesa.numero)}`, mesaId, usuarioId: meta?.operador?.id, usuarioNome: meta?.operador?.nome, acao: "lancar_pedido" }
+      : origem === "caixa"
+        ? { tipo: "caixa", descricao: `Caixa ${meta?.operador?.nome ?? "identificado"} lançou pedido na ${formatMesaNumero(mesa.numero)}`, mesaId, usuarioId: meta?.operador?.id, usuarioNome: meta?.operador?.nome, acao: "lancar_pedido" }
+        : { tipo: "pedido", descricao: `Cliente da ${formatMesaNumero(mesa.numero)} enviou pedido`, mesaId, acao: "pedido_cliente" };
+
     setStore((prev) => {
-      let eventInput: Omit<EventoOperacional, "id" | "criadoEm" | "criadoEmIso"> | null = null;
-      const mesas = prev.mesas.map((mesa) => {
-        if (mesa.id !== mesaId || mesa.carrinho.length === 0) return mesa;
-        const totalPedido = calcularTotalItens(mesa.carrinho);
-        const snapshot = mesa.carrinho.map(cloneItem);
-        const now = new Date();
-        const origem = meta?.modo === "garcom" || meta?.modo === "caixa" ? meta.modo : meta?.modo === "totem" ? "totem" : "cliente";
-        const novoPedido: PedidoRealizado = {
-          id: `pedido-${now.getTime()}-${Math.random().toString(36).slice(2, 7)}`,
-          numeroPedido: proximoNumeroPedido(), itens: snapshot, total: totalPedido,
-          criadoEm: formatClock(now), criadoEmIso: now.toISOString(), origem, mesaId,
-          garcomId: origem === "garcom" ? meta?.operador?.id : undefined,
-          garcomNome: origem === "garcom" ? meta?.operador?.nome : undefined,
-          caixaId: origem === "caixa" ? meta?.operador?.id : undefined,
-          caixaNome: origem === "caixa" ? meta?.operador?.nome : undefined,
-          paraViagem: meta?.paraViagem || false,
-        };
-        // Persist to DB — patch in-memory number when real number arrives
-        dbInsertPedido(novoPedido, (pedidoId, realNum) => {
-          setStore((s) => ({
-            ...s,
-            mesas: s.mesas.map((m) => ({
-              ...m,
-              pedidos: m.pedidos.map((p) => p.id === pedidoId ? { ...p, numeroPedido: realNum } : p),
-            })),
-          }));
-        });
-        eventInput = origem === "garcom"
-          ? { tipo: "pedido", descricao: `Garçom ${meta?.operador?.nome ?? "identificado"} lançou pedido na ${formatMesaNumero(mesa.numero)}`, mesaId, usuarioId: meta?.operador?.id, usuarioNome: meta?.operador?.nome, acao: "lancar_pedido" }
-          : origem === "caixa"
-            ? { tipo: "caixa", descricao: `Caixa ${meta?.operador?.nome ?? "identificado"} lançou pedido na ${formatMesaNumero(mesa.numero)}`, mesaId, usuarioId: meta?.operador?.id, usuarioNome: meta?.operador?.nome, acao: "lancar_pedido" }
-            : { tipo: "pedido", descricao: `Cliente da ${formatMesaNumero(mesa.numero)} enviou pedido`, mesaId, acao: "pedido_cliente" };
-        const updated: Mesa = { ...mesa, carrinho: [], pedidos: [...mesa.pedidos, novoPedido], total: mesa.total + totalPedido, status: "consumo" as const };
+      const mesas = prev.mesas.map((m) => {
+        if (m.id !== mesaId) return m;
+        const updated: Mesa = { ...m, carrinho: [], pedidos: [...m.pedidos, novoPedido], total: m.total + totalPedido, status: "consumo" as const };
         dbSyncEstadoMesa(updated);
         return updated;
       });
-      return { ...prev, mesas, eventos: eventInput ? appendEventAndPersist(prev.eventos, eventInput) : prev.eventos };
+      return { ...prev, mesas, eventos: appendEventAndPersist(prev.eventos, eventInput) };
     });
-  }, []);
+  }, [store.mesas]);
 
   const chamarGarcomFn = useCallback((mesaId: string) => {
     const chamadoEm = Date.now();
