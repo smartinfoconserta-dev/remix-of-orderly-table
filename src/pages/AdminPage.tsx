@@ -391,7 +391,7 @@ const AdminPage = () => {
     };
     setEditProduct(newProduct);
     setIsNewProduct(true);
-    setEditForm({ nome: "", descricao: "", preco: "", categoria: newProduct.categoria, imagem: "", imagemBase64: "", permiteLevar: true });
+    setEditForm({ nome: "", descricao: "", preco: "", categoria: newProduct.categoria, imagem: "", imagemBase64: "", permiteLevar: true, controleEstoque: false, quantidadeEstoque: 0, estoqueMinimo: 0 });
   }, [todasCategorias]);
 
   const saveEdit = useCallback(async () => {
