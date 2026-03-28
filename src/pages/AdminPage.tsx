@@ -2506,7 +2506,10 @@ ${topRows ? `<h2>Top 5 produtos</h2><table><thead><tr><th>#</th><th>Produto</th>
                   </div>
                 </div>
 
-
+                <div className="surface-card rounded-2xl p-6 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-black text-foreground">Couvert / Taxa de serviço</p>
                       <p className="text-xs text-muted-foreground mt-0.5">Cobrado por pessoa ao fechar a conta</p>
                     </div>
                     <button
