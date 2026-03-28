@@ -300,6 +300,7 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
   const [deliveryTempoEstimado, setDeliveryTempoEstimado] = useState("");
   const [buscaDelivery, setBuscaDelivery] = useState("");
   const [bairrosCache, setBairrosCache] = useState<Bairro[]>([]);
+  const caixaStoreIdRef = useRef<string | null>(null);
   useEffect(() => {
     const getStoreId = (): string | null => {
       try { const raw = sessionStorage.getItem("obsidian-op-session-v2"); if (raw) { const s = JSON.parse(raw); return s.storeId ?? null; } } catch {}
@@ -307,6 +308,7 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
       return null;
     };
     const sid = getStoreId();
+    caixaStoreIdRef.current = sid;
     if (sid) getBairrosAsync(sid).then(setBairrosCache);
   }, []);
   const [mostrarEntregues, setMostrarEntregues] = useState(false);
