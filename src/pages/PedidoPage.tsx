@@ -490,16 +490,13 @@ function PedidoPageInner({ storeId, config, bairros }: {
     const criadoEm = now.toLocaleString("pt-BR");
     const criadoEmIso = now.toISOString();
 
-    // Get next order number
-    const { data: lastOrder } = await supabase
-      .from("pedidos")
-      .select("numero_pedido")
-      .eq("store_id", storeId)
-      .order("numero_pedido", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    const nextNum = (lastOrder?.numero_pedido ?? 0) + 1;
+    // Get next order number atomically from DB
+    const { data: nextNum, error: rpcError } = await supabase.rpc("next_order_number" as any, { _store_id: storeId });
+    if (rpcError) {
+      console.error("[PedidoPage] next_order_number error:", rpcError);
+      toast.error("Erro ao gerar número do pedido");
+      return;
+    }
 
     const pedidoRow = {
       id: crypto.randomUUID(),

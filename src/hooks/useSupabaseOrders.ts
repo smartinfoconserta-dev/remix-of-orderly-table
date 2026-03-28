@@ -173,17 +173,13 @@ export function useSupabaseOrders(storeId: string | null) {
     if (error) console.error("updatePedido error", error);
   }, []);
 
-  // Get next pedido number
+  // Get next pedido number atomically
   const getNextNumero = useCallback(async (): Promise<number> => {
     const sid = storeIdRef.current;
     if (!sid) return 1;
-    const { data } = await supabase
-      .from("pedidos")
-      .select("numero_pedido")
-      .eq("store_id", sid)
-      .order("numero_pedido", { ascending: false })
-      .limit(1);
-    return (data?.[0]?.numero_pedido ?? 0) + 1;
+    const { data, error } = await supabase.rpc("next_order_number" as any, { _store_id: sid });
+    if (error) { console.error("next_order_number error", error); return 1; }
+    return typeof data === "number" ? data : 1;
   }, []);
 
   return {

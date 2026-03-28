@@ -68,7 +68,7 @@ import { useRouteLock } from "@/hooks/use-route-lock";
 import type { PaymentMethod, SplitPayment, UserRole } from "@/types/operations";
 import { getSistemaConfig } from "@/lib/adminStorage";
 import type { ItemCarrinho } from "@/contexts/RestaurantContext";
-import { findClienteDelivery, upsertClienteDelivery, getBairros, type ClienteDelivery } from "@/lib/deliveryStorage";
+import { findClienteDelivery, upsertClienteDelivery, getBairrosAsync, type Bairro, type ClienteDelivery } from "@/lib/deliveryStorage";
 import { supabase } from "@/integrations/supabase/client";
 
 /* ── helpers ── */
@@ -299,6 +299,18 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
   const [confirmTaxaEntrega, setConfirmTaxaEntrega] = useState("");
   const [deliveryTempoEstimado, setDeliveryTempoEstimado] = useState("");
   const [buscaDelivery, setBuscaDelivery] = useState("");
+  const [bairrosCache, setBairrosCache] = useState<Bairro[]>([]);
+  const caixaStoreIdRef = useRef<string | null>(null);
+  useEffect(() => {
+    const getStoreId = (): string | null => {
+      try { const raw = sessionStorage.getItem("obsidian-op-session-v2"); if (raw) { const s = JSON.parse(raw); return s.storeId ?? null; } } catch {}
+      try { const saved = sessionStorage.getItem("orderly-active-store"); if (saved) return saved; } catch {}
+      return null;
+    };
+    const sid = getStoreId();
+    caixaStoreIdRef.current = sid;
+    if (sid) getBairrosAsync(sid).then(setBairrosCache);
+  }, []);
   const [mostrarEntregues, setMostrarEntregues] = useState(false);
   const [filtroMotoboy, setFiltroMotoboy] = useState<string | null>(null);
   const [fechamentosPendentes, setFechamentosPendentes] = useState<any[]>([]);
@@ -878,9 +890,9 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
       bairro: balcaoBairro.trim(),
       complemento: balcaoComplemento.trim(),
       referencia: balcaoReferencia.trim(),
-    });
+    }, caixaStoreIdRef.current);
 
-    const bairrosDisp = getBairros().filter((b) => b.ativo);
+    const bairrosDisp = bairrosCache.filter((b) => b.ativo);
     const matchBairro = balcaoBairro.trim() ? bairrosDisp.find((b) => normStr(b.nome) === normStr(balcaoBairro)) : null;
     const taxa = matchBairro ? matchBairro.taxa : 0;
     const totalItens = deliveryPendingItens.reduce((s, it) => s + it.precoUnitario * it.quantidade, 0);
@@ -1899,7 +1911,7 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
                                       className="h-8 text-xs rounded-lg"
                                     />
                                     {(() => {
-                                      const bairros = getBairros().filter((b) => b.ativo);
+                                      const bairros = bairrosCache.filter((b) => b.ativo);
                                       const bairroPedido = pb.bairro || "";
                                       const match = bairroPedido ? bairros.find((b) => normStr(b.nome) === normStr(bairroPedido)) : null;
                                       if (match && parseCurrencyInput(confirmTaxaEntrega) > 0) {
@@ -1974,7 +1986,7 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
                                       setConfirmTempoId(pb.id);
                                       setConfirmTempo("");
                                       setConfirmTempoCustom("");
-                                      const bairros = getBairros().filter((b) => b.ativo);
+                                      const bairros = bairrosCache.filter((b) => b.ativo);
                                       const bairroPedido = pb.bairro || "";
                                       const match = bairroPedido ? bairros.find((b) => normStr(b.nome) === normStr(bairroPedido)) : null;
                                       setConfirmTaxaEntrega(match ? match.taxa.toFixed(2).replace(".", ",") : "");
@@ -3838,8 +3850,8 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
               <div className="space-y-3 rounded-xl border border-border bg-card p-4">
                 <label className="text-xs font-semibold text-foreground">Buscar cliente por CPF ou Telefone</label>
                 <div className="flex gap-2">
-                  <Input value={deliveryBusca} onChange={(e) => setDeliveryBusca(e.target.value)} placeholder="CPF ou telefone..." onKeyDown={async (e) => { if (e.key === "Enter") setDeliveryResultados(await findClienteDelivery(deliveryBusca)); }} />
-                  <Button size="sm" onClick={async () => setDeliveryResultados(await findClienteDelivery(deliveryBusca))} className="rounded-xl font-bold gap-1.5 shrink-0"><Search className="h-4 w-4" />Buscar</Button>
+                  <Input value={deliveryBusca} onChange={(e) => setDeliveryBusca(e.target.value)} placeholder="CPF ou telefone..." onKeyDown={async (e) => { if (e.key === "Enter") setDeliveryResultados(await findClienteDelivery(deliveryBusca, caixaStoreIdRef.current)); }} />
+                  <Button size="sm" onClick={async () => setDeliveryResultados(await findClienteDelivery(deliveryBusca, caixaStoreIdRef.current))} className="rounded-xl font-bold gap-1.5 shrink-0"><Search className="h-4 w-4" />Buscar</Button>
                 </div>
                 {deliveryResultados.length > 0 && (
                   <div className="space-y-1.5 mt-2">

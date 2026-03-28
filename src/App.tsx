@@ -19,7 +19,7 @@ import MotoboyPage from "./pages/MotoboyPage";
 import TotemPage from "./pages/TotemPage";
 import TvPage from "./pages/TvPage";
 import NotFound from "./pages/NotFound";
-import SeedPage from "./pages/SeedPage";
+
 
 const ROUTE_TITLES: Record<string, string> = {
   "/": "Login — Orderly Table",
@@ -71,7 +71,7 @@ const App = () => {
         <Route path="/cliente" element={<Navigate to="/tablet" replace />} />
         <Route path="/pedido/:slug" element={<PedidoPage />} />
 
-        <Route path="/seed" element={<SeedPage />} />
+        
         <Route path="*" element={<NotFound />} />
       </Routes>
     </div>

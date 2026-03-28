@@ -103,7 +103,7 @@ import {
   type HorarioFuncionamento,
   type PlanoModulos,
 } from "@/lib/adminStorage";
-import { getBairros, saveBairros, type Bairro } from "@/lib/deliveryStorage";
+import { getBairrosAsync, saveBairros, type Bairro } from "@/lib/deliveryStorage";
 import { toast } from "sonner";
 
 type AdminTab = "dashboard" | "cardapio" | "mesas" | "tablets" | "equipe" | "configuracoes" | "licenca";
@@ -331,7 +331,8 @@ const AdminPage = () => {
   const [horariosFuncionamento, setHorariosFuncionamento] = useState<HorariosSemana>(getHorariosFuncionamento);
 
   // --- Bairros state ---
-  const [bairros, setBairros] = useState<Bairro[]>(getBairros);
+  const [bairros, setBairros] = useState<Bairro[]>([]);
+  useEffect(() => { if (storeId) getBairrosAsync(storeId).then(setBairros); }, [storeId]);
   const [novoBairroNome, setNovoBairroNome] = useState("");
   const [novoBairroTaxa, setNovoBairroTaxa] = useState("");
   const [deliveryModo, setDeliveryModo] = useState<"todos" | "cadastrados">(() => {
@@ -1617,7 +1618,7 @@ const AdminPage = () => {
                         if (isNaN(taxa) || taxa < 0) { toast.error("Taxa inválida"); return; }
                         const novo: Bairro = { id: `bairro-${Date.now()}`, nome: novoBairroNome.trim(), taxa, ativo: true };
                         const next = [...bairros, novo];
-                        saveBairros(next);
+                        saveBairros(next, storeId);
                         setBairros(next);
                         setNovoBairroNome("");
                         setNovoBairroTaxa("");
@@ -1636,7 +1637,7 @@ const AdminPage = () => {
                           <div className="flex items-center gap-3">
                             <Switch checked={b.ativo} onCheckedChange={(v) => {
                               const next = bairros.map((x) => x.id === b.id ? { ...x, ativo: v } : x);
-                              saveBairros(next);
+                              saveBairros(next, storeId);
                               setBairros(next);
                             }} />
                             <span className={`text-sm font-semibold ${b.ativo ? "text-foreground" : "text-muted-foreground line-through"}`}>{b.nome}</span>
@@ -1645,7 +1646,7 @@ const AdminPage = () => {
                             <span className="text-sm font-bold text-foreground">R$ {b.taxa.toFixed(2).replace(".", ",")}</span>
                             <Button variant="ghost" size="icon" className="text-destructive hover:bg-destructive/10 h-8 w-8" onClick={() => {
                               const next = bairros.filter((x) => x.id !== b.id);
-                              saveBairros(next);
+                              saveBairros(next, storeId);
                               setBairros(next);
                               toast.success(`Bairro "${b.nome}" removido`);
                             }}>

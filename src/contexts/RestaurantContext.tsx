@@ -402,13 +402,27 @@ const rowToMovimentacao = (row: any): MovimentacaoCaixa => ({
   usuarioId: row.usuario_id ?? "", usuarioNome: row.usuario_nome ?? "",
 });
 
-// Fire-and-forget DB insert with error visibility
-const dbInsertPedido = (p: PedidoRealizado) => {
+// Fire-and-forget DB insert — uses atomic next_order_number RPC to avoid duplicates
+const dbInsertPedido = async (p: PedidoRealizado) => {
   const sid = getActiveStoreId();
   if (!sid) { console.warn("dbInsertPedido: storeId is null, skipping"); return; }
-  supabase.from("pedidos").insert(pedidoToRow(p, sid) as any).then(({ error }) => {
+  try {
+    // Get atomic order number from DB
+    const { data: nextNum, error: rpcError } = await supabase.rpc("next_order_number" as any, { _store_id: sid });
+    if (rpcError) { console.error("next_order_number RPC error", rpcError); }
+    const atomicNum = typeof nextNum === "number" ? nextNum : p.numeroPedido;
+    // Update local counter to stay in sync
+    if (atomicNum >= _nextPedidoNumber) _nextPedidoNumber = atomicNum + 1;
+    const row = pedidoToRow({ ...p, numeroPedido: atomicNum }, sid);
+    const { error } = await supabase.from("pedidos").insert(row as any);
     if (error) { console.error("DB insert pedido", error); toast.error("Erro ao salvar pedido no banco"); }
-  });
+  } catch (err) {
+    console.error("dbInsertPedido unexpected error", err);
+    // Fallback: insert with optimistic number
+    supabase.from("pedidos").insert(pedidoToRow(p, sid) as any).then(({ error }) => {
+      if (error) console.error("DB insert pedido fallback", error);
+    });
+  }
 };
 
 const dbUpdatePedido = (pedidoId: string, updates: Record<string, any>) => {
