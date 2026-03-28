@@ -90,7 +90,7 @@ function configToDbRow(config: SistemaConfig) {
     mensagem_boas_vindas: config.mensagemBoasVindas ?? "",
     delivery_ativo: config.deliveryAtivo ?? true,
     modo_identificacao_delivery: config.modoIdentificacaoDelivery ?? "visitante",
-    cozinha_ativa: config.cozinhaAtiva ?? false,
+    
     couvert_ativo: config.couvertAtivo ?? false,
     couvert_valor: config.couvertValor ?? 0,
     couvert_obrigatorio: config.couvertObrigatorio ?? false,

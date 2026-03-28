@@ -1217,7 +1217,8 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       const pedido = prev.pedidosBalcao.find(p => p.id === pedidoId);
       if (!pedido) return prev;
       const isDelivery = pedido.origem === "delivery";
-      const statusInicial = isDelivery ? "pronto" as const : (cfg.cozinhaAtiva ? "aberto" as const : "pronto" as const);
+      const cozinhaLigada = !!(cfg.modulos as any)?.cozinha;
+      const statusInicial = isDelivery ? "pronto" as const : (cozinhaLigada ? "aberto" as const : "pronto" as const);
       const taxa = taxaEntrega && taxaEntrega > 0 ? taxaEntrega : 0;
       const taxaItem: ItemCarrinho = { uid: `taxa-${Date.now()}`, produtoId: "taxa-entrega", nome: "Taxa de entrega", precoBase: taxa, quantidade: 1, removidos: [], adicionais: [], precoUnitario: taxa };
       const itensAtualizados = taxa > 0 ? [...pedido.itens, taxaItem] : pedido.itens;
