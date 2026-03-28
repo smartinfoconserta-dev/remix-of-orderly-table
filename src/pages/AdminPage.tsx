@@ -33,7 +33,10 @@ import {
   Wallet,
   Printer,
   Clock,
+  BarChart3,
 } from "lucide-react";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
+import { Skeleton } from "@/components/ui/skeleton";
 import TeamManager from "@/components/TeamManager";
 import MesasManager from "@/components/MesasManager";
 import DevicesManager from "@/components/DevicesManager";
@@ -169,6 +172,8 @@ const AdminPage = () => {
   const [dashTotalFechamentos, setDashTotalFechamentos] = useState(0);
   const [dashCaixaAberto, setDashCaixaAberto] = useState<boolean | null>(null);
   const [dashUltimosFechamentos, setDashUltimosFechamentos] = useState<any[]>([]);
+  const [dash7dias, setDash7dias] = useState<{ dia: string; total: number }[]>([]);
+  const [dash7diasLoading, setDash7diasLoading] = useState(false);
 
   useEffect(() => {
     if (tab !== "dashboard" || !storeId) return;
@@ -358,7 +363,51 @@ const AdminPage = () => {
       toast.error("Erro ao remover produto");
     }
   }, [removeTarget, storeId, loadProducts]);
-  
+
+
+  // Fetch 7-day revenue chart data
+  useEffect(() => {
+    if (tab !== "dashboard" || !storeId) return;
+    let cancelled = false;
+    const DIAS_SEMANA = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+    const load7dias = async () => {
+      setDash7diasLoading(true);
+      try {
+        const dias: { inicio: string; fim: string; label: string }[] = [];
+        for (let i = 6; i >= 0; i--) {
+          const d = new Date();
+          d.setHours(0, 0, 0, 0);
+          d.setDate(d.getDate() - i);
+          const inicio = d.toISOString();
+          const fim = new Date(d.getTime() + 86400000 - 1).toISOString();
+          dias.push({ inicio, fim, label: DIAS_SEMANA[d.getDay()] });
+        }
+        const results = await Promise.all(
+          dias.map(({ inicio, fim }) =>
+            supabase
+              .from("fechamentos")
+              .select("total")
+              .eq("store_id", storeId)
+              .eq("cancelado", false)
+              .gte("criado_em_iso", inicio)
+              .lte("criado_em_iso", fim)
+          )
+        );
+        if (cancelled) return;
+        const chartData = dias.map((d, i) => ({
+          dia: d.label,
+          total: (results[i].data ?? []).reduce((s, f) => s + (Number(f.total) || 0), 0),
+        }));
+        setDash7dias(chartData);
+      } catch (err) {
+        console.error("[AdminPage] erro ao carregar gráfico 7 dias:", err);
+      } finally {
+        if (!cancelled) setDash7diasLoading(false);
+      }
+    };
+    load7dias();
+    return () => { cancelled = true; };
+  }, [tab, storeId]);
 
   // --- Mesas state ---
   const [mesasConfig, setMesasConfig] = useState<MesasConfig>(getMesasConfig);
@@ -421,7 +470,6 @@ const AdminPage = () => {
     saveLicencaConfigAsync(licencaConfig);
     toast.success("Licença salva");
   }, [licencaConfig]);
-
 
 
   const nomeRestaurante = getSistemaConfig().nomeRestaurante || "Restaurante";
@@ -780,6 +828,36 @@ th{background:#f5f5f5;padding:8px 12px;border:1px solid #ddd;text-align:left;fon
                 </div>
               )}
             </div>
+
+            {/* ── Gráfico 7 dias ── */}
+            {!dashLoading && (
+              <div className="rounded-xl border border-border bg-card p-5">
+                <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-4 flex items-center gap-1.5">
+                  <BarChart3 className="h-3.5 w-3.5" />
+                  Faturamento — últimos 7 dias
+                </p>
+                {dash7diasLoading ? (
+                  <div className="space-y-2">
+                    <Skeleton className="h-[220px] w-full rounded-lg" />
+                  </div>
+                ) : dash7dias.length > 0 ? (
+                  <ResponsiveContainer width="100%" height={220}>
+                    <BarChart data={dash7dias}>
+                      <XAxis dataKey="dia" tick={{ fontSize: 12 }} tickLine={false} axisLine={false} />
+                      <YAxis tick={{ fontSize: 11 }} tickLine={false} axisLine={false} tickFormatter={(v: number) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : String(v)} width={45} />
+                      <Tooltip
+                        formatter={(value: number) => [`R$ ${value.toFixed(2).replace(".", ",")}`, "Faturamento"]}
+                        contentStyle={{ borderRadius: "8px", border: "1px solid hsl(var(--border))", background: "hsl(var(--card))", fontSize: "12px" }}
+                        labelStyle={{ fontWeight: "bold", marginBottom: "4px" }}
+                      />
+                      <Bar dataKey="total" fill="hsl(var(--primary))" radius={[6, 6, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <p className="text-xs text-muted-foreground py-8 text-center">Sem dados de faturamento</p>
+                )}
+              </div>
+            )}
 
             {/* ── Últimos fechamentos ── */}
             {!dashLoading && dashUltimosFechamentos.length > 0 && (
