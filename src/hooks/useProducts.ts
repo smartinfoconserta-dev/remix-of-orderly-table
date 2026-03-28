@@ -105,15 +105,15 @@ function getStoreId(): string | null {
   try {
     const raw = sessionStorage.getItem("obsidian-op-session-v2");
     if (raw) { const s = JSON.parse(raw); if (s.storeId) return s.storeId; }
-  } catch {}
+  } catch (err) { console.error("[useProducts] erro:", err); }
   try {
     const saved = sessionStorage.getItem("orderly-active-store");
     if (saved) return saved;
-  } catch {}
+  } catch (err) { console.error("[useProducts] erro:", err); }
   try {
     const device = localStorage.getItem("orderly-device-store-id");
     if (device) return device;
-  } catch {}
+  } catch (err) { console.error("[useProducts] erro:", err); }
   return null;
 }
 

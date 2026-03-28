@@ -12,7 +12,8 @@ function getLocalCache<T>(key: string): T | null {
   try {
     const raw = localStorage.getItem(key);
     return raw ? JSON.parse(raw) : null;
-  } catch {
+  } catch (err) {
+    console.error("[configService] erro:", err);
     return null;
   }
 }
@@ -26,7 +27,7 @@ function markPendingSync(entity: string) {
     const pending = JSON.parse(localStorage.getItem(SYNC_PENDING_KEY) || "{}");
     pending[entity] = Date.now();
     localStorage.setItem(SYNC_PENDING_KEY, JSON.stringify(pending));
-  } catch { /* ignore */ }
+  } catch (err) { console.error("[configService] erro:", err); }
 }
 
 function clearPendingSync(entity: string) {
@@ -34,7 +35,7 @@ function clearPendingSync(entity: string) {
     const pending = JSON.parse(localStorage.getItem(SYNC_PENDING_KEY) || "{}");
     delete pending[entity];
     localStorage.setItem(SYNC_PENDING_KEY, JSON.stringify(pending));
-  } catch { /* ignore */ }
+  } catch (err) { console.error("[configService] erro:", err); }
 }
 
 // ── Map DB row → SistemaConfig ──
@@ -154,8 +155,8 @@ export async function fetchConfig(storeId?: string | null): Promise<SistemaConfi
     // No row yet — return local cache or defaults
     const cached = getLocalCache<SistemaConfig>(CONFIG_CACHE_KEY);
     return cached ?? { nomeRestaurante: "Obsidian", logoUrl: "", corPrimaria: "" };
-  } catch {
-    // Offline fallback
+  } catch (err) {
+    console.error("[configService] erro:", err);
     const cached = getLocalCache<SistemaConfig>(CONFIG_CACHE_KEY);
     return cached ?? { nomeRestaurante: "Obsidian", logoUrl: "", corPrimaria: "" };
   }
@@ -180,7 +181,8 @@ export async function saveConfig(config: SistemaConfig, storeId?: string | null)
       await supabase.from("restaurant_config").insert(row as any);
     }
     clearPendingSync("config");
-  } catch {
+  } catch (err) {
+    console.error("[configService] erro:", err);
     markPendingSync("config");
   }
 }
@@ -206,7 +208,8 @@ export async function fetchLicenca(storeId?: string | null): Promise<LicencaConf
 
     const cached = getLocalCache<LicencaConfig>(LICENCA_CACHE_KEY);
     return cached ?? { nomeCliente: "", dataVencimento: "", ativo: true };
-  } catch {
+  } catch (err) {
+    console.error("[configService] erro:", err);
     const cached = getLocalCache<LicencaConfig>(LICENCA_CACHE_KEY);
     return cached ?? { nomeCliente: "", dataVencimento: "", ativo: true };
   }
@@ -229,7 +232,8 @@ export async function saveLicenca(lic: LicencaConfig, storeId?: string | null): 
       await supabase.from("restaurant_license").insert(row);
     }
     clearPendingSync("licenca");
-  } catch {
+  } catch (err) {
+    console.error("[configService] erro:", err);
     markPendingSync("licenca");
   }
 }
@@ -260,7 +264,8 @@ export async function fetchCategorias(storeId?: string | null): Promise<Categori
 
     const cached = getLocalCache<CategoriaCustom[]>(CATEGORIAS_CACHE_KEY);
     return cached ?? [];
-  } catch {
+  } catch (err) {
+    console.error("[configService] erro:", err);
     const cached = getLocalCache<CategoriaCustom[]>(CATEGORIAS_CACHE_KEY);
     return cached ?? [];
   }
@@ -290,7 +295,8 @@ export async function saveCategorias(cats: CategoriaCustom[], storeId?: string |
       await supabase.from("restaurant_categories").insert(rows);
     }
     clearPendingSync("categorias");
-  } catch {
+  } catch (err) {
+    console.error("[configService] erro:", err);
     markPendingSync("categorias");
   }
 }
@@ -314,5 +320,5 @@ export async function syncPending(): Promise<void> {
       const cats = getLocalCache<CategoriaCustom[]>(CATEGORIAS_CACHE_KEY);
       if (cats) await saveCategorias(cats);
     }
-  } catch { /* silent */ }
+  } catch (err) { console.error("[configService] erro:", err); }
 }

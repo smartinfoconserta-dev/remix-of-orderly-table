@@ -69,7 +69,8 @@ export const validateDevice = async (deviceId: string, expectedType?: DeviceType
       mesaId: (data as any).mesa_id,
       label: (data as any).label,
     };
-  } catch {
+  } catch (err) {
+    console.error("[deviceAuth] erro:", err);
     return { ok: false, error: "Erro ao validar dispositivo" };
   }
 };
@@ -102,7 +103,8 @@ export const activateDevice = async (
 
     saveDeviceId(deviceId);
     return { ok: true, deviceId };
-  } catch {
+  } catch (err) {
+    console.error("[deviceAuth] erro:", err);
     return { ok: false, error: "Erro ao ativar dispositivo" };
   }
 };

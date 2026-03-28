@@ -97,7 +97,8 @@ const readOpSession = (): OperationalSession | null => {
   try {
     const raw = sessionStorage.getItem(OP_SESSION_KEY);
     return raw ? (JSON.parse(raw) as OperationalSession) : null;
-  } catch {
+  } catch (err) {
+    console.error("[AuthContext] erro:", err);
     return null;
   }
 };
@@ -423,7 +424,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       }
       return { ok: false, error: "PIN de gerente inválido" };
-    } catch {
+    } catch (err) {
+      console.error("[AuthContext] erro:", err);
       return { ok: false, error: "Erro ao verificar PIN" };
     }
   }, [operationalSession]);
@@ -453,7 +455,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       }
       return { ok: false, error: "PIN inválido" };
-    } catch {
+    } catch (err) {
+      console.error("[AuthContext] erro:", err);
       return { ok: false, error: "Erro ao verificar PIN" };
     }
   }, [operationalSession]);

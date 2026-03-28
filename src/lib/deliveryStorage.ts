@@ -32,7 +32,8 @@ export const getBairrosAsync = async (storeId?: string | null): Promise<Bairro[]
     }));
     _bairrosCache = mapped;
     return mapped;
-  } catch {
+  } catch (err) {
+    console.error("[deliveryStorage] erro:", err);
     return _bairrosCache;
   }
 };
@@ -107,7 +108,8 @@ export async function getClientesDeliveryAsync(storeId?: string | null): Promise
       ultimoPedido: r.ultimo_pedido ?? new Date().toISOString(),
       senhaHash: r.senha_hash ?? undefined,
     }));
-  } catch {
+  } catch (err) {
+    console.error("[deliveryStorage] erro:", err);
     return [];
   }
 }
@@ -123,7 +125,8 @@ export async function findClienteDelivery(busca: string, storeId?: string | null
         c.telefone.replace(/\D/g, "").includes(term.replace(/\D/g, "")) ||
         c.cpf.replace(/\D/g, "").includes(term.replace(/\D/g, ""))
     );
-  } catch {
+  } catch (err) {
+    console.error("[deliveryStorage] erro:", err);
     return [];
   }
 }
