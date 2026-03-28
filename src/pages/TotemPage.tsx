@@ -376,7 +376,7 @@ const TotemInner = ({ storeId }: { storeId: string }) => {
           {isFastFoodCodigo && (
             <>
               <p className="text-lg font-bold mt-2" style={{ color: "#666" }}>Retire com o código abaixo</p>
-              <p className="text-[140px] leading-none font-black tabular-nums" style={{ color: "#FF6B00" }}>
+              <p className="text-[180px] leading-none font-black tabular-nums" style={{ color: "#FF6B00" }}>
                 #{String(pedidoConfirmado).padStart(3, "0")}
               </p>
             </>
@@ -388,7 +388,7 @@ const TotemInner = ({ storeId }: { storeId: string }) => {
               <p className="text-[80px] leading-none font-black" style={{ color: "#FF6B00" }}>
                 {clienteNome.trim()}
               </p>
-              <p className="text-2xl font-bold tabular-nums mt-2" style={{ color: "#999" }}>
+              <p className="text-4xl font-black tabular-nums mt-2" style={{ color: "#999" }}>
                 Pedido #{String(pedidoConfirmado).padStart(3, "0")}
               </p>
             </>
@@ -396,7 +396,7 @@ const TotemInner = ({ storeId }: { storeId: string }) => {
 
           {!isFastFoodCodigo && !isFastFoodNome && (
             <>
-              <p className="text-[120px] leading-none font-black tabular-nums" style={{ color: "#FF6B00" }}>
+              <p className="text-[160px] leading-none font-black tabular-nums" style={{ color: "#FF6B00" }}>
                 #{String(pedidoConfirmado).padStart(3, "0")}
               </p>
               <p className="text-xl font-bold mt-2" style={{ color: "#1A1A1A" }}>Retire quando aparecer na tela</p>
