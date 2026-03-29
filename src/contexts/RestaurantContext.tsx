@@ -1,6 +1,6 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import type { CashMovementType, OperationalUser, PaymentMethod, SplitPayment } from "@/types/operations";
-import { getSistemaConfig } from "@/lib/adminStorage";
+import { getSistemaConfig, getSistemaConfigAsync } from "@/lib/adminStorage";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useStore } from "@/contexts/StoreContext";
@@ -615,6 +615,9 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       loadedStoreRef.current = sid;
 
       console.log("[RestaurantContext] Loading data for store:", sid);
+
+      // Pre-load config into memory cache so getSistemaConfig() returns real data
+      await getSistemaConfigAsync(sid);
 
       const today = new Date();
       today.setHours(0, 0, 0, 0);

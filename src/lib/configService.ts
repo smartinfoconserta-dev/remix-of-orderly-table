@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { SistemaConfig, LicencaConfig, CategoriaCustom, HorariosSemana } from "./adminStorage";
+import { setConfigCache, setLicencaCache } from "./adminStorage";
 
 const CONFIG_CACHE_KEY = "orderly-config-v1";
 const LICENCA_CACHE_KEY = "orderly-licenca-v1";
@@ -153,6 +154,7 @@ export async function fetchConfig(storeId?: string | null): Promise<SistemaConfi
 
     if (data) {
       const config = dbRowToConfig(data);
+      setConfigCache(config);
       setLocalCache(CONFIG_CACHE_KEY, config);
       clearPendingSync("config");
       return config;
@@ -207,6 +209,7 @@ export async function fetchLicenca(storeId?: string | null): Promise<LicencaConf
 
     if (data) {
       const lic = dbRowToLicenca(data);
+      setLicencaCache(lic);
       setLocalCache(LICENCA_CACHE_KEY, lic);
       clearPendingSync("licenca");
       return lic;
