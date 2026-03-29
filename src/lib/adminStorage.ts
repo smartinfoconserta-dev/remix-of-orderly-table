@@ -73,6 +73,8 @@ export interface SistemaConfig {
   nomeImpressoraCozinha?: string;
   nomeImpressoraBar?: string;
   modulos?: {
+    mesas?: boolean;
+    balcao?: boolean;
     totem?: boolean;
     tvRetirada?: boolean;
     cozinha?: boolean;
@@ -80,6 +82,7 @@ export interface SistemaConfig {
     motoboy?: boolean;
   };
   plano?: "basico" | "medio" | "pro" | "premium";
+  /** @deprecated Use modulos.mesas / modulos.balcao instead */
   modoOperacao?: "restaurante" | "fast_food";
   identificacaoFastFood?: "codigo" | "nome_cliente";
   impressoras?: ImpressoraConfig[];

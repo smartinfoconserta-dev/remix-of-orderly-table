@@ -68,7 +68,20 @@ function dbRowToConfig(row: any): SistemaConfig {
     impressaoPorSetor: row.impressao_por_setor ?? false,
     nomeImpressoraCozinha: row.nome_impressora_cozinha ?? undefined,
     nomeImpressoraBar: row.nome_impressora_bar ?? undefined,
-    modulos: row.modulos ?? {},
+    modulos: (() => {
+      const m = row.modulos ?? {};
+      // Backward compat: derive mesas/balcao from modo_operacao if not explicitly set
+      if (m.mesas === undefined && m.balcao === undefined) {
+        if (row.modo_operacao === "fast_food") {
+          m.mesas = false;
+          m.balcao = true;
+        } else {
+          m.mesas = true;
+          m.balcao = false;
+        }
+      }
+      return m;
+    })(),
     plano: row.plano ?? "basico",
     modoOperacao: row.modo_operacao ?? "restaurante",
     identificacaoFastFood: row.identificacao_fast_food ?? "codigo",
