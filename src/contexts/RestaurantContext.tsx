@@ -809,40 +809,151 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           }));
         }
       })
-      .subscribe();
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "eventos_operacionais", filter: `store_id=eq.${sid}` }, (payload) => {
+        const e = rowToEvento(payload.new);
+        setStore(prev => {
+          if (prev.eventos.find(x => x.id === e.id)) return prev;
+          return { ...prev, eventos: [e, ...prev.eventos].slice(0, 300) };
+        });
+        setAllEventos(prev => prev.find(x => x.id === e.id) ? prev : [e, ...prev]);
+      })
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "movimentacoes_caixa", filter: `store_id=eq.${sid}` }, (payload) => {
+        const m = rowToMovimentacao(payload.new);
+        setStore(prev => {
+          if (prev.movimentacoesCaixa.find(x => x.id === m.id)) return prev;
+          return { ...prev, movimentacoesCaixa: [m, ...prev.movimentacoesCaixa] };
+        });
+        setAllMovimentacoesCaixa(prev => prev.find(x => x.id === m.id) ? prev : [m, ...prev]);
+      })
+      .subscribe((status, err) => {
+        if (status === 'SUBSCRIBED') {
+          console.log('[Realtime] Canal conectado para store:', sid);
+        }
+        if (status === 'TIMED_OUT') {
+          console.error('[Realtime] Timeout na conexão:', err);
+          toast.error('Conexão com servidor perdida. Recarregando dados...');
+          loadedStoreRef.current = null;
+          setActiveStoreId(prev => prev);
+        }
+        if (status === 'CHANNEL_ERROR') {
+          console.error('[Realtime] Erro no canal:', err);
+          toast.error('Erro de conexão. Tentando reconectar...');
+          loadedStoreRef.current = null;
+          setActiveStoreId(prev => prev);
+        }
+        if (status === 'CLOSED') {
+          console.warn('[Realtime] Canal fechado');
+        }
+      });
 
     return () => { supabase.removeChannel(channel); };
   }, [activeStoreId]);
 
-  // ── Polling fallback for pedidos (catches missed Realtime events) ──
+  // ── Polling fallback — catches missed Realtime events ──
   useEffect(() => {
     const sid = activeStoreId;
     if (!sid) return;
 
-    const pollPedidos = async () => {
-      const { data, error } = await supabase.rpc("rpc_get_operational_pedidos" as any, { _store_id: sid });
-      if (error || !data) return;
-      const freshPedidos = (data as any[]).map(rowToPedido);
-      const freshBalcao = freshPedidos.filter(p => ["balcao", "delivery", "totem", "ifood"].includes(p.origem));
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const todayIso = today.toISOString();
 
-      setStore(prev => {
-        const existingIds = new Set(prev.pedidosBalcao.map(p => p.id));
-        const newOnes = freshBalcao.filter(p => !existingIds.has(p.id));
-        // Also update existing ones that may have changed status
-        const updatedBalcao = prev.pedidosBalcao.map(existing => {
-          const fresh = freshBalcao.find(f => f.id === existing.id);
-          return fresh ?? existing;
+    const pollAll = async () => {
+      // 1. Pedidos
+      const { data: pedidosData, error: pedidosErr } = await supabase.rpc("rpc_get_operational_pedidos" as any, { _store_id: sid });
+      if (!pedidosErr && pedidosData) {
+        const freshPedidos = (pedidosData as any[]).map(rowToPedido);
+        const freshBalcao = freshPedidos.filter(p => ["balcao", "delivery", "totem", "ifood"].includes(p.origem));
+
+        setStore(prev => {
+          const existingIds = new Set(prev.pedidosBalcao.map(p => p.id));
+          const newOnes = freshBalcao.filter(p => !existingIds.has(p.id));
+          const updatedBalcao = prev.pedidosBalcao.map(existing => {
+            const fresh = freshBalcao.find(f => f.id === existing.id);
+            return fresh ?? existing;
+          });
+          if (newOnes.length > 0) {
+            return { ...prev, pedidosBalcao: [...updatedBalcao, ...newOnes] };
+          }
+          const changed = updatedBalcao.some((p, i) => p.statusBalcao !== prev.pedidosBalcao[i]?.statusBalcao);
+          return changed ? { ...prev, pedidosBalcao: updatedBalcao } : prev;
         });
-        if (newOnes.length > 0) {
-          return { ...prev, pedidosBalcao: [...updatedBalcao, ...newOnes] };
+
+        // Sync mesa pedidos
+        const freshMesa = freshPedidos.filter(p => !["balcao", "delivery", "totem", "ifood"].includes(p.origem));
+        if (freshMesa.length > 0) {
+          setStore(prev => {
+            let changed = false;
+            const mesas = prev.mesas.map(m => {
+              const mesaPedidos = freshMesa.filter(p => p.mesaId === m.id);
+              if (mesaPedidos.length === 0) return m;
+              const existingIds = new Set(m.pedidos.map(p => p.id));
+              const newPedidos = mesaPedidos.filter(p => !existingIds.has(p.id));
+              if (newPedidos.length === 0) {
+                const updatedPedidos = m.pedidos.map(existing => {
+                  const fresh = mesaPedidos.find(f => f.id === existing.id);
+                  return fresh ?? existing;
+                });
+                const pedidoChanged = updatedPedidos.some((p, i) => p.pronto !== m.pedidos[i]?.pronto);
+                if (!pedidoChanged) return m;
+                changed = true;
+                const updated = { ...m, pedidos: updatedPedidos };
+                updated.status = derivarStatus(updated);
+                return updated;
+              }
+              changed = true;
+              const allPedidos = [...m.pedidos, ...newPedidos];
+              const total = allPedidos.reduce((acc, p) => acc + p.total, 0);
+              const updated = { ...m, pedidos: allPedidos, total };
+              updated.status = derivarStatus(updated);
+              return updated;
+            });
+            return changed ? { ...prev, mesas } : prev;
+          });
         }
-        // Check if any status changed
-        const changed = updatedBalcao.some((p, i) => p.statusBalcao !== prev.pedidosBalcao[i]?.statusBalcao);
-        return changed ? { ...prev, pedidosBalcao: updatedBalcao } : prev;
-      });
+      }
+
+      // 2. Fechamentos do dia
+      const { data: fechData } = await supabase
+        .from("fechamentos").select("*")
+        .eq("store_id", sid)
+        .gte("criado_em_iso", todayIso)
+        .order("criado_em_iso", { ascending: false });
+      if (fechData) {
+        const freshFech = fechData.map(rowToFechamento);
+        setStore(prev => {
+          const existingIds = new Set(prev.fechamentos.map(f => f.id));
+          const newOnes = freshFech.filter(f => !existingIds.has(f.id));
+          const updated = prev.fechamentos.map(existing => {
+            const fresh = freshFech.find(f => f.id === existing.id);
+            return fresh ?? existing;
+          });
+          if (newOnes.length > 0) {
+            return { ...prev, fechamentos: [...newOnes, ...updated] };
+          }
+          const changed = updated.some((f, i) => f.cancelado !== prev.fechamentos[i]?.cancelado);
+          return changed ? { ...prev, fechamentos: updated } : prev;
+        });
+      }
+
+      // 3. Estado do caixa
+      const { data: caixaData } = await supabase
+        .from("estado_caixa").select("*")
+        .eq("store_id", sid)
+        .order("updated_at", { ascending: false })
+        .limit(1);
+      if (caixaData?.[0]) {
+        const row = caixaData[0];
+        setStore(prev => {
+          const newAberto = row.aberto ?? false;
+          const newFundo = Number(row.fundo_troco ?? 0);
+          if (prev.caixaAberto === newAberto && prev.fundoTroco === newFundo) return prev;
+          return { ...prev, caixaAberto: newAberto, fundoTroco: newFundo };
+        });
+      }
     };
 
-    const interval = setInterval(pollPedidos, 10_000);
+    const interval = setInterval(pollAll, 10_000);
     return () => clearInterval(interval);
   }, [activeStoreId]);
 
