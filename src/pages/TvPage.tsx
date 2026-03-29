@@ -14,7 +14,7 @@ type PedidoTV = {
 const TvInner = ({ storeId }: { storeId: string }) => {
   const { pedidosBalcao } = useRestaurant();
   const [clock, setClock] = useState(() => new Date());
-  const [modoOperacao, setModoOperacao] = useState<string>("restaurante");
+  const [hasTotemOrBalcao, setHasTotemOrBalcao] = useState(false);
   const [config, setConfig] = useState<{ nomeRestaurante: string; logoBase64: string; logoUrl: string }>({
     nomeRestaurante: "",
     logoBase64: "",
@@ -24,7 +24,7 @@ const TvInner = ({ storeId }: { storeId: string }) => {
   useEffect(() => {
     supabase
       .from("restaurant_config")
-      .select("nome_restaurante, logo_base64, logo_url, modo_operacao")
+      .select("nome_restaurante, logo_base64, logo_url, modo_operacao, modulos")
       .eq("store_id", storeId)
       .maybeSingle()
       .then(({ data }) => {
@@ -34,7 +34,12 @@ const TvInner = ({ storeId }: { storeId: string }) => {
             logoBase64: data.logo_base64 ?? "",
             logoUrl: data.logo_url ?? "",
           });
-          setModoOperacao(data.modo_operacao ?? "restaurante");
+          const modulos = (data.modulos as any) ?? {};
+          // Backward compat: if modulos.mesas/balcao not set, derive from modo_operacao
+          const hasMesas = modulos.mesas !== undefined ? modulos.mesas : (data.modo_operacao !== "fast_food");
+          const hasBalcao = modulos.balcao !== undefined ? modulos.balcao : (data.modo_operacao === "fast_food");
+          const hasTotem = modulos.totem === true;
+          setHasTotemOrBalcao(hasTotem || hasBalcao || !hasMesas);
         }
       });
   }, [storeId]);
@@ -112,13 +117,13 @@ const TvInner = ({ storeId }: { storeId: string }) => {
     </div>
   );
 
-  if (modoOperacao === "restaurante") {
+  if (!hasTotemOrBalcao) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center" style={{ background: "#FFFFFF" }}>
         {logoUrl && <img src={logoUrl} alt="" className="h-24 w-24 rounded-2xl object-cover mb-6" />}
         <h1 className="text-4xl font-black" style={{ color: "#FF6B00" }}>{config.nomeRestaurante || "Restaurante"}</h1>
-        <p className="text-xl font-bold mt-4" style={{ color: "#999" }}>Modo Restaurante — TV em standby</p>
-        <p className="text-base mt-2" style={{ color: "#BBB" }}>Ative o modo Fast Food para exibir o painel de retirada</p>
+        <p className="text-xl font-bold mt-4" style={{ color: "#999" }}>TV em standby</p>
+        <p className="text-base mt-2" style={{ color: "#BBB" }}>Ative o módulo Totem ou Balcão para exibir o painel de retirada</p>
         <p className="text-3xl font-black tabular-nums mt-8" style={{ color: "#FF6B00" }}>{clock.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</p>
       </div>
     );

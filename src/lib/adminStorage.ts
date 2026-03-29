@@ -73,6 +73,8 @@ export interface SistemaConfig {
   nomeImpressoraCozinha?: string;
   nomeImpressoraBar?: string;
   modulos?: {
+    mesas?: boolean;
+    balcao?: boolean;
     totem?: boolean;
     tvRetirada?: boolean;
     cozinha?: boolean;
@@ -80,6 +82,7 @@ export interface SistemaConfig {
     motoboy?: boolean;
   };
   plano?: "basico" | "medio" | "pro" | "premium";
+  /** @deprecated Use modulos.mesas / modulos.balcao instead */
   modoOperacao?: "restaurante" | "fast_food";
   identificacaoFastFood?: "codigo" | "nome_cliente";
   impressoras?: ImpressoraConfig[];
@@ -108,6 +111,8 @@ export interface LicencaConfig {
 export type PlanoModulos = "basico" | "medio" | "pro" | "premium";
 
 export function getModulosDoPlano(plano: PlanoModulos): {
+  mesas: boolean;
+  balcao: boolean;
   cozinha: boolean;
   delivery: boolean;
   motoboy: boolean;
@@ -115,6 +120,8 @@ export function getModulosDoPlano(plano: PlanoModulos): {
   tvRetirada: boolean;
 } {
   return {
+    mesas: true,
+    balcao: true,
     cozinha: true,
     delivery: plano === "medio" || plano === "pro" || plano === "premium",
     motoboy: plano === "pro" || plano === "premium",

@@ -19,8 +19,7 @@ const TotemInner = ({ storeId }: { storeId: string }) => {
   const [pendingTotal, setPendingTotal] = useState(0);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Fast Food identification
-  const [modoOperacao, setModoOperacao] = useState<string>("restaurante");
+  // Totem always uses fast-food style identification
   const [identificacaoFastFood, setIdentificacaoFastFood] = useState<string>("codigo");
   const [clienteNome, setClienteNome] = useState("");
   const [clienteCpf, setClienteCpf] = useState("");
@@ -36,13 +35,12 @@ const TotemInner = ({ storeId }: { storeId: string }) => {
     const loadConfig = async () => {
       const { data } = await supabase
         .from("restaurant_config")
-        .select("nome_restaurante, logo_base64, logo_url, modo_operacao, identificacao_fast_food, cpf_nota_ativo")
+        .select("nome_restaurante, logo_base64, logo_url, identificacao_fast_food, cpf_nota_ativo")
         .eq("store_id", storeId)
         .maybeSingle();
       if (data) {
         setNomeRestaurante(data.nome_restaurante);
         setLogoBase64(data.logo_base64 || data.logo_url || "");
-        setModoOperacao(data.modo_operacao ?? "restaurante");
         setIdentificacaoFastFood(data.identificacao_fast_food ?? "codigo");
         setCpfNotaAtivo(data.cpf_nota_ativo ?? false);
       }
@@ -62,7 +60,6 @@ const TotemInner = ({ storeId }: { storeId: string }) => {
         if (row) {
           setNomeRestaurante(row.nome_restaurante || "");
           setLogoBase64(row.logo_base64 || row.logo_url || "");
-          setModoOperacao(row.modo_operacao ?? "restaurante");
           setIdentificacaoFastFood(row.identificacao_fast_food ?? "codigo");
         }
       })
@@ -91,13 +88,13 @@ const TotemInner = ({ storeId }: { storeId: string }) => {
     setPendingItens(itens);
     setPendingTotal(itens.reduce((acc, item) => acc + item.precoUnitario * item.quantidade, 0));
 
-    // In fast_food mode with nome_cliente identification, ask for name first
-    if (modoOperacao === "fast_food" && identificacaoFastFood === "nome_cliente") {
+    // Totem always asks for name when identification is nome_cliente
+    if (identificacaoFastFood === "nome_cliente") {
       setStep("name");
     } else {
       setStep("payment");
     }
-  }, [modoOperacao, identificacaoFastFood]);
+  }, [identificacaoFastFood]);
 
   const handleNameConfirmed = useCallback(() => {
     if (!clienteNome.trim()) return;
@@ -129,7 +126,7 @@ const TotemInner = ({ storeId }: { storeId: string }) => {
 
   // Called after CPF step (with or without CPF)
   const handleCpfConfirmed = useCallback(async () => {
-    const nome = modoOperacao === "fast_food" && identificacaoFastFood === "nome_cliente" && clienteNome.trim()
+    const nome = identificacaoFastFood === "nome_cliente" && clienteNome.trim()
       ? clienteNome.trim()
       : "Totem";
 
@@ -145,7 +142,7 @@ const TotemInner = ({ storeId }: { storeId: string }) => {
     });
     setPedidoConfirmado(numeroPedido);
     setStep("confirmed");
-  }, [criarPedidoBalcao, pendingItens, modoOperacao, identificacaoFastFood, clienteNome, clienteCpf, pendingPaymentMethod]);
+  }, [criarPedidoBalcao, pendingItens, identificacaoFastFood, clienteNome, clienteCpf, pendingPaymentMethod]);
 
   const handleBackToMenu = useCallback(() => {
     setStep("menu");
@@ -166,8 +163,8 @@ const TotemInner = ({ storeId }: { storeId: string }) => {
 
   const formatPrice = (v: number) => `R$ ${v.toFixed(2).replace(".", ",")}`;
 
-  const isFastFoodCodigo = modoOperacao === "fast_food" && identificacaoFastFood === "codigo";
-  const isFastFoodNome = modoOperacao === "fast_food" && identificacaoFastFood === "nome_cliente";
+  const isFastFoodCodigo = identificacaoFastFood === "codigo";
+  const isFastFoodNome = identificacaoFastFood === "nome_cliente";
 
   // ─── Name input screen (fast food nome_cliente) ───
   if (step === "name") {
