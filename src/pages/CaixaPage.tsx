@@ -1461,17 +1461,6 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
           ))}
           {pb.itens.length > 3 && <p className="text-muted-foreground/60">+{pb.itens.length - 3} itens...</p>}
         </div>
-        {/* QR Code for motoboy pickup */}
-        {isPronto && !pb.motoboyNome && (
-          <div className="flex items-center gap-3 py-2">
-            <img
-              src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=MOTOBOY:${pb.id}`}
-              alt="QR Motoboy"
-              className="w-[60px] h-[60px] rounded"
-            />
-            <p className="text-[10px] text-muted-foreground leading-tight">Motoboy: escaneie<br/>para retirar</p>
-          </div>
-        )}
         <div className="flex items-center justify-between pt-2 border-t border-border">
           <span className="text-lg font-black tabular-nums text-foreground">{formatPrice(pb.total)}</span>
           <Button size="sm" variant="outline" onClick={() => handleSelecionarBalcao(pb.id)}
@@ -1762,7 +1751,7 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
                 >
                   Delivery
                   {(pedidosDeliveryAtivos.length + pedidosAguardandoConfirmacao.length) > 0 && (
-                    <span className="rounded-full px-1.5 py-0.5 text-[10px] font-black tabular-nums leading-none bg-red-600 text-white">{pedidosDeliveryAtivos.length + pedidosAguardandoConfirmacao.length}</span>
+                    <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-black tabular-nums leading-none bg-red-600 text-white ${pedidosAguardandoConfirmacao.length > 0 ? "animate-pulse" : ""}`}>{pedidosDeliveryAtivos.length + pedidosAguardandoConfirmacao.length}</span>
                   )}
                 </button>
                 )}
@@ -2229,6 +2218,23 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
                       <h2 className="text-base font-black text-foreground flex-1">Pedidos do Totem</h2>
                       <span className="text-xs text-muted-foreground">{pedidosTotemAtivos.length} ativo{pedidosTotemAtivos.length !== 1 ? "s" : ""}</span>
                     </div>
+
+                    {/* Alerta de delivery pendente no modo fast food */}
+                    {isFastFoodGlobal && pedidosAguardandoConfirmacao.length > 0 && (
+                      <button
+                        onClick={() => setCaixaView("delivery")}
+                        className="w-full rounded-2xl border-2 border-amber-500/60 bg-amber-500/10 p-4 flex items-center gap-3 hover:bg-amber-500/15 transition-colors animate-pulse"
+                      >
+                        <Bell className="h-6 w-6 text-amber-400 shrink-0" />
+                        <div className="text-left flex-1">
+                          <p className="text-sm font-black text-amber-400">
+                            {pedidosAguardandoConfirmacao.length} pedido{pedidosAguardandoConfirmacao.length > 1 ? "s" : ""} delivery aguardando confirmação
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-0.5">Toque para ver e confirmar com taxa + tempo</p>
+                        </div>
+                        <span className="text-2xl">🛵</span>
+                      </button>
+                    )}
 
                     {pedidosTotem.length === 0 ? (
                       <div className="flex flex-col items-center justify-center gap-3 py-20 text-muted-foreground">
