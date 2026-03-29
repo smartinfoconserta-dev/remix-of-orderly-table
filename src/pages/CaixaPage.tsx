@@ -286,10 +286,14 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
   const [balcaoPaymentValue, setBalcaoPaymentValue] = useState("");
   const [balcaoValorEntregue, setBalcaoValorEntregue] = useState("");
   const [balcaoFlowAtivo, setBalcaoFlowAtivo] = useState(false);
-  const globalModoOp = useMemo(() => getSistemaConfig()?.modoOperacao, []);
-  const isFastFoodGlobal = globalModoOp === "fast_food";
+  const globalModulos = useMemo(() => getSistemaConfig()?.modulos ?? {}, []);
+  const moduloMesas = globalModulos.mesas !== false;
+  const moduloTotem = globalModulos.totem === true;
+  const moduloBalcao = globalModulos.balcao === true;
+  // isFastFoodGlobal backward compat: true when no mesas and has totem/balcao
+  const isFastFoodGlobal = !moduloMesas && (moduloTotem || moduloBalcao);
   const [modoOperacao, setModoOperacao] = useState<"completo" | "somente_mesas" | "somente_delivery">(() => {
-    if (isFastFoodGlobal) return "somente_delivery";
+    if (!moduloMesas) return "somente_delivery";
     if (modoForced) return modoForced;
     const savedModo = localStorage.getItem("obsidian-caixa-modo-v1");
     if (savedModo === "somente_mesas" || savedModo === "somente_delivery" || savedModo === "completo") return savedModo;
@@ -299,7 +303,8 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
     if (modoForced) setModoOperacao(modoForced);
   }, [modoForced]);
   const [caixaView, setCaixaView] = useState<"mesas" | "delivery" | "totem" | "historico" | "ifood">(() => {
-    if (isFastFoodGlobal) return "totem";
+    if (!moduloMesas && moduloTotem) return "totem";
+    if (!moduloMesas) return "delivery";
     if (modoForced === "somente_delivery") return "delivery";
     if (modoForced === "somente_mesas") return "mesas";
     const savedModo = localStorage.getItem("obsidian-caixa-modo-v1");
