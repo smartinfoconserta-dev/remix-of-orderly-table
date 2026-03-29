@@ -19,8 +19,7 @@ const TotemInner = ({ storeId }: { storeId: string }) => {
   const [pendingTotal, setPendingTotal] = useState(0);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Fast Food identification
-  const [modoOperacao, setModoOperacao] = useState<string>("restaurante");
+  // Totem always uses fast-food style identification
   const [identificacaoFastFood, setIdentificacaoFastFood] = useState<string>("codigo");
   const [clienteNome, setClienteNome] = useState("");
   const [clienteCpf, setClienteCpf] = useState("");
