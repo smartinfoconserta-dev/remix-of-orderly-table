@@ -142,7 +142,7 @@ const TotemInner = ({ storeId }: { storeId: string }) => {
     });
     setPedidoConfirmado(numeroPedido);
     setStep("confirmed");
-  }, [criarPedidoBalcao, pendingItens, modoOperacao, identificacaoFastFood, clienteNome, clienteCpf, pendingPaymentMethod]);
+  }, [criarPedidoBalcao, pendingItens, identificacaoFastFood, clienteNome, clienteCpf, pendingPaymentMethod]);
 
   const handleBackToMenu = useCallback(() => {
     setStep("menu");
