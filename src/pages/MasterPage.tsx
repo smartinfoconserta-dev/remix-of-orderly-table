@@ -288,19 +288,16 @@ const MasterPage = () => {
 
     if (form.planoModulos) {
       const clientStoreId = resolveStoreId(form.nomeRestaurante);
-      const lic = clientStoreId ? await saveLicencaConfigAsync({ plano: form.planoModulos, nomeCliente: form.nomeRestaurante, ativo: form.ativo, dataVencimento: form.dataVencimento } as any, clientStoreId) : null;
-      const cfg = clientStoreId ? await saveSistemaConfigAsync({ plano: form.planoModulos } as any, clientStoreId) : null;
       if (!clientStoreId) {
         console.warn("[MasterPage] storeId não encontrado para cliente:", form.nomeRestaurante);
+      } else {
+        const lic = getLicencaConfig();
+        lic.plano = form.planoModulos;
+        await saveLicencaConfigAsync(lic, clientStoreId);
+        const cfg = getSistemaConfig();
+        cfg.plano = form.planoModulos;
+        await saveSistemaConfigAsync(cfg, clientStoreId);
       }
-      // Update license
-      const licConfig = getLicencaConfig();
-      licConfig.plano = form.planoModulos;
-      if (clientStoreId) await saveLicencaConfigAsync(licConfig, clientStoreId);
-      // Update sistema config
-      const sysConfig = getSistemaConfig();
-      sysConfig.plano = form.planoModulos;
-      if (clientStoreId) await saveSistemaConfigAsync(sysConfig, clientStoreId);
     }
     setDialogOpen(false);
     await refresh();
