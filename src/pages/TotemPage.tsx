@@ -126,7 +126,7 @@ const TotemInner = ({ storeId }: { storeId: string }) => {
 
   // Called after CPF step (with or without CPF)
   const handleCpfConfirmed = useCallback(async () => {
-    const nome = modoOperacao === "fast_food" && identificacaoFastFood === "nome_cliente" && clienteNome.trim()
+    const nome = identificacaoFastFood === "nome_cliente" && clienteNome.trim()
       ? clienteNome.trim()
       : "Totem";
 
