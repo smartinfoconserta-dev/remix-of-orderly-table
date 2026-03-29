@@ -167,7 +167,7 @@ const AdminPage = () => {
   const navigate = useNavigate();
   const [tab, setTab] = useState<AdminTab>("dashboard");
   const [configSection, setConfigSection] = useState<"inicio" | "identidade" | "delivery" | "salao" | "operacao" | "modulos" | "sistema" | "impressoras">("inicio");
-  const [modoOperacaoPendente, setModoOperacaoPendente] = useState<"restaurante" | "fast_food" | null>(null);
+  // modoOperacaoPendente removed — now using independent module flags
 
   // --- Impressoras form state ---
   const [impEditando, setImpEditando] = useState<import("@/lib/adminStorage").ImpressoraConfig | null>(null);
