@@ -209,6 +209,7 @@ export async function fetchLicenca(storeId?: string | null): Promise<LicencaConf
 
     if (data) {
       const lic = dbRowToLicenca(data);
+      setLicencaCache(lic);
       setLocalCache(LICENCA_CACHE_KEY, lic);
       clearPendingSync("licenca");
       return lic;
