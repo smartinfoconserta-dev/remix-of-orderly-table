@@ -14,7 +14,7 @@ type PedidoTV = {
 const TvInner = ({ storeId }: { storeId: string }) => {
   const { pedidosBalcao } = useRestaurant();
   const [clock, setClock] = useState(() => new Date());
-  const [modoOperacao, setModoOperacao] = useState<string>("restaurante");
+  const [hasTotemOrBalcao, setHasTotemOrBalcao] = useState(false);
   const [config, setConfig] = useState<{ nomeRestaurante: string; logoBase64: string; logoUrl: string }>({
     nomeRestaurante: "",
     logoBase64: "",
@@ -24,7 +24,7 @@ const TvInner = ({ storeId }: { storeId: string }) => {
   useEffect(() => {
     supabase
       .from("restaurant_config")
-      .select("nome_restaurante, logo_base64, logo_url, modo_operacao")
+      .select("nome_restaurante, logo_base64, logo_url, modo_operacao, modulos")
       .eq("store_id", storeId)
       .maybeSingle()
       .then(({ data }) => {
@@ -34,7 +34,12 @@ const TvInner = ({ storeId }: { storeId: string }) => {
             logoBase64: data.logo_base64 ?? "",
             logoUrl: data.logo_url ?? "",
           });
-          setModoOperacao(data.modo_operacao ?? "restaurante");
+          const modulos = (data.modulos as any) ?? {};
+          // Backward compat: if modulos.mesas/balcao not set, derive from modo_operacao
+          const hasMesas = modulos.mesas !== undefined ? modulos.mesas : (data.modo_operacao !== "fast_food");
+          const hasBalcao = modulos.balcao !== undefined ? modulos.balcao : (data.modo_operacao === "fast_food");
+          const hasTotem = modulos.totem === true;
+          setHasTotemOrBalcao(hasTotem || hasBalcao || !hasMesas);
         }
       });
   }, [storeId]);
