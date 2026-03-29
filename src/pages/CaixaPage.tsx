@@ -1461,17 +1461,6 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
           ))}
           {pb.itens.length > 3 && <p className="text-muted-foreground/60">+{pb.itens.length - 3} itens...</p>}
         </div>
-        {/* QR Code for motoboy pickup */}
-        {isPronto && !pb.motoboyNome && (
-          <div className="flex items-center gap-3 py-2">
-            <img
-              src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=MOTOBOY:${pb.id}`}
-              alt="QR Motoboy"
-              className="w-[60px] h-[60px] rounded"
-            />
-            <p className="text-[10px] text-muted-foreground leading-tight">Motoboy: escaneie<br/>para retirar</p>
-          </div>
-        )}
         <div className="flex items-center justify-between pt-2 border-t border-border">
           <span className="text-lg font-black tabular-nums text-foreground">{formatPrice(pb.total)}</span>
           <Button size="sm" variant="outline" onClick={() => handleSelecionarBalcao(pb.id)}
