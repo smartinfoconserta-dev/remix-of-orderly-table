@@ -294,6 +294,17 @@ const getActiveStoreId = (): string | null => {
     const raw = sessionStorage.getItem("obsidian-op-session-v2");
     if (raw) { const s = JSON.parse(raw); if (s.storeId) { _cachedStoreId = s.storeId; return s.storeId; } }
   } catch {}
+  try {
+    const persistedRaw = localStorage.getItem("obsidian-op-session-v2-persisted");
+    if (persistedRaw) {
+      const s = JSON.parse(persistedRaw);
+      if (s.storeId) {
+        sessionStorage.setItem("obsidian-op-session-v2", persistedRaw);
+        _cachedStoreId = s.storeId;
+        return s.storeId;
+      }
+    }
+  } catch {}
   // Try admin store
   try {
     const saved = sessionStorage.getItem("orderly-active-store");
@@ -585,7 +596,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   // ── Load from Supabase — reactive to session changes ──
   useEffect(() => {
     const load = async () => {
-      const sid = getActiveStoreId();
+      const sid = activeStoreId;
       if (!sid) return;
       // Already loaded for this store
       if (loadedStoreRef.current === sid) return;
@@ -702,7 +713,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
   // ── Realtime subscriptions ──
   useEffect(() => {
-    const sid = getActiveStoreId();
+    const sid = activeStoreId;
     if (!sid) return;
 
     const channel = supabase
@@ -790,7 +801,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
   // ── Polling fallback for pedidos (catches missed Realtime events) ──
   useEffect(() => {
-    const sid = getActiveStoreId();
+    const sid = activeStoreId;
     if (!sid) return;
 
     const pollPedidos = async () => {
