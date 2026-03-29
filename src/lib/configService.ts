@@ -154,6 +154,7 @@ export async function fetchConfig(storeId?: string | null): Promise<SistemaConfi
 
     if (data) {
       const config = dbRowToConfig(data);
+      setConfigCache(config);
       setLocalCache(CONFIG_CACHE_KEY, config);
       clearPendingSync("config");
       return config;
