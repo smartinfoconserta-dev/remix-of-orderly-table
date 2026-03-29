@@ -41,7 +41,6 @@ const TotemInner = ({ storeId }: { storeId: string }) => {
       if (data) {
         setNomeRestaurante(data.nome_restaurante);
         setLogoBase64(data.logo_base64 || data.logo_url || "");
-        setModoOperacao(data.modo_operacao ?? "restaurante");
         setIdentificacaoFastFood(data.identificacao_fast_food ?? "codigo");
         setCpfNotaAtivo(data.cpf_nota_ativo ?? false);
       }
