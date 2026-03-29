@@ -132,6 +132,15 @@ const MasterPage = () => {
   const [avisoStoreId, setAvisoStoreId] = useState("");
 
   const [stores, setStores] = useState<{ id: string; name: string; slug: string }[]>([]);
+
+  // Resolve storeId for a client by matching restaurant name to stores
+  const resolveStoreId = useCallback((nomeRestaurante: string): string | null => {
+    if (!nomeRestaurante) return null;
+    const norm = nomeRestaurante.trim().toLowerCase();
+    const found = stores.find(s => s.name.trim().toLowerCase() === norm);
+    return found?.id ?? null;
+  }, [stores]);
+
   useEffect(() => {
     supabase.from("stores").select("id, name, slug").then(({ data }) => {
       if (data) setStores(data);
@@ -278,12 +287,17 @@ const MasterPage = () => {
     }
 
     if (form.planoModulos) {
-      const lic = getLicencaConfig();
-      lic.plano = form.planoModulos;
-      await saveLicencaConfigAsync(lic); // TODO: passar storeId do cliente
-      const cfg = getSistemaConfig();
-      cfg.plano = form.planoModulos;
-      await saveSistemaConfigAsync(cfg); // TODO: passar storeId do cliente
+      const clientStoreId = resolveStoreId(form.nomeRestaurante);
+      if (!clientStoreId) {
+        console.warn("[MasterPage] storeId não encontrado para cliente:", form.nomeRestaurante);
+      } else {
+        const lic = getLicencaConfig();
+        lic.plano = form.planoModulos;
+        await saveLicencaConfigAsync(lic, clientStoreId);
+        const cfg = getSistemaConfig();
+        cfg.plano = form.planoModulos;
+        await saveSistemaConfigAsync(cfg, clientStoreId);
+      }
     }
     setDialogOpen(false);
     await refresh();
@@ -301,12 +315,18 @@ const MasterPage = () => {
   const toggleAtivo = async (c: Cliente) => {
     await updateCliente(c.id, { ativo: !c.ativo });
     if (c.planoModulos) {
-      const lic = getLicencaConfig();
-      lic.plano = c.planoModulos;
-      await saveLicencaConfigAsync(lic); // TODO: passar storeId do cliente
-      const cfg = getSistemaConfig();
-      cfg.plano = c.planoModulos;
-      await saveSistemaConfigAsync(cfg); // TODO: passar storeId do cliente
+      const clientStoreId = resolveStoreId(c.nomeRestaurante);
+      if (clientStoreId) {
+        const lic = getLicencaConfig();
+        lic.plano = c.planoModulos;
+        lic.ativo = !c.ativo;
+        await saveLicencaConfigAsync(lic, clientStoreId);
+        const cfg = getSistemaConfig();
+        cfg.plano = c.planoModulos;
+        await saveSistemaConfigAsync(cfg, clientStoreId);
+      } else {
+        console.warn("[MasterPage] storeId não encontrado para cliente:", c.nomeRestaurante);
+      }
     }
     await refresh();
   };
