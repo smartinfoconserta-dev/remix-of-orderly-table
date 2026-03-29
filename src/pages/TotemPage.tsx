@@ -163,8 +163,8 @@ const TotemInner = ({ storeId }: { storeId: string }) => {
 
   const formatPrice = (v: number) => `R$ ${v.toFixed(2).replace(".", ",")}`;
 
-  const isFastFoodCodigo = modoOperacao === "fast_food" && identificacaoFastFood === "codigo";
-  const isFastFoodNome = modoOperacao === "fast_food" && identificacaoFastFood === "nome_cliente";
+  const isFastFoodCodigo = identificacaoFastFood === "codigo";
+  const isFastFoodNome = identificacaoFastFood === "nome_cliente";
 
   // ─── Name input screen (fast food nome_cliente) ───
   if (step === "name") {
