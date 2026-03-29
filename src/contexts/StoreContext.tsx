@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
+const ACTIVE_STORE_KEY = "orderly-active-store";
+
 interface StoreContextType {
   storeId: string | null;
   storeName: string | null;
@@ -32,6 +34,21 @@ export const StoreProvider = ({ children }: { children: React.ReactNode }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [stores, setStores] = useState<{ id: string; name: string; slug: string }[]>([]);
 
+  const syncActiveStore = useCallback((nextStoreId: string | null, nextStoreName: string | null) => {
+    setStoreId(nextStoreId);
+    setStoreName(nextStoreName);
+
+    try {
+      if (nextStoreId) {
+        sessionStorage.setItem(ACTIVE_STORE_KEY, nextStoreId);
+      } else {
+        sessionStorage.removeItem(ACTIVE_STORE_KEY);
+      }
+    } catch {}
+
+    window.dispatchEvent(new Event("obsidian-store-context-changed"));
+  }, []);
+
   const loadUserContext = useCallback(async (userId: string) => {
     try {
       // Check role
@@ -52,13 +69,13 @@ export const StoreProvider = ({ children }: { children: React.ReactNode }) => {
         setStores(allStores ?? []);
         
         // Restore last selected store (usando sessionStorage — dura só enquanto o navegador está aberto)
-        const saved = sessionStorage.getItem("orderly-active-store");
+        const saved = sessionStorage.getItem(ACTIVE_STORE_KEY);
         if (saved && allStores?.find((s) => s.id === saved)) {
-          setStoreId(saved);
-          setStoreName(allStores.find((s) => s.id === saved)?.name ?? null);
+          syncActiveStore(saved, allStores.find((s) => s.id === saved)?.name ?? null);
         } else if (allStores && allStores.length > 0) {
-          setStoreId(allStores[0].id);
-          setStoreName(allStores[0].name);
+          syncActiveStore(allStores[0].id, allStores[0].name);
+        } else {
+          syncActiveStore(null, null);
         }
       } else {
         // Admin sees only their stores
@@ -73,8 +90,9 @@ export const StoreProvider = ({ children }: { children: React.ReactNode }) => {
         setStores(userStores);
 
         if (userStores.length > 0) {
-          setStoreId(userStores[0].id);
-          setStoreName(userStores[0].name);
+          syncActiveStore(userStores[0].id, userStores[0].name);
+        } else {
+          syncActiveStore(null, null);
         }
       }
     } catch (err) {
@@ -82,15 +100,14 @@ export const StoreProvider = ({ children }: { children: React.ReactNode }) => {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [syncActiveStore]);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session?.user) {
         loadUserContext(session.user.id);
       } else {
-        setStoreId(null);
-        setStoreName(null);
+        syncActiveStore(null, null);
         setUserRole(null);
         setStores([]);
         setIsLoading(false);
@@ -110,11 +127,9 @@ export const StoreProvider = ({ children }: { children: React.ReactNode }) => {
   }, [loadUserContext]);
 
   const setActiveStore = useCallback((id: string) => {
-    setStoreId(id);
     const found = stores.find((s) => s.id === id);
-    setStoreName(found?.name ?? null);
-    sessionStorage.setItem("orderly-active-store", id);
-  }, [stores]);
+    syncActiveStore(id, found?.name ?? null);
+  }, [stores, syncActiveStore]);
 
   const refreshStores = useCallback(async () => {
     const { data: { session } } = await supabase.auth.getSession();

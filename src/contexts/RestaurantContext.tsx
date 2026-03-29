@@ -2,6 +2,8 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useR
 import type { CashMovementType, OperationalUser, PaymentMethod, SplitPayment } from "@/types/operations";
 import { getSistemaConfig } from "@/lib/adminStorage";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { useStore } from "@/contexts/StoreContext";
 import { toast } from "sonner";
 
 export interface ItemCarrinho {
@@ -559,15 +561,25 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const [allFechamentos, setAllFechamentos] = useState<FechamentoConta[]>([]);
   const [allEventos, setAllEventos] = useState<EventoOperacional[]>([]);
   const [allMovimentacoesCaixa, setAllMovimentacoesCaixa] = useState<MovimentacaoCaixa[]>([]);
+  const { operationalSession, authLevel } = useAuth();
+  const { storeId: contextStoreId } = useStore();
   const loadedStoreRef = useRef<string | null>(null);
-  const [activeStoreId, setActiveStoreId] = useState<string | null>(getActiveStoreId);
+  const derivedStoreId = operationalSession?.storeId ?? contextStoreId ?? null;
+  const [activeStoreId, setActiveStoreId] = useState<string | null>(() => derivedStoreId ?? getActiveStoreId());
 
   // Sync active store changes from auth/device sessions with a polling fallback
   useEffect(() => {
     const syncActiveStoreId = () => {
-      const current = getActiveStoreId();
+      const current = derivedStoreId ?? getActiveStoreId();
+
+      if (current) {
+        _cachedStoreId = current;
+      }
+
       setActiveStoreId(prev => prev !== current ? current : prev);
-      if (!current) {
+
+      if (!current && authLevel === "unauthenticated") {
+        _cachedStoreId = null;
         loadedStoreRef.current = null;
         setStore(estadoInicial());
       }
@@ -584,7 +596,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       window.removeEventListener("storage", handleCustomSync);
       window.removeEventListener("obsidian-store-context-changed", handleCustomSync);
     };
-  }, []);
+  }, [authLevel, derivedStoreId]);
 
   // Reset loadedStoreRef when activeStoreId changes to force reload
   useEffect(() => {
