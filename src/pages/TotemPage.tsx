@@ -88,13 +88,13 @@ const TotemInner = ({ storeId }: { storeId: string }) => {
     setPendingItens(itens);
     setPendingTotal(itens.reduce((acc, item) => acc + item.precoUnitario * item.quantidade, 0));
 
-    // In fast_food mode with nome_cliente identification, ask for name first
-    if (modoOperacao === "fast_food" && identificacaoFastFood === "nome_cliente") {
+    // Totem always asks for name when identification is nome_cliente
+    if (identificacaoFastFood === "nome_cliente") {
       setStep("name");
     } else {
       setStep("payment");
     }
-  }, [modoOperacao, identificacaoFastFood]);
+  }, [identificacaoFastFood]);
 
   const handleNameConfirmed = useCallback(() => {
     if (!clienteNome.trim()) return;
