@@ -117,13 +117,13 @@ const TvInner = ({ storeId }: { storeId: string }) => {
     </div>
   );
 
-  if (modoOperacao === "restaurante") {
+  if (!hasTotemOrBalcao) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center" style={{ background: "#FFFFFF" }}>
         {logoUrl && <img src={logoUrl} alt="" className="h-24 w-24 rounded-2xl object-cover mb-6" />}
         <h1 className="text-4xl font-black" style={{ color: "#FF6B00" }}>{config.nomeRestaurante || "Restaurante"}</h1>
-        <p className="text-xl font-bold mt-4" style={{ color: "#999" }}>Modo Restaurante — TV em standby</p>
-        <p className="text-base mt-2" style={{ color: "#BBB" }}>Ative o modo Fast Food para exibir o painel de retirada</p>
+        <p className="text-xl font-bold mt-4" style={{ color: "#999" }}>TV em standby</p>
+        <p className="text-base mt-2" style={{ color: "#BBB" }}>Ative o módulo Totem ou Balcão para exibir o painel de retirada</p>
         <p className="text-3xl font-black tabular-nums mt-8" style={{ color: "#FF6B00" }}>{clock.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</p>
       </div>
     );
