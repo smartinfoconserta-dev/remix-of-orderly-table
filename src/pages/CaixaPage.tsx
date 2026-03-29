@@ -2219,6 +2219,23 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
                       <span className="text-xs text-muted-foreground">{pedidosTotemAtivos.length} ativo{pedidosTotemAtivos.length !== 1 ? "s" : ""}</span>
                     </div>
 
+                    {/* Alerta de delivery pendente no modo fast food */}
+                    {isFastFoodGlobal && pedidosAguardandoConfirmacao.length > 0 && (
+                      <button
+                        onClick={() => setCaixaView("delivery")}
+                        className="w-full rounded-2xl border-2 border-amber-500/60 bg-amber-500/10 p-4 flex items-center gap-3 hover:bg-amber-500/15 transition-colors animate-pulse"
+                      >
+                        <Bell className="h-6 w-6 text-amber-400 shrink-0" />
+                        <div className="text-left flex-1">
+                          <p className="text-sm font-black text-amber-400">
+                            {pedidosAguardandoConfirmacao.length} pedido{pedidosAguardandoConfirmacao.length > 1 ? "s" : ""} delivery aguardando confirmação
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-0.5">Toque para ver e confirmar com taxa + tempo</p>
+                        </div>
+                        <span className="text-2xl">🛵</span>
+                      </button>
+                    )}
+
                     {pedidosTotem.length === 0 ? (
                       <div className="flex flex-col items-center justify-center gap-3 py-20 text-muted-foreground">
                         <span className="text-5xl opacity-20">🖥️</span>
