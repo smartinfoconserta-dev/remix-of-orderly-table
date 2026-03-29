@@ -82,6 +82,7 @@ interface AuthContextType {
 /* ─── Storage keys ─── */
 
 const OP_SESSION_KEY = "obsidian-op-session-v2";
+const OP_SESSION_PERSISTED_KEY = "obsidian-op-session-v2-persisted";
 
 /* ─── Context setup (HMR-safe) ─── */
 
@@ -96,7 +97,12 @@ authContextStore.__obsidianAuthContext__ = AuthContext;
 const readOpSession = (): OperationalSession | null => {
   try {
     const raw = sessionStorage.getItem(OP_SESSION_KEY);
-    return raw ? (JSON.parse(raw) as OperationalSession) : null;
+    if (raw) return JSON.parse(raw) as OperationalSession;
+    const persisted = localStorage.getItem(OP_SESSION_PERSISTED_KEY);
+    if (!persisted) return null;
+    const parsed = JSON.parse(persisted) as OperationalSession;
+    sessionStorage.setItem(OP_SESSION_KEY, persisted);
+    return parsed;
   } catch (err) {
     console.error("[AuthContext] erro:", err);
     return null;
@@ -105,9 +111,12 @@ const readOpSession = (): OperationalSession | null => {
 
 const writeOpSession = (session: OperationalSession | null) => {
   if (session) {
-    sessionStorage.setItem(OP_SESSION_KEY, JSON.stringify(session));
+    const serialized = JSON.stringify(session);
+    sessionStorage.setItem(OP_SESSION_KEY, serialized);
+    localStorage.setItem(OP_SESSION_PERSISTED_KEY, serialized);
   } else {
     sessionStorage.removeItem(OP_SESSION_KEY);
+    localStorage.removeItem(OP_SESSION_PERSISTED_KEY);
   }
 };
 
