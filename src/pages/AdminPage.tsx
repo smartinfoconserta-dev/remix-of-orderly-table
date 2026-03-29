@@ -558,7 +558,13 @@ const AdminPage = () => {
   // Load from Supabase on mount
   useEffect(() => {
     if (!storeId) return;
-    getSistemaConfigAsync(storeId).then((c) => setSistemaConfig(c));
+    getSistemaConfigAsync(storeId).then((c) => {
+      setSistemaConfig(c);
+      // Sync horários state from DB config
+      if (c.horarioFuncionamento) {
+        setHorariosFuncionamento(c.horarioFuncionamento);
+      }
+    });
     getLicencaConfigAsync(storeId).then((l) => setLicencaConfig(l));
     getCategoriasCustomAsync(storeId).then((cats) => setCategoriasCustom(cats));
     syncPendingChanges();
