@@ -2958,8 +2958,7 @@ ${topRows ? `<h2>Top 5 produtos</h2><table><thead><tr><th>#</th><th>Produto</th>
         {tab === "licenca" && (() => {
           const planoAtual = (licencaConfig.plano || sistemaConfig.plano || "basico") as PlanoModulos;
           const modulosMaster = getModulosDoPlano(planoAtual);
-          const currentConfig = getSistemaConfig();
-          const modulosAtivos = currentConfig.modulos ?? {};
+          const modulosAtivos = sistemaConfig.modulos ?? {};
 
           const planoNomeMap: Record<string, string> = {
             basico: "BÁSICO", medio: "MÉDIO", pro: "PROFISSIONAL", premium: "PREMIUM",
