@@ -1,6 +1,6 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import type { CashMovementType, OperationalUser, PaymentMethod, SplitPayment } from "@/types/operations";
-import { getSistemaConfig } from "@/lib/adminStorage";
+import { getSistemaConfig, getSistemaConfigAsync } from "@/lib/adminStorage";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useStore } from "@/contexts/StoreContext";
