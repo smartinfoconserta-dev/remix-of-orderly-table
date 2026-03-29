@@ -153,6 +153,16 @@ export function getSistemaConfig(): SistemaConfig {
   return _configCache ?? { ...defaultSistemaConfig };
 }
 
+/** Atualiza o cache em memória (usado pelo configService após fetch) */
+export function setConfigCache(config: SistemaConfig) {
+  _configCache = config;
+}
+
+/** Atualiza o cache de licença em memória */
+export function setLicencaCache(lic: LicencaConfig) {
+  _licencaCache = lic;
+}
+
 export async function saveSistemaConfig(config: SistemaConfig, storeId?: string | null): Promise<void> {
   _configCache = config;
   await saveConfig(config, storeId);

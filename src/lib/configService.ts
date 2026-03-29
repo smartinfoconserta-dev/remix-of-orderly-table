@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { SistemaConfig, LicencaConfig, CategoriaCustom, HorariosSemana } from "./adminStorage";
+import { setConfigCache, setLicencaCache } from "./adminStorage";
 
 const CONFIG_CACHE_KEY = "orderly-config-v1";
 const LICENCA_CACHE_KEY = "orderly-licenca-v1";
