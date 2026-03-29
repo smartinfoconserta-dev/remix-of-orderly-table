@@ -111,6 +111,8 @@ export interface LicencaConfig {
 export type PlanoModulos = "basico" | "medio" | "pro" | "premium";
 
 export function getModulosDoPlano(plano: PlanoModulos): {
+  mesas: boolean;
+  balcao: boolean;
   cozinha: boolean;
   delivery: boolean;
   motoboy: boolean;
@@ -118,6 +120,8 @@ export function getModulosDoPlano(plano: PlanoModulos): {
   tvRetirada: boolean;
 } {
   return {
+    mesas: true,
+    balcao: true,
     cozinha: true,
     delivery: plano === "medio" || plano === "pro" || plano === "premium",
     motoboy: plano === "pro" || plano === "premium",
