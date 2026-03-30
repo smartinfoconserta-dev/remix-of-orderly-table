@@ -147,19 +147,6 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
   const { currentCaixa, currentGerente, logout, verifyManagerAccess, verifyEmployeeAccess, authLevel } = useAuth();
   const isAdminAccess = authLevel === "admin" || authLevel === "master";
 
-  const [mesaSelecionada, setMesaSelecionada] = useState<string | null>(null);
-  const [comandaOpen, setComandaOpen] = useState(false);
-  const [mesaTab, setMesaTab] = useState<"comanda" | "pagamento" | "historico">("comanda");
-  const [closingPayments, setClosingPayments] = useState<SplitPayment[]>([]);
-  const [closingPaymentMethod, setClosingPaymentMethod] = useState<PaymentMethod>("dinheiro");
-  const [closingPaymentValue, setClosingPaymentValue] = useState("");
-  const [valorEntregue, setValorEntregue] = useState("");
-  const [trocoRegistrado, setTrocoRegistrado] = useState(0);
-  const [financeUnlocked, setFinanceUnlocked] = useState(accessMode === "gerente");
-  const [financeManagerName, setFinanceManagerName] = useState("");
-  const [financeManagerPin, setFinanceManagerPin] = useState("");
-  const [financeError, setFinanceError] = useState<string | null>(null);
-  const [isUnlockingFinance, setIsUnlockingFinance] = useState(false);
   /* ── Dialogs state (hook) ── */
   const dialogs = useCaixaDialogsState();
   const {
@@ -186,23 +173,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
     totemCancelPin, setTotemCancelPin, totemCancelError, setTotemCancelError,
     totemCancelLoading, setTotemCancelLoading,
   } = dialogs;
-  const [fundoTrocoInput, setFundoTrocoInput] = useState("");
-
-  // Load fundo_proximo from estado_caixa
-  useEffect(() => {
-    const storeId = getActiveStoreId();
-    if (!storeId) return;
-    supabase.from("estado_caixa").select("fundo_proximo").eq("store_id", storeId).order("updated_at", { ascending: false }).limit(1)
-      .then(({ data }) => {
-        const val = Number(data?.[0]?.fundo_proximo ?? 0);
-        if (val > 0) setFundoTrocoInput(val.toFixed(2).replace(".", ","));
-      });
-  }, []);
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [couvertPessoas, setCouvertPessoas] = useState(0);
-  const [couvertDispensado, setCouvertDispensado] = useState(false);
-  const [cpfNotaMesa, setCpfNotaMesa] = useState("");
-  const [cpfNotaMesaOpen, setCpfNotaMesaOpen] = useState(false);
 
   /* ── Balcão/Delivery state (hook) ── */
   const balcao = useCaixaBalcaoState(pedidosBalcao);
