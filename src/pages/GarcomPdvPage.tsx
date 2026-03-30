@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { LogOut, Bell, Search, CreditCard, Smartphone, Wallet, ShoppingBag } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel } from "@/components/ui/alert-dialog";
 import { useSearchParams } from "react-router-dom";
 import PedidoFlow from "@/components/PedidoFlow";
 import AppLayout from "@/components/AppLayout";
