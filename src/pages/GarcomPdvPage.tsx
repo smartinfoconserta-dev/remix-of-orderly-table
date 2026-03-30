@@ -15,7 +15,6 @@ import type { PaymentMethod, FiltroMesa } from "@/types/operations";
 import { toast } from "sonner";
 import { formatPrice } from "@/components/caixa/caixaHelpers";
 
-type Filtro = "todas" | "consumo" | "livres" | "chamado";
 
 const PAYMENT_OPTIONS: { value: PaymentMethod; label: string; icon: typeof CreditCard }[] = [
   { value: "pix", label: "PIX", icon: Smartphone },
