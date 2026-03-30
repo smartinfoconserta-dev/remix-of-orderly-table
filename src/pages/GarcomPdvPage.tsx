@@ -80,6 +80,7 @@ const GarcomPdvPage = () => {
       }],
       troco: 0,
       desconto: 0,
+      origemOverride: "garcom_pdv",
     });
 
     toast.success(`Mesa ${mesa.numero} paga com ${
