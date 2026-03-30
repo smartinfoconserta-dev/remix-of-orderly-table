@@ -1848,37 +1848,22 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
       </div>
 
       {/* ── CRITICAL ACTION DIALOG ── */}
-      <Dialog open={Boolean(criticalAction)} onOpenChange={(open) => !open && resetCriticalDialog()}>
-        <DialogContent className="rounded-2xl border-border bg-background sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle>{getCriticalActionCopy()?.title}</DialogTitle>
-            <DialogDescription>{getCriticalActionCopy()?.description}</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-foreground">Nome do gerente</label>
-              <Input value={criticalManagerName} onChange={(e) => setCriticalManagerName(e.target.value)} placeholder="Ex.: Mariana" maxLength={40} />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-foreground">PIN do gerente</label>
-              <Input value={criticalManagerPin} onChange={(e) => setCriticalManagerPin(e.target.value.replace(/\D/g, "").slice(0, 6))} placeholder="4 a 6 dígitos" inputMode="numeric" autoComplete="one-time-code" />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-foreground">Motivo da ação</label>
-              <Textarea value={criticalReason} onChange={(e) => setCriticalReason(e.target.value)} placeholder="Descreva o motivo obrigatório desta ação" maxLength={180} className="min-h-[110px] rounded-xl" />
-            </div>
-            {criticalError && <p className="rounded-xl border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive">{criticalError}</p>}
-          </div>
-          <DialogFooter className="gap-3 sm:gap-0">
-            <Button variant="outline" onClick={resetCriticalDialog} className="rounded-xl font-bold">Voltar</Button>
-            <Button variant="destructive" onClick={handleConfirmCriticalAction} className="rounded-xl font-black" disabled={isAuthorizingCriticalAction}>
-              {getCriticalActionCopy()?.buttonLabel ?? "Autorizar"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <CaixaTurnoReport
+      <CaixaCriticalActionDialog
+        open={Boolean(criticalAction)}
+        onClose={resetCriticalDialog}
+        title={getCriticalActionCopy()?.title}
+        description={getCriticalActionCopy()?.description}
+        buttonLabel={getCriticalActionCopy()?.buttonLabel}
+        managerName={criticalManagerName}
+        setManagerName={setCriticalManagerName}
+        managerPin={criticalManagerPin}
+        setManagerPin={setCriticalManagerPin}
+        reason={criticalReason}
+        setReason={setCriticalReason}
+        error={criticalError}
+        isLoading={isAuthorizingCriticalAction}
+        onConfirm={handleConfirmCriticalAction}
+      />
         turnoReportOpen={turnoReportOpen}
         setTurnoReportOpen={setTurnoReportOpen}
         turnoModalOpen={turnoModalOpen}
