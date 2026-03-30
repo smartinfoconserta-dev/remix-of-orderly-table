@@ -466,6 +466,7 @@ export default function MotoboyPage() {
           )}
         </div>
       </div>
+      </ModuleGate>
     );
   }
 
