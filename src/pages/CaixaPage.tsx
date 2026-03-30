@@ -74,6 +74,7 @@ import type { ItemCarrinho } from "@/contexts/RestaurantContext";
 import { findClienteDelivery, upsertClienteDelivery, type Bairro, type ClienteDelivery } from "@/lib/deliveryStorage";
 import { useCaixaBalcaoState } from "@/hooks/useCaixaBalcaoState";
 import { useCaixaDialogsState, type CriticalAction } from "@/hooks/useCaixaDialogsState";
+import { useCaixaMesaState } from "@/hooks/useCaixaMesaState";
 import { supabase } from "@/integrations/supabase/client";
 import IfoodPainel from "@/components/IfoodPainel";
 
@@ -147,19 +148,6 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
   const { currentCaixa, currentGerente, logout, verifyManagerAccess, verifyEmployeeAccess, authLevel } = useAuth();
   const isAdminAccess = authLevel === "admin" || authLevel === "master";
 
-  const [mesaSelecionada, setMesaSelecionada] = useState<string | null>(null);
-  const [comandaOpen, setComandaOpen] = useState(false);
-  const [mesaTab, setMesaTab] = useState<"comanda" | "pagamento" | "historico">("comanda");
-  const [closingPayments, setClosingPayments] = useState<SplitPayment[]>([]);
-  const [closingPaymentMethod, setClosingPaymentMethod] = useState<PaymentMethod>("dinheiro");
-  const [closingPaymentValue, setClosingPaymentValue] = useState("");
-  const [valorEntregue, setValorEntregue] = useState("");
-  const [trocoRegistrado, setTrocoRegistrado] = useState(0);
-  const [financeUnlocked, setFinanceUnlocked] = useState(accessMode === "gerente");
-  const [financeManagerName, setFinanceManagerName] = useState("");
-  const [financeManagerPin, setFinanceManagerPin] = useState("");
-  const [financeError, setFinanceError] = useState<string | null>(null);
-  const [isUnlockingFinance, setIsUnlockingFinance] = useState(false);
   /* ── Dialogs state (hook) ── */
   const dialogs = useCaixaDialogsState();
   const {
@@ -186,23 +174,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
     totemCancelPin, setTotemCancelPin, totemCancelError, setTotemCancelError,
     totemCancelLoading, setTotemCancelLoading,
   } = dialogs;
-  const [fundoTrocoInput, setFundoTrocoInput] = useState("");
-
-  // Load fundo_proximo from estado_caixa
-  useEffect(() => {
-    const storeId = getActiveStoreId();
-    if (!storeId) return;
-    supabase.from("estado_caixa").select("fundo_proximo").eq("store_id", storeId).order("updated_at", { ascending: false }).limit(1)
-      .then(({ data }) => {
-        const val = Number(data?.[0]?.fundo_proximo ?? 0);
-        if (val > 0) setFundoTrocoInput(val.toFixed(2).replace(".", ","));
-      });
-  }, []);
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [couvertPessoas, setCouvertPessoas] = useState(0);
-  const [couvertDispensado, setCouvertDispensado] = useState(false);
-  const [cpfNotaMesa, setCpfNotaMesa] = useState("");
-  const [cpfNotaMesaOpen, setCpfNotaMesaOpen] = useState(false);
 
   /* ── Balcão/Delivery state (hook) ── */
   const balcao = useCaixaBalcaoState(pedidosBalcao);
@@ -274,11 +246,43 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
 
   const [isDesktop, setIsDesktop] = useState(() => typeof window !== "undefined" && window.innerWidth >= 768);
   const sistemaConfig = useMemo(() => getSistemaConfig(), []);
+  /* ── Mesa/Payment state (hook) ── */
+  const mesaState = useCaixaMesaState({
+    mesas, sistemaConfig, accessMode,
+    descontoAplicado, setDescontoAplicado,
+    setDescontoInput, setDescontoMotivo,
+    setDescontoManagerName, setDescontoManagerPin, setDescontoError,
+  });
+  const {
+    mesaSelecionada, setMesaSelecionada, comandaOpen, setComandaOpen,
+    mesaTab, setMesaTab, closingPayments, setClosingPayments,
+    closingPaymentMethod, setClosingPaymentMethod, closingPaymentValue, setClosingPaymentValue,
+    valorEntregue, setValorEntregue, trocoRegistrado, setTrocoRegistrado,
+    couvertPessoas, setCouvertPessoas, couvertDispensado, setCouvertDispensado,
+    cpfNotaMesa, setCpfNotaMesa, cpfNotaMesaOpen, setCpfNotaMesaOpen,
+    financeUnlocked, setFinanceUnlocked, financeManagerName, setFinanceManagerName,
+    financeManagerPin, setFinanceManagerPin, financeError, setFinanceError,
+    isUnlockingFinance, setIsUnlockingFinance,
+    fundoTrocoInput, setFundoTrocoInput,
+    mesa, resetCloseAccountState,
+    couvertValorUnit, couvertTotal, totalConta, totalContaCents,
+    totalPago, totalPagoCents, valorRestante, fechamentoPronto, paymentProgress,
+    valorEntregueNum, valorEntregueValido, trocoCalculado, valorDinheiroARegistrar,
+  } = mesaState;
+  const handleVoltar = useCallback(() => {
+    mesaState.handleVoltar(() => {
+      setBalcaoPedidoSelecionado(null);
+      setBalcaoPayments([]);
+      setBalcaoPaymentMethod("dinheiro");
+      setBalcaoPaymentValue("");
+      setBalcaoValorEntregue("");
+      setCpfNotaBalcao("");
+      setCpfNotaBalcaoOpen(false);
+    });
+  }, [mesaState.handleVoltar, setBalcaoPedidoSelecionado, setBalcaoPayments, setBalcaoPaymentMethod, setBalcaoPaymentValue, setBalcaoValorEntregue, setCpfNotaBalcao, setCpfNotaBalcaoOpen]);
   const audioCtxRef = useRef<AudioContext | null>(null);
   const prevAguardandoRef = useRef<number | null>(null);
 
-  const mesa = mesaSelecionada ? mesas.find((item) => item.id === mesaSelecionada) ?? null : null;
-  
   const adminOperator = isAdminAccess ? { id: "admin", nome: "Administrador", role: "caixa" as const, criadoEm: "" } : null;
   const currentOperator = adminOperator ?? (accessMode === "gerente" ? currentGerente : currentCaixa);
   const hasCaixaAccess = isAdminAccess || (accessMode === "gerente"
@@ -407,57 +411,8 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
       .slice(0, 20);
   }, [buscaComanda, allFechamentos]);
 
-  /* ── payment math (mesa) ── */
-  const couvertValorUnit = sistemaConfig.couvertAtivo && !couvertDispensado && couvertPessoas > 0
-    ? (sistemaConfig.couvertValor ?? 0)
-    : 0;
-  const couvertTotal = couvertValorUnit * couvertPessoas;
-  const totalConta = Math.max((mesa?.total ?? 0) - descontoAplicado + couvertTotal, 0);
-  const totalContaCents = toCents(totalConta);
-  const totalPago = useMemo(() => closingPayments.reduce((acc, p) => acc + p.valor, 0), [closingPayments]);
-  const totalPagoCents = toCents(totalPago);
-  const valorRestante = Math.max((totalContaCents - totalPagoCents) / 100, 0);
-  const fechamentoPronto = totalContaCents > 0 && totalPagoCents === totalContaCents;
-  const paymentProgress = totalContaCents > 0 ? Math.min(totalPagoCents / totalContaCents, 1) : 0;
-  const valorEntregueNum = parseCurrencyInput(valorEntregue);
-  const valorEntregueValido = Number.isFinite(valorEntregueNum) && valorEntregueNum > 0;
-  const trocoCalculado = closingPaymentMethod === "dinheiro" && Number.isFinite(valorEntregueNum) && valorEntregueNum > valorRestante
-    ? valorEntregueNum - valorRestante : 0;
-  const valorDinheiroARegistrar = Number.isFinite(valorEntregueNum) ? Math.min(valorEntregueNum, valorRestante) : 0;
-
 
   /* ── callbacks ── */
-  const resetCloseAccountState = useCallback(() => {
-    setClosingPayments([]);
-    setClosingPaymentMethod("dinheiro");
-    setClosingPaymentValue("");
-    setValorEntregue("");
-    setTrocoRegistrado(0);
-    setDescontoAplicado(0);
-    setDescontoInput("");
-    setDescontoMotivo("");
-    setDescontoManagerName("");
-    setDescontoManagerPin("");
-    setDescontoError(null);
-    setCouvertPessoas(0);
-    setCouvertDispensado(false);
-    setCpfNotaMesa("");
-    setCpfNotaMesaOpen(false);
-  }, []);
-
-  const handleVoltar = useCallback(() => {
-    setComandaOpen(false);
-    setMesaSelecionada(null);
-    setBalcaoPedidoSelecionado(null);
-    setMesaTab("comanda");
-    resetCloseAccountState();
-    setBalcaoPayments([]);
-    setBalcaoPaymentMethod("dinheiro");
-    setBalcaoPaymentValue("");
-    setBalcaoValorEntregue("");
-    setCpfNotaBalcao("");
-    setCpfNotaBalcaoOpen(false);
-  }, [resetCloseAccountState]);
 
   const handleSelecionarMesa = useCallback(
     (mesaId: string) => {
