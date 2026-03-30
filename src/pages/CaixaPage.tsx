@@ -1294,7 +1294,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
     fecharCaixaDoDia(currentOperator, Object.keys(extras).length > 0 ? extras : undefined);
     // Clear operator shift tracking
     try { localStorage.removeItem("obsidian-caixa-operadores-v1"); } catch {}
-    try { localStorage.removeItem("obsidian-caixa-modo-v1"); } catch {}
+    
     // motoboy fechamentos now managed in Supabase
     setTurnoModalOpen(false);
     setIsClosingTurno(false);
