@@ -733,7 +733,7 @@ const GerentePage = () => {
               return (
                 <div className="space-y-2">
                   <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">Vendas por origem</p>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
                     {grouped.map(g => {
                       const Icon = g.icon;
                       const empty = g.count === 0;
