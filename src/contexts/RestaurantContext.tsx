@@ -541,7 +541,6 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       setActiveStoreId(prev => prev !== current ? current : prev);
 
       if (!current && authLevel === "unauthenticated") {
-        _cachedStoreId = null;
         loadedStoreRef.current = null;
         setStore(estadoInicial());
       }
