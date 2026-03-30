@@ -24,69 +24,6 @@ import GerenteFechamento from "@/components/gerente/GerenteFechamento";
 import GerenteRelatorio from "@/components/gerente/GerenteRelatorio";
 import GerenteLogs from "@/components/gerente/GerenteLogs";
 
-const actionLabels: Record<string, string> = {
-  cancelar_item: "Exclusão de item",
-  cancelar_pedido: "Cancelamento de pedido",
-  editar_pedido: "Ajuste de pedido",
-  fechar_conta: "Fechamento de conta",
-  zerar_mesa: "Zeragem de mesa",
-  entrada_manual: "Entrada manual",
-  saida_manual: "Saída manual",
-  chamar_garcom: "Chamada de garçom",
-  lancar_pedido: "Lançamento de pedido",
-  pedido_cliente: "Pedido do cliente",
-  pedido_garcom: "Pedido do garçom",
-  pedido_caixa: "Pedido do caixa",
-  pedido_pronto: "Pedido pronto",
-  abertura_caixa: "Abertura de caixa",
-  abrir_caixa: "Abertura de caixa",
-  fechar_turno: "Fechamento de turno",
-  fechamento_dia: "Fechamento do dia",
-  confirmar_delivery: "Delivery confirmado",
-  rejeitar_delivery: "Delivery rejeitado",
-  delivery_entregue: "Delivery entregue",
-  sangria: "Sangria",
-  suprimento: "Suprimento",
-};
-
-const RELEVANT_LOG_ACTIONS = new Set([
-  "pedido_cliente", "pedido_garcom", "pedido_caixa",
-  "fechar_conta",
-  "confirmar_delivery", "rejeitar_delivery", "delivery_entregue",
-  "chamar_garcom",
-  "abrir_caixa", "abertura_caixa", "fechar_turno", "fechamento_dia",
-  "sangria", "suprimento",
-]);
-
-type LogCategory = "all" | "pedidos" | "caixa" | "delivery";
-const LOG_CATEGORY_ACTIONS: Record<LogCategory, Set<string> | null> = {
-  all: null,
-  pedidos: new Set(["pedido_cliente", "pedido_garcom", "pedido_caixa", "fechar_conta", "chamar_garcom"]),
-  caixa: new Set(["abrir_caixa", "abertura_caixa", "fechar_turno", "fechamento_dia", "sangria", "suprimento"]),
-  delivery: new Set(["confirmar_delivery", "rejeitar_delivery", "delivery_entregue"]),
-};
-
-const formatDateHeader = (dateStr: string): string => {
-  const date = new Date(dateStr + "T00:00:00");
-  const now = new Date();
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const yesterday = new Date(today);
-  yesterday.setDate(today.getDate() - 1);
-
-  if (date.getTime() === today.getTime()) return "Hoje";
-  if (date.getTime() === yesterday.getTime()) return "Ontem";
-  return date.toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long" });
-};
-
-const getEventDotColor = (acao?: string) => {
-  if (!acao) return "bg-muted-foreground";
-  if (["pedido_cliente", "pedido_garcom", "pedido_caixa", "chamar_garcom"].includes(acao)) return "bg-emerald-500";
-  if (["fechar_conta", "fechar_turno", "fechamento_dia", "abrir_caixa", "abertura_caixa"].includes(acao)) return "bg-blue-500";
-  if (["confirmar_delivery", "delivery_entregue"].includes(acao)) return "bg-purple-500";
-  if (["rejeitar_delivery"].includes(acao)) return "bg-destructive";
-  if (["sangria", "suprimento"].includes(acao)) return "bg-amber-500";
-  return "bg-muted-foreground";
-};
 
 
 const GerentePage = () => {
