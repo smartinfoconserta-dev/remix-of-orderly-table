@@ -354,14 +354,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
 
   useRouteLock(accessMode === "gerente" ? "/gerente" : "/caixa");
 
-  // Load saved modo operacao (skip if fast_food global overrides)
-  useEffect(() => {
-    if (modoForced || isFastFoodGlobal) return;
-    const savedModo = localStorage.getItem("obsidian-caixa-modo-v1");
-    if (savedModo === "somente_mesas" || savedModo === "somente_delivery" || savedModo === "completo") {
-      setModoOperacao(savedModo);
-    }
-  }, []);
+  // (legacy modoOperacao removed — modules now control tabs)
 
   // Poll motoboy fechamentos from Supabase every 5s
   useEffect(() => {
