@@ -411,57 +411,8 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
       .slice(0, 20);
   }, [buscaComanda, allFechamentos]);
 
-  /* ── payment math (mesa) ── */
-  const couvertValorUnit = sistemaConfig.couvertAtivo && !couvertDispensado && couvertPessoas > 0
-    ? (sistemaConfig.couvertValor ?? 0)
-    : 0;
-  const couvertTotal = couvertValorUnit * couvertPessoas;
-  const totalConta = Math.max((mesa?.total ?? 0) - descontoAplicado + couvertTotal, 0);
-  const totalContaCents = toCents(totalConta);
-  const totalPago = useMemo(() => closingPayments.reduce((acc, p) => acc + p.valor, 0), [closingPayments]);
-  const totalPagoCents = toCents(totalPago);
-  const valorRestante = Math.max((totalContaCents - totalPagoCents) / 100, 0);
-  const fechamentoPronto = totalContaCents > 0 && totalPagoCents === totalContaCents;
-  const paymentProgress = totalContaCents > 0 ? Math.min(totalPagoCents / totalContaCents, 1) : 0;
-  const valorEntregueNum = parseCurrencyInput(valorEntregue);
-  const valorEntregueValido = Number.isFinite(valorEntregueNum) && valorEntregueNum > 0;
-  const trocoCalculado = closingPaymentMethod === "dinheiro" && Number.isFinite(valorEntregueNum) && valorEntregueNum > valorRestante
-    ? valorEntregueNum - valorRestante : 0;
-  const valorDinheiroARegistrar = Number.isFinite(valorEntregueNum) ? Math.min(valorEntregueNum, valorRestante) : 0;
-
 
   /* ── callbacks ── */
-  const resetCloseAccountState = useCallback(() => {
-    setClosingPayments([]);
-    setClosingPaymentMethod("dinheiro");
-    setClosingPaymentValue("");
-    setValorEntregue("");
-    setTrocoRegistrado(0);
-    setDescontoAplicado(0);
-    setDescontoInput("");
-    setDescontoMotivo("");
-    setDescontoManagerName("");
-    setDescontoManagerPin("");
-    setDescontoError(null);
-    setCouvertPessoas(0);
-    setCouvertDispensado(false);
-    setCpfNotaMesa("");
-    setCpfNotaMesaOpen(false);
-  }, []);
-
-  const handleVoltar = useCallback(() => {
-    setComandaOpen(false);
-    setMesaSelecionada(null);
-    setBalcaoPedidoSelecionado(null);
-    setMesaTab("comanda");
-    resetCloseAccountState();
-    setBalcaoPayments([]);
-    setBalcaoPaymentMethod("dinheiro");
-    setBalcaoPaymentValue("");
-    setBalcaoValorEntregue("");
-    setCpfNotaBalcao("");
-    setCpfNotaBalcaoOpen(false);
-  }, [resetCloseAccountState]);
 
   const handleSelecionarMesa = useCallback(
     (mesaId: string) => {
