@@ -22,6 +22,7 @@ import { supabase } from "@/integrations/supabase/client";
 import IfoodPainel from "@/components/IfoodPainel";
 import GerenteFechamento from "@/components/gerente/GerenteFechamento";
 import GerenteRelatorio from "@/components/gerente/GerenteRelatorio";
+import GerenteLogs from "@/components/gerente/GerenteLogs";
 
 const actionLabels: Record<string, string> = {
   cancelar_item: "Exclusão de item",
