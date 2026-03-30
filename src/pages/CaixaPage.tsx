@@ -2486,10 +2486,10 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                     Turno: aberto {caixaOpenTime}
                   </span>
                 )}
-                {modoOperacao !== "somente_delivery" && (
+                {moduloMesas && (
                   <span className="px-3 py-1.5">Consumo: {mesasConsumo}</span>
                 )}
-                {modoOperacao !== "somente_delivery" && (
+                {moduloMesas && (
                   <span className="px-3 py-1.5">Livres: {mesasLivre}</span>
                 )}
                 <span className="px-3 py-1.5">Fechadas: {fechamentos.length}</span>
