@@ -252,17 +252,7 @@ const GerentePage = () => {
     }
   }, [effectiveGerente, isAdminAccess, pinInput, verifyManagerAccess]);
 
-  /* ── shift closing data ── */
-  const sumByMethod = (method: PaymentMethod) =>
-    fechamentos.reduce((acc, f) => {
-      const pags = f.pagamentos?.length ? f.pagamentos : [{ id: f.id, formaPagamento: f.formaPagamento, valor: f.total }];
-      return acc + pags.filter((p) => p.formaPagamento === method).reduce((s, p) => s + p.valor, 0);
-    }, 0);
-
-  const totalVendas = fechamentos.reduce((acc, f) => acc + f.total, 0);
-  const entradasExtras = movimentacoesCaixa.filter((m) => m.tipo === "entrada").reduce((acc, m) => acc + m.valor, 0);
-  const saidas = movimentacoesCaixa.filter((m) => m.tipo === "saida").reduce((acc, m) => acc + m.valor, 0);
-  const totalLiquido = fundoTroco + totalVendas + entradasExtras - saidas;
+  /* ── shift closing data (moved to GerenteFechamento) ── */
 
   /* ── audit logs — only relevant actions ── */
   const relevantEvents = useMemo(
