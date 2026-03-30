@@ -24,7 +24,7 @@ const PAYMENT_OPTIONS: { value: PaymentMethod; label: string; icon: typeof Credi
 ];
 
 const GarcomPdvPage = () => {
-  const { mesas, dismissChamarGarcom, fecharConta } = useRestaurant();
+  const { mesas, dismissChamarGarcom, fecharConta, caixaAberto } = useRestaurant();
   const { currentGarcom, logout, authLevel } = useAuth();
   const isAdminAccess = authLevel === "admin" || authLevel === "master";
   const [searchParams, setSearchParams] = useSearchParams();
@@ -51,12 +51,17 @@ const GarcomPdvPage = () => {
   }, []);
 
   const handleCobrar = useCallback((mesaId: string) => {
+    if (!caixaAberto) {
+      toast.error("O caixa precisa estar aberto para realizar cobranças.");
+      return;
+    }
     setPagamentoMesaId(mesaId);
     setPagamentoOpen(true);
     setPagamentoMethod("pix");
-  }, []);
+  }, [caixaAberto]);
 
   const handleConfirmarPagamento = useCallback(() => {
+    if (processando) return;
     if (!pagamentoMesaId || !currentGarcom) return;
     setProcessando(true);
 
