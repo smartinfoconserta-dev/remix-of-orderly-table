@@ -320,6 +320,14 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
   const [mostrarEntregues, setMostrarEntregues] = useState(false);
   const [filtroMotoboy, setFiltroMotoboy] = useState<string | null>(null);
   const [fechamentosPendentes, setFechamentosPendentes] = useState<any[]>([]);
+  const resumoDeliveryTurno = useMemo(() => {
+    const conferidos = fechamentosPendentes.filter((f: any) => f.status === "conferido");
+    const pendentes = fechamentosPendentes.filter((f: any) => f.status === "aguardando");
+    const motoboyNomes = [...new Set(fechamentosPendentes.map((f: any) => f.motoboy_nome).filter(Boolean))] as string[];
+    const totalConferido = conferidos.reduce((s: number, f: any) => s + Number(f.resumo?.total ?? 0), 0);
+    const totalEntregas = fechamentosPendentes.reduce((s: number, f: any) => s + Number(f.resumo?.totalEntregas ?? 0), 0);
+    return { totalEntregas, conferidos: conferidos.length, pendentes: pendentes.length, totalConferido, motoboyNomes };
+  }, [fechamentosPendentes]);
   const [buscaComanda, setBuscaComanda] = useState("");
   const [buscaComandaOpen, setBuscaComandaOpen] = useState(false);
   const [fechamentoSelecionado, setFechamentoSelecionado] = useState<any | null>(null);
