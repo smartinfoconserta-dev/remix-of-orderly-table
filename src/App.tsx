@@ -28,6 +28,7 @@ const ROUTE_TITLES: Record<string, string> = {
   "/master": "Master — Orderly Table",
   "/admin": "Admin — Orderly Table",
   "/garcom": "Garçom — Orderly Table",
+  "/garcom-pdv": "Garçom PDV — Orderly Table",
   "/caixa": "Caixa — Orderly Table",
   "/delivery": "Delivery — Orderly Table",
   "/gerente": "Gerente — Orderly Table",
