@@ -1,66 +1,25 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
 import LicenseBanner from "@/components/LicenseBanner";
-import { Bike } from "lucide-react";
 import {
-  AlertTriangle,
-  Banknote,
   BarChart3,
-  Calendar,
-  Clock,
-  ClipboardList,
-  CreditCard,
-  Download,
   LockKeyhole,
   LogOut,
-  Monitor,
-  Printer,
   ScrollText,
-  ShieldCheck,
-  ShoppingBag,
-  Smartphone,
-  Timer,
-  TrendingUp,
   Truck,
-  Wallet,
   Users,
-  Tag,
-  UtensilsCrossed,
-  XCircle,
 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRestaurant } from "@/contexts/RestaurantContext";
-import type { FechamentoConta } from "@/contexts/RestaurantContext";
 import { useRouteLock } from "@/hooks/use-route-lock";
-import type { PaymentMethod } from "@/types/operations";
 import { getSistemaConfig } from "@/lib/adminStorage";
 import StorePinsManager from "@/components/StorePinsManager";
 import { useStore } from "@/contexts/StoreContext";
 import { supabase } from "@/integrations/supabase/client";
 import IfoodPainel from "@/components/IfoodPainel";
-import { formatPrice } from "@/components/caixa/caixaHelpers";
 import GerenteFechamento from "@/components/gerente/GerenteFechamento";
 import GerenteRelatorio from "@/components/gerente/GerenteRelatorio";
 
