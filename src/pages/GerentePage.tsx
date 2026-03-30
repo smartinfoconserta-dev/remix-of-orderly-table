@@ -61,6 +61,7 @@ import { useStore } from "@/contexts/StoreContext";
 import { supabase } from "@/integrations/supabase/client";
 import IfoodPainel from "@/components/IfoodPainel";
 import { formatPrice } from "@/components/caixa/caixaHelpers";
+import GerenteFechamento from "@/components/gerente/GerenteFechamento";
 
 const paymentMethods: { value: PaymentMethod; label: string; icon: typeof Banknote; color: string; bg: string }[] = [
   { value: "dinheiro", label: "Dinheiro", icon: Banknote, color: "text-emerald-400", bg: "bg-emerald-500/15" },
