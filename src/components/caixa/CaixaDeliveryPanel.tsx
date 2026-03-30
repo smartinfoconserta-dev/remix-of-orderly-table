@@ -17,7 +17,7 @@ interface PedidoBalcao {
   enderecoCompleto?: string;
   bairro?: string;
   referencia?: string;
-  statusBalcao: string;
+  statusBalcao?: string;
   canceladoMotivo?: string;
   total: number;
   motoboyNome?: string;
