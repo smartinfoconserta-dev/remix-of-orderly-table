@@ -13,7 +13,7 @@ interface PedidoFlowCartProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   hideTrigger: boolean;
-  modo: string;
+  modo: "cliente" | "garcom" | "caixa" | "balcao" | "delivery" | "totem";
   isTotemMode: boolean;
   /** Show mobile sticky bar */
   showStickyBar: boolean;
