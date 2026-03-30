@@ -71,7 +71,8 @@ import type { PaymentMethod, SplitPayment, UserRole } from "@/types/operations";
 import { getSistemaConfig } from "@/lib/adminStorage";
 import { getActiveStoreId } from "@/lib/sessionManager";
 import type { ItemCarrinho } from "@/contexts/RestaurantContext";
-import { findClienteDelivery, upsertClienteDelivery, getBairrosAsync, type Bairro, type ClienteDelivery } from "@/lib/deliveryStorage";
+import { findClienteDelivery, upsertClienteDelivery, type Bairro, type ClienteDelivery } from "@/lib/deliveryStorage";
+import { useCaixaBalcaoState } from "@/hooks/useCaixaBalcaoState";
 import { supabase } from "@/integrations/supabase/client";
 import IfoodPainel from "@/components/IfoodPainel";
 
@@ -208,8 +209,6 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
   const [couvertDispensado, setCouvertDispensado] = useState(false);
   const [cpfNotaMesa, setCpfNotaMesa] = useState("");
   const [cpfNotaMesaOpen, setCpfNotaMesaOpen] = useState(false);
-  const [cpfNotaBalcao, setCpfNotaBalcao] = useState("");
-  const [cpfNotaBalcaoOpen, setCpfNotaBalcaoOpen] = useState(false);
   const [estornoModalOpen, setEstornoModalOpen] = useState(false);
   const [estornoFechamentoId, setEstornoFechamentoId] = useState<string | null>(null);
   const [estornoMotivo, setEstornoMotivo] = useState("");
@@ -217,32 +216,43 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
   const [estornoNome, setEstornoNome] = useState("");
   const [estornoError, setEstornoError] = useState<string | null>(null);
 
-  /* ── Balcão/Delivery state ── */
-  const [balcaoOpen, setBalcaoOpen] = useState(false);
-  const [balcaoTipo, setBalcaoTipo] = useState<"balcao" | "delivery">("balcao");
-  const [balcaoClienteNome, setBalcaoClienteNome] = useState("");
-  const [balcaoTelefone, setBalcaoTelefone] = useState("");
-  const [balcaoEndereco, setBalcaoEndereco] = useState("");
-  const [balcaoBairro, setBalcaoBairro] = useState("");
-  const [balcaoReferencia, setBalcaoReferencia] = useState("");
-  const [balcaoFormaPag, setBalcaoFormaPag] = useState<PaymentMethod>("dinheiro");
-  const [balcaoTroco, setBalcaoTroco] = useState("");
-  const [balcaoCpf, setBalcaoCpf] = useState("");
-  const [balcaoNumero, setBalcaoNumero] = useState("");
-  const [balcaoComplemento, setBalcaoComplemento] = useState("");
-  const [deliveryBusca, setDeliveryBusca] = useState("");
-  const [deliveryResultados, setDeliveryResultados] = useState<ClienteDelivery[]>([]);
-  const [deliveryStep, setDeliveryStep] = useState<"busca" | "form">("busca");
-  const [deliveryCep, setDeliveryCep] = useState("");
-  const [deliveryCepLoading, setDeliveryCepLoading] = useState(false);
-  const [deliveryCepErro, setDeliveryCepErro] = useState("");
-  const [deliveryCidade, setDeliveryCidade] = useState("");
-  const [balcaoPedidoSelecionado, setBalcaoPedidoSelecionado] = useState<string | null>(null);
-  const [balcaoPayments, setBalcaoPayments] = useState<SplitPayment[]>([]);
-  const [balcaoPaymentMethod, setBalcaoPaymentMethod] = useState<PaymentMethod>("dinheiro");
-  const [balcaoPaymentValue, setBalcaoPaymentValue] = useState("");
-  const [balcaoValorEntregue, setBalcaoValorEntregue] = useState("");
-  const [balcaoFlowAtivo, setBalcaoFlowAtivo] = useState(false);
+  /* ── Balcão/Delivery state (hook) ── */
+  const balcao = useCaixaBalcaoState(pedidosBalcao);
+  const {
+    balcaoOpen, setBalcaoOpen, balcaoTipo, setBalcaoTipo,
+    balcaoClienteNome, setBalcaoClienteNome, balcaoTelefone, setBalcaoTelefone,
+    balcaoEndereco, setBalcaoEndereco, balcaoBairro, setBalcaoBairro,
+    balcaoReferencia, setBalcaoReferencia, balcaoFormaPag, setBalcaoFormaPag,
+    balcaoTroco, setBalcaoTroco, balcaoCpf, setBalcaoCpf,
+    balcaoNumero, setBalcaoNumero, balcaoComplemento, setBalcaoComplemento,
+    deliveryBusca, setDeliveryBusca, deliveryResultados, setDeliveryResultados,
+    deliveryStep, setDeliveryStep, deliveryCep, setDeliveryCep,
+    deliveryCepLoading, setDeliveryCepLoading, deliveryCepErro, setDeliveryCepErro,
+    deliveryCidade, setDeliveryCidade,
+    balcaoPedidoSelecionado, setBalcaoPedidoSelecionado,
+    balcaoPayments, setBalcaoPayments, balcaoPaymentMethod, setBalcaoPaymentMethod,
+    balcaoPaymentValue, setBalcaoPaymentValue, balcaoValorEntregue, setBalcaoValorEntregue,
+    balcaoFlowAtivo, setBalcaoFlowAtivo,
+    deliveryConfirmOpen, setDeliveryConfirmOpen,
+    deliveryPendingItens, setDeliveryPendingItens,
+    deliveryPendingParaViagem, setDeliveryPendingParaViagem,
+    rejectDialogOpen, setRejectDialogOpen, rejectPedidoId, setRejectPedidoId, rejectMotivo, setRejectMotivo,
+    confirmTempoId, setConfirmTempoId, confirmTempo, setConfirmTempo,
+    confirmTempoCustom, setConfirmTempoCustom, confirmTaxaEntrega, setConfirmTaxaEntrega,
+    deliveryTempoEstimado, setDeliveryTempoEstimado,
+    buscaDelivery, setBuscaDelivery,
+    cpfNotaBalcao, setCpfNotaBalcao, cpfNotaBalcaoOpen, setCpfNotaBalcaoOpen,
+    bairrosCache, setBairrosCache, caixaStoreIdRef,
+    resetBalcaoStates,
+    balcaoPedido,
+    balcaoTotalConta, balcaoTotalContaCents,
+    balcaoTotalPago, balcaoTotalPagoCents,
+    balcaoValorRestante, balcaoFechamentoPronto, balcaoPaymentProgress,
+    balcaoValorEntregueNum, balcaoTrocoCalculado,
+    pedidosBalcaoAtivos, pedidosDeliveryAtivos, pedidosAguardandoConfirmacao,
+    pedidosBalcaoSoAtivos, pedidosTotem, pedidosTotemAtivos,
+    pedidosParaRetirar, pedidosEmRota, pedidosDevolvidos, pedidosEntregues, motoboyAtivos,
+  } = balcao;
   const globalModulos = useMemo(() => getSistemaConfig()?.modulos ?? {}, []);
   const moduloMesas = globalModulos.mesas !== false;
   const moduloTotem = globalModulos.totem === true;
@@ -260,25 +270,6 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
   const [totemCancelPin, setTotemCancelPin] = useState("");
   const [totemCancelError, setTotemCancelError] = useState<string | null>(null);
   const [totemCancelLoading, setTotemCancelLoading] = useState(false);
-  const [deliveryConfirmOpen, setDeliveryConfirmOpen] = useState(false);
-  const [deliveryPendingItens, setDeliveryPendingItens] = useState<ItemCarrinho[]>([]);
-  const [deliveryPendingParaViagem, setDeliveryPendingParaViagem] = useState(false);
-  const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
-  const [rejectPedidoId, setRejectPedidoId] = useState<string | null>(null);
-  const [rejectMotivo, setRejectMotivo] = useState("");
-  const [confirmTempoId, setConfirmTempoId] = useState<string | null>(null);
-  const [confirmTempo, setConfirmTempo] = useState("");
-  const [confirmTempoCustom, setConfirmTempoCustom] = useState("");
-  const [confirmTaxaEntrega, setConfirmTaxaEntrega] = useState("");
-  const [deliveryTempoEstimado, setDeliveryTempoEstimado] = useState("");
-  const [buscaDelivery, setBuscaDelivery] = useState("");
-  const [bairrosCache, setBairrosCache] = useState<Bairro[]>([]);
-  const caixaStoreIdRef = useRef<string | null>(null);
-  useEffect(() => {
-    const sid = getActiveStoreId();
-    caixaStoreIdRef.current = sid;
-    if (sid) getBairrosAsync(sid).then(setBairrosCache);
-  }, []);
   const [mostrarEntregues, setMostrarEntregues] = useState(false);
   const [filtroMotoboy, setFiltroMotoboy] = useState<string | null>(null);
   const [fechamentosPendentes, setFechamentosPendentes] = useState<any[]>([]);
@@ -306,7 +297,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
   const prevAguardandoRef = useRef<number | null>(null);
 
   const mesa = mesaSelecionada ? mesas.find((item) => item.id === mesaSelecionada) ?? null : null;
-  const balcaoPedido = balcaoPedidoSelecionado ? pedidosBalcao.find((p) => p.id === balcaoPedidoSelecionado) ?? null : null;
+  
   const adminOperator = isAdminAccess ? { id: "admin", nome: "Administrador", role: "caixa" as const, criadoEm: "" } : null;
   const currentOperator = adminOperator ?? (accessMode === "gerente" ? currentGerente : currentCaixa);
   const hasCaixaAccess = isAdminAccess || (accessMode === "gerente"
@@ -453,60 +444,6 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
     ? valorEntregueNum - valorRestante : 0;
   const valorDinheiroARegistrar = Number.isFinite(valorEntregueNum) ? Math.min(valorEntregueNum, valorRestante) : 0;
 
-  /* ── payment math (balcão) ── */
-  const balcaoTotalConta = balcaoPedido?.total ?? 0;
-  const balcaoTotalContaCents = toCents(balcaoTotalConta);
-  const balcaoTotalPago = useMemo(() => balcaoPayments.reduce((acc, p) => acc + p.valor, 0), [balcaoPayments]);
-  const balcaoTotalPagoCents = toCents(balcaoTotalPago);
-  const balcaoValorRestante = Math.max((balcaoTotalContaCents - balcaoTotalPagoCents) / 100, 0);
-  const balcaoFechamentoPronto = balcaoTotalContaCents > 0 && balcaoTotalPagoCents === balcaoTotalContaCents;
-  const balcaoPaymentProgress = balcaoTotalContaCents > 0 ? Math.min(balcaoTotalPagoCents / balcaoTotalContaCents, 1) : 0;
-  const balcaoValorEntregueNum = parseCurrencyInput(balcaoValorEntregue);
-  const balcaoTrocoCalculado = balcaoPaymentMethod === "dinheiro" && Number.isFinite(balcaoValorEntregueNum) && balcaoValorEntregueNum > balcaoValorRestante
-    ? balcaoValorEntregueNum - balcaoValorRestante : 0;
-
-  /* ── active balcão orders for grid ── */
-  const pedidosBalcaoAtivos = useMemo(() => pedidosBalcao.filter((p) => p.statusBalcao !== "pago"), [pedidosBalcao]);
-  const pedidosDeliveryAtivos = useMemo(() => pedidosBalcaoAtivos.filter((p) => p.origem === "delivery" && p.statusBalcao !== "aguardando_confirmacao"), [pedidosBalcaoAtivos]);
-  const pedidosAguardandoConfirmacao = useMemo(() =>
-    [...pedidosBalcao.filter((p) => p.origem === "delivery" && p.statusBalcao === "aguardando_confirmacao")]
-      .sort((a, b) => new Date(a.criadoEmIso).getTime() - new Date(b.criadoEmIso).getTime()),
-    [pedidosBalcao]
-  );
-  const pedidosBalcaoSoAtivos = useMemo(() => pedidosBalcaoAtivos.filter((p) => p.origem === "balcao"), [pedidosBalcaoAtivos]);
-  const pedidosTotem = useMemo(() =>
-    pedidosBalcao.filter((p) => p.origem === "totem").sort((a, b) => new Date(b.criadoEmIso).getTime() - new Date(a.criadoEmIso).getTime()),
-    [pedidosBalcao]
-  );
-  const pedidosTotemAtivos = useMemo(() => pedidosTotem.filter((p) => p.statusBalcao !== "cancelado" && p.statusBalcao !== "retirado"), [pedidosTotem]);
-
-  const pedidosParaRetirar = useMemo(() =>
-    pedidosDeliveryAtivos.filter(p => p.statusBalcao === "pronto" && !p.motoboyNome),
-    [pedidosDeliveryAtivos]
-  );
-  const pedidosEmRota = useMemo(() =>
-    pedidosDeliveryAtivos.filter(p => p.statusBalcao === "saiu"),
-    [pedidosDeliveryAtivos]
-  );
-  const pedidosDevolvidos = useMemo(() =>
-    pedidosDeliveryAtivos.filter(p => p.statusBalcao === "devolvido"),
-    [pedidosDeliveryAtivos]
-  );
-  const pedidosEntregues = useMemo(() =>
-    pedidosDeliveryAtivos.filter(p => p.statusBalcao === "entregue" || p.statusBalcao === "pago"),
-    [pedidosDeliveryAtivos]
-  );
-  const motoboyAtivos = useMemo(() => {
-    const map = new Map<string, { emRota: number; entregues: number }>();
-    pedidosDeliveryAtivos.forEach(p => {
-      if (!p.motoboyNome) return;
-      const atual = map.get(p.motoboyNome) || { emRota: 0, entregues: 0 };
-      if (p.statusBalcao === "saiu") atual.emRota++;
-      if (p.statusBalcao === "entregue" || p.statusBalcao === "pago") atual.entregues++;
-      map.set(p.motoboyNome, atual);
-    });
-    return [...map.entries()].map(([nome, dados]) => ({ nome, ...dados }));
-  }, [pedidosDeliveryAtivos]);
 
   /* ── callbacks ── */
   const resetCloseAccountState = useCallback(() => {
@@ -597,29 +534,6 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
     setMovConfirmStep(false);
   }, [currentOperator, movTipo, movDescricao, movValor, movConfirmStep, registrarMovimentacaoCaixa]);
 
-  /* ── Balcão/Delivery helpers ── */
-  const resetBalcaoStates = useCallback(() => {
-    setBalcaoFlowAtivo(false);
-    setBalcaoOpen(false);
-    setBalcaoTipo("balcao");
-    setBalcaoClienteNome("");
-    setBalcaoTelefone("");
-    setBalcaoEndereco("");
-    setBalcaoBairro("");
-    setBalcaoReferencia("");
-    setBalcaoFormaPag("dinheiro");
-    setBalcaoTroco("");
-    setBalcaoCpf("");
-    setBalcaoNumero("");
-    setBalcaoComplemento("");
-    setDeliveryBusca("");
-    setDeliveryResultados([]);
-    setDeliveryStep("busca");
-    setDeliveryCep("");
-    setDeliveryCepLoading(false);
-    setDeliveryCepErro("");
-    setDeliveryCidade("");
-  }, []);
 
   /* ── Print receipt helper (must be before early returns) ── */
   const handlePrintComanda = useCallback((data: {
