@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import Index from "./pages/Index";
 
 import GarcomPage from "./pages/GarcomPage";
+import GarcomPdvPage from "./pages/GarcomPdvPage";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { AdminBackButton } from "./components/AdminBackButton";
 import MesaPage from "./pages/MesaPage";
