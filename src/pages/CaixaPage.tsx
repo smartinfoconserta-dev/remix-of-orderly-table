@@ -269,25 +269,6 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
   const [totemCancelPin, setTotemCancelPin] = useState("");
   const [totemCancelError, setTotemCancelError] = useState<string | null>(null);
   const [totemCancelLoading, setTotemCancelLoading] = useState(false);
-  const [deliveryConfirmOpen, setDeliveryConfirmOpen] = useState(false);
-  const [deliveryPendingItens, setDeliveryPendingItens] = useState<ItemCarrinho[]>([]);
-  const [deliveryPendingParaViagem, setDeliveryPendingParaViagem] = useState(false);
-  const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
-  const [rejectPedidoId, setRejectPedidoId] = useState<string | null>(null);
-  const [rejectMotivo, setRejectMotivo] = useState("");
-  const [confirmTempoId, setConfirmTempoId] = useState<string | null>(null);
-  const [confirmTempo, setConfirmTempo] = useState("");
-  const [confirmTempoCustom, setConfirmTempoCustom] = useState("");
-  const [confirmTaxaEntrega, setConfirmTaxaEntrega] = useState("");
-  const [deliveryTempoEstimado, setDeliveryTempoEstimado] = useState("");
-  const [buscaDelivery, setBuscaDelivery] = useState("");
-  const [bairrosCache, setBairrosCache] = useState<Bairro[]>([]);
-  const caixaStoreIdRef = useRef<string | null>(null);
-  useEffect(() => {
-    const sid = getActiveStoreId();
-    caixaStoreIdRef.current = sid;
-    if (sid) getBairrosAsync(sid).then(setBairrosCache);
-  }, []);
   const [mostrarEntregues, setMostrarEntregues] = useState(false);
   const [filtroMotoboy, setFiltroMotoboy] = useState<string | null>(null);
   const [fechamentosPendentes, setFechamentosPendentes] = useState<any[]>([]);
