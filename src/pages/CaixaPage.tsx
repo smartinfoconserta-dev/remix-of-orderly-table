@@ -159,12 +159,32 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
   const [financeManagerPin, setFinanceManagerPin] = useState("");
   const [financeError, setFinanceError] = useState<string | null>(null);
   const [isUnlockingFinance, setIsUnlockingFinance] = useState(false);
-  const [criticalAction, setCriticalAction] = useState<CriticalAction | null>(null);
-  const [criticalManagerName, setCriticalManagerName] = useState("");
-  const [criticalManagerPin, setCriticalManagerPin] = useState("");
-  const [criticalReason, setCriticalReason] = useState("");
-  const [criticalError, setCriticalError] = useState<string | null>(null);
-  const [isAuthorizingCriticalAction, setIsAuthorizingCriticalAction] = useState(false);
+  /* ── Dialogs state (hook) ── */
+  const dialogs = useCaixaDialogsState();
+  const {
+    criticalAction, setCriticalAction, criticalManagerName, setCriticalManagerName,
+    criticalManagerPin, setCriticalManagerPin, criticalReason, setCriticalReason,
+    criticalError, setCriticalError, isAuthorizingCriticalAction, setIsAuthorizingCriticalAction,
+    resetCriticalDialog,
+    descontoModalOpen, setDescontoModalOpen, descontoTipo, setDescontoTipo,
+    descontoInput, setDescontoInput, descontoMotivo, setDescontoMotivo,
+    descontoManagerName, setDescontoManagerName, descontoManagerPin, setDescontoManagerPin,
+    descontoError, setDescontoError, descontoAplicado, setDescontoAplicado,
+    estornoModalOpen, setEstornoModalOpen, estornoFechamentoId, setEstornoFechamentoId,
+    estornoMotivo, setEstornoMotivo, estornoPin, setEstornoPin,
+    estornoNome, setEstornoNome, estornoError, setEstornoError,
+    turnoModalOpen, setTurnoModalOpen, turnoManagerName, setTurnoManagerName,
+    turnoManagerPin, setTurnoManagerPin, turnoError, setTurnoError,
+    isClosingTurno, setIsClosingTurno, turnoReportOpen, setTurnoReportOpen,
+    dinheiroContado, setDinheiroContado, motivoDiferenca, setMotivoDiferenca,
+    movModalOpen, setMovModalOpen, movTipo, setMovTipo,
+    movDescricao, setMovDescricao, movValor, setMovValor, movConfirmStep, setMovConfirmStep,
+    buscaComanda, setBuscaComanda, buscaComandaOpen, setBuscaComandaOpen,
+    qrScanOpen, setQrScanOpen, qrScanInput, setQrScanInput, qrScanInputRef,
+    totemCancelOpen, setTotemCancelOpen, totemCancelMotivo, setTotemCancelMotivo,
+    totemCancelPin, setTotemCancelPin, totemCancelError, setTotemCancelError,
+    totemCancelLoading, setTotemCancelLoading,
+  } = dialogs;
   const [fundoTrocoInput, setFundoTrocoInput] = useState("");
 
   // Load fundo_proximo from estado_caixa
