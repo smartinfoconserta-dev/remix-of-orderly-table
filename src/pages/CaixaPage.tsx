@@ -1274,12 +1274,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
 
   const dismissAviso = async () => {
     try {
-      const getStoreId = (): string | null => {
-        try { const raw = sessionStorage.getItem("obsidian-op-session-v2"); if (raw) { const s = JSON.parse(raw); return s.storeId ?? null; } } catch {}
-        try { const saved = sessionStorage.getItem("orderly-active-store"); if (saved) return saved; } catch {}
-        return null;
-      };
-      const storeId = getStoreId();
+    const storeId = getActiveStoreId();
       if (storeId) {
         await supabase.from("restaurant_config").update({ aviso_master: { ...masterAviso, lido: true } as any }).eq("store_id", storeId);
       }
