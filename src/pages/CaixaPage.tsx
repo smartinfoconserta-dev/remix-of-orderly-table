@@ -349,40 +349,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
 
   // Poll motoboy fechamentos from Supabase every 5s
   useEffect(() => {
-    const getStoreId = (): string | null => {
-      try { const raw = sessionStorage.getItem("obsidian-op-session-v2"); if (raw) { const s = JSON.parse(raw); return s.storeId ?? null; } } catch {}
-      try { const saved = sessionStorage.getItem("orderly-active-store"); if (saved) return saved; } catch {}
-      return null;
-    };
-    const ler = async () => {
-      const storeId = getStoreId();
-      if (!storeId) return;
-      const { data } = await supabase.from("motoboy_fechamentos").select("*").eq("store_id", storeId).eq("status", "aguardando");
-      setFechamentosPendentes(data ?? []);
-    };
-    ler();
-    const id = setInterval(ler, 5000);
-    return () => clearInterval(id);
-  }, []);
-
-  const resumoDeliveryTurno = useMemo(() => {
-    const conferidos = fechamentosPendentes.filter((f: any) => f.status === "conferido");
-    const pendentes = fechamentosPendentes.filter((f: any) => f.status === "aguardando");
-    const totalConferido = conferidos.reduce((s: number, f: any) => s + (f.resumo?.totalAPrestar || 0), 0);
-    const totalEntregas = conferidos.reduce((s: number, f: any) => s + (f.resumo?.totalEntregas || 0), 0);
-    const motoboyNomes = [...new Set([...conferidos, ...pendentes].map((f: any) => f.motoboy_nome))] as string[];
-    return { conferidos: conferidos.length, pendentes: pendentes.length, totalConferido, totalEntregas, motoboyNomes };
-  }, [fechamentosPendentes]);
-
-
-  // Load master aviso from restaurant_config (Supabase)
-  useEffect(() => {
-    const getStoreId = (): string | null => {
-      try { const raw = sessionStorage.getItem("obsidian-op-session-v2"); if (raw) { const s = JSON.parse(raw); return s.storeId ?? null; } } catch {}
-      try { const saved = sessionStorage.getItem("orderly-active-store"); if (saved) return saved; } catch {}
-      return null;
-    };
-    const storeId = getStoreId();
+    const storeId = getActiveStoreId();
     if (!storeId) return;
 
     const loadAviso = async () => {
