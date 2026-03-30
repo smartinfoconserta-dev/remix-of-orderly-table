@@ -80,6 +80,7 @@ export interface SistemaConfig {
     cozinha?: boolean;
     delivery?: boolean;
     motoboy?: boolean;
+    garcomPdv?: boolean;
   };
   plano?: "basico" | "medio" | "pro" | "premium";
   /** @deprecated Use modulos.mesas / modulos.balcao instead */
