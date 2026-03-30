@@ -14,8 +14,8 @@ type PedidoTV = {
 const TvInner = ({ storeId }: { storeId: string }) => {
   const { pedidosBalcao } = useRestaurant();
   const [clock, setClock] = useState(() => new Date());
-  const [modulos, setModulos] = useState<{ mesas: boolean; balcao: boolean; totem: boolean }>({
-    mesas: true, balcao: false, totem: false,
+  const [modulos, setModulos] = useState<{ mesas: boolean; balcao: boolean; totem: boolean; garcomPdv: boolean }>({
+    mesas: true, balcao: false, totem: false, garcomPdv: false,
   });
   const [config, setConfig] = useState<{ nomeRestaurante: string; logoBase64: string; logoUrl: string }>({
     nomeRestaurante: "",
