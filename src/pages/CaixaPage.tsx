@@ -252,11 +252,6 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
     if (moduloBalcao) return "delivery";
     return "delivery";
   });
-  const [totemCancelOpen, setTotemCancelOpen] = useState<string | null>(null);
-  const [totemCancelMotivo, setTotemCancelMotivo] = useState("");
-  const [totemCancelPin, setTotemCancelPin] = useState("");
-  const [totemCancelError, setTotemCancelError] = useState<string | null>(null);
-  const [totemCancelLoading, setTotemCancelLoading] = useState(false);
   const [mostrarEntregues, setMostrarEntregues] = useState(false);
   const [filtroMotoboy, setFiltroMotoboy] = useState<string | null>(null);
   const [fechamentosPendentes, setFechamentosPendentes] = useState<any[]>([]);
