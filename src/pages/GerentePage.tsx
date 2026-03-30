@@ -228,65 +228,7 @@ const GerentePage = () => {
 
         {/* ═══ TAB 3: Logs de Auditoria ═══ */}
         <TabsContent value="logs" className="flex-1 overflow-y-auto p-4 md:p-6 mt-0">
-          {/* Filter pills */}
-          <div className="flex items-center gap-2 flex-wrap pb-4 border-b border-border">
-            {([
-              { key: "all" as LogCategory, label: "Todos" },
-              { key: "pedidos" as LogCategory, label: "Pedidos" },
-              { key: "caixa" as LogCategory, label: "Caixa" },
-              { key: "delivery" as LogCategory, label: "Delivery" },
-            ]).map((pill) => (
-              <button
-                key={pill.key}
-                type="button"
-                onClick={() => setLogFilter(pill.key)}
-                className={`rounded-full px-4 py-1.5 text-xs font-bold transition-all ${
-                  logFilter === pill.key
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-secondary text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {pill.label}
-              </button>
-            ))}
-            <span className="text-xs text-muted-foreground ml-auto">
-              {filteredEvents.length} evento{filteredEvents.length !== 1 ? "s" : ""}
-            </span>
-          </div>
-
-          {/* Event list */}
-          <div className="pt-4">
-            {groupedEvents.length === 0 ? (
-              <p className="text-sm text-muted-foreground py-8 text-center">Nenhum evento registrado.</p>
-            ) : (
-              <div className="mx-auto max-w-2xl space-y-5">
-                {groupedEvents.map((group) => (
-                  <div key={group.date} className="space-y-1.5">
-                    <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground pb-1">{group.label}</h3>
-                    {group.events.map((evento) => (
-                      <div key={evento.id} className="flex items-start gap-3 rounded-xl border border-border bg-card px-4 py-3">
-                        <span className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${getEventDotColor(evento.acao)}`} />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-bold text-foreground leading-snug">{evento.descricao}</p>
-                          <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1">
-                            <span className="text-xs text-muted-foreground">{evento.criadoEm}</span>
-                            {evento.acao && (
-                              <span className="text-xs font-bold text-muted-foreground">
-                                {actionLabels[evento.acao] ?? evento.acao}
-                              </span>
-                            )}
-                            {evento.motivo && (
-                              <span className="text-xs text-destructive italic">Motivo: {evento.motivo}</span>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+          <GerenteLogs eventos={eventos} />
         </TabsContent>
 
         {/* ═══ TAB 4: Equipe ═══ */}
