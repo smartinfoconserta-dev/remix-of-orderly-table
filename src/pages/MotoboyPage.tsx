@@ -940,5 +940,6 @@ export default function MotoboyPage() {
       </Dialog>
       <LicenseBanner context="operational" />
     </div>
+    </ModuleGate>
   );
 }
