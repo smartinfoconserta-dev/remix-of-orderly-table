@@ -197,38 +197,11 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
         if (val > 0) setFundoTrocoInput(val.toFixed(2).replace(".", ","));
       });
   }, []);
-  const [turnoModalOpen, setTurnoModalOpen] = useState(false);
-  const [turnoManagerName, setTurnoManagerName] = useState("");
-  const [turnoManagerPin, setTurnoManagerPin] = useState("");
-  const [turnoError, setTurnoError] = useState<string | null>(null);
-  const [isClosingTurno, setIsClosingTurno] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [movModalOpen, setMovModalOpen] = useState(false);
-  const [movTipo, setMovTipo] = useState<"entrada" | "saida">("entrada");
-  const [movDescricao, setMovDescricao] = useState("");
-  const [movValor, setMovValor] = useState("");
-  const [movConfirmStep, setMovConfirmStep] = useState(false);
-  const [turnoReportOpen, setTurnoReportOpen] = useState(false);
-  const [dinheiroContado, setDinheiroContado] = useState("");
-  const [motivoDiferenca, setMotivoDiferenca] = useState("");
-  const [descontoModalOpen, setDescontoModalOpen] = useState(false);
-  const [descontoTipo, setDescontoTipo] = useState<"percentual" | "valor">("percentual");
-  const [descontoInput, setDescontoInput] = useState("");
-  const [descontoMotivo, setDescontoMotivo] = useState("");
-  const [descontoManagerName, setDescontoManagerName] = useState("");
-  const [descontoManagerPin, setDescontoManagerPin] = useState("");
-  const [descontoError, setDescontoError] = useState<string | null>(null);
-  const [descontoAplicado, setDescontoAplicado] = useState(0);
   const [couvertPessoas, setCouvertPessoas] = useState(0);
   const [couvertDispensado, setCouvertDispensado] = useState(false);
   const [cpfNotaMesa, setCpfNotaMesa] = useState("");
   const [cpfNotaMesaOpen, setCpfNotaMesaOpen] = useState(false);
-  const [estornoModalOpen, setEstornoModalOpen] = useState(false);
-  const [estornoFechamentoId, setEstornoFechamentoId] = useState<string | null>(null);
-  const [estornoMotivo, setEstornoMotivo] = useState("");
-  const [estornoPin, setEstornoPin] = useState("");
-  const [estornoNome, setEstornoNome] = useState("");
-  const [estornoError, setEstornoError] = useState<string | null>(null);
 
   /* ── Balcão/Delivery state (hook) ── */
   const balcao = useCaixaBalcaoState(pedidosBalcao);
