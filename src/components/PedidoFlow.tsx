@@ -10,7 +10,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import CategoryTabs from "@/components/CategoryTabs";
 import CategoryIcon from "@/components/CategoryIcon";
 import ProductModal from "@/components/ProductModal";
-import CartDrawer from "@/components/CartDrawer";
+import PedidoFlowCart from "@/components/pedido/PedidoFlowCart";
 import MinhaContaDrawer from "@/components/MinhaContaDrawer";
 import {
   AlertDialog,
