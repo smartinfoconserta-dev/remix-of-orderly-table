@@ -12,7 +12,7 @@ type PedidoTV = {
 };
 
 const TvInner = ({ storeId }: { storeId: string }) => {
-  const { pedidosBalcao } = useRestaurant();
+  const { pedidosBalcao, mesas } = useRestaurant();
   const [clock, setClock] = useState(() => new Date());
   const [modulos, setModulos] = useState<{ mesas: boolean; balcao: boolean; totem: boolean; garcomPdv: boolean }>({
     mesas: true, balcao: false, totem: false, garcomPdv: false,
