@@ -61,6 +61,7 @@ import { useStore } from "@/contexts/StoreContext";
 import { supabase } from "@/integrations/supabase/client";
 import IfoodPainel from "@/components/IfoodPainel";
 import { formatPrice } from "@/components/caixa/caixaHelpers";
+import GerenteFechamento from "@/components/gerente/GerenteFechamento";
 
 const paymentMethods: { value: PaymentMethod; label: string; icon: typeof Banknote; color: string; bg: string }[] = [
   { value: "dinheiro", label: "Dinheiro", icon: Banknote, color: "text-emerald-400", bg: "bg-emerald-500/15" },
@@ -251,17 +252,7 @@ const GerentePage = () => {
     }
   }, [effectiveGerente, isAdminAccess, pinInput, verifyManagerAccess]);
 
-  /* ── shift closing data ── */
-  const sumByMethod = (method: PaymentMethod) =>
-    fechamentos.reduce((acc, f) => {
-      const pags = f.pagamentos?.length ? f.pagamentos : [{ id: f.id, formaPagamento: f.formaPagamento, valor: f.total }];
-      return acc + pags.filter((p) => p.formaPagamento === method).reduce((s, p) => s + p.valor, 0);
-    }, 0);
-
-  const totalVendas = fechamentos.reduce((acc, f) => acc + f.total, 0);
-  const entradasExtras = movimentacoesCaixa.filter((m) => m.tipo === "entrada").reduce((acc, m) => acc + m.valor, 0);
-  const saidas = movimentacoesCaixa.filter((m) => m.tipo === "saida").reduce((acc, m) => acc + m.valor, 0);
-  const totalLiquido = fundoTroco + totalVendas + entradasExtras - saidas;
+  /* ── shift closing data (moved to GerenteFechamento) ── */
 
   /* ── audit logs — only relevant actions ── */
   const relevantEvents = useMemo(
@@ -604,86 +595,15 @@ const GerentePage = () => {
 
         {/* ═══ TAB 1: Fechamento do Turno ═══ */}
         <TabsContent value="fechamento" className="flex-1 overflow-y-auto p-4 md:p-6 mt-0">
-          {!pinVerificado ? pinGateUI : (
-          <div className="space-y-6">
-            {/* Payment breakdown */}
-            <div className="space-y-3">
-              <h2 className="text-sm font-black uppercase tracking-widest text-muted-foreground">Vendas por forma de pagamento</h2>
-              <div className="grid grid-cols-2 gap-3">
-                {paymentMethods.map((pm) => {
-                  const Icon = pm.icon;
-                  const total = sumByMethod(pm.value);
-                  return (
-                    <div key={pm.value} className="flex items-center gap-3 rounded-2xl border border-border bg-card p-4">
-                      <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${pm.bg} ${pm.color}`}>
-                        <Icon className="h-5 w-5" />
-                      </div>
-                      <div>
-                        <p className="text-xs font-bold text-muted-foreground">{pm.label}</p>
-                        <p className={`text-lg font-black tabular-nums ${pm.color}`}>{formatPrice(total)}</p>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Summary */}
-            <div className="space-y-2 rounded-2xl border border-border bg-card p-5">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">Fundo de troco</span>
-                <span className="font-bold tabular-nums text-foreground">{formatPrice(fundoTroco)}</span>
-              </div>
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">Total vendas</span>
-                <span className="font-bold tabular-nums text-foreground">{formatPrice(totalVendas)}</span>
-              </div>
-              {entradasExtras > 0 && (
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">Entradas extras</span>
-                  <span className="font-bold tabular-nums text-emerald-400">+ {formatPrice(entradasExtras)}</span>
-                </div>
-              )}
-              {saidas > 0 && (
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">Saídas</span>
-                  <span className="font-bold tabular-nums text-destructive">- {formatPrice(saidas)}</span>
-                </div>
-              )}
-              <div className="border-t border-border pt-3 mt-3 flex items-center justify-between">
-                <span className="text-base font-black text-foreground">Total líquido</span>
-                <span className="text-2xl font-black tabular-nums text-primary">{formatPrice(totalLiquido)}</span>
-              </div>
-            </div>
-
-            {/* Close day button */}
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="destructive" className="w-full h-12 rounded-xl text-base font-black gap-2">
-                  <XCircle className="h-5 w-5" />
-                  Fechar caixa do dia
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent className="rounded-2xl">
-                <AlertDialogHeader>
-                  <AlertDialogTitle className="flex items-center gap-2">
-                    <AlertTriangle className="h-5 w-5 text-destructive" />
-                    Confirmar fechamento do dia
-                  </AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Esta ação irá zerar todas as mesas, limpar movimentações e fechamentos do turno. Os logs de auditoria serão preservados. Deseja continuar?
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel className="rounded-xl font-bold">Cancelar</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleFecharDia} className="rounded-xl font-black bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                    Confirmar fechamento
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          </div>
-          )}
+          <GerenteFechamento
+            pinVerificado={pinVerificado}
+            pinGateUI={pinGateUI}
+            fechamentos={fechamentos}
+            movimentacoesCaixa={movimentacoesCaixa}
+            fundoTroco={fundoTroco}
+            caixaAberto={caixaAberto}
+            onFecharDia={handleFecharDia}
+          />
         </TabsContent>
 
         {/* ═══ TAB 2: Relatórios ═══ */}
