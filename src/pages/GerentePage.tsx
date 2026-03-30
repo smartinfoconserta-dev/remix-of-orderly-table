@@ -340,6 +340,8 @@ const GerentePage = () => {
   const totalTotem = useMemo(() => fechTotem.reduce((a, f) => a + f.total, 0), [fechTotem]);
   const totalDelivery = useMemo(() => fechDelivery.reduce((a, f) => a + f.total, 0), [fechDelivery]);
   const totalMotoboys = useMemo(() => fechMotoboys.reduce((a, f) => a + f.total, 0), [fechMotoboys]);
+  const fechGarcomPdv = useMemo(() => fechFiltrados.filter(f => f.origem === "garcom_pdv"), [fechFiltrados]);
+  const totalGarcomPdv = useMemo(() => fechGarcomPdv.reduce((a, f) => a + f.total, 0), [fechGarcomPdv]);
 
   const diferencasFiltradas = useMemo(() =>
     diferencasCaixa.filter(d => {
