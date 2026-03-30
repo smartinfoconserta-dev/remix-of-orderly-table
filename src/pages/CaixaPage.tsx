@@ -469,14 +469,6 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
     [dismissChamarGarcom, resetCloseAccountState],
   );
 
-  const resetCriticalDialog = useCallback(() => {
-    setCriticalAction(null);
-    setCriticalManagerName("");
-    setCriticalManagerPin("");
-    setCriticalReason("");
-    setCriticalError(null);
-    setIsAuthorizingCriticalAction(false);
-  }, []);
 
   /* ── caixa open time (must be before early returns) ── */
   const caixaOpenTime = useMemo(() => {
