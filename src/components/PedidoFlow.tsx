@@ -12,6 +12,7 @@ import ProductModal from "@/components/ProductModal";
 import PedidoFlowCart from "@/components/pedido/PedidoFlowCart";
 import PedidoFlowCatalog from "@/components/pedido/PedidoFlowCatalog";
 import PedidoFlowHome from "@/components/pedido/PedidoFlowHome";
+import { buildPedidoFlowHeader } from "@/components/pedido/PedidoFlowHeader";
 import MinhaContaDrawer from "@/components/MinhaContaDrawer";
 import {
   AlertDialog,
