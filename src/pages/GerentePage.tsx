@@ -183,10 +183,6 @@ const GerentePage = () => {
   const [pinInput, setPinInput] = useState("");
   const [pinError, setPinError] = useState("");
 
-  // Relatório state
-  const [periodo, setPeriodo] = useState<PeriodoFiltro>("hoje");
-  const [customInicio, setCustomInicio] = useState("");
-  const [customFim, setCustomFim] = useState("");
 
   // Store ID for PIN management  
   const { storeId: ctxStoreId } = useStore();
