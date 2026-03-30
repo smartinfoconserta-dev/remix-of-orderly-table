@@ -2046,39 +2046,13 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
       />
 
       {/* ── QR SCANNER DIALOG ── */}
-      <Dialog open={qrScanOpen} onOpenChange={(o) => { setQrScanOpen(o); if (!o) setQrScanInput(""); }}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Leitura de QR Code</DialogTitle>
-            <DialogDescription>
-              Escaneie o cupom do cliente ou digite o código
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-2">
-            <Input
-              ref={qrScanInputRef}
-              autoFocus
-              value={qrScanInput}
-              onChange={(e) => setQrScanInput(e.target.value)}
-              placeholder="Aguardando leitura..."
-              className="text-lg font-mono h-12"
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  handleQrScan(qrScanInput);
-                  setQrScanInput("");
-                  setTimeout(() => qrScanInputRef.current?.focus(), 50);
-                }
-              }}
-            />
-            <p className="text-xs text-muted-foreground text-center">
-              O leitor USB envia os dados como digitação. Pressione Enter ou escaneie.
-            </p>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => { setQrScanOpen(false); setQrScanInput(""); }}>Fechar</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <CaixaQrScanner
+        open={qrScanOpen}
+        onClose={() => { setQrScanOpen(false); setQrScanInput(""); }}
+        input={qrScanInput}
+        setInput={setQrScanInput}
+        onScan={handleQrScan}
+      />
 
       <LicenseBanner context="operational" />
     </>
