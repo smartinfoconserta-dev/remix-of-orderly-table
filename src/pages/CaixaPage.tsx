@@ -587,29 +587,6 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
     setMovConfirmStep(false);
   }, [currentOperator, movTipo, movDescricao, movValor, movConfirmStep, registrarMovimentacaoCaixa]);
 
-  /* ── Balcão/Delivery helpers ── */
-  const resetBalcaoStates = useCallback(() => {
-    setBalcaoFlowAtivo(false);
-    setBalcaoOpen(false);
-    setBalcaoTipo("balcao");
-    setBalcaoClienteNome("");
-    setBalcaoTelefone("");
-    setBalcaoEndereco("");
-    setBalcaoBairro("");
-    setBalcaoReferencia("");
-    setBalcaoFormaPag("dinheiro");
-    setBalcaoTroco("");
-    setBalcaoCpf("");
-    setBalcaoNumero("");
-    setBalcaoComplemento("");
-    setDeliveryBusca("");
-    setDeliveryResultados([]);
-    setDeliveryStep("busca");
-    setDeliveryCep("");
-    setDeliveryCepLoading(false);
-    setDeliveryCepErro("");
-    setDeliveryCidade("");
-  }, []);
 
   /* ── Print receipt helper (must be before early returns) ── */
   const handlePrintComanda = useCallback((data: {
