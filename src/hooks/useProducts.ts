@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Produto, Categoria, GrupoPersonalizacao, Adicional, ProductStep } from "@/data/menuData";
 import { categorias as defaultCategorias } from "@/data/menuData";
+import { getActiveStoreId } from "@/lib/sessionManager";
 
 // ─── In-memory cache ───
 let _produtosCache: Produto[] = [];
