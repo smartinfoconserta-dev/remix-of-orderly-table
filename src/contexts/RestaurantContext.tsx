@@ -7,118 +7,25 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useStore } from "@/contexts/StoreContext";
 import { toast } from "sonner";
 
-export interface ItemCarrinho {
-  uid: string;
-  produtoId: string;
-  nome: string;
-  precoBase: number;
-  quantidade: number;
-  removidos: string[];
-  adicionais: { nome: string; preco: number }[];
-  bebida?: string | null;
-  tipo?: string | null;
-  embalagem?: string | null;
-  observacoes?: string;
-  precoUnitario: number;
-  imagemUrl?: string;
-  gruposEscolhidos?: { grupoNome: string; tipo: "escolha" | "adicional" | "retirar"; opcoes: { nome: string; preco: number }[] }[];
-  setor?: "cozinha" | "bar" | "ambos";
-}
+// Types — re-exported for backward compatibility
+import type {
+  ItemCarrinho, PedidoRealizado, EventoOperacional,
+  MovimentacaoCaixa, FechamentoConta, Mesa,
+} from "@/types/restaurant";
+export type { ItemCarrinho, PedidoRealizado, EventoOperacional, MovimentacaoCaixa, FechamentoConta, Mesa };
 
-export interface PedidoRealizado {
-  id: string;
-  numeroPedido: number;
-  itens: ItemCarrinho[];
-  total: number;
-  criadoEm: string;
-  criadoEmIso: string;
-  origem: "mesa" | "cliente" | "garcom" | "caixa" | "balcao" | "delivery" | "totem" | "ifood";
-  mesaId: string;
-  garcomId?: string;
-  garcomNome?: string;
-  caixaId?: string;
-  caixaNome?: string;
-  pronto?: boolean;
-  paraViagem?: boolean;
-  clienteNome?: string;
-  clienteTelefone?: string;
-  enderecoCompleto?: string;
-  bairro?: string;
-  referencia?: string;
-  formaPagamentoDelivery?: string;
-  trocoParaQuanto?: number;
-  observacaoGeral?: string;
-  statusBalcao?: "aberto" | "preparando" | "pronto" | "retirado" | "pago" | "saiu" | "entregue" | "aguardando_confirmacao" | "devolvido" | "cancelado" | "pendente_ifood";
-  motoboyNome?: string;
-  cancelado?: boolean;
-  canceladoEm?: string;
-  canceladoMotivo?: string;
-  canceladoPor?: string;
-}
-
-export interface EventoOperacional {
-  id: string;
-  tipo: "pedido" | "chamado" | "caixa" | "movimentacao";
-  descricao: string;
-  criadoEm: string;
-  criadoEmIso: string;
-  mesaId?: string;
-  usuarioId?: string;
-  usuarioNome?: string;
-  acao?: string;
-  valor?: number;
-  itemNome?: string;
-  motivo?: string;
-  pedidoNumero?: number;
-}
-
-export interface MovimentacaoCaixa {
-  id: string;
-  tipo: CashMovementType;
-  descricao: string;
-  valor: number;
-  criadoEm: string;
-  criadoEmIso: string;
-  usuarioId: string;
-  usuarioNome: string;
-}
-
-export interface FechamentoConta {
-  id: string;
-  numeroComanda?: number;
-  mesaId: string;
-  mesaNumero: number;
-  total: number;
-  formaPagamento: PaymentMethod;
-  pagamentos: SplitPayment[];
-  itens?: ItemCarrinho[];
-  criadoEm: string;
-  criadoEmIso: string;
-  caixaId: string;
-  caixaNome: string;
-  troco?: number;
-  subtotal?: number;
-  desconto?: number;
-  couvert?: number;
-  numeroPessoas?: number;
-  cancelado?: boolean;
-  canceladoEm?: string;
-  canceladoMotivo?: string;
-  canceladoPor?: string;
-  origem?: "mesa" | "balcao" | "delivery" | "totem" | "motoboy";
-  cpfNota?: string;
-}
-
-export interface Mesa {
-  id: string;
-  numero: number;
-  status: "livre" | "pendente" | "consumo";
-  total: number;
-  carrinho: ItemCarrinho[];
-  pedidos: PedidoRealizado[];
-  chamarGarcom: boolean;
-  chamadoEm: number | null;
-}
+// DB helpers & pure functions
+import {
+  pedidoToRow, rowToPedido, fechamentoToRow, rowToFechamento,
+  eventoToRow, rowToEvento, movToRow, rowToMovimentacao,
+  dbInsertPedido, dbUpdatePedido, dbInsertFechamento, dbUpdateFechamento,
+  dbInsertEvento, dbInsertMovimentacao, dbUpsertEstadoCaixa, dbSyncEstadoMesa,
+  decrementStock, normalizeItem, cloneItem, calcularTotalItens,
+  criarMesasIniciais, derivarStatus, resetMesa, buildEvent, appendEvent,
+  proximoNumeroPedido, proximoNumeroComanda, _nextPedidoNumber,
+  setNextPedidoNumber, setContadorComanda,
+  formatMesaNumero, formatClock, formatDateTime,
+} from "@/services/dbHelpers";
 
 interface PedidoMeta {
   modo: "cliente" | "garcom" | "caixa" | "totem";
@@ -234,281 +141,9 @@ const _global = globalThis as unknown as { __restaurantCtx?: React.Context<Resta
 if (!_global.__restaurantCtx) _global.__restaurantCtx = createContext<RestaurantContextType | null>(null);
 const RestaurantContext = _global.__restaurantCtx;
 
-// ─── helpers ───
-let _contadorComanda = 0;
-const proximoNumeroComanda = () => { _contadorComanda += 1; return _contadorComanda; };
-
-// Global pedido number counter — loaded from DB on init
-let _nextPedidoNumber = 1;
-const proximoNumeroPedido = () => { const n = _nextPedidoNumber; _nextPedidoNumber += 1; return n; };
-
-function derivarStatus(m: Pick<Mesa, "carrinho" | "pedidos">): Mesa["status"] {
-  if (m.pedidos.length > 0) return "consumo";
-  if (m.carrinho.length > 0) return "pendente";
-  return "livre";
-}
-
-const formatMesaNumero = (numero: number) => `Mesa ${String(numero).padStart(2, "0")}`;
-const formatClock = (date = new Date()) => date.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
-const formatDateTime = (date = new Date()) => date.toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
-
-const buildEvent = (input: Omit<EventoOperacional, "id" | "criadoEm" | "criadoEmIso">): EventoOperacional => {
-  const now = new Date();
-  return { id: `evento-${now.getTime()}-${Math.random().toString(36).slice(2, 8)}`, criadoEm: formatDateTime(now), criadoEmIso: now.toISOString(), ...input };
-};
-
-const appendEvent = (eventos: EventoOperacional[], input: Omit<EventoOperacional, "id" | "criadoEm" | "criadoEmIso">) =>
-  [buildEvent(input), ...eventos].slice(0, 300);
-
-const calcularTotalItens = (itens: ItemCarrinho[]) => itens.reduce((acc, item) => acc + item.precoUnitario * item.quantidade, 0);
-
-const criarMesasIniciais = (total = 20): Mesa[] =>
-  Array.from({ length: total }, (_, i) => ({
-    id: `mesa-${i + 1}`, numero: i + 1, status: "livre" as const, total: 0, carrinho: [], pedidos: [], chamarGarcom: false, chamadoEm: null,
-  }));
-
-const cloneItem = (item: ItemCarrinho): ItemCarrinho => ({ ...item, removidos: [...item.removidos], adicionais: item.adicionais.map((a) => ({ ...a })) });
-
-const normalizeItem = (item: Partial<ItemCarrinho>, index = 0): ItemCarrinho => ({
-  uid: String(item.uid ?? `item-${Date.now()}-${index}`), produtoId: String(item.produtoId ?? ""),
-  nome: String(item.nome ?? "Item"), precoBase: Number(item.precoBase ?? item.precoUnitario ?? 0),
-  quantidade: Number(item.quantidade ?? 1), removidos: Array.isArray(item.removidos) ? item.removidos.map(String) : [],
-  adicionais: Array.isArray(item.adicionais) ? item.adicionais.map((a) => ({ nome: String(a.nome ?? "Adicional"), preco: Number(a.preco ?? 0) })) : [],
-  bebida: item.bebida ?? null, tipo: item.tipo ?? null, embalagem: item.embalagem ?? null,
-  observacoes: item.observacoes ?? "", precoUnitario: Number(item.precoUnitario ?? item.precoBase ?? 0),
-  imagemUrl: item.imagemUrl ?? undefined, gruposEscolhidos: Array.isArray(item.gruposEscolhidos) ? item.gruposEscolhidos : undefined,
-  setor: item.setor ?? undefined,
-});
-
 const estadoInicial = (): RestaurantStore => ({
   mesas: [], eventos: [], movimentacoesCaixa: [], fechamentos: [], caixaAberto: false, fundoTroco: 0, pedidosBalcao: [],
 });
-
-const resetMesa = (mesa: Mesa): Mesa => ({
-  ...mesa, carrinho: [], pedidos: [], total: 0, chamarGarcom: false, chamadoEm: null, status: "livre" as const,
-});
-
-// ── Supabase persistence helpers ──
-
-// DB row converters for pedidos
-const pedidoToRow = (p: PedidoRealizado, storeId: string) => ({
-  id: p.id, store_id: storeId, numero_pedido: p.numeroPedido,
-  itens: JSON.parse(JSON.stringify(p.itens)), total: p.total,
-  criado_em: p.criadoEm, criado_em_iso: p.criadoEmIso, origem: p.origem,
-  mesa_id: p.mesaId || null, garcom_id: p.garcomId || null, garcom_nome: p.garcomNome || null,
-  caixa_id: p.caixaId || null, caixa_nome: p.caixaNome || null,
-  pronto: p.pronto ?? false, para_viagem: p.paraViagem ?? false,
-  cliente_nome: p.clienteNome || null, cliente_telefone: p.clienteTelefone || null,
-  endereco_completo: p.enderecoCompleto || null, bairro: p.bairro || null,
-  referencia: p.referencia || null, forma_pagamento_delivery: p.formaPagamentoDelivery || null,
-  troco_para_quanto: p.trocoParaQuanto ?? null, observacao_geral: p.observacaoGeral || null,
-  status_balcao: p.statusBalcao ?? "aberto", motoboy_nome: p.motoboyNome || null,
-  cancelado: p.cancelado ?? false, cancelado_em: p.canceladoEm || null,
-  cancelado_motivo: p.canceladoMotivo || null, cancelado_por: p.canceladoPor || null,
-});
-
-const rowToPedido = (row: any): PedidoRealizado => ({
-  id: row.id, numeroPedido: row.numero_pedido,
-  itens: (Array.isArray(row.itens) ? row.itens : []).map((it: any, i: number) => normalizeItem(it, i)),
-  total: Number(row.total ?? 0), criadoEm: row.criado_em, criadoEmIso: row.criado_em_iso,
-  origem: row.origem, mesaId: row.mesa_id ?? "",
-  garcomId: row.garcom_id ?? undefined, garcomNome: row.garcom_nome ?? undefined,
-  caixaId: row.caixa_id ?? undefined, caixaNome: row.caixa_nome ?? undefined,
-  pronto: row.pronto ?? false, paraViagem: row.para_viagem ?? false,
-  clienteNome: row.cliente_nome ?? undefined, clienteTelefone: row.cliente_telefone ?? undefined,
-  enderecoCompleto: row.endereco_completo ?? undefined, bairro: row.bairro ?? undefined,
-  referencia: row.referencia ?? undefined, formaPagamentoDelivery: row.forma_pagamento_delivery ?? undefined,
-  trocoParaQuanto: row.troco_para_quanto ?? undefined, observacaoGeral: row.observacao_geral ?? undefined,
-  statusBalcao: row.status_balcao ?? "aberto", motoboyNome: row.motoboy_nome ?? undefined,
-  cancelado: row.cancelado ?? false, canceladoEm: row.cancelado_em ?? undefined,
-  canceladoMotivo: row.cancelado_motivo ?? undefined, canceladoPor: row.cancelado_por ?? undefined,
-});
-
-const fechamentoToRow = (f: FechamentoConta, storeId: string) => ({
-  id: f.id, store_id: storeId, mesa_id: f.mesaId || null, mesa_numero: f.mesaNumero ?? 0,
-  origem: f.origem ?? "mesa", total: f.total, subtotal: f.subtotal ?? f.total,
-  desconto: f.desconto ?? 0, couvert: f.couvert ?? 0, numero_pessoas: f.numeroPessoas ?? 0,
-  forma_pagamento: f.formaPagamento, pagamentos: JSON.parse(JSON.stringify(f.pagamentos)),
-  itens: JSON.parse(JSON.stringify(f.itens ?? [])), caixa_id: f.caixaId || null,
-  caixa_nome: f.caixaNome || null, troco: f.troco ?? 0, numero_comanda: f.numeroComanda ?? null,
-  cancelado: f.cancelado ?? false, cancelado_em: f.canceladoEm || null,
-  cancelado_motivo: f.canceladoMotivo || null, cancelado_por: f.canceladoPor || null,
-  criado_em: f.criadoEm || null, criado_em_iso: f.criadoEmIso,
-  cpf_nota: f.cpfNota || null,
-});
-
-const eventoToRow = (e: EventoOperacional, storeId: string) => ({
-  id: e.id, store_id: storeId, tipo: e.tipo, descricao: e.descricao || null,
-  mesa_id: e.mesaId || null, usuario_id: e.usuarioId || null, usuario_nome: e.usuarioNome || null,
-  acao: e.acao || null, valor: e.valor ?? null, item_nome: e.itemNome || null,
-  motivo: e.motivo || null, pedido_numero: e.pedidoNumero ?? null,
-  criado_em: e.criadoEm || null, criado_em_iso: e.criadoEmIso,
-});
-
-const movToRow = (m: MovimentacaoCaixa, storeId: string) => ({
-  id: m.id, store_id: storeId, tipo: m.tipo, descricao: m.descricao || null,
-  valor: m.valor, usuario_id: m.usuarioId || null, usuario_nome: m.usuarioNome || null,
-  criado_em: m.criadoEm || null, criado_em_iso: m.criadoEmIso,
-});
-
-const rowToFechamento = (row: any): FechamentoConta => ({
-  id: row.id, numeroComanda: row.numero_comanda ?? undefined,
-  mesaId: row.mesa_id ?? "", mesaNumero: row.mesa_numero ?? 0,
-  total: Number(row.total ?? 0), formaPagamento: row.forma_pagamento ?? "dinheiro",
-  pagamentos: Array.isArray(row.pagamentos) ? row.pagamentos : [],
-  itens: Array.isArray(row.itens) ? row.itens : [],
-  criadoEm: row.criado_em ?? "", criadoEmIso: row.criado_em_iso ?? new Date().toISOString(),
-  caixaId: row.caixa_id ?? "", caixaNome: row.caixa_nome ?? "",
-  troco: Number(row.troco ?? 0), subtotal: Number(row.subtotal ?? 0),
-  desconto: Number(row.desconto ?? 0), couvert: Number(row.couvert ?? 0),
-  numeroPessoas: row.numero_pessoas ?? 0, cancelado: row.cancelado ?? false,
-  canceladoEm: row.cancelado_em ?? undefined, canceladoMotivo: row.cancelado_motivo ?? undefined,
-  canceladoPor: row.cancelado_por ?? undefined, origem: row.origem ?? "mesa",
-  cpfNota: row.cpf_nota ?? undefined,
-});
-
-const rowToEvento = (row: any): EventoOperacional => ({
-  id: row.id, tipo: row.tipo, descricao: row.descricao ?? "",
-  criadoEm: row.criado_em ?? "", criadoEmIso: row.criado_em_iso ?? new Date().toISOString(),
-  mesaId: row.mesa_id ?? undefined, usuarioId: row.usuario_id ?? undefined,
-  usuarioNome: row.usuario_nome ?? undefined, acao: row.acao ?? undefined,
-  valor: row.valor != null ? Number(row.valor) : undefined, itemNome: row.item_nome ?? undefined,
-  motivo: row.motivo ?? undefined, pedidoNumero: row.pedido_numero ?? undefined,
-});
-
-const rowToMovimentacao = (row: any): MovimentacaoCaixa => ({
-  id: row.id, tipo: row.tipo, descricao: row.descricao ?? "",
-  valor: Number(row.valor ?? 0), criadoEm: row.criado_em ?? "",
-  criadoEmIso: row.criado_em_iso ?? new Date().toISOString(),
-  usuarioId: row.usuario_id ?? "", usuarioNome: row.usuario_nome ?? "",
-});
-
-// DB insert — number is already resolved by the caller
-const dbInsertPedido = async (p: PedidoRealizado) => {
-  const sid = getActiveStoreId();
-  if (!sid) { console.warn("dbInsertPedido: storeId is null, skipping"); return; }
-  try {
-    if (p.numeroPedido >= _nextPedidoNumber) _nextPedidoNumber = p.numeroPedido + 1;
-    const row = pedidoToRow(p, sid);
-    const { error } = await supabase.rpc("rpc_insert_pedido" as any, { _data: row });
-    if (error) { console.error("DB insert pedido", error); toast.error("Erro ao salvar pedido no banco"); }
-    else {
-      // Decrement stock for items with controle_estoque
-      decrementStock(p.itens, sid);
-    }
-  } catch (err) {
-    console.error("dbInsertPedido unexpected error", err);
-    const fallbackRow = pedidoToRow(p, sid);
-    supabase.rpc("rpc_insert_pedido" as any, { _data: fallbackRow }).then(({ error }: any) => {
-      if (error) { console.error("DB insert pedido fallback", error); toast.error("Erro ao salvar pedido"); }
-      else { decrementStock(p.itens, sid); }
-    });
-  }
-};
-
-const decrementStock = async (itens: any[], storeId: string) => {
-  try {
-    // Get product IDs from items
-    const prodIds = [...new Set(itens.map((item: any) => item.produtoId || item.id).filter(Boolean))];
-    if (prodIds.length === 0) return;
-    // Fetch which products have stock control enabled
-    const { data: prods } = await supabase
-      .from("produtos")
-      .select("id, controle_estoque, quantidade_estoque")
-      .eq("store_id", storeId)
-      .in("id", prodIds)
-      .eq("controle_estoque", true);
-    if (!prods || prods.length === 0) return;
-    const prodMap = new Map(prods.map(p => [p.id, p]));
-    // Count quantities per product in the order
-    const qtdMap = new Map<string, number>();
-    for (const item of itens) {
-      const pid = item.produtoId || item.id;
-      if (pid && prodMap.has(pid)) {
-        qtdMap.set(pid, (qtdMap.get(pid) || 0) + (Number(item.quantidade) || Number(item.qtd) || 1));
-      }
-    }
-    // Update each product
-    for (const [pid, qtd] of qtdMap) {
-      const prod = prodMap.get(pid)!;
-      const newQtd = Math.max(0, (prod.quantidade_estoque ?? 0) - qtd);
-      supabase.from("produtos").update({ quantidade_estoque: newQtd } as any).eq("id", pid).then(({ error }) => {
-        if (error) console.error("Erro ao decrementar estoque:", error);
-      });
-    }
-  } catch (err) {
-    console.error("decrementStock error:", err);
-  }
-};
-
-const dbUpdatePedido = (pedidoId: string, updates: Record<string, any>) => {
-  const sid = getActiveStoreId();
-  if (!sid) { console.warn("dbUpdatePedido: storeId is null"); return; }
-  supabase.rpc("rpc_update_pedido" as any, { _id: pedidoId, _store_id: sid, _updates: updates }).then(({ error }: any) => {
-    if (error) { console.error("DB update pedido", error); toast.error("Erro ao atualizar pedido"); }
-  });
-};
-
-const dbInsertFechamento = (f: FechamentoConta) => {
-  const sid = getActiveStoreId();
-  if (!sid) { console.warn("dbInsertFechamento: storeId is null, skipping"); return; }
-  supabase.rpc("rpc_insert_fechamento" as any, { _data: fechamentoToRow(f, sid) }).then(({ error }: any) => {
-    if (error) { console.error("DB insert fechamento", error); toast.error("Erro ao salvar fechamento no banco"); }
-  });
-};
-
-const dbUpdateFechamento = (id: string, updates: Record<string, any>) => {
-  const sid = getActiveStoreId();
-  if (!sid) { console.warn("dbUpdateFechamento: storeId is null"); return; }
-  supabase.rpc("rpc_update_fechamento" as any, { _id: id, _store_id: sid, _updates: updates }).then(({ error }: any) => {
-    if (error) { console.error("DB update fechamento", error); toast.error("Erro ao atualizar fechamento"); }
-  });
-};
-
-const dbInsertEvento = (e: EventoOperacional) => {
-  const sid = getActiveStoreId();
-  if (!sid) return;
-  supabase.rpc("rpc_insert_evento" as any, { _data: eventoToRow(e, sid) }).then(({ error }: any) => {
-    if (error) { console.error("DB insert evento", error); toast.error("Erro ao registrar evento"); }
-  });
-};
-
-const dbInsertMovimentacao = (m: MovimentacaoCaixa) => {
-  const sid = getActiveStoreId();
-  if (!sid) { console.warn("dbInsertMovimentacao: storeId is null"); return; }
-  supabase.rpc("rpc_insert_movimentacao" as any, { _data: movToRow(m, sid) }).then(({ error }: any) => {
-    if (error) { console.error("DB insert mov", error); toast.error("Erro ao salvar movimentação"); }
-  });
-};
-
-const dbUpsertEstadoCaixa = (aberto: boolean, fundoTroco: number, nome: string, extras?: { diferenca_dinheiro?: number; diferenca_motivo?: string; fundo_proximo?: number }) => {
-  const sid = getActiveStoreId();
-  if (!sid) return;
-  const data: Record<string, any> = { aberto, fundo_troco: fundoTroco };
-  if (aberto) { data.aberto_por = nome; data.aberto_em = new Date().toISOString(); }
-  else { data.fechado_por = nome; data.fechado_em = new Date().toISOString(); }
-  if (extras?.diferenca_dinheiro !== undefined) data.diferenca_dinheiro = extras.diferenca_dinheiro;
-  if (extras?.diferenca_motivo !== undefined) data.diferenca_motivo = extras.diferenca_motivo;
-  if (extras?.fundo_proximo !== undefined) data.fundo_proximo = extras.fundo_proximo;
-  supabase.rpc("rpc_upsert_estado_caixa" as any, { _store_id: sid, _data: data }).then(({ error }: any) => {
-    if (error) { console.error("DB upsert caixa", error); toast.error("Erro ao atualizar caixa"); }
-  });
-};
-
-const dbSyncEstadoMesa = (mesa: Mesa) => {
-  const sid = getActiveStoreId();
-  if (!sid) return;
-  const row = {
-    id: mesa.id, mesa_id: mesa.id, numero: mesa.numero, status: mesa.status,
-    total: mesa.total, carrinho: JSON.parse(JSON.stringify(mesa.carrinho)),
-    pedidos: JSON.parse(JSON.stringify(mesa.pedidos)),
-    chamar_garcom: mesa.chamarGarcom, chamado_em: mesa.chamadoEm,
-    store_id: sid,
-  };
-  supabase.rpc("rpc_upsert_estado_mesa" as any, { _data: row }).then(({ error }: any) => {
-    if (error) { console.error("DB sync mesa via RPC", error); toast.error("Erro ao sincronizar mesa"); }
-  });
-};
 
 // ── Enhanced appendEvent that also persists ──
 const appendEventAndPersist = (
@@ -535,11 +170,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   useEffect(() => {
     const syncActiveStoreId = () => {
       const current = derivedStoreId ?? getActiveStoreId();
-
-      // storeId is now managed by sessionManager — no local cache needed
-
       setActiveStoreId(prev => prev !== current ? current : prev);
-
       if (!current && authLevel === "unauthenticated") {
         loadedStoreRef.current = null;
         setStore(estadoInicial());
@@ -571,20 +202,16 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     const load = async () => {
       const sid = activeStoreId;
       if (!sid) return;
-      // Already loaded for this store
       if (loadedStoreRef.current === sid) return;
       loadedStoreRef.current = sid;
 
       console.log("[RestaurantContext] Loading data for store:", sid);
-
-      // Pre-load config into memory cache so getSistemaConfig() returns real data
       await getSistemaConfigAsync(sid);
 
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       const iso = today.toISOString();
 
-      // Historical data (last 30 days for allFechamentos)
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
       thirtyDaysAgo.setHours(0, 0, 0, 0);
@@ -601,33 +228,30 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         supabase.from("fechamentos").select("*").eq("store_id", sid).gte("criado_em_iso", isoHistory).order("criado_em_iso", { ascending: false }).limit(500),
       ]);
 
-      // Get max numero_pedido for proper sequencing
       const { data: maxPedidoData } = await supabase
         .from("pedidos")
         .select("numero_pedido")
         .eq("store_id", sid)
         .order("numero_pedido", { ascending: false })
         .limit(1);
-      _nextPedidoNumber = (maxPedidoData?.[0]?.numero_pedido ?? 0) + 1;
+      setNextPedidoNumber((maxPedidoData?.[0]?.numero_pedido ?? 0) + 1);
 
       const allPedidos = (pedidosRes.data ?? []).map(rowToPedido);
       const pedidosMesa = allPedidos.filter(p => !["balcao", "delivery", "totem", "ifood"].includes(p.origem));
       const pedidosBalcao = allPedidos.filter(p => ["balcao", "delivery", "totem", "ifood"].includes(p.origem));
       const fechamentos = (fechRes.data ?? []).map(rowToFechamento);
       const maxComanda = fechamentos.reduce((max, f) => Math.max(max, f.numeroComanda ?? 0), 0);
-      _contadorComanda = maxComanda;
+      setContadorComanda(maxComanda);
       const eventos = (evtRes.data ?? []).map(rowToEvento);
       const movimentacoes = (movRes.data ?? []).map(rowToMovimentacao);
 
       console.log(`[RestaurantContext] Loaded: ${allPedidos.length} pedidos, ${fechamentos.length} fechamentos, caixa: ${caixaRes.data?.[0]?.aberto ?? "N/A"}`);
 
-      // Build mesa state from estado_mesas + pedidos
       const estadoMesasMap = new Map<string, any>();
       for (const row of (estadoMesasRes.data ?? [])) {
         estadoMesasMap.set(row.mesa_id ?? row.id, row);
       }
 
-      // Group mesa pedidos by mesaId
       const pedidosPorMesa = new Map<string, PedidoRealizado[]>();
       for (const p of pedidosMesa) {
         if (!p.mesaId) continue;
@@ -637,9 +261,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       }
 
       const mesasDb = mesasDbRes.data ?? [];
-      const mesasList = mesasDb.length > 0
-        ? mesasDb
-        : criarMesasIniciais();
+      const mesasList = mesasDb.length > 0 ? mesasDb : criarMesasIniciais();
 
       const mesas: Mesa[] = mesasList.map((mesaRow) => {
         const mesaId = `mesa-${mesaRow.numero}`;
@@ -659,10 +281,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       const caixaRow = caixaRes.data?.[0];
 
       setStore({
-        mesas,
-        eventos,
-        movimentacoesCaixa: movimentacoes,
-        fechamentos,
+        mesas, eventos, movimentacoesCaixa: movimentacoes, fechamentos,
         caixaAberto: caixaRow?.aberto ?? false,
         fundoTroco: Number(caixaRow?.fundo_troco ?? 0),
         pedidosBalcao,
@@ -673,15 +292,11 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       setAllMovimentacoesCaixa(movimentacoes);
     };
 
-    // Run immediately
     load();
 
-    // Retry periodically if storeId wasn't available yet (session may set later)
     const retryInterval = setInterval(() => {
       const sid = getActiveStoreId();
-      if (sid && loadedStoreRef.current !== sid) {
-        load();
-      }
+      if (sid && loadedStoreRef.current !== sid) { load(); }
     }, 1500);
 
     return () => clearInterval(retryInterval);
@@ -702,7 +317,6 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
               if (prev.pedidosBalcao.find(x => x.id === p.id)) return prev;
               return { ...prev, pedidosBalcao: [...prev.pedidosBalcao, p] };
             } else {
-              // Add to mesa
               const mesas = prev.mesas.map(m => {
                 if (m.id !== p.mesaId) return m;
                 if (m.pedidos.find(x => x.id === p.id)) return m;
@@ -820,7 +434,6 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     const todayIso = today.toISOString();
 
     const pollAll = async () => {
-      // 1. Pedidos
       const { data: pedidosData, error: pedidosErr } = await supabase.rpc("rpc_get_operational_pedidos" as any, { _store_id: sid });
       if (!pedidosErr && pedidosData) {
         const freshPedidos = (pedidosData as any[]).map(rowToPedido);
@@ -840,7 +453,6 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           return changed ? { ...prev, pedidosBalcao: updatedBalcao } : prev;
         });
 
-        // Sync mesa pedidos
         const freshMesa = freshPedidos.filter(p => !["balcao", "delivery", "totem", "ifood"].includes(p.origem));
         if (freshMesa.length > 0) {
           setStore(prev => {
@@ -874,7 +486,6 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         }
       }
 
-      // 2. Fechamentos do dia
       const { data: fechData } = await supabase
         .from("fechamentos").select("*")
         .eq("store_id", sid)
@@ -897,7 +508,6 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         });
       }
 
-      // 3. Estado do caixa
       const { data: caixaData } = await supabase
         .from("estado_caixa").select("*")
         .eq("store_id", sid)
@@ -1019,13 +629,12 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   }, []);
 
   const confirmarPedido = useCallback(async (mesaId: string, meta?: PedidoMeta) => {
-    // Get atomic number from DB BEFORE setStore (async)
     const sid = getActiveStoreId();
-    let realNum = proximoNumeroPedido(); // fallback
+    let realNum = proximoNumeroPedido();
     if (sid) {
       try {
         const { data: nextNum } = await supabase.rpc("next_order_number" as any, { _store_id: sid });
-        if (typeof nextNum === "number") { realNum = nextNum; if (nextNum >= _nextPedidoNumber) _nextPedidoNumber = nextNum + 1; }
+        if (typeof nextNum === "number") { realNum = nextNum; if (nextNum >= _nextPedidoNumber) setNextPedidoNumber(nextNum + 1); }
       } catch (err) { console.error("confirmarPedido: next_order_number error", err); }
     }
 
@@ -1050,7 +659,6 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         paraViagem: meta?.paraViagem || false,
       };
 
-      // Persist to DB via RPC
       if (sid) {
         const row = pedidoToRow(novoPedido, sid);
         supabase.rpc("rpc_insert_pedido" as any, { _data: row }).then(({ error }: any) => {
@@ -1178,7 +786,6 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           const pedidoCancelado = itens.length === 0;
           eventInput = { tipo: "caixa", descricao: pedidoCancelado ? `Caixa ${audit.usuario.nome} cancelou o Pedido #${pedido.numeroPedido} da ${formatMesaNumero(mesa.numero)}` : newQty < 1 ? `Caixa ${audit.usuario.nome} excluiu item ${targetItem.nome} do Pedido #${pedido.numeroPedido} da ${formatMesaNumero(mesa.numero)}` : `Caixa ${audit.usuario.nome} editou item ${targetItem.nome} do Pedido #${pedido.numeroPedido} da ${formatMesaNumero(mesa.numero)}`, mesaId, usuarioId: audit.usuario.id, usuarioNome: audit.usuario.nome, acao: pedidoCancelado ? "cancelar_pedido" : newQty < 1 ? "cancelar_item" : "editar_pedido", itemNome: targetItem.nome, motivo: newQty < 1 ? audit.motivo : undefined, pedidoNumero: pedido.numeroPedido };
           const updated = { ...pedido, itens, total: calcularTotalItens(itens) };
-          // Sync pedido to DB
           dbUpdatePedido(pedido.id, { itens: JSON.parse(JSON.stringify(itens)), total: updated.total });
           return updated;
         }).filter((pedido) => pedido.itens.length > 0);
@@ -1265,7 +872,6 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         dbInsertFechamento(f);
         return f;
       });
-      // Reset mesas in DB
       const mesasReset = prev.mesas.map(m => resetMesa(m));
       mesasReset.forEach(m => dbSyncEstadoMesa(m));
       return {
