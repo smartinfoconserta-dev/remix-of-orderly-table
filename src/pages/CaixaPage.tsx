@@ -101,6 +101,8 @@ import CaixaRejectDialog from "@/components/caixa/CaixaRejectDialog";
 import CaixaDescontoDialog from "@/components/caixa/CaixaDescontoDialog";
 import CaixaEstornoDialog from "@/components/caixa/CaixaEstornoDialog";
 import CaixaHistoricoTab from "@/components/caixa/CaixaHistoricoTab";
+import CaixaCriticalActionDialog from "@/components/caixa/CaixaCriticalActionDialog";
+import CaixaQrScanner from "@/components/caixa/CaixaQrScanner";
 
 /* ── types ── */
 type CriticalAction =
@@ -1846,35 +1848,22 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
       </div>
 
       {/* ── CRITICAL ACTION DIALOG ── */}
-      <Dialog open={Boolean(criticalAction)} onOpenChange={(open) => !open && resetCriticalDialog()}>
-        <DialogContent className="rounded-2xl border-border bg-background sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle>{getCriticalActionCopy()?.title}</DialogTitle>
-            <DialogDescription>{getCriticalActionCopy()?.description}</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-foreground">Nome do gerente</label>
-              <Input value={criticalManagerName} onChange={(e) => setCriticalManagerName(e.target.value)} placeholder="Ex.: Mariana" maxLength={40} />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-foreground">PIN do gerente</label>
-              <Input value={criticalManagerPin} onChange={(e) => setCriticalManagerPin(e.target.value.replace(/\D/g, "").slice(0, 6))} placeholder="4 a 6 dígitos" inputMode="numeric" autoComplete="one-time-code" />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-foreground">Motivo da ação</label>
-              <Textarea value={criticalReason} onChange={(e) => setCriticalReason(e.target.value)} placeholder="Descreva o motivo obrigatório desta ação" maxLength={180} className="min-h-[110px] rounded-xl" />
-            </div>
-            {criticalError && <p className="rounded-xl border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive">{criticalError}</p>}
-          </div>
-          <DialogFooter className="gap-3 sm:gap-0">
-            <Button variant="outline" onClick={resetCriticalDialog} className="rounded-xl font-bold">Voltar</Button>
-            <Button variant="destructive" onClick={handleConfirmCriticalAction} className="rounded-xl font-black" disabled={isAuthorizingCriticalAction}>
-              {getCriticalActionCopy()?.buttonLabel ?? "Autorizar"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <CaixaCriticalActionDialog
+        open={Boolean(criticalAction)}
+        onClose={resetCriticalDialog}
+        title={getCriticalActionCopy()?.title}
+        description={getCriticalActionCopy()?.description}
+        buttonLabel={getCriticalActionCopy()?.buttonLabel}
+        managerName={criticalManagerName}
+        setManagerName={setCriticalManagerName}
+        managerPin={criticalManagerPin}
+        setManagerPin={setCriticalManagerPin}
+        reason={criticalReason}
+        setReason={setCriticalReason}
+        error={criticalError}
+        isLoading={isAuthorizingCriticalAction}
+        onConfirm={handleConfirmCriticalAction}
+      />
 
       <CaixaTurnoReport
         turnoReportOpen={turnoReportOpen}
@@ -2057,39 +2046,13 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
       />
 
       {/* ── QR SCANNER DIALOG ── */}
-      <Dialog open={qrScanOpen} onOpenChange={(o) => { setQrScanOpen(o); if (!o) setQrScanInput(""); }}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Leitura de QR Code</DialogTitle>
-            <DialogDescription>
-              Escaneie o cupom do cliente ou digite o código
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-2">
-            <Input
-              ref={qrScanInputRef}
-              autoFocus
-              value={qrScanInput}
-              onChange={(e) => setQrScanInput(e.target.value)}
-              placeholder="Aguardando leitura..."
-              className="text-lg font-mono h-12"
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  handleQrScan(qrScanInput);
-                  setQrScanInput("");
-                  setTimeout(() => qrScanInputRef.current?.focus(), 50);
-                }
-              }}
-            />
-            <p className="text-xs text-muted-foreground text-center">
-              O leitor USB envia os dados como digitação. Pressione Enter ou escaneie.
-            </p>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => { setQrScanOpen(false); setQrScanInput(""); }}>Fechar</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <CaixaQrScanner
+        open={qrScanOpen}
+        onClose={() => { setQrScanOpen(false); setQrScanInput(""); }}
+        input={qrScanInput}
+        setInput={setQrScanInput}
+        onScan={handleQrScan}
+      />
 
       <LicenseBanner context="operational" />
     </>
