@@ -101,6 +101,8 @@ import CaixaRejectDialog from "@/components/caixa/CaixaRejectDialog";
 import CaixaDescontoDialog from "@/components/caixa/CaixaDescontoDialog";
 import CaixaEstornoDialog from "@/components/caixa/CaixaEstornoDialog";
 import CaixaHistoricoTab from "@/components/caixa/CaixaHistoricoTab";
+import CaixaCriticalActionDialog from "@/components/caixa/CaixaCriticalActionDialog";
+import CaixaQrScanner from "@/components/caixa/CaixaQrScanner";
 
 /* ── types ── */
 type CriticalAction =
