@@ -2,6 +2,7 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useR
 import type { CashMovementType, OperationalUser, PaymentMethod, SplitPayment } from "@/types/operations";
 import { getSistemaConfig, getSistemaConfigAsync } from "@/lib/adminStorage";
 import { supabase } from "@/integrations/supabase/client";
+import { getActiveStoreId } from "@/lib/sessionManager";
 import { useAuth } from "@/contexts/AuthContext";
 import { useStore } from "@/contexts/StoreContext";
 import { toast } from "sonner";
