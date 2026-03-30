@@ -110,39 +110,6 @@ const GerentePage = () => {
     }
   }, [effectiveGerente, isAdminAccess, pinInput, verifyManagerAccess]);
 
-  /* ── shift closing data (moved to GerenteFechamento) ── */
-
-  /* ── audit logs — only relevant actions ── */
-  const relevantEvents = useMemo(
-    () => eventos.filter((e) => e.acao && RELEVANT_LOG_ACTIONS.has(e.acao)),
-    [eventos]
-  );
-
-  const filteredEvents = useMemo(() => {
-    const categorySet = LOG_CATEGORY_ACTIONS[logFilter];
-    if (!categorySet) return relevantEvents;
-    return relevantEvents.filter((e) => e.acao && categorySet.has(e.acao));
-  }, [relevantEvents, logFilter]);
-
-  // Group events by date
-  const groupedEvents = useMemo(() => {
-    const groups: { date: string; label: string; events: typeof filteredEvents }[] = [];
-    const map = new Map<string, typeof filteredEvents>();
-
-    filteredEvents.forEach((e) => {
-      const dateKey = e.criadoEmIso.slice(0, 10);
-      if (!map.has(dateKey)) map.set(dateKey, []);
-      map.get(dateKey)!.push(e);
-    });
-
-    // Sort dates descending
-    const sortedDates = [...map.keys()].sort().reverse();
-    sortedDates.forEach((date) => {
-      groups.push({ date, label: formatDateHeader(date), events: map.get(date)! });
-    });
-
-    return groups;
-  }, [filteredEvents]);
 
 
   /* ── auth guard ── */
