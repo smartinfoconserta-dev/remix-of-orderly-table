@@ -74,6 +74,7 @@ import type { ItemCarrinho } from "@/contexts/RestaurantContext";
 import { findClienteDelivery, upsertClienteDelivery, type Bairro, type ClienteDelivery } from "@/lib/deliveryStorage";
 import { useCaixaBalcaoState } from "@/hooks/useCaixaBalcaoState";
 import { useCaixaDialogsState, type CriticalAction } from "@/hooks/useCaixaDialogsState";
+import { useCaixaMesaState } from "@/hooks/useCaixaMesaState";
 import { supabase } from "@/integrations/supabase/client";
 import IfoodPainel from "@/components/IfoodPainel";
 
