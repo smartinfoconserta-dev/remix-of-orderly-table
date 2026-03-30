@@ -7,6 +7,7 @@ import AppLayout from "@/components/AppLayout";
 import MesaCard from "@/components/MesaCard";
 
 import LicenseBanner from "@/components/LicenseBanner";
+import ModuleGate from "@/components/ModuleGate";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRestaurant } from "@/contexts/RestaurantContext";
@@ -66,6 +67,7 @@ const GarcomPage = () => {
   ];
 
   return (
+    <ModuleGate moduleKey="mesas" moduleName="Mesas">
     <AppLayout
       title="Mesas"
       headerRight={
@@ -158,6 +160,7 @@ const GarcomPage = () => {
 
       <LicenseBanner context="operational" />
     </AppLayout>
+    </ModuleGate>
   );
 };
 

@@ -150,13 +150,12 @@ type CriticalAction =
 
 interface CaixaPageProps {
   accessMode?: Extract<UserRole, "caixa" | "gerente">;
-  modoForced?: "somente_delivery" | "somente_mesas" | "completo";
 }
 
 /* ══════════════════════════════════════ */
 /*            CAIXA PAGE                  */
 /* ══════════════════════════════════════ */
-const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
+const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
   const {
     mesas,
     eventos,
@@ -292,23 +291,11 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
   const moduloBalcao = globalModulos.balcao === true;
   // isFastFoodGlobal backward compat: true when no mesas and has totem/balcao
   const isFastFoodGlobal = !moduloMesas && (moduloTotem || moduloBalcao);
-  const [modoOperacao, setModoOperacao] = useState<"completo" | "somente_mesas" | "somente_delivery">(() => {
-    if (!moduloMesas) return "somente_delivery";
-    if (modoForced) return modoForced;
-    const savedModo = localStorage.getItem("obsidian-caixa-modo-v1");
-    if (savedModo === "somente_mesas" || savedModo === "somente_delivery" || savedModo === "completo") return savedModo;
-    return "completo";
-  });
-  useEffect(() => {
-    if (modoForced) setModoOperacao(modoForced);
-  }, [modoForced]);
   const [caixaView, setCaixaView] = useState<"mesas" | "delivery" | "totem" | "historico" | "ifood">(() => {
-    if (!moduloMesas && moduloTotem) return "totem";
-    if (!moduloMesas) return "delivery";
-    if (modoForced === "somente_delivery") return "delivery";
-    if (modoForced === "somente_mesas") return "mesas";
-    const savedModo = localStorage.getItem("obsidian-caixa-modo-v1");
-    return savedModo === "somente_delivery" ? "delivery" : "mesas";
+    if (moduloMesas) return "mesas";
+    if (moduloTotem) return "totem";
+    if (moduloBalcao) return "delivery";
+    return "delivery";
   });
   const [totemCancelOpen, setTotemCancelOpen] = useState<string | null>(null);
   const [totemCancelMotivo, setTotemCancelMotivo] = useState("");
@@ -367,14 +354,7 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
 
   useRouteLock(accessMode === "gerente" ? "/gerente" : "/caixa");
 
-  // Load saved modo operacao (skip if fast_food global overrides)
-  useEffect(() => {
-    if (modoForced || isFastFoodGlobal) return;
-    const savedModo = localStorage.getItem("obsidian-caixa-modo-v1");
-    if (savedModo === "somente_mesas" || savedModo === "somente_delivery" || savedModo === "completo") {
-      setModoOperacao(savedModo);
-    }
-  }, []);
+  // (legacy modoOperacao removed — modules now control tabs)
 
   // Poll motoboy fechamentos from Supabase every 5s
   useEffect(() => {
@@ -894,7 +874,7 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
       if (currentOperator && !ops.includes(currentOperator.id)) {
         localStorage.setItem(OPERADORES_KEY, JSON.stringify([...ops, currentOperator.id]));
       }
-      localStorage.setItem("obsidian-caixa-modo-v1", modoOperacao);
+      // legacy modoOperacao localStorage removed
       abrirCaixa(valor, currentOperator);
       // fundo_proximo is now managed via estado_caixa in Supabase
       toast.success("Caixa aberto com sucesso!", { duration: 1200, icon: "✅" });
@@ -954,33 +934,6 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
                   ))}
                 </div>
               </div>
-              {!modoForced && !isFastFoodGlobal && (
-              <div className="space-y-2">
-                <label className="text-sm font-bold text-foreground">Modo de operação</label>
-                <div className="grid grid-cols-3 gap-2">
-                  {([
-                    { value: "completo", label: "Completo", icon: "⊞", desc: "Mesas + Delivery" },
-                    { value: "somente_mesas", label: "Só Mesas", icon: "🍽️", desc: "Sem delivery" },
-                    { value: "somente_delivery", label: "Só Delivery", icon: "🛵", desc: "Sem mesas" },
-                  ] as const).map(opt => (
-                    <button
-                      key={opt.value}
-                      type="button"
-                      onClick={() => setModoOperacao(opt.value)}
-                      className={`flex flex-col items-center gap-1 rounded-xl border p-3 text-center transition-colors ${
-                        modoOperacao === opt.value
-                          ? "border-primary bg-primary/10 text-primary"
-                          : "border-border bg-secondary text-muted-foreground hover:text-foreground"
-                      }`}
-                    >
-                      <span className="text-xl">{opt.icon}</span>
-                      <span className="text-xs font-black">{opt.label}</span>
-                      <span className="text-[10px] text-muted-foreground">{opt.desc}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-              )}
               <Button onClick={handleAbrirCaixa} className="w-full h-12 rounded-xl text-base font-black gap-2">
                 <Check className="h-5 w-5" />
                 Abrir Caixa
@@ -1341,7 +1294,7 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
     fecharCaixaDoDia(currentOperator, Object.keys(extras).length > 0 ? extras : undefined);
     // Clear operator shift tracking
     try { localStorage.removeItem("obsidian-caixa-operadores-v1"); } catch {}
-    try { localStorage.removeItem("obsidian-caixa-modo-v1"); } catch {}
+    
     // motoboy fechamentos now managed in Supabase
     setTurnoModalOpen(false);
     setIsClosingTurno(false);
@@ -1733,7 +1686,7 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
 
               {/* ── Windows-style Tabs ── */}
               <div className="flex items-end px-3 pt-1 shrink-0 bg-card">
-                {modoOperacao !== "somente_delivery" && !isFastFoodGlobal && (
+                {moduloMesas && !isFastFoodGlobal && (
                 <button
                   onClick={() => setCaixaView("mesas")}
                   className={`px-4 py-1.5 text-xs font-bold transition-colors border border-border rounded-t -mb-px relative ${
@@ -1745,7 +1698,7 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
                   Mesas
                 </button>
                 )}
-                {modoOperacao !== "somente_mesas" && sistemaConfig.deliveryAtivo !== false && (
+                {sistemaConfig.deliveryAtivo !== false && (
                 <button
                   onClick={() => setCaixaView("delivery")}
                   className={`px-4 py-1.5 text-xs font-bold transition-colors border border-border rounded-t -mb-px relative flex items-center gap-1.5 ${
@@ -2533,10 +2486,10 @@ const CaixaPage = ({ accessMode = "caixa", modoForced }: CaixaPageProps) => {
                     Turno: aberto {caixaOpenTime}
                   </span>
                 )}
-                {modoOperacao !== "somente_delivery" && (
+                {moduloMesas && (
                   <span className="px-3 py-1.5">Consumo: {mesasConsumo}</span>
                 )}
-                {modoOperacao !== "somente_delivery" && (
+                {moduloMesas && (
                   <span className="px-3 py-1.5">Livres: {mesasLivre}</span>
                 )}
                 <span className="px-3 py-1.5">Fechadas: {fechamentos.length}</span>

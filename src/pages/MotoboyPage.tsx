@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import LicenseBanner from "@/components/LicenseBanner";
+import ModuleGate from "@/components/ModuleGate";
 import { Bike, LogOut, MapPin, Phone, DollarSign, Clock, Map, Navigation, QrCode, GripVertical, CheckCircle2, Package, XCircle, Camera, X } from "lucide-react";
 import { savePreferencia, loadPreferencias } from "@/hooks/usePreferencias";
 import { Button } from "@/components/ui/button";
@@ -415,6 +416,7 @@ export default function MotoboyPage() {
   /* ── Login screen ── */
   if (!sessao) {
     return (
+      <ModuleGate moduleKey="motoboy" moduleName="Delivery / Motoboy">
       <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center px-4">
         <div className="max-w-sm w-full space-y-6 text-center">
           <div className="flex justify-center"><Logo /></div>
@@ -464,11 +466,13 @@ export default function MotoboyPage() {
           )}
         </div>
       </div>
+      </ModuleGate>
     );
   }
 
   /* ── Main content ── */
   return (
+    <ModuleGate moduleKey="motoboy" moduleName="Delivery / Motoboy">
     <div className="min-h-screen bg-background text-foreground flex flex-col">
       {/* Hidden file input for QR scanning */}
       <input ref={fileInputRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handleFileSelected} />
@@ -936,5 +940,6 @@ export default function MotoboyPage() {
       </Dialog>
       <LicenseBanner context="operational" />
     </div>
+    </ModuleGate>
   );
 }
