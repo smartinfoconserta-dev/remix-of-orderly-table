@@ -834,6 +834,7 @@ const GerentePage = () => {
                       <tr><td>🖥️ Totem</td><td style="text-align:right">${formatPrice(totalTotem)}</td><td style="text-align:right">${relTotalFaturado > 0 ? ((totalTotem/relTotalFaturado)*100).toFixed(1) : "0.0"}%</td></tr>
                       <tr><td>🛵 Delivery (caixa)</td><td style="text-align:right">${formatPrice(totalDelivery)}</td><td style="text-align:right">${relTotalFaturado > 0 ? ((totalDelivery/relTotalFaturado)*100).toFixed(1) : "0.0"}%</td></tr>
                       <tr><td>🏍️ Motoboys conferidos</td><td style="text-align:right">${formatPrice(totalMotoboys)}</td><td style="text-align:right">${relTotalFaturado > 0 ? ((totalMotoboys/relTotalFaturado)*100).toFixed(1) : "0.0"}%</td></tr>
+                      <tr><td>💳 Garçom PDV</td><td style="text-align:right">${formatPrice(totalGarcomPdv)}</td><td style="text-align:right">${relTotalFaturado > 0 ? ((totalGarcomPdv/relTotalFaturado)*100).toFixed(1) : "0.0"}%</td></tr>
                     </tbody>
                   </table>
                   <h2>Formas de Pagamento</h2>
