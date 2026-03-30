@@ -1864,6 +1864,8 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
         isLoading={isAuthorizingCriticalAction}
         onConfirm={handleConfirmCriticalAction}
       />
+
+      <CaixaTurnoReport
         turnoReportOpen={turnoReportOpen}
         setTurnoReportOpen={setTurnoReportOpen}
         turnoModalOpen={turnoModalOpen}
