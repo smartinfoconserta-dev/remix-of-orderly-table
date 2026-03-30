@@ -901,7 +901,7 @@ const GerentePage = () => {
                   <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Total faturado no período</p>
                 </div>
                 <p className="text-3xl font-black tabular-nums text-primary">{formatPrice(relTotalFaturado)}</p>
-                <div className="grid grid-cols-5 gap-3 pt-2 border-t border-border">
+                <div className="grid grid-cols-6 gap-3 pt-2 border-t border-border">
                   <div className="space-y-0.5">
                     <p className="text-[10px] font-bold uppercase text-muted-foreground">🍽️ Salão</p>
                     <p className="text-lg font-black tabular-nums text-foreground">{formatPrice(totalMesas)}</p>
