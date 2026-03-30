@@ -312,6 +312,54 @@ const GarcomPdvPage = () => {
           </div>
         )}
 
+        {(() => {
+          const actionMesa = actionMesaId ? mesas.find(m => m.id === actionMesaId) : null;
+          return (
+            <AlertDialog open={!!actionMesaId} onOpenChange={(open) => { if (!open) setActionMesaId(null); }}>
+              <AlertDialogContent className="max-w-xs rounded-2xl">
+                <AlertDialogHeader>
+                  <AlertDialogTitle className="text-center">
+                    Mesa {actionMesa?.numero}
+                  </AlertDialogTitle>
+                  <AlertDialogDescription className="text-center">
+                    Total atual: <span className="font-bold text-foreground">{formatPrice(actionMesa?.total ?? 0)}</span>
+                    <br />
+                    {actionMesa?.pedidos.length ?? 0} pedido(s)
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <div className="flex flex-col gap-2">
+                  <Button
+                    className="h-12 rounded-xl font-bold gap-2"
+                    variant="outline"
+                    onClick={() => {
+                      const id = actionMesaId!;
+                      setActionMesaId(null);
+                      setSearchParams({ mesa: id });
+                    }}
+                  >
+                    <ShoppingBag className="h-5 w-5" />
+                    Adicionar itens
+                  </Button>
+                  <Button
+                    className="h-12 rounded-xl font-black gap-2"
+                    onClick={() => {
+                      const id = actionMesaId!;
+                      setActionMesaId(null);
+                      handleCobrar(id);
+                    }}
+                  >
+                    <CreditCard className="h-5 w-5" />
+                    Cobrar {formatPrice(actionMesa?.total ?? 0)}
+                  </Button>
+                </div>
+                <AlertDialogFooter>
+                  <AlertDialogCancel className="w-full rounded-xl">Cancelar</AlertDialogCancel>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          );
+        })()}
+
         <LicenseBanner context="operational" />
       </AppLayout>
     </ModuleGate>
