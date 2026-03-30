@@ -536,9 +536,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     const syncActiveStoreId = () => {
       const current = derivedStoreId ?? getActiveStoreId();
 
-      if (current) {
-        _cachedStoreId = current;
-      }
+      // storeId is now managed by sessionManager — no local cache needed
 
       setActiveStoreId(prev => prev !== current ? current : prev);
 
