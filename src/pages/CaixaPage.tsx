@@ -611,10 +611,6 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
   const [qrRetiradaPedidoId, setQrRetiradaPedidoId] = useState<string | null>(null);
   const qrRetiradaTimerRef = useRef<number | null>(null);
 
-  // QR scanner dialog state
-  const [qrScanOpen, setQrScanOpen] = useState(false);
-  const [qrScanInput, setQrScanInput] = useState("");
-  const qrScanInputRef = useRef<HTMLInputElement>(null);
 
   const handleQrScan = useCallback((raw: string) => {
     const value = raw.trim();
