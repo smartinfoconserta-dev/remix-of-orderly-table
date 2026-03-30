@@ -34,17 +34,7 @@ const saveOrdem = (ids: string[], storeId?: string | null) => {
   if (storeId) savePreferencia(storeId, "motoboy", "ordem", JSON.stringify(ids));
 };
 
-const getStoreIdFromSession = (): string | null => {
-  try {
-    const raw = sessionStorage.getItem("obsidian-op-session-v2");
-    if (raw) { const s = JSON.parse(raw); return s.storeId ?? null; }
-  } catch {}
-  try {
-    const saved = sessionStorage.getItem("orderly-active-store");
-    if (saved) return saved;
-  } catch {}
-  return null;
-};
+const getStoreIdFromSession = getActiveStoreId;
 
 export default function MotoboyPage() {
   const sysConfig = getSistemaConfig();

@@ -43,6 +43,7 @@ import {
 } from "@/lib/tabletBinding";
 import { getStoredDeviceId } from "@/lib/deviceAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { getActiveStoreId } from "@/lib/sessionManager";
 
 interface PedidoFlowProps {
   modo: "cliente" | "garcom" | "caixa" | "balcao" | "delivery" | "totem";
