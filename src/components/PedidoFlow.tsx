@@ -855,7 +855,7 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
             )}
           </>
         )}
-        <CartDrawer
+        <PedidoFlowCart
           carrinho={carrinho}
           onUpdateQty={(uid, delta) => {
             if (isExternalOrder) {
@@ -866,7 +866,7 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
               updateCartItemQty(mesaId, uid, delta);
             }
           }}
-          onRemove={(uid) => {
+          onRemoveItem={(uid) => {
             if (isExternalOrder) {
               setLocalCarrinho(prev => prev.filter(item => item.uid !== uid));
             } else {
@@ -877,10 +877,12 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
           onContinueOrdering={() => handleCartOpenChange(false)}
           onSuccessAcknowledge={handleSuccessAcknowledge}
           open={cartOpen}
-           onOpenChange={handleCartOpenChange}
-           hideTrigger={isGarcomMobile}
-           modo={modo}
-           isTotemMode={isTotem}
+          onOpenChange={handleCartOpenChange}
+          hideTrigger={isGarcomMobile}
+          modo={modo}
+          isTotemMode={isTotem}
+          showStickyBar={false}
+          onStickyBarClick={() => handleCartOpenChange(true)}
         />
         {modo === "cliente" && (
           <Button
