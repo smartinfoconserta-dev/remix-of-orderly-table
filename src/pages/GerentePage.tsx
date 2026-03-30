@@ -128,35 +128,6 @@ const getEventDotColor = (acao?: string) => {
   return "bg-muted-foreground";
 };
 
-type PeriodoFiltro = "hoje" | "semana" | "mes" | "custom";
-
-const getDateRange = (periodo: PeriodoFiltro, customInicio: string, customFim: string) => {
-  const now = new Date();
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-
-  switch (periodo) {
-    case "hoje":
-      return { start: today, end: now };
-    case "semana": {
-      const weekStart = new Date(today);
-      weekStart.setDate(today.getDate() - today.getDay());
-      return { start: weekStart, end: now };
-    }
-    case "mes":
-      return { start: new Date(today.getFullYear(), today.getMonth(), 1), end: now };
-    case "custom":
-      return {
-        start: customInicio ? new Date(customInicio) : today,
-        end: customFim ? new Date(customFim + "T23:59:59.999") : now,
-      };
-  }
-};
-
-const filterByDateRange = (items: FechamentoConta[], start: Date, end: Date) =>
-  items.filter((f) => {
-    const d = new Date(f.criadoEmIso);
-    return d >= start && d <= end;
-  });
 
 const GerentePage = () => {
   const {
