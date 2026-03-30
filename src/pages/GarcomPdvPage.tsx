@@ -61,6 +61,7 @@ const GarcomPdvPage = () => {
   }, [caixaAberto]);
 
   const handleConfirmarPagamento = useCallback(() => {
+    if (processando) return;
     if (!pagamentoMesaId || !currentGarcom) return;
     setProcessando(true);
 
