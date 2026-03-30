@@ -263,8 +263,6 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
     const totalEntregas = fechamentosPendentes.reduce((s: number, f: any) => s + Number(f.resumo?.totalEntregas ?? 0), 0);
     return { totalEntregas, conferidos: conferidos.length, pendentes: pendentes.length, totalConferido, motoboyNomes };
   }, [fechamentosPendentes]);
-  const [buscaComanda, setBuscaComanda] = useState("");
-  const [buscaComandaOpen, setBuscaComandaOpen] = useState(false);
   const [fechamentoSelecionado, setFechamentoSelecionado] = useState<any | null>(null);
   const [pinConferencia, setPinConferencia] = useState("");
   const [pinConferenciaErro, setPinConferenciaErro] = useState("");
