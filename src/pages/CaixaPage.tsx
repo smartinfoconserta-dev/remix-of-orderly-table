@@ -296,7 +296,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
   const prevAguardandoRef = useRef<number | null>(null);
 
   const mesa = mesaSelecionada ? mesas.find((item) => item.id === mesaSelecionada) ?? null : null;
-  const balcaoPedido = balcaoPedidoSelecionado ? pedidosBalcao.find((p) => p.id === balcaoPedidoSelecionado) ?? null : null;
+  
   const adminOperator = isAdminAccess ? { id: "admin", nome: "Administrador", role: "caixa" as const, criadoEm: "" } : null;
   const currentOperator = adminOperator ?? (accessMode === "gerente" ? currentGerente : currentCaixa);
   const hasCaixaAccess = isAdminAccess || (accessMode === "gerente"
