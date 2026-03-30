@@ -40,7 +40,8 @@ const TvInner = ({ storeId }: { storeId: string }) => {
           const hasMesas = m.mesas !== undefined ? m.mesas : (data.modo_operacao !== "fast_food");
           const hasBalcao = m.balcao !== undefined ? m.balcao : (data.modo_operacao === "fast_food");
           const hasTotem = m.totem === true;
-          setModulos({ mesas: hasMesas, balcao: hasBalcao, totem: hasTotem });
+          const hasGarcomPdv = m.garcomPdv === true;
+          setModulos({ mesas: hasMesas, balcao: hasBalcao, totem: hasTotem, garcomPdv: hasGarcomPdv });
         }
       });
   }, [storeId]);
