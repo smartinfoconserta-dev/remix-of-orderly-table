@@ -9,6 +9,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { getSistemaConfig } from "@/lib/adminStorage";
+import { getActiveStoreId } from "@/lib/sessionManager";
 import { useRestaurant } from "@/contexts/RestaurantContext";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
