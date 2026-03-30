@@ -340,6 +340,8 @@ const GerentePage = () => {
   const totalTotem = useMemo(() => fechTotem.reduce((a, f) => a + f.total, 0), [fechTotem]);
   const totalDelivery = useMemo(() => fechDelivery.reduce((a, f) => a + f.total, 0), [fechDelivery]);
   const totalMotoboys = useMemo(() => fechMotoboys.reduce((a, f) => a + f.total, 0), [fechMotoboys]);
+  const fechGarcomPdv = useMemo(() => fechFiltrados.filter(f => f.origem === "garcom_pdv"), [fechFiltrados]);
+  const totalGarcomPdv = useMemo(() => fechGarcomPdv.reduce((a, f) => a + f.total, 0), [fechGarcomPdv]);
 
   const diferencasFiltradas = useMemo(() =>
     diferencasCaixa.filter(d => {
@@ -834,6 +836,7 @@ const GerentePage = () => {
                       <tr><td>🖥️ Totem</td><td style="text-align:right">${formatPrice(totalTotem)}</td><td style="text-align:right">${relTotalFaturado > 0 ? ((totalTotem/relTotalFaturado)*100).toFixed(1) : "0.0"}%</td></tr>
                       <tr><td>🛵 Delivery (caixa)</td><td style="text-align:right">${formatPrice(totalDelivery)}</td><td style="text-align:right">${relTotalFaturado > 0 ? ((totalDelivery/relTotalFaturado)*100).toFixed(1) : "0.0"}%</td></tr>
                       <tr><td>🏍️ Motoboys conferidos</td><td style="text-align:right">${formatPrice(totalMotoboys)}</td><td style="text-align:right">${relTotalFaturado > 0 ? ((totalMotoboys/relTotalFaturado)*100).toFixed(1) : "0.0"}%</td></tr>
+                      <tr><td>💳 Garçom PDV</td><td style="text-align:right">${formatPrice(totalGarcomPdv)}</td><td style="text-align:right">${relTotalFaturado > 0 ? ((totalGarcomPdv/relTotalFaturado)*100).toFixed(1) : "0.0"}%</td></tr>
                     </tbody>
                   </table>
                   <h2>Formas de Pagamento</h2>
@@ -901,7 +904,7 @@ const GerentePage = () => {
                   <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Total faturado no período</p>
                 </div>
                 <p className="text-3xl font-black tabular-nums text-primary">{formatPrice(relTotalFaturado)}</p>
-                <div className="grid grid-cols-5 gap-3 pt-2 border-t border-border">
+                <div className="grid grid-cols-6 gap-3 pt-2 border-t border-border">
                   <div className="space-y-0.5">
                     <p className="text-[10px] font-bold uppercase text-muted-foreground">🍽️ Salão</p>
                     <p className="text-lg font-black tabular-nums text-foreground">{formatPrice(totalMesas)}</p>
@@ -926,6 +929,11 @@ const GerentePage = () => {
                     <p className="text-[10px] font-bold uppercase text-muted-foreground">🏍️ Motoboys</p>
                     <p className="text-lg font-black tabular-nums text-foreground">{formatPrice(totalMotoboys)}</p>
                     <p className="text-xs text-muted-foreground">{fechMotoboys.length} fechamentos</p>
+                  </div>
+                  <div className="space-y-0.5">
+                    <p className="text-[10px] font-bold uppercase text-muted-foreground">💳 Garçom PDV</p>
+                    <p className="text-lg font-black tabular-nums text-foreground">{formatPrice(totalGarcomPdv)}</p>
+                    <p className="text-xs text-muted-foreground">{fechGarcomPdv.length} fechamentos</p>
                   </div>
                 </div>
               </div>
