@@ -284,10 +284,8 @@ const GarcomPdvPage = () => {
                 onClick={() => {
                   dismissChamarGarcom(mesa.id);
                   if (mesa.status === "consumo" && mesa.total > 0) {
-                    // Mesa com consumo — abre tela de cobrança
-                    handleCobrar(mesa.id);
+                    setActionMesaId(mesa.id);
                   } else {
-                    // Mesa livre ou sem total — abre PedidoFlow
                     setSearchParams({ mesa: mesa.id });
                   }
                 }}
@@ -296,7 +294,7 @@ const GarcomPdvPage = () => {
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    handleCobrar(mesa.id);
+                    setActionMesaId(mesa.id);
                   }}
                   className="mt-1 w-full rounded-xl bg-primary py-2 text-xs font-black text-primary-foreground flex items-center justify-center gap-1.5"
                 >
