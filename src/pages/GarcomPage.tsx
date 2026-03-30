@@ -160,6 +160,7 @@ const GarcomPage = () => {
 
       <LicenseBanner context="operational" />
     </AppLayout>
+    </ModuleGate>
   );
 };
 
