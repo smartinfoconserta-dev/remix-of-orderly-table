@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
-import { LogOut, Bell, Search, CreditCard, Smartphone, Wallet } from "lucide-react";
+import { LogOut, Bell, Search, CreditCard, Smartphone, Wallet, ShoppingBag } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel } from "@/components/ui/alert-dialog";
 import { useSearchParams } from "react-router-dom";
 import PedidoFlow from "@/components/PedidoFlow";
 import AppLayout from "@/components/AppLayout";
@@ -38,6 +39,7 @@ const GarcomPdvPage = () => {
   const [pagamentoMesaId, setPagamentoMesaId] = useState<string | null>(null);
   const [pagamentoMethod, setPagamentoMethod] = useState<PaymentMethod>("pix");
   const [processando, setProcessando] = useState(false);
+  const [actionMesaId, setActionMesaId] = useState<string | null>(null);
 
   useRouteLock("/garcom-pdv");
 
@@ -282,10 +284,8 @@ const GarcomPdvPage = () => {
                 onClick={() => {
                   dismissChamarGarcom(mesa.id);
                   if (mesa.status === "consumo" && mesa.total > 0) {
-                    // Mesa com consumo — abre tela de cobrança
-                    handleCobrar(mesa.id);
+                    setActionMesaId(mesa.id);
                   } else {
-                    // Mesa livre ou sem total — abre PedidoFlow
                     setSearchParams({ mesa: mesa.id });
                   }
                 }}
@@ -294,7 +294,7 @@ const GarcomPdvPage = () => {
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    handleCobrar(mesa.id);
+                    setActionMesaId(mesa.id);
                   }}
                   className="mt-1 w-full rounded-xl bg-primary py-2 text-xs font-black text-primary-foreground flex items-center justify-center gap-1.5"
                 >
@@ -311,6 +311,54 @@ const GarcomPdvPage = () => {
             <p className="text-sm font-bold">Nenhuma mesa encontrada.</p>
           </div>
         )}
+
+        {(() => {
+          const actionMesa = actionMesaId ? mesas.find(m => m.id === actionMesaId) : null;
+          return (
+            <AlertDialog open={!!actionMesaId} onOpenChange={(open) => { if (!open) setActionMesaId(null); }}>
+              <AlertDialogContent className="max-w-xs rounded-2xl">
+                <AlertDialogHeader>
+                  <AlertDialogTitle className="text-center">
+                    Mesa {actionMesa?.numero}
+                  </AlertDialogTitle>
+                  <AlertDialogDescription className="text-center">
+                    Total atual: <span className="font-bold text-foreground">{formatPrice(actionMesa?.total ?? 0)}</span>
+                    <br />
+                    {actionMesa?.pedidos.length ?? 0} pedido(s)
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <div className="flex flex-col gap-2">
+                  <Button
+                    className="h-12 rounded-xl font-bold gap-2"
+                    variant="outline"
+                    onClick={() => {
+                      const id = actionMesaId!;
+                      setActionMesaId(null);
+                      setSearchParams({ mesa: id });
+                    }}
+                  >
+                    <ShoppingBag className="h-5 w-5" />
+                    Adicionar itens
+                  </Button>
+                  <Button
+                    className="h-12 rounded-xl font-black gap-2"
+                    onClick={() => {
+                      const id = actionMesaId!;
+                      setActionMesaId(null);
+                      handleCobrar(id);
+                    }}
+                  >
+                    <CreditCard className="h-5 w-5" />
+                    Cobrar {formatPrice(actionMesa?.total ?? 0)}
+                  </Button>
+                </div>
+                <AlertDialogFooter>
+                  <AlertDialogCancel className="w-full rounded-xl">Cancelar</AlertDialogCancel>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          );
+        })()}
 
         <LicenseBanner context="operational" />
       </AppLayout>
