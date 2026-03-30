@@ -94,6 +94,7 @@ import CaixaBalcaoDetail from "@/components/caixa/CaixaBalcaoDetail";
 import CaixaTurnoReport from "@/components/caixa/CaixaTurnoReport";
 import CaixaMovimentacaoDialog from "@/components/caixa/CaixaMovimentacaoDialog";
 import CaixaMotoboyConferencia from "@/components/caixa/CaixaMotoboyConferencia";
+import CaixaBuscaComanda from "@/components/caixa/CaixaBuscaComanda";
 
 /* ── types ── */
 type CriticalAction =
