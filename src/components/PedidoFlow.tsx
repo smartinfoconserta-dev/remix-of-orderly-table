@@ -6,7 +6,6 @@ import qrWifiFallback from "@/assets/qr-wifi-premium.png";
 import bgInstagramDefault from "@/assets/bg-instagram-card.jpg";
 import bgWifiDefault from "@/assets/bg-wifi-card.jpg";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import CategoryTabs from "@/components/CategoryTabs";
 import CategoryIcon from "@/components/CategoryIcon";
 import ProductModal from "@/components/ProductModal";
