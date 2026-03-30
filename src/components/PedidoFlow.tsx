@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { AlertTriangle, ArrowLeft, Bell, Instagram, LockKeyhole, Plus, RefreshCw, Search, ShoppingBag, ShoppingCart, Unlink, Wallet, Wifi, X } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Bell, Instagram, LockKeyhole, RefreshCw, Search, ShoppingBag, ShoppingCart, Unlink, Wallet, Wifi, X } from "lucide-react";
 import qrInstagramFallback from "@/assets/qr-instagram-premium.png";
 import qrWifiFallback from "@/assets/qr-wifi-premium.png";
 import bgInstagramDefault from "@/assets/bg-instagram-card.jpg";
@@ -11,6 +11,7 @@ import CategoryTabs from "@/components/CategoryTabs";
 import CategoryIcon from "@/components/CategoryIcon";
 import ProductModal from "@/components/ProductModal";
 import PedidoFlowCart from "@/components/pedido/PedidoFlowCart";
+import PedidoFlowCatalog from "@/components/pedido/PedidoFlowCatalog";
 import MinhaContaDrawer from "@/components/MinhaContaDrawer";
 import {
   AlertDialog,
@@ -66,8 +67,6 @@ interface PedidoFlowProps {
 const HOME_TAB_ID = "inicio";
 const HOME_TAB: Categoria = { id: HOME_TAB_ID, nome: "Início", icone: "house" };
 // customCats & navigationItems moved inside component via useMemo
-const CARD_STAGGER_STEP_MS = 50;
-const CARD_ANIMATION_DURATION_MS = 200;
 const PRODUCT_MODAL_OPEN_DELAY_MS = 120;
 const CLIENT_IDLE_TIMEOUT_MS = 30000;
 const ORDER_SUBMIT_LOCK_MS = 2000;
@@ -977,63 +976,16 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
   const visibleProducts = isGarcomMobile && categoriaExibida === HOME_TAB_ID ? produtos : produtosFiltrados;
 
   const productGrid = (
-    <div>
-      {searchQuery.trim() && (
-        <p className={`text-xs px-4 pb-2 ${isTotem ? "text-gray-500" : "text-muted-foreground"}`}>{produtosFiltrados.length} resultado(s) para "{searchQuery}"</p>
-      )}
-      <div
-        key={categoryFadeKey}
-        className={`grid ${isTotem ? "grid-cols-2 gap-4" : "grid-cols-2 gap-3 md:grid-cols-3 md:gap-4"} ${categoryFadeClass}`}
-      >
-      {visibleProducts.map((produto, index) => {
-        const isCardSelected = selectedProductCardId === produto.id;
-
-        return (
-          <article
-            key={produto.id}
-            className={`group overflow-hidden ${isTotem ? "rounded-2xl border border-gray-200 bg-white shadow-md" : "rounded-[1.75rem] border border-border bg-card shadow-[0_20px_45px_-30px_hsl(var(--foreground)/0.8)]"} text-left transition-all duration-300 hover:-translate-y-0.5 ${isTotem ? "hover:border-[#FF6B00]/30" : "hover:border-primary/30"} card-fade-up ${
-              isCardSelected ? `scale-[1.01] ${isTotem ? "shadow-lg" : "shadow-[0_20px_44px_-24px_hsl(var(--foreground)/0.92)]"}` : ""
-            }`}
-            style={{
-              animationDelay: `${index * 30}ms`,
-              transitionProperty: "transform, box-shadow",
-              transitionDuration: `${CARD_ANIMATION_DURATION_MS}ms`,
-              transitionTimingFunction: "ease-out",
-            }}
-          >
-            <button type="button" onClick={() => handleOpenProductModal(produto)} className="flex w-full flex-col text-left">
-              <div className={isTotem ? "aspect-square overflow-hidden" : "aspect-[3/2] overflow-hidden"}>
-                <img src={produto.imagem} alt={produto.nome} className="h-full w-full object-cover" loading="lazy" />
-              </div>
-              <div className={`flex flex-1 flex-col gap-2 p-4 ${isTotem ? "min-h-[7rem]" : "min-h-[9rem]"}`}>
-                <h2 className={`line-clamp-2 font-black leading-tight ${isTotem ? "text-lg text-[#1A1A1A]" : "text-[1.05rem] text-foreground"}`}>{produto.nome}</h2>
-                {!isTotem && <p className="line-clamp-3 flex-1 text-sm leading-relaxed text-muted-foreground">{produto.descricao}</p>}
-                <div className="mt-1 flex items-end justify-between gap-2">
-                  <p className={`font-black tracking-tight ${isTotem ? "text-lg text-[#FF6B00]" : "text-[1.05rem] text-foreground"}`}>{formatPrice(produto.preco)}</p>
-                  <button
-                    type="button"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      handleOpenProductModal(produto);
-                    }}
-                    className={`flex items-center justify-center transition-transform active:scale-95 ${
-                      isTotem
-                        ? "h-12 rounded-xl bg-[#FF6B00] px-4 text-white font-black text-sm shadow-md gap-1"
-                        : "h-11 w-11 rounded-full bg-primary text-primary-foreground shadow-[0_18px_32px_-22px_hsl(var(--primary)/0.95)]"
-                    }`}
-                    aria-label={`Adicionar ${produto.nome}`}
-                  >
-                    <Plus className={isTotem ? "h-4 w-4" : "h-5 w-5"} />
-                    {isTotem && <span>ADICIONAR</span>}
-                  </button>
-                </div>
-              </div>
-            </button>
-          </article>
-        );
-      })}
-      </div>
-    </div>
+    <PedidoFlowCatalog
+      produtos={visibleProducts}
+      searchQuery={searchQuery}
+      searchResultCount={produtosFiltrados.length}
+      categoryFadeKey={categoryFadeKey}
+      selectedProductCardId={selectedProductCardId}
+      onSelectProduto={handleOpenProductModal}
+      isTotem={isTotem}
+      isGarcomMobile={isGarcomMobile}
+    />
   );
 
   const homeContent = (
