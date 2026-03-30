@@ -12,8 +12,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRestaurant } from "@/contexts/RestaurantContext";
 import { useRouteLock } from "@/hooks/use-route-lock";
-
-type Filtro = "todas" | "consumo" | "livres" | "chamado";
+import type { FiltroMesa } from "@/types/operations";
 
 const GarcomPage = () => {
   const { mesas, dismissChamarGarcom } = useRestaurant();
