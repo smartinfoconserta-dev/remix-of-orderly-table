@@ -62,13 +62,7 @@ import { supabase } from "@/integrations/supabase/client";
 import IfoodPainel from "@/components/IfoodPainel";
 import { formatPrice } from "@/components/caixa/caixaHelpers";
 import GerenteFechamento from "@/components/gerente/GerenteFechamento";
-
-const paymentMethods: { value: PaymentMethod; label: string; icon: typeof Banknote; color: string; bg: string }[] = [
-  { value: "dinheiro", label: "Dinheiro", icon: Banknote, color: "text-emerald-400", bg: "bg-emerald-500/15" },
-  { value: "credito", label: "Crédito", icon: CreditCard, color: "text-blue-400", bg: "bg-blue-500/15" },
-  { value: "debito", label: "Débito", icon: Wallet, color: "text-amber-400", bg: "bg-amber-500/15" },
-  { value: "pix", label: "PIX", icon: Smartphone, color: "text-purple-400", bg: "bg-purple-500/15" },
-];
+import GerenteRelatorio from "@/components/gerente/GerenteRelatorio";
 
 const actionLabels: Record<string, string> = {
   cancelar_item: "Exclusão de item",
