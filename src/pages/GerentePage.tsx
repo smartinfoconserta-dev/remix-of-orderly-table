@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useCallback } from "react";
+import { useEffect, useState, useCallback } from "react";
 import LicenseBanner from "@/components/LicenseBanner";
 import {
   BarChart3,
