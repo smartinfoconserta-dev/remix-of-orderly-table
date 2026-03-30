@@ -212,12 +212,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
 
   // Load fundo_proximo from estado_caixa
   useEffect(() => {
-    const getStoreId = (): string | null => {
-      try { const raw = sessionStorage.getItem("obsidian-op-session-v2"); if (raw) { const s = JSON.parse(raw); return s.storeId ?? null; } } catch {}
-      try { const saved = sessionStorage.getItem("orderly-active-store"); if (saved) return saved; } catch {}
-      return null;
-    };
-    const storeId = getStoreId();
+    const storeId = getActiveStoreId();
     if (!storeId) return;
     supabase.from("estado_caixa").select("fundo_proximo").eq("store_id", storeId).order("updated_at", { ascending: false }).limit(1)
       .then(({ data }) => {
