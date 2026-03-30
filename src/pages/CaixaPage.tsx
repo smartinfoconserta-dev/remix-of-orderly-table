@@ -874,7 +874,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
       if (currentOperator && !ops.includes(currentOperator.id)) {
         localStorage.setItem(OPERADORES_KEY, JSON.stringify([...ops, currentOperator.id]));
       }
-      localStorage.setItem("obsidian-caixa-modo-v1", modoOperacao);
+      // legacy modoOperacao localStorage removed
       abrirCaixa(valor, currentOperator);
       // fundo_proximo is now managed via estado_caixa in Supabase
       toast.success("Caixa aberto com sucesso!", { duration: 1200, icon: "✅" });
