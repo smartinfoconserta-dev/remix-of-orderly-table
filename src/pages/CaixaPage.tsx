@@ -313,12 +313,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
   const [bairrosCache, setBairrosCache] = useState<Bairro[]>([]);
   const caixaStoreIdRef = useRef<string | null>(null);
   useEffect(() => {
-    const getStoreId = (): string | null => {
-      try { const raw = sessionStorage.getItem("obsidian-op-session-v2"); if (raw) { const s = JSON.parse(raw); return s.storeId ?? null; } } catch {}
-      try { const saved = sessionStorage.getItem("orderly-active-store"); if (saved) return saved; } catch {}
-      return null;
-    };
-    const sid = getStoreId();
+    const sid = getActiveStoreId();
     caixaStoreIdRef.current = sid;
     if (sid) getBairrosAsync(sid).then(setBairrosCache);
   }, []);
