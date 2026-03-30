@@ -222,11 +222,16 @@ const GerentePage = () => {
       .order("fechado_em", { ascending: false }).limit(100)
       .then(({ data }) => {
         setDiferencasCaixa((data ?? []).filter((d: any) => d.diferenca_dinheiro !== 0 && d.diferenca_dinheiro !== null).map((d: any) => ({
+          id: d.id,
           data: d.fechado_em ?? d.updated_at,
+          dataFormatada: new Date(d.fechado_em ?? d.updated_at ?? Date.now()).toLocaleDateString("pt-BR"),
           diferenca: Number(d.diferenca_dinheiro ?? 0),
           tipo: Number(d.diferenca_dinheiro ?? 0) > 0 ? "sobra" : "quebra",
           motivo: d.diferenca_motivo ?? "",
           operador: d.fechado_por ?? "",
+          gerente: d.conferido_por ?? d.fechado_por ?? "",
+          esperado: Number(d.esperado_dinheiro ?? 0),
+          contado: Number(d.contado_dinheiro ?? 0),
         })));
       });
   }, [equipeStoreId]);
