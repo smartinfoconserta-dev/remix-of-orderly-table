@@ -55,6 +55,7 @@ export interface FecharContaInput {
   couvert?: number;
   numeroPessoas?: number;
   cpfNota?: string;
+  origemOverride?: string;
 }
 
 interface RestaurantStore {
