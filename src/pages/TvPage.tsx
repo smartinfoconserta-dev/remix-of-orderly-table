@@ -66,9 +66,19 @@ const TvInner = ({ storeId }: { storeId: string }) => {
         list.push({ id: p.id, numero: p.numeroPedido, nome: p.origem === "totem" ? "Totem" : (p.clienteNome || "Balcão"), origem: p.origem, timestamp: p.criadoEmIso });
       }
     }
+    // Garçom PDV: pedidos de mesa ainda não prontos
+    if (modulos.garcomPdv) {
+      for (const mesa of mesas) {
+        for (const p of mesa.pedidos) {
+          if (!p.pronto) {
+            list.push({ id: p.id, numero: p.numeroPedido, nome: `Mesa ${mesa.numero}`, origem: "garcom_pdv", timestamp: p.criadoEmIso });
+          }
+        }
+      }
+    }
     list.sort((a, b) => a.timestamp.localeCompare(b.timestamp));
     return list;
-  }, [pedidosBalcao, origensTV]);
+  }, [pedidosBalcao, origensTV, modulos.garcomPdv, mesas]);
 
   const pedidosProntos = useMemo(() => {
     const list: PedidoTV[] = [];
@@ -77,9 +87,19 @@ const TvInner = ({ storeId }: { storeId: string }) => {
         list.push({ id: p.id, numero: p.numeroPedido, nome: p.origem === "totem" ? "Totem" : (p.clienteNome || "Balcão"), origem: p.origem, timestamp: p.criadoEmIso });
       }
     }
+    // Garçom PDV: pedidos de mesa marcados como prontos
+    if (modulos.garcomPdv) {
+      for (const mesa of mesas) {
+        for (const p of mesa.pedidos) {
+          if (p.pronto) {
+            list.push({ id: p.id, numero: p.numeroPedido, nome: `Mesa ${mesa.numero}`, origem: "garcom_pdv", timestamp: p.criadoEmIso });
+          }
+        }
+      }
+    }
     list.sort((a, b) => a.timestamp.localeCompare(b.timestamp));
     return list;
-  }, [pedidosBalcao, origensTV]);
+  }, [pedidosBalcao, origensTV, modulos.garcomPdv, mesas]);
 
   // Audio alert when a new pedido becomes "pronto"
   const audioCtxRef = useRef<AudioContext | null>(null);
