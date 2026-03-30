@@ -934,33 +934,6 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                   ))}
                 </div>
               </div>
-              {!modoForced && !isFastFoodGlobal && (
-              <div className="space-y-2">
-                <label className="text-sm font-bold text-foreground">Modo de operação</label>
-                <div className="grid grid-cols-3 gap-2">
-                  {([
-                    { value: "completo", label: "Completo", icon: "⊞", desc: "Mesas + Delivery" },
-                    { value: "somente_mesas", label: "Só Mesas", icon: "🍽️", desc: "Sem delivery" },
-                    { value: "somente_delivery", label: "Só Delivery", icon: "🛵", desc: "Sem mesas" },
-                  ] as const).map(opt => (
-                    <button
-                      key={opt.value}
-                      type="button"
-                      onClick={() => setModoOperacao(opt.value)}
-                      className={`flex flex-col items-center gap-1 rounded-xl border p-3 text-center transition-colors ${
-                        modoOperacao === opt.value
-                          ? "border-primary bg-primary/10 text-primary"
-                          : "border-border bg-secondary text-muted-foreground hover:text-foreground"
-                      }`}
-                    >
-                      <span className="text-xl">{opt.icon}</span>
-                      <span className="text-xs font-black">{opt.label}</span>
-                      <span className="text-[10px] text-muted-foreground">{opt.desc}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-              )}
               <Button onClick={handleAbrirCaixa} className="w-full h-12 rounded-xl text-base font-black gap-2">
                 <Check className="h-5 w-5" />
                 Abrir Caixa
