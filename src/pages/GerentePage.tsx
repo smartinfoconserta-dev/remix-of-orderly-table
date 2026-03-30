@@ -927,6 +927,11 @@ const GerentePage = () => {
                     <p className="text-lg font-black tabular-nums text-foreground">{formatPrice(totalMotoboys)}</p>
                     <p className="text-xs text-muted-foreground">{fechMotoboys.length} fechamentos</p>
                   </div>
+                  <div className="space-y-0.5">
+                    <p className="text-[10px] font-bold uppercase text-muted-foreground">💳 Garçom PDV</p>
+                    <p className="text-lg font-black tabular-nums text-foreground">{formatPrice(totalGarcomPdv)}</p>
+                    <p className="text-xs text-muted-foreground">{fechGarcomPdv.length} fechamentos</p>
+                  </div>
                 </div>
               </div>
               {[
