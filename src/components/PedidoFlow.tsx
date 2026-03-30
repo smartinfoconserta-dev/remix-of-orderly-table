@@ -11,6 +11,7 @@ import CategoryTabs from "@/components/CategoryTabs";
 import CategoryIcon from "@/components/CategoryIcon";
 import ProductModal from "@/components/ProductModal";
 import PedidoFlowCart from "@/components/pedido/PedidoFlowCart";
+import PedidoFlowCatalog from "@/components/pedido/PedidoFlowCatalog";
 import MinhaContaDrawer from "@/components/MinhaContaDrawer";
 import {
   AlertDialog,
