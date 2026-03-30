@@ -67,6 +67,7 @@ const GarcomPage = () => {
   ];
 
   return (
+    <ModuleGate moduleKey="mesas" moduleName="Mesas">
     <AppLayout
       title="Mesas"
       headerRight={
