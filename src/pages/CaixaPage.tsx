@@ -245,11 +245,43 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
 
   const [isDesktop, setIsDesktop] = useState(() => typeof window !== "undefined" && window.innerWidth >= 768);
   const sistemaConfig = useMemo(() => getSistemaConfig(), []);
+  /* ── Mesa/Payment state (hook) ── */
+  const mesaState = useCaixaMesaState({
+    mesas, sistemaConfig, accessMode,
+    descontoAplicado, setDescontoAplicado,
+    setDescontoInput, setDescontoMotivo,
+    setDescontoManagerName, setDescontoManagerPin, setDescontoError,
+  });
+  const {
+    mesaSelecionada, setMesaSelecionada, comandaOpen, setComandaOpen,
+    mesaTab, setMesaTab, closingPayments, setClosingPayments,
+    closingPaymentMethod, setClosingPaymentMethod, closingPaymentValue, setClosingPaymentValue,
+    valorEntregue, setValorEntregue, trocoRegistrado, setTrocoRegistrado,
+    couvertPessoas, setCouvertPessoas, couvertDispensado, setCouvertDispensado,
+    cpfNotaMesa, setCpfNotaMesa, cpfNotaMesaOpen, setCpfNotaMesaOpen,
+    financeUnlocked, setFinanceUnlocked, financeManagerName, setFinanceManagerName,
+    financeManagerPin, setFinanceManagerPin, financeError, setFinanceError,
+    isUnlockingFinance, setIsUnlockingFinance,
+    fundoTrocoInput, setFundoTrocoInput,
+    mesa, resetCloseAccountState,
+    couvertValorUnit, couvertTotal, totalConta, totalContaCents,
+    totalPago, totalPagoCents, valorRestante, fechamentoPronto, paymentProgress,
+    valorEntregueNum, valorEntregueValido, trocoCalculado, valorDinheiroARegistrar,
+  } = mesaState;
+  const handleVoltar = useCallback(() => {
+    mesaState.handleVoltar(() => {
+      setBalcaoPedidoSelecionado(null);
+      setBalcaoPayments([]);
+      setBalcaoPaymentMethod("dinheiro");
+      setBalcaoPaymentValue("");
+      setBalcaoValorEntregue("");
+      setCpfNotaBalcao("");
+      setCpfNotaBalcaoOpen(false);
+    });
+  }, [mesaState.handleVoltar, setBalcaoPedidoSelecionado, setBalcaoPayments, setBalcaoPaymentMethod, setBalcaoPaymentValue, setBalcaoValorEntregue, setCpfNotaBalcao, setCpfNotaBalcaoOpen]);
   const audioCtxRef = useRef<AudioContext | null>(null);
   const prevAguardandoRef = useRef<number | null>(null);
 
-  const mesa = mesaSelecionada ? mesas.find((item) => item.id === mesaSelecionada) ?? null : null;
-  
   const adminOperator = isAdminAccess ? { id: "admin", nome: "Administrador", role: "caixa" as const, criadoEm: "" } : null;
   const currentOperator = adminOperator ?? (accessMode === "gerente" ? currentGerente : currentCaixa);
   const hasCaixaAccess = isAdminAccess || (accessMode === "gerente"
