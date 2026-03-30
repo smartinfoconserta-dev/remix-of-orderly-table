@@ -1208,32 +1208,35 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
         <div>{isGarcomMobile && !isTotem ? productGrid : isHomeActive && !isTotem ? homeContent : productGrid}</div>
       </main>
       {(isGarcomMobile || isTotem) && carrinho.length > 0 && !cartOpen && (
-        <div className="fixed bottom-0 left-0 right-0 z-50 p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
-          <button
-            type="button"
-            onClick={() => handleCartOpenChange(true)}
-            className={`w-full flex items-center justify-between gap-3 rounded-2xl px-5 py-4 shadow-lg active:scale-[0.98] transition-transform ${
-              isTotem
-                ? "bg-[#FF6B00] text-white"
-                : "bg-primary text-primary-foreground shadow-[0_8px_32px_-8px_hsl(var(--primary)/0.6)]"
-            }`}
-          >
-            <div className="flex items-center gap-3">
-              <div className="relative">
-                <ShoppingCart className="h-5 w-5" />
-                <span className={`absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-black ${
-                  isTotem ? "bg-white text-[#FF6B00]" : "bg-white text-primary"
-                }`}>
-                  {carrinho.reduce((s, i) => s + i.quantidade, 0)}
-                </span>
-              </div>
-              <span className="text-base font-black uppercase">{isTotem ? "CONTINUAR" : "Ver carrinho"}</span>
-            </div>
-            <span className="text-base font-black tabular-nums">
-              {formatPrice(carrinho.reduce((s, i) => s + i.precoUnitario * i.quantidade, 0))}
-            </span>
-          </button>
-        </div>
+        <PedidoFlowCart
+          carrinho={carrinho}
+          onUpdateQty={(uid, delta) => {
+            if (isExternalOrder) {
+              setLocalCarrinho(prev => prev.map(item =>
+                item.uid === uid ? { ...item, quantidade: Math.max(1, item.quantidade + delta) } : item
+              ));
+            } else {
+              updateCartItemQty(mesaId, uid, delta);
+            }
+          }}
+          onRemoveItem={(uid) => {
+            if (isExternalOrder) {
+              setLocalCarrinho(prev => prev.filter(item => item.uid !== uid));
+            } else {
+              removeFromCart(mesaId, uid);
+            }
+          }}
+          onConfirmar={handleConfirmar}
+          onContinueOrdering={() => handleCartOpenChange(false)}
+          onSuccessAcknowledge={handleSuccessAcknowledge}
+          open={cartOpen}
+          onOpenChange={handleCartOpenChange}
+          hideTrigger={isGarcomMobile}
+          modo={modo}
+          isTotemMode={isTotem}
+          showStickyBar={true}
+          onStickyBarClick={() => handleCartOpenChange(true)}
+        />
       )}
     </>
   );
