@@ -60,9 +60,7 @@ import StorePinsManager from "@/components/StorePinsManager";
 import { useStore } from "@/contexts/StoreContext";
 import { supabase } from "@/integrations/supabase/client";
 import IfoodPainel from "@/components/IfoodPainel";
-
-/* ── helpers ── */
-const formatPrice = (v: number) => `R$ ${v.toFixed(2).replace(".", ",")}`;
+import { formatPrice } from "@/components/caixa/caixaHelpers";
 
 const paymentMethods: { value: PaymentMethod; label: string; icon: typeof Banknote; color: string; bg: string }[] = [
   { value: "dinheiro", label: "Dinheiro", icon: Banknote, color: "text-emerald-400", bg: "bg-emerald-500/15" },

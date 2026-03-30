@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { UtensilsCrossed } from "lucide-react";
+import { formatPrice } from "@/components/caixa/caixaHelpers";
 
 interface Categoria {
   id: string;
@@ -20,8 +21,6 @@ interface Produto {
   quantidadeEstoque: number;
   controleEstoque: boolean;
 }
-
-const formatPrice = (v: number) => `R$ ${v.toFixed(2).replace(".", ",")}`;
 
 const CardapioPublico = () => {
   const { slug } = useParams<{ slug: string }>();

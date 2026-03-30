@@ -7,14 +7,13 @@ import bgWifiDefault from "@/assets/bg-wifi-card.jpg";
 import { getSistemaConfig } from "@/lib/adminStorage";
 import type { Produto } from "@/data/menuData";
 import type { HomeShowcaseConfig } from "@/data/homeShowcaseData";
+import { formatPrice } from "@/components/caixa/caixaHelpers";
 
 interface Props {
   config: HomeShowcaseConfig;
   featuredProducts: Produto[];
   onOpenProduct: (produto: Produto) => void;
 }
-
-const formatPrice = (v: number) => `R$ ${v.toFixed(2).replace(".", ",")}`;
 
 const RestaurantHomeSection = ({ config, featuredProducts, onOpenProduct }: Props) => {
   const sistemaConfig = getSistemaConfig();

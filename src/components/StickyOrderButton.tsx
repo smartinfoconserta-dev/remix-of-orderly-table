@@ -1,6 +1,7 @@
 import { useCallback } from "react";
 import { ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { formatPrice } from "@/components/caixa/caixaHelpers";
 
 interface Props {
   total: number;
@@ -8,8 +9,6 @@ interface Props {
   onOpenCart: () => void;
   label?: string;
 }
-
-const formatPrice = (v: number) => `R$ ${v.toFixed(2).replace(".", ",")}`;
 
 const StickyOrderButton = ({ total, itemCount = 0, onOpenCart, label }: Props) => {
   const isEmpty = total <= 0 || itemCount <= 0;

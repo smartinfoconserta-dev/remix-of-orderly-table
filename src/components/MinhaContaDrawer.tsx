@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Minus, Plus, Receipt, Users, X } from "lucide-react";
 import type { PedidoRealizado } from "@/contexts/RestaurantContext";
+import { formatPrice } from "@/components/caixa/caixaHelpers";
 
 interface MinhaContaDrawerProps {
   pedidos: PedidoRealizado[];
@@ -9,7 +10,6 @@ interface MinhaContaDrawerProps {
   onOpenChange: (open: boolean) => void;
 }
 
-const fmt = (v: number) => `R$ ${v.toFixed(2).replace(".", ",")}`;
 
 const MinhaContaDrawer = ({ pedidos, total, open, onOpenChange }: MinhaContaDrawerProps) => {
   const [n, setN] = useState(1);
@@ -48,7 +48,7 @@ const MinhaContaDrawer = ({ pedidos, total, open, onOpenChange }: MinhaContaDraw
           {/* Total esquerda */}
           <div className="min-w-0">
             <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Total</p>
-            <p className="text-2xl font-black text-foreground tabular-nums">{fmt(total)}</p>
+            <p className="text-2xl font-black text-foreground tabular-nums">{formatPrice(total)}</p>
           </div>
           {/* Dividir + controles + cada um — tudo numa linha horizontal */}
           <div className="shrink-0 flex items-center gap-2">
@@ -71,7 +71,7 @@ const MinhaContaDrawer = ({ pedidos, total, open, onOpenChange }: MinhaContaDraw
             <div className="w-16 shrink-0 text-right">
               <p className="text-[10px] text-muted-foreground leading-tight">Cada um</p>
               <p className={`text-sm font-black tabular-nums leading-tight ${n > 1 ? "text-primary" : "text-muted-foreground/25"}`}>
-                {fmt(porPessoa)}
+                {formatPrice(porPessoa)}
               </p>
             </div>
           </div>
@@ -94,7 +94,7 @@ const MinhaContaDrawer = ({ pedidos, total, open, onOpenChange }: MinhaContaDraw
                 <span className="font-black text-foreground text-sm">Pedido #{pedido.numeroPedido}</span>
                 <span>às {pedido.criadoEm}</span>
               </div>
-              <span className="text-sm font-black text-foreground tabular-nums">{fmt(pedido.total)}</span>
+              <span className="text-sm font-black text-foreground tabular-nums">{formatPrice(pedido.total)}</span>
             </div>
 
             {/* Itens */}
@@ -137,7 +137,7 @@ const MinhaContaDrawer = ({ pedidos, total, open, onOpenChange }: MinhaContaDraw
 
                   {/* Valor */}
                   <span className="shrink-0 text-sm font-black text-foreground tabular-nums">
-                    {fmt(item.precoUnitario * item.quantidade)}
+                    {formatPrice(item.precoUnitario * item.quantidade)}
                   </span>
                 </div>
               ))}

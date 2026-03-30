@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { CheckCircle2, LoaderCircle, Minus, Plus, ShoppingCart, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { ItemCarrinho } from "@/contexts/RestaurantContext";
+import { formatPrice } from "@/components/caixa/caixaHelpers";
 
 interface Props {
   carrinho: ItemCarrinho[];
@@ -18,7 +19,6 @@ interface Props {
   isTotemMode?: boolean;
 }
 
-const formatPrice = (v: number) => `R$ ${v.toFixed(2).replace(".", ",")}`;
 const SUBMIT_LOCK_MS = 2000;
 const SUBMIT_LOADING_MS = 1500;
 

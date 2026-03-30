@@ -13,6 +13,7 @@ import { useRestaurant } from "@/contexts/RestaurantContext";
 import { useRouteLock } from "@/hooks/use-route-lock";
 import type { PaymentMethod } from "@/types/operations";
 import { toast } from "sonner";
+import { formatPrice } from "@/components/caixa/caixaHelpers";
 
 type Filtro = "todas" | "consumo" | "livres" | "chamado";
 
@@ -21,8 +22,6 @@ const PAYMENT_OPTIONS: { value: PaymentMethod; label: string; icon: typeof Credi
   { value: "credito", label: "Crédito", icon: CreditCard },
   { value: "debito", label: "Débito", icon: Wallet },
 ];
-
-const formatPrice = (v: number) => `R$ ${v.toFixed(2).replace(".", ",")}`;
 
 const GarcomPdvPage = () => {
   const { mesas, dismissChamarGarcom, fecharConta } = useRestaurant();

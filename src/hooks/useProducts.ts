@@ -107,12 +107,9 @@ async function loadFromDb(storeId?: string | null): Promise<void> {
   _loaded = true;
 }
 
-/** @deprecated Use getActiveStoreId from sessionManager */
-const getStoreId = getActiveStoreId;
-
 /** Preload products into memory cache. Call early in app lifecycle. */
 export async function preloadProducts(storeId?: string | null): Promise<void> {
-  const sid = storeId ?? getStoreId();
+  const sid = storeId ?? getActiveStoreId();
   // If already loaded for a different store, force reload
   if (_loaded && sid && _loadedStoreId && sid !== _loadedStoreId) {
     _loaded = false;

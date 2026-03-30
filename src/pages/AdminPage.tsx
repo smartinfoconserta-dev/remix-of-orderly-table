@@ -122,6 +122,7 @@ import { toast } from "sonner";
 import CaixasSection from "@/components/CaixasSection";
 import LicenseBanner from "@/components/LicenseBanner";
 import IfoodPainel from "@/components/IfoodPainel";
+import { formatPrice } from "@/components/caixa/caixaHelpers";
 
 type AdminTab = "dashboard" | "cardapio" | "mesas" | "tablets" | "equipe" | "caixas" | "configuracoes" | "licenca" | "ifood";
 
@@ -158,8 +159,6 @@ const sidebarSections = [
   { id: "configuracoes" as const, label: "Configurações", icon: Settings },
   { id: "licenca" as const, label: "Meu Plano", icon: Shield },
 ];
-
-const formatPrice = (v: number) => `R$ ${v.toFixed(2).replace(".", ",")}`;
 
 const AdminPage = () => {
   const { logout } = useAuth();

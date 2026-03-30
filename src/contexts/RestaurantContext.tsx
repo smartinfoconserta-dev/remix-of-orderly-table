@@ -27,6 +27,8 @@ import {
   formatMesaNumero, formatClock, formatDateTime,
 } from "@/services/dbHelpers";
 
+const BALCAO_ORIGINS = ["balcao", "delivery", "totem", "ifood"] as const;
+
 interface PedidoMeta {
   modo: "cliente" | "garcom" | "caixa" | "totem";
   operador?: OperationalUser | null;
@@ -237,8 +239,8 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       setNextPedidoNumber((maxPedidoData?.[0]?.numero_pedido ?? 0) + 1);
 
       const allPedidos = (pedidosRes.data ?? []).map(rowToPedido);
-      const pedidosMesa = allPedidos.filter(p => !["balcao", "delivery", "totem", "ifood"].includes(p.origem));
-      const pedidosBalcao = allPedidos.filter(p => ["balcao", "delivery", "totem", "ifood"].includes(p.origem));
+      const pedidosMesa = allPedidos.filter(p => !(BALCAO_ORIGINS as ReadonlyArray<string>).includes(p.origem));
+      const pedidosBalcao = allPedidos.filter(p => (BALCAO_ORIGINS as ReadonlyArray<string>).includes(p.origem));
       const fechamentos = (fechRes.data ?? []).map(rowToFechamento);
       const maxComanda = fechamentos.reduce((max, f) => Math.max(max, f.numeroComanda ?? 0), 0);
       setContadorComanda(maxComanda);
@@ -313,7 +315,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         if (payload.eventType === "INSERT") {
           const p = rowToPedido(payload.new);
           setStore(prev => {
-            if (["balcao", "delivery", "totem", "ifood"].includes(p.origem)) {
+            if ((BALCAO_ORIGINS as ReadonlyArray<string>).includes(p.origem)) {
               if (prev.pedidosBalcao.find(x => x.id === p.id)) return prev;
               return { ...prev, pedidosBalcao: [...prev.pedidosBalcao, p] };
             } else {
@@ -330,7 +332,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         } else if (payload.eventType === "UPDATE") {
           const p = rowToPedido(payload.new);
           setStore(prev => {
-            const isBalcaoOrigin = ["balcao", "delivery", "totem", "ifood"].includes(p.origem);
+            const isBalcaoOrigin = (BALCAO_ORIGINS as ReadonlyArray<string>).includes(p.origem);
             let pedidosBalcao = prev.pedidosBalcao;
             if (isBalcaoOrigin) {
               const exists = prev.pedidosBalcao.some(x => x.id === p.id);
@@ -434,10 +436,16 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     const todayIso = today.toISOString();
 
     const pollAll = async () => {
-      const { data: pedidosData, error: pedidosErr } = await supabase.rpc("rpc_get_operational_pedidos" as any, { _store_id: sid });
+      const [pedidosRes, fechRes, caixaRes] = await Promise.all([
+        supabase.rpc("rpc_get_operational_pedidos" as any, { _store_id: sid }),
+        supabase.from("fechamentos").select("*").eq("store_id", sid).gte("criado_em_iso", todayIso).order("criado_em_iso", { ascending: false }),
+        supabase.from("estado_caixa").select("*").eq("store_id", sid).order("updated_at", { ascending: false }).limit(1),
+      ]);
+
+      const { data: pedidosData, error: pedidosErr } = pedidosRes;
       if (!pedidosErr && pedidosData) {
         const freshPedidos = (pedidosData as any[]).map(rowToPedido);
-        const freshBalcao = freshPedidos.filter(p => ["balcao", "delivery", "totem", "ifood"].includes(p.origem));
+        const freshBalcao = freshPedidos.filter(p => (BALCAO_ORIGINS as ReadonlyArray<string>).includes(p.origem));
 
         setStore(prev => {
           const existingIds = new Set(prev.pedidosBalcao.map(p => p.id));
@@ -453,7 +461,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           return changed ? { ...prev, pedidosBalcao: updatedBalcao } : prev;
         });
 
-        const freshMesa = freshPedidos.filter(p => !["balcao", "delivery", "totem", "ifood"].includes(p.origem));
+        const freshMesa = freshPedidos.filter(p => !(BALCAO_ORIGINS as ReadonlyArray<string>).includes(p.origem));
         if (freshMesa.length > 0) {
           setStore(prev => {
             let changed = false;
@@ -486,11 +494,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         }
       }
 
-      const { data: fechData } = await supabase
-        .from("fechamentos").select("*")
-        .eq("store_id", sid)
-        .gte("criado_em_iso", todayIso)
-        .order("criado_em_iso", { ascending: false });
+      const { data: fechData } = fechRes;
       if (fechData) {
         const freshFech = fechData.map(rowToFechamento);
         setStore(prev => {
@@ -508,11 +512,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         });
       }
 
-      const { data: caixaData } = await supabase
-        .from("estado_caixa").select("*")
-        .eq("store_id", sid)
-        .order("updated_at", { ascending: false })
-        .limit(1);
+      const { data: caixaData } = caixaRes;
       if (caixaData?.[0]) {
         const row = caixaData[0];
         setStore(prev => {

@@ -34,8 +34,6 @@ const saveOrdem = (ids: string[], storeId?: string | null) => {
   if (storeId) savePreferencia(storeId, "motoboy", "ordem", JSON.stringify(ids));
 };
 
-const getStoreIdFromSession = getActiveStoreId;
-
 export default function MotoboyPage() {
   const sysConfig = getSistemaConfig();
   const NOME_REST = sysConfig.nomeRestaurante || "Restaurante";
@@ -45,7 +43,7 @@ export default function MotoboyPage() {
   const { pedidosBalcao, marcarBalcaoSaiu, marcarBalcaoEntregue, cancelarEntregaMotoboy } = useRestaurant();
   const { authLevel, operationalSession, supabaseUser, logout } = useAuth();
   const { storeId: ctxStoreId } = useStore();
-  const effectiveStoreId = operationalSession?.storeId ?? ctxStoreId ?? getStoreIdFromSession();
+  const effectiveStoreId = operationalSession?.storeId ?? ctxStoreId ?? getActiveStoreId();
   const isAdminAccess = authLevel === "admin" || authLevel === "master";
   const isAuthenticatedMotoboyAccess = !!supabaseUser && authLevel === "operational" && operationalSession?.module === "motoboy";
   const [sessao, setSessao] = useState<{ id: string; nome: string; fundoTroco: number } | null>(() =>

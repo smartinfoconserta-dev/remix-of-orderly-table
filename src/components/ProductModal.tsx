@@ -8,6 +8,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
 import type { Produto, ProductStep, GrupoPersonalizacao } from "@/data/menuData";
 import type { ItemCarrinho } from "@/contexts/RestaurantContext";
+import { formatPrice } from "@/components/caixa/caixaHelpers";
 
 interface Props {
   produto: Produto | null;
@@ -46,8 +47,6 @@ const defaultEmbalagemOptions = ["Consumir na mesa", "Para viagem"];
 const standardFlowOrder: ProductStep[] = ["adicionais", "bebida", "remover", "tipo", "embalagem", "quantidade"];
 const ADD_BUTTON_LOCK_MS = 500;
 const STEP_TRANSITION_MS = 250;
-
-const formatPrice = (value: number) => `R$ ${value.toFixed(2).replace(".", ",")}`;
 
 const createPedidoAtual = (produtoId: string | null = null): PedidoAtual => ({
   produtoId,

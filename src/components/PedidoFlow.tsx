@@ -44,6 +44,7 @@ import {
 import { getStoredDeviceId } from "@/lib/deviceAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { getActiveStoreId } from "@/lib/sessionManager";
+import { formatPrice } from "@/components/caixa/caixaHelpers";
 
 interface PedidoFlowProps {
   modo: "cliente" | "garcom" | "caixa" | "balcao" | "delivery" | "totem";
@@ -73,8 +74,6 @@ const ORDER_SUBMIT_LOCK_MS = 2000;
 const TABLET_MIN_WIDTH = 768;
 const TABLET_MAX_WIDTH = 1279;
 const LONG_PRESS_DURATION_MS = 5000;
-
-const formatPrice = (v: number) => `R$ ${v.toFixed(2).replace(".", ",")}`;
 
 const formatMesaLabel = (mesaId: string) => {
   const numeroMesa = mesaId.replace(/\D/g, "") || "1";
