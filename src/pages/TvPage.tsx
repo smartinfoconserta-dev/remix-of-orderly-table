@@ -127,7 +127,7 @@ const TvInner = ({ storeId }: { storeId: string }) => {
     </div>
   );
 
-  if (!modulos.totem && !modulos.balcao) {
+  if (!modulos.totem && !modulos.balcao && !modulos.garcomPdv) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center" style={{ background: "#FFFFFF" }}>
         {logoUrl && <img src={logoUrl} alt="" className="h-24 w-24 rounded-2xl object-cover mb-6" />}

@@ -2486,6 +2486,26 @@ ${topRows ? `<h2>Top 5 produtos</h2><table><thead><tr><th>#</th><th>Produto</th>
                         }}
                       />
                     </div>
+                    {/* Garçom PDV */}
+                    <div className="flex items-center justify-between rounded-xl border border-border p-4">
+                      <div className="flex items-center gap-3">
+                        <span className="text-xl">💳</span>
+                        <div>
+                          <p className="text-sm font-bold text-foreground">Garçom PDV</p>
+                          <p className="text-[10px] text-muted-foreground">Garçom tira pedido e recebe pagamento digital na mesa • Sem dinheiro</p>
+                        </div>
+                      </div>
+                      <Switch
+                        checked={sistemaConfig.modulos?.garcomPdv === true}
+                        onCheckedChange={(v) => {
+                          const next = { ...sistemaConfig, modulos: { ...sistemaConfig.modulos, garcomPdv: v } };
+                          setSistemaConfig(next);
+                          saveSistemaConfig(next, storeId);
+                          saveSistemaConfigAsync(next, storeId);
+                          toast.success(v ? "Garçom PDV ativado" : "Garçom PDV desativado");
+                        }}
+                      />
+                    </div>
                     {/* Balcão */}
                     <div className="flex items-center justify-between rounded-xl border border-border p-4">
                       <div className="flex items-center gap-3">
