@@ -206,7 +206,7 @@ const GarcomPdvPage = () => {
     return true;
   });
 
-  const filtros: { id: Filtro; label: string; badge?: number }[] = [
+  const filtros: { id: FiltroMesa; label: string; badge?: number }[] = [
     { id: "todas", label: "Todas" },
     { id: "consumo", label: "Em consumo" },
     { id: "livres", label: "Livres" },

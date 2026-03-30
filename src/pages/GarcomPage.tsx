@@ -21,7 +21,7 @@ const GarcomPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const mesaIdSelecionada = searchParams.get("mesa")?.trim() ?? "";
-  const [filtro, setFiltro] = useState<Filtro>("todas");
+  const [filtro, setFiltro] = useState<FiltroMesa>("todas");
   const [mesaBusca, setMesaBusca] = useState("");
   const [clock, setClock] = useState(() => new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }));
 

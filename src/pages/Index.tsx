@@ -21,7 +21,7 @@ const Index = () => {
   // Auto-redirect if already logged in
   useEffect(() => {
     if (isLoading) return;
-    const routeMap: Record<string, string> = { tv_retirada: "tv", cliente: "tablet" };
+    const routeMap: Record<string, string> = { tv_retirada: "tv", cliente: "tablet", garcom_pdv: "garcom-pdv", "garcom-pdv": "garcom-pdv" };
     if (authLevel === "master") navigate("/master", { replace: true });
     else if (authLevel === "admin") navigate("/admin", { replace: true });
     else if (authLevel === "operational" && operationalSession?.module) {
