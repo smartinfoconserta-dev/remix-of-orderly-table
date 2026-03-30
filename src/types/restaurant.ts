@@ -98,7 +98,7 @@ export interface FechamentoConta {
   canceladoEm?: string;
   canceladoMotivo?: string;
   canceladoPor?: string;
-  origem?: "mesa" | "balcao" | "delivery" | "totem" | "motoboy";
+  origem?: "mesa" | "balcao" | "delivery" | "totem" | "motoboy" | "garcom_pdv";
   cpfNota?: string;
 }
 

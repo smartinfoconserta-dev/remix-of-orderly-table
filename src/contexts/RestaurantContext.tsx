@@ -55,7 +55,7 @@ export interface FecharContaInput {
   couvert?: number;
   numeroPessoas?: number;
   cpfNota?: string;
-  origemOverride?: string;
+  origemOverride?: FechamentoConta["origem"];
 }
 
 interface RestaurantStore {
@@ -724,7 +724,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           const resumoPagamento = pagamentos.length === 1 ? pagamentos[0].formaPagamento : `${pagamentos.length} formas de pagamento`;
           fechamento = {
             id: `fechamento-${now.getTime()}-${mesa.id}`, numeroComanda: proximoNumeroComanda(),
-            mesaId, mesaNumero: mesa.numero, origem: (input.origemOverride ?? "mesa") as any,
+            mesaId, mesaNumero: mesa.numero, origem: (input.origemOverride ?? "mesa") as FechamentoConta["origem"],
             total: Math.max(mesa.total - (input?.desconto ?? 0), 0), formaPagamento: pagamentos[0].formaPagamento,
             pagamentos, itens: mesa.pedidos.flatMap((p) => p.itens.map(cloneItem)),
             criadoEm: formatDateTime(now), criadoEmIso: now.toISOString(),

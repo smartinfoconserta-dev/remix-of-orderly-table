@@ -189,6 +189,7 @@ const GarcomPdvPage = () => {
           modo="garcom"
           mesaId={mesaIdSelecionada}
           garcomNome={garcomNome}
+          onBack={() => setSearchParams({})}
         />
       </ModuleGate>
     );
