@@ -37,7 +37,7 @@ interface ResumoDeliveryTurno {
 interface PedidoBalcao {
   id: string;
   numeroPedido: number;
-  statusBalcao: string;
+  statusBalcao?: string;
   total: number;
   origem: string;
   formaPagamentoDelivery?: string;

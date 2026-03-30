@@ -11,7 +11,7 @@ interface PedidoBalcao {
   id: string;
   numeroPedido: number;
   clienteNome?: string;
-  statusBalcao: string;
+  statusBalcao?: string;
   canceladoMotivo?: string;
   total: number;
   itens: Array<{ uid: string; nome: string; quantidade: number }>;
