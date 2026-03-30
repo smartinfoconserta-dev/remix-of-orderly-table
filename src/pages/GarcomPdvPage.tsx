@@ -51,10 +51,14 @@ const GarcomPdvPage = () => {
   }, []);
 
   const handleCobrar = useCallback((mesaId: string) => {
+    if (!caixaAberto) {
+      toast.error("O caixa precisa estar aberto para realizar cobranças.");
+      return;
+    }
     setPagamentoMesaId(mesaId);
     setPagamentoOpen(true);
     setPagamentoMethod("pix");
-  }, []);
+  }, [caixaAberto]);
 
   const handleConfirmarPagamento = useCallback(() => {
     if (!pagamentoMesaId || !currentGarcom) return;
