@@ -881,7 +881,7 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
           hideTrigger={isGarcomMobile}
           modo={modo}
           isTotemMode={isTotem}
-          showStickyBar={false}
+          showStickyBar={(isGarcomMobile || isTotem)}
           onStickyBarClick={() => handleCartOpenChange(true)}
         />
         {modo === "cliente" && (
