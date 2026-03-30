@@ -24,7 +24,7 @@ const PAYMENT_OPTIONS: { value: PaymentMethod; label: string; icon: typeof Credi
 ];
 
 const GarcomPdvPage = () => {
-  const { mesas, dismissChamarGarcom, fecharConta } = useRestaurant();
+  const { mesas, dismissChamarGarcom, fecharConta, caixaAberto } = useRestaurant();
   const { currentGarcom, logout, authLevel } = useAuth();
   const isAdminAccess = authLevel === "admin" || authLevel === "master";
   const [searchParams, setSearchParams] = useSearchParams();
