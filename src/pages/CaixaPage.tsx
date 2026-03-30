@@ -73,6 +73,7 @@ import { getActiveStoreId } from "@/lib/sessionManager";
 import type { ItemCarrinho } from "@/contexts/RestaurantContext";
 import { findClienteDelivery, upsertClienteDelivery, type Bairro, type ClienteDelivery } from "@/lib/deliveryStorage";
 import { useCaixaBalcaoState } from "@/hooks/useCaixaBalcaoState";
+import { useCaixaDialogsState, type CriticalAction } from "@/hooks/useCaixaDialogsState";
 import { supabase } from "@/integrations/supabase/client";
 import IfoodPainel from "@/components/IfoodPainel";
 
@@ -105,12 +106,6 @@ import CaixaHistoricoTab from "@/components/caixa/CaixaHistoricoTab";
 import CaixaCriticalActionDialog from "@/components/caixa/CaixaCriticalActionDialog";
 import CaixaQrScanner from "@/components/caixa/CaixaQrScanner";
 
-/* ── types ── */
-type CriticalAction =
-  | { type: "zerar_mesa"; mesaId: string; mesaNumero: number }
-  | { type: "remover_item_carrinho"; mesaId: string; mesaNumero: number; itemUid: string; itemNome: string }
-  | { type: "remover_item_pedido"; mesaId: string; mesaNumero: number; pedidoId: string; pedidoNumero: number; itemUid: string; itemNome: string; quantidade: number }
-  | { type: "cancelar_pedido"; mesaId: string; mesaNumero: number; pedidoId: string; pedidoNumero: number };
 
 interface CaixaPageProps {
   accessMode?: Extract<UserRole, "caixa" | "gerente">;
@@ -165,12 +160,32 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
   const [financeManagerPin, setFinanceManagerPin] = useState("");
   const [financeError, setFinanceError] = useState<string | null>(null);
   const [isUnlockingFinance, setIsUnlockingFinance] = useState(false);
-  const [criticalAction, setCriticalAction] = useState<CriticalAction | null>(null);
-  const [criticalManagerName, setCriticalManagerName] = useState("");
-  const [criticalManagerPin, setCriticalManagerPin] = useState("");
-  const [criticalReason, setCriticalReason] = useState("");
-  const [criticalError, setCriticalError] = useState<string | null>(null);
-  const [isAuthorizingCriticalAction, setIsAuthorizingCriticalAction] = useState(false);
+  /* ── Dialogs state (hook) ── */
+  const dialogs = useCaixaDialogsState();
+  const {
+    criticalAction, setCriticalAction, criticalManagerName, setCriticalManagerName,
+    criticalManagerPin, setCriticalManagerPin, criticalReason, setCriticalReason,
+    criticalError, setCriticalError, isAuthorizingCriticalAction, setIsAuthorizingCriticalAction,
+    resetCriticalDialog,
+    descontoModalOpen, setDescontoModalOpen, descontoTipo, setDescontoTipo,
+    descontoInput, setDescontoInput, descontoMotivo, setDescontoMotivo,
+    descontoManagerName, setDescontoManagerName, descontoManagerPin, setDescontoManagerPin,
+    descontoError, setDescontoError, descontoAplicado, setDescontoAplicado,
+    estornoModalOpen, setEstornoModalOpen, estornoFechamentoId, setEstornoFechamentoId,
+    estornoMotivo, setEstornoMotivo, estornoPin, setEstornoPin,
+    estornoNome, setEstornoNome, estornoError, setEstornoError,
+    turnoModalOpen, setTurnoModalOpen, turnoManagerName, setTurnoManagerName,
+    turnoManagerPin, setTurnoManagerPin, turnoError, setTurnoError,
+    isClosingTurno, setIsClosingTurno, turnoReportOpen, setTurnoReportOpen,
+    dinheiroContado, setDinheiroContado, motivoDiferenca, setMotivoDiferenca,
+    movModalOpen, setMovModalOpen, movTipo, setMovTipo,
+    movDescricao, setMovDescricao, movValor, setMovValor, movConfirmStep, setMovConfirmStep,
+    buscaComanda, setBuscaComanda, buscaComandaOpen, setBuscaComandaOpen,
+    qrScanOpen, setQrScanOpen, qrScanInput, setQrScanInput, qrScanInputRef,
+    totemCancelOpen, setTotemCancelOpen, totemCancelMotivo, setTotemCancelMotivo,
+    totemCancelPin, setTotemCancelPin, totemCancelError, setTotemCancelError,
+    totemCancelLoading, setTotemCancelLoading,
+  } = dialogs;
   const [fundoTrocoInput, setFundoTrocoInput] = useState("");
 
   // Load fundo_proximo from estado_caixa
@@ -183,38 +198,11 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
         if (val > 0) setFundoTrocoInput(val.toFixed(2).replace(".", ","));
       });
   }, []);
-  const [turnoModalOpen, setTurnoModalOpen] = useState(false);
-  const [turnoManagerName, setTurnoManagerName] = useState("");
-  const [turnoManagerPin, setTurnoManagerPin] = useState("");
-  const [turnoError, setTurnoError] = useState<string | null>(null);
-  const [isClosingTurno, setIsClosingTurno] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [movModalOpen, setMovModalOpen] = useState(false);
-  const [movTipo, setMovTipo] = useState<"entrada" | "saida">("entrada");
-  const [movDescricao, setMovDescricao] = useState("");
-  const [movValor, setMovValor] = useState("");
-  const [movConfirmStep, setMovConfirmStep] = useState(false);
-  const [turnoReportOpen, setTurnoReportOpen] = useState(false);
-  const [dinheiroContado, setDinheiroContado] = useState("");
-  const [motivoDiferenca, setMotivoDiferenca] = useState("");
-  const [descontoModalOpen, setDescontoModalOpen] = useState(false);
-  const [descontoTipo, setDescontoTipo] = useState<"percentual" | "valor">("percentual");
-  const [descontoInput, setDescontoInput] = useState("");
-  const [descontoMotivo, setDescontoMotivo] = useState("");
-  const [descontoManagerName, setDescontoManagerName] = useState("");
-  const [descontoManagerPin, setDescontoManagerPin] = useState("");
-  const [descontoError, setDescontoError] = useState<string | null>(null);
-  const [descontoAplicado, setDescontoAplicado] = useState(0);
   const [couvertPessoas, setCouvertPessoas] = useState(0);
   const [couvertDispensado, setCouvertDispensado] = useState(false);
   const [cpfNotaMesa, setCpfNotaMesa] = useState("");
   const [cpfNotaMesaOpen, setCpfNotaMesaOpen] = useState(false);
-  const [estornoModalOpen, setEstornoModalOpen] = useState(false);
-  const [estornoFechamentoId, setEstornoFechamentoId] = useState<string | null>(null);
-  const [estornoMotivo, setEstornoMotivo] = useState("");
-  const [estornoPin, setEstornoPin] = useState("");
-  const [estornoNome, setEstornoNome] = useState("");
-  const [estornoError, setEstornoError] = useState<string | null>(null);
 
   /* ── Balcão/Delivery state (hook) ── */
   const balcao = useCaixaBalcaoState(pedidosBalcao);
@@ -265,11 +253,6 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
     if (moduloBalcao) return "delivery";
     return "delivery";
   });
-  const [totemCancelOpen, setTotemCancelOpen] = useState<string | null>(null);
-  const [totemCancelMotivo, setTotemCancelMotivo] = useState("");
-  const [totemCancelPin, setTotemCancelPin] = useState("");
-  const [totemCancelError, setTotemCancelError] = useState<string | null>(null);
-  const [totemCancelLoading, setTotemCancelLoading] = useState(false);
   const [mostrarEntregues, setMostrarEntregues] = useState(false);
   const [filtroMotoboy, setFiltroMotoboy] = useState<string | null>(null);
   const [fechamentosPendentes, setFechamentosPendentes] = useState<any[]>([]);
@@ -281,8 +264,6 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
     const totalEntregas = fechamentosPendentes.reduce((s: number, f: any) => s + Number(f.resumo?.totalEntregas ?? 0), 0);
     return { totalEntregas, conferidos: conferidos.length, pendentes: pendentes.length, totalConferido, motoboyNomes };
   }, [fechamentosPendentes]);
-  const [buscaComanda, setBuscaComanda] = useState("");
-  const [buscaComandaOpen, setBuscaComandaOpen] = useState(false);
   const [fechamentoSelecionado, setFechamentoSelecionado] = useState<any | null>(null);
   const [pinConferencia, setPinConferencia] = useState("");
   const [pinConferenciaErro, setPinConferenciaErro] = useState("");
@@ -489,14 +470,6 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
     [dismissChamarGarcom, resetCloseAccountState],
   );
 
-  const resetCriticalDialog = useCallback(() => {
-    setCriticalAction(null);
-    setCriticalManagerName("");
-    setCriticalManagerPin("");
-    setCriticalReason("");
-    setCriticalError(null);
-    setIsAuthorizingCriticalAction(false);
-  }, []);
 
   /* ── caixa open time (must be before early returns) ── */
   const caixaOpenTime = useMemo(() => {
@@ -639,10 +612,6 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
   const [qrRetiradaPedidoId, setQrRetiradaPedidoId] = useState<string | null>(null);
   const qrRetiradaTimerRef = useRef<number | null>(null);
 
-  // QR scanner dialog state
-  const [qrScanOpen, setQrScanOpen] = useState(false);
-  const [qrScanInput, setQrScanInput] = useState("");
-  const qrScanInputRef = useRef<HTMLInputElement>(null);
 
   const handleQrScan = useCallback((raw: string) => {
     const value = raw.trim();
