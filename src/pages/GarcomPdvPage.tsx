@@ -11,7 +11,7 @@ import LicenseBanner from "@/components/LicenseBanner";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRestaurant } from "@/contexts/RestaurantContext";
 import { useRouteLock } from "@/hooks/use-route-lock";
-import type { PaymentMethod } from "@/types/operations";
+import type { PaymentMethod, FiltroMesa } from "@/types/operations";
 import { toast } from "sonner";
 import { formatPrice } from "@/components/caixa/caixaHelpers";
 
