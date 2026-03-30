@@ -46,7 +46,7 @@ import {
 import { getStoredDeviceId } from "@/lib/deviceAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { getActiveStoreId } from "@/lib/sessionManager";
-import { formatPrice } from "@/components/caixa/caixaHelpers";
+
 
 interface PedidoFlowProps {
   modo: "cliente" | "garcom" | "caixa" | "balcao" | "delivery" | "totem";
