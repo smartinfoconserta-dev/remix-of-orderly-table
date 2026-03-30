@@ -69,6 +69,7 @@ import { useRestaurant } from "@/contexts/RestaurantContext";
 import { useRouteLock } from "@/hooks/use-route-lock";
 import type { PaymentMethod, SplitPayment, UserRole } from "@/types/operations";
 import { getSistemaConfig } from "@/lib/adminStorage";
+import { getActiveStoreId } from "@/lib/sessionManager";
 import type { ItemCarrinho } from "@/contexts/RestaurantContext";
 import { findClienteDelivery, upsertClienteDelivery, getBairrosAsync, type Bairro, type ClienteDelivery } from "@/lib/deliveryStorage";
 import { supabase } from "@/integrations/supabase/client";
