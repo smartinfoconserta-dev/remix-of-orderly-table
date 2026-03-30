@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Produto, Categoria, GrupoPersonalizacao, Adicional, ProductStep } from "@/data/menuData";
 import { categorias as defaultCategorias } from "@/data/menuData";
+import { getActiveStoreId } from "@/lib/sessionManager";
 
 // ─── In-memory cache ───
 let _produtosCache: Produto[] = [];
@@ -106,22 +107,8 @@ async function loadFromDb(storeId?: string | null): Promise<void> {
   _loaded = true;
 }
 
-/** Get storeId from session storage */
-function getStoreId(): string | null {
-  try {
-    const raw = sessionStorage.getItem("obsidian-op-session-v2");
-    if (raw) { const s = JSON.parse(raw); if (s.storeId) return s.storeId; }
-  } catch (err) { console.error("[useProducts] erro:", err); }
-  try {
-    const saved = sessionStorage.getItem("orderly-active-store");
-    if (saved) return saved;
-  } catch (err) { console.error("[useProducts] erro:", err); }
-  try {
-    const device = localStorage.getItem("orderly-device-store-id");
-    if (device) return device;
-  } catch (err) { console.error("[useProducts] erro:", err); }
-  return null;
-}
+/** @deprecated Use getActiveStoreId from sessionManager */
+const getStoreId = getActiveStoreId;
 
 /** Preload products into memory cache. Call early in app lifecycle. */
 export async function preloadProducts(storeId?: string | null): Promise<void> {

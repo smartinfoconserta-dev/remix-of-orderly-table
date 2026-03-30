@@ -2,6 +2,7 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useR
 import type { CashMovementType, OperationalUser, PaymentMethod, SplitPayment } from "@/types/operations";
 import { getSistemaConfig, getSistemaConfigAsync } from "@/lib/adminStorage";
 import { supabase } from "@/integrations/supabase/client";
+import { getActiveStoreId } from "@/lib/sessionManager";
 import { useAuth } from "@/contexts/AuthContext";
 import { useStore } from "@/contexts/StoreContext";
 import { toast } from "sonner";
@@ -288,43 +289,6 @@ const resetMesa = (mesa: Mesa): Mesa => ({
 });
 
 // ── Supabase persistence helpers ──
-let _cachedStoreId: string | null = null;
-
-const getActiveStoreId = (): string | null => {
-  // Try operational session first
-  try {
-    const raw = sessionStorage.getItem("obsidian-op-session-v2");
-    if (raw) { const s = JSON.parse(raw); if (s.storeId) { _cachedStoreId = s.storeId; return s.storeId; } }
-  } catch {}
-  try {
-    const persistedRaw = localStorage.getItem("obsidian-op-session-v2-persisted");
-    if (persistedRaw) {
-      const s = JSON.parse(persistedRaw);
-      if (s.storeId) {
-        sessionStorage.setItem("obsidian-op-session-v2", persistedRaw);
-        _cachedStoreId = s.storeId;
-        return s.storeId;
-      }
-    }
-  } catch {}
-  // Try admin store
-  try {
-    const saved = sessionStorage.getItem("orderly-active-store");
-    if (saved) { _cachedStoreId = saved; return saved; }
-  } catch {}
-  // Try device store (tablet/totem/tv activated via DeviceGate) — check both storages
-  try {
-    const deviceStore = sessionStorage.getItem("orderly-device-store-id") || localStorage.getItem("orderly-device-store-id");
-    if (deviceStore) {
-      // Ensure sessionStorage is synced for current tab
-      sessionStorage.setItem("orderly-device-store-id", deviceStore);
-      _cachedStoreId = deviceStore;
-      return deviceStore;
-    }
-  } catch {}
-  // Fallback to cached value (covers edge cases where session is briefly unavailable)
-  return _cachedStoreId;
-};
 
 // DB row converters for pedidos
 const pedidoToRow = (p: PedidoRealizado, storeId: string) => ({
@@ -572,14 +536,11 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     const syncActiveStoreId = () => {
       const current = derivedStoreId ?? getActiveStoreId();
 
-      if (current) {
-        _cachedStoreId = current;
-      }
+      // storeId is now managed by sessionManager — no local cache needed
 
       setActiveStoreId(prev => prev !== current ? current : prev);
 
       if (!current && authLevel === "unauthenticated") {
-        _cachedStoreId = null;
         loadedStoreRef.current = null;
         setStore(estadoInicial());
       }

@@ -43,6 +43,7 @@ import {
 } from "@/lib/tabletBinding";
 import { getStoredDeviceId } from "@/lib/deviceAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { getActiveStoreId } from "@/lib/sessionManager";
 
 interface PedidoFlowProps {
   modo: "cliente" | "garcom" | "caixa" | "balcao" | "delivery" | "totem";
@@ -107,9 +108,7 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
   // Get storeId from prop (delivery), sessionStorage (device), or null
   const deviceStoreId = useMemo(() => {
     if (propStoreId) return propStoreId;
-    try {
-      return sessionStorage.getItem("orderly-device-store-id") || localStorage.getItem("orderly-device-store-id") || null;
-    } catch { return null; }
+    return getActiveStoreId();
   }, [propStoreId]);
 
   useEffect(() => {

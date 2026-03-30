@@ -69,6 +69,7 @@ import { useRestaurant } from "@/contexts/RestaurantContext";
 import { useRouteLock } from "@/hooks/use-route-lock";
 import type { PaymentMethod, SplitPayment, UserRole } from "@/types/operations";
 import { getSistemaConfig } from "@/lib/adminStorage";
+import { getActiveStoreId } from "@/lib/sessionManager";
 import type { ItemCarrinho } from "@/contexts/RestaurantContext";
 import { findClienteDelivery, upsertClienteDelivery, getBairrosAsync, type Bairro, type ClienteDelivery } from "@/lib/deliveryStorage";
 import { supabase } from "@/integrations/supabase/client";
@@ -211,12 +212,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
 
   // Load fundo_proximo from estado_caixa
   useEffect(() => {
-    const getStoreId = (): string | null => {
-      try { const raw = sessionStorage.getItem("obsidian-op-session-v2"); if (raw) { const s = JSON.parse(raw); return s.storeId ?? null; } } catch {}
-      try { const saved = sessionStorage.getItem("orderly-active-store"); if (saved) return saved; } catch {}
-      return null;
-    };
-    const storeId = getStoreId();
+    const storeId = getActiveStoreId();
     if (!storeId) return;
     supabase.from("estado_caixa").select("fundo_proximo").eq("store_id", storeId).order("updated_at", { ascending: false }).limit(1)
       .then(({ data }) => {
@@ -317,18 +313,21 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
   const [bairrosCache, setBairrosCache] = useState<Bairro[]>([]);
   const caixaStoreIdRef = useRef<string | null>(null);
   useEffect(() => {
-    const getStoreId = (): string | null => {
-      try { const raw = sessionStorage.getItem("obsidian-op-session-v2"); if (raw) { const s = JSON.parse(raw); return s.storeId ?? null; } } catch {}
-      try { const saved = sessionStorage.getItem("orderly-active-store"); if (saved) return saved; } catch {}
-      return null;
-    };
-    const sid = getStoreId();
+    const sid = getActiveStoreId();
     caixaStoreIdRef.current = sid;
     if (sid) getBairrosAsync(sid).then(setBairrosCache);
   }, []);
   const [mostrarEntregues, setMostrarEntregues] = useState(false);
   const [filtroMotoboy, setFiltroMotoboy] = useState<string | null>(null);
   const [fechamentosPendentes, setFechamentosPendentes] = useState<any[]>([]);
+  const resumoDeliveryTurno = useMemo(() => {
+    const conferidos = fechamentosPendentes.filter((f: any) => f.status === "conferido");
+    const pendentes = fechamentosPendentes.filter((f: any) => f.status === "aguardando");
+    const motoboyNomes = [...new Set(fechamentosPendentes.map((f: any) => f.motoboy_nome).filter(Boolean))] as string[];
+    const totalConferido = conferidos.reduce((s: number, f: any) => s + Number(f.resumo?.total ?? 0), 0);
+    const totalEntregas = fechamentosPendentes.reduce((s: number, f: any) => s + Number(f.resumo?.totalEntregas ?? 0), 0);
+    return { totalEntregas, conferidos: conferidos.length, pendentes: pendentes.length, totalConferido, motoboyNomes };
+  }, [fechamentosPendentes]);
   const [buscaComanda, setBuscaComanda] = useState("");
   const [buscaComandaOpen, setBuscaComandaOpen] = useState(false);
   const [fechamentoSelecionado, setFechamentoSelecionado] = useState<any | null>(null);
@@ -358,40 +357,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
 
   // Poll motoboy fechamentos from Supabase every 5s
   useEffect(() => {
-    const getStoreId = (): string | null => {
-      try { const raw = sessionStorage.getItem("obsidian-op-session-v2"); if (raw) { const s = JSON.parse(raw); return s.storeId ?? null; } } catch {}
-      try { const saved = sessionStorage.getItem("orderly-active-store"); if (saved) return saved; } catch {}
-      return null;
-    };
-    const ler = async () => {
-      const storeId = getStoreId();
-      if (!storeId) return;
-      const { data } = await supabase.from("motoboy_fechamentos").select("*").eq("store_id", storeId).eq("status", "aguardando");
-      setFechamentosPendentes(data ?? []);
-    };
-    ler();
-    const id = setInterval(ler, 5000);
-    return () => clearInterval(id);
-  }, []);
-
-  const resumoDeliveryTurno = useMemo(() => {
-    const conferidos = fechamentosPendentes.filter((f: any) => f.status === "conferido");
-    const pendentes = fechamentosPendentes.filter((f: any) => f.status === "aguardando");
-    const totalConferido = conferidos.reduce((s: number, f: any) => s + (f.resumo?.totalAPrestar || 0), 0);
-    const totalEntregas = conferidos.reduce((s: number, f: any) => s + (f.resumo?.totalEntregas || 0), 0);
-    const motoboyNomes = [...new Set([...conferidos, ...pendentes].map((f: any) => f.motoboy_nome))] as string[];
-    return { conferidos: conferidos.length, pendentes: pendentes.length, totalConferido, totalEntregas, motoboyNomes };
-  }, [fechamentosPendentes]);
-
-
-  // Load master aviso from restaurant_config (Supabase)
-  useEffect(() => {
-    const getStoreId = (): string | null => {
-      try { const raw = sessionStorage.getItem("obsidian-op-session-v2"); if (raw) { const s = JSON.parse(raw); return s.storeId ?? null; } } catch {}
-      try { const saved = sessionStorage.getItem("orderly-active-store"); if (saved) return saved; } catch {}
-      return null;
-    };
-    const storeId = getStoreId();
+    const storeId = getActiveStoreId();
     if (!storeId) return;
 
     const loadAviso = async () => {
@@ -1316,12 +1282,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
 
   const dismissAviso = async () => {
     try {
-      const getStoreId = (): string | null => {
-        try { const raw = sessionStorage.getItem("obsidian-op-session-v2"); if (raw) { const s = JSON.parse(raw); return s.storeId ?? null; } } catch {}
-        try { const saved = sessionStorage.getItem("orderly-active-store"); if (saved) return saved; } catch {}
-        return null;
-      };
-      const storeId = getStoreId();
+    const storeId = getActiveStoreId();
       if (storeId) {
         await supabase.from("restaurant_config").update({ aviso_master: { ...masterAviso, lido: true } as any }).eq("store_id", storeId);
       }
