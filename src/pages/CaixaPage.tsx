@@ -1686,7 +1686,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
 
               {/* ── Windows-style Tabs ── */}
               <div className="flex items-end px-3 pt-1 shrink-0 bg-card">
-                {modoOperacao !== "somente_delivery" && !isFastFoodGlobal && (
+                {moduloMesas && !isFastFoodGlobal && (
                 <button
                   onClick={() => setCaixaView("mesas")}
                   className={`px-4 py-1.5 text-xs font-bold transition-colors border border-border rounded-t -mb-px relative ${
