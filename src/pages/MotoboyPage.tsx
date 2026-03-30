@@ -416,6 +416,7 @@ export default function MotoboyPage() {
   /* ── Login screen ── */
   if (!sessao) {
     return (
+      <ModuleGate moduleKey="motoboy" moduleName="Delivery / Motoboy">
       <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center px-4">
         <div className="max-w-sm w-full space-y-6 text-center">
           <div className="flex justify-center"><Logo /></div>
