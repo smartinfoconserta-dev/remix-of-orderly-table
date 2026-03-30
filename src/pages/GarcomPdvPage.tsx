@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { LogOut, Bell, Search, CreditCard, Smartphone, Wallet } from "lucide-react";
+import { LogOut, Bell, Search, CreditCard, Smartphone, Wallet, ShoppingBag } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useSearchParams } from "react-router-dom";
