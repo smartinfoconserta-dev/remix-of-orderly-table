@@ -14,7 +14,9 @@ type PedidoTV = {
 const TvInner = ({ storeId }: { storeId: string }) => {
   const { pedidosBalcao } = useRestaurant();
   const [clock, setClock] = useState(() => new Date());
-  const [hasTotemOrBalcao, setHasTotemOrBalcao] = useState(false);
+  const [modulos, setModulos] = useState<{ mesas: boolean; balcao: boolean; totem: boolean }>({
+    mesas: true, balcao: false, totem: false,
+  });
   const [config, setConfig] = useState<{ nomeRestaurante: string; logoBase64: string; logoUrl: string }>({
     nomeRestaurante: "",
     logoBase64: "",
@@ -34,12 +36,11 @@ const TvInner = ({ storeId }: { storeId: string }) => {
             logoBase64: data.logo_base64 ?? "",
             logoUrl: data.logo_url ?? "",
           });
-          const modulos = (data.modulos as any) ?? {};
-          // Backward compat: if modulos.mesas/balcao not set, derive from modo_operacao
-          const hasMesas = modulos.mesas !== undefined ? modulos.mesas : (data.modo_operacao !== "fast_food");
-          const hasBalcao = modulos.balcao !== undefined ? modulos.balcao : (data.modo_operacao === "fast_food");
-          const hasTotem = modulos.totem === true;
-          setHasTotemOrBalcao(hasTotem || hasBalcao || !hasMesas);
+          const m = (data.modulos as any) ?? {};
+          const hasMesas = m.mesas !== undefined ? m.mesas : (data.modo_operacao !== "fast_food");
+          const hasBalcao = m.balcao !== undefined ? m.balcao : (data.modo_operacao === "fast_food");
+          const hasTotem = m.totem === true;
+          setModulos({ mesas: hasMesas, balcao: hasBalcao, totem: hasTotem });
         }
       });
   }, [storeId]);
@@ -49,27 +50,35 @@ const TvInner = ({ storeId }: { storeId: string }) => {
     return () => clearInterval(id);
   }, []);
 
+  const origensTV = useMemo(() => {
+    const list: string[] = [];
+    if (modulos.totem) list.push("totem");
+    if (modulos.balcao) list.push("balcao");
+    // garcom_pdv será adicionado no futuro
+    return list;
+  }, [modulos]);
+
   const pedidosPreparando = useMemo(() => {
     const list: PedidoTV[] = [];
     for (const p of pedidosBalcao) {
-      if ((p.origem === "balcao" || p.origem === "totem") && (p.statusBalcao === "aberto" || p.statusBalcao === "preparando")) {
+      if (origensTV.includes(p.origem) && (p.statusBalcao === "aberto" || p.statusBalcao === "preparando")) {
         list.push({ id: p.id, numero: p.numeroPedido, nome: p.origem === "totem" ? "Totem" : (p.clienteNome || "Balcão"), origem: p.origem, timestamp: p.criadoEmIso });
       }
     }
     list.sort((a, b) => a.timestamp.localeCompare(b.timestamp));
     return list;
-  }, [pedidosBalcao]);
+  }, [pedidosBalcao, origensTV]);
 
   const pedidosProntos = useMemo(() => {
     const list: PedidoTV[] = [];
     for (const p of pedidosBalcao) {
-      if ((p.origem === "balcao" || p.origem === "totem") && p.statusBalcao === "pronto") {
+      if (origensTV.includes(p.origem) && p.statusBalcao === "pronto") {
         list.push({ id: p.id, numero: p.numeroPedido, nome: p.origem === "totem" ? "Totem" : (p.clienteNome || "Balcão"), origem: p.origem, timestamp: p.criadoEmIso });
       }
     }
     list.sort((a, b) => a.timestamp.localeCompare(b.timestamp));
     return list;
-  }, [pedidosBalcao]);
+  }, [pedidosBalcao, origensTV]);
 
   // Audio alert when a new pedido becomes "pronto"
   const audioCtxRef = useRef<AudioContext | null>(null);
