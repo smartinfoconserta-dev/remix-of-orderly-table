@@ -46,7 +46,7 @@ const GerentePage = () => {
   const isAuthenticatedByPassword = !!supabaseUser;
   const effectiveGerente = currentGerente ?? (isAdminAccess || isAuthenticatedByPassword ? { id: "admin", nome: "Administrador", role: "gerente" as const, criadoEm: "" } : null);
   useRouteLock("/gerente");
-  const [logFilter, setLogFilter] = useState<LogCategory>("all");
+  
   const [pinVerificado, setPinVerificado] = useState(isAdminAccess || isAuthenticatedByPassword);
   const [pinInput, setPinInput] = useState("");
   const [pinError, setPinError] = useState("");
