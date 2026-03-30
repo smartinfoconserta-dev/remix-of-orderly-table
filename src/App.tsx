@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import Index from "./pages/Index";
 
 import GarcomPage from "./pages/GarcomPage";
+import GarcomPdvPage from "./pages/GarcomPdvPage";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { AdminBackButton } from "./components/AdminBackButton";
 import MesaPage from "./pages/MesaPage";
@@ -27,6 +28,7 @@ const ROUTE_TITLES: Record<string, string> = {
   "/master": "Master — Orderly Table",
   "/admin": "Admin — Orderly Table",
   "/garcom": "Garçom — Orderly Table",
+  "/garcom-pdv": "Garçom PDV — Orderly Table",
   "/caixa": "Caixa — Orderly Table",
   "/delivery": "Delivery — Orderly Table",
   "/gerente": "Gerente — Orderly Table",
@@ -60,6 +62,7 @@ const App = () => {
 
         {/* Level 3: Operational */}
         <Route path="/garcom" element={<ProtectedRoute requiredLevel="operational" requiredModule="garcom"><GarcomPage /></ProtectedRoute>} />
+        <Route path="/garcom-pdv" element={<ProtectedRoute requiredLevel="operational" requiredModule="garcom"><GarcomPdvPage /></ProtectedRoute>} />
         <Route path="/mesa/:id" element={<ProtectedRoute requiredLevel="operational" requiredModule="garcom"><MesaPage /></ProtectedRoute>} />
         <Route path="/caixa" element={<ProtectedRoute requiredLevel="operational" requiredModule="caixa"><CaixaPage accessMode="caixa" /></ProtectedRoute>} />
         <Route path="/delivery" element={<ProtectedRoute requiredLevel="operational" requiredModule="delivery"><CaixaPage accessMode="caixa" /></ProtectedRoute>} />

@@ -3,7 +3,7 @@ import { getSistemaConfig } from "@/lib/adminStorage";
 import { useAuth } from "@/contexts/AuthContext";
 
 interface ModuleGateProps {
-  moduleKey: "mesas" | "balcao" | "totem" | "delivery" | "motoboy";
+  moduleKey: "mesas" | "balcao" | "totem" | "delivery" | "motoboy" | "garcomPdv";
   moduleName: string;
   children: React.ReactNode;
 }

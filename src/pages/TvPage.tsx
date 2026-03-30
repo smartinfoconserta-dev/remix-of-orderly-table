@@ -12,10 +12,10 @@ type PedidoTV = {
 };
 
 const TvInner = ({ storeId }: { storeId: string }) => {
-  const { pedidosBalcao } = useRestaurant();
+  const { pedidosBalcao, mesas } = useRestaurant();
   const [clock, setClock] = useState(() => new Date());
-  const [modulos, setModulos] = useState<{ mesas: boolean; balcao: boolean; totem: boolean }>({
-    mesas: true, balcao: false, totem: false,
+  const [modulos, setModulos] = useState<{ mesas: boolean; balcao: boolean; totem: boolean; garcomPdv: boolean }>({
+    mesas: true, balcao: false, totem: false, garcomPdv: false,
   });
   const [config, setConfig] = useState<{ nomeRestaurante: string; logoBase64: string; logoUrl: string }>({
     nomeRestaurante: "",
@@ -40,7 +40,8 @@ const TvInner = ({ storeId }: { storeId: string }) => {
           const hasMesas = m.mesas !== undefined ? m.mesas : (data.modo_operacao !== "fast_food");
           const hasBalcao = m.balcao !== undefined ? m.balcao : (data.modo_operacao === "fast_food");
           const hasTotem = m.totem === true;
-          setModulos({ mesas: hasMesas, balcao: hasBalcao, totem: hasTotem });
+          const hasGarcomPdv = m.garcomPdv === true;
+          setModulos({ mesas: hasMesas, balcao: hasBalcao, totem: hasTotem, garcomPdv: hasGarcomPdv });
         }
       });
   }, [storeId]);
@@ -65,9 +66,19 @@ const TvInner = ({ storeId }: { storeId: string }) => {
         list.push({ id: p.id, numero: p.numeroPedido, nome: p.origem === "totem" ? "Totem" : (p.clienteNome || "Balcão"), origem: p.origem, timestamp: p.criadoEmIso });
       }
     }
+    // Garçom PDV: pedidos de mesa ainda não prontos
+    if (modulos.garcomPdv) {
+      for (const mesa of mesas) {
+        for (const p of mesa.pedidos) {
+          if (!p.pronto) {
+            list.push({ id: p.id, numero: p.numeroPedido, nome: `Mesa ${mesa.numero}`, origem: "garcom_pdv", timestamp: p.criadoEmIso });
+          }
+        }
+      }
+    }
     list.sort((a, b) => a.timestamp.localeCompare(b.timestamp));
     return list;
-  }, [pedidosBalcao, origensTV]);
+  }, [pedidosBalcao, origensTV, modulos.garcomPdv, mesas]);
 
   const pedidosProntos = useMemo(() => {
     const list: PedidoTV[] = [];
@@ -76,9 +87,19 @@ const TvInner = ({ storeId }: { storeId: string }) => {
         list.push({ id: p.id, numero: p.numeroPedido, nome: p.origem === "totem" ? "Totem" : (p.clienteNome || "Balcão"), origem: p.origem, timestamp: p.criadoEmIso });
       }
     }
+    // Garçom PDV: pedidos de mesa marcados como prontos
+    if (modulos.garcomPdv) {
+      for (const mesa of mesas) {
+        for (const p of mesa.pedidos) {
+          if (p.pronto) {
+            list.push({ id: p.id, numero: p.numeroPedido, nome: `Mesa ${mesa.numero}`, origem: "garcom_pdv", timestamp: p.criadoEmIso });
+          }
+        }
+      }
+    }
     list.sort((a, b) => a.timestamp.localeCompare(b.timestamp));
     return list;
-  }, [pedidosBalcao, origensTV]);
+  }, [pedidosBalcao, origensTV, modulos.garcomPdv, mesas]);
 
   // Audio alert when a new pedido becomes "pronto"
   const audioCtxRef = useRef<AudioContext | null>(null);
@@ -126,7 +147,7 @@ const TvInner = ({ storeId }: { storeId: string }) => {
     </div>
   );
 
-  if (!modulos.totem && !modulos.balcao) {
+  if (!modulos.totem && !modulos.balcao && !modulos.garcomPdv) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center" style={{ background: "#FFFFFF" }}>
         {logoUrl && <img src={logoUrl} alt="" className="h-24 w-24 rounded-2xl object-cover mb-6" />}
