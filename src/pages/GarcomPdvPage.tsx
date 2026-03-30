@@ -11,11 +11,10 @@ import LicenseBanner from "@/components/LicenseBanner";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRestaurant } from "@/contexts/RestaurantContext";
 import { useRouteLock } from "@/hooks/use-route-lock";
-import type { PaymentMethod } from "@/types/operations";
+import type { PaymentMethod, FiltroMesa } from "@/types/operations";
 import { toast } from "sonner";
 import { formatPrice } from "@/components/caixa/caixaHelpers";
 
-type Filtro = "todas" | "consumo" | "livres" | "chamado";
 
 const PAYMENT_OPTIONS: { value: PaymentMethod; label: string; icon: typeof CreditCard }[] = [
   { value: "pix", label: "PIX", icon: Smartphone },
@@ -29,7 +28,7 @@ const GarcomPdvPage = () => {
   const isAdminAccess = authLevel === "admin" || authLevel === "master";
   const [searchParams, setSearchParams] = useSearchParams();
   const mesaIdSelecionada = searchParams.get("mesa")?.trim() ?? "";
-  const [filtro, setFiltro] = useState<Filtro>("todas");
+  const [filtro, setFiltro] = useState<FiltroMesa>("todas");
   const [mesaBusca, setMesaBusca] = useState("");
   const [clock, setClock] = useState(() =>
     new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })
@@ -80,6 +79,7 @@ const GarcomPdvPage = () => {
       }],
       troco: 0,
       desconto: 0,
+      origemOverride: "garcom_pdv",
     });
 
     toast.success(`Mesa ${mesa.numero} paga com ${
@@ -205,7 +205,7 @@ const GarcomPdvPage = () => {
     return true;
   });
 
-  const filtros: { id: Filtro; label: string; badge?: number }[] = [
+  const filtros: { id: FiltroMesa; label: string; badge?: number }[] = [
     { id: "todas", label: "Todas" },
     { id: "consumo", label: "Em consumo" },
     { id: "livres", label: "Livres" },

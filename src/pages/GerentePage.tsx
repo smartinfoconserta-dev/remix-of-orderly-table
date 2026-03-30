@@ -724,6 +724,7 @@ const GerentePage = () => {
                 { key: "totem", label: "Totem", icon: Monitor },
                 { key: "delivery", label: "Delivery", icon: Truck },
                 { key: "balcao", label: "Balcão", icon: ShoppingBag },
+                { key: "garcom_pdv", label: "Garçom PDV", icon: Smartphone },
               ];
               const grouped = origemData.map(o => {
                 const items = fechFiltrados.filter(f => !f.cancelado && f.origem === o.key);
@@ -732,7 +733,7 @@ const GerentePage = () => {
               return (
                 <div className="space-y-2">
                   <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">Vendas por origem</p>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
                     {grouped.map(g => {
                       const Icon = g.icon;
                       const empty = g.count === 0;
@@ -779,7 +780,7 @@ const GerentePage = () => {
                   const pgto = f.pagamentos.length > 1
                     ? f.pagamentos.map(p => `${paymentMethods.find(pm => pm.value === p.formaPagamento)?.label ?? p.formaPagamento}: R$${p.valor.toFixed(2)}`).join(", ")
                     : paymentMethods.find(pm => pm.value === f.formaPagamento)?.label ?? f.formaPagamento;
-                  const origemLabel = f.origem === "mesa" ? `Mesa ${String(f.mesaNumero).padStart(2,"0")}` : f.origem === "balcao" ? "Balcão" : f.origem === "totem" ? "Totem" : f.origem === "delivery" ? "Delivery" : f.origem === "motoboy" ? "Motoboy" : f.mesaNumero > 0 ? `Mesa ${String(f.mesaNumero).padStart(2,"0")}` : "Balcão";
+                  const origemLabel = f.origem === "mesa" ? `Mesa ${String(f.mesaNumero).padStart(2,"0")}` : f.origem === "balcao" ? "Balcão" : f.origem === "totem" ? "Totem" : f.origem === "delivery" ? "Delivery" : f.origem === "motoboy" ? "Motoboy" : f.origem === "garcom_pdv" ? "Garçom PDV" : f.mesaNumero > 0 ? `Mesa ${String(f.mesaNumero).padStart(2,"0")}` : "Balcão";
                   const descontoStr = (f.desconto ?? 0) > 0 ? ` (sub: ${formatPrice(f.subtotal ?? (f.total + (f.desconto ?? 0)))} desc: -${formatPrice(f.desconto!)})` : "";
                   return `<tr><td>${origemLabel}</td><td>${f.criadoEm}</td><td>${f.caixaNome}</td><td>${itensStr}</td><td style="text-align:right">${formatPrice(f.total)}${descontoStr}</td><td>${pgto}</td></tr>`;
                 }).join("");
@@ -1286,7 +1287,7 @@ const GerentePage = () => {
                       const pgto = f.pagamentos.length > 1
                         ? f.pagamentos.map((p) => `${paymentMethods.find((pm) => pm.value === p.formaPagamento)?.label ?? p.formaPagamento}: R$${p.valor.toFixed(2)}`).join("; ")
                         : paymentMethods.find((pm) => pm.value === f.formaPagamento)?.label ?? f.formaPagamento;
-                      const origemLabel = f.origem === "mesa" ? `Mesa ${String(f.mesaNumero).padStart(2, "0")}` : f.origem === "balcao" ? "Balcão" : f.origem === "totem" ? "Totem" : f.origem === "delivery" ? "Delivery" : f.origem === "motoboy" ? "Motoboy" : f.mesaNumero > 0 ? `Mesa ${String(f.mesaNumero).padStart(2, "0")}` : "Balcão";
+                      const origemLabel = f.origem === "mesa" ? `Mesa ${String(f.mesaNumero).padStart(2, "0")}` : f.origem === "balcao" ? "Balcão" : f.origem === "totem" ? "Totem" : f.origem === "delivery" ? "Delivery" : f.origem === "motoboy" ? "Motoboy" : f.origem === "garcom_pdv" ? "Garçom PDV" : f.mesaNumero > 0 ? `Mesa ${String(f.mesaNumero).padStart(2, "0")}` : "Balcão";
                       return `"${origemLabel}","${f.criadoEm}","${f.caixaNome}","${itensStr}","R$ ${f.total.toFixed(2).replace(".", ",")}","${pgto}"`;
                     }).join("\n");
                     const blob = new Blob([header + rows], { type: "text/csv;charset=utf-8;" });

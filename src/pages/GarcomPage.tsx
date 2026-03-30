@@ -12,8 +12,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRestaurant } from "@/contexts/RestaurantContext";
 import { useRouteLock } from "@/hooks/use-route-lock";
-
-type Filtro = "todas" | "consumo" | "livres" | "chamado";
+import type { FiltroMesa } from "@/types/operations";
 
 const GarcomPage = () => {
   const { mesas, dismissChamarGarcom } = useRestaurant();
@@ -22,7 +21,7 @@ const GarcomPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const mesaIdSelecionada = searchParams.get("mesa")?.trim() ?? "";
-  const [filtro, setFiltro] = useState<Filtro>("todas");
+  const [filtro, setFiltro] = useState<FiltroMesa>("todas");
   const [mesaBusca, setMesaBusca] = useState("");
   const [clock, setClock] = useState(() => new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }));
 
@@ -59,7 +58,7 @@ const GarcomPage = () => {
     return true;
   });
 
-  const filtros: { id: Filtro; label: string; badge?: number }[] = [
+  const filtros: { id: FiltroMesa; label: string; badge?: number }[] = [
     { id: "todas", label: "Todas" },
     { id: "consumo", label: "Em consumo" },
     { id: "livres", label: "Livres" },

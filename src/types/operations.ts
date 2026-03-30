@@ -16,3 +16,5 @@ export interface OperationalUser {
 }
 
 export type CashMovementType = "entrada" | "saida";
+
+export type FiltroMesa = "todas" | "consumo" | "livres" | "chamado";
