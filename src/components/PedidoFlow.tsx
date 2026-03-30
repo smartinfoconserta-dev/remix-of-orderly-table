@@ -12,6 +12,7 @@ import CategoryIcon from "@/components/CategoryIcon";
 import ProductModal from "@/components/ProductModal";
 import PedidoFlowCart from "@/components/pedido/PedidoFlowCart";
 import PedidoFlowCatalog from "@/components/pedido/PedidoFlowCatalog";
+import PedidoFlowHome from "@/components/pedido/PedidoFlowHome";
 import MinhaContaDrawer from "@/components/MinhaContaDrawer";
 import {
   AlertDialog,
