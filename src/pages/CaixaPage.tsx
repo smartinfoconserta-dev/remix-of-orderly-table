@@ -217,32 +217,43 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
   const [estornoNome, setEstornoNome] = useState("");
   const [estornoError, setEstornoError] = useState<string | null>(null);
 
-  /* ── Balcão/Delivery state ── */
-  const [balcaoOpen, setBalcaoOpen] = useState(false);
-  const [balcaoTipo, setBalcaoTipo] = useState<"balcao" | "delivery">("balcao");
-  const [balcaoClienteNome, setBalcaoClienteNome] = useState("");
-  const [balcaoTelefone, setBalcaoTelefone] = useState("");
-  const [balcaoEndereco, setBalcaoEndereco] = useState("");
-  const [balcaoBairro, setBalcaoBairro] = useState("");
-  const [balcaoReferencia, setBalcaoReferencia] = useState("");
-  const [balcaoFormaPag, setBalcaoFormaPag] = useState<PaymentMethod>("dinheiro");
-  const [balcaoTroco, setBalcaoTroco] = useState("");
-  const [balcaoCpf, setBalcaoCpf] = useState("");
-  const [balcaoNumero, setBalcaoNumero] = useState("");
-  const [balcaoComplemento, setBalcaoComplemento] = useState("");
-  const [deliveryBusca, setDeliveryBusca] = useState("");
-  const [deliveryResultados, setDeliveryResultados] = useState<ClienteDelivery[]>([]);
-  const [deliveryStep, setDeliveryStep] = useState<"busca" | "form">("busca");
-  const [deliveryCep, setDeliveryCep] = useState("");
-  const [deliveryCepLoading, setDeliveryCepLoading] = useState(false);
-  const [deliveryCepErro, setDeliveryCepErro] = useState("");
-  const [deliveryCidade, setDeliveryCidade] = useState("");
-  const [balcaoPedidoSelecionado, setBalcaoPedidoSelecionado] = useState<string | null>(null);
-  const [balcaoPayments, setBalcaoPayments] = useState<SplitPayment[]>([]);
-  const [balcaoPaymentMethod, setBalcaoPaymentMethod] = useState<PaymentMethod>("dinheiro");
-  const [balcaoPaymentValue, setBalcaoPaymentValue] = useState("");
-  const [balcaoValorEntregue, setBalcaoValorEntregue] = useState("");
-  const [balcaoFlowAtivo, setBalcaoFlowAtivo] = useState(false);
+  /* ── Balcão/Delivery state (hook) ── */
+  const balcao = useCaixaBalcaoState(pedidosBalcao);
+  const {
+    balcaoOpen, setBalcaoOpen, balcaoTipo, setBalcaoTipo,
+    balcaoClienteNome, setBalcaoClienteNome, balcaoTelefone, setBalcaoTelefone,
+    balcaoEndereco, setBalcaoEndereco, balcaoBairro, setBalcaoBairro,
+    balcaoReferencia, setBalcaoReferencia, balcaoFormaPag, setBalcaoFormaPag,
+    balcaoTroco, setBalcaoTroco, balcaoCpf, setBalcaoCpf,
+    balcaoNumero, setBalcaoNumero, balcaoComplemento, setBalcaoComplemento,
+    deliveryBusca, setDeliveryBusca, deliveryResultados, setDeliveryResultados,
+    deliveryStep, setDeliveryStep, deliveryCep, setDeliveryCep,
+    deliveryCepLoading, setDeliveryCepLoading, deliveryCepErro, setDeliveryCepErro,
+    deliveryCidade, setDeliveryCidade,
+    balcaoPedidoSelecionado, setBalcaoPedidoSelecionado,
+    balcaoPayments, setBalcaoPayments, balcaoPaymentMethod, setBalcaoPaymentMethod,
+    balcaoPaymentValue, setBalcaoPaymentValue, balcaoValorEntregue, setBalcaoValorEntregue,
+    balcaoFlowAtivo, setBalcaoFlowAtivo,
+    deliveryConfirmOpen, setDeliveryConfirmOpen,
+    deliveryPendingItens, setDeliveryPendingItens,
+    deliveryPendingParaViagem, setDeliveryPendingParaViagem,
+    rejectDialogOpen, setRejectDialogOpen, rejectPedidoId, setRejectPedidoId, rejectMotivo, setRejectMotivo,
+    confirmTempoId, setConfirmTempoId, confirmTempo, setConfirmTempo,
+    confirmTempoCustom, setConfirmTempoCustom, confirmTaxaEntrega, setConfirmTaxaEntrega,
+    deliveryTempoEstimado, setDeliveryTempoEstimado,
+    buscaDelivery, setBuscaDelivery,
+    cpfNotaBalcao, setCpfNotaBalcao, cpfNotaBalcaoOpen, setCpfNotaBalcaoOpen,
+    bairrosCache, setBairrosCache, caixaStoreIdRef,
+    resetBalcaoStates,
+    balcaoPedido,
+    balcaoTotalConta, balcaoTotalContaCents,
+    balcaoTotalPago, balcaoTotalPagoCents,
+    balcaoValorRestante, balcaoFechamentoPronto, balcaoPaymentProgress,
+    balcaoValorEntregueNum, balcaoTrocoCalculado,
+    pedidosBalcaoAtivos, pedidosDeliveryAtivos, pedidosAguardandoConfirmacao,
+    pedidosBalcaoSoAtivos, pedidosTotem, pedidosTotemAtivos,
+    pedidosParaRetirar, pedidosEmRota, pedidosDevolvidos, pedidosEntregues, motoboyAtivos,
+  } = balcao;
   const globalModulos = useMemo(() => getSistemaConfig()?.modulos ?? {}, []);
   const moduloMesas = globalModulos.mesas !== false;
   const moduloTotem = globalModulos.totem === true;
