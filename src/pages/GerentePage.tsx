@@ -724,6 +724,7 @@ const GerentePage = () => {
                 { key: "totem", label: "Totem", icon: Monitor },
                 { key: "delivery", label: "Delivery", icon: Truck },
                 { key: "balcao", label: "Balcão", icon: ShoppingBag },
+                { key: "garcom_pdv", label: "Garçom PDV", icon: Smartphone },
               ];
               const grouped = origemData.map(o => {
                 const items = fechFiltrados.filter(f => !f.cancelado && f.origem === o.key);
