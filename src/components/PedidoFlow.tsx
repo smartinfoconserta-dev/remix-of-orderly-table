@@ -1207,37 +1207,6 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
       <main className={`pt-3 px-4 ${isGarcomMobile && carrinho.length > 0 ? "pb-32" : "pb-24"} ${isClientIdle ? "brightness-[0.2] saturate-50" : "brightness-100 saturate-100"} ${isTotem ? "bg-white" : ""}`}>
         <div>{isGarcomMobile && !isTotem ? productGrid : isHomeActive && !isTotem ? homeContent : productGrid}</div>
       </main>
-      {(isGarcomMobile || isTotem) && carrinho.length > 0 && !cartOpen && (
-        <PedidoFlowCart
-          carrinho={carrinho}
-          onUpdateQty={(uid, delta) => {
-            if (isExternalOrder) {
-              setLocalCarrinho(prev => prev.map(item =>
-                item.uid === uid ? { ...item, quantidade: Math.max(1, item.quantidade + delta) } : item
-              ));
-            } else {
-              updateCartItemQty(mesaId, uid, delta);
-            }
-          }}
-          onRemoveItem={(uid) => {
-            if (isExternalOrder) {
-              setLocalCarrinho(prev => prev.filter(item => item.uid !== uid));
-            } else {
-              removeFromCart(mesaId, uid);
-            }
-          }}
-          onConfirmar={handleConfirmar}
-          onContinueOrdering={() => handleCartOpenChange(false)}
-          onSuccessAcknowledge={handleSuccessAcknowledge}
-          open={cartOpen}
-          onOpenChange={handleCartOpenChange}
-          hideTrigger={isGarcomMobile}
-          modo={modo}
-          isTotemMode={isTotem}
-          showStickyBar={true}
-          onStickyBarClick={() => handleCartOpenChange(true)}
-        />
-      )}
     </>
   );
 
