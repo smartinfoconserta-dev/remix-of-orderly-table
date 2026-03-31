@@ -88,9 +88,10 @@ const AdminConfig = ({ storeId, storeName }: Props) => {
     getBairrosAsync(storeId).then(setBairros);
   }, [storeId]);
 
-  const saveSistema = useCallback(() => {
-    saveSistemaConfig(sistemaConfig, storeId);
-    saveSistemaConfigAsync(sistemaConfig, storeId);
+  const saveSistema = useCallback((configOverride?: SistemaConfig) => {
+    const toSave = configOverride || sistemaConfig;
+    saveSistemaConfig(toSave, storeId);
+    saveSistemaConfigAsync(toSave, storeId);
     applyCustomPrimaryColor();
     toast.success("Configurações salvas");
   }, [sistemaConfig, storeId]);
