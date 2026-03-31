@@ -99,6 +99,16 @@ function dbRowToConfig(row: any): SistemaConfig {
     letraGradiente: row.letra_gradiente ?? undefined,
     sidebarCor: row.sidebar_cor ?? undefined,
     cardsCor: row.cards_cor ?? undefined,
+    sidebarEstilo: row.sidebar_estilo ?? "icone-texto",
+    totemTema: row.totem_tema ?? undefined,
+    totemCorPrimaria: row.totem_cor_primaria ?? undefined,
+    totemTemaPersonalizado: row.totem_tema_personalizado ?? false,
+    totemFundoTipo: row.totem_fundo_tipo ?? undefined,
+    totemFundoCor: row.totem_fundo_cor ?? undefined,
+    totemFundoGradiente: row.totem_fundo_gradiente ?? undefined,
+    totemLetraCor: row.totem_letra_cor ?? undefined,
+    totemSidebarCor: row.totem_sidebar_cor ?? undefined,
+    totemCardsCor: row.totem_cards_cor ?? undefined,
   };
 }
 
@@ -146,6 +156,16 @@ function configToDbRow(config: SistemaConfig) {
     letra_gradiente: (config.letraGradiente ?? null) as unknown as null,
     sidebar_cor: config.sidebarCor ?? null,
     cards_cor: config.cardsCor ?? null,
+    sidebar_estilo: config.sidebarEstilo ?? "icone-texto",
+    totem_tema: config.totemTema ?? null,
+    totem_cor_primaria: config.totemCorPrimaria ?? null,
+    totem_tema_personalizado: config.totemTemaPersonalizado ?? false,
+    totem_fundo_tipo: config.totemFundoTipo ?? null,
+    totem_fundo_cor: config.totemFundoCor ?? null,
+    totem_fundo_gradiente: (config.totemFundoGradiente ?? null) as unknown as null,
+    totem_letra_cor: config.totemLetraCor ?? null,
+    totem_sidebar_cor: config.totemSidebarCor ?? null,
+    totem_cards_cor: config.totemCardsCor ?? null,
     total_mesas: 20,
     updated_at: new Date().toISOString(),
   };

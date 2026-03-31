@@ -1009,6 +1009,7 @@ export type Database = {
           plano: string | null
           senha_wifi: string | null
           sidebar_cor: string | null
+          sidebar_estilo: string | null
           store_id: string | null
           taxa_entrega: number | null
           telefone: string | null
@@ -1016,6 +1017,15 @@ export type Database = {
           tema_personalizado: boolean | null
           tempo_entrega: string | null
           total_mesas: number | null
+          totem_cards_cor: string | null
+          totem_cor_primaria: string | null
+          totem_fundo_cor: string | null
+          totem_fundo_gradiente: Json | null
+          totem_fundo_tipo: string | null
+          totem_letra_cor: string | null
+          totem_sidebar_cor: string | null
+          totem_tema: string | null
+          totem_tema_personalizado: boolean | null
           updated_at: string | null
           wifi_bg: string | null
         }
@@ -1061,6 +1071,7 @@ export type Database = {
           plano?: string | null
           senha_wifi?: string | null
           sidebar_cor?: string | null
+          sidebar_estilo?: string | null
           store_id?: string | null
           taxa_entrega?: number | null
           telefone?: string | null
@@ -1068,6 +1079,15 @@ export type Database = {
           tema_personalizado?: boolean | null
           tempo_entrega?: string | null
           total_mesas?: number | null
+          totem_cards_cor?: string | null
+          totem_cor_primaria?: string | null
+          totem_fundo_cor?: string | null
+          totem_fundo_gradiente?: Json | null
+          totem_fundo_tipo?: string | null
+          totem_letra_cor?: string | null
+          totem_sidebar_cor?: string | null
+          totem_tema?: string | null
+          totem_tema_personalizado?: boolean | null
           updated_at?: string | null
           wifi_bg?: string | null
         }
@@ -1113,6 +1133,7 @@ export type Database = {
           plano?: string | null
           senha_wifi?: string | null
           sidebar_cor?: string | null
+          sidebar_estilo?: string | null
           store_id?: string | null
           taxa_entrega?: number | null
           telefone?: string | null
@@ -1120,6 +1141,15 @@ export type Database = {
           tema_personalizado?: boolean | null
           tempo_entrega?: string | null
           total_mesas?: number | null
+          totem_cards_cor?: string | null
+          totem_cor_primaria?: string | null
+          totem_fundo_cor?: string | null
+          totem_fundo_gradiente?: Json | null
+          totem_fundo_tipo?: string | null
+          totem_letra_cor?: string | null
+          totem_sidebar_cor?: string | null
+          totem_tema?: string | null
+          totem_tema_personalizado?: boolean | null
           updated_at?: string | null
           wifi_bg?: string | null
         }
