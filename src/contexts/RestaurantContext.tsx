@@ -68,7 +68,7 @@ export interface RestaurantStore {
   pedidosBalcao: PedidoRealizado[];
 }
 
-interface CriarPedidoBalcaoInput {
+export interface CriarPedidoBalcaoInput {
   itens: ItemCarrinho[];
   origem: "balcao" | "delivery" | "totem";
   operador: OperationalUser;
