@@ -131,11 +131,8 @@ const renderGrupoStep = (
 
   if (tipo === "retirar") {
     return (
-      <div className="space-y-4">
-        <div>
-          <h3 className="text-base font-black text-foreground">Retirar algum item?</h3>
-          <p className="mt-1 text-sm text-muted-foreground">Toque nos ingredientes que deseja remover (opcional)</p>
-        </div>
+      <div className="space-y-3">
+        <p className="text-sm text-muted-foreground">Toque nos ingredientes que deseja remover (opcional)</p>
         <div className="space-y-3">
           {grupo.opcoes.map((opcao) => {
             const checked = escolhidos.includes(opcao.id);
