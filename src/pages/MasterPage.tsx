@@ -348,6 +348,9 @@ const MasterPage = () => {
         }
       }
       if (key === "nomeRestaurante") next.slugLoja = toSlug(value);
+      if (key === "criarContaAdmin" && value && !next.slugLoja && next.nomeRestaurante) {
+        next.slugLoja = toSlug(next.nomeRestaurante);
+      }
       return next;
     });
   };
