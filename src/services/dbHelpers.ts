@@ -195,15 +195,24 @@ export const dbInsertPedido = async (p: PedidoRealizado) => {
     if (p.numeroPedido >= _nextPedidoNumber) _nextPedidoNumber = p.numeroPedido + 1;
     const row = pedidoToRow(p, sid);
     const { error } = await supabase.rpc("rpc_insert_pedido" as any, { _data: row });
-    if (error) { console.error("DB insert pedido", error); toast.error("Erro ao salvar pedido no banco"); }
-    else { decrementStock(p.itens, sid); }
+    if (error) {
+      if (isNetworkError(error)) {
+        enqueue("rpc_insert_pedido", { _data: row }, `Pedido #${p.numeroPedido}`);
+      } else {
+        console.error("DB insert pedido", error);
+        toast.error("Erro ao salvar pedido no banco");
+      }
+    } else {
+      decrementStock(p.itens, sid);
+    }
   } catch (err) {
-    console.error("dbInsertPedido unexpected error", err);
-    const fallbackRow = pedidoToRow(p, sid);
-    supabase.rpc("rpc_insert_pedido" as any, { _data: fallbackRow }).then(({ error }: any) => {
-      if (error) { console.error("DB insert pedido fallback", error); toast.error("Erro ao salvar pedido"); }
-      else { decrementStock(p.itens, sid); }
-    });
+    if (isNetworkError(err)) {
+      const row = pedidoToRow(p, sid);
+      enqueue("rpc_insert_pedido", { _data: row }, `Pedido #${p.numeroPedido}`);
+    } else {
+      console.error("dbInsertPedido unexpected error", err);
+      toast.error("Erro ao salvar pedido");
+    }
   }
 };
 
