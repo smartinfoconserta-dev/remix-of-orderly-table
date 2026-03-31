@@ -93,6 +93,15 @@ export interface SistemaConfig {
   cardapioHeaderEstilo?: "padrao" | "banner";
   cardapioBannerBase64?: string;
   temaCardapio?: string;
+  temaPersonalizado?: boolean;
+  fundoTipo?: "solido" | "gradiente";
+  fundoCor?: string;
+  fundoGradiente?: { cor1: string; cor2: string; direcao: string };
+  letraTipo?: "solido" | "gradiente";
+  letraCor?: string;
+  letraGradiente?: { cor1: string; cor2: string; direcao: string };
+  sidebarCor?: string;
+  cardsCor?: string;
 }
 
 export interface ImpressoraConfig {

@@ -96,6 +96,66 @@ export function applyThemeToElement(element: HTMLElement, themeId: string, custo
   element.style.setProperty("--sidebar-border", hexToHSL(theme.border));
 }
 
+export function applyCustomThemeToElement(element: HTMLElement, config: {
+  fundoTipo?: "solido" | "gradiente";
+  fundoCor?: string;
+  fundoGradiente?: { cor1: string; cor2: string; direcao: string };
+  letraTipo?: "solido" | "gradiente";
+  letraCor?: string;
+  letraGradiente?: { cor1: string; cor2: string; direcao: string };
+  corPrimaria?: string;
+  sidebarCor?: string;
+  cardsCor?: string;
+}): void {
+  // Background
+  if (config.fundoTipo === "gradiente" && config.fundoGradiente) {
+    element.style.setProperty("--background", "0 0% 0%");
+    element.style.background = `linear-gradient(${config.fundoGradiente.direcao}, ${config.fundoGradiente.cor1}, ${config.fundoGradiente.cor2})`;
+    element.style.minHeight = "100dvh";
+  } else if (config.fundoCor) {
+    element.style.setProperty("--background", hexToHSL(config.fundoCor));
+    element.style.background = "";
+  }
+
+  // Text
+  if (config.letraCor) {
+    element.style.setProperty("--foreground", hexToHSL(config.letraCor));
+    element.style.setProperty("--card-foreground", hexToHSL(config.letraCor));
+    element.style.setProperty("--popover-foreground", hexToHSL(config.letraCor));
+    element.style.setProperty("--secondary-foreground", hexToHSL(config.letraCor));
+    element.style.setProperty("--accent-foreground", hexToHSL(config.letraCor));
+    element.style.setProperty("--sidebar-foreground", hexToHSL(config.letraCor));
+  }
+
+  // Primary
+  if (config.corPrimaria) {
+    const pR = parseInt(config.corPrimaria.replace("#", "").substring(0, 2), 16);
+    const pG = parseInt(config.corPrimaria.replace("#", "").substring(2, 4), 16);
+    const pB = parseInt(config.corPrimaria.replace("#", "").substring(4, 6), 16);
+    const primaryLum = (0.299 * pR + 0.587 * pG + 0.114 * pB) / 255;
+    const primaryFg = primaryLum > 0.5 ? "0 0% 10%" : "0 0% 100%";
+    element.style.setProperty("--primary", hexToHSL(config.corPrimaria));
+    element.style.setProperty("--primary-foreground", primaryFg);
+    element.style.setProperty("--ring", hexToHSL(config.corPrimaria));
+    element.style.setProperty("--sidebar-primary", hexToHSL(config.corPrimaria));
+  }
+
+  // Sidebar
+  if (config.sidebarCor) {
+    element.style.setProperty("--sidebar-background", hexToHSL(config.sidebarCor));
+  }
+
+  // Cards
+  if (config.cardsCor) {
+    element.style.setProperty("--card", hexToHSL(config.cardsCor));
+    element.style.setProperty("--surface", hexToHSL(config.cardsCor));
+    element.style.setProperty("--secondary", hexToHSL(config.cardsCor));
+    element.style.setProperty("--muted", hexToHSL(config.cardsCor));
+    element.style.setProperty("--accent", hexToHSL(config.cardsCor));
+    element.style.setProperty("--popover", hexToHSL(config.cardsCor));
+  }
+}
+
 export function clearThemeFromElement(element: HTMLElement): void {
   const vars = [
     "--background", "--foreground", "--card", "--card-foreground",
