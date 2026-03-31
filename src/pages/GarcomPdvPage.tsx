@@ -56,6 +56,24 @@ const GarcomPdvPage = () => {
     }
     prevChamadoRef.current = chamadoCount;
   }, [chamadoCount]);
+
+  const goToChamados = useCallback(() => {
+    setSearchParams({});
+    setPagamentoOpen(false);
+    setPagamentoMesaId(null);
+    setReceiptData(null as any);
+    setFiltro("chamado");
+  }, [setSearchParams]);
+
+  const floatingChamadoBadge = chamadoCount > 0 ? (
+    <button
+      onClick={goToChamados}
+      className="fixed top-4 right-4 z-50 flex items-center gap-1.5 bg-destructive text-destructive-foreground px-3 py-2 rounded-full shadow-lg animate-bounce"
+    >
+      <BellRing className="h-4 w-4" />
+      <span className="text-sm font-black">{chamadoCount}</span>
+    </button>
+  ) : null;
   const [receiptData, setReceiptData] = useState<{
     mesaNumero: number;
     total: number;
