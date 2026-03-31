@@ -260,7 +260,7 @@ export const dbUpdateFechamento = (id: string, updates: Record<string, any>) => 
   const sid = getActiveStoreId();
   if (!sid) { console.warn("dbUpdateFechamento: storeId is null"); return; }
   const params = { _id: id, _store_id: sid, _updates: updates };
-  supabase.rpc("rpc_update_fechamento" as any, params).then(({ error }: any) => {
+  Promise.resolve(supabase.rpc("rpc_update_fechamento" as any, params)).then(({ error }: any) => {
     if (error) {
       if (isNetworkError(error)) { enqueue("rpc_update_fechamento", params, "Atualizar fechamento"); }
       else { console.error("DB update fechamento", error); toast.error("Erro ao atualizar fechamento"); }
