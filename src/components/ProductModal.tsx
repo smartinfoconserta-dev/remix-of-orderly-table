@@ -104,7 +104,7 @@ const ProductModal = ({ produto, onClose, onAdd, isGarcomMobile = false, skipEmb
                       Etapa {state.activeStepIndex + 1} de {state.flowSteps.length}
                     </p>
                     <h2 className="mt-1 text-xl font-black leading-tight text-foreground">{produto.nome}</h2>
-                    <p className="mt-1 text-sm text-muted-foreground">{state.getStepMeta(state.displayStep).label}</p>
+                    <p className="mt-1 text-sm text-muted-foreground line-clamp-2">{produto.descricao}</p>
                   </div>
                   <button
                     type="button"
