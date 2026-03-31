@@ -381,6 +381,67 @@ const GarcomPdvPage = () => {
     );
   }
 
+  // Receipt dialog
+  if (receiptData) {
+    return (
+      <ModuleGate moduleKey="garcomPdv" moduleName="Garçom PDV">
+        <div className="min-h-svh bg-background flex flex-col items-center justify-center p-6">
+          <div className="w-full max-w-sm space-y-5">
+            {/* Success header */}
+            <div className="text-center space-y-2">
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500/15">
+                <Check className="h-8 w-8 text-emerald-400" />
+              </div>
+              <h2 className="text-2xl font-black text-foreground">Pagamento realizado</h2>
+              <p className="text-sm text-muted-foreground">
+                Mesa {String(receiptData.mesaNumero).padStart(2, "0")}
+              </p>
+            </div>
+
+            {/* Summary card */}
+            <div className="rounded-2xl border border-border bg-card overflow-hidden">
+              <div className="divide-y divide-border/50">
+                {receiptData.itens.map((item, i) => (
+                  <div key={i} className="flex items-center justify-between px-4 py-2">
+                    <span className="text-xs text-muted-foreground">{item.quantidade}× {item.nome}</span>
+                    <span className="text-xs font-bold text-foreground tabular-nums">{formatPrice(item.preco * item.quantidade)}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="flex items-center justify-between px-4 py-3 border-t border-border bg-secondary/20">
+                <span className="text-sm font-black text-foreground">TOTAL</span>
+                <span className="text-lg font-black text-primary tabular-nums">{formatPrice(receiptData.total)}</span>
+              </div>
+              <div className="flex items-center justify-center px-4 py-2 border-t border-border">
+                <span className="text-xs font-bold text-muted-foreground">
+                  Pago com: <span className="text-foreground">{receiptData.formasLabel}</span>
+                </span>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="flex flex-col gap-2">
+              <Button
+                className="w-full h-12 rounded-xl font-bold gap-2"
+                variant="outline"
+                onClick={handlePrintReceipt}
+              >
+                <Printer className="h-4 w-4" />
+                Imprimir comanda
+              </Button>
+              <Button
+                className="w-full h-12 rounded-xl font-black"
+                onClick={handleCloseReceipt}
+              >
+                Fechar
+              </Button>
+            </div>
+          </div>
+        </div>
+      </ModuleGate>
+    );
+  }
+
   // Tela de pedido (PedidoFlow)
   if (mesaIdSelecionada) {
     return (
