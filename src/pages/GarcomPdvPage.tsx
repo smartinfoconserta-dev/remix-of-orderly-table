@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { LogOut, Bell, Search, CreditCard, Smartphone, Wallet, ShoppingBag, Trash2, Plus, Check, Printer } from "lucide-react";
+import { LogOut, Bell, Search, CreditCard, Smartphone, Wallet, ShoppingBag, Trash2, Plus, Check, Printer, BellRing } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel } from "@/components/ui/alert-dialog";
@@ -56,6 +56,24 @@ const GarcomPdvPage = () => {
     }
     prevChamadoRef.current = chamadoCount;
   }, [chamadoCount]);
+
+  const goToChamados = useCallback(() => {
+    setSearchParams({});
+    setPagamentoOpen(false);
+    setPagamentoMesaId(null);
+    setReceiptData(null as any);
+    setFiltro("chamado");
+  }, [setSearchParams]);
+
+  const floatingChamadoBadge = chamadoCount > 0 ? (
+    <button
+      onClick={goToChamados}
+      className="fixed top-4 right-4 z-50 flex items-center gap-1.5 bg-destructive text-destructive-foreground px-3 py-2 rounded-full shadow-lg animate-bounce"
+    >
+      <BellRing className="h-4 w-4" />
+      <span className="text-sm font-black">{chamadoCount}</span>
+    </button>
+  ) : null;
   const [receiptData, setReceiptData] = useState<{
     mesaNumero: number;
     total: number;
@@ -235,6 +253,7 @@ const GarcomPdvPage = () => {
   if (pagamentoOpen && pagamentoMesaId) {
     return (
       <ModuleGate moduleKey="garcomPdv" moduleName="Garçom PDV">
+        {floatingChamadoBadge}
         <div className="min-h-svh bg-background flex flex-col">
           {/* Header */}
           <div className="shrink-0 border-b border-border bg-card px-4 py-3 flex items-center justify-between">
@@ -400,6 +419,7 @@ const GarcomPdvPage = () => {
   if (receiptData) {
     return (
       <ModuleGate moduleKey="garcomPdv" moduleName="Garçom PDV">
+        {floatingChamadoBadge}
         <div className="min-h-svh bg-background flex flex-col items-center justify-center p-6">
           <div className="w-full max-w-sm space-y-5">
             {/* Success header */}
@@ -461,6 +481,7 @@ const GarcomPdvPage = () => {
   if (mesaIdSelecionada) {
     return (
       <ModuleGate moduleKey="garcomPdv" moduleName="Garçom PDV">
+        {floatingChamadoBadge}
         <PedidoFlow
           modo="garcom"
           mesaId={mesaIdSelecionada}
