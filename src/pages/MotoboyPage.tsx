@@ -538,14 +538,16 @@ export default function MotoboyPage() {
                   onDragOver={(e) => handleDragOver(e, p.id)}
                   onDrop={handleDrop}
                   onDragEnd={() => setDraggingId(null)}
-                  onTouchStart={(e) => handleTouchStart(p.id, e)}
-                  onTouchEnd={handleTouchEnd}
                   className={`transition-all duration-200 ${isDragging ? "opacity-40 scale-95" : ""}`}
                 >
                   <Card className="border-blue-500/50">
                     <CardContent className="p-0">
                       <div className="flex">
-                        <div className="flex items-center justify-center w-10 shrink-0 bg-muted/30 cursor-grab active:cursor-grabbing border-r border-border rounded-l-xl">
+                        <div
+                          className="flex items-center justify-center w-10 shrink-0 bg-muted/30 cursor-grab active:cursor-grabbing border-r border-border rounded-l-xl"
+                          onTouchStart={(e) => handleTouchStart(p.id, e)}
+                          onTouchEnd={handleTouchEnd}
+                        >
                           <GripVertical className="w-5 h-5 text-muted-foreground" />
                         </div>
 
