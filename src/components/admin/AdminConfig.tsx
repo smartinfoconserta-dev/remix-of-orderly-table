@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
 import {
-  Plus, Save, Trash2, X, Upload, ImagePlus, Pencil, Printer, ExternalLink,
+  Plus, Save, Trash2, X, Upload, Pencil, Printer, ExternalLink,
+  Palette, Image, Megaphone, MessageCircle, Truck, Store, Database,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
@@ -20,16 +20,43 @@ import {
 import { getBairrosAsync, saveBairros, type Bairro } from "@/lib/deliveryStorage";
 import { useStore } from "@/contexts/StoreContext";
 import { toast } from "sonner";
+import AdminAparencia from "./AdminAparencia";
+import AdminBanners from "./AdminBanners";
+import AdminRedes from "./AdminRedes";
+import AdminTemas from "./AdminTemas";
 
+type ConfigSection = "inicio" | "aparencia" | "temas" | "banners" | "redes" | "delivery" | "restaurante" | "impressoras" | "sistema";
 
 interface Props {
   storeId: string | null;
   storeName: string;
 }
 
+const sectionMeta: Record<Exclude<ConfigSection, "inicio">, { icon: React.ElementType; label: string }> = {
+  restaurante: { icon: Store, label: "Meu Restaurante" },
+  aparencia: { icon: Palette, label: "Aparência" },
+  temas: { icon: Image, label: "Temas" },
+  banners: { icon: Megaphone, label: "Banners" },
+  redes: { icon: MessageCircle, label: "WhatsApp e Redes" },
+  delivery: { icon: Truck, label: "Delivery" },
+  impressoras: { icon: Printer, label: "Impressoras" },
+  sistema: { icon: Database, label: "Sistema" },
+};
+
+const sections = [
+  { id: "restaurante" as const, icon: Store, label: "Meu Restaurante", desc: "Tipo de atendimento e delivery" },
+  { id: "aparencia" as const, icon: Palette, label: "Aparência", desc: "Logo, nome e formato" },
+  { id: "temas" as const, icon: Image, label: "Temas", desc: "Visual do cardápio e cores" },
+  { id: "banners" as const, icon: Megaphone, label: "Banners", desc: "Promoções e destaques" },
+  { id: "redes" as const, icon: MessageCircle, label: "WhatsApp e Redes", desc: "Comunicação e QR codes" },
+  { id: "delivery" as const, icon: Truck, label: "Delivery", desc: "Bairros, taxas e horários" },
+  { id: "impressoras" as const, icon: Printer, label: "Impressoras", desc: "Impressoras térmicas" },
+  { id: "sistema" as const, icon: Database, label: "Sistema", desc: "Backup e restauração" },
+];
+
 const AdminConfig = ({ storeId, storeName }: Props) => {
   const { stores } = useStore();
-  const [configSection, setConfigSection] = useState<"inicio" | "identidade" | "delivery" | "salao" | "restaurante" | "sistema" | "impressoras">("inicio");
+  const [configSection, setConfigSection] = useState<ConfigSection>("inicio");
   const [sistemaConfig, setSistemaConfig] = useState<SistemaConfig>(getSistemaConfig);
   const [licencaConfig, setLicencaConfig] = useState<LicencaConfig>(getLicencaConfig);
   const [horariosFuncionamento, setHorariosFuncionamento] = useState<HorariosSemana>(getHorariosFuncionamento);
@@ -68,6 +95,8 @@ const AdminConfig = ({ storeId, storeName }: Props) => {
     toast.success("Configurações salvas");
   }, [sistemaConfig, storeId]);
 
+  const currentMeta = configSection !== "inicio" ? sectionMeta[configSection] : null;
+
   return (
     <div className="space-y-5 fade-in">
       {/* Header */}
@@ -75,213 +104,49 @@ const AdminConfig = ({ storeId, storeName }: Props) => {
         {configSection !== "inicio" && (
           <button onClick={() => setConfigSection("inicio")} className="flex items-center gap-1.5 text-sm font-bold text-muted-foreground hover:text-foreground transition-colors">← Voltar</button>
         )}
-        <div>
+        <div className="flex items-center gap-2">
+          {currentMeta && <currentMeta.icon className="h-5 w-5 text-muted-foreground" />}
           <h2 className="text-2xl font-black text-foreground">
-            {configSection === "inicio" && "Configurações"}
-            {configSection === "identidade" && "🎨 Identidade Visual"}
-            {configSection === "delivery" && "🛵 Delivery"}
-            {configSection === "salao" && "🍽️ Ambiente"}
-            {configSection === "restaurante" && "🏪 Meu Restaurante"}
-            {configSection === "sistema" && "💾 Sistema"}
-            {configSection === "impressoras" && "🖨️ Impressoras"}
+            {configSection === "inicio" ? "Configurações" : currentMeta?.label}
           </h2>
-          {configSection === "inicio" && <p className="text-sm text-muted-foreground">Toque em um bloco para configurar</p>}
         </div>
       </div>
+      {configSection === "inicio" && <p className="text-sm text-muted-foreground">Toque em um bloco para configurar</p>}
 
       {/* Grid de cards */}
       {configSection === "inicio" && (
-        <div className="grid grid-cols-2 gap-3 max-w-xl">
-          {[
-            { id: "identidade", icon: "🎨", label: "Identidade Visual", desc: "Logo, nome, cor, banners" },
-            { id: "restaurante", icon: "🏪", label: "Meu Restaurante", desc: "Tipo de atendimento e funcionalidades" },
-            { id: "delivery", icon: "🛵", label: "Delivery", desc: "Horários, bairros, taxas" },
-            { id: "salao", icon: "🍽️", label: "Ambiente", desc: "Wi-Fi, Instagram, boas-vindas" },
-            { id: "impressoras", icon: "🖨️", label: "Impressoras", desc: "Impressoras térmicas" },
-            { id: "sistema", icon: "💾", label: "Sistema", desc: "Backup e restauração" },
-          ].map(card => (
-            <button key={card.id} onClick={() => setConfigSection(card.id as any)}
-              className="flex items-start gap-4 rounded-2xl border border-border bg-card p-5 text-left hover:border-primary/40 hover:bg-primary/5 transition-colors">
-              <span className="text-3xl">{card.icon}</span>
-              <div><p className="text-sm font-black text-foreground">{card.label}</p><p className="text-xs text-muted-foreground mt-0.5">{card.desc}</p></div>
-            </button>
-          ))}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl">
+          {sections.map(card => {
+            const Icon = card.icon;
+            return (
+              <button key={card.id} onClick={() => setConfigSection(card.id)}
+                className="flex items-center gap-4 rounded-xl border border-border bg-card p-6 text-left hover:border-primary/30 hover:bg-accent/50 transition-all">
+                <Icon className="h-6 w-6 text-muted-foreground shrink-0" />
+                <div>
+                  <p className="text-base font-bold text-foreground">{card.label}</p>
+                  <p className="text-sm text-muted-foreground mt-0.5">{card.desc}</p>
+                </div>
+              </button>
+            );
+          })}
         </div>
       )}
 
-      {/* IDENTIDADE VISUAL */}
-      {configSection === "identidade" && (
-        <div className="space-y-4 max-w-lg">
-          <div className="surface-card space-y-5 rounded-2xl p-6">
-            <div className="space-y-1.5"><label className="text-xs font-bold text-muted-foreground">Nome do restaurante</label><Input value={sistemaConfig.nomeRestaurante} onChange={(e) => setSistemaConfig((c) => ({ ...c, nomeRestaurante: e.target.value }))} placeholder="Nome do restaurante" /></div>
-            <div className="space-y-2">
-              <label className="text-xs font-bold text-muted-foreground">Logo do restaurante</label>
-              {(sistemaConfig.logoBase64 || sistemaConfig.logoUrl) && (
-                <div className="flex items-center gap-3">
-                  <img src={sistemaConfig.logoBase64 || sistemaConfig.logoUrl} alt="Logo" className="h-12 w-12 rounded-xl border border-border object-cover" />
-                  {sistemaConfig.logoBase64 && (<button type="button" onClick={() => setSistemaConfig((c) => ({ ...c, logoBase64: "" }))} className="text-xs text-destructive hover:underline">Remover foto</button>)}
-                </div>
-              )}
-              <label className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border bg-secondary/30 px-4 py-4 text-sm font-bold text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground">
-                <Upload className="h-5 w-5" />Fazer upload da logo
-                <input type="file" accept="image/*" className="hidden" onChange={(e) => {
-                  const file = e.target.files?.[0]; if (!file) return;
-                  if (file.size > 2 * 1024 * 1024) { toast.error("Imagem muito grande (máx 2MB)"); return; }
-                  const reader = new FileReader();
-                  reader.onload = () => setSistemaConfig((c) => ({ ...c, logoBase64: reader.result as string }));
-                  reader.readAsDataURL(file); e.target.value = "";
-                }} />
-              </label>
-              <p className="text-[10px] font-bold text-muted-foreground pt-1">Ou cole uma URL</p>
-              <Input value={sistemaConfig.logoUrl} onChange={(e) => setSistemaConfig((c) => ({ ...c, logoUrl: e.target.value }))} placeholder="https://..." />
-            </div>
-            {/* Logo style */}
-            <div className="space-y-2">
-              <label className="text-xs font-bold text-muted-foreground">Formato da logo</label>
-              <div className="flex gap-2">
-                {([{ id: "quadrada" as const, label: "Quadrada", preview: "rounded-xl" }, { id: "circular" as const, label: "Circular", preview: "rounded-full" }]).map(opt => (
-                  <button key={opt.id} type="button" onClick={() => setSistemaConfig(c => ({ ...c, logoEstilo: opt.id }))}
-                    className={`flex items-center gap-3 rounded-xl border px-4 py-3 text-left transition-colors flex-1 ${(sistemaConfig.logoEstilo || "quadrada") === opt.id ? "border-primary bg-primary/10 text-primary" : "border-border bg-secondary text-muted-foreground hover:border-primary/30"}`}>
-                    <div className={`h-8 w-8 ${opt.preview} border border-border bg-card flex items-center justify-center shrink-0 overflow-hidden`}>
-                      {(sistemaConfig.logoBase64 || sistemaConfig.logoUrl) ? (<img src={sistemaConfig.logoBase64 || sistemaConfig.logoUrl} alt="" className={`h-full w-full ${opt.preview} object-cover`} />) : (<span className="text-[8px] font-black text-muted-foreground">AB</span>)}
-                    </div>
-                    <span className="text-sm font-bold">{opt.label}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-            {/* Cardápio header style */}
-            <div className="space-y-2">
-              <label className="text-xs font-bold text-muted-foreground">Topo do cardápio (tablet/totem)</label>
-              <p className="text-[10px] text-muted-foreground">Como aparece o cabeçalho do cardápio digital</p>
-              <div className="flex gap-2">
-                {([{ id: "padrao" as const, label: "Padrão", icon: "🔤" }, { id: "banner" as const, label: "Banner personalizado", icon: "🖼️" }]).map(opt => (
-                  <button key={opt.id} type="button" onClick={() => setSistemaConfig(c => ({ ...c, cardapioHeaderEstilo: opt.id }))}
-                    className={`flex items-center gap-3 rounded-xl border px-4 py-3 text-left transition-colors flex-1 ${(sistemaConfig.cardapioHeaderEstilo || "padrao") === opt.id ? "border-primary bg-primary/10 text-primary" : "border-border bg-secondary text-muted-foreground hover:border-primary/30"}`}>
-                    <span className="text-xl">{opt.icon}</span><span className="text-sm font-bold">{opt.label}</span>
-                  </button>
-                ))}
-              </div>
-              {sistemaConfig.cardapioHeaderEstilo === "banner" && (
-                <div className="space-y-2 pt-2">
-                  <label className="text-xs font-bold text-muted-foreground">Imagem de fundo do topo</label>
-                  {sistemaConfig.cardapioBannerBase64 && (
-                    <div className="flex items-center gap-3">
-                      <img src={sistemaConfig.cardapioBannerBase64} alt="Banner" className="h-14 w-full max-w-xs rounded-xl border border-border object-cover" />
-                      <button type="button" onClick={() => setSistemaConfig(c => ({ ...c, cardapioBannerBase64: "" }))} className="text-xs text-destructive hover:underline"><X className="h-4 w-4" /></button>
-                    </div>
-                  )}
-                  <label className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border bg-secondary/30 px-4 py-4 text-sm font-bold text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground">
-                    <ImagePlus className="h-5 w-5" />{sistemaConfig.cardapioBannerBase64 ? "Trocar imagem" : "Fazer upload do banner"}
-                    <input type="file" accept="image/*" className="hidden" onChange={(e) => {
-                      const file = e.target.files?.[0]; if (!file) return;
-                      if (file.size > 2 * 1024 * 1024) { toast.error("Imagem muito grande (máx 2MB)"); return; }
-                      const reader = new FileReader();
-                      reader.onload = () => setSistemaConfig(c => ({ ...c, cardapioBannerBase64: reader.result as string }));
-                      reader.readAsDataURL(file); e.target.value = "";
-                    }} />
-                  </label>
-                </div>
-              )}
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-muted-foreground">Cor primária</label>
-              <div className="flex items-center gap-3">
-                <input type="color" value={sistemaConfig.corPrimaria || "#f97316"} onChange={(e) => setSistemaConfig((c) => ({ ...c, corPrimaria: e.target.value }))} className="h-10 w-14 cursor-pointer rounded-lg border border-border bg-transparent" />
-                <span className="text-sm text-muted-foreground font-mono">{sistemaConfig.corPrimaria || "#f97316"}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* WhatsApp */}
-          <div className="surface-card space-y-5 rounded-2xl p-6">
-            <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">📱 WhatsApp</p>
-            <div className="space-y-1.5"><label className="text-xs font-bold text-muted-foreground">Telefone WhatsApp do restaurante</label><Input value={sistemaConfig.telefoneRestaurante || ""} onChange={(e) => setSistemaConfig((c) => ({ ...c, telefoneRestaurante: e.target.value.replace(/\D/g, "") }))} placeholder="11999999999 (só números com DDD)" inputMode="tel" /></div>
-            <div className="space-y-1.5"><label className="text-xs font-bold text-muted-foreground">Mensagem de boas-vindas WhatsApp</label><Textarea value={sistemaConfig.mensagemBoasVindas ?? `Olá! Bem-vindo ao ${sistemaConfig.nomeRestaurante}! 😊 Clique para fazer seu pedido:`} onChange={(e) => setSistemaConfig((c) => ({ ...c, mensagemBoasVindas: e.target.value }))} rows={3} /></div>
-          </div>
-
-          {/* QR Codes */}
-          <div className="surface-card space-y-5 rounded-2xl p-6">
-            <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">📲 QR Codes</p>
-            <div className="space-y-3 rounded-xl border border-border p-4">
-              <p className="text-xs font-black uppercase tracking-wider text-muted-foreground">Instagram</p>
-              <div className="space-y-1.5"><label className="text-xs font-bold text-muted-foreground">URL do Instagram</label><Input value={sistemaConfig.instagramUrl || ""} onChange={(e) => setSistemaConfig((c) => ({ ...c, instagramUrl: e.target.value }))} placeholder="https://instagram.com/seurestaurante" /></div>
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-muted-foreground">Imagem de fundo</label>
-                <div className="flex items-center gap-3">
-                  {sistemaConfig.instagramBg && (<img src={sistemaConfig.instagramBg} alt="bg instagram" className="h-12 w-20 rounded-lg border border-border object-cover" />)}
-                  <label className="cursor-pointer rounded-lg border border-dashed border-border px-3 py-1.5 text-xs font-semibold text-muted-foreground hover:bg-accent/40">
-                    {sistemaConfig.instagramBg ? "Trocar" : "Upload"}
-                    <input type="file" accept="image/*" className="hidden" onChange={(e) => { const file = e.target.files?.[0]; if (!file) return; const reader = new FileReader(); reader.onload = () => setSistemaConfig((c) => ({ ...c, instagramBg: reader.result as string })); reader.readAsDataURL(file); }} />
-                  </label>
-                  {sistemaConfig.instagramBg && (<Button variant="ghost" size="sm" className="h-7 px-2 text-xs text-destructive" onClick={() => setSistemaConfig((c) => ({ ...c, instagramBg: "" }))}><Trash2 className="mr-1 h-3 w-3" /> Remover</Button>)}
-                </div>
-              </div>
-              {sistemaConfig.instagramUrl && (<div className="text-center space-y-1"><img src={`https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(sistemaConfig.instagramUrl)}`} alt="QR Instagram" className="h-16 w-16 rounded-lg border border-border" /></div>)}
-            </div>
-            <div className="space-y-3 rounded-xl border border-border p-4">
-              <p className="text-xs font-black uppercase tracking-wider text-muted-foreground">Wi-Fi</p>
-              <div className="space-y-1.5"><label className="text-xs font-bold text-muted-foreground">Senha do Wi-Fi</label><Input value={sistemaConfig.senhaWifi || ""} onChange={(e) => setSistemaConfig((c) => ({ ...c, senhaWifi: e.target.value }))} placeholder="Senha da rede Wi-Fi" /></div>
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-muted-foreground">Imagem de fundo</label>
-                <div className="flex items-center gap-3">
-                  {sistemaConfig.wifiBg && (<img src={sistemaConfig.wifiBg} alt="bg wifi" className="h-12 w-20 rounded-lg border border-border object-cover" />)}
-                  <label className="cursor-pointer rounded-lg border border-dashed border-border px-3 py-1.5 text-xs font-semibold text-muted-foreground hover:bg-accent/40">
-                    {sistemaConfig.wifiBg ? "Trocar" : "Upload"}
-                    <input type="file" accept="image/*" className="hidden" onChange={(e) => { const file = e.target.files?.[0]; if (!file) return; const reader = new FileReader(); reader.onload = () => setSistemaConfig((c) => ({ ...c, wifiBg: reader.result as string })); reader.readAsDataURL(file); }} />
-                  </label>
-                  {sistemaConfig.wifiBg && (<Button variant="ghost" size="sm" className="h-7 px-2 text-xs text-destructive" onClick={() => setSistemaConfig((c) => ({ ...c, wifiBg: "" }))}><Trash2 className="mr-1 h-3 w-3" /> Remover</Button>)}
-                </div>
-              </div>
-              {sistemaConfig.senhaWifi && (<div className="text-center space-y-1"><img src={`https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(`WIFI:T:WPA;S:${sistemaConfig.nomeRestaurante};P:${sistemaConfig.senhaWifi};;`)}`} alt="QR Wi-Fi" className="h-16 w-16 rounded-lg border border-border" /></div>)}
-            </div>
-          </div>
-
-          {/* Banners */}
-          <div className="space-y-3">
-            <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">🖼️ Banners</p>
-            {(sistemaConfig.banners ?? []).map((banner, idx) => (
-              <div key={banner.id} className="surface-card rounded-2xl p-4 space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-black text-muted-foreground">Banner {idx + 1}</span>
-                  <Button variant="ghost" size="icon" className="text-destructive hover:bg-destructive/10" onClick={() => setSistemaConfig((c) => ({ ...c, banners: (c.banners ?? []).filter((b) => b.id !== banner.id) }))}><Trash2 className="h-4 w-4" /></Button>
-                </div>
-                <Input value={banner.titulo} onChange={(e) => setSistemaConfig((c) => ({ ...c, banners: (c.banners ?? []).map((b) => b.id === banner.id ? { ...b, titulo: e.target.value } : b) }))} placeholder="Título" />
-                <Input value={banner.subtitulo} onChange={(e) => setSistemaConfig((c) => ({ ...c, banners: (c.banners ?? []).map((b) => b.id === banner.id ? { ...b, subtitulo: e.target.value } : b) }))} placeholder="Subtítulo" />
-                <div className="flex gap-2">
-                  <Input value={banner.preco} onChange={(e) => setSistemaConfig((c) => ({ ...c, banners: (c.banners ?? []).map((b) => b.id === banner.id ? { ...b, preco: e.target.value } : b) }))} placeholder="Preço (opcional)" className="w-1/2" />
-                  <Input value={banner.imagemUrl} onChange={(e) => setSistemaConfig((c) => ({ ...c, banners: (c.banners ?? []).map((b) => b.id === banner.id ? { ...b, imagemUrl: e.target.value } : b) }))} placeholder="URL da imagem" className="flex-1" />
-                </div>
-                <label className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border bg-secondary/30 px-3 py-3 text-xs font-bold text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground">
-                  <Upload className="h-4 w-4" />Upload imagem do banner
-                  <input type="file" accept="image/*" className="hidden" onChange={(e) => {
-                    const file = e.target.files?.[0]; if (!file) return;
-                    if (file.size > 2 * 1024 * 1024) { toast.error("Imagem muito grande (máx 2MB)"); return; }
-                    const reader = new FileReader();
-                    reader.onload = () => setSistemaConfig((c) => ({ ...c, banners: (c.banners ?? []).map((b) => b.id === banner.id ? { ...b, imagemBase64: reader.result as string } : b) }));
-                    reader.readAsDataURL(file); e.target.value = "";
-                  }} />
-                </label>
-                {(banner.imagemBase64 || banner.imagemUrl) && (<img src={banner.imagemBase64 || banner.imagemUrl} alt="Preview" className="h-20 w-full rounded-xl border border-border object-cover" />)}
-              </div>
-            ))}
-            {(sistemaConfig.banners ?? []).length < 5 && (
-              <Button variant="outline" className="w-full rounded-xl" onClick={() => setSistemaConfig((c) => ({ ...c, banners: [...(c.banners ?? []), { id: `banner-${Date.now()}`, titulo: "", subtitulo: "", preco: "", imagemUrl: "" }] }))}><Plus className="h-4 w-4 mr-1" /> Adicionar banner</Button>
-            )}
-          </div>
-          <Button onClick={saveSistema} className="rounded-xl font-black w-full mt-4"><Save className="mr-1 h-4 w-4" /> Salvar</Button>
-        </div>
-      )}
+      {/* Extracted components */}
+      {configSection === "aparencia" && <AdminAparencia sistemaConfig={sistemaConfig} setSistemaConfig={setSistemaConfig} onSave={saveSistema} />}
+      {configSection === "banners" && <AdminBanners sistemaConfig={sistemaConfig} setSistemaConfig={setSistemaConfig} onSave={saveSistema} />}
+      {configSection === "redes" && <AdminRedes sistemaConfig={sistemaConfig} setSistemaConfig={setSistemaConfig} onSave={saveSistema} />}
+      {configSection === "temas" && <AdminTemas sistemaConfig={sistemaConfig} setSistemaConfig={setSistemaConfig} storeId={storeId} onSave={saveSistema} />}
 
       {/* DELIVERY */}
       {configSection === "delivery" && (
         <div className="space-y-4 max-w-lg">
           <div className="surface-card rounded-2xl p-6 space-y-3">
             <div className="flex items-center justify-between">
-              <div><p className="text-sm font-bold text-foreground">{sistemaConfig.deliveryAtivo !== false ? "Delivery ativado" : "Delivery desativado"}</p><p className="text-xs text-muted-foreground">Controle se o link de delivery aceita pedidos</p></div>
+              <div><p className="text-sm font-bold text-foreground">{sistemaConfig.deliveryAtivo !== false ? "Delivery ativado" : "Delivery desativado"}</p><p className="text-sm text-muted-foreground">Controle se o link de delivery aceita pedidos</p></div>
               <Switch checked={sistemaConfig.deliveryAtivo !== false} onCheckedChange={(v) => { const next = { ...sistemaConfig, deliveryAtivo: v }; setSistemaConfig(next); saveSistemaConfig(next, storeId); toast.success(v ? "Delivery ativado" : "Delivery desativado"); }} />
             </div>
-            {sistemaConfig.deliveryAtivo === false && (<p className="text-xs font-semibold text-destructive rounded-lg bg-destructive/10 px-3 py-2">⚠ Clientes não conseguem fazer pedidos pelo link de delivery</p>)}
+            {sistemaConfig.deliveryAtivo === false && (<p className="text-sm font-semibold text-destructive rounded-lg bg-destructive/10 px-3 py-2">⚠ Clientes não conseguem fazer pedidos pelo link de delivery</p>)}
           </div>
 
           {/* Link do delivery */}
@@ -293,12 +158,12 @@ const AdminConfig = ({ storeId, storeName }: Props) => {
             if (!deliveryLink) return null;
             return (
               <div className="surface-card rounded-2xl p-6 space-y-3">
-                <div><p className="text-sm font-black text-foreground flex items-center gap-2">🔗 Link do Delivery</p><p className="text-xs text-muted-foreground mt-0.5">Compartilhe este link no WhatsApp Business</p></div>
+                <div><p className="text-sm font-black text-foreground flex items-center gap-2">Link do Delivery</p><p className="text-sm text-muted-foreground mt-0.5">Compartilhe este link no WhatsApp Business</p></div>
                 <div className="flex items-center gap-2">
-                  <Input value={deliveryLink} readOnly className="text-xs font-mono bg-muted" />
+                  <Input value={deliveryLink} readOnly className="text-sm font-mono bg-muted h-11 rounded-xl" />
                   <Button variant="outline" size="sm" className="shrink-0" onClick={() => { navigator.clipboard.writeText(deliveryLink); toast.success("Link copiado!"); }}>Copiar</Button>
                 </div>
-                <Button variant="ghost" size="sm" className="gap-2 text-xs" onClick={() => window.open(deliveryLink, "_blank")}><ExternalLink className="h-3.5 w-3.5" />Abrir link</Button>
+                <Button variant="ghost" size="sm" className="gap-2 text-sm" onClick={() => window.open(deliveryLink, "_blank")}><ExternalLink className="h-3.5 w-3.5" />Abrir link</Button>
               </div>
             );
           })()}
@@ -312,12 +177,12 @@ const AdminConfig = ({ storeId, storeName }: Props) => {
             if (!cardapioLink) return null;
             return (
               <div className="surface-card rounded-2xl p-6 space-y-3">
-                <div><p className="text-sm font-black text-foreground flex items-center gap-2">📖 Cardápio Digital</p><p className="text-xs text-muted-foreground mt-0.5">Link público do cardápio</p></div>
+                <div><p className="text-sm font-black text-foreground flex items-center gap-2">Cardápio Digital</p><p className="text-sm text-muted-foreground mt-0.5">Link público do cardápio</p></div>
                 <div className="flex items-center gap-2">
-                  <Input value={cardapioLink} readOnly className="text-xs font-mono bg-muted" />
+                  <Input value={cardapioLink} readOnly className="text-sm font-mono bg-muted h-11 rounded-xl" />
                   <Button variant="outline" size="sm" className="shrink-0" onClick={() => { navigator.clipboard.writeText(cardapioLink); toast.success("Link copiado!"); }}>Copiar</Button>
                 </div>
-                <Button variant="ghost" size="sm" className="gap-2 text-xs" onClick={() => window.open(cardapioLink, "_blank")}><ExternalLink className="h-3.5 w-3.5" />Abrir cardápio</Button>
+                <Button variant="ghost" size="sm" className="gap-2 text-sm" onClick={() => window.open(cardapioLink, "_blank")}><ExternalLink className="h-3.5 w-3.5" />Abrir cardápio</Button>
               </div>
             );
           })()}
@@ -337,7 +202,7 @@ const AdminConfig = ({ storeId, storeName }: Props) => {
             };
             return (
               <div className="surface-card rounded-2xl p-6 space-y-4">
-                <div><p className="text-sm font-black text-foreground flex items-center gap-2">🕐 Horário de funcionamento</p><p className="text-xs text-muted-foreground mt-0.5">Define quando o delivery aceita pedidos</p></div>
+                <div><p className="text-sm font-black text-foreground flex items-center gap-2">Horário de funcionamento</p><p className="text-sm text-muted-foreground mt-0.5">Define quando o delivery aceita pedidos</p></div>
                 <div className="space-y-2">
                   {DIAS.map(({ key, label }) => {
                     const dia = horarios[key];
@@ -349,24 +214,24 @@ const AdminConfig = ({ storeId, storeName }: Props) => {
                         <span className="text-sm font-bold text-foreground w-20 shrink-0">{label}</span>
                         {dia.ativo && (
                           <div className="flex items-center gap-2 flex-1">
-                            <Input type="time" value={dia.abertura} onChange={(e) => updateDia(key, { abertura: e.target.value })} className="h-8 rounded-lg text-xs font-bold w-24" />
-                            <span className="text-xs text-muted-foreground">até</span>
-                            <Input type="time" value={dia.fechamento} onChange={(e) => updateDia(key, { fechamento: e.target.value })} className="h-8 rounded-lg text-xs font-bold w-24" />
+                            <Input type="time" value={dia.abertura} onChange={(e) => updateDia(key, { abertura: e.target.value })} className="h-9 rounded-lg text-sm font-bold w-24" />
+                            <span className="text-sm text-muted-foreground">até</span>
+                            <Input type="time" value={dia.fechamento} onChange={(e) => updateDia(key, { fechamento: e.target.value })} className="h-9 rounded-lg text-sm font-bold w-24" />
                           </div>
                         )}
-                        {!dia.ativo && <span className="text-xs text-muted-foreground italic">Fechado</span>}
+                        {!dia.ativo && <span className="text-sm text-muted-foreground italic">Fechado</span>}
                       </div>
                     );
                   })}
                 </div>
-                <div className="space-y-1.5"><label className="text-xs font-bold text-muted-foreground">Mensagem quando fechado (opcional)</label><Input value={sistemaConfig.mensagemFechado || ""} onChange={(e) => setSistemaConfig(c => ({ ...c, mensagemFechado: e.target.value }))} placeholder="Ex.: Voltamos amanhã!" /></div>
+                <div className="space-y-2"><label className="text-sm font-bold text-muted-foreground">Mensagem quando fechado (opcional)</label><Input className="h-11 rounded-xl" value={sistemaConfig.mensagemFechado || ""} onChange={(e) => setSistemaConfig(c => ({ ...c, mensagemFechado: e.target.value }))} placeholder="Ex.: Voltamos amanhã!" /></div>
               </div>
             );
           })()}
 
           {/* Modo de entrega */}
           <div className="surface-card rounded-2xl p-6 space-y-3">
-            <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">Modo de entrega</p>
+            <p className="text-base font-bold text-muted-foreground">Modo de entrega</p>
             <label className="flex items-center gap-3 cursor-pointer" onClick={() => { setDeliveryModo("todos"); localStorage.setItem("obsidian-delivery-modo-v1", "todos"); }}>
               <span className={`h-5 w-5 rounded-full border-2 flex items-center justify-center ${deliveryModo === "todos" ? "border-primary" : "border-muted-foreground/40"}`}>{deliveryModo === "todos" && <span className="h-2.5 w-2.5 rounded-full bg-primary" />}</span>
               <span className={`text-sm font-semibold ${deliveryModo === "todos" ? "text-foreground" : "text-muted-foreground"}`}>Atender todos os bairros</span>
@@ -379,19 +244,19 @@ const AdminConfig = ({ storeId, storeName }: Props) => {
 
           {/* Taxa padrão */}
           <div className="surface-card rounded-2xl p-6 space-y-2">
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-muted-foreground">Taxa de entrega padrão (R$)</label>
-              <Input type="number" min="0" step="0.5" value={sistemaConfig.taxaEntrega ?? ""} onChange={(e) => setSistemaConfig((c) => ({ ...c, taxaEntrega: e.target.value ? parseFloat(e.target.value) : undefined }))} placeholder="0.00" />
-              <p className="text-[10px] text-amber-400 font-semibold">⚠️ Taxa legada — usada quando nenhum bairro está cadastrado</p>
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-muted-foreground">Taxa de entrega padrão (R$)</label>
+              <Input className="h-11 rounded-xl" type="number" min="0" step="0.5" value={sistemaConfig.taxaEntrega ?? ""} onChange={(e) => setSistemaConfig((c) => ({ ...c, taxaEntrega: e.target.value ? parseFloat(e.target.value) : undefined }))} placeholder="0.00" />
+              <p className="text-sm text-amber-400 font-semibold">⚠️ Taxa legada — usada quando nenhum bairro está cadastrado</p>
             </div>
           </div>
 
           {/* Bairros */}
           <div className="surface-card space-y-4 rounded-2xl p-6">
-            <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">Taxas por bairro</p>
+            <p className="text-base font-bold text-muted-foreground">Taxas por bairro</p>
             <div className="flex gap-2 items-end">
-              <div className="flex-1 space-y-1.5"><label className="text-xs font-bold text-muted-foreground">Nome do bairro</label><Input value={novoBairroNome} onChange={(e) => setNovoBairroNome(e.target.value)} placeholder="Ex.: Centro" /></div>
-              <div className="w-28 space-y-1.5"><label className="text-xs font-bold text-muted-foreground">Taxa (R$)</label><Input type="number" min="0" step="0.5" value={novoBairroTaxa} onChange={(e) => setNovoBairroTaxa(e.target.value)} placeholder="5.00" /></div>
+              <div className="flex-1 space-y-2"><label className="text-sm font-bold text-muted-foreground">Nome do bairro</label><Input className="h-11 rounded-xl" value={novoBairroNome} onChange={(e) => setNovoBairroNome(e.target.value)} placeholder="Ex.: Centro" /></div>
+              <div className="w-28 space-y-2"><label className="text-sm font-bold text-muted-foreground">Taxa (R$)</label><Input className="h-11 rounded-xl" type="number" min="0" step="0.5" value={novoBairroTaxa} onChange={(e) => setNovoBairroTaxa(e.target.value)} placeholder="5.00" /></div>
               <Button className="rounded-xl font-bold gap-1 shrink-0" disabled={!novoBairroNome.trim() || !novoBairroTaxa} onClick={() => {
                 const taxa = parseFloat(novoBairroTaxa);
                 if (isNaN(taxa) || taxa < 0) return;
@@ -422,7 +287,7 @@ const AdminConfig = ({ storeId, storeName }: Props) => {
 
           {/* Tempo de entrega */}
           <div className="surface-card rounded-2xl p-6 space-y-2">
-            <div className="space-y-1.5"><label className="text-xs font-bold text-muted-foreground">Tempo estimado de entrega</label><Input value={sistemaConfig.tempoEntrega || ""} onChange={(e) => setSistemaConfig(c => ({ ...c, tempoEntrega: e.target.value }))} placeholder="Ex.: 30-50 min" /></div>
+            <div className="space-y-2"><label className="text-sm font-bold text-muted-foreground">Tempo estimado de entrega</label><Input className="h-11 rounded-xl" value={sistemaConfig.tempoEntrega || ""} onChange={(e) => setSistemaConfig(c => ({ ...c, tempoEntrega: e.target.value }))} placeholder="Ex.: 30-50 min" /></div>
           </div>
           <Button onClick={saveSistema} className="rounded-xl font-black w-full mt-4"><Save className="mr-1 h-4 w-4" /> Salvar</Button>
         </div>
@@ -463,9 +328,9 @@ const AdminConfig = ({ storeId, storeName }: Props) => {
         };
 
         const tipos = [
-          { id: "restaurante" as const, icon: "🍽️", nome: "RESTAURANTE", desc: "Garçom anota pedido, cozinha prepara, garçom leva na mesa" },
-          { id: "fastfood" as const, icon: "🍔", nome: "FAST FOOD", desc: "Cliente pede no totem ou balcão, retira quando aparece na TV" },
-          { id: "completo" as const, icon: "⚡", nome: "COMPLETO", desc: "Usa todos os modos de atendimento" },
+          { id: "restaurante" as const, icon: Store, nome: "RESTAURANTE", desc: "Garçom anota pedido, cozinha prepara, garçom leva na mesa" },
+          { id: "fastfood" as const, icon: Truck, nome: "FAST FOOD", desc: "Cliente pede no totem ou balcão, retira quando aparece na TV" },
+          { id: "completo" as const, icon: Database, nome: "COMPLETO", desc: "Usa todos os modos de atendimento" },
         ];
 
         const activeModules = [
@@ -483,41 +348,44 @@ const AdminConfig = ({ storeId, storeName }: Props) => {
           <div className="space-y-5 max-w-lg">
             {/* A) Tipo do restaurante */}
             <div className="space-y-3">
-              <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">Tipo de atendimento</p>
-              {tipos.map(t => (
-                <button key={t.id} type="button" onClick={() => handleTipoChange(t.id)}
-                  className={`w-full flex items-start gap-4 rounded-2xl border p-5 text-left transition-colors ${
-                    tipoAtual === t.id
-                      ? "border-primary bg-primary/10"
-                      : "border-border bg-card hover:border-primary/30"
-                  }`}>
-                  <span className="text-3xl mt-0.5">{t.icon}</span>
-                  <div>
-                    <p className={`text-sm font-black ${tipoAtual === t.id ? "text-primary" : "text-foreground"}`}>{t.nome}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">{t.desc}</p>
-                  </div>
-                  {tipoAtual === t.id && (
-                    <span className="ml-auto mt-1 text-primary text-lg">✓</span>
-                  )}
-                </button>
-              ))}
+              <p className="text-base font-bold text-muted-foreground">Tipo de atendimento</p>
+              {tipos.map(t => {
+                const Icon = t.icon;
+                return (
+                  <button key={t.id} type="button" onClick={() => handleTipoChange(t.id)}
+                    className={`w-full flex items-start gap-4 rounded-2xl border p-5 text-left transition-colors ${
+                      tipoAtual === t.id
+                        ? "border-primary bg-primary/10"
+                        : "border-border bg-card hover:border-primary/30"
+                    }`}>
+                    <Icon className="h-6 w-6 text-muted-foreground mt-0.5 shrink-0" />
+                    <div>
+                      <p className={`text-sm font-black ${tipoAtual === t.id ? "text-primary" : "text-foreground"}`}>{t.nome}</p>
+                      <p className="text-sm text-muted-foreground mt-0.5">{t.desc}</p>
+                    </div>
+                    {tipoAtual === t.id && (
+                      <span className="ml-auto mt-1 text-primary text-lg">✓</span>
+                    )}
+                  </button>
+                );
+              })}
             </div>
 
             {/* B) Delivery addon */}
             <div className="surface-card rounded-2xl p-6 space-y-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <span className="text-xl">🛵</span>
+                  <Truck className="h-5 w-5 text-muted-foreground" />
                   <div>
                     <p className="text-sm font-bold text-foreground">Delivery (entrega em casa)</p>
-                    <p className="text-[10px] text-muted-foreground">Addon independente do tipo de restaurante</p>
+                    <p className="text-sm text-muted-foreground">Addon independente do tipo de restaurante</p>
                   </div>
                 </div>
                 <Switch checked={sistemaConfig.deliveryAtivo === true} onCheckedChange={handleDeliveryToggle} />
               </div>
               {sistemaConfig.deliveryAtivo === true && (
                 <div className="space-y-3 pt-3 border-t border-border">
-                  <p className="text-xs font-bold text-muted-foreground">Modo do caixa delivery</p>
+                  <p className="text-sm font-bold text-muted-foreground">Modo do caixa delivery</p>
                   <label className="flex items-center gap-3 cursor-pointer" onClick={() => {
                     const next = { ...sistemaConfig, deliverySeparado: false };
                     setSistemaConfig(next); saveSistemaConfig(next, storeId); saveSistemaConfigAsync(next, storeId);
@@ -527,7 +395,7 @@ const AdminConfig = ({ storeId, storeName }: Props) => {
                     </span>
                     <div>
                       <span className={`text-sm font-semibold ${!sistemaConfig.deliverySeparado ? "text-foreground" : "text-muted-foreground"}`}>Caixa único</span>
-                      <p className="text-[10px] text-muted-foreground">Delivery junto com presencial</p>
+                      <p className="text-sm text-muted-foreground">Delivery junto com presencial</p>
                     </div>
                   </label>
                   <label className="flex items-center gap-3 cursor-pointer" onClick={() => {
@@ -539,7 +407,7 @@ const AdminConfig = ({ storeId, storeName }: Props) => {
                     </span>
                     <div>
                       <span className={`text-sm font-semibold ${sistemaConfig.deliverySeparado ? "text-foreground" : "text-muted-foreground"}`}>Caixa separado</span>
-                      <p className="text-[10px] text-muted-foreground">Operador exclusivo para delivery</p>
+                      <p className="text-sm text-muted-foreground">Operador exclusivo para delivery</p>
                     </div>
                   </label>
                 </div>
@@ -547,17 +415,16 @@ const AdminConfig = ({ storeId, storeName }: Props) => {
             </div>
 
             {/* C) Configurações extras */}
-            {/* Identificação do pedido — só fastfood ou completo */}
             {(tipoAtual === "fastfood" || tipoAtual === "completo") && (
               <div className="surface-card rounded-2xl p-6 space-y-3">
-                <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">Identificação do pedido (Totem/Balcão)</p>
+                <p className="text-base font-bold text-muted-foreground">Identificação do pedido (Totem/Balcão)</p>
                 <label className="flex items-center gap-3 cursor-pointer" onClick={() => { const next = { ...sistemaConfig, identificacaoFastFood: "codigo" as const }; setSistemaConfig(next); saveSistemaConfig(next, storeId); saveSistemaConfigAsync(next, storeId); }}>
                   <span className={`h-5 w-5 rounded-full border-2 flex items-center justify-center ${(sistemaConfig.identificacaoFastFood || "codigo") === "codigo" ? "border-primary" : "border-muted-foreground/40"}`}>{(sistemaConfig.identificacaoFastFood || "codigo") === "codigo" && <span className="h-2.5 w-2.5 rounded-full bg-primary" />}</span>
-                  <div><span className={`text-sm font-semibold ${(sistemaConfig.identificacaoFastFood || "codigo") === "codigo" ? "text-foreground" : "text-muted-foreground"}`}>Código numérico</span><p className="text-[10px] text-muted-foreground">Número sequencial automático</p></div>
+                  <div><span className={`text-sm font-semibold ${(sistemaConfig.identificacaoFastFood || "codigo") === "codigo" ? "text-foreground" : "text-muted-foreground"}`}>Código numérico</span><p className="text-sm text-muted-foreground">Número sequencial automático</p></div>
                 </label>
                 <label className="flex items-center gap-3 cursor-pointer" onClick={() => { const next = { ...sistemaConfig, identificacaoFastFood: "nome_cliente" as const }; setSistemaConfig(next); saveSistemaConfig(next, storeId); saveSistemaConfigAsync(next, storeId); }}>
                   <span className={`h-5 w-5 rounded-full border-2 flex items-center justify-center ${sistemaConfig.identificacaoFastFood === "nome_cliente" ? "border-primary" : "border-muted-foreground/40"}`}>{sistemaConfig.identificacaoFastFood === "nome_cliente" && <span className="h-2.5 w-2.5 rounded-full bg-primary" />}</span>
-                  <div><span className={`text-sm font-semibold ${sistemaConfig.identificacaoFastFood === "nome_cliente" ? "text-foreground" : "text-muted-foreground"}`}>Nome do cliente</span><p className="text-[10px] text-muted-foreground">Comanda exibe o nome informado</p></div>
+                  <div><span className={`text-sm font-semibold ${sistemaConfig.identificacaoFastFood === "nome_cliente" ? "text-foreground" : "text-muted-foreground"}`}>Nome do cliente</span><p className="text-sm text-muted-foreground">Comanda exibe o nome informado</p></div>
                 </label>
               </div>
             )}
@@ -565,23 +432,23 @@ const AdminConfig = ({ storeId, storeName }: Props) => {
             {/* CPF na nota */}
             <div className="surface-card rounded-2xl p-6 space-y-3">
               <div className="flex items-center justify-between">
-                <div><p className="text-sm font-black text-foreground">📄 Solicitar CPF na nota</p><p className="text-xs text-muted-foreground mt-0.5">Necessário para emissão de nota fiscal.</p></div>
+                <div><p className="text-sm font-black text-foreground">Solicitar CPF na nota</p><p className="text-sm text-muted-foreground mt-0.5">Necessário para emissão de nota fiscal.</p></div>
                 <Switch checked={sistemaConfig.cpfNotaAtivo ?? false} onCheckedChange={(v) => setSistemaConfig((prev) => ({ ...prev, cpfNotaAtivo: v }))} />
               </div>
             </div>
 
-            {/* Couvert — só restaurante ou completo */}
+            {/* Couvert */}
             {(tipoAtual === "restaurante" || tipoAtual === "completo") && (
               <div className="surface-card rounded-2xl p-6 space-y-3">
                 <div className="flex items-center justify-between">
-                  <div><p className="text-sm font-black text-foreground">Couvert / Taxa de serviço</p><p className="text-xs text-muted-foreground mt-0.5">Cobrado por pessoa ao fechar a conta</p></div>
+                  <div><p className="text-sm font-black text-foreground">Couvert / Taxa de serviço</p><p className="text-sm text-muted-foreground mt-0.5">Cobrado por pessoa ao fechar a conta</p></div>
                   <Switch checked={sistemaConfig.couvertAtivo ?? false} onCheckedChange={(v) => setSistemaConfig(c => ({ ...c, couvertAtivo: v }))} />
                 </div>
                 {sistemaConfig.couvertAtivo && (
                   <>
-                    <div className="space-y-1"><label className="text-xs font-bold text-muted-foreground">Valor por pessoa (R$)</label><Input value={sistemaConfig.couvertValor ? sistemaConfig.couvertValor.toFixed(2).replace(".", ",") : ""} onChange={e => { const val = parseFloat(e.target.value.replace(",", ".")) || 0; setSistemaConfig(c => ({ ...c, couvertValor: Number.isFinite(val) ? val : 0 })); }} placeholder="Ex.: 5,00" inputMode="decimal" className="h-10 rounded-xl text-sm max-w-[160px]" /></div>
+                    <div className="space-y-2"><label className="text-sm font-bold text-muted-foreground">Valor por pessoa (R$)</label><Input value={sistemaConfig.couvertValor ? sistemaConfig.couvertValor.toFixed(2).replace(".", ",") : ""} onChange={e => { const val = parseFloat(e.target.value.replace(",", ".")) || 0; setSistemaConfig(c => ({ ...c, couvertValor: Number.isFinite(val) ? val : 0 })); }} placeholder="Ex.: 5,00" inputMode="decimal" className="h-11 rounded-xl text-sm max-w-[160px]" /></div>
                     <div className="flex items-center justify-between">
-                      <div><p className="text-xs font-bold text-foreground">Obrigatório</p><p className="text-xs text-muted-foreground">Se desligado, operador pode dispensar</p></div>
+                      <div><p className="text-sm font-bold text-foreground">Obrigatório</p><p className="text-sm text-muted-foreground">Se desligado, operador pode dispensar</p></div>
                       <Switch checked={sistemaConfig.couvertObrigatorio ?? false} onCheckedChange={(v) => setSistemaConfig(c => ({ ...c, couvertObrigatorio: v }))} />
                     </div>
                   </>
@@ -589,13 +456,13 @@ const AdminConfig = ({ storeId, storeName }: Props) => {
               </div>
             )}
 
-            {/* Número de mesas — só se mesas ativo */}
+            {/* Número de mesas */}
             {modulos.mesas && (
               <div className="surface-card rounded-2xl p-6 space-y-3">
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-muted-foreground">Número de mesas</label>
-                  <Input type="number" min="1" max="200" value={20} readOnly className="h-10 rounded-xl text-sm max-w-[120px]" />
-                  <p className="text-[10px] text-muted-foreground">Gerenciado na aba Mesas do painel</p>
+                <div className="space-y-2">
+                  <label className="text-sm font-bold text-muted-foreground">Número de mesas</label>
+                  <Input type="number" min="1" max="200" value={20} readOnly className="h-11 rounded-xl text-sm max-w-[120px]" />
+                  <p className="text-sm text-muted-foreground">Gerenciado na aba Mesas do painel</p>
                 </div>
               </div>
             )}
@@ -603,10 +470,10 @@ const AdminConfig = ({ storeId, storeName }: Props) => {
             {/* D) Resumo visual */}
             {activeModules.length > 0 && (
               <div className="surface-card rounded-2xl p-5 space-y-3">
-                <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">Seu restaurante usa</p>
+                <p className="text-base font-bold text-muted-foreground">Seu restaurante usa</p>
                 <div className="flex flex-wrap gap-2">
                   {activeModules.map(m => (
-                    <span key={m.key} className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 border border-primary/20 px-3 py-1 text-xs font-bold text-primary">
+                    <span key={m.key} className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 border border-primary/20 px-3 py-1 text-sm font-bold text-primary">
                       ✓ {m.label}
                     </span>
                   ))}
@@ -618,7 +485,6 @@ const AdminConfig = ({ storeId, storeName }: Props) => {
           </div>
         );
       })()}
-
 
       {/* IMPRESSORAS */}
       {configSection === "impressoras" && (() => {
@@ -659,12 +525,12 @@ const AdminConfig = ({ storeId, storeName }: Props) => {
               <div className="surface-card space-y-4 rounded-2xl p-6">
                 <h3 className="text-sm font-bold text-foreground">{impEditando ? "Editar impressora" : "Nova impressora"}</h3>
                 <div className="space-y-3">
-                  <div><label className="text-xs font-bold text-muted-foreground">Nome</label><Input value={impFormNome} onChange={e => setImpFormNome(e.target.value)} placeholder="Ex: Cozinha Principal" className="rounded-xl mt-1" /></div>
-                  <div><label className="text-xs font-bold text-muted-foreground">Setor</label><Select value={impFormSetor} onValueChange={v => setImpFormSetor(v as any)}><SelectTrigger className="rounded-xl mt-1"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="caixa">Caixa</SelectItem><SelectItem value="cozinha">Cozinha</SelectItem><SelectItem value="bar">Bar</SelectItem><SelectItem value="delivery">Delivery</SelectItem></SelectContent></Select></div>
-                  <div><label className="text-xs font-bold text-muted-foreground">Tipo de conexão</label><Select value={impFormTipo} onValueChange={v => setImpFormTipo(v as any)}><SelectTrigger className="rounded-xl mt-1"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="rede">Rede (IP)</SelectItem><SelectItem value="usb">USB</SelectItem><SelectItem value="bluetooth">Bluetooth</SelectItem></SelectContent></Select></div>
-                  {impFormTipo === "rede" && (<div><label className="text-xs font-bold text-muted-foreground">Endereço IP</label><Input value={impFormIp} onChange={e => setImpFormIp(e.target.value)} placeholder="192.168.1.100" className="rounded-xl mt-1" /></div>)}
-                  <div><label className="text-xs font-bold text-muted-foreground">Largura do papel</label><Select value={impFormLargura} onValueChange={v => setImpFormLargura(v as any)}><SelectTrigger className="rounded-xl mt-1"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="58mm">58mm</SelectItem><SelectItem value="80mm">80mm</SelectItem></SelectContent></Select></div>
-                  <div className="flex items-center justify-between"><label className="text-xs font-bold text-muted-foreground">Ativa</label><Switch checked={impFormAtiva} onCheckedChange={setImpFormAtiva} /></div>
+                  <div><label className="text-sm font-bold text-muted-foreground">Nome</label><Input value={impFormNome} onChange={e => setImpFormNome(e.target.value)} placeholder="Ex: Cozinha Principal" className="rounded-xl mt-1 h-11" /></div>
+                  <div><label className="text-sm font-bold text-muted-foreground">Setor</label><Select value={impFormSetor} onValueChange={v => setImpFormSetor(v as any)}><SelectTrigger className="rounded-xl mt-1"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="caixa">Caixa</SelectItem><SelectItem value="cozinha">Cozinha</SelectItem><SelectItem value="bar">Bar</SelectItem><SelectItem value="delivery">Delivery</SelectItem></SelectContent></Select></div>
+                  <div><label className="text-sm font-bold text-muted-foreground">Tipo de conexão</label><Select value={impFormTipo} onValueChange={v => setImpFormTipo(v as any)}><SelectTrigger className="rounded-xl mt-1"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="rede">Rede (IP)</SelectItem><SelectItem value="usb">USB</SelectItem><SelectItem value="bluetooth">Bluetooth</SelectItem></SelectContent></Select></div>
+                  {impFormTipo === "rede" && (<div><label className="text-sm font-bold text-muted-foreground">Endereço IP</label><Input value={impFormIp} onChange={e => setImpFormIp(e.target.value)} placeholder="192.168.1.100" className="rounded-xl mt-1 h-11" /></div>)}
+                  <div><label className="text-sm font-bold text-muted-foreground">Largura do papel</label><Select value={impFormLargura} onValueChange={v => setImpFormLargura(v as any)}><SelectTrigger className="rounded-xl mt-1"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="58mm">58mm</SelectItem><SelectItem value="80mm">80mm</SelectItem></SelectContent></Select></div>
+                  <div className="flex items-center justify-between"><label className="text-sm font-bold text-muted-foreground">Ativa</label><Switch checked={impFormAtiva} onCheckedChange={setImpFormAtiva} /></div>
                 </div>
                 <div className="flex gap-2"><Button onClick={salvar} className="flex-1 rounded-xl font-bold gap-2"><Save className="h-4 w-4" /> Salvar</Button><Button variant="outline" onClick={() => { setImpShowForm(false); resetForm(); }} className="rounded-xl"><X className="h-4 w-4" /></Button></div>
               </div>
@@ -673,8 +539,8 @@ const AdminConfig = ({ storeId, storeName }: Props) => {
             {impressoras.map(imp => (
               <div key={imp.id} className="surface-card rounded-2xl p-5 space-y-3">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3"><Printer className="h-5 w-5 text-muted-foreground" /><div><p className="text-sm font-bold text-foreground">{imp.nome}</p><p className="text-xs text-muted-foreground">{setorLabels[imp.setor]} · {tipoLabels[imp.tipo]}{imp.tipo === "rede" && imp.ip ? ` · ${imp.ip}` : ""} · {imp.largura}</p></div></div>
-                  <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${imp.ativa ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400" : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"}`}>{imp.ativa ? "Ativa" : "Inativa"}</span>
+                  <div className="flex items-center gap-3"><Printer className="h-5 w-5 text-muted-foreground" /><div><p className="text-sm font-bold text-foreground">{imp.nome}</p><p className="text-sm text-muted-foreground">{setorLabels[imp.setor]} · {tipoLabels[imp.tipo]}{imp.tipo === "rede" && imp.ip ? ` · ${imp.ip}` : ""} · {imp.largura}</p></div></div>
+                  <span className={`text-sm font-bold px-2 py-0.5 rounded-full ${imp.ativa ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400" : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"}`}>{imp.ativa ? "Ativa" : "Inativa"}</span>
                 </div>
                 <div className="flex gap-2">
                   <Button variant="outline" size="sm" className="rounded-xl gap-1.5 flex-1" onClick={() => openEditImp(imp)}><Pencil className="h-3.5 w-3.5" /> Editar</Button>
@@ -698,10 +564,10 @@ const AdminConfig = ({ storeId, storeName }: Props) => {
               const url = URL.createObjectURL(blob); const a = document.createElement("a"); a.href = url; a.download = `backup-orderly-${new Date().toISOString().slice(0, 10)}.json`; a.click(); URL.revokeObjectURL(url);
               toast.success("Backup exportado com sucesso!");
             }}>
-              <span className="mr-1">📥</span> Exportar backup
+              Exportar backup
             </Button>
             <div className="space-y-2">
-              <label className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border bg-secondary/30 px-4 py-4 text-sm font-bold text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground">
+              <label className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border bg-secondary/30 px-4 py-5 text-sm font-bold text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground">
                 <Upload className="h-5 w-5" />Importar backup (.json)
                 <input type="file" accept=".json" className="hidden" onChange={(e) => {
                   const file = e.target.files?.[0]; if (!file) return;
@@ -718,7 +584,7 @@ const AdminConfig = ({ storeId, storeName }: Props) => {
                   reader.readAsText(file); e.target.value = "";
                 }} />
               </label>
-              <p className="text-[10px] text-muted-foreground text-center">Selecione um arquivo .json exportado anteriormente</p>
+              <p className="text-sm text-muted-foreground text-center">Selecione um arquivo .json exportado anteriormente</p>
             </div>
           </div>
         </div>
