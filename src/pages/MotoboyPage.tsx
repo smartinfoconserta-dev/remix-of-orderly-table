@@ -794,7 +794,14 @@ export default function MotoboyPage() {
         setConfirmandoPedido={setConfirmandoPedido}
         onConfirmarRetirada={(pedido) => {
           marcarBalcaoSaiu(pedido.id, sessao?.nome || "Motoboy");
-          toast.success(`Pedido #${pedido.numeroPedido} retirado! Boa entrega 🏍️`);
+          const tel = (pedido as any).clienteTelefone;
+          const nome = (pedido as any).clienteNome || "Cliente";
+          toast.success(`Pedido #${pedido.numeroPedido} retirado! Boa entrega 🏍️`, {
+            action: tel ? {
+              label: "📱 Avisar cliente",
+              onClick: () => sendWhatsAppMessage(tel, buildDeliveryStatusMessage(NOME_REST, pedido.numeroPedido, nome, "saiu", { motoboyNome: sessao?.nome })),
+            } : undefined,
+          });
           setConfirmandoPedido(null);
           setShowManualPick(false);
         }}
