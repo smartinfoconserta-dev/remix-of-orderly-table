@@ -53,7 +53,7 @@ const MesaCard = ({ mesa, onClick, showTotal = true, showIndicators = true, time
       <StatusLabel status={status} chamarGarcom={chamarGarcom} />
 
       {timeLabel && (
-        <span className="text-[10px] font-bold tabular-nums text-status-consumo">
+        <span className={`text-[10px] font-bold tabular-nums ${TIME_COLOR_CLASS[timeColor ?? "green"]}`}>
           {timeLabel}
         </span>
       )}

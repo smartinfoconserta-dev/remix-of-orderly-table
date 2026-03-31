@@ -1437,6 +1437,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                           onClick={() => handleSelecionarMesa(item.id)}
                           showTotal
                           timeLabel={getMesaTimeLabel(item)}
+                          timeColor={getMesaTimeColor(item)}
                           subtle={item.status === "livre"}
                         />
                       </div>
