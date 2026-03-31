@@ -111,12 +111,13 @@ import CaixaQrScanner from "@/components/caixa/CaixaQrScanner";
 
 interface CaixaPageProps {
   accessMode?: Extract<UserRole, "caixa" | "gerente">;
+  deliveryOnly?: boolean;
 }
 
 /* ══════════════════════════════════════ */
 /*            CAIXA PAGE                  */
 /* ══════════════════════════════════════ */
-const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
+const CaixaPage = ({ accessMode = "caixa", deliveryOnly = false }: CaixaPageProps) => {
   const {
     mesas,
     eventos,
@@ -220,7 +221,9 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
   const moduloBalcao = globalModulos.balcao === true;
   // isFastFoodGlobal backward compat: true when no mesas and has totem/balcao
   const isFastFoodGlobal = !moduloMesas && (moduloTotem || moduloBalcao);
+
   const [caixaView, setCaixaView] = useState<"mesas" | "delivery" | "totem" | "historico" | "ifood">(() => {
+    if (deliveryOnly) return "delivery";
     if (moduloMesas) return "mesas";
     if (moduloTotem) return "totem";
     if (moduloBalcao) return "delivery";
@@ -247,6 +250,12 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
 
   const [isDesktop, setIsDesktop] = useState(() => typeof window !== "undefined" && window.innerWidth >= 768);
   const sistemaConfig = useMemo(() => getSistemaConfig(), []);
+  const deliverySeparado = sistemaConfig.deliverySeparado === true;
+  const showMesasTab = moduloMesas && !isFastFoodGlobal && !deliveryOnly;
+  const showDeliveryTab = deliveryOnly || (!deliverySeparado && sistemaConfig.deliveryAtivo !== false);
+  const showTotemTab = (moduloTotem || pedidosTotemAtivos.length > 0) && !deliveryOnly;
+  const showIfoodTab = !deliveryOnly;
+  const caixaTitle = deliveryOnly ? "Caixa Delivery" : (accessMode === "gerente" ? "Gerente" : "Caixa");
   /* ── Mesa/Payment state (hook) ── */
   const mesaState = useCaixaMesaState({
     mesas, sistemaConfig, accessMode,
@@ -545,7 +554,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
       <div className="min-h-svh flex flex-col bg-background">
         <header className="flex items-center gap-3 border-b border-border bg-card px-4 py-4 shrink-0 md:px-6">
           <h1 className="text-lg font-bold tracking-tight text-foreground truncate flex-1 md:text-xl">
-            {accessMode === "gerente" ? "Gerente" : "Caixa"}
+            {caixaTitle}
           </h1>
         </header>
         <main className="flex-1 overflow-y-auto p-4 md:p-6">
@@ -592,7 +601,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
         <div className="min-h-svh flex flex-col bg-background">
           <header className="flex items-center gap-3 border-b border-border bg-card px-4 py-4 shrink-0 md:px-6">
             <h1 className="text-lg font-bold tracking-tight text-foreground truncate flex-1 md:text-xl">
-              Caixa
+              {caixaTitle}
             </h1>
             <Button variant="outline" onClick={() => logout(accessMode)} className="gap-2 rounded-xl font-bold h-9 px-3 text-sm">
               <LogOut className="h-4 w-4" />
@@ -1294,7 +1303,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
 
               {/* ── Windows-style Tabs ── */}
               <div className="flex items-end px-3 pt-1 shrink-0 bg-card">
-                {moduloMesas && !isFastFoodGlobal && (
+                {showMesasTab && (
                 <button
                   onClick={() => setCaixaView("mesas")}
                   className={`px-4 py-1.5 text-xs font-bold transition-colors border border-border rounded-t -mb-px relative ${
@@ -1306,7 +1315,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                   Mesas
                 </button>
                 )}
-                {sistemaConfig.deliveryAtivo !== false && (
+                {showDeliveryTab && (
                 <button
                   onClick={() => setCaixaView("delivery")}
                   className={`px-4 py-1.5 text-xs font-bold transition-colors border border-border rounded-t -mb-px relative flex items-center gap-1.5 ${
@@ -1321,7 +1330,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                   )}
                 </button>
                 )}
-                {(sistemaConfig.modulos?.totem === true || pedidosTotemAtivos.length > 0) && (
+                {showTotemTab && (
                 <button
                   onClick={() => setCaixaView("totem")}
                   className={`px-4 py-1.5 text-xs font-bold transition-colors border border-border rounded-t -mb-px relative flex items-center gap-1.5 ${
@@ -1336,6 +1345,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                   )}
                 </button>
                 )}
+                {showIfoodTab && (
                 <button
                   onClick={() => setCaixaView("ifood")}
                   className={`px-4 py-1.5 text-xs font-bold transition-colors border border-border rounded-t -mb-px relative flex items-center gap-1.5 ${
@@ -1346,6 +1356,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                 >
                   🔴 iFood
                 </button>
+                )}
                 <button
                   onClick={() => setCaixaView("historico")}
                   className={`px-4 py-1.5 text-xs font-bold transition-colors border border-border rounded-t -mb-px relative flex items-center gap-1.5 ${
@@ -1559,7 +1570,7 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
                     return `Mesa ${String(f.mesaNumero).padStart(2, "0")}`;
                   })() : "—"}
                 </span>
-                {pedidosAguardandoConfirmacao.length > 0 && (
+                {showDeliveryTab && pedidosAguardandoConfirmacao.length > 0 && (
                   <button
                     onClick={() => setCaixaView("delivery")}
                     className="px-3 py-1.5 font-bold animate-pulse bg-amber-500/15 text-amber-500"
