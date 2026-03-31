@@ -108,3 +108,17 @@ export const activateDevice = async (
     return { ok: false, error: "Erro ao ativar dispositivo" };
   }
 };
+
+/** Update mesa_id on the devices table for this device */
+export const updateDeviceMesa = async (mesaId: string | null): Promise<void> => {
+  const deviceId = getStoredDeviceId();
+  if (!deviceId) return;
+  try {
+    await supabase
+      .from("devices")
+      .update({ mesa_id: mesaId } as any)
+      .eq("device_id", deviceId);
+  } catch (err) {
+    console.error("[updateDeviceMesa] error:", err);
+  }
+};
