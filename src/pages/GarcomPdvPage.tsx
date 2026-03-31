@@ -44,6 +44,14 @@ const GarcomPdvPage = () => {
   const [pagamentoValue, setPagamentoValue] = useState("");
   const [processando, setProcessando] = useState(false);
   const [actionMesaId, setActionMesaId] = useState<string | null>(null);
+  const [receiptData, setReceiptData] = useState<{
+    mesaNumero: number;
+    total: number;
+    formasLabel: string;
+    pagamentos: SplitPayment[];
+    itens: Array<{ quantidade: number; nome: string; preco: number }>;
+    numeroPedido: number;
+  } | null>(null);
 
   useRouteLock("/garcom-pdv");
 
