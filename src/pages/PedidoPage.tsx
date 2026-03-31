@@ -184,6 +184,18 @@ export default function PedidoPage() {
 
   const [bairrosDisponiveis, setBairrosDisponiveis] = useState<Bairro[]>([]);
 
+  // ── Theme engine ──
+  const themeContainerRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = themeContainerRef.current;
+    if (!el || !storeConfig) return;
+    const themeId = storeConfig.temaCardapio || "obsidian";
+    const customColor = storeConfig.corPrimaria;
+    const themeDefault = THEME_MAP[themeId]?.primary;
+    applyThemeToElement(el, themeId, customColor && customColor !== themeDefault ? customColor : undefined);
+    return () => { if (el) clearThemeFromElement(el); };
+  }, [storeConfig?.temaCardapio, storeConfig?.corPrimaria]);
+
   // Resolve slug → storeId + load config
   useEffect(() => {
     if (!slug) { setStoreNotFound(true); setLoadingStore(false); return; }
