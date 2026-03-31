@@ -240,7 +240,7 @@ export const dbInsertFechamento = (f: FechamentoConta) => {
   const sid = getActiveStoreId();
   if (!sid) { console.warn("dbInsertFechamento: storeId is null, skipping"); return; }
   const row = fechamentoToRow(f, sid);
-  supabase.rpc("rpc_insert_fechamento" as any, { _data: row }).then(({ error }: any) => {
+  Promise.resolve(supabase.rpc("rpc_insert_fechamento" as any, { _data: row })).then(({ error }: any) => {
     if (error) {
       if (isNetworkError(error)) {
         enqueue("rpc_insert_fechamento", { _data: row }, `Fechamento mesa ${f.mesaNumero}`);
