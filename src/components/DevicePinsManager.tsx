@@ -253,7 +253,7 @@ const DevicePinsManager = ({ storeId }: Props) => {
                       <RefreshCw className={`h-3 w-3 ${isRegen ? "animate-spin" : ""}`} /> Regenerar
                     </Button>
                   </div>
-                  <p className="text-[10px] text-muted-foreground text-center">"Ver PIN" gera um novo sem desativar dispositivos.</p>
+                  <p className="text-[10px] text-muted-foreground text-center">"Ver PIN" mostra o PIN atual sem alterações.</p>
                 </div>
               ) : (
                 <Button onClick={() => handleCreateOrRegenerate(module)} disabled={isRegen} className="h-10 w-full rounded-xl font-bold gap-2 text-sm">
