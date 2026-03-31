@@ -99,6 +99,16 @@ function dbRowToConfig(row: any): SistemaConfig {
     letraGradiente: row.letra_gradiente ?? undefined,
     sidebarCor: row.sidebar_cor ?? undefined,
     cardsCor: row.cards_cor ?? undefined,
+    sidebarEstilo: row.sidebar_estilo ?? "icone-texto",
+    totemTema: row.totem_tema ?? undefined,
+    totemCorPrimaria: row.totem_cor_primaria ?? undefined,
+    totemTemaPersonalizado: row.totem_tema_personalizado ?? false,
+    totemFundoTipo: row.totem_fundo_tipo ?? undefined,
+    totemFundoCor: row.totem_fundo_cor ?? undefined,
+    totemFundoGradiente: row.totem_fundo_gradiente ?? undefined,
+    totemLetraCor: row.totem_letra_cor ?? undefined,
+    totemSidebarCor: row.totem_sidebar_cor ?? undefined,
+    totemCardsCor: row.totem_cards_cor ?? undefined,
   };
 }
 
