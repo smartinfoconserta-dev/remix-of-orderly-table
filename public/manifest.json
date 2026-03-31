@@ -2,10 +2,10 @@
   "name": "Orderly Table",
   "short_name": "Orderly",
   "start_url": "/",
-  "display": "fullscreen",
-  "background_color": "#0d0d12",
-  "theme_color": "#0d0d12",
-  "orientation": "portrait",
+  "display": "standalone",
+  "background_color": "#0A0A0A",
+  "theme_color": "#0A0A0A",
+  "orientation": "any",
   "categories": ["business", "food"],
   "icons": [
     {
