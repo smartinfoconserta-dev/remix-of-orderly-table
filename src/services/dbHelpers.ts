@@ -259,24 +259,47 @@ export const dbInsertFechamento = (f: FechamentoConta) => {
 export const dbUpdateFechamento = (id: string, updates: Record<string, any>) => {
   const sid = getActiveStoreId();
   if (!sid) { console.warn("dbUpdateFechamento: storeId is null"); return; }
-  supabase.rpc("rpc_update_fechamento" as any, { _id: id, _store_id: sid, _updates: updates }).then(({ error }: any) => {
-    if (error) { console.error("DB update fechamento", error); toast.error("Erro ao atualizar fechamento"); }
+  const params = { _id: id, _store_id: sid, _updates: updates };
+  Promise.resolve(supabase.rpc("rpc_update_fechamento" as any, params)).then(({ error }: any) => {
+    if (error) {
+      if (isNetworkError(error)) { enqueue("rpc_update_fechamento", params, "Atualizar fechamento"); }
+      else { console.error("DB update fechamento", error); toast.error("Erro ao atualizar fechamento"); }
+    }
+  }).catch((err: any) => {
+    if (isNetworkError(err)) { enqueue("rpc_update_fechamento", params, "Atualizar fechamento"); }
+    else { console.error("dbUpdateFechamento unexpected", err); }
   });
 };
 
 export const dbInsertEvento = (e: EventoOperacional) => {
   const sid = getActiveStoreId();
   if (!sid) return;
-  supabase.rpc("rpc_insert_evento" as any, { _data: eventoToRow(e, sid) }).then(({ error }: any) => {
-    if (error) { console.error("DB insert evento", error); toast.error("Erro ao registrar evento"); }
+  const row = eventoToRow(e, sid);
+  const params = { _data: row };
+  Promise.resolve(supabase.rpc("rpc_insert_evento" as any, params)).then(({ error }: any) => {
+    if (error) {
+      if (isNetworkError(error)) { enqueue("rpc_insert_evento", params, `Evento: ${(e.descricao || "").slice(0, 30)}`); }
+      else { console.error("DB insert evento", error); toast.error("Erro ao registrar evento"); }
+    }
+  }).catch((err: any) => {
+    if (isNetworkError(err)) { enqueue("rpc_insert_evento", params, `Evento: ${(e.descricao || "").slice(0, 30)}`); }
+    else { console.error("dbInsertEvento unexpected", err); }
   });
 };
 
 export const dbInsertMovimentacao = (m: MovimentacaoCaixa) => {
   const sid = getActiveStoreId();
   if (!sid) { console.warn("dbInsertMovimentacao: storeId is null"); return; }
-  supabase.rpc("rpc_insert_movimentacao" as any, { _data: movToRow(m, sid) }).then(({ error }: any) => {
-    if (error) { console.error("DB insert mov", error); toast.error("Erro ao salvar movimentação"); }
+  const row = movToRow(m, sid);
+  const params = { _data: row };
+  Promise.resolve(supabase.rpc("rpc_insert_movimentacao" as any, params)).then(({ error }: any) => {
+    if (error) {
+      if (isNetworkError(error)) { enqueue("rpc_insert_movimentacao", params, `Movimentação: ${(m.descricao || "").slice(0, 30)}`); }
+      else { console.error("DB insert mov", error); toast.error("Erro ao salvar movimentação"); }
+    }
+  }).catch((err: any) => {
+    if (isNetworkError(err)) { enqueue("rpc_insert_movimentacao", params, `Movimentação: ${(m.descricao || "").slice(0, 30)}`); }
+    else { console.error("dbInsertMovimentacao unexpected", err); }
   });
 };
 
@@ -289,8 +312,15 @@ export const dbUpsertEstadoCaixa = (aberto: boolean, fundoTroco: number, nome: s
   if (extras?.diferenca_dinheiro !== undefined) data.diferenca_dinheiro = extras.diferenca_dinheiro;
   if (extras?.diferenca_motivo !== undefined) data.diferenca_motivo = extras.diferenca_motivo;
   if (extras?.fundo_proximo !== undefined) data.fundo_proximo = extras.fundo_proximo;
-  supabase.rpc("rpc_upsert_estado_caixa" as any, { _store_id: sid, _data: data }).then(({ error }: any) => {
-    if (error) { console.error("DB upsert caixa", error); toast.error("Erro ao atualizar caixa"); }
+  const params = { _store_id: sid, _data: data };
+  Promise.resolve(supabase.rpc("rpc_upsert_estado_caixa" as any, params)).then(({ error }: any) => {
+    if (error) {
+      if (isNetworkError(error)) { enqueue("rpc_upsert_estado_caixa", params, "Estado do caixa"); }
+      else { console.error("DB upsert caixa", error); toast.error("Erro ao atualizar caixa"); }
+    }
+  }).catch((err: any) => {
+    if (isNetworkError(err)) { enqueue("rpc_upsert_estado_caixa", params, "Estado do caixa"); }
+    else { console.error("dbUpsertEstadoCaixa unexpected", err); }
   });
 };
 
@@ -304,7 +334,14 @@ export const dbSyncEstadoMesa = (mesa: Mesa) => {
     chamar_garcom: mesa.chamarGarcom, chamado_em: mesa.chamadoEm,
     store_id: sid,
   };
-  supabase.rpc("rpc_upsert_estado_mesa" as any, { _data: row }).then(({ error }: any) => {
-    if (error) { console.error("DB sync mesa via RPC", error); toast.error("Erro ao sincronizar mesa"); }
+  const params = { _data: row };
+  Promise.resolve(supabase.rpc("rpc_upsert_estado_mesa" as any, params)).then(({ error }: any) => {
+    if (error) {
+      if (isNetworkError(error)) { enqueue("rpc_upsert_estado_mesa", params, `Sync mesa ${mesa.numero}`); }
+      else { console.error("DB sync mesa via RPC", error); toast.error("Erro ao sincronizar mesa"); }
+    }
+  }).catch((err: any) => {
+    if (isNetworkError(err)) { enqueue("rpc_upsert_estado_mesa", params, `Sync mesa ${mesa.numero}`); }
+    else { console.error("dbSyncEstadoMesa unexpected", err); }
   });
 };
