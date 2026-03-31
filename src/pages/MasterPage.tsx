@@ -79,9 +79,9 @@ const PLANOS_MODULOS = [
 ];
 const PLANO_MODULOS_LABELS: Record<string, string> = { restaurante: "Restaurante", fastfood: "Fast Food", completo: "Completo" };
 const PLANO_MODULOS_BADGE: Record<string, string> = {
-  restaurante: "bg-muted text-muted-foreground",
-  fastfood: "bg-blue-600 hover:bg-blue-600 text-white",
-  completo: "bg-emerald-600 hover:bg-emerald-600 text-white",
+  restaurante: "bg-blue-600 hover:bg-blue-600 text-white",
+  fastfood: "bg-amber-600 hover:bg-amber-600 text-white",
+  completo: "bg-purple-600 hover:bg-purple-600 text-white",
 };
 
 const emptyForm = {
