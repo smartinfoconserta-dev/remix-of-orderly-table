@@ -1331,7 +1331,7 @@ const CaixaPage = ({ accessMode = "caixa", deliveryOnly = false }: CaixaPageProp
                 </button>
                 )}
                 {showTotemTab && (
-                {showIfoodTab && (
+                <button
                   onClick={() => setCaixaView("totem")}
                   className={`px-4 py-1.5 text-xs font-bold transition-colors border border-border rounded-t -mb-px relative flex items-center gap-1.5 ${
                     caixaView === "totem"
@@ -1345,6 +1345,7 @@ const CaixaPage = ({ accessMode = "caixa", deliveryOnly = false }: CaixaPageProp
                   )}
                 </button>
                 )}
+                {showIfoodTab && (
                 <button
                   onClick={() => setCaixaView("ifood")}
                   className={`px-4 py-1.5 text-xs font-bold transition-colors border border-border rounded-t -mb-px relative flex items-center gap-1.5 ${
@@ -1355,6 +1356,7 @@ const CaixaPage = ({ accessMode = "caixa", deliveryOnly = false }: CaixaPageProp
                 >
                   🔴 iFood
                 </button>
+                )}
                 <button
                   onClick={() => setCaixaView("historico")}
                   className={`px-4 py-1.5 text-xs font-bold transition-colors border border-border rounded-t -mb-px relative flex items-center gap-1.5 ${
