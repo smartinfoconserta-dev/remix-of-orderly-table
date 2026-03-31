@@ -41,6 +41,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import PedidoFlow from "@/components/PedidoFlow";
+import CaixaBalcaoFlow from "@/components/caixa/CaixaBalcaoFlow";
 
 
 import LicenseBanner from "@/components/LicenseBanner";
