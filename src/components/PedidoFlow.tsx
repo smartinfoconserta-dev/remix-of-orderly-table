@@ -1065,6 +1065,7 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
         </Dialog>
       )}
     </>
+    </div>
   );
 };
 
