@@ -31,7 +31,6 @@ const sidebarSections = [
   { id: "equipe" as const, label: "Equipe", icon: Users },
   { id: "caixas" as const, label: "Caixas", icon: Wallet },
   { id: "ifood" as const, label: "iFood", icon: ShoppingBag },
-  { id: "totem" as const, label: "Totem", icon: Monitor },
   { id: "configuracoes" as const, label: "Configurações", icon: Settings },
   { id: "licenca" as const, label: "Meu Plano", icon: Shield },
 ];
