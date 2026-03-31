@@ -463,6 +463,15 @@ const GarcomPdvPage = () => {
   // Tela de lista de mesas
   const chamadoCount = mesas.filter((m) => m.chamarGarcom).length;
 
+  const prevChamadoRef = useRef(chamadoCount);
+  useEffect(() => {
+    if (chamadoCount > prevChamadoRef.current) {
+      playAlertSound();
+      vibrateAlert();
+    }
+    prevChamadoRef.current = chamadoCount;
+  }, [chamadoCount]);
+
   const mesasFiltradas = mesas.filter((m) => {
     if (filtro === "consumo" && m.status !== "consumo") return false;
     if (filtro === "livres" && m.status !== "livre") return false;
