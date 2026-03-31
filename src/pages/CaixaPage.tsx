@@ -2,35 +2,16 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowLeft,
   Bell,
-  Loader2,
-  Printer,
-  Search,
-  Banknote,
   Check,
-  Clock,
-  CreditCard,
-  Landmark,
-  LockKeyhole,
   LogOut,
-  MapPin,
-  Minus,
-  Plus,
+  Printer,
   ReceiptText,
   RotateCcw,
-  ScrollText,
-  ShieldCheck,
-  
   ShoppingCart,
-  Smartphone,
-  Trash2,
-  Truck,
   User,
   Wallet,
   X,
-  XCircle,
   MoreHorizontal,
-  MessageCircle,
-  QrCode,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -47,24 +28,8 @@ import CaixaBalcaoFlow from "@/components/caixa/CaixaBalcaoFlow";
 import LicenseBanner from "@/components/LicenseBanner";
 import StatusBadge from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Textarea } from "@/components/ui/textarea";
+import { Tabs } from "@/components/ui/tabs";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRestaurant } from "@/contexts/RestaurantContext";
 import { useRouteLock } from "@/hooks/use-route-lock";
@@ -72,7 +37,7 @@ import type { PaymentMethod, SplitPayment, UserRole } from "@/types/operations";
 import { getSistemaConfig } from "@/lib/adminStorage";
 import { getActiveStoreId } from "@/lib/sessionManager";
 import type { ItemCarrinho } from "@/contexts/RestaurantContext";
-import { findClienteDelivery, upsertClienteDelivery, type Bairro, type ClienteDelivery } from "@/lib/deliveryStorage";
+import { upsertClienteDelivery } from "@/lib/deliveryStorage";
 import { useCaixaBalcaoState } from "@/hooks/useCaixaBalcaoState";
 import { useCaixaDialogsState, type CriticalAction } from "@/hooks/useCaixaDialogsState";
 import { useCaixaMesaState } from "@/hooks/useCaixaMesaState";
@@ -84,12 +49,8 @@ import {
   normStr,
   formatPrice,
   toCents,
-  formatCpfMask,
   parseCurrencyInput,
-  paymentMethodOptions,
   getPaymentMethodLabel,
-  getPaymentMethodStyle,
-  QUICK_VALUES,
   printComanda as printComandaFn,
 } from "@/components/caixa/caixaHelpers";
 import CaixaDeliveryPanel from "@/components/caixa/CaixaDeliveryPanel";
