@@ -732,9 +732,9 @@ const CaixaPage = ({ accessMode = "caixa", deliveryOnly = false }: CaixaPageProp
     };
 
     return (
-      <PedidoFlow
-        modo={balcaoTipo}
-        clienteNome={balcaoClienteNome}
+      <CaixaBalcaoFlow
+        balcaoTipo={balcaoTipo}
+        balcaoClienteNome={balcaoClienteNome}
         onPedidoConfirmado={handleBalcaoConfirmado}
         onBack={() => setBalcaoFlowAtivo(false)}
       />
