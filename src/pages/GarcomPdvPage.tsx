@@ -479,6 +479,7 @@ const GarcomPdvPage = () => {
   if (mesaIdSelecionada) {
     return (
       <ModuleGate moduleKey="garcomPdv" moduleName="Garçom PDV">
+        {floatingChamadoBadge}
         <PedidoFlow
           modo="garcom"
           mesaId={mesaIdSelecionada}
