@@ -359,15 +359,14 @@ function PedidoPageInner({ storeId, config, bairros }: {
       .select("id").eq("store_id", storeId).eq("telefone", telNorm).limit(1).maybeSingle();
 
     const id = existing?.id || crypto.randomUUID();
-    const row: any = {
-      id, store_id: storeId, nome: c.nome, cpf: c.cpf, telefone: telNorm,
-      endereco: c.endereco, numero: c.numero, bairro: c.bairro,
-      complemento: c.complemento, referencia: c.referencia,
-      ultimo_pedido: new Date().toISOString(),
-    };
-    if (c.senhaHash) row.senha_hash = c.senhaHash;
-
-    await supabase.from("clientes_delivery").upsert(row as any);
+    await supabase.rpc("rpc_upsert_cliente_delivery", {
+      _store_id: storeId,
+      _data: {
+        nome: c.nome, cpf: c.cpf, telefone: telNorm,
+        endereco: c.endereco, numero: c.numero, bairro: c.bairro,
+        complemento: c.complemento, referencia: c.referencia,
+      } as any,
+    });
     return { ...c, id, telefone: telNorm };
   }, [storeId]);
 

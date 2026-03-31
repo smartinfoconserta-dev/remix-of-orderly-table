@@ -140,18 +140,17 @@ export async function upsertClienteDelivery(
     );
 
     if (existing) {
-      const updated = {
-        nome: dados.nome || existing.nome,
-        cpf: dados.cpf || existing.cpf,
-        telefone: dados.telefone || existing.telefone,
-        endereco: dados.endereco || existing.endereco,
-        numero: dados.numero || existing.numero,
-        bairro: dados.bairro || existing.bairro,
-        complemento: dados.complemento || existing.complemento,
-        referencia: dados.referencia || existing.referencia,
-        ultimo_pedido: now,
-      };
-      await (supabase.from as any)("clientes_delivery").update(updated).eq("id", existing.id);
+      if (storeId) {
+        await supabase.rpc("rpc_upsert_cliente_delivery", {
+          _store_id: storeId,
+          _data: {
+            nome: dados.nome || existing.nome, cpf: dados.cpf || existing.cpf,
+            telefone: dados.telefone || existing.telefone, endereco: dados.endereco || existing.endereco,
+            numero: dados.numero || existing.numero, bairro: dados.bairro || existing.bairro,
+            complemento: dados.complemento || existing.complemento, referencia: dados.referencia || existing.referencia,
+          } as any,
+        });
+      }
       return { ...existing, ...dados, ultimoPedido: now };
     }
 

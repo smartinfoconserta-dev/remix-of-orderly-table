@@ -744,7 +744,7 @@ export default function MotoboyPage() {
                         },
                         pedidos_ids: entregues.map(p => p.id),
                       };
-                      supabase.from("motoboy_fechamentos").insert(fechamento as any).then(({ error }) => {
+                       supabase.rpc("rpc_insert_motoboy_fechamento", { _data: fechamento as any }).then(({ error }) => {
                         if (error) { console.error("Erro ao salvar fechamento motoboy", error); toast.error("Erro ao solicitar fechamento"); setFechamentoEnviado(false); return; }
                         toast.success("Fechamento solicitado! Aguarde o caixa conferir.", { duration: 3000 });
                       });
