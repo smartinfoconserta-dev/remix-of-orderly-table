@@ -551,6 +551,7 @@ const TotemInner = ({ storeId }: { storeId: string }) => {
   // ─── Menu ───
   return (
     <div style={{ minHeight: "100dvh", background: "#FFFFFF" }}>
+      <OfflineIndicator />
       <PedidoFlow modo="totem" onPedidoConfirmado={handlePedidoConfirmado} deviceStoreId={storeId} />
     </div>
   );

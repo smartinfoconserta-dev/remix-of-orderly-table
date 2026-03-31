@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import LicenseBanner from "@/components/LicenseBanner";
 import ModuleGate from "@/components/ModuleGate";
 import MotoboyDialogs from "@/components/motoboy/MotoboyDialogs";
+import OfflineIndicator from "@/components/OfflineIndicator";
 import { Bike, LogOut, MapPin, Phone, DollarSign, Clock, Map, Navigation, QrCode, GripVertical, CheckCircle2, Package, XCircle, Camera, X } from "lucide-react";
 import { savePreferencia, loadPreferencias } from "@/hooks/usePreferencias";
 import { playAlertSound, vibrateAlert } from "@/lib/sounds";
