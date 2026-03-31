@@ -18,7 +18,7 @@ import CategoryIcon from "@/components/CategoryIcon";
 import { type GrupoPersonalizacao, type OpcaoGrupo, type Produto } from "@/data/menuData";
 import {
   fetchAllProducts, upsertProduct, softDeleteProduct, toggleProductActive,
-  toggleProductDelivery, reloadProducts, getCachedCategorias,
+  toggleProductDelivery, reloadProducts, getCachedCategorias, preloadProducts,
 } from "@/hooks/useProducts";
 import {
   getCategoriasCustom, saveCategoriasCustom,
@@ -32,6 +32,16 @@ type AdminProduct = Produto & { ativo: boolean; removido: boolean; disponivelDel
 interface Props {
   storeId: string | null;
 }
+
+const UUID_REGEX =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+const normalizeCategoryName = (value: string) =>
+  value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .toLowerCase();
 
 const AdminCardapio = ({ storeId }: Props) => {
   const [allProducts, setAllProducts] = useState<AdminProduct[]>([]);
@@ -54,13 +64,36 @@ const AdminCardapio = ({ storeId }: Props) => {
   }, [storeId]);
 
   useEffect(() => { loadProducts(); }, [loadProducts]);
-  useEffect(() => { if (storeId) getCategoriasCustomAsync(storeId).then(setCategoriasCustom); }, [storeId]);
+  useEffect(() => {
+    if (!storeId) return;
+    preloadProducts(storeId).catch(() => undefined);
+    getCategoriasCustomAsync(storeId).then(setCategoriasCustom);
+  }, [storeId]);
 
   const dbCategorias = getCachedCategorias();
   const todasCategorias = useMemo(() => {
-    const dbCats = dbCategorias.map((c, i) => ({ ...c, ordem: i, _isDefault: false as const }));
-    const customCats = categoriasCustom.filter((c) => !dbCategorias.some((dc) => dc.id === c.id)).map((c) => ({ ...c, _isDefault: false as const }));
-    return [...dbCats, ...customCats];
+    const seenIds = new Set<string>();
+    const seenNames = new Set<string>();
+    const merged: Array<CategoriaCustom & { _isDefault: boolean }> = [];
+
+    const pushUnique = (cat: CategoriaCustom & { _isDefault: boolean }) => {
+      const normalizedName = normalizeCategoryName(cat.nome);
+      if (seenIds.has(cat.id) || seenNames.has(normalizedName)) return;
+      seenIds.add(cat.id);
+      seenNames.add(normalizedName);
+      merged.push(cat);
+    };
+
+    categoriasCustom
+      .slice()
+      .sort((a, b) => (a.ordem ?? 0) - (b.ordem ?? 0))
+      .forEach((c) => pushUnique({ ...c, _isDefault: false }));
+
+    dbCategorias
+      .map((c, i) => ({ ...c, ordem: i, _isDefault: !UUID_REGEX.test(c.id) }))
+      .forEach(pushUnique);
+
+    return merged;
   }, [categoriasCustom, dbCategorias]);
 
   const filteredProducts = useMemo(() => {
