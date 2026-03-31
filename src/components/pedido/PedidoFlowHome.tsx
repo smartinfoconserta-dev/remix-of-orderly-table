@@ -76,7 +76,7 @@ const PedidoFlowHome = ({
                       </div>
                     </div>
                     {/* Right: QR code */}
-                    <div className="shrink-0 rounded-xl bg-white p-2 shadow-lg">
+                    <div className="shrink-0 rounded-xl bg-card p-2 shadow-lg">
                       <img
                         src={card.qrUrl}
                         alt={`QR Code ${card.badge}`}
