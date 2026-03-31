@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { formatPrice } from "@/components/caixa/caixaHelpers";
 import {
   getSistemaConfig, getLicencaConfig, getMesasConfigAsync,
+  getSistemaConfigAsync, getLicencaConfigAsync,
   type SistemaConfig, type LicencaConfig, type MesasConfig,
   type PlanoModulos, getModulosDoPlano,
 } from "@/lib/adminStorage";
