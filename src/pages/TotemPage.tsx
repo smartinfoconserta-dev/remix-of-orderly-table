@@ -1,16 +1,20 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import PedidoFlow from "@/components/PedidoFlow";
 import OfflineIndicator from "@/components/OfflineIndicator";
-import { RestaurantProvider, useRestaurant } from "@/contexts/RestaurantContext";
-import { CheckCircle2, CreditCard, FileText, QrCode, Smartphone, User, Timer, Wifi } from "lucide-react";
+import { useRestaurant } from "@/contexts/RestaurantContext";
 import { supabase } from "@/integrations/supabase/client";
 import type { ItemCarrinho } from "@/contexts/RestaurantContext";
 import DeviceGate from "@/components/DeviceGate";
 import type { PaymentMethod } from "@/types/operations";
-import { formatPrice } from "@/components/caixa/caixaHelpers";
+
+import TotemNameScreen from "@/components/totem/TotemNameScreen";
+import TotemPaymentScreen from "@/components/totem/TotemPaymentScreen";
+import TotemAguardandoScreen from "@/components/totem/TotemAguardandoScreen";
+import TotemCpfScreen from "@/components/totem/TotemCpfScreen";
+import TotemConfirmedScreen from "@/components/totem/TotemConfirmedScreen";
 
 const AUTO_RESET_MS = 10_000;
-const PAYMENT_TIMEOUT_MS = 120_000; // 2 minutes
+const PAYMENT_TIMEOUT_MS = 120_000;
 
 type TotemStep = "menu" | "name" | "cpf" | "payment" | "aguardando_pagamento" | "confirmed";
 
@@ -22,7 +26,6 @@ const TotemInner = ({ storeId }: { storeId: string }) => {
   const [pendingTotal, setPendingTotal] = useState(0);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Totem always uses fast-food style identification
   const [identificacaoFastFood, setIdentificacaoFastFood] = useState<string>("codigo");
   const [clienteNome, setClienteNome] = useState("");
   const [clienteCpf, setClienteCpf] = useState("");
@@ -30,7 +33,6 @@ const TotemInner = ({ storeId }: { storeId: string }) => {
   const [cpfNotaAtivo, setCpfNotaAtivo] = useState(false);
   const [pendingPaymentMethod, setPendingPaymentMethod] = useState<PaymentMethod | null>(null);
 
-  // Reactive restaurant name & logo from DB
   const [nomeRestaurante, setNomeRestaurante] = useState("");
   const [logoBase64, setLogoBase64] = useState("");
 
@@ -50,7 +52,6 @@ const TotemInner = ({ storeId }: { storeId: string }) => {
     };
     loadConfig();
 
-    // Subscribe to realtime updates for reactive name/logo
     const channel = supabase
       .channel(`totem-config-${storeId}`)
       .on("postgres_changes", {
@@ -71,7 +72,6 @@ const TotemInner = ({ storeId }: { storeId: string }) => {
     return () => { supabase.removeChannel(channel); };
   }, [storeId]);
 
-  // Auto-reset after confirmation
   useEffect(() => {
     if (step !== "confirmed") return;
     timerRef.current = setTimeout(() => {
@@ -95,7 +95,6 @@ const TotemInner = ({ storeId }: { storeId: string }) => {
     setPendingPaymentMethod(null);
   }, []);
 
-  // Auto-timeout for aguardando_pagamento (2 min)
   const paymentTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     if (step !== "aguardando_pagamento") {
@@ -108,12 +107,9 @@ const TotemInner = ({ storeId }: { storeId: string }) => {
     return () => { if (paymentTimerRef.current) clearTimeout(paymentTimerRef.current); };
   }, [step, handleBackToMenu]);
 
-  // Called when customer finishes picking items
   const handlePedidoConfirmado = useCallback((itens: ItemCarrinho[]) => {
     setPendingItens(itens);
     setPendingTotal(itens.reduce((acc, item) => acc + item.precoUnitario * item.quantidade, 0));
-
-    // Totem always asks for name when identification is nome_cliente
     if (identificacaoFastFood === "nome_cliente") {
       setStep("name");
     } else {
@@ -126,14 +122,12 @@ const TotemInner = ({ storeId }: { storeId: string }) => {
     setStep("payment");
   }, [clienteNome]);
 
-  // Called when customer picks a payment method — go to aguardando_pagamento
   const skipCpfRef = useRef(false);
   const handlePaymentSelected = useCallback((method: PaymentMethod) => {
     setPendingPaymentMethod(method);
     setStep("aguardando_pagamento");
   }, []);
 
-  // Called when customer confirms payment was made — go to CPF or create order
   const handlePaymentConfirmed = useCallback(() => {
     if (cpfNotaAtivo) {
       setStep("cpf");
@@ -145,16 +139,6 @@ const TotemInner = ({ storeId }: { storeId: string }) => {
     }
   }, [cpfNotaAtivo]);
 
-  // CPF mask helper
-  const formatCpfMask = (value: string) => {
-    const digits = value.replace(/\D/g, "").slice(0, 11);
-    if (digits.length <= 3) return digits;
-    if (digits.length <= 6) return `${digits.slice(0, 3)}.${digits.slice(3)}`;
-    if (digits.length <= 9) return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6)}`;
-    return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9)}`;
-  };
-
-  // Called after CPF step (with or without CPF)
   const handleCpfConfirmed = useCallback(async () => {
     const nome = identificacaoFastFood === "nome_cliente" && clienteNome.trim()
       ? clienteNome.trim()
@@ -174,8 +158,6 @@ const TotemInner = ({ storeId }: { storeId: string }) => {
     setStep("confirmed");
   }, [criarPedidoBalcao, pendingItens, identificacaoFastFood, clienteNome, clienteCpf, pendingPaymentMethod]);
 
-
-  // Auto-skip CPF step when cpfNotaAtivo is off
   useEffect(() => {
     if (step === "cpf" && skipCpfRef.current) {
       skipCpfRef.current = false;
@@ -186,370 +168,76 @@ const TotemInner = ({ storeId }: { storeId: string }) => {
   const isFastFoodCodigo = identificacaoFastFood === "codigo";
   const isFastFoodNome = identificacaoFastFood === "nome_cliente";
 
-  // ─── Name input screen (fast food nome_cliente) ───
   if (step === "name") {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-8 p-8" style={{ background: "#FFFFFF" }}>
-        <div className="flex flex-col items-center gap-4 text-center">
-          {logoBase64 && (
-            <img src={logoBase64} alt={nomeRestaurante} className="h-16 w-16 rounded-xl object-contain" />
-          )}
-          <div className="h-20 w-20 rounded-full flex items-center justify-center" style={{ background: "#FF6B00" }}>
-            <User className="h-10 w-10 text-white" />
-          </div>
-          <h1 className="text-3xl font-black" style={{ color: "#1A1A1A" }}>Qual é o seu nome?</h1>
-          <p className="text-base font-medium" style={{ color: "#666" }}>
-            Vamos chamar você quando o pedido estiver pronto
-          </p>
-        </div>
-
-        <div className="w-full max-w-md space-y-4">
-          <input
-            type="text"
-            value={clienteNome}
-            onChange={(e) => setClienteNome(e.target.value)}
-            onKeyDown={(e) => { if (e.key === "Enter") handleNameConfirmed(); }}
-            placeholder="Digite seu nome..."
-            autoFocus
-            className="w-full h-16 text-2xl font-bold text-center rounded-2xl border-2 outline-none transition-colors"
-            style={{
-              borderColor: clienteNome.trim() ? "#FF6B00" : "#E0E0E0",
-              background: clienteNome.trim() ? "#FFF8F0" : "#FAFAFA",
-              color: "#1A1A1A",
-            }}
-          />
-
-          <button
-            onClick={handleNameConfirmed}
-            disabled={!clienteNome.trim()}
-            className="w-full h-16 rounded-2xl text-xl font-black text-white transition-all active:scale-[0.98] disabled:opacity-40"
-            style={{ background: "#FF6B00" }}
-          >
-            Continuar →
-          </button>
-        </div>
-
-        <button
-          onClick={handleBackToMenu}
-          className="mt-2 text-sm font-bold underline"
-          style={{ color: "#999" }}
-        >
-          ← Voltar ao cardápio
-        </button>
-      </div>
+      <TotemNameScreen
+        logoBase64={logoBase64}
+        nomeRestaurante={nomeRestaurante}
+        clienteNome={clienteNome}
+        setClienteNome={setClienteNome}
+        onConfirm={handleNameConfirmed}
+        onBack={handleBackToMenu}
+      />
     );
   }
 
-  // ─── Payment screen ───
   if (step === "payment") {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-8 p-8" style={{ background: "#FFFFFF" }}>
-        <div className="flex flex-col items-center gap-4 text-center">
-          {logoBase64 && (
-            <img src={logoBase64} alt={nomeRestaurante} className="h-16 w-16 rounded-xl object-contain" />
-          )}
-          <h1 className="text-3xl font-black" style={{ color: "#1A1A1A" }}>Como você vai pagar?</h1>
-          <p className="text-xl font-bold" style={{ color: "#FF6B00" }}>
-            Total: {formatPrice(pendingTotal)}
-          </p>
-          {isFastFoodNome && clienteNome.trim() && (
-            <p className="text-base font-bold" style={{ color: "#666" }}>
-              Pedido de: <span style={{ color: "#1A1A1A" }}>{clienteNome.trim()}</span>
-            </p>
-          )}
-        </div>
-
-        <div className="flex flex-col gap-4 w-full max-w-md">
-          {/* PIX */}
-          <button
-            onClick={() => handlePaymentSelected("pix")}
-            className="flex items-center gap-5 h-20 rounded-2xl border-2 px-6 transition-all active:scale-[0.98]"
-            style={{ borderColor: "#FF6B00", background: "#FFF8F0" }}
-          >
-            <div className="h-14 w-14 rounded-xl flex items-center justify-center" style={{ background: "#FF6B00" }}>
-              <QrCode className="h-7 w-7 text-white" />
-            </div>
-            <div className="text-left">
-              <p className="text-lg font-black" style={{ color: "#1A1A1A" }}>PIX</p>
-              <p className="text-sm font-medium" style={{ color: "#666" }}>Escaneie o QR Code no caixa</p>
-            </div>
-          </button>
-
-          {/* Crédito */}
-          <button
-            onClick={() => handlePaymentSelected("credito")}
-            className="flex items-center gap-5 h-20 rounded-2xl border-2 px-6 transition-all active:scale-[0.98]"
-            style={{ borderColor: "#E0E0E0", background: "#FFFFFF" }}
-          >
-            <div className="h-14 w-14 rounded-xl flex items-center justify-center" style={{ background: "#333" }}>
-              <CreditCard className="h-7 w-7 text-white" />
-            </div>
-            <div className="text-left">
-              <p className="text-lg font-black" style={{ color: "#1A1A1A" }}>Cartão de Crédito</p>
-              <p className="text-sm font-medium" style={{ color: "#666" }}>Insira o cartão na maquininha</p>
-            </div>
-          </button>
-
-          {/* Débito */}
-          <button
-            onClick={() => handlePaymentSelected("debito")}
-            className="flex items-center gap-5 h-20 rounded-2xl border-2 px-6 transition-all active:scale-[0.98]"
-            style={{ borderColor: "#E0E0E0", background: "#FFFFFF" }}
-          >
-            <div className="h-14 w-14 rounded-xl flex items-center justify-center" style={{ background: "#555" }}>
-              <Smartphone className="h-7 w-7 text-white" />
-            </div>
-            <div className="text-left">
-              <p className="text-lg font-black" style={{ color: "#1A1A1A" }}>Cartão de Débito</p>
-              <p className="text-sm font-medium" style={{ color: "#666" }}>Insira o cartão na maquininha</p>
-            </div>
-          </button>
-        </div>
-
-        <button
-          onClick={() => isFastFoodNome ? setStep("name") : handleBackToMenu()}
-          className="mt-4 text-sm font-bold underline"
-          style={{ color: "#999" }}
-        >
-          ← {isFastFoodNome ? "Voltar" : "Voltar ao cardápio"}
-        </button>
-      </div>
+      <TotemPaymentScreen
+        logoBase64={logoBase64}
+        nomeRestaurante={nomeRestaurante}
+        pendingTotal={pendingTotal}
+        clienteNome={clienteNome}
+        isFastFoodNome={isFastFoodNome}
+        onSelectPayment={handlePaymentSelected}
+        onBack={() => isFastFoodNome ? setStep("name") : handleBackToMenu()}
+      />
     );
   }
 
-  // ─── Aguardando Pagamento ───
   if (step === "aguardando_pagamento" && pendingPaymentMethod) {
-    const isPix = pendingPaymentMethod === "pix";
-    const methodLabel = isPix ? "PIX" : pendingPaymentMethod === "credito" ? "Crédito" : "Débito";
-
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-8 p-8" style={{ background: "#FFFFFF" }}>
-        <div className="flex flex-col items-center gap-5 text-center">
-          {logoBase64 && (
-            <img src={logoBase64} alt={nomeRestaurante} className="h-16 w-16 rounded-xl object-contain" />
-          )}
-
-          {isPix ? (
-            <>
-              <div className="h-24 w-24 rounded-full flex items-center justify-center" style={{ background: "#FF6B00" }}>
-                <QrCode className="h-14 w-14 text-white" />
-              </div>
-              <h1 className="text-3xl font-black" style={{ color: "#1A1A1A" }}>Pagamento via PIX</h1>
-              <p className="text-base font-medium max-w-sm" style={{ color: "#666" }}>
-                Apresente o QR Code ao caixa ou escaneie com o app do seu banco
-              </p>
-              {/* QR Code placeholder */}
-              <div
-                className="w-52 h-52 rounded-2xl border-4 flex flex-col items-center justify-center gap-3"
-                style={{ borderColor: "#FF6B00", background: "#FFF8F0" }}
-              >
-                <QrCode className="h-20 w-20" style={{ color: "#FF6B00" }} />
-                <p className="text-xs font-bold" style={{ color: "#999" }}>QR Code PIX</p>
-              </div>
-            </>
-          ) : (
-            <>
-              <div className="h-24 w-24 rounded-full flex items-center justify-center" style={{ background: "#333" }}>
-                <CreditCard className="h-14 w-14 text-white" />
-              </div>
-              <h1 className="text-3xl font-black" style={{ color: "#1A1A1A" }}>Pagamento com {methodLabel}</h1>
-              <p className="text-base font-medium max-w-sm" style={{ color: "#666" }}>
-                Insira ou aproxime o cartão na maquininha ao lado
-              </p>
-              {/* Card machine illustration */}
-              <div
-                className="w-40 h-52 rounded-2xl border-4 flex flex-col items-center justify-center gap-3"
-                style={{ borderColor: "#E0E0E0", background: "#FAFAFA" }}
-              >
-                <Wifi className="h-12 w-12 rotate-90" style={{ color: "#666" }} />
-                <p className="text-xs font-bold text-center px-2" style={{ color: "#999" }}>Aproxime ou insira o cartão</p>
-              </div>
-            </>
-          )}
-
-          <p className="text-2xl font-black mt-2" style={{ color: "#FF6B00" }}>
-            {formatPrice(pendingTotal)}
-          </p>
-        </div>
-
-        <div className="flex flex-col gap-3 w-full max-w-md">
-          <button
-            onClick={handlePaymentConfirmed}
-            className="w-full h-16 rounded-2xl text-xl font-black text-white transition-all active:scale-[0.98]"
-            style={{ background: "#FF6B00" }}
-          >
-            {isPix ? "✓ Já paguei" : "✓ Pagamento realizado"}
-          </button>
-          <button
-            onClick={() => setStep("payment")}
-            className="w-full h-14 rounded-2xl text-lg font-bold transition-all active:scale-[0.98] border-2"
-            style={{ borderColor: "#E0E0E0", color: "#666", background: "#FAFAFA" }}
-          >
-            ← Voltar
-          </button>
-        </div>
-
-        {/* Timer indicator */}
-        <div className="w-64 flex flex-col items-center gap-2">
-          <div className="flex items-center gap-1.5">
-            <Timer className="h-4 w-4" style={{ color: "#999" }} />
-            <p className="text-xs font-bold" style={{ color: "#999" }}>Tempo limite: 2 minutos</p>
-          </div>
-          <div className="h-1.5 w-full rounded-full overflow-hidden" style={{ background: "#F3F3F3" }}>
-            <div className="h-full rounded-full" style={{ background: "#FF6B00", animation: `totem-shrink ${PAYMENT_TIMEOUT_MS}ms linear forwards` }} />
-          </div>
-        </div>
-        <style>{`@keyframes totem-shrink { from { width: 100%; } to { width: 0%; } }`}</style>
-      </div>
+      <TotemAguardandoScreen
+        logoBase64={logoBase64}
+        nomeRestaurante={nomeRestaurante}
+        pendingTotal={pendingTotal}
+        pendingPaymentMethod={pendingPaymentMethod}
+        timeoutMs={PAYMENT_TIMEOUT_MS}
+        onConfirmPayment={handlePaymentConfirmed}
+        onBack={() => setStep("payment")}
+      />
     );
   }
 
   if (step === "cpf") {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-8 p-8" style={{ background: "#FFFFFF" }}>
-        <div className="flex flex-col items-center gap-4 text-center">
-          {logoBase64 && (
-            <img src={logoBase64} alt={nomeRestaurante} className="h-16 w-16 rounded-xl object-contain" />
-          )}
-          <div className="h-20 w-20 rounded-full flex items-center justify-center" style={{ background: "#FF6B00" }}>
-            <FileText className="h-10 w-10 text-white" />
-          </div>
-          <h1 className="text-3xl font-black" style={{ color: "#1A1A1A" }}>Deseja CPF na nota?</h1>
-        </div>
-
-        {cpfWanted === null && (
-          <div className="flex gap-4 w-full max-w-md">
-            <button
-              onClick={() => setCpfWanted(true)}
-              className="flex-1 h-20 rounded-2xl text-xl font-black text-white transition-all active:scale-[0.98]"
-              style={{ background: "#FF6B00" }}
-            >
-              Sim
-            </button>
-            <button
-              onClick={() => { setCpfWanted(false); handleCpfConfirmed(); }}
-              className="flex-1 h-20 rounded-2xl text-xl font-black transition-all active:scale-[0.98] border-2"
-              style={{ borderColor: "#E0E0E0", color: "#666", background: "#FAFAFA" }}
-            >
-              Não, obrigado
-            </button>
-          </div>
-        )}
-
-        {cpfWanted === true && (
-          <div className="w-full max-w-md space-y-4">
-            <input
-              type="text"
-              inputMode="numeric"
-              value={clienteCpf}
-              onChange={(e) => setClienteCpf(formatCpfMask(e.target.value))}
-              onKeyDown={(e) => { if (e.key === "Enter" && clienteCpf.replace(/\D/g, "").length === 11) handleCpfConfirmed(); }}
-              placeholder="000.000.000-00"
-              autoFocus
-              className="w-full h-16 text-2xl font-bold text-center rounded-2xl border-2 outline-none transition-colors"
-              style={{
-                borderColor: clienteCpf.replace(/\D/g, "").length === 11 ? "#FF6B00" : "#E0E0E0",
-                background: clienteCpf.replace(/\D/g, "").length === 11 ? "#FFF8F0" : "#FAFAFA",
-                color: "#1A1A1A",
-              }}
-            />
-
-            <button
-              onClick={handleCpfConfirmed}
-              disabled={clienteCpf.replace(/\D/g, "").length !== 11}
-              className="w-full h-16 rounded-2xl text-xl font-black text-white transition-all active:scale-[0.98] disabled:opacity-40"
-              style={{ background: "#FF6B00" }}
-            >
-              Confirmar
-            </button>
-
-            <button
-              onClick={() => { setClienteCpf(""); setCpfWanted(null); }}
-              className="w-full text-sm font-bold underline"
-              style={{ color: "#999" }}
-            >
-              Não quero CPF
-            </button>
-          </div>
-        )}
-
-        <button
-          onClick={() => { setCpfWanted(null); setClienteCpf(""); setStep("payment"); }}
-          className="mt-2 text-sm font-bold underline"
-          style={{ color: "#999" }}
-        >
-          ← Voltar
-        </button>
-      </div>
+      <TotemCpfScreen
+        logoBase64={logoBase64}
+        nomeRestaurante={nomeRestaurante}
+        clienteCpf={clienteCpf}
+        setClienteCpf={setClienteCpf}
+        cpfWanted={cpfWanted}
+        setCpfWanted={setCpfWanted}
+        onConfirm={handleCpfConfirmed}
+        onBack={() => { setCpfWanted(null); setClienteCpf(""); setStep("payment"); }}
+      />
     );
   }
 
-  // ─── Confirmation screen ───
   if (step === "confirmed" && pedidoConfirmado !== null) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-10 p-8" style={{ background: "#FFFFFF" }}>
-        <div className="flex flex-col items-center gap-5 text-center animate-in fade-in zoom-in duration-500">
-          <div className="h-28 w-28 rounded-full flex items-center justify-center" style={{ background: "#FF6B00" }}>
-            <CheckCircle2 className="h-16 w-16 text-white" strokeWidth={2.5} />
-          </div>
-          <h1 className="text-5xl font-black" style={{ color: "#1A1A1A" }}>Pedido realizado!</h1>
-
-          {isFastFoodCodigo && (
-            <>
-              <p className="text-lg font-bold mt-2" style={{ color: "#666" }}>Retire com o código abaixo</p>
-              <p className="text-[180px] leading-none font-black tabular-nums" style={{ color: "#FF6B00" }}>
-                #{String(pedidoConfirmado).padStart(3, "0")}
-              </p>
-            </>
-          )}
-
-          {isFastFoodNome && clienteNome.trim() && (
-            <>
-              <p className="text-lg font-bold mt-2" style={{ color: "#666" }}>Vamos chamar você pelo nome</p>
-              <p className="text-[80px] leading-none font-black" style={{ color: "#FF6B00" }}>
-                {clienteNome.trim()}
-              </p>
-              <p className="text-4xl font-black tabular-nums mt-2" style={{ color: "#999" }}>
-                Pedido #{String(pedidoConfirmado).padStart(3, "0")}
-              </p>
-            </>
-          )}
-
-          {!isFastFoodCodigo && !isFastFoodNome && (
-            <>
-              <p className="text-6xl leading-none font-black tabular-nums" style={{ color: "#FF6B00" }}>
-                #{String(pedidoConfirmado).padStart(3, "0")}
-              </p>
-              <p className="text-xl font-bold mt-2" style={{ color: "#1A1A1A" }}>Retire quando aparecer na tela</p>
-            </>
-          )}
-
-          {/* QR Code for pickup */}
-          <div className="flex flex-col items-center gap-2 mt-4">
-            <img
-              src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=RETIRADA:${pedidoConfirmado}`}
-              alt="QR Code para retirada"
-              className="w-32 h-32"
-            />
-            <p className="text-sm font-bold" style={{ color: "#666" }}>Apresente este código ao retirar seu pedido</p>
-          </div>
-
-          {nomeRestaurante && (
-            <p className="text-lg font-bold" style={{ color: "#FF6B00" }}>{nomeRestaurante}</p>
-          )}
-        </div>
-        <div className="w-64">
-          <div className="h-2 w-full rounded-full overflow-hidden" style={{ background: "#F3F3F3" }}>
-            <div className="h-full rounded-full" style={{ background: "#FF6B00", animation: `totem-shrink ${AUTO_RESET_MS}ms linear forwards` }} />
-          </div>
-          <p className="text-sm font-bold text-center mt-3" style={{ color: "#999" }}>Voltando ao cardápio automaticamente...</p>
-        </div>
-        <style>{`@keyframes totem-shrink { from { width: 100%; } to { width: 0%; } }`}</style>
-      </div>
+      <TotemConfirmedScreen
+        logoBase64={logoBase64}
+        nomeRestaurante={nomeRestaurante}
+        pedidoConfirmado={pedidoConfirmado}
+        clienteNome={clienteNome}
+        isFastFoodCodigo={isFastFoodCodigo}
+        isFastFoodNome={isFastFoodNome}
+        autoResetMs={AUTO_RESET_MS}
+      />
     );
   }
 
-  // ─── Menu ───
   return (
     <div style={{ minHeight: "100dvh", background: "#FFFFFF" }}>
       <OfflineIndicator />
