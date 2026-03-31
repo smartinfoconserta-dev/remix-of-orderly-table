@@ -794,7 +794,7 @@ export default function MotoboyPage() {
         usbScanInputRef={usbScanInputRef}
         onUsbScan={handleUsbQrScan}
       />
-              <div className="text-center py-16 text-muted-foreground">
+
                 <p>Nenhum pedido disponível para retirada</p>
               </div>
             ) : (
