@@ -51,7 +51,7 @@ const CardapioPublico = () => {
 
       // 2. Parallel fetch
       const [configRes, catRes, prodRes] = await Promise.all([
-        supabase.from("restaurant_config").select("nome_restaurante, logo_url, logo_base64").eq("store_id", sid).maybeSingle(),
+        supabase.from("restaurant_config").select("nome_restaurante, logo_url, logo_base64, tema_cardapio, cor_primaria, tema_personalizado, fundo_tipo, fundo_cor, fundo_gradiente, letra_cor, sidebar_cor, cards_cor").eq("store_id", sid).maybeSingle(),
         supabase.from("restaurant_categories").select("id, nome, icone, ordem").eq("store_id", sid).order("ordem"),
         supabase.from("produtos").select("id, nome, descricao, preco, imagem, categoria_id, controle_estoque, quantidade_estoque").eq("store_id", sid).eq("ativo", true).eq("removido", false).order("ordem"),
       ]);
@@ -59,6 +59,30 @@ const CardapioPublico = () => {
       if (configRes.data) {
         setStoreName(configRes.data.nome_restaurante || "");
         setLogoUrl(configRes.data.logo_url || configRes.data.logo_base64 || "");
+
+        // Apply theme
+        const cfg = configRes.data;
+        if (containerRef.current) {
+          clearThemeFromElement(containerRef.current);
+          if (cfg.tema_personalizado) {
+            applyCustomThemeToElement(containerRef.current, {
+              fundoTipo: (cfg.fundo_tipo as "solido" | "gradiente") || undefined,
+              fundoCor: cfg.fundo_cor || undefined,
+              fundoGradiente: cfg.fundo_gradiente as { cor1: string; cor2: string; direcao: string } | undefined,
+              letraCor: cfg.letra_cor || undefined,
+              corPrimaria: cfg.cor_primaria || undefined,
+              sidebarCor: cfg.sidebar_cor || undefined,
+              cardsCor: cfg.cards_cor || undefined,
+            });
+          } else {
+            const themeId = cfg.tema_cardapio || "obsidian";
+            applyThemeToElement(
+              containerRef.current,
+              themeId,
+              cfg.cor_primaria || undefined,
+            );
+          }
+        }
       }
 
       const cats = (catRes.data ?? []).map((c) => ({
