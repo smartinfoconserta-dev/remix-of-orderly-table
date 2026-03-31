@@ -35,7 +35,7 @@ const AdminLicenca = ({ storeId }: Props) => {
   const modulosMaster = getModulosDoPlano(planoAtual);
   const modulosAtivos = sistemaConfig.modulos ?? {};
 
-  const planoNomeMap: Record<string, string> = { basico: "BÁSICO", medio: "MÉDIO", pro: "PROFISSIONAL", premium: "PREMIUM" };
+  const planoNomeMap: Record<string, string> = { restaurante: "RESTAURANTE", fastfood: "FAST FOOD", completo: "COMPLETO" };
 
   const allModules = [
     { id: "tabletCliente", label: "Tablet Cliente", desc: "Cardápio digital na mesa", icon: "📱", alwaysOn: true, alwaysEnabled: true },
