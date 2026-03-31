@@ -1,6 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { getActiveStoreId } from "@/lib/sessionManager";
 import { toast } from "sonner";
+import { enqueue, isNetworkError } from "@/lib/offlineQueue";
 import type {
   ItemCarrinho, PedidoRealizado, EventoOperacional,
   MovimentacaoCaixa, FechamentoConta, Mesa,
