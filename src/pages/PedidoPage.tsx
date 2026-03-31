@@ -604,6 +604,7 @@ function PedidoPageInner({ storeId, config, bairros }: {
     const horarioDiaTexto = horarioDia.ativo ? `${horarioDia.abertura} — ${horarioDia.fechamento}` : "";
 
     return (
+      <div ref={themeInnerRef}>
       <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center p-6 text-center space-y-6">
         {RESTAURANTE_LOGO ? (
           <img src={RESTAURANTE_LOGO} alt={RESTAURANTE_NOME} className="w-20 h-20 rounded-2xl object-cover border border-border" />
@@ -635,6 +636,7 @@ function PedidoPageInner({ storeId, config, bairros }: {
           </button>
         )}
         <p className="text-xs text-muted-foreground/60">Delivery indisponível fora do horário de funcionamento</p>
+      </div>
       </div>
     );
   }
