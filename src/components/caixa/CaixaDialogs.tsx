@@ -76,8 +76,8 @@ interface CaixaDialogsProps {
   balcaoOpen: boolean;
   balcaoFlowAtivo: boolean;
   onCloseBalcao: () => void;
-  balcaoTipo: string;
-  setBalcaoTipo: (v: any) => void;
+  balcaoTipo: "balcao" | "delivery";
+  setBalcaoTipo: (v: "balcao" | "delivery") => void;
   balcaoClienteNome: string;
   setBalcaoClienteNome: (v: string) => void;
   balcaoTelefone: string;
