@@ -107,6 +107,7 @@ import CaixaEstornoDialog from "@/components/caixa/CaixaEstornoDialog";
 import CaixaHistoricoTab from "@/components/caixa/CaixaHistoricoTab";
 import CaixaCriticalActionDialog from "@/components/caixa/CaixaCriticalActionDialog";
 import CaixaQrScanner from "@/components/caixa/CaixaQrScanner";
+import CaixaHeader from "@/components/caixa/CaixaHeader";
 
 
 interface CaixaPageProps {
