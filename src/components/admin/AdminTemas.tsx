@@ -144,7 +144,7 @@ const AdminTemas = ({ sistemaConfig, setSistemaConfig, storeId, onSave }: AdminT
     const next: SistemaConfig = { ...sistemaConfig, temaPersonalizado: checked };
     setSistemaConfig(next);
     if (!checked) {
-      setTimeout(() => { onSave(); }, 50);
+      setTimeout(() => { onSave(next); }, 50);
     }
   };
 
