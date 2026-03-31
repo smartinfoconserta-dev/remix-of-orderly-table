@@ -102,6 +102,55 @@ export interface SistemaConfig {
   letraGradiente?: { cor1: string; cor2: string; direcao: string };
   sidebarCor?: string;
   cardsCor?: string;
+  // Totem-specific appearance
+  totemTema?: string;
+  totemCorPrimaria?: string;
+  totemTemaPersonalizado?: boolean;
+  totemFundoTipo?: "solido" | "gradiente";
+  totemFundoCor?: string;
+  totemFundoGradiente?: { cor1: string; cor2: string; direcao: string };
+  totemLetraCor?: string;
+  totemSidebarCor?: string;
+  totemCardsCor?: string;
+  // Sidebar style
+  sidebarEstilo?: "icone-texto" | "icone-acima" | "so-texto";
+}
+
+export function getTotemAparencia(config: SistemaConfig): {
+  temaCardapio: string;
+  corPrimaria: string;
+  temaPersonalizado: boolean;
+  fundoTipo?: "solido" | "gradiente";
+  fundoCor?: string;
+  fundoGradiente?: { cor1: string; cor2: string; direcao: string };
+  letraCor?: string;
+  sidebarCor?: string;
+  cardsCor?: string;
+} {
+  if (config.totemTema || config.totemCorPrimaria || config.totemTemaPersonalizado) {
+    return {
+      temaCardapio: config.totemTema || config.temaCardapio || "obsidian",
+      corPrimaria: config.totemCorPrimaria || config.corPrimaria || "#F97316",
+      temaPersonalizado: config.totemTemaPersonalizado ?? false,
+      fundoTipo: config.totemFundoTipo,
+      fundoCor: config.totemFundoCor,
+      fundoGradiente: config.totemFundoGradiente,
+      letraCor: config.totemLetraCor,
+      sidebarCor: config.totemSidebarCor,
+      cardsCor: config.totemCardsCor,
+    };
+  }
+  return {
+    temaCardapio: config.temaCardapio || "obsidian",
+    corPrimaria: config.corPrimaria || "#F97316",
+    temaPersonalizado: config.temaPersonalizado ?? false,
+    fundoTipo: config.fundoTipo,
+    fundoCor: config.fundoCor,
+    fundoGradiente: config.fundoGradiente,
+    letraCor: config.letraCor,
+    sidebarCor: config.sidebarCor,
+    cardsCor: config.cardsCor,
+  };
 }
 
 export interface ImpressoraConfig {

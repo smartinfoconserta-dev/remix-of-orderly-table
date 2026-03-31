@@ -57,6 +57,38 @@ export const THEME_MAP: Record<string, ThemeVars> = {
     bg: "#0A0F10", surface: "#121A1C", text: "#FFFFFF", muted: "#94A3B8",
     primary: "#14B8A6", border: "#1F2A2E", sidebarBg: "#0E1416",
   },
+  acai: {
+    bg: "#F5F0FF", surface: "#FFFFFF", text: "#2D1B4E", muted: "#8B7AA8",
+    primary: "#7C3AED", border: "#E8E0F5", sidebarBg: "#EDE5FF",
+  },
+  pizzaria: {
+    bg: "#FFF8F0", surface: "#FFFFFF", text: "#3D1F00", muted: "#8B7355",
+    primary: "#DC2626", border: "#F0E0CC", sidebarBg: "#FFF0E0",
+  },
+  cafeteria: {
+    bg: "#FAF5F0", surface: "#FFFFFF", text: "#3E2C1E", muted: "#8B7562",
+    primary: "#92400E", border: "#E8DDD0", sidebarBg: "#F0E8DD",
+  },
+  japones: {
+    bg: "#0C0C0C", surface: "#1A1A1A", text: "#F5F5F0", muted: "#9CA3AF",
+    primary: "#EF4444", border: "#2A2A2A", sidebarBg: "#111111",
+  },
+  bar: {
+    bg: "#0A0A12", surface: "#14141F", text: "#F5F5FF", muted: "#9CA3B8",
+    primary: "#F59E0B", border: "#1F1F30", sidebarBg: "#0F0F18",
+  },
+  padaria: {
+    bg: "#FFFCF5", surface: "#FFFFFF", text: "#3D3020", muted: "#9B8B70",
+    primary: "#D97706", border: "#F0E8D5", sidebarBg: "#FFF8EB",
+  },
+  churrascaria: {
+    bg: "#0D0806", surface: "#1A1210", text: "#FFF8F0", muted: "#A89080",
+    primary: "#B91C1C", border: "#2A2018", sidebarBg: "#120E0A",
+  },
+  saudavel: {
+    bg: "#F0FAF0", surface: "#FFFFFF", text: "#1A3A1A", muted: "#6B8B6B",
+    primary: "#16A34A", border: "#D5EAD5", sidebarBg: "#E5F5E5",
+  },
 };
 
 export function applyThemeToElement(element: HTMLElement, themeId: string, customPrimary?: string): void {
