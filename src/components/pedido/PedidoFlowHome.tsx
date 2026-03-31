@@ -69,10 +69,10 @@ const PedidoFlowHome = ({
                         <span className="inline-flex rounded-full border border-background/20 bg-background/10 px-3 py-0.5 text-[10px] font-bold uppercase tracking-widest text-background/90 backdrop-blur-sm">
                           {card.badge}
                         </span>
-                        <h2 className="text-[0.95rem] font-black leading-tight text-white md:text-base">
+                        <h2 className="text-[0.95rem] font-black leading-tight text-background md:text-base">
                           {card.title}
                         </h2>
-                        <p className="text-xs leading-snug text-white/70">{card.subtitle}</p>
+                        <p className="text-xs leading-snug text-background/70">{card.subtitle}</p>
                       </div>
                     </div>
                     {/* Right: QR code */}
