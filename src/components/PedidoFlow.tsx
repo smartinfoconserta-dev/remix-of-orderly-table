@@ -889,7 +889,7 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
         />
       </div>
       <div ref={mobileListTopRef} />
-      <main className={`pt-3 px-4 ${isGarcomMobile && carrinho.length > 0 ? "pb-32" : "pb-24"} ${isClientIdle ? "brightness-[0.2] saturate-50" : "brightness-100 saturate-100"} ${isTotem ? "bg-white" : ""}`}>
+      <main className={`pt-3 px-4 ${isGarcomMobile && carrinho.length > 0 ? "pb-32" : "pb-24"} ${isClientIdle ? "brightness-[0.2] saturate-50" : "brightness-100 saturate-100"} ${isTotem ? "bg-background" : ""}`}>
         <div>{isGarcomMobile && !isTotem ? productGrid : isHomeActive && !isTotem ? homeContent : productGrid}</div>
       </main>
     </>
