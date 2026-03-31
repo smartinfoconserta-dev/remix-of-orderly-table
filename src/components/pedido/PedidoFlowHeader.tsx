@@ -129,7 +129,7 @@ export function buildPedidoFlowHeader(props: PedidoFlowHeaderProps) {
           <img src={RESTAURANTE.logoUrl} alt={RESTAURANTE.nome} className="absolute left-3 top-3 h-10 w-10 rounded-xl object-contain bg-foreground/40 p-1" />
         )}
         {mesaLabel && (
-          <div className="absolute right-3 top-3 rounded-lg bg-black/50 px-3 py-1 text-sm font-bold text-white">
+          <div className="absolute right-3 top-3 rounded-lg bg-foreground/50 px-3 py-1 text-sm font-bold text-background">
             {mesaLabel}
           </div>
         )}
