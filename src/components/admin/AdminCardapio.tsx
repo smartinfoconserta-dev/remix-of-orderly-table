@@ -101,6 +101,14 @@ const AdminCardapio = ({ storeId }: Props) => {
     return allProducts.filter((p) => p.categoria === catFilter);
   }, [allProducts, catFilter]);
 
+  const persistCategorias = useCallback(async (nextCategorias: CategoriaCustom[]) => {
+    const ordered = nextCategorias.map((cat, index) => ({ ...cat, ordem: index }));
+    setCategoriasCustom(ordered);
+    if (!storeId) return;
+    await saveCategoriasCustom(ordered, storeId);
+    await reloadProducts(storeId);
+  }, [storeId]);
+
   const toggleAtivo = useCallback(async (id: string) => {
     const product = allProducts.find((p) => p.id === id);
     if (!product) return;
@@ -227,18 +235,23 @@ const AdminCardapio = ({ storeId }: Props) => {
                       const idx = categoriasCustom.findIndex((cc) => cc.id === c.id);
                       if (idx <= 0) return;
                       const next = [...categoriasCustom]; [next[idx - 1], next[idx]] = [next[idx], next[idx - 1]];
-                      next.forEach((cc, i) => cc.ordem = i); saveCategoriasCustom(next, storeId); setCategoriasCustom(next);
+                      void persistCategorias(next);
                     }}><span className="text-[10px]">▲</span></Button>
                     <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => {
                       const idx = categoriasCustom.findIndex((cc) => cc.id === c.id);
                       if (idx < 0 || idx >= categoriasCustom.length - 1) return;
                       const next = [...categoriasCustom]; [next[idx], next[idx + 1]] = [next[idx + 1], next[idx]];
-                      next.forEach((cc, i) => cc.ordem = i); saveCategoriasCustom(next, storeId); setCategoriasCustom(next);
+                      void persistCategorias(next);
                     }}><span className="text-[10px]">▼</span></Button>
                     <Button variant="ghost" size="icon" className="h-5 w-5 text-destructive hover:bg-destructive/10" onClick={() => {
                       if (count > 0) { toast.error("Remova os produtos desta categoria primeiro"); return; }
-                      const next = categoriasCustom.filter((cc) => cc.id !== c.id);
-                      saveCategoriasCustom(next, storeId); setCategoriasCustom(next); toast.success("Categoria removida");
+                      const catNomeNormalizado = normalizeCategoryName(c.nome);
+                      const next = categoriasCustom.filter((cc) => {
+                        if (cc.id === c.id) return false;
+                        return normalizeCategoryName(cc.nome) !== catNomeNormalizado;
+                      });
+                      void persistCategorias(next);
+                      toast.success("Categoria removida");
                     }}><Trash2 className="h-3 w-3" /></Button>
                   </>
                 )}
@@ -514,12 +527,18 @@ const AdminCardapio = ({ storeId }: Props) => {
                 if (!catNomeInput.trim()) return;
                 if (catEditando) {
                   const next = categoriasCustom.map((c) => c.id === catEditando.id ? { ...c, nome: catNomeInput.trim(), icone: catIconeInput } : c);
-                  saveCategoriasCustom(next, storeId); setCategoriasCustom(next); toast.success("Categoria atualizada");
+                  void persistCategorias(next);
+                  toast.success("Categoria atualizada");
                 } else {
-                  const slug = catNomeInput.trim().toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
-                  const nova: CategoriaCustom = { id: `${slug}-${Date.now()}`, nome: catNomeInput.trim(), icone: catIconeInput, ordem: todasCategorias.length };
+                  const nova: CategoriaCustom = {
+                    id: crypto.randomUUID(),
+                    nome: catNomeInput.trim(),
+                    icone: catIconeInput,
+                    ordem: todasCategorias.length,
+                  };
                   const next = [...categoriasCustom, nova];
-                  saveCategoriasCustom(next, storeId); setCategoriasCustom(next); toast.success("Categoria criada");
+                  void persistCategorias(next);
+                  toast.success("Categoria criada");
                 }
                 setCatDialogOpen(false);
               }}><Save className="mr-1 h-4 w-4" /> Salvar</Button>
