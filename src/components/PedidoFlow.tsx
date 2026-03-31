@@ -547,27 +547,12 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
   }, [mesas, mesaId, deviceStoreId, adminUserEmail]);
 
   const handleAdminDesvincular = useCallback(async () => {
-    const deviceId = getStoredDeviceId();
-    if (deviceId) {
-      await supabase.from("devices").update({ mesa_id: null } as any).eq("device_id", deviceId);
-    }
+    await updateDeviceMesa(null);
     // Clear sessionStorage
     try { sessionStorage.removeItem("orderly-tablet-mesa"); } catch {}
     // Log event
     if (deviceStoreId) {
-      try {
-        await supabase.rpc("rpc_insert_evento", {
-          _data: {
-            id: crypto.randomUUID(),
-            store_id: deviceStoreId,
-            tipo: "tablet_desvinculado",
-            usuario_nome: adminUserEmail,
-            descricao: `Tablet desvinculado por ${adminUserEmail}`,
-            criado_em: new Date().toLocaleString("pt-BR"),
-            criado_em_iso: new Date().toISOString(),
-          },
-        });
-      } catch {}
+      await logEvento(deviceStoreId, "tablet_desvinculado", adminUserEmail, `Tablet desvinculado por ${adminUserEmail}`);
     }
     await supabase.auth.signOut();
     clearTabletLoginUser();
