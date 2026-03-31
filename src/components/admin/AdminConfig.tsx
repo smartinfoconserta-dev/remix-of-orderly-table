@@ -428,145 +428,196 @@ const AdminConfig = ({ storeId, storeName }: Props) => {
         </div>
       )}
 
-      {/* OPERAÇÃO */}
-      {configSection === "operacao" && (
-        <div className="space-y-4 max-w-lg">
-          {/* Mesas toggle */}
-          <div className="surface-card rounded-2xl p-6 space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3"><span className="text-xl">🍽️</span><div><p className="text-sm font-bold text-foreground">Mesas</p><p className="text-[10px] text-muted-foreground">Garçom + tablets nas mesas</p></div></div>
-              <Switch checked={sistemaConfig.modulos?.mesas !== false} onCheckedChange={(v) => {
-                const next = { ...sistemaConfig, modulos: { ...sistemaConfig.modulos, mesas: v } };
-                setSistemaConfig(next); saveSistemaConfig(next, storeId); saveSistemaConfigAsync(next, storeId);
-                toast.success(v ? "Módulo Mesas ativado" : "Módulo Mesas desativado");
-              }} />
-            </div>
-          </div>
-          {/* Garçom PDV */}
-          <div className="surface-card rounded-2xl p-6 space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3"><span className="text-xl">💳</span><div><p className="text-sm font-bold text-foreground">Garçom PDV</p><p className="text-[10px] text-muted-foreground">Garçom tira pedido e cobra digitalmente na hora</p></div></div>
-              <Switch checked={sistemaConfig.modulos?.garcomPdv === true} onCheckedChange={(v) => {
-                const next = { ...sistemaConfig, modulos: { ...sistemaConfig.modulos, garcomPdv: v } };
-                setSistemaConfig(next); saveSistemaConfig(next, storeId); saveSistemaConfigAsync(next, storeId);
-                toast.success(v ? "Garçom PDV ativado" : "Garçom PDV desativado");
-              }} />
-            </div>
-          </div>
-          {/* Balcão */}
-          <div className="flex items-center justify-between rounded-xl border border-border p-4">
-            <div className="flex items-center gap-3"><span className="text-xl">🏪</span><div><p className="text-sm font-bold text-foreground">Balcão</p><p className="text-[10px] text-muted-foreground">Pedidos sem mesa</p></div></div>
-            <Switch checked={sistemaConfig.modulos?.balcao === true} onCheckedChange={(v) => {
-              const next = { ...sistemaConfig, modulos: { ...sistemaConfig.modulos, balcao: v } };
-              setSistemaConfig(next); saveSistemaConfig(next, storeId); saveSistemaConfigAsync(next, storeId);
-              toast.success(v ? "Módulo Balcão ativado" : "Módulo Balcão desativado");
-            }} />
-          </div>
-          {/* Totem */}
-          {(() => {
-            const plano = (licencaConfig.plano || sistemaConfig.plano || "restaurante") as PlanoModulos;
-            const liberado = getModulosDoPlano(plano).totem;
-            return (
-              <div className="flex items-center justify-between rounded-xl border border-border p-4">
-                <div className="flex items-center gap-3"><span className="text-xl">🖥️</span><div><p className="text-sm font-bold text-foreground">Totem</p><p className="text-[10px] text-muted-foreground">Autoatendimento</p></div></div>
-                {liberado ? (<Switch checked={sistemaConfig.modulos?.totem === true} onCheckedChange={(v) => {
-                  const next = { ...sistemaConfig, modulos: { ...sistemaConfig.modulos, totem: v } };
-                  setSistemaConfig(next); saveSistemaConfig(next, storeId); saveSistemaConfigAsync(next, storeId);
-                  toast.success(v ? "Módulo Totem ativado" : "Módulo Totem desativado");
-                }} />) : (<span className="text-xs text-muted-foreground flex items-center gap-1">🔒 Bloqueado</span>)}
-              </div>
-            );
-          })()}
-          {/* Delivery */}
-          {(() => {
-            const plano = (licencaConfig.plano || sistemaConfig.plano || "restaurante") as PlanoModulos;
-            const liberado = getModulosDoPlano(plano).delivery;
-            return (
-              <div className="flex items-center justify-between rounded-xl border border-border p-4">
-                <div className="flex items-center gap-3"><span className="text-xl">🛵</span><div><p className="text-sm font-bold text-foreground">Delivery</p><p className="text-[10px] text-muted-foreground">Pedidos para entrega</p></div></div>
-                {liberado ? (<Switch checked={sistemaConfig.modulos?.delivery !== false && sistemaConfig.deliveryAtivo !== false} onCheckedChange={(v) => {
-                  const next = { ...sistemaConfig, modulos: { ...sistemaConfig.modulos, delivery: v }, deliveryAtivo: v };
-                  setSistemaConfig(next); saveSistemaConfig(next, storeId); saveSistemaConfigAsync(next, storeId);
-                  toast.success(v ? "Módulo Delivery ativado" : "Módulo Delivery desativado");
-                }} />) : (<span className="text-xs text-muted-foreground flex items-center gap-1">🔒 Bloqueado</span>)}
-              </div>
-            );
-          })()}
+      {/* MEU RESTAURANTE */}
+      {configSection === "restaurante" && (() => {
+        const tipoAtual = sistemaConfig.tipoRestaurante || "restaurante";
+        const modulos = sistemaConfig.modulos ?? {};
 
-          {/* Identificação do pedido */}
-          {(sistemaConfig.modulos?.totem === true || sistemaConfig.modulos?.balcao === true) && (
-            <div className="surface-card rounded-2xl p-6 space-y-3">
-              <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">Identificação do pedido (Totem/Balcão)</p>
-              <label className="flex items-center gap-3 cursor-pointer" onClick={() => { const next = { ...sistemaConfig, identificacaoFastFood: "codigo" as const }; setSistemaConfig(next); saveSistemaConfig(next, storeId); saveSistemaConfigAsync(next, storeId); }}>
-                <span className={`h-5 w-5 rounded-full border-2 flex items-center justify-center ${(sistemaConfig.identificacaoFastFood || "codigo") === "codigo" ? "border-primary" : "border-muted-foreground/40"}`}>{(sistemaConfig.identificacaoFastFood || "codigo") === "codigo" && <span className="h-2.5 w-2.5 rounded-full bg-primary" />}</span>
-                <div><span className={`text-sm font-semibold ${(sistemaConfig.identificacaoFastFood || "codigo") === "codigo" ? "text-foreground" : "text-muted-foreground"}`}>Código numérico</span><p className="text-[10px] text-muted-foreground">Número sequencial automático</p></div>
-              </label>
-              <label className="flex items-center gap-3 cursor-pointer" onClick={() => { const next = { ...sistemaConfig, identificacaoFastFood: "nome_cliente" as const }; setSistemaConfig(next); saveSistemaConfig(next, storeId); saveSistemaConfigAsync(next, storeId); }}>
-                <span className={`h-5 w-5 rounded-full border-2 flex items-center justify-center ${sistemaConfig.identificacaoFastFood === "nome_cliente" ? "border-primary" : "border-muted-foreground/40"}`}>{sistemaConfig.identificacaoFastFood === "nome_cliente" && <span className="h-2.5 w-2.5 rounded-full bg-primary" />}</span>
-                <div><span className={`text-sm font-semibold ${sistemaConfig.identificacaoFastFood === "nome_cliente" ? "text-foreground" : "text-muted-foreground"}`}>Nome do cliente</span><p className="text-[10px] text-muted-foreground">Comanda exibe o nome informado</p></div>
-              </label>
-            </div>
-          )}
+        const handleTipoChange = (tipo: "restaurante" | "fastfood" | "completo") => {
+          const planoModulos = getModulosDoPlano(tipo as PlanoModulos);
+          const next: SistemaConfig = {
+            ...sistemaConfig,
+            tipoRestaurante: tipo,
+            modulos: {
+              ...planoModulos,
+              delivery: sistemaConfig.deliveryAtivo === true,
+              motoboy: sistemaConfig.deliveryAtivo === true,
+            },
+          };
+          setSistemaConfig(next);
+          saveSistemaConfig(next, storeId);
+          saveSistemaConfigAsync(next, storeId);
+          toast.success("Tipo de restaurante atualizado");
+        };
 
-          {/* CPF na nota */}
-          <div className="surface-card rounded-2xl p-6 space-y-3">
-            <div className="flex items-center justify-between">
-              <div><p className="text-sm font-black text-foreground">📄 Solicitar CPF na nota</p><p className="text-xs text-muted-foreground mt-0.5">Necessário para emissão de nota fiscal.</p></div>
-              <Switch checked={sistemaConfig.cpfNotaAtivo ?? false} onCheckedChange={(v) => setSistemaConfig((prev) => ({ ...prev, cpfNotaAtivo: v }))} />
-            </div>
-          </div>
+        const handleDeliveryToggle = (v: boolean) => {
+          const next: SistemaConfig = {
+            ...sistemaConfig,
+            deliveryAtivo: v,
+            modulos: { ...sistemaConfig.modulos, delivery: v, motoboy: v },
+          };
+          setSistemaConfig(next);
+          saveSistemaConfig(next, storeId);
+          saveSistemaConfigAsync(next, storeId);
+          toast.success(v ? "Delivery ativado" : "Delivery desativado");
+        };
 
-          {/* Couvert */}
-          <div className="surface-card rounded-2xl p-6 space-y-3">
-            <div className="flex items-center justify-between">
-              <div><p className="text-sm font-black text-foreground">Couvert / Taxa de serviço</p><p className="text-xs text-muted-foreground mt-0.5">Cobrado por pessoa ao fechar a conta</p></div>
-              <button type="button" onClick={() => setSistemaConfig(c => ({ ...c, couvertAtivo: !c.couvertAtivo }))} className={`relative h-6 w-11 rounded-full transition-colors ${sistemaConfig.couvertAtivo ? "bg-primary" : "bg-border"}`}>
-                <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${sistemaConfig.couvertAtivo ? "translate-x-5" : "translate-x-0.5"}`} />
-              </button>
+        const tipos = [
+          { id: "restaurante" as const, icon: "🍽️", nome: "RESTAURANTE", desc: "Garçom anota pedido, cozinha prepara, garçom leva na mesa" },
+          { id: "fastfood" as const, icon: "🍔", nome: "FAST FOOD", desc: "Cliente pede no totem ou balcão, retira quando aparece na TV" },
+          { id: "completo" as const, icon: "⚡", nome: "COMPLETO", desc: "Usa todos os modos de atendimento" },
+        ];
+
+        const activeModules = [
+          { key: "mesas", label: "Mesas" },
+          { key: "balcao", label: "Balcão" },
+          { key: "cozinha", label: "Cozinha" },
+          { key: "totem", label: "Totem" },
+          { key: "tvRetirada", label: "TV Retirada" },
+          { key: "garcomPdv", label: "Garçom PDV" },
+          { key: "delivery", label: "Delivery" },
+          { key: "motoboy", label: "Motoboy" },
+        ].filter(m => !!(modulos as any)[m.key]);
+
+        return (
+          <div className="space-y-5 max-w-lg">
+            {/* A) Tipo do restaurante */}
+            <div className="space-y-3">
+              <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">Tipo de atendimento</p>
+              {tipos.map(t => (
+                <button key={t.id} type="button" onClick={() => handleTipoChange(t.id)}
+                  className={`w-full flex items-start gap-4 rounded-2xl border p-5 text-left transition-colors ${
+                    tipoAtual === t.id
+                      ? "border-primary bg-primary/10"
+                      : "border-border bg-card hover:border-primary/30"
+                  }`}>
+                  <span className="text-3xl mt-0.5">{t.icon}</span>
+                  <div>
+                    <p className={`text-sm font-black ${tipoAtual === t.id ? "text-primary" : "text-foreground"}`}>{t.nome}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">{t.desc}</p>
+                  </div>
+                  {tipoAtual === t.id && (
+                    <span className="ml-auto mt-1 text-primary text-lg">✓</span>
+                  )}
+                </button>
+              ))}
             </div>
-            {sistemaConfig.couvertAtivo && (
-              <>
-                <div className="space-y-1"><label className="text-xs font-bold text-muted-foreground">Valor por pessoa (R$)</label><Input value={sistemaConfig.couvertValor ? sistemaConfig.couvertValor.toFixed(2).replace(".", ",") : ""} onChange={e => { const val = parseFloat(e.target.value.replace(",", ".")) || 0; setSistemaConfig(c => ({ ...c, couvertValor: Number.isFinite(val) ? val : 0 })); }} placeholder="Ex.: 5,00" inputMode="decimal" className="h-10 rounded-xl text-sm max-w-[160px]" /></div>
-                <div className="flex items-center justify-between">
-                  <div><p className="text-xs font-bold text-foreground">Obrigatório</p><p className="text-xs text-muted-foreground">Se desligado, operador pode dispensar</p></div>
-                  <button type="button" onClick={() => setSistemaConfig(c => ({ ...c, couvertObrigatorio: !c.couvertObrigatorio }))} className={`relative h-6 w-11 rounded-full transition-colors ${sistemaConfig.couvertObrigatorio ? "bg-primary" : "bg-border"}`}>
-                    <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${sistemaConfig.couvertObrigatorio ? "translate-x-5" : "translate-x-0.5"}`} />
-                  </button>
+
+            {/* B) Delivery addon */}
+            <div className="surface-card rounded-2xl p-6 space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <span className="text-xl">🛵</span>
+                  <div>
+                    <p className="text-sm font-bold text-foreground">Delivery (entrega em casa)</p>
+                    <p className="text-[10px] text-muted-foreground">Addon independente do tipo de restaurante</p>
+                  </div>
                 </div>
-              </>
-            )}
-          </div>
-
-          {/* Impressão por setor */}
-          <div className="rounded-2xl border border-border bg-card p-5 space-y-4">
-            <div className="flex items-center justify-between">
-              <div><p className="text-sm font-black text-foreground">Impressão por setor</p><p className="text-xs text-muted-foreground mt-0.5">Separa cozinha e bar em comandas distintas</p></div>
-              <Switch checked={sistemaConfig.impressaoPorSetor ?? false} onCheckedChange={(v) => setSistemaConfig((prev) => ({ ...prev, impressaoPorSetor: v }))} />
+                <Switch checked={sistemaConfig.deliveryAtivo === true} onCheckedChange={handleDeliveryToggle} />
+              </div>
+              {sistemaConfig.deliveryAtivo === true && (
+                <div className="space-y-3 pt-3 border-t border-border">
+                  <p className="text-xs font-bold text-muted-foreground">Modo do caixa delivery</p>
+                  <label className="flex items-center gap-3 cursor-pointer" onClick={() => {
+                    const next = { ...sistemaConfig, deliverySeparado: false };
+                    setSistemaConfig(next); saveSistemaConfig(next, storeId); saveSistemaConfigAsync(next, storeId);
+                  }}>
+                    <span className={`h-5 w-5 rounded-full border-2 flex items-center justify-center ${!sistemaConfig.deliverySeparado ? "border-primary" : "border-muted-foreground/40"}`}>
+                      {!sistemaConfig.deliverySeparado && <span className="h-2.5 w-2.5 rounded-full bg-primary" />}
+                    </span>
+                    <div>
+                      <span className={`text-sm font-semibold ${!sistemaConfig.deliverySeparado ? "text-foreground" : "text-muted-foreground"}`}>Caixa único</span>
+                      <p className="text-[10px] text-muted-foreground">Delivery junto com presencial</p>
+                    </div>
+                  </label>
+                  <label className="flex items-center gap-3 cursor-pointer" onClick={() => {
+                    const next = { ...sistemaConfig, deliverySeparado: true };
+                    setSistemaConfig(next); saveSistemaConfig(next, storeId); saveSistemaConfigAsync(next, storeId);
+                  }}>
+                    <span className={`h-5 w-5 rounded-full border-2 flex items-center justify-center ${sistemaConfig.deliverySeparado ? "border-primary" : "border-muted-foreground/40"}`}>
+                      {sistemaConfig.deliverySeparado && <span className="h-2.5 w-2.5 rounded-full bg-primary" />}
+                    </span>
+                    <div>
+                      <span className={`text-sm font-semibold ${sistemaConfig.deliverySeparado ? "text-foreground" : "text-muted-foreground"}`}>Caixa separado</span>
+                      <p className="text-[10px] text-muted-foreground">Operador exclusivo para delivery</p>
+                    </div>
+                  </label>
+                </div>
+              )}
             </div>
-            {sistemaConfig.impressaoPorSetor && (
-              <div className="space-y-3 pt-2 border-t border-border">
-                <div className="space-y-1"><label className="text-xs font-bold text-muted-foreground">Nome da impressora — Cozinha</label><Input value={sistemaConfig.nomeImpressoraCozinha ?? ""} onChange={(e) => setSistemaConfig((prev) => ({ ...prev, nomeImpressoraCozinha: e.target.value }))} placeholder="Ex: EPSON-COZINHA" className="h-9 text-sm" /></div>
-                <div className="space-y-1"><label className="text-xs font-bold text-muted-foreground">Nome da impressora — Bar</label><Input value={sistemaConfig.nomeImpressoraBar ?? ""} onChange={(e) => setSistemaConfig((prev) => ({ ...prev, nomeImpressoraBar: e.target.value }))} placeholder="Ex: EPSON-BAR" className="h-9 text-sm" /></div>
-                <p className="text-[10px] text-muted-foreground">Na demonstração abre janelas separadas. Na produção, o nome é usado para rotear para a impressora correta.</p>
+
+            {/* C) Configurações extras */}
+            {/* Identificação do pedido — só fastfood ou completo */}
+            {(tipoAtual === "fastfood" || tipoAtual === "completo") && (
+              <div className="surface-card rounded-2xl p-6 space-y-3">
+                <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">Identificação do pedido (Totem/Balcão)</p>
+                <label className="flex items-center gap-3 cursor-pointer" onClick={() => { const next = { ...sistemaConfig, identificacaoFastFood: "codigo" as const }; setSistemaConfig(next); saveSistemaConfig(next, storeId); saveSistemaConfigAsync(next, storeId); }}>
+                  <span className={`h-5 w-5 rounded-full border-2 flex items-center justify-center ${(sistemaConfig.identificacaoFastFood || "codigo") === "codigo" ? "border-primary" : "border-muted-foreground/40"}`}>{(sistemaConfig.identificacaoFastFood || "codigo") === "codigo" && <span className="h-2.5 w-2.5 rounded-full bg-primary" />}</span>
+                  <div><span className={`text-sm font-semibold ${(sistemaConfig.identificacaoFastFood || "codigo") === "codigo" ? "text-foreground" : "text-muted-foreground"}`}>Código numérico</span><p className="text-[10px] text-muted-foreground">Número sequencial automático</p></div>
+                </label>
+                <label className="flex items-center gap-3 cursor-pointer" onClick={() => { const next = { ...sistemaConfig, identificacaoFastFood: "nome_cliente" as const }; setSistemaConfig(next); saveSistemaConfig(next, storeId); saveSistemaConfigAsync(next, storeId); }}>
+                  <span className={`h-5 w-5 rounded-full border-2 flex items-center justify-center ${sistemaConfig.identificacaoFastFood === "nome_cliente" ? "border-primary" : "border-muted-foreground/40"}`}>{sistemaConfig.identificacaoFastFood === "nome_cliente" && <span className="h-2.5 w-2.5 rounded-full bg-primary" />}</span>
+                  <div><span className={`text-sm font-semibold ${sistemaConfig.identificacaoFastFood === "nome_cliente" ? "text-foreground" : "text-muted-foreground"}`}>Nome do cliente</span><p className="text-[10px] text-muted-foreground">Comanda exibe o nome informado</p></div>
+                </label>
               </div>
             )}
-          </div>
 
-          {/* Modo identificação delivery */}
-          <div className="surface-card rounded-2xl p-6 space-y-3">
-            <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">Modo de identificação</p>
-            <label className="flex items-center gap-3 cursor-pointer" onClick={() => { const next = { ...sistemaConfig, modoIdentificacaoDelivery: "visitante" as const }; setSistemaConfig(next); saveSistemaConfig(next, storeId); }}>
-              <span className={`h-5 w-5 rounded-full border-2 flex items-center justify-center ${(sistemaConfig.modoIdentificacaoDelivery || "visitante") === "visitante" ? "border-primary" : "border-muted-foreground/40"}`}>{(sistemaConfig.modoIdentificacaoDelivery || "visitante") === "visitante" && <span className="h-2.5 w-2.5 rounded-full bg-primary" />}</span>
-              <div><span className={`text-sm font-semibold ${(sistemaConfig.modoIdentificacaoDelivery || "visitante") === "visitante" ? "text-foreground" : "text-muted-foreground"}`}>Modo visitante</span><p className="text-[10px] text-muted-foreground">Cliente preenche dados ao finalizar o pedido</p></div>
-            </label>
-            <label className="flex items-center gap-3 cursor-pointer" onClick={() => { const next = { ...sistemaConfig, modoIdentificacaoDelivery: "cadastro" as const }; setSistemaConfig(next); saveSistemaConfig(next, storeId); }}>
-              <span className={`h-5 w-5 rounded-full border-2 flex items-center justify-center ${sistemaConfig.modoIdentificacaoDelivery === "cadastro" ? "border-primary" : "border-muted-foreground/40"}`}>{sistemaConfig.modoIdentificacaoDelivery === "cadastro" && <span className="h-2.5 w-2.5 rounded-full bg-primary" />}</span>
-              <div><span className={`text-sm font-semibold ${sistemaConfig.modoIdentificacaoDelivery === "cadastro" ? "text-foreground" : "text-muted-foreground"}`}>Modo cadastro</span><p className="text-[10px] text-muted-foreground">Cliente cria conta com telefone e senha</p></div>
-            </label>
+            {/* CPF na nota */}
+            <div className="surface-card rounded-2xl p-6 space-y-3">
+              <div className="flex items-center justify-between">
+                <div><p className="text-sm font-black text-foreground">📄 Solicitar CPF na nota</p><p className="text-xs text-muted-foreground mt-0.5">Necessário para emissão de nota fiscal.</p></div>
+                <Switch checked={sistemaConfig.cpfNotaAtivo ?? false} onCheckedChange={(v) => setSistemaConfig((prev) => ({ ...prev, cpfNotaAtivo: v }))} />
+              </div>
+            </div>
+
+            {/* Couvert — só restaurante ou completo */}
+            {(tipoAtual === "restaurante" || tipoAtual === "completo") && (
+              <div className="surface-card rounded-2xl p-6 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div><p className="text-sm font-black text-foreground">Couvert / Taxa de serviço</p><p className="text-xs text-muted-foreground mt-0.5">Cobrado por pessoa ao fechar a conta</p></div>
+                  <Switch checked={sistemaConfig.couvertAtivo ?? false} onCheckedChange={(v) => setSistemaConfig(c => ({ ...c, couvertAtivo: v }))} />
+                </div>
+                {sistemaConfig.couvertAtivo && (
+                  <>
+                    <div className="space-y-1"><label className="text-xs font-bold text-muted-foreground">Valor por pessoa (R$)</label><Input value={sistemaConfig.couvertValor ? sistemaConfig.couvertValor.toFixed(2).replace(".", ",") : ""} onChange={e => { const val = parseFloat(e.target.value.replace(",", ".")) || 0; setSistemaConfig(c => ({ ...c, couvertValor: Number.isFinite(val) ? val : 0 })); }} placeholder="Ex.: 5,00" inputMode="decimal" className="h-10 rounded-xl text-sm max-w-[160px]" /></div>
+                    <div className="flex items-center justify-between">
+                      <div><p className="text-xs font-bold text-foreground">Obrigatório</p><p className="text-xs text-muted-foreground">Se desligado, operador pode dispensar</p></div>
+                      <Switch checked={sistemaConfig.couvertObrigatorio ?? false} onCheckedChange={(v) => setSistemaConfig(c => ({ ...c, couvertObrigatorio: v }))} />
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+
+            {/* Número de mesas — só se mesas ativo */}
+            {modulos.mesas && (
+              <div className="surface-card rounded-2xl p-6 space-y-3">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-muted-foreground">Número de mesas</label>
+                  <Input type="number" min="1" max="200" value={20} readOnly className="h-10 rounded-xl text-sm max-w-[120px]" />
+                  <p className="text-[10px] text-muted-foreground">Gerenciado na aba Mesas do painel</p>
+                </div>
+              </div>
+            )}
+
+            {/* D) Resumo visual */}
+            {activeModules.length > 0 && (
+              <div className="surface-card rounded-2xl p-5 space-y-3">
+                <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">Seu restaurante usa</p>
+                <div className="flex flex-wrap gap-2">
+                  {activeModules.map(m => (
+                    <span key={m.key} className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 border border-primary/20 px-3 py-1 text-xs font-bold text-primary">
+                      ✓ {m.label}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <Button onClick={saveSistema} className="rounded-xl font-black w-full mt-4"><Save className="mr-1 h-4 w-4" /> Salvar</Button>
           </div>
-          <Button onClick={saveSistema} className="rounded-xl font-black w-full mt-4"><Save className="mr-1 h-4 w-4" /> Salvar</Button>
-        </div>
-      )}
+        );
+      })()}
 
 
       {/* IMPRESSORAS */}
