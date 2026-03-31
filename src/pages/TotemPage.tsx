@@ -103,10 +103,15 @@ const TotemInner = ({ storeId }: { storeId: string }) => {
     setStep("payment");
   }, [clienteNome]);
 
-  // Called when customer picks a payment method — go to CPF step
+  // Called when customer picks a payment method — go to aguardando_pagamento
   const skipCpfRef = useRef(false);
   const handlePaymentSelected = useCallback((method: PaymentMethod) => {
     setPendingPaymentMethod(method);
+    setStep("aguardando_pagamento");
+  }, []);
+
+  // Called when customer confirms payment was made — go to CPF or create order
+  const handlePaymentConfirmed = useCallback(() => {
     if (cpfNotaAtivo) {
       setStep("cpf");
     } else {
