@@ -174,7 +174,7 @@ export function buildPedidoFlowHeader(props: PedidoFlowHeaderProps) {
               onChange={e => setSearchQuery(e.target.value)}
               className={`h-9 w-36 rounded-xl border pl-9 pr-3 text-sm focus:outline-none focus:ring-2 focus:w-48 transition-all ${
                 isTotem
-                  ? "border-gray-200 bg-gray-50 text-gray-900 placeholder:text-gray-400 focus:ring-[#FF6B00]"
+                  ? "border-border bg-secondary text-foreground placeholder:text-muted-foreground focus:ring-primary"
                   : "border-border bg-secondary text-foreground placeholder:text-muted-foreground focus:ring-primary"
               }`}
             />
