@@ -42,6 +42,13 @@ export interface Despesa {
   data: string;
 }
 
+function migratePlano(raw: string | null | undefined): Cliente["planoModulos"] {
+  if (raw === "restaurante" || raw === "fastfood" || raw === "completo") return raw;
+  if (raw === "pro" || raw === "premium") return "completo";
+  if (raw === "medio") return "fastfood";
+  return "restaurante"; // basico or fallback
+}
+
 // ─── CLIENTES ───────────────────────────────────
 
 export async function getClientes(): Promise<Cliente[]> {
