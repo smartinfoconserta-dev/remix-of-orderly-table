@@ -108,24 +108,36 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
   useEffect(() => {
     const el = themeContainerRef.current;
     if (!el) return;
-    if (sysConfig.temaPersonalizado) {
+    // For totem mode, use totem-specific appearance config
+    const themeConfig = isTotem ? getTotemAparencia(sysConfig) : {
+      temaCardapio: sysConfig.temaCardapio,
+      corPrimaria: sysConfig.corPrimaria,
+      temaPersonalizado: sysConfig.temaPersonalizado ?? false,
+      fundoTipo: sysConfig.fundoTipo,
+      fundoCor: sysConfig.fundoCor,
+      fundoGradiente: sysConfig.fundoGradiente,
+      letraCor: sysConfig.letraCor,
+      sidebarCor: sysConfig.sidebarCor,
+      cardsCor: sysConfig.cardsCor,
+    };
+    if (themeConfig.temaPersonalizado) {
       applyCustomThemeToElement(el, {
-        fundoTipo: sysConfig.fundoTipo,
-        fundoCor: sysConfig.fundoCor,
-        fundoGradiente: sysConfig.fundoGradiente,
-        letraCor: sysConfig.letraCor,
-        corPrimaria: sysConfig.corPrimaria,
-        sidebarCor: sysConfig.sidebarCor,
-        cardsCor: sysConfig.cardsCor,
+        fundoTipo: themeConfig.fundoTipo,
+        fundoCor: themeConfig.fundoCor,
+        fundoGradiente: themeConfig.fundoGradiente,
+        letraCor: themeConfig.letraCor,
+        corPrimaria: themeConfig.corPrimaria,
+        sidebarCor: themeConfig.sidebarCor,
+        cardsCor: themeConfig.cardsCor,
       });
     } else {
-      const themeId = sysConfig.temaCardapio || "obsidian";
-      const customColor = sysConfig.corPrimaria;
+      const themeId = themeConfig.temaCardapio || "obsidian";
+      const customColor = themeConfig.corPrimaria;
       const themeDefault = THEME_MAP[themeId]?.primary;
       applyThemeToElement(el, themeId, customColor && customColor !== themeDefault ? customColor : undefined);
     }
     return () => { if (el) clearThemeFromElement(el); };
-  }, [sysConfig.temaCardapio, sysConfig.corPrimaria, sysConfig.temaPersonalizado, sysConfig.fundoTipo, sysConfig.fundoCor, sysConfig.fundoGradiente, sysConfig.letraCor, sysConfig.sidebarCor, sysConfig.cardsCor]);
+  }, [sysConfig.temaCardapio, sysConfig.corPrimaria, sysConfig.temaPersonalizado, sysConfig.fundoTipo, sysConfig.fundoCor, sysConfig.fundoGradiente, sysConfig.letraCor, sysConfig.sidebarCor, sysConfig.cardsCor, sysConfig.totemTema, sysConfig.totemCorPrimaria, sysConfig.totemTemaPersonalizado, isTotem]);
 
   // Reactive product/category loading from Supabase cache
   const [produtos, setProdutos] = useState<Produto[]>(() => getCachedProdutos());
