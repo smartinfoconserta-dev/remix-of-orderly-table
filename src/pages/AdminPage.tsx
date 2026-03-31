@@ -20,9 +20,8 @@ import AdminRelatorios from "@/components/admin/AdminRelatorios";
 import AdminCardapio from "@/components/admin/AdminCardapio";
 import AdminConfig from "@/components/admin/AdminConfig";
 import AdminLicenca from "@/components/admin/AdminLicenca";
-import AdminTotem from "@/components/admin/AdminTotem";
 
-type AdminTab = "dashboard" | "cardapio" | "mesas" | "tablets" | "equipe" | "caixas" | "configuracoes" | "licenca" | "ifood" | "totem";
+type AdminTab = "dashboard" | "cardapio" | "mesas" | "tablets" | "equipe" | "caixas" | "configuracoes" | "licenca" | "ifood";
 
 const sidebarSections = [
   { id: "dashboard" as const, label: "Início", icon: LayoutDashboard },
