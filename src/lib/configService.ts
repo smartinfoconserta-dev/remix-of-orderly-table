@@ -319,6 +319,7 @@ export async function fetchCategorias(storeId?: string | null): Promise<Categori
         nome: r.nome,
         icone: r.icone,
         ordem: r.ordem ?? 0,
+        parentId: (r as any).parent_id ?? null,
       }));
       setLocalCache(CATEGORIAS_CACHE_KEY, cats);
       clearPendingSync("categorias");
@@ -353,6 +354,7 @@ export async function saveCategorias(cats: CategoriaCustom[], storeId?: string |
         nome: c.nome,
         icone: c.icone,
         ordem: c.ordem,
+        parent_id: c.parentId ?? null,
         ...(storeId ? { store_id: storeId } : {}),
       }));
       await supabase.from("restaurant_categories").insert(rows);

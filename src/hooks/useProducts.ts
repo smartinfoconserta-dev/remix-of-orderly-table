@@ -40,6 +40,7 @@ function rowToCategoria(row: any): Categoria {
     id: row.id,
     nome: row.nome,
     icone: row.icone ?? "🍽️",
+    parentId: row.parent_id ?? null,
   };
 }
 
