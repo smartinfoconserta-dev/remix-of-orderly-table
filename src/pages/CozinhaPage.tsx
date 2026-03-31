@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import LicenseBanner from "@/components/LicenseBanner";
+import OfflineIndicator from "@/components/OfflineIndicator";
 import { Check, ChefHat, Clock, LogOut, ShoppingBag, User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useRestaurant } from "@/contexts/RestaurantContext";

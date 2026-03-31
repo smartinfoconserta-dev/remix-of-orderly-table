@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import CategoryTabs from "@/components/CategoryTabs";
 import CategoryIcon from "@/components/CategoryIcon";
 import ProductModal from "@/components/ProductModal";
+import OfflineIndicator from "@/components/OfflineIndicator";
 import PedidoFlowCart from "@/components/pedido/PedidoFlowCart";
 import PedidoFlowCatalog from "@/components/pedido/PedidoFlowCatalog";
 import PedidoFlowHome from "@/components/pedido/PedidoFlowHome";
