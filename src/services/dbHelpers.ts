@@ -290,8 +290,16 @@ export const dbInsertEvento = (e: EventoOperacional) => {
 export const dbInsertMovimentacao = (m: MovimentacaoCaixa) => {
   const sid = getActiveStoreId();
   if (!sid) { console.warn("dbInsertMovimentacao: storeId is null"); return; }
-  supabase.rpc("rpc_insert_movimentacao" as any, { _data: movToRow(m, sid) }).then(({ error }: any) => {
-    if (error) { console.error("DB insert mov", error); toast.error("Erro ao salvar movimentação"); }
+  const row = movToRow(m, sid);
+  const params = { _data: row };
+  supabase.rpc("rpc_insert_movimentacao" as any, params).then(({ error }: any) => {
+    if (error) {
+      if (isNetworkError(error)) { enqueue("rpc_insert_movimentacao", params, `Movimentação: ${(m.descricao || "").slice(0, 30)}`); }
+      else { console.error("DB insert mov", error); toast.error("Erro ao salvar movimentação"); }
+    }
+  }).catch((err: any) => {
+    if (isNetworkError(err)) { enqueue("rpc_insert_movimentacao", params, `Movimentação: ${(m.descricao || "").slice(0, 30)}`); }
+    else { console.error("dbInsertMovimentacao unexpected", err); }
   });
 };
 
