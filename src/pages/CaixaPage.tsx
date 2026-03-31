@@ -89,6 +89,7 @@ import {
   getPaymentMethodLabel,
   getPaymentMethodStyle,
   QUICK_VALUES,
+  printComanda as printComandaFn,
 } from "@/components/caixa/caixaHelpers";
 import CaixaDeliveryPanel from "@/components/caixa/CaixaDeliveryPanel";
 import CaixaTotemPanel from "@/components/caixa/CaixaTotemPanel";
