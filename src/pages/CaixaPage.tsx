@@ -554,7 +554,7 @@ const CaixaPage = ({ accessMode = "caixa", deliveryOnly = false }: CaixaPageProp
       <div className="min-h-svh flex flex-col bg-background">
         <header className="flex items-center gap-3 border-b border-border bg-card px-4 py-4 shrink-0 md:px-6">
           <h1 className="text-lg font-bold tracking-tight text-foreground truncate flex-1 md:text-xl">
-            {accessMode === "gerente" ? "Gerente" : "Caixa"}
+            {caixaTitle}
           </h1>
         </header>
         <main className="flex-1 overflow-y-auto p-4 md:p-6">
