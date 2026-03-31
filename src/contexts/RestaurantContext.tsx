@@ -6,6 +6,9 @@ import { getActiveStoreId } from "@/lib/sessionManager";
 import { useAuth } from "@/contexts/AuthContext";
 import { useStore } from "@/contexts/StoreContext";
 import { toast } from "sonner";
+import { useMesaActions } from "@/hooks/useMesaActions";
+import { useBalcaoActions } from "@/hooks/useBalcaoActions";
+import { useCaixaActions } from "@/hooks/useCaixaActions";
 
 // Types — re-exported for backward compatibility
 import type {
