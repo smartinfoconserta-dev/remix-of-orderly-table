@@ -7,7 +7,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useStore } from "@/contexts/StoreContext";
 import { useAuth } from "@/contexts/AuthContext";
-import { getSistemaConfig, getLicenseLevel, saveSistemaConfig } from "@/lib/adminStorage";
+import { getSistemaConfig, getLicenseLevel } from "@/lib/adminStorage";
 import TeamManager from "@/components/TeamManager";
 import MesasManager from "@/components/MesasManager";
 import DevicesManager from "@/components/DevicesManager";
