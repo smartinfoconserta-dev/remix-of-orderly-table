@@ -21,7 +21,7 @@ import {
   getClientes, addCliente, updateCliente, removeCliente,
   getDespesas, addDespesa,
 } from "@/lib/masterStorage";
-import { getLicencaConfig, saveLicencaConfigAsync, getSistemaConfig, saveSistemaConfigAsync } from "@/lib/adminStorage";
+import { getLicencaConfig, saveLicencaConfigAsync, getLicencaConfigAsync, getSistemaConfig, getSistemaConfigAsync, saveSistemaConfigAsync } from "@/lib/adminStorage";
 
 const SEGMENTOS = ["hamburgeria", "pizzaria", "sushi", "pastel", "a-la-carte", "outro"];
 const SEGMENTO_LABELS: Record<string, string> = {
