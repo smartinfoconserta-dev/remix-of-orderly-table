@@ -312,8 +312,15 @@ export const dbUpsertEstadoCaixa = (aberto: boolean, fundoTroco: number, nome: s
   if (extras?.diferenca_dinheiro !== undefined) data.diferenca_dinheiro = extras.diferenca_dinheiro;
   if (extras?.diferenca_motivo !== undefined) data.diferenca_motivo = extras.diferenca_motivo;
   if (extras?.fundo_proximo !== undefined) data.fundo_proximo = extras.fundo_proximo;
-  supabase.rpc("rpc_upsert_estado_caixa" as any, { _store_id: sid, _data: data }).then(({ error }: any) => {
-    if (error) { console.error("DB upsert caixa", error); toast.error("Erro ao atualizar caixa"); }
+  const params = { _store_id: sid, _data: data };
+  supabase.rpc("rpc_upsert_estado_caixa" as any, params).then(({ error }: any) => {
+    if (error) {
+      if (isNetworkError(error)) { enqueue("rpc_upsert_estado_caixa", params, "Estado do caixa"); }
+      else { console.error("DB upsert caixa", error); toast.error("Erro ao atualizar caixa"); }
+    }
+  }).catch((err: any) => {
+    if (isNetworkError(err)) { enqueue("rpc_upsert_estado_caixa", params, "Estado do caixa"); }
+    else { console.error("dbUpsertEstadoCaixa unexpected", err); }
   });
 };
 
