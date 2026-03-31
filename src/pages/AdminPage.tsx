@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   ClipboardList, Grid3X3, LayoutDashboard, LogOut, Settings, Shield,
-  Users, Wallet, TabletSmartphone, ShoppingBag,
+  Users, Wallet, TabletSmartphone, ShoppingBag, Monitor,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useStore } from "@/contexts/StoreContext";
@@ -20,8 +20,9 @@ import AdminRelatorios from "@/components/admin/AdminRelatorios";
 import AdminCardapio from "@/components/admin/AdminCardapio";
 import AdminConfig from "@/components/admin/AdminConfig";
 import AdminLicenca from "@/components/admin/AdminLicenca";
+import AdminTotem from "@/components/admin/AdminTotem";
 
-type AdminTab = "dashboard" | "cardapio" | "mesas" | "tablets" | "equipe" | "caixas" | "configuracoes" | "licenca" | "ifood";
+type AdminTab = "dashboard" | "cardapio" | "mesas" | "tablets" | "equipe" | "caixas" | "configuracoes" | "licenca" | "ifood" | "totem";
 
 const sidebarSections = [
   { id: "dashboard" as const, label: "Início", icon: LayoutDashboard },
