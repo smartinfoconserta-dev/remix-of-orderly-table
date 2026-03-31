@@ -880,8 +880,7 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
           categoriaAtiva={categoriaAtiva}
           onSelect={handleSelectCategoria}
           paddingClassName={isGarcomMobile ? "px-4 pb-3" : "px-4 pb-2"}
-          sidebarEstilo={sysConfig.sidebarEstilo || "icone-texto"}
-          totemMode={isTotem}
+           totemMode={isTotem}
         />
       </div>
       <div ref={mobileListTopRef} />
