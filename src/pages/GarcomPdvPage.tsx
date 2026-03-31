@@ -175,6 +175,9 @@ const GarcomPdvPage = () => {
       numeroPedido: lastPedido?.numeroPedido ?? 0,
     });
 
+    playSuccessSound();
+    vibrateSuccess();
+
     setPagamentoOpen(false);
     setPagamentoMesaId(null);
     setPagamentos([]);
