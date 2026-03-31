@@ -773,8 +773,23 @@ export default function MotoboyPage() {
                         pedidos_ids: entregues.map(p => p.id),
                       };
                        supabase.rpc("rpc_insert_motoboy_fechamento", { _data: fechamento as any }).then(({ error }) => {
-                        if (error) { console.error("Erro ao salvar fechamento motoboy", error); toast.error("Erro ao solicitar fechamento"); setFechamentoEnviado(false); return; }
-                        toast.success("Fechamento solicitado! Aguarde o caixa conferir.", { duration: 3000 });
+                        if (error) {
+                          if (isNetworkError(error)) {
+                            enqueue("rpc_insert_motoboy_fechamento", { _data: fechamento }, "Fechamento motoboy " + sessao?.nome);
+                            toast.warning("Sem conexão — fechamento salvo localmente. Será enviado quando a internet voltar.");
+                          } else {
+                            console.error("Erro ao salvar fechamento motoboy", error); toast.error("Erro ao solicitar fechamento"); setFechamentoEnviado(false); return;
+                          }
+                        } else {
+                          toast.success("Fechamento solicitado! Aguarde o caixa conferir.", { duration: 3000 });
+                        }
+                      }).catch((err) => {
+                        if (isNetworkError(err)) {
+                          enqueue("rpc_insert_motoboy_fechamento", { _data: fechamento }, "Fechamento motoboy " + sessao?.nome);
+                          toast.warning("Sem conexão — fechamento salvo localmente.");
+                        } else {
+                          toast.error("Erro ao solicitar fechamento"); setFechamentoEnviado(false);
+                        }
                       });
                     }}
                   >
