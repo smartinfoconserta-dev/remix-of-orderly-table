@@ -850,5 +850,6 @@ function PedidoPageInner({ storeId, config, bairros }: {
         )}
       </div>
     </div>
+    </div>
   );
 }
