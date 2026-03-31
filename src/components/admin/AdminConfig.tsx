@@ -21,13 +21,6 @@ import { getBairrosAsync, saveBairros, type Bairro } from "@/lib/deliveryStorage
 import { useStore } from "@/contexts/StoreContext";
 import { toast } from "sonner";
 
-const TODOS_MODULOS = [
-  { id: "cozinha", label: "Cozinha", icon: "🍳", desc: "Tela de preparo de pedidos" },
-  { id: "delivery", label: "Delivery", icon: "🛵", desc: "Pedidos para entrega" },
-  { id: "motoboy", label: "Motoboy", icon: "🏍️", desc: "Gestão de entregadores" },
-  { id: "totem", label: "Totem", icon: "📱", desc: "Autoatendimento para clientes" },
-  { id: "tvRetirada", label: "TV de Retirada", icon: "📺", desc: "Painel de chamada de pedidos" },
-];
 
 interface Props {
   storeId: string | null;
