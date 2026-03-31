@@ -231,7 +231,14 @@ export default function MotoboyPage() {
           const found = pedidosBalcao.find((p) => p.id === pedidoId && p.origem === "delivery" && p.statusBalcao === "pronto");
           if (found) {
             marcarBalcaoSaiu(pedidoId, sessao?.nome || "Motoboy");
-            toast.success(`Pedido #${found.numeroPedido} retirado! Boa entrega. 🏍️`);
+            const tel = (found as any).clienteTelefone;
+            const nome = (found as any).clienteNome || "Cliente";
+            toast.success(`Pedido #${found.numeroPedido} retirado! Boa entrega. 🏍️`, {
+              action: tel ? {
+                label: "📱 Avisar cliente",
+                onClick: () => sendWhatsAppMessage(tel, buildDeliveryStatusMessage(NOME_REST, found.numeroPedido, nome, "saiu", { motoboyNome: sessao?.nome })),
+              } : undefined,
+            });
           } else {
             toast.error("Pedido não encontrado ou já retirado");
           }
