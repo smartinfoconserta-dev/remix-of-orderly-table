@@ -92,6 +92,7 @@ const emptyForm = {
   observacoes: "", historicoPagamentos: [] as any[],
   plano: "anual", dataInicio: new Date().toISOString().slice(0, 10), dataTermino: "",
   planoModulos: "restaurante" as "restaurante" | "fastfood" | "completo",
+  deliveryAtivo: false,
   criarContaAdmin: false, senhaAdmin: "", slugLoja: "",
 };
 
