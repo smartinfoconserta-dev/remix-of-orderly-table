@@ -53,9 +53,8 @@ const CategoryTabs = ({
           >
             <CategoryIcon
                 name={cat.icone}
-                className={`h-4 w-4 transition-opacity duration-300 ${categoriaAtiva === cat.id ? "opacity-100" : "opacity-70"}`}
-              />
-            )}
+              className={`h-4 w-4 transition-opacity duration-300 ${categoriaAtiva === cat.id ? "opacity-100" : "opacity-70"}`}
+            />
             <span>{cat.nome}</span>
           </button>
         ))}

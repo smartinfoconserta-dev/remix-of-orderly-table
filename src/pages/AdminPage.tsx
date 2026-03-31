@@ -115,14 +115,6 @@ const AdminPage = () => {
             </div>
           )}
           {tab === "ifood" && <div className="space-y-4 fade-in"><IfoodPainel /></div>}
-          {tab === "totem" && (
-            <AdminTotem
-              sistemaConfig={totemConfig}
-              setSistemaConfig={setTotemConfig}
-              storeId={storeId}
-              onSave={saveTotemConfig}
-            />
-          )}
         </main>
       </div>
       <LicenseBanner context="admin" />
