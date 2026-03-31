@@ -458,16 +458,6 @@ const AdminConfig = ({ storeId, storeName }: Props) => {
               </div>
             )}
 
-            {/* Número de mesas */}
-            {modulos.mesas && (
-              <div className="surface-card rounded-2xl p-6 space-y-3">
-                <div className="space-y-2">
-                  <label className="text-sm font-bold text-muted-foreground">Número de mesas</label>
-                  <Input type="number" min="1" max="200" value={20} readOnly className="h-11 rounded-xl text-sm max-w-[120px]" />
-                  <p className="text-sm text-muted-foreground">Gerenciado na aba Mesas do painel</p>
-                </div>
-              </div>
-            )}
 
             {/* D) Resumo visual */}
             {activeModules.length > 0 && (
