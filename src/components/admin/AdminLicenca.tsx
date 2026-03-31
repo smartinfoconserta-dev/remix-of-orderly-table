@@ -49,9 +49,9 @@ const AdminLicenca = ({ storeId }: Props) => {
   ];
 
   const requiredPlan = (modId: string) => {
-    if (modId === "delivery" || modId === "cozinha") return "Médio";
-    if (modId === "motoboy") return "Pro";
-    if (modId === "totem" || modId === "tvRetirada") return "Profissional";
+    if (modId === "delivery" || modId === "motoboy") return "Addon Delivery";
+    if (modId === "totem" || modId === "tvRetirada" || modId === "garcomPdv") return "Fast Food / Completo";
+    if (modId === "cozinha") return "";
     return "";
   };
 
