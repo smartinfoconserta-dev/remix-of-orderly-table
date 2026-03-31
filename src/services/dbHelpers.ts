@@ -220,7 +220,7 @@ export const dbUpdatePedido = (pedidoId: string, updates: Record<string, any>) =
   const sid = getActiveStoreId();
   if (!sid) { console.warn("dbUpdatePedido: storeId is null"); return; }
   const params = { _id: pedidoId, _store_id: sid, _updates: updates };
-  supabase.rpc("rpc_update_pedido" as any, params).then(({ error }: any) => {
+  Promise.resolve(supabase.rpc("rpc_update_pedido" as any, params)).then(({ error }: any) => {
     if (error) {
       if (isNetworkError(error)) {
         enqueue("rpc_update_pedido", params, `Atualizar pedido`);
