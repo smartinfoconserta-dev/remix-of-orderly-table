@@ -102,6 +102,18 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
   // ── sysConfig as reactive state (loads from DB) ──
   const [sysConfig, setSysConfig] = useState<SistemaConfig>(() => getSistemaConfig());
 
+  // ── Theme engine ──
+  const themeContainerRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = themeContainerRef.current;
+    if (!el) return;
+    const themeId = sysConfig.temaCardapio || "obsidian";
+    const customColor = sysConfig.corPrimaria;
+    const themeDefault = THEME_MAP[themeId]?.primary;
+    applyThemeToElement(el, themeId, customColor && customColor !== themeDefault ? customColor : undefined);
+    return () => { if (el) clearThemeFromElement(el); };
+  }, [sysConfig.temaCardapio, sysConfig.corPrimaria]);
+
   // Reactive product/category loading from Supabase cache
   const [produtos, setProdutos] = useState<Produto[]>(() => getCachedProdutos());
   const [dbCategorias, setDbCategorias] = useState<Categoria[]>(() => getCachedCategorias());
