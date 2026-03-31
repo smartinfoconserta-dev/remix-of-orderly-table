@@ -41,7 +41,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import PedidoFlow from "@/components/PedidoFlow";
-import MesaCard from "@/components/MesaCard";
+
 
 import LicenseBanner from "@/components/LicenseBanner";
 import StatusBadge from "@/components/StatusBadge";
