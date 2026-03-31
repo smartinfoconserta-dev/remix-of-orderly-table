@@ -108,7 +108,7 @@ export interface LicencaConfig {
   nomeCliente: string;
   dataVencimento: string;
   ativo: boolean;
-  plano?: "basico" | "medio" | "pro" | "premium";
+  plano?: "restaurante" | "fastfood" | "completo";
 }
 
 export type PlanoModulos = "restaurante" | "fastfood" | "completo";
