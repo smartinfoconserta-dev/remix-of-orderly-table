@@ -29,7 +29,7 @@ import {
 
 const BALCAO_ORIGINS = ["balcao", "delivery", "totem", "ifood"] as const;
 
-interface PedidoMeta {
+export interface PedidoMeta {
   modo: "cliente" | "garcom" | "caixa" | "totem";
   operador?: OperationalUser | null;
   paraViagem?: boolean;
