@@ -1,6 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { getActiveStoreId } from "@/lib/sessionManager";
 import { toast } from "sonner";
+import { enqueue, isNetworkError } from "@/lib/offlineQueue";
 import type {
   ItemCarrinho, PedidoRealizado, EventoOperacional,
   MovimentacaoCaixa, FechamentoConta, Mesa,
@@ -194,31 +195,64 @@ export const dbInsertPedido = async (p: PedidoRealizado) => {
     if (p.numeroPedido >= _nextPedidoNumber) _nextPedidoNumber = p.numeroPedido + 1;
     const row = pedidoToRow(p, sid);
     const { error } = await supabase.rpc("rpc_insert_pedido" as any, { _data: row });
-    if (error) { console.error("DB insert pedido", error); toast.error("Erro ao salvar pedido no banco"); }
-    else { decrementStock(p.itens, sid); }
+    if (error) {
+      if (isNetworkError(error)) {
+        enqueue("rpc_insert_pedido", { _data: row }, `Pedido #${p.numeroPedido}`);
+      } else {
+        console.error("DB insert pedido", error);
+        toast.error("Erro ao salvar pedido no banco");
+      }
+    } else {
+      decrementStock(p.itens, sid);
+    }
   } catch (err) {
-    console.error("dbInsertPedido unexpected error", err);
-    const fallbackRow = pedidoToRow(p, sid);
-    supabase.rpc("rpc_insert_pedido" as any, { _data: fallbackRow }).then(({ error }: any) => {
-      if (error) { console.error("DB insert pedido fallback", error); toast.error("Erro ao salvar pedido"); }
-      else { decrementStock(p.itens, sid); }
-    });
+    if (isNetworkError(err)) {
+      const row = pedidoToRow(p, sid);
+      enqueue("rpc_insert_pedido", { _data: row }, `Pedido #${p.numeroPedido}`);
+    } else {
+      console.error("dbInsertPedido unexpected error", err);
+      toast.error("Erro ao salvar pedido");
+    }
   }
 };
 
 export const dbUpdatePedido = (pedidoId: string, updates: Record<string, any>) => {
   const sid = getActiveStoreId();
   if (!sid) { console.warn("dbUpdatePedido: storeId is null"); return; }
-  supabase.rpc("rpc_update_pedido" as any, { _id: pedidoId, _store_id: sid, _updates: updates }).then(({ error }: any) => {
-    if (error) { console.error("DB update pedido", error); toast.error("Erro ao atualizar pedido"); }
+  const params = { _id: pedidoId, _store_id: sid, _updates: updates };
+  Promise.resolve(supabase.rpc("rpc_update_pedido" as any, params)).then(({ error }: any) => {
+    if (error) {
+      if (isNetworkError(error)) {
+        enqueue("rpc_update_pedido", params, `Atualizar pedido`);
+      } else {
+        console.error("DB update pedido", error);
+        toast.error("Erro ao atualizar pedido");
+      }
+    }
+  }).catch((err: any) => {
+    if (isNetworkError(err)) {
+      enqueue("rpc_update_pedido", params, `Atualizar pedido`);
+    }
   });
 };
 
 export const dbInsertFechamento = (f: FechamentoConta) => {
   const sid = getActiveStoreId();
   if (!sid) { console.warn("dbInsertFechamento: storeId is null, skipping"); return; }
-  supabase.rpc("rpc_insert_fechamento" as any, { _data: fechamentoToRow(f, sid) }).then(({ error }: any) => {
-    if (error) { console.error("DB insert fechamento", error); toast.error("Erro ao salvar fechamento no banco"); }
+  const row = fechamentoToRow(f, sid);
+  Promise.resolve(supabase.rpc("rpc_insert_fechamento" as any, { _data: row })).then(({ error }: any) => {
+    if (error) {
+      if (isNetworkError(error)) {
+        enqueue("rpc_insert_fechamento", { _data: row }, `Fechamento mesa ${f.mesaNumero}`);
+      } else {
+        console.error("DB insert fechamento", error);
+        toast.error("Erro ao salvar fechamento no banco");
+      }
+    }
+  }).catch((err: any) => {
+    if (isNetworkError(err)) {
+      enqueue("rpc_insert_fechamento", { _data: row }, `Fechamento mesa ${f.mesaNumero}`);
+    }
   });
 };
 
