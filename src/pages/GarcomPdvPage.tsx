@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { LogOut, Bell, Search, CreditCard, Smartphone, Wallet, ShoppingBag, Trash2, Plus, Check } from "lucide-react";
+import { LogOut, Bell, Search, CreditCard, Smartphone, Wallet, ShoppingBag, Trash2, Plus, Check, Printer } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel } from "@/components/ui/alert-dialog";
@@ -15,7 +15,8 @@ import { useRestaurant } from "@/contexts/RestaurantContext";
 import { useRouteLock } from "@/hooks/use-route-lock";
 import type { PaymentMethod, SplitPayment, FiltroMesa } from "@/types/operations";
 import { toast } from "sonner";
-import { formatPrice } from "@/components/caixa/caixaHelpers";
+import { formatPrice, printComanda } from "@/components/caixa/caixaHelpers";
+import { getSistemaConfig } from "@/lib/adminStorage";
 
 
 const PAYMENT_OPTIONS: { value: PaymentMethod; label: string; icon: typeof CreditCard }[] = [
@@ -43,6 +44,14 @@ const GarcomPdvPage = () => {
   const [pagamentoValue, setPagamentoValue] = useState("");
   const [processando, setProcessando] = useState(false);
   const [actionMesaId, setActionMesaId] = useState<string | null>(null);
+  const [receiptData, setReceiptData] = useState<{
+    mesaNumero: number;
+    total: number;
+    formasLabel: string;
+    pagamentos: SplitPayment[];
+    itens: Array<{ quantidade: number; nome: string; preco: number }>;
+    numeroPedido: number;
+  } | null>(null);
 
   useRouteLock("/garcom-pdv");
 
@@ -129,6 +138,13 @@ const GarcomPdvPage = () => {
     }
     setProcessando(true);
 
+    const mesa = mesas.find(m => m.id === pagamentoMesaId);
+    if (!mesa || mesa.total === 0) {
+      toast.error("Mesa sem consumo para fechar");
+      setProcessando(false);
+      return;
+    }
+
     fecharConta(pagamentoMesaId, {
       usuario: {
         id: currentGarcom.id,
@@ -146,14 +162,45 @@ const GarcomPdvPage = () => {
       p.formaPagamento === "pix" ? "PIX" : p.formaPagamento === "credito" ? "Crédito" : "Débito"
     ))].join(" + ");
 
-    toast.success(`Mesa ${pagamentoMesa?.numero} paga com ${formas}!`, { icon: "💳" });
+    const lastPedido = mesa.pedidos[mesa.pedidos.length - 1];
+    const allItens = mesa.pedidos.flatMap(p => p.itens);
+
+    setReceiptData({
+      mesaNumero: mesa.numero,
+      total: mesa.total,
+      formasLabel: formas,
+      pagamentos: [...pagamentos],
+      itens: allItens.map(i => ({ quantidade: i.quantidade, nome: i.nome, preco: i.precoUnitario })),
+      numeroPedido: lastPedido?.numeroPedido ?? 0,
+    });
 
     setPagamentoOpen(false);
     setPagamentoMesaId(null);
     setPagamentos([]);
     setProcessando(false);
+  }, [pagamentoMesaId, pagamentos, mesas, fecharConta, currentGarcom, fechamentoPronto]);
+
+  const handlePrintReceipt = useCallback(() => {
+    if (!receiptData) return;
+    const nomeRest = getSistemaConfig().nomeRestaurante || "Restaurante";
+    const now = new Date();
+    const dataHora = `${String(now.getDate()).padStart(2,"0")}/${String(now.getMonth()+1).padStart(2,"0")}/${now.getFullYear()} ${String(now.getHours()).padStart(2,"0")}:${String(now.getMinutes()).padStart(2,"0")}`;
+    printComanda({
+      tipo: `Mesa ${String(receiptData.mesaNumero).padStart(2, "0")}`,
+      numero: receiptData.numeroPedido,
+      dataHora,
+      itens: receiptData.itens,
+      subtotal: receiptData.total,
+      total: receiptData.total,
+      formaPagamento: receiptData.formasLabel,
+      origem: "mesa",
+    }, nomeRest);
+  }, [receiptData]);
+
+  const handleCloseReceipt = useCallback(() => {
+    setReceiptData(null);
     setSearchParams({});
-  }, [pagamentoMesaId, pagamentos, pagamentoMesa, fecharConta, currentGarcom, setSearchParams, fechamentoPronto]);
+  }, [setSearchParams]);
 
   if (!currentGarcom && !isAdminAccess) {
     return (
@@ -328,6 +375,67 @@ const GarcomPdvPage = () => {
             <p className="text-[10px] text-center text-muted-foreground pb-2">
               Garçom PDV — apenas pagamentos digitais
             </p>
+          </div>
+        </div>
+      </ModuleGate>
+    );
+  }
+
+  // Receipt dialog
+  if (receiptData) {
+    return (
+      <ModuleGate moduleKey="garcomPdv" moduleName="Garçom PDV">
+        <div className="min-h-svh bg-background flex flex-col items-center justify-center p-6">
+          <div className="w-full max-w-sm space-y-5">
+            {/* Success header */}
+            <div className="text-center space-y-2">
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500/15">
+                <Check className="h-8 w-8 text-emerald-400" />
+              </div>
+              <h2 className="text-2xl font-black text-foreground">Pagamento realizado</h2>
+              <p className="text-sm text-muted-foreground">
+                Mesa {String(receiptData.mesaNumero).padStart(2, "0")}
+              </p>
+            </div>
+
+            {/* Summary card */}
+            <div className="rounded-2xl border border-border bg-card overflow-hidden">
+              <div className="divide-y divide-border/50">
+                {receiptData.itens.map((item, i) => (
+                  <div key={i} className="flex items-center justify-between px-4 py-2">
+                    <span className="text-xs text-muted-foreground">{item.quantidade}× {item.nome}</span>
+                    <span className="text-xs font-bold text-foreground tabular-nums">{formatPrice(item.preco * item.quantidade)}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="flex items-center justify-between px-4 py-3 border-t border-border bg-secondary/20">
+                <span className="text-sm font-black text-foreground">TOTAL</span>
+                <span className="text-lg font-black text-primary tabular-nums">{formatPrice(receiptData.total)}</span>
+              </div>
+              <div className="flex items-center justify-center px-4 py-2 border-t border-border">
+                <span className="text-xs font-bold text-muted-foreground">
+                  Pago com: <span className="text-foreground">{receiptData.formasLabel}</span>
+                </span>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="flex flex-col gap-2">
+              <Button
+                className="w-full h-12 rounded-xl font-bold gap-2"
+                variant="outline"
+                onClick={handlePrintReceipt}
+              >
+                <Printer className="h-4 w-4" />
+                Imprimir comanda
+              </Button>
+              <Button
+                className="w-full h-12 rounded-xl font-black"
+                onClick={handleCloseReceipt}
+              >
+                Fechar
+              </Button>
+            </div>
           </div>
         </div>
       </ModuleGate>
