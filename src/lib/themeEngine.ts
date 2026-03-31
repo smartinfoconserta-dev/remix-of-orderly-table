@@ -62,6 +62,9 @@ export const THEME_MAP: Record<string, ThemeVars> = {
 export function applyThemeToElement(element: HTMLElement, themeId: string, customPrimary?: string): void {
   const theme = THEME_MAP[themeId];
   if (!theme) return;
+  // Clear any inline background from gradient mode
+  element.style.background = "";
+  element.style.minHeight = "";
 
   const primary = customPrimary || theme.primary;
 
@@ -166,4 +169,6 @@ export function clearThemeFromElement(element: HTMLElement): void {
     "--sidebar-primary", "--sidebar-border",
   ];
   vars.forEach(v => element.style.removeProperty(v));
+  element.style.background = "";
+  element.style.minHeight = "";
 }
