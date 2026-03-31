@@ -56,6 +56,7 @@ const AdminCardapio = ({ storeId }: Props) => {
   const [catEditando, setCatEditando] = useState<CategoriaCustom | null>(null);
   const [catNomeInput, setCatNomeInput] = useState("");
   const [catIconeInput, setCatIconeInput] = useState("tag");
+  const [catParentInput, setCatParentInput] = useState<string | null>(null);
 
   const loadProducts = useCallback(async () => {
     if (!storeId) return;
@@ -240,51 +241,38 @@ const AdminCardapio = ({ storeId }: Props) => {
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-black text-foreground">Categorias</h3>
-          <Button size="sm" variant="outline" className="rounded-xl font-bold gap-1 text-xs" onClick={() => { setCatEditando(null); setCatNomeInput(""); setCatIconeInput("tag"); setCatDialogOpen(true); }}>
+          <Button size="sm" variant="outline" className="rounded-xl font-bold gap-1 text-xs" onClick={() => { setCatEditando(null); setCatNomeInput(""); setCatIconeInput("tag"); setCatParentInput(null); setCatDialogOpen(true); }}>
             <Plus className="h-3.5 w-3.5" /> Nova categoria
           </Button>
         </div>
-        <div className="flex flex-wrap gap-2">
-          {todasCategorias.map((c) => {
-            const count = allProducts.filter((p) => p.categoria === c.id).length;
+        <div className="space-y-2">
+          {todasCategorias.filter((c) => !c.parentId).map((parent) => {
+            const parentCount = allProducts.filter((p) => p.categoria === parent.id).length;
+            const children = todasCategorias.filter((c) => c.parentId === parent.id);
+            const totalCount = parentCount + children.reduce((acc, ch) => acc + allProducts.filter((p) => p.categoria === ch.id).length, 0);
             return (
-              <div key={c.id} className="flex items-center gap-1.5 rounded-xl border border-border bg-card px-3 py-1.5">
-                <span className="text-xs font-bold text-foreground">{c.nome}</span>
-                <span className="text-[10px] text-muted-foreground">({count})</span>
-                  <>
-                    <Button variant="ghost" size="icon" className="h-5 w-5" onClick={async () => {
-                      const cats = await ensureCustomCategorias();
-                      const target = cats.find((cc) => cc.id === c.id || normalizeCategoryName(cc.nome) === normalizeCategoryName(c.nome));
-                      if (target) { setCatEditando(target); setCatNomeInput(target.nome); setCatIconeInput(target.icone || "tag"); }
-                      else { setCatEditando(c); setCatNomeInput(c.nome); setCatIconeInput(c.icone || "tag"); }
-                      setCatDialogOpen(true);
-                    }}><Pencil className="h-3 w-3" /></Button>
-                    <Button variant="ghost" size="icon" className="h-5 w-5" onClick={async () => {
-                      const cats = await ensureCustomCategorias();
-                      const idx = cats.findIndex((cc) => cc.id === c.id || normalizeCategoryName(cc.nome) === normalizeCategoryName(c.nome));
-                      if (idx <= 0) return;
-                      const next = [...cats]; [next[idx - 1], next[idx]] = [next[idx], next[idx - 1]];
-                      persistCategorias(next).catch(() => toast.error("Erro ao reordenar categoria"));
-                    }}><span className="text-[10px]">▲</span></Button>
-                    <Button variant="ghost" size="icon" className="h-5 w-5" onClick={async () => {
-                      const cats = await ensureCustomCategorias();
-                      const idx = cats.findIndex((cc) => cc.id === c.id || normalizeCategoryName(cc.nome) === normalizeCategoryName(c.nome));
-                      if (idx < 0 || idx >= cats.length - 1) return;
-                      const next = [...cats]; [next[idx], next[idx + 1]] = [next[idx + 1], next[idx]];
-                      persistCategorias(next).catch(() => toast.error("Erro ao reordenar categoria"));
-                    }}><span className="text-[10px]">▼</span></Button>
-                    <Button variant="ghost" size="icon" className="h-5 w-5 text-destructive hover:bg-destructive/10" onClick={async () => {
-                      if (count > 0) { toast.error("Remova os produtos desta categoria primeiro"); return; }
-                      const cats = await ensureCustomCategorias();
-                      const catNomeNormalizado = normalizeCategoryName(c.nome);
-                      const next = cats.filter((cc) => {
-                        if (cc.id === c.id) return false;
-                        return normalizeCategoryName(cc.nome) !== catNomeNormalizado;
-                      });
-                      await persistCategorias(next);
-                      toast.success("Categoria removida");
-                    }}><Trash2 className="h-3 w-3" /></Button>
-                  </>
+              <div key={parent.id} className="space-y-1">
+                <div className="flex items-center gap-1.5 rounded-xl border border-border bg-card px-3 py-1.5">
+                  <CategoryIcon name={parent.icone} className="h-3.5 w-3.5 text-muted-foreground" />
+                  <span className="text-xs font-bold text-foreground">{parent.nome}</span>
+                  <span className="text-[10px] text-muted-foreground">({totalCount})</span>
+                  {renderCatActions(parent, parentCount)}
+                </div>
+                {children.length > 0 && (
+                  <div className="ml-6 flex flex-wrap gap-1.5">
+                    {children.map((child) => {
+                      const childCount = allProducts.filter((p) => p.categoria === child.id).length;
+                      return (
+                        <div key={child.id} className="flex items-center gap-1.5 rounded-lg border border-border/60 bg-secondary/40 px-2.5 py-1">
+                          <CategoryIcon name={child.icone} className="h-3 w-3 text-muted-foreground" />
+                          <span className="text-[11px] font-semibold text-foreground">{child.nome}</span>
+                          <span className="text-[10px] text-muted-foreground">({childCount})</span>
+                          {renderCatActions(child, childCount)}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             );
           })}
@@ -534,6 +522,19 @@ const AdminCardapio = ({ storeId }: Props) => {
           <div className="space-y-4 pt-2">
             <div className="space-y-1.5"><label className="text-xs font-bold text-muted-foreground">Nome da categoria</label><Input value={catNomeInput} onChange={(e) => setCatNomeInput(e.target.value)} placeholder="Ex.: Massas" maxLength={40} /></div>
             <div className="space-y-1.5">
+              <label className="text-xs font-bold text-muted-foreground">Categoria-pai (opcional)</label>
+              <Select value={catParentInput ?? "__none__"} onValueChange={(v) => setCatParentInput(v === "__none__" ? null : v)}>
+                <SelectTrigger className="rounded-xl"><SelectValue placeholder="Nenhuma (categoria principal)" /></SelectTrigger>
+                <SelectContent position="popper" sideOffset={4}>
+                  <SelectItem value="__none__">Nenhuma (categoria principal)</SelectItem>
+                  {todasCategorias.filter((c) => !c.parentId && c.id !== catEditando?.id).map((c) => (
+                    <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-[10px] text-muted-foreground">Selecione uma categoria-pai para criar uma subcategoria</p>
+            </div>
+            <div className="space-y-1.5">
               <label className="text-xs font-bold text-muted-foreground">Ícone</label>
               <div className="max-h-[40vh] overflow-y-auto space-y-3">
                 {iconGroups.map((group) => (
@@ -556,7 +557,7 @@ const AdminCardapio = ({ storeId }: Props) => {
               <Button className="flex-1" disabled={!catNomeInput.trim()} onClick={async () => {
                 if (!catNomeInput.trim()) return;
                 if (catEditando) {
-                  const next = categoriasCustom.map((c) => c.id === catEditando.id ? { ...c, nome: catNomeInput.trim(), icone: catIconeInput } : c);
+                  const next = categoriasCustom.map((c) => c.id === catEditando.id ? { ...c, nome: catNomeInput.trim(), icone: catIconeInput, parentId: catParentInput } : c);
                   await persistCategorias(next);
                   toast.success("Categoria atualizada");
                 } else {
@@ -565,6 +566,7 @@ const AdminCardapio = ({ storeId }: Props) => {
                     nome: catNomeInput.trim(),
                     icone: catIconeInput,
                     ordem: todasCategorias.length,
+                    parentId: catParentInput,
                   };
                   const next = [...categoriasCustom, nova];
                   await persistCategorias(next);
