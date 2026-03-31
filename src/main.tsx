@@ -30,7 +30,7 @@ createRoot(document.getElementById("root")!).render(
             <RestaurantProvider>
               <BrowserRouter>
                 <Toaster />
-                <Sonner />
+                <Sonner position="top-right" duration={2000} />
                 <App />
               </BrowserRouter>
             </RestaurantProvider>
