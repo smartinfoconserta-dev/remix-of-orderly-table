@@ -1330,7 +1330,7 @@ const CaixaPage = ({ accessMode = "caixa", deliveryOnly = false }: CaixaPageProp
                   )}
                 </button>
                 )}
-                {(sistemaConfig.modulos?.totem === true || pedidosTotemAtivos.length > 0) && (
+                {showTotemTab && (
                 <button
                   onClick={() => setCaixaView("totem")}
                   className={`px-4 py-1.5 text-xs font-bold transition-colors border border-border rounded-t -mb-px relative flex items-center gap-1.5 ${
