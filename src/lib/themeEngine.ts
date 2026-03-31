@@ -112,7 +112,7 @@ export function applyCustomThemeToElement(element: HTMLElement, config: {
 }): void {
   // Background
   if (config.fundoTipo === "gradiente" && config.fundoGradiente) {
-    element.style.setProperty("--background", "0 0% 0%");
+    element.style.setProperty("--background", "0 0% 0% / 0");
     element.style.background = `linear-gradient(${config.fundoGradiente.direcao}, ${config.fundoGradiente.cor1}, ${config.fundoGradiente.cor2})`;
     element.style.minHeight = "100dvh";
   } else if (config.fundoCor) {
