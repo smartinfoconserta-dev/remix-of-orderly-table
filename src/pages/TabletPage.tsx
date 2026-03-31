@@ -5,27 +5,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useRestaurant } from "@/contexts/RestaurantContext";
 import DeviceGate from "@/components/DeviceGate";
-import { getStoredDeviceId, clearStoredDeviceId } from "@/lib/deviceAuth";
+import { getStoredDeviceId, clearStoredDeviceId, updateDeviceMesa } from "@/lib/deviceAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { LockKeyhole, LogOut } from "lucide-react";
 import { toast } from "sonner";
+import { logEvento } from "@/services/dbHelpers";
 
 const MESA_STORAGE_KEY = "orderly-tablet-mesa";
-
-/** Update mesa_id on the devices table for this device */
-async function updateDeviceMesa(mesaId: string | null) {
-  const deviceId = getStoredDeviceId();
-  if (!deviceId) return;
-  try {
-    await supabase
-      .from("devices")
-      .update({ mesa_id: mesaId } as any)
-      .eq("device_id", deviceId);
-  } catch (err) {
-    console.error("[TabletPage] updateDeviceMesa error:", err);
-  }
-}
 
 function saveMesaToStorage(mesaId: string) {
   try { sessionStorage.setItem(MESA_STORAGE_KEY, mesaId); } catch {}
@@ -37,24 +24,6 @@ function getMesaFromStorage(): string | null {
 
 function clearMesaFromStorage() {
   try { sessionStorage.removeItem(MESA_STORAGE_KEY); } catch {}
-}
-
-async function logEvento(storeId: string, tipo: string, email: string, descricao: string) {
-  try {
-    await supabase.rpc("rpc_insert_evento", {
-      _data: {
-        id: crypto.randomUUID(),
-        store_id: storeId,
-        tipo,
-        usuario_nome: email,
-        descricao,
-        criado_em: new Date().toLocaleString("pt-BR"),
-        criado_em_iso: new Date().toISOString(),
-      },
-    });
-  } catch (err) {
-    console.error("[TabletPage] logEvento error:", err);
-  }
 }
 
 const TabletInner = ({ storeId, initialMesaId }: { storeId: string; initialMesaId?: string | null }) => {

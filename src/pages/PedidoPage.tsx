@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import type { ItemCarrinho } from "@/contexts/RestaurantContext";
 import type { Bairro } from "@/lib/deliveryStorage";
 import type { HorariosSemana, HorarioFuncionamento, SistemaConfig } from "@/lib/adminStorage";
+import { checkDeliveryAberto } from "@/lib/adminStorage";
 import { preloadProducts } from "@/hooks/useProducts";
 import { applyThemeToElement, applyCustomThemeToElement, clearThemeFromElement, THEME_MAP } from "@/lib/themeEngine";
 
@@ -40,54 +41,6 @@ const defaultHorariosSemana: HorariosSemana = {
   dom: { ...defaultHorario, ativo: false }, seg: { ...defaultHorario }, ter: { ...defaultHorario },
   qua: { ...defaultHorario }, qui: { ...defaultHorario }, sex: { ...defaultHorario }, sab: { ...defaultHorario },
 };
-
-function checkDeliveryAberto(horarios: HorariosSemana) {
-  const agora = new Date();
-  const diasSemana: (keyof HorariosSemana)[] = ["dom", "seg", "ter", "qua", "qui", "sex", "sab"];
-  const diaAtual = diasSemana[agora.getDay()];
-  const horarioDia = horarios[diaAtual];
-  const nomes = ["domingo", "segunda", "terça", "quarta", "quinta", "sexta", "sábado"];
-
-  const calcularHorasAte = (targetHora: string, diasAdiante = 0): number => {
-    const [h, m] = targetHora.split(":").map(Number);
-    const target = new Date(agora);
-    target.setDate(target.getDate() + diasAdiante);
-    target.setHours(h, m, 0, 0);
-    return Math.max(0, Math.round((target.getTime() - agora.getTime()) / 3600000));
-  };
-
-  const buscarProximoDia = (): { texto: string; horas: number } => {
-    for (let i = 1; i <= 7; i++) {
-      const proximoDia = diasSemana[(agora.getDay() + i) % 7];
-      const h = horarios[proximoDia];
-      if (h.ativo) {
-        const horas = calcularHorasAte(h.abertura, i);
-        const nomeDia = nomes[(agora.getDay() + i) % 7];
-        return { texto: `Abrimos ${nomeDia} às ${h.abertura}`, horas };
-      }
-    }
-    return { texto: "", horas: 0 };
-  };
-
-  if (!horarioDia.ativo) {
-    const proximo = buscarProximoDia();
-    return { aberto: false, mensagem: "Fechados hoje", proximoHorario: proximo.texto, horasRestantes: proximo.horas };
-  }
-
-  const [hAb, mAb] = horarioDia.abertura.split(":").map(Number);
-  const [hFe, mFe] = horarioDia.fechamento.split(":").map(Number);
-  const minutosAgora = agora.getHours() * 60 + agora.getMinutes();
-
-  if (minutosAgora < hAb * 60 + mAb) {
-    const horas = calcularHorasAte(horarioDia.abertura);
-    return { aberto: false, mensagem: "Ainda não abrimos", proximoHorario: `Abrimos às ${horarioDia.abertura}`, horasRestantes: horas };
-  }
-  if (minutosAgora >= hFe * 60 + mFe) {
-    const proximo = buscarProximoDia();
-    return { aberto: false, mensagem: "Já encerramos por hoje", proximoHorario: proximo.texto, horasRestantes: proximo.horas };
-  }
-  return { aberto: true, mensagem: `Aberto até ${horarioDia.fechamento}`, proximoHorario: "", horasRestantes: 0 };
-}
 
 // ── Confirmação sub-component ──
 function ConfirmacaoEtapa({ nome, endereco, numero, complemento, bairro, itens, taxaEntrega, totalPedido, formaPag, setFormaPag, troco, setTroco, onVoltar, onConfirmar, editEndereco }: {

@@ -345,3 +345,22 @@ export const dbSyncEstadoMesa = (mesa: Mesa) => {
     else { console.error("dbSyncEstadoMesa unexpected", err); }
   });
 };
+
+/** Centralized logEvento for tablet/totem/device flows */
+export async function logEvento(storeId: string, tipo: string, usuarioNome: string, descricao: string) {
+  try {
+    await supabase.rpc("rpc_insert_evento", {
+      _data: {
+        id: crypto.randomUUID(),
+        store_id: storeId,
+        tipo,
+        usuario_nome: usuarioNome,
+        descricao,
+        criado_em: new Date().toLocaleString("pt-BR"),
+        criado_em_iso: new Date().toISOString(),
+      },
+    });
+  } catch (err) {
+    console.error("[logEvento] error:", err);
+  }
+}
