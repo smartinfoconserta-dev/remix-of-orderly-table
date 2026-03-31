@@ -29,7 +29,7 @@ interface Props {
 
 const AdminConfig = ({ storeId, storeName }: Props) => {
   const { stores } = useStore();
-  const [configSection, setConfigSection] = useState<"inicio" | "identidade" | "delivery" | "salao" | "operacao" | "modulos" | "sistema" | "impressoras">("inicio");
+  const [configSection, setConfigSection] = useState<"inicio" | "identidade" | "delivery" | "salao" | "restaurante" | "sistema" | "impressoras">("inicio");
   const [sistemaConfig, setSistemaConfig] = useState<SistemaConfig>(getSistemaConfig);
   const [licencaConfig, setLicencaConfig] = useState<LicencaConfig>(getLicencaConfig);
   const [horariosFuncionamento, setHorariosFuncionamento] = useState<HorariosSemana>(getHorariosFuncionamento);
