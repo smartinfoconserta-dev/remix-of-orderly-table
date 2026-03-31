@@ -37,7 +37,7 @@ import type { PaymentMethod, SplitPayment, UserRole } from "@/types/operations";
 import { getSistemaConfig } from "@/lib/adminStorage";
 import { getActiveStoreId } from "@/lib/sessionManager";
 import type { ItemCarrinho } from "@/contexts/RestaurantContext";
-import { findClienteDelivery, upsertClienteDelivery, type Bairro, type ClienteDelivery } from "@/lib/deliveryStorage";
+import { upsertClienteDelivery } from "@/lib/deliveryStorage";
 import { useCaixaBalcaoState } from "@/hooks/useCaixaBalcaoState";
 import { useCaixaDialogsState, type CriticalAction } from "@/hooks/useCaixaDialogsState";
 import { useCaixaMesaState } from "@/hooks/useCaixaMesaState";
