@@ -8,10 +8,17 @@ interface Props {
   showTotal?: boolean;
   showIndicators?: boolean;
   timeLabel?: string;
+  timeColor?: "green" | "amber" | "red";
   subtle?: boolean;
 }
 
-const MesaCard = ({ mesa, onClick, showTotal = true, showIndicators = true, timeLabel, subtle }: Props) => {
+const TIME_COLOR_CLASS: Record<string, string> = {
+  green: "text-status-consumo",
+  amber: "text-amber-400",
+  red: "text-destructive",
+};
+
+const MesaCard = ({ mesa, onClick, showTotal = true, showIndicators = true, timeLabel, timeColor, subtle }: Props) => {
   const { status, chamarGarcom, carrinho, pedidos, total } = mesa;
   const hasParaViagem = pedidos.some((p) => p.paraViagem === true);
 
