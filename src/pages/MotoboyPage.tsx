@@ -758,12 +758,42 @@ export default function MotoboyPage() {
         </div>
       )}
 
-      {/* MODAL 1 — Lista de pedidos para retirada manual */}
-      {showManualPick && !confirmandoPedido && (
-        <div className="fixed inset-0 z-50 bg-background/95 backdrop-blur-sm flex flex-col">
-          <div className="flex items-center justify-between px-4 py-4 border-b border-border shrink-0">
-            <div>
-              <p className="font-black text-lg text-foreground">Pedidos para retirar</p>
+      <MotoboyDialogs
+        showManualPick={showManualPick}
+        setShowManualPick={setShowManualPick}
+        pedidosDisponiveis={pedidosDisponiveis}
+        confirmandoPedido={confirmandoPedido}
+        setConfirmandoPedido={setConfirmandoPedido}
+        onConfirmarRetirada={(pedido) => {
+          marcarBalcaoSaiu(pedido.id, sessao?.nome || "Motoboy");
+          toast.success(`Pedido #${pedido.numeroPedido} retirado! Boa entrega 🏍️`);
+          setConfirmandoPedido(null);
+          setShowManualPick(false);
+        }}
+        confirmandoEntregue={confirmandoEntregue}
+        setConfirmandoEntregue={setConfirmandoEntregue}
+        onConfirmarEntrega={(pedido) => {
+          marcarBalcaoEntregue(pedido.id);
+          toast.success(`Pedido #${pedido.numeroPedido} entregue! ✓`);
+          setConfirmandoEntregue(null);
+        }}
+        confirmandoDevolvido={confirmandoDevolvido}
+        setConfirmandoDevolvido={setConfirmandoDevolvido}
+        motivoDevolucao={motivoDevolucao}
+        setMotivoDevolucao={setMotivoDevolucao}
+        onConfirmarDevolucao={(pedido, motivo) => {
+          cancelarEntregaMotoboy(pedido.id, motivo);
+          toast.info(`Pedido #${pedido.numeroPedido} devolvido ao caixa`);
+          setConfirmandoDevolvido(null);
+          setMotivoDevolucao("");
+        }}
+        usbScanOpen={usbScanOpen}
+        setUsbScanOpen={setUsbScanOpen}
+        usbScanInput={usbScanInput}
+        setUsbScanInput={setUsbScanInput}
+        usbScanInputRef={usbScanInputRef}
+        onUsbScan={handleUsbQrScan}
+      />
               <p className="text-xs text-muted-foreground">Toque no pedido que você vai entregar</p>
             </div>
             <button onClick={() => setShowManualPick(false)}
