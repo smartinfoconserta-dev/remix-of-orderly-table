@@ -28,24 +28,8 @@ import CaixaBalcaoFlow from "@/components/caixa/CaixaBalcaoFlow";
 import LicenseBanner from "@/components/LicenseBanner";
 import StatusBadge from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Textarea } from "@/components/ui/textarea";
+import { Tabs } from "@/components/ui/tabs";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRestaurant } from "@/contexts/RestaurantContext";
 import { useRouteLock } from "@/hooks/use-route-lock";
