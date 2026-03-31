@@ -172,7 +172,7 @@ export function buildPedidoFlowHeader(props: PedidoFlowHeaderProps) {
               placeholder="Buscar..."
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              className={`h-9 w-36 rounded-xl border pl-9 pr-3 text-sm focus:outline-none focus:ring-2 focus:w-48 transition-all ${
+              className={`h-9 rounded-xl border pl-9 pr-3 text-sm focus:outline-none focus:ring-2 transition-all ${isTotem ? "w-44 focus:w-56" : "w-36 focus:w-48"} ${
                 isTotem
                   ? "border-border bg-secondary text-foreground placeholder:text-muted-foreground focus:ring-primary"
                   : "border-border bg-secondary text-foreground placeholder:text-muted-foreground focus:ring-primary"

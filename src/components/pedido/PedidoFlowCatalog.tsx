@@ -59,8 +59,8 @@ const PedidoFlowCatalog = ({
                 <div className={`flex flex-1 flex-col gap-1.5 ${isTotem ? "p-3 min-h-0" : "p-4 min-h-[9rem]"}`}>
                   <h2 className={`line-clamp-2 font-black leading-tight ${isTotem ? "text-base text-foreground" : "text-[1.05rem] text-foreground"}`}>{produto.nome}</h2>
                   {!isTotem && <p className="line-clamp-3 flex-1 text-sm leading-relaxed text-muted-foreground">{produto.descricao}</p>}
-                  <div className="mt-1 flex items-end justify-between gap-2">
-                    <p className={`font-black tracking-tight ${isTotem ? "text-lg text-primary" : "text-[1.05rem] text-foreground"}`}>{formatPrice(produto.preco)}</p>
+                  <div className={`flex items-end justify-between gap-2 ${isTotem ? "mt-auto" : "mt-1"}`}>
+                    <p className={`font-black tracking-tight ${isTotem ? "text-base text-primary" : "text-[1.05rem] text-foreground"}`}>{formatPrice(produto.preco)}</p>
                     <button
                       type="button"
                       onClick={(event) => {
@@ -69,12 +69,12 @@ const PedidoFlowCatalog = ({
                       }}
                       className={`flex items-center justify-center transition-transform active:scale-95 ${
                         isTotem
-                          ? "h-12 rounded-xl bg-primary px-4 text-primary-foreground font-black text-sm shadow-md gap-1"
+                          ? "h-10 rounded-lg bg-primary px-3 text-primary-foreground font-black text-xs gap-1"
                           : "h-11 w-11 rounded-full bg-primary text-primary-foreground shadow-[0_18px_32px_-22px_hsl(var(--primary)/0.95)]"
                       }`}
                       aria-label={`Adicionar ${produto.nome}`}
                     >
-                      <Plus className={isTotem ? "h-4 w-4" : "h-5 w-5"} />
+                      <Plus className={isTotem ? "h-3.5 w-3.5" : "h-5 w-5"} />
                       {isTotem && <span>ADICIONAR</span>}
                     </button>
                   </div>
