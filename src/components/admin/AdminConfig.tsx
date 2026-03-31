@@ -80,9 +80,8 @@ const AdminConfig = ({ storeId, storeName }: Props) => {
             {configSection === "inicio" && "Configurações"}
             {configSection === "identidade" && "🎨 Identidade Visual"}
             {configSection === "delivery" && "🛵 Delivery"}
-            {configSection === "salao" && "🍽️ Salão"}
-            {configSection === "operacao" && "⚙️ Operação"}
-            {configSection === "modulos" && "🧩 Módulos"}
+            {configSection === "salao" && "🍽️ Ambiente"}
+            {configSection === "restaurante" && "🏪 Meu Restaurante"}
             {configSection === "sistema" && "💾 Sistema"}
             {configSection === "impressoras" && "🖨️ Impressoras"}
           </h2>
