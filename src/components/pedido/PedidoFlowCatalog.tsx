@@ -53,7 +53,7 @@ const PedidoFlowCatalog = ({
               }}
             >
               <button type="button" onClick={() => onSelectProduto(produto)} className="flex w-full flex-col text-left">
-                <div className={isTotem ? "aspect-square overflow-hidden" : "aspect-[3/2] overflow-hidden"}>
+                <div className={isTotem ? "aspect-[4/3] overflow-hidden" : "aspect-[3/2] overflow-hidden"}>
                   <img src={produto.imagem} alt={produto.nome} className="h-full w-full object-cover" loading="lazy" />
                 </div>
                 <div className={`flex flex-1 flex-col gap-2 p-4 ${isTotem ? "min-h-[7rem]" : "min-h-[9rem]"}`}>
