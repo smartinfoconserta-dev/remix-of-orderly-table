@@ -274,8 +274,16 @@ export const dbUpdateFechamento = (id: string, updates: Record<string, any>) => 
 export const dbInsertEvento = (e: EventoOperacional) => {
   const sid = getActiveStoreId();
   if (!sid) return;
-  supabase.rpc("rpc_insert_evento" as any, { _data: eventoToRow(e, sid) }).then(({ error }: any) => {
-    if (error) { console.error("DB insert evento", error); toast.error("Erro ao registrar evento"); }
+  const row = eventoToRow(e, sid);
+  const params = { _data: row };
+  supabase.rpc("rpc_insert_evento" as any, params).then(({ error }: any) => {
+    if (error) {
+      if (isNetworkError(error)) { enqueue("rpc_insert_evento", params, `Evento: ${(e.descricao || "").slice(0, 30)}`); }
+      else { console.error("DB insert evento", error); toast.error("Erro ao registrar evento"); }
+    }
+  }).catch((err: any) => {
+    if (isNetworkError(err)) { enqueue("rpc_insert_evento", params, `Evento: ${(e.descricao || "").slice(0, 30)}`); }
+    else { console.error("dbInsertEvento unexpected", err); }
   });
 };
 
