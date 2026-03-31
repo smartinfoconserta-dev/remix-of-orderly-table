@@ -58,7 +58,7 @@ export interface FecharContaInput {
   origemOverride?: FechamentoConta["origem"];
 }
 
-interface RestaurantStore {
+export interface RestaurantStore {
   mesas: Mesa[];
   eventos: EventoOperacional[];
   movimentacoesCaixa: MovimentacaoCaixa[];
