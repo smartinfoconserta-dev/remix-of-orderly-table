@@ -216,6 +216,8 @@ export default function PedidoPage() {
           mensagemFechado: configData?.mensagem_fechado || "",
           mensagemBoasVindas: configData?.mensagem_boas_vindas || "",
           horarios,
+          temaCardapio: (configData as any)?.tema_cardapio || undefined,
+          corPrimaria: configData?.cor_primaria || undefined,
         });
 
         // Load bairros
