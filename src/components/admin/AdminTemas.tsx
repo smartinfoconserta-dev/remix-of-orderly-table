@@ -1,8 +1,12 @@
-import { useState } from "react";
-import { Check, Palette, Save } from "lucide-react";
+import { useState, useMemo } from "react";
+import { Check, Palette, Save, Monitor } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { SistemaConfig } from "@/lib/adminStorage";
+import { THEME_MAP } from "@/lib/themeEngine";
 import { toast } from "sonner";
 
 interface AdminTemasProps {
@@ -16,90 +20,161 @@ interface ThemePreset {
   id: string;
   name: string;
   description: string;
-  preview: { bg: string; surface: string; primary: string; text: string; muted: string };
-  vars: Record<string, string>;
+  preview: { bg: string; surface: string; primary: string; text: string; muted: string; sidebar: string };
 }
 
 const THEME_PRESETS: ThemePreset[] = [
-  {
-    id: "obsidian",
-    name: "Obsidian",
-    description: "Escuro elegante com detalhes em laranja",
-    preview: { bg: "#0A0A0A", surface: "#161616", primary: "#F97316", text: "#FAFAFA", muted: "#71717A" },
-    vars: { "--theme-bg": "#0A0A0A", "--theme-surface": "#161616", "--theme-text": "#FAFAFA", "--theme-muted": "#71717A", "--theme-primary": "#F97316", "--theme-border": "#27272A", "--theme-sidebar-bg": "#0F0F0F", "--theme-sidebar-active": "#F97316" },
-  },
-  {
-    id: "clean",
-    name: "Clean",
-    description: "Fundo claro, limpo e moderno",
-    preview: { bg: "#FFFFFF", surface: "#F4F4F5", primary: "#2563EB", text: "#18181B", muted: "#71717A" },
-    vars: { "--theme-bg": "#FFFFFF", "--theme-surface": "#F4F4F5", "--theme-text": "#18181B", "--theme-muted": "#71717A", "--theme-primary": "#2563EB", "--theme-border": "#E4E4E7", "--theme-sidebar-bg": "#FAFAFA", "--theme-sidebar-active": "#2563EB" },
-  },
-  {
-    id: "rustico",
-    name: "Rústico",
-    description: "Tons quentes, acolhedor e natural",
-    preview: { bg: "#1C1917", surface: "#292524", primary: "#D97706", text: "#FAFAF9", muted: "#A8A29E" },
-    vars: { "--theme-bg": "#1C1917", "--theme-surface": "#292524", "--theme-text": "#FAFAF9", "--theme-muted": "#A8A29E", "--theme-primary": "#D97706", "--theme-border": "#44403C", "--theme-sidebar-bg": "#1C1917", "--theme-sidebar-active": "#D97706" },
-  },
-  {
-    id: "premium",
-    name: "Premium",
-    description: "Escuro sofisticado com dourado",
-    preview: { bg: "#09090B", surface: "#18181B", primary: "#EAB308", text: "#FAFAFA", muted: "#A1A1AA" },
-    vars: { "--theme-bg": "#09090B", "--theme-surface": "#18181B", "--theme-text": "#FAFAFA", "--theme-muted": "#A1A1AA", "--theme-primary": "#EAB308", "--theme-border": "#27272A", "--theme-sidebar-bg": "#09090B", "--theme-sidebar-active": "#EAB308" },
-  },
-  {
-    id: "fresh",
-    name: "Fresh",
-    description: "Claro e vibrante, ideal para fast food",
-    preview: { bg: "#FFFFFF", surface: "#F0FDF4", primary: "#16A34A", text: "#14532D", muted: "#6B7280" },
-    vars: { "--theme-bg": "#FFFFFF", "--theme-surface": "#F0FDF4", "--theme-text": "#14532D", "--theme-muted": "#6B7280", "--theme-primary": "#16A34A", "--theme-border": "#DCFCE7", "--theme-sidebar-bg": "#F0FDF4", "--theme-sidebar-active": "#16A34A" },
-  },
-  {
-    id: "crimson",
-    name: "Vermelho Intenso",
-    description: "Ousado e marcante, ideal para hamburguerias",
-    preview: { bg: "#0C0A09", surface: "#1C1917", primary: "#DC2626", text: "#FAFAF9", muted: "#A8A29E" },
-    vars: { "--theme-bg": "#0C0A09", "--theme-surface": "#1C1917", "--theme-text": "#FAFAF9", "--theme-muted": "#A8A29E", "--theme-primary": "#DC2626", "--theme-border": "#44403C", "--theme-sidebar-bg": "#0C0A09", "--theme-sidebar-active": "#DC2626" },
-  },
+  { id: "obsidian", name: "Obsidian", description: "Escuro elegante com detalhes em laranja", preview: { bg: "#0A0A0A", surface: "#161616", primary: "#F97316", text: "#FAFAFA", muted: "#71717A", sidebar: "#0F0F0F" } },
+  { id: "clean", name: "Clean", description: "Fundo claro, limpo e moderno", preview: { bg: "#FFFFFF", surface: "#F4F4F5", primary: "#2563EB", text: "#18181B", muted: "#71717A", sidebar: "#FAFAFA" } },
+  { id: "rustico", name: "Rústico", description: "Tons quentes, acolhedor e natural", preview: { bg: "#1C1917", surface: "#292524", primary: "#D97706", text: "#FAFAF9", muted: "#A8A29E", sidebar: "#1C1917" } },
+  { id: "premium", name: "Premium", description: "Escuro sofisticado com dourado", preview: { bg: "#09090B", surface: "#18181B", primary: "#EAB308", text: "#FAFAFA", muted: "#A1A1AA", sidebar: "#09090B" } },
+  { id: "fresh", name: "Fresh", description: "Claro e vibrante, ideal para fast food", preview: { bg: "#FFFFFF", surface: "#F0FDF4", primary: "#16A34A", text: "#14532D", muted: "#6B7280", sidebar: "#F0FDF4" } },
+  { id: "crimson", name: "Vermelho Intenso", description: "Ousado e marcante, ideal para hamburguerias", preview: { bg: "#0C0A09", surface: "#1C1917", primary: "#DC2626", text: "#FAFAF9", muted: "#A8A29E", sidebar: "#0C0A09" } },
+];
+
+// ── Mini Tablet Preview ──
+const MiniTabletPreview = ({ bg, surface, text, muted, primary, sidebar, size = "sm" }: {
+  bg: string; surface: string; text: string; muted: string; primary: string; sidebar: string; size?: "sm" | "lg";
+}) => {
+  const w = size === "lg" ? "w-[380px]" : "w-full";
+  const h = size === "lg" ? "h-[240px]" : "h-[120px]";
+  return (
+    <div className={`${w} ${h} rounded-xl border-[3px] border-zinc-600 overflow-hidden flex shadow-lg`} style={{ backgroundColor: bg }}>
+      {/* Sidebar */}
+      <div className="w-[18%] flex flex-col gap-1 p-1.5 pt-3" style={{ backgroundColor: sidebar }}>
+        <div className="h-1.5 w-full rounded-full" style={{ backgroundColor: primary, opacity: 0.9 }} />
+        <div className="h-1 w-3/4 rounded-full" style={{ backgroundColor: muted, opacity: 0.3 }} />
+        <div className="h-1 w-3/4 rounded-full" style={{ backgroundColor: muted, opacity: 0.3 }} />
+        <div className="h-1 w-3/4 rounded-full" style={{ backgroundColor: muted, opacity: 0.3 }} />
+        <div className="h-1 w-3/4 rounded-full" style={{ backgroundColor: muted, opacity: 0.3 }} />
+      </div>
+      {/* Content */}
+      <div className="flex-1 p-1.5 flex flex-col gap-1">
+        {/* Header */}
+        <div className="flex items-center gap-1">
+          <div className="h-2 w-8 rounded-full" style={{ backgroundColor: text, opacity: 0.7 }} />
+          <div className="flex-1" />
+          <div className="h-2 w-4 rounded" style={{ backgroundColor: primary, opacity: 0.5 }} />
+        </div>
+        {/* Banner */}
+        <div className="h-[35%] rounded-md" style={{ background: `linear-gradient(135deg, ${primary}44, ${primary}22)`, border: `1px solid ${primary}33` }} />
+        {/* Products */}
+        <div className="flex gap-1 flex-1">
+          {[0, 1, 2].map(i => (
+            <div key={i} className="flex-1 rounded overflow-hidden" style={{ backgroundColor: surface, border: `1px solid ${muted}22` }}>
+              <div className="h-[55%]" style={{ backgroundColor: muted, opacity: 0.15 }} />
+              <div className="p-0.5">
+                <div className="h-1 w-3/4 rounded-full mt-0.5" style={{ backgroundColor: text, opacity: 0.5 }} />
+                <div className="h-1 w-1/2 rounded-full mt-0.5" style={{ backgroundColor: primary, opacity: 0.7 }} />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ── Color Picker Row ──
+const ColorPickerRow = ({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) => (
+  <div className="flex items-center gap-3">
+    <input type="color" value={value} onChange={(e) => onChange(e.target.value)} className="h-10 w-14 cursor-pointer rounded-lg border border-border bg-transparent shrink-0" />
+    <Input value={value} onChange={(e) => onChange(e.target.value)} className="w-28 font-mono text-sm" maxLength={7} />
+    <span className="text-sm text-muted-foreground">{label}</span>
+  </div>
+);
+
+const GRADIENT_DIRECTIONS = [
+  { value: "to bottom", label: "Cima → Baixo" },
+  { value: "to right", label: "Esquerda → Direita" },
+  { value: "to bottom right", label: "Diagonal ↘" },
+  { value: "to top right", label: "Diagonal ↗" },
 ];
 
 const AdminTemas = ({ sistemaConfig, setSistemaConfig, storeId, onSave }: AdminTemasProps) => {
   const selectedTheme = sistemaConfig.temaCardapio || "obsidian";
-  const [useCustomColor, setUseCustomColor] = useState(false);
-  const [customColor, setCustomColor] = useState(sistemaConfig.corPrimaria || "#F97316");
+  const isCustom = sistemaConfig.temaPersonalizado ?? false;
+
+  // Local state for custom colors (initialized from config)
+  const [fundoTipo, setFundoTipo] = useState<"solido" | "gradiente">(sistemaConfig.fundoTipo || "solido");
+  const [fundoCor, setFundoCor] = useState(sistemaConfig.fundoCor || "#0A0A0A");
+  const [fundoGrad1, setFundoGrad1] = useState(sistemaConfig.fundoGradiente?.cor1 || "#0A0A0A");
+  const [fundoGrad2, setFundoGrad2] = useState(sistemaConfig.fundoGradiente?.cor2 || "#1a1a2e");
+  const [fundoDir, setFundoDir] = useState(sistemaConfig.fundoGradiente?.direcao || "to bottom");
+
+  const [letraTipo, setLetraTipo] = useState<"solido" | "gradiente">(sistemaConfig.letraTipo || "solido");
+  const [letraCor, setLetraCor] = useState(sistemaConfig.letraCor || "#FAFAFA");
+  const [letraGrad1, setLetraGrad1] = useState(sistemaConfig.letraGradiente?.cor1 || "#FAFAFA");
+  const [letraGrad2, setLetraGrad2] = useState(sistemaConfig.letraGradiente?.cor2 || "#a1a1aa");
+  const [letraDir, setLetraDir] = useState(sistemaConfig.letraGradiente?.direcao || "to right");
+
+  const [corPrimaria, setCorPrimaria] = useState(sistemaConfig.corPrimaria || "#F97316");
+  const [sidebarCor, setSidebarCor] = useState(sistemaConfig.sidebarCor || "#0F0F0F");
+  const [cardsCor, setCardsCor] = useState(sistemaConfig.cardsCor || "#161616");
+
+  // Live preview colors for custom mode
+  const customPreview = useMemo(() => ({
+    bg: fundoTipo === "gradiente" ? fundoGrad1 : fundoCor,
+    surface: cardsCor,
+    text: letraCor,
+    muted: "#71717A",
+    primary: corPrimaria,
+    sidebar: sidebarCor,
+  }), [fundoTipo, fundoCor, fundoGrad1, cardsCor, letraCor, corPrimaria, sidebarCor]);
 
   const handleSelectTheme = (tema: ThemePreset) => {
     const next: SistemaConfig = {
       ...sistemaConfig,
       temaCardapio: tema.id,
-      corPrimaria: tema.vars["--theme-primary"],
+      corPrimaria: tema.preview.primary,
+      temaPersonalizado: false,
     };
     setSistemaConfig(next);
-    // Persist immediately then notify
     setTimeout(() => {
       onSave();
       toast.success(`Tema "${tema.name}" aplicado!`);
     }, 50);
   };
 
-  const handleCustomColorSave = () => {
-    const next: SistemaConfig = { ...sistemaConfig, corPrimaria: customColor };
+  const handleToggleCustom = (checked: boolean) => {
+    const next: SistemaConfig = { ...sistemaConfig, temaPersonalizado: checked };
     setSistemaConfig(next);
-    onSave();
+    if (!checked) {
+      setTimeout(() => { onSave(); }, 50);
+    }
+  };
+
+  const handleCustomSave = () => {
+    const next: SistemaConfig = {
+      ...sistemaConfig,
+      temaPersonalizado: true,
+      fundoTipo,
+      fundoCor,
+      fundoGradiente: fundoTipo === "gradiente" ? { cor1: fundoGrad1, cor2: fundoGrad2, direcao: fundoDir } : undefined,
+      letraTipo,
+      letraCor,
+      letraGradiente: letraTipo === "gradiente" ? { cor1: letraGrad1, cor2: letraGrad2, direcao: letraDir } : undefined,
+      corPrimaria,
+      sidebarCor,
+      cardsCor,
+    };
+    setSistemaConfig(next);
+    setTimeout(() => {
+      onSave();
+      toast.success("Tema personalizado salvo!");
+    }, 50);
   };
 
   return (
-    <div className="space-y-6 max-w-2xl">
-      {/* Temas grid */}
+    <div className="space-y-8 max-w-3xl">
+      {/* ═══ SEÇÃO 1: Temas Prontos ═══ */}
       <div className="space-y-3">
         <p className="text-base font-bold text-foreground">Escolha o tema do cardápio</p>
         <p className="text-sm text-muted-foreground">O tema será aplicado no cardápio digital, totem e delivery.</p>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 pt-2">
           {THEME_PRESETS.map((tema) => {
-            const isSelected = selectedTheme === tema.id;
+            const isSelected = selectedTheme === tema.id && !isCustom;
             return (
               <button
                 key={tema.id}
@@ -111,31 +186,16 @@ const AdminTemas = ({ sistemaConfig, setSistemaConfig, storeId, onSave }: AdminT
                     : "border-border hover:border-primary/40"
                 }`}
               >
-                {/* Mini preview */}
-                <div
-                  className="rounded-lg overflow-hidden h-24 flex"
-                  style={{ backgroundColor: tema.preview.bg }}
-                >
-                  {/* Mini sidebar */}
-                  <div
-                    className="w-8 shrink-0 flex flex-col items-center gap-1.5 pt-3"
-                    style={{ backgroundColor: tema.vars["--theme-sidebar-bg"] }}
-                  >
-                    <div className="h-2 w-2 rounded-full" style={{ backgroundColor: tema.preview.primary }} />
-                    <div className="h-1.5 w-3 rounded-full" style={{ backgroundColor: tema.preview.muted, opacity: 0.4 }} />
-                    <div className="h-1.5 w-3 rounded-full" style={{ backgroundColor: tema.preview.muted, opacity: 0.4 }} />
-                    <div className="h-1.5 w-3 rounded-full" style={{ backgroundColor: tema.preview.muted, opacity: 0.4 }} />
-                  </div>
-                  {/* Mini content */}
-                  <div className="flex-1 p-2 space-y-1.5">
-                    <div className="h-2 w-12 rounded-full" style={{ backgroundColor: tema.preview.text, opacity: 0.8 }} />
-                    <div className="flex gap-1.5">
-                      <div className="h-8 w-10 rounded" style={{ backgroundColor: tema.preview.surface }} />
-                      <div className="h-8 w-10 rounded" style={{ backgroundColor: tema.preview.surface }} />
-                    </div>
-                    <div className="h-1.5 w-8 rounded-full" style={{ backgroundColor: tema.preview.primary }} />
-                  </div>
-                </div>
+                {/* Mini tablet preview */}
+                <MiniTabletPreview
+                  bg={tema.preview.bg}
+                  surface={tema.preview.surface}
+                  text={tema.preview.text}
+                  muted={tema.preview.muted}
+                  primary={tema.preview.primary}
+                  sidebar={tema.preview.sidebar}
+                  size="sm"
+                />
 
                 {/* Label */}
                 <div className="mt-2.5">
@@ -157,32 +217,115 @@ const AdminTemas = ({ sistemaConfig, setSistemaConfig, storeId, onSave }: AdminT
         </div>
       </div>
 
-      {/* Cor personalizada */}
-      <div className="surface-card rounded-2xl p-6 space-y-4">
+      {/* ═══ SEÇÃO 2: Personalização Avançada ═══ */}
+      <div className="surface-card rounded-2xl p-6 space-y-5">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Palette className="h-5 w-5 text-muted-foreground" />
             <div>
-              <p className="text-sm font-bold text-foreground">Cor personalizada</p>
-              <p className="text-sm text-muted-foreground">Sobrescreve a cor primária do tema selecionado</p>
+              <p className="text-sm font-bold text-foreground">Personalizar cores manualmente</p>
+              <p className="text-sm text-muted-foreground">Sobrescreve o tema selecionado com cores customizadas</p>
             </div>
           </div>
-          <Switch checked={useCustomColor} onCheckedChange={setUseCustomColor} />
+          <Switch checked={isCustom} onCheckedChange={handleToggleCustom} />
         </div>
 
-        {useCustomColor && (
-          <div className="space-y-3 pt-2 border-t border-border">
-            <div className="flex items-center gap-4">
-              <input
-                type="color"
-                value={customColor}
-                onChange={(e) => setCustomColor(e.target.value)}
-                className="h-11 w-16 cursor-pointer rounded-lg border border-border bg-transparent"
-              />
-              <span className="text-sm text-muted-foreground font-mono">{customColor}</span>
+        {isCustom && (
+          <div className="space-y-6 pt-3 border-t border-border">
+            {/* Live preview */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <Monitor className="h-4 w-4 text-muted-foreground" />
+                <p className="text-sm font-bold text-foreground">Preview ao vivo</p>
+              </div>
+              <div className="flex justify-center py-2">
+                <MiniTabletPreview {...customPreview} size="lg" />
+              </div>
             </div>
-            <Button onClick={handleCustomColorSave} className="rounded-xl font-bold gap-2">
-              <Save className="h-4 w-4" /> Salvar cor
+
+            {/* a) Cor de fundo */}
+            <div className="space-y-3">
+              <Label className="text-sm font-bold">Cor de fundo</Label>
+              <div className="flex gap-4">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input type="radio" name="fundoTipo" checked={fundoTipo === "solido"} onChange={() => setFundoTipo("solido")} className="accent-[hsl(var(--primary))]" />
+                  <span className="text-sm">Cor sólida</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input type="radio" name="fundoTipo" checked={fundoTipo === "gradiente"} onChange={() => setFundoTipo("gradiente")} className="accent-[hsl(var(--primary))]" />
+                  <span className="text-sm">Degradê</span>
+                </label>
+              </div>
+              {fundoTipo === "solido" ? (
+                <ColorPickerRow label="Fundo" value={fundoCor} onChange={setFundoCor} />
+              ) : (
+                <div className="space-y-2">
+                  <ColorPickerRow label="Início" value={fundoGrad1} onChange={setFundoGrad1} />
+                  <ColorPickerRow label="Fim" value={fundoGrad2} onChange={setFundoGrad2} />
+                  <Select value={fundoDir} onValueChange={setFundoDir}>
+                    <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {GRADIENT_DIRECTIONS.map(d => (
+                        <SelectItem key={d.value} value={d.value}>{d.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+            </div>
+
+            {/* b) Cor das letras */}
+            <div className="space-y-3">
+              <Label className="text-sm font-bold">Cor das letras</Label>
+              <div className="flex gap-4">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input type="radio" name="letraTipo" checked={letraTipo === "solido"} onChange={() => setLetraTipo("solido")} className="accent-[hsl(var(--primary))]" />
+                  <span className="text-sm">Cor sólida</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input type="radio" name="letraTipo" checked={letraTipo === "gradiente"} onChange={() => setLetraTipo("gradiente")} className="accent-[hsl(var(--primary))]" />
+                  <span className="text-sm">Degradê</span>
+                </label>
+              </div>
+              {letraTipo === "solido" ? (
+                <ColorPickerRow label="Texto" value={letraCor} onChange={setLetraCor} />
+              ) : (
+                <div className="space-y-2">
+                  <ColorPickerRow label="Início" value={letraGrad1} onChange={setLetraGrad1} />
+                  <ColorPickerRow label="Fim" value={letraGrad2} onChange={setLetraGrad2} />
+                  <Select value={letraDir} onValueChange={setLetraDir}>
+                    <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {GRADIENT_DIRECTIONS.map(d => (
+                        <SelectItem key={d.value} value={d.value}>{d.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+            </div>
+
+            {/* c) Cor primária */}
+            <div className="space-y-3">
+              <Label className="text-sm font-bold">Cor primária (botões, preços, destaques)</Label>
+              <ColorPickerRow label="Primária" value={corPrimaria} onChange={setCorPrimaria} />
+            </div>
+
+            {/* d) Cor da sidebar */}
+            <div className="space-y-3">
+              <Label className="text-sm font-bold">Cor da sidebar</Label>
+              <ColorPickerRow label="Sidebar" value={sidebarCor} onChange={setSidebarCor} />
+            </div>
+
+            {/* e) Cor dos cards */}
+            <div className="space-y-3">
+              <Label className="text-sm font-bold">Cor dos cards</Label>
+              <ColorPickerRow label="Cards" value={cardsCor} onChange={setCardsCor} />
+            </div>
+
+            {/* Save */}
+            <Button onClick={handleCustomSave} className="rounded-xl font-bold gap-2 w-full sm:w-auto">
+              <Save className="h-4 w-4" /> Salvar tema personalizado
             </Button>
           </div>
         )}

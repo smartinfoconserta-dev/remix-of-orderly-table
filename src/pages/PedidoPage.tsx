@@ -300,6 +300,7 @@ function PedidoPageInner({ storeId, config, bairros }: {
   useEffect(() => {
     const el = themeInnerRef.current;
     if (!el) return;
+    // For now delivery only uses preset themes from config
     const themeId = config.temaCardapio || "obsidian";
     const customColor = config.corPrimaria;
     const themeDefault = THEME_MAP[themeId]?.primary;
