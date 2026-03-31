@@ -578,6 +578,7 @@ function PedidoPageInner({ storeId, config, bairros }: {
   // ── Delivery desativado ──
   if (!config.deliveryAtivo) {
     return (
+      <div ref={themeInnerRef}>
       <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center p-6 text-center space-y-6">
         {RESTAURANTE_LOGO ? (
           <img src={RESTAURANTE_LOGO} alt={RESTAURANTE_NOME} className="w-20 h-20 rounded-2xl object-cover border border-border" />
@@ -589,6 +590,7 @@ function PedidoPageInner({ storeId, config, bairros }: {
           <h1 className="text-3xl font-black text-foreground">Delivery indisponível</h1>
           <p className="text-sm text-muted-foreground">{config.mensagemFechado || "Voltamos em breve!"}</p>
         </div>
+      </div>
       </div>
     );
   }
