@@ -559,6 +559,7 @@ export type Database = {
           label: string | null
           module: string
           pin_hash: string
+          pin_plain: string | null
           store_id: string
         }
         Insert: {
@@ -569,6 +570,7 @@ export type Database = {
           label?: string | null
           module: string
           pin_hash: string
+          pin_plain?: string | null
           store_id: string
         }
         Update: {
@@ -579,6 +581,7 @@ export type Database = {
           label?: string | null
           module?: string
           pin_hash?: string
+          pin_plain?: string | null
           store_id?: string
         }
         Relationships: [
@@ -1327,6 +1330,7 @@ export type Database = {
         }
         Returns: string
       }
+      get_module_pin_plain: { Args: { _pin_id: string }; Returns: string }
       get_store_by_cnpj: {
         Args: { _cnpj: string }
         Returns: {
