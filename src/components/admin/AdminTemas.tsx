@@ -13,7 +13,7 @@ interface AdminTemasProps {
   sistemaConfig: SistemaConfig;
   setSistemaConfig: React.Dispatch<React.SetStateAction<SistemaConfig>>;
   storeId: string | null;
-  onSave: () => void;
+  onSave: (config?: SistemaConfig) => void;
 }
 
 interface ThemePreset {
