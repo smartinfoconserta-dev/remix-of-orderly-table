@@ -1,8 +1,13 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { UtensilsCrossed } from "lucide-react";
 import { formatPrice } from "@/components/caixa/caixaHelpers";
+import {
+  applyThemeToElement,
+  applyCustomThemeToElement,
+  clearThemeFromElement,
+} from "@/lib/themeEngine";
 
 interface Categoria {
   id: string;
