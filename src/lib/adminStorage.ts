@@ -109,7 +109,7 @@ export interface LicencaConfig {
   plano?: "basico" | "medio" | "pro" | "premium";
 }
 
-export type PlanoModulos = "basico" | "medio" | "pro" | "premium";
+export type PlanoModulos = "restaurante" | "fastfood" | "completo";
 
 export function getModulosDoPlano(plano: PlanoModulos): {
   mesas: boolean;
@@ -119,16 +119,43 @@ export function getModulosDoPlano(plano: PlanoModulos): {
   motoboy: boolean;
   totem: boolean;
   tvRetirada: boolean;
+  garcomPdv: boolean;
 } {
-  return {
-    mesas: true,
-    balcao: true,
-    cozinha: true,
-    delivery: plano === "medio" || plano === "pro" || plano === "premium",
-    motoboy: plano === "pro" || plano === "premium",
-    totem: plano === "premium",
-    tvRetirada: plano === "premium",
-  };
+  switch (plano) {
+    case "restaurante":
+      return {
+        mesas: true,
+        balcao: true,
+        cozinha: true,
+        delivery: false,
+        motoboy: false,
+        totem: false,
+        tvRetirada: false,
+        garcomPdv: false,
+      };
+    case "fastfood":
+      return {
+        mesas: false,
+        balcao: true,
+        cozinha: true,
+        delivery: false,
+        motoboy: false,
+        totem: true,
+        tvRetirada: true,
+        garcomPdv: true,
+      };
+    case "completo":
+      return {
+        mesas: true,
+        balcao: true,
+        cozinha: true,
+        delivery: false,
+        motoboy: false,
+        totem: true,
+        tvRetirada: true,
+        garcomPdv: true,
+      };
+  }
 }
 
 // ─────────────────────────────────
