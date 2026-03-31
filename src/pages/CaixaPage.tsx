@@ -95,20 +95,10 @@ import CaixaDeliveryPanel from "@/components/caixa/CaixaDeliveryPanel";
 import CaixaTotemPanel from "@/components/caixa/CaixaTotemPanel";
 import CaixaMesaDetail from "@/components/caixa/CaixaMesaDetail";
 import CaixaBalcaoDetail from "@/components/caixa/CaixaBalcaoDetail";
-import CaixaTurnoReport from "@/components/caixa/CaixaTurnoReport";
-import CaixaMovimentacaoDialog from "@/components/caixa/CaixaMovimentacaoDialog";
-import CaixaMotoboyConferencia from "@/components/caixa/CaixaMotoboyConferencia";
-import CaixaBuscaComanda from "@/components/caixa/CaixaBuscaComanda";
-import CaixaBalcaoFormDialog from "@/components/caixa/CaixaBalcaoFormDialog";
-import CaixaDeliveryConfirmDialog from "@/components/caixa/CaixaDeliveryConfirmDialog";
-import CaixaRejectDialog from "@/components/caixa/CaixaRejectDialog";
-import CaixaDescontoDialog from "@/components/caixa/CaixaDescontoDialog";
-import CaixaEstornoDialog from "@/components/caixa/CaixaEstornoDialog";
 import CaixaHistoricoTab from "@/components/caixa/CaixaHistoricoTab";
-import CaixaCriticalActionDialog from "@/components/caixa/CaixaCriticalActionDialog";
-import CaixaQrScanner from "@/components/caixa/CaixaQrScanner";
 import CaixaHeader from "@/components/caixa/CaixaHeader";
 import CaixaMesasTab from "@/components/caixa/CaixaMesasTab";
+import CaixaDialogs from "@/components/caixa/CaixaDialogs";
 
 
 interface CaixaPageProps {
@@ -1498,25 +1488,19 @@ const CaixaPage = ({ accessMode = "caixa", deliveryOnly = false }: CaixaPageProp
         </main>
       </div>
 
-      {/* ── CRITICAL ACTION DIALOG ── */}
-      <CaixaCriticalActionDialog
-        open={Boolean(criticalAction)}
-        onClose={resetCriticalDialog}
-        title={getCriticalActionCopy()?.title}
-        description={getCriticalActionCopy()?.description}
-        buttonLabel={getCriticalActionCopy()?.buttonLabel}
-        managerName={criticalManagerName}
-        setManagerName={setCriticalManagerName}
-        managerPin={criticalManagerPin}
-        setManagerPin={setCriticalManagerPin}
-        reason={criticalReason}
-        setReason={setCriticalReason}
-        error={criticalError}
-        isLoading={isAuthorizingCriticalAction}
-        onConfirm={handleConfirmCriticalAction}
-      />
-
-      <CaixaTurnoReport
+      <CaixaDialogs
+        criticalAction={criticalAction}
+        resetCriticalDialog={resetCriticalDialog}
+        criticalManagerName={criticalManagerName}
+        setCriticalManagerName={setCriticalManagerName}
+        criticalManagerPin={criticalManagerPin}
+        setCriticalManagerPin={setCriticalManagerPin}
+        criticalReason={criticalReason}
+        setCriticalReason={setCriticalReason}
+        criticalError={criticalError}
+        isAuthorizingCriticalAction={isAuthorizingCriticalAction}
+        getCriticalActionCopy={getCriticalActionCopy}
+        handleConfirmCriticalAction={handleConfirmCriticalAction}
         turnoReportOpen={turnoReportOpen}
         setTurnoReportOpen={setTurnoReportOpen}
         turnoModalOpen={turnoModalOpen}
@@ -1545,9 +1529,6 @@ const CaixaPage = ({ accessMode = "caixa", deliveryOnly = false }: CaixaPageProp
         handleCloseTurno={handleCloseTurno}
         accessMode={accessMode}
         currentOperatorNome={currentOperator.nome}
-      />
-
-      <CaixaMovimentacaoDialog
         movModalOpen={movModalOpen}
         setMovModalOpen={setMovModalOpen}
         movTipo={movTipo}
@@ -1558,16 +1539,10 @@ const CaixaPage = ({ accessMode = "caixa", deliveryOnly = false }: CaixaPageProp
         setMovValor={setMovValor}
         movConfirmStep={movConfirmStep}
         setMovConfirmStep={setMovConfirmStep}
-        isDesktop={isDesktop}
         handleRegistrarMovimentacao={handleRegistrarMovimentacao}
-        movimentacoesCaixa={movimentacoesCaixa}
-      />
-
-      {/* ── BALCÃO / DELIVERY ── */}
-      <CaixaBalcaoFormDialog
-        open={balcaoOpen && !balcaoFlowAtivo}
-        onClose={() => { setBalcaoOpen(false); setDeliveryStep("busca"); }}
-        isDesktop={isDesktop}
+        balcaoOpen={balcaoOpen}
+        balcaoFlowAtivo={balcaoFlowAtivo}
+        onCloseBalcao={() => { setBalcaoOpen(false); setDeliveryStep("busca"); }}
         balcaoTipo={balcaoTipo}
         setBalcaoTipo={setBalcaoTipo}
         balcaoClienteNome={balcaoClienteNome}
@@ -1602,36 +1577,23 @@ const CaixaPage = ({ accessMode = "caixa", deliveryOnly = false }: CaixaPageProp
         setDeliveryCidade={setDeliveryCidade}
         onOpenCardapio={() => setBalcaoFlowAtivo(true)}
         caixaStoreIdRef={caixaStoreIdRef}
-      />
-
-      {/* ── DELIVERY CONFIRMATION DIALOG ── */}
-      <CaixaDeliveryConfirmDialog
-        open={deliveryConfirmOpen}
-        onClose={() => { setDeliveryConfirmOpen(false); setDeliveryPendingItens([]); }}
-        itens={deliveryPendingItens}
+        deliveryConfirmOpen={deliveryConfirmOpen}
+        onCloseDeliveryConfirm={() => { setDeliveryConfirmOpen(false); setDeliveryPendingItens([]); }}
+        deliveryPendingItens={deliveryPendingItens}
         sistemaConfig={sistemaConfig}
-        balcaoClienteNome={balcaoClienteNome}
-        balcaoEndereco={balcaoEndereco}
-        balcaoNumero={balcaoNumero}
-        balcaoBairro={balcaoBairro}
-        balcaoTelefone={balcaoTelefone}
         balcaoFormaPag={balcaoFormaPag}
         setBalcaoFormaPag={setBalcaoFormaPag}
         balcaoTroco={balcaoTroco}
         setBalcaoTroco={setBalcaoTroco}
         deliveryTempoEstimado={deliveryTempoEstimado}
         setDeliveryTempoEstimado={setDeliveryTempoEstimado}
-        onConfirm={(sendWhatsapp) => handleDeliveryConfirm(sendWhatsapp)}
+        handleDeliveryConfirm={handleDeliveryConfirm}
         onBackToCardapio={() => { setDeliveryConfirmOpen(false); setBalcaoFlowAtivo(true); }}
-      />
-
-      {/* ── REJECT DELIVERY DIALOG ── */}
-      <CaixaRejectDialog
-        open={rejectDialogOpen}
-        onClose={() => { setRejectDialogOpen(false); setRejectPedidoId(null); setRejectMotivo(""); }}
-        motivo={rejectMotivo}
-        setMotivo={setRejectMotivo}
-        onConfirm={() => {
+        rejectDialogOpen={rejectDialogOpen}
+        rejectMotivo={rejectMotivo}
+        setRejectMotivo={setRejectMotivo}
+        onCloseReject={() => { setRejectDialogOpen(false); setRejectPedidoId(null); setRejectMotivo(""); }}
+        onConfirmReject={() => {
           if (rejectPedidoId && rejectMotivo.trim()) {
             rejeitarPedidoBalcao(rejectPedidoId, rejectMotivo.trim());
             toast.success("Pedido rejeitado", { duration: 1400, icon: "❌" });
@@ -1640,9 +1602,6 @@ const CaixaPage = ({ accessMode = "caixa", deliveryOnly = false }: CaixaPageProp
             setRejectMotivo("");
           }
         }}
-      />
-
-      <CaixaMotoboyConferencia
         fechamentoSelecionado={fechamentoSelecionado}
         setFechamentoSelecionado={setFechamentoSelecionado}
         pinConferencia={pinConferencia}
@@ -1653,11 +1612,8 @@ const CaixaPage = ({ accessMode = "caixa", deliveryOnly = false }: CaixaPageProp
         currentOperator={currentOperator}
         registrarFechamentoMotoboy={registrarFechamentoMotoboy}
         setFechamentosPendentes={setFechamentosPendentes}
-      />
-
-      <CaixaDescontoDialog
-        open={descontoModalOpen}
-        onClose={() => { setDescontoModalOpen(false); setDescontoError(null); }}
+        descontoModalOpen={descontoModalOpen}
+        onCloseDesconto={() => { setDescontoModalOpen(false); setDescontoError(null); }}
         descontoTipo={descontoTipo}
         setDescontoTipo={setDescontoTipo}
         descontoInput={descontoInput}
@@ -1670,12 +1626,9 @@ const CaixaPage = ({ accessMode = "caixa", deliveryOnly = false }: CaixaPageProp
         setDescontoManagerPin={setDescontoManagerPin}
         descontoError={descontoError}
         mesaTotal={mesa?.total ?? 0}
-        onAplicar={handleAplicarDesconto}
-      />
-
-      <CaixaEstornoDialog
-        open={estornoModalOpen}
-        onClose={() => { setEstornoModalOpen(false); setEstornoError(null); }}
+        handleAplicarDesconto={handleAplicarDesconto}
+        estornoModalOpen={estornoModalOpen}
+        onCloseEstorno={() => { setEstornoModalOpen(false); setEstornoError(null); }}
         estornoMotivo={estornoMotivo}
         setEstornoMotivo={setEstornoMotivo}
         estornoNome={estornoNome}
@@ -1683,26 +1636,18 @@ const CaixaPage = ({ accessMode = "caixa", deliveryOnly = false }: CaixaPageProp
         estornoPin={estornoPin}
         setEstornoPin={setEstornoPin}
         estornoError={estornoError}
-        onConfirmar={handleEstornar}
-      />
-
-      {/* ── BUSCA COMANDA MODAL ── */}
-      <CaixaBuscaComanda
-        open={buscaComandaOpen}
-        onClose={() => { setBuscaComandaOpen(false); setBuscaComanda(""); }}
-        resultados={resultadosBusca}
-        busca={buscaComanda}
-        setBusca={setBuscaComanda}
-        onEstornar={(id) => { setEstornoFechamentoId(id); setEstornoModalOpen(true); }}
-      />
-
-      {/* ── QR SCANNER DIALOG ── */}
-      <CaixaQrScanner
-        open={qrScanOpen}
-        onClose={() => { setQrScanOpen(false); setQrScanInput(""); }}
-        input={qrScanInput}
-        setInput={setQrScanInput}
-        onScan={handleQrScan}
+        handleEstornar={handleEstornar}
+        buscaComandaOpen={buscaComandaOpen}
+        onCloseBuscaComanda={() => { setBuscaComandaOpen(false); setBuscaComanda(""); }}
+        resultadosBusca={resultadosBusca}
+        buscaComanda={buscaComanda}
+        setBuscaComanda={setBuscaComanda}
+        onEstornarFromBusca={(id) => { setEstornoFechamentoId(id); setEstornoModalOpen(true); }}
+        qrScanOpen={qrScanOpen}
+        onCloseQrScan={() => { setQrScanOpen(false); setQrScanInput(""); }}
+        qrScanInput={qrScanInput}
+        setQrScanInput={setQrScanInput}
+        handleQrScan={handleQrScan}
       />
 
       <LicenseBanner context="operational" />
