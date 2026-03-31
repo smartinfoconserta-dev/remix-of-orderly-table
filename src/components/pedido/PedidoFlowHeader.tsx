@@ -240,7 +240,7 @@ export function buildPedidoFlowHeader(props: PedidoFlowHeaderProps) {
             onClick={onChamarGarcom}
             className={`h-auto gap-2 rounded-xl px-5 py-2.5 text-base font-bold transition-all duration-300 ${
               chamarGarcomAtivo
-                ? "bg-amber-500 text-white hover:bg-amber-600"
+                ? "bg-amber-500 text-primary-foreground hover:bg-amber-600"
                 : "bg-destructive text-destructive-foreground hover:bg-destructive/90"
             }`}
           >

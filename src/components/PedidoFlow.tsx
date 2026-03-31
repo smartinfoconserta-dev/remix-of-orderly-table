@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { applyThemeToElement, clearThemeFromElement, THEME_MAP } from "@/lib/themeEngine";
+import { applyThemeToElement, applyCustomThemeToElement, clearThemeFromElement, THEME_MAP } from "@/lib/themeEngine";
 import { useNavigate } from "react-router-dom";
 import { AlertTriangle, Instagram, LockKeyhole, RefreshCw, ShoppingBag, Unlink, Wifi, X } from "lucide-react";
 import qrInstagramFallback from "@/assets/qr-instagram-premium.png";
@@ -107,12 +107,24 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
   useEffect(() => {
     const el = themeContainerRef.current;
     if (!el) return;
-    const themeId = sysConfig.temaCardapio || "obsidian";
-    const customColor = sysConfig.corPrimaria;
-    const themeDefault = THEME_MAP[themeId]?.primary;
-    applyThemeToElement(el, themeId, customColor && customColor !== themeDefault ? customColor : undefined);
+    if (sysConfig.temaPersonalizado) {
+      applyCustomThemeToElement(el, {
+        fundoTipo: sysConfig.fundoTipo,
+        fundoCor: sysConfig.fundoCor,
+        fundoGradiente: sysConfig.fundoGradiente,
+        letraCor: sysConfig.letraCor,
+        corPrimaria: sysConfig.corPrimaria,
+        sidebarCor: sysConfig.sidebarCor,
+        cardsCor: sysConfig.cardsCor,
+      });
+    } else {
+      const themeId = sysConfig.temaCardapio || "obsidian";
+      const customColor = sysConfig.corPrimaria;
+      const themeDefault = THEME_MAP[themeId]?.primary;
+      applyThemeToElement(el, themeId, customColor && customColor !== themeDefault ? customColor : undefined);
+    }
     return () => { if (el) clearThemeFromElement(el); };
-  }, [sysConfig.temaCardapio, sysConfig.corPrimaria]);
+  }, [sysConfig.temaCardapio, sysConfig.corPrimaria, sysConfig.temaPersonalizado, sysConfig.fundoTipo, sysConfig.fundoCor, sysConfig.fundoGradiente, sysConfig.letraCor, sysConfig.sidebarCor, sysConfig.cardsCor]);
 
   // Reactive product/category loading from Supabase cache
   const [produtos, setProdutos] = useState<Produto[]>(() => getCachedProdutos());

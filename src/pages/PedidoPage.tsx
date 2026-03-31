@@ -14,7 +14,7 @@ import type { ItemCarrinho } from "@/contexts/RestaurantContext";
 import type { Bairro } from "@/lib/deliveryStorage";
 import type { HorariosSemana, HorarioFuncionamento, SistemaConfig } from "@/lib/adminStorage";
 import { preloadProducts } from "@/hooks/useProducts";
-import { applyThemeToElement, clearThemeFromElement, THEME_MAP } from "@/lib/themeEngine";
+import { applyThemeToElement, applyCustomThemeToElement, clearThemeFromElement, THEME_MAP } from "@/lib/themeEngine";
 
 const normStr = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
 
@@ -300,6 +300,7 @@ function PedidoPageInner({ storeId, config, bairros }: {
   useEffect(() => {
     const el = themeInnerRef.current;
     if (!el) return;
+    // For now delivery only uses preset themes from config
     const themeId = config.temaCardapio || "obsidian";
     const customColor = config.corPrimaria;
     const themeDefault = THEME_MAP[themeId]?.primary;
