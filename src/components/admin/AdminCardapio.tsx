@@ -90,7 +90,7 @@ const AdminCardapio = ({ storeId }: Props) => {
       .forEach((c) => pushUnique({ ...c, _isDefault: false }));
 
     dbCategorias
-      .map((c, i) => ({ ...c, ordem: i, _isDefault: !UUID_REGEX.test(c.id) }))
+      .map((c, i) => ({ ...c, ordem: i, _isDefault: false }))
       .forEach(pushUnique);
 
     return merged;
