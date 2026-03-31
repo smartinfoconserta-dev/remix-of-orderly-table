@@ -21,7 +21,7 @@ import {
   getClientes, addCliente, updateCliente, removeCliente,
   getDespesas, addDespesa,
 } from "@/lib/masterStorage";
-import { getLicencaConfig, saveLicencaConfigAsync, getLicencaConfigAsync, getSistemaConfig, getSistemaConfigAsync, saveSistemaConfigAsync } from "@/lib/adminStorage";
+import { getLicencaConfig, saveLicencaConfigAsync, getLicencaConfigAsync, getSistemaConfig, getSistemaConfigAsync, saveSistemaConfigAsync, getModulosDoPlano, type PlanoModulos } from "@/lib/adminStorage";
 
 const SEGMENTOS = ["hamburgeria", "pizzaria", "sushi", "pastel", "a-la-carte", "outro"];
 const SEGMENTO_LABELS: Record<string, string> = {
@@ -79,9 +79,9 @@ const PLANOS_MODULOS = [
 ];
 const PLANO_MODULOS_LABELS: Record<string, string> = { restaurante: "Restaurante", fastfood: "Fast Food", completo: "Completo" };
 const PLANO_MODULOS_BADGE: Record<string, string> = {
-  restaurante: "bg-muted text-muted-foreground",
-  fastfood: "bg-blue-600 hover:bg-blue-600 text-white",
-  completo: "bg-emerald-600 hover:bg-emerald-600 text-white",
+  restaurante: "bg-blue-600 hover:bg-blue-600 text-white",
+  fastfood: "bg-amber-600 hover:bg-amber-600 text-white",
+  completo: "bg-purple-600 hover:bg-purple-600 text-white",
 };
 
 const emptyForm = {
@@ -92,6 +92,7 @@ const emptyForm = {
   observacoes: "", historicoPagamentos: [] as any[],
   plano: "anual", dataInicio: new Date().toISOString().slice(0, 10), dataTermino: "",
   planoModulos: "restaurante" as "restaurante" | "fastfood" | "completo",
+  deliveryAtivo: false,
   criarContaAdmin: false, senhaAdmin: "", slugLoja: "",
 };
 
@@ -165,6 +166,7 @@ const MasterPage = () => {
       observacoes: c.observacoes || "", historicoPagamentos: c.historicoPagamentos || [],
       plano: c.plano || "anual", dataInicio: c.dataInicio || "", dataTermino: c.dataTermino || "",
       planoModulos: c.planoModulos || "restaurante",
+      deliveryAtivo: false,
       criarContaAdmin: false, senhaAdmin: "", slugLoja: "",
     });
     setDialogOpen(true);
@@ -293,7 +295,11 @@ const MasterPage = () => {
         lic.plano = form.planoModulos;
         await saveLicencaConfigAsync(lic, clientStoreId);
         const cfg = await getSistemaConfigAsync(clientStoreId);
+        const modulosBase = getModulosDoPlano(form.planoModulos as PlanoModulos);
+        cfg.modulos = { ...modulosBase, delivery: form.deliveryAtivo ?? false, motoboy: form.deliveryAtivo ?? false };
         cfg.plano = form.planoModulos;
+        cfg.tipoRestaurante = form.planoModulos as any;
+        cfg.deliveryAtivo = form.deliveryAtivo ?? false;
         await saveSistemaConfigAsync(cfg, clientStoreId);
       }
     }
@@ -320,7 +326,10 @@ const MasterPage = () => {
         lic.ativo = !c.ativo;
         await saveLicencaConfigAsync(lic, clientStoreId);
         const cfg = await getSistemaConfigAsync(clientStoreId);
+        const modulosBase = getModulosDoPlano(c.planoModulos as PlanoModulos);
+        cfg.modulos = { ...modulosBase, delivery: cfg.deliveryAtivo ?? false, motoboy: cfg.deliveryAtivo ?? false };
         cfg.plano = c.planoModulos;
+        cfg.tipoRestaurante = c.planoModulos as any;
         await saveSistemaConfigAsync(cfg, clientStoreId);
       } else {
         console.warn("[MasterPage] storeId não encontrado para cliente:", c.nomeRestaurante);
@@ -787,6 +796,7 @@ const MasterPage = () => {
                 <div><Label>Dia de vencimento</Label><Select value={String(form.diaVencimento)} onValueChange={(v) => ff("diaVencimento", Number(v))}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent container={document.body} position="popper" className="z-[80]">{DIAS_VENCIMENTO.map((d) => <SelectItem key={d} value={String(d)}>Dia {d}</SelectItem>)}</SelectContent></Select></div>
                 <div><Label>Data de vencimento da licença</Label><Input type="date" value={form.dataVencimento} onChange={(e) => ff("dataVencimento", e.target.value)} /></div>
                 <div className="flex items-center gap-2 pt-5"><Switch checked={form.ativo} onCheckedChange={(v) => ff("ativo", v)} /><Label>{form.ativo ? "Ativo" : "Bloqueado"}</Label></div>
+                <div className="flex items-center gap-2 pt-5"><Switch checked={form.deliveryAtivo ?? false} onCheckedChange={(v) => ff("deliveryAtivo", v)} /><Label>Delivery ativo</Label></div>
               </div>
             </div>
             <div className="space-y-3">
