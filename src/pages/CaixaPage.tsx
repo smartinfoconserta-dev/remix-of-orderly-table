@@ -1849,6 +1849,11 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
       />
 
       <LicenseBanner context="operational" />
+
+      {/* Atalhos de teclado - tooltip */}
+      <div className="fixed bottom-2 left-1/2 -translate-x-1/2 z-40 px-3 py-1 rounded-full bg-muted/80 backdrop-blur text-[10px] text-muted-foreground font-mono tracking-wide pointer-events-none select-none">
+        F2 Busca · F3 QR · F4 Balcão · F5 Delivery · Esc Voltar
+      </div>
     </>
   );
 };
