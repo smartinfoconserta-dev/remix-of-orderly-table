@@ -45,6 +45,7 @@ export interface Categoria {
   id: string;
   nome: string;
   icone: string;
+  parentId?: string | null;
 }
 
 export interface HomeQuickLink {

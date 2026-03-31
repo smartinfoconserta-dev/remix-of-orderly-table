@@ -14,6 +14,7 @@ export interface CategoriaCustom {
   nome: string;
   icone: string;
   ordem: number;
+  parentId?: string | null;
 }
 
 
