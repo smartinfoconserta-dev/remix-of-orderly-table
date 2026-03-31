@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   ClipboardList, Grid3X3, LayoutDashboard, LogOut, Settings, Shield,
@@ -7,7 +7,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useStore } from "@/contexts/StoreContext";
 import { useAuth } from "@/contexts/AuthContext";
-import { getSistemaConfig, getLicenseLevel } from "@/lib/adminStorage";
+import { getSistemaConfig, getLicenseLevel, saveSistemaConfig } from "@/lib/adminStorage";
 import TeamManager from "@/components/TeamManager";
 import MesasManager from "@/components/MesasManager";
 import DevicesManager from "@/components/DevicesManager";
@@ -41,6 +41,16 @@ const AdminPage = () => {
   const { logout } = useAuth();
   const { storeId, storeName: ctxStoreName } = useStore();
   const [tab, setTab] = useState<AdminTab>("dashboard");
+  const [totemConfig, setTotemConfig] = useState(() => getSistemaConfig());
+
+  const saveTotemConfig = useCallback((config?: any) => {
+    const configToSave = config
+      && typeof config === "object"
+      && "nomeRestaurante" in config
+        ? config
+        : totemConfig;
+    saveSistemaConfig(configToSave, storeId);
+  }, [totemConfig, storeId]);
 
   const nomeRestaurante = getSistemaConfig().nomeRestaurante || "Restaurante";
 
@@ -117,11 +127,14 @@ const AdminPage = () => {
             </div>
           )}
           {tab === "ifood" && <div className="space-y-4 fade-in"><IfoodPainel /></div>}
-          {tab === "totem" && (() => {
-            const [tc, setTc] = useState(getSistemaConfig());
-            const saveTc = (c?: any) => { const s = c && typeof c === "object" && "nomeRestaurante" in c ? c : tc; import("@/lib/adminStorage").then(m => { m.saveSistemaConfig(s, storeId); import("@/lib/adminStorage").then(m2 => m2.saveSistemaConfigAsync(s, storeId)); }); };
-            return <AdminTotem sistemaConfig={tc} setSistemaConfig={setTc} storeId={storeId} onSave={saveTc} />;
-          })()}
+          {tab === "totem" && (
+            <AdminTotem
+              sistemaConfig={totemConfig}
+              setSistemaConfig={setTotemConfig}
+              storeId={storeId}
+              onSave={saveTotemConfig}
+            />
+          )}
         </main>
       </div>
       <LicenseBanner context="admin" />
