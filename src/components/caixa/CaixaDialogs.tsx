@@ -98,7 +98,7 @@ interface CaixaDialogsProps {
   setDeliveryStep: (v: "busca" | "form") => void;
   deliveryBusca: string;
   setDeliveryBusca: (v: string) => void;
-  deliveryResultados: any[];
+  deliveryResultados: ClienteDelivery[];
   setDeliveryResultados: (v: any[]) => void;
   deliveryCep: string;
   setDeliveryCep: (v: string) => void;
