@@ -295,7 +295,11 @@ const MasterPage = () => {
         lic.plano = form.planoModulos;
         await saveLicencaConfigAsync(lic, clientStoreId);
         const cfg = await getSistemaConfigAsync(clientStoreId);
+        const modulosBase = getModulosDoPlano(form.planoModulos as PlanoModulos);
+        cfg.modulos = { ...modulosBase, delivery: form.deliveryAtivo ?? false, motoboy: form.deliveryAtivo ?? false };
         cfg.plano = form.planoModulos;
+        cfg.tipoRestaurante = form.planoModulos as any;
+        cfg.deliveryAtivo = form.deliveryAtivo ?? false;
         await saveSistemaConfigAsync(cfg, clientStoreId);
       }
     }
