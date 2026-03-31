@@ -661,10 +661,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       };
 
       if (sid) {
-        const row = pedidoToRow(novoPedido, sid);
-        supabase.rpc("rpc_insert_pedido" as any, { _data: row }).then(({ error }: any) => {
-          if (error) { console.error("DB insert pedido", error); toast.error("Erro ao salvar pedido no banco"); }
-        });
+        dbInsertPedido(novoPedido);
       }
 
       const eventInput: Omit<EventoOperacional, "id" | "criadoEm" | "criadoEmIso"> = origem === "garcom"
