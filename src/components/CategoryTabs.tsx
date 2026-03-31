@@ -8,7 +8,6 @@ interface Props {
   onSelect: (id: string) => void;
   paddingClassName?: string;
   totemMode?: boolean;
-  sidebarEstilo?: "icone-texto" | "icone-acima" | "so-texto";
 }
 
 const CategoryTabs = ({
