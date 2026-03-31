@@ -219,8 +219,20 @@ export const dbInsertPedido = async (p: PedidoRealizado) => {
 export const dbUpdatePedido = (pedidoId: string, updates: Record<string, any>) => {
   const sid = getActiveStoreId();
   if (!sid) { console.warn("dbUpdatePedido: storeId is null"); return; }
-  supabase.rpc("rpc_update_pedido" as any, { _id: pedidoId, _store_id: sid, _updates: updates }).then(({ error }: any) => {
-    if (error) { console.error("DB update pedido", error); toast.error("Erro ao atualizar pedido"); }
+  const params = { _id: pedidoId, _store_id: sid, _updates: updates };
+  supabase.rpc("rpc_update_pedido" as any, params).then(({ error }: any) => {
+    if (error) {
+      if (isNetworkError(error)) {
+        enqueue("rpc_update_pedido", params, `Atualizar pedido`);
+      } else {
+        console.error("DB update pedido", error);
+        toast.error("Erro ao atualizar pedido");
+      }
+    }
+  }).catch((err: any) => {
+    if (isNetworkError(err)) {
+      enqueue("rpc_update_pedido", params, `Atualizar pedido`);
+    }
   });
 };
 
