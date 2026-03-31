@@ -1570,7 +1570,7 @@ const CaixaPage = ({ accessMode = "caixa", deliveryOnly = false }: CaixaPageProp
                     return `Mesa ${String(f.mesaNumero).padStart(2, "0")}`;
                   })() : "—"}
                 </span>
-                {pedidosAguardandoConfirmacao.length > 0 && (
+                {showDeliveryTab && pedidosAguardandoConfirmacao.length > 0 && (
                   <button
                     onClick={() => setCaixaView("delivery")}
                     className="px-3 py-1.5 font-bold animate-pulse bg-amber-500/15 text-amber-500"
