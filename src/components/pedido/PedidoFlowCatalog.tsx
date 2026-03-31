@@ -57,7 +57,7 @@ const PedidoFlowCatalog = ({
                   <img src={produto.imagem} alt={produto.nome} className="h-full w-full object-cover" loading="lazy" />
                 </div>
                 <div className={`flex flex-1 flex-col gap-2 p-4 ${isTotem ? "min-h-[7rem]" : "min-h-[9rem]"}`}>
-                  <h2 className={`line-clamp-2 font-black leading-tight ${isTotem ? "text-lg text-[#1A1A1A]" : "text-[1.05rem] text-foreground"}`}>{produto.nome}</h2>
+                  <h2 className={`line-clamp-2 font-black leading-tight ${isTotem ? "text-lg text-foreground" : "text-[1.05rem] text-foreground"}`}>{produto.nome}</h2>
                   {!isTotem && <p className="line-clamp-3 flex-1 text-sm leading-relaxed text-muted-foreground">{produto.descricao}</p>}
                   <div className="mt-1 flex items-end justify-between gap-2">
                     <p className={`font-black tracking-tight ${isTotem ? "text-lg text-[#FF6B00]" : "text-[1.05rem] text-foreground"}`}>{formatPrice(produto.preco)}</p>
