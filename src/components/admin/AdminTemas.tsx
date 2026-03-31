@@ -25,11 +25,11 @@ interface ThemePreset {
 
 const THEME_PRESETS: ThemePreset[] = [
   { id: "obsidian", name: "Obsidian", description: "Escuro elegante com detalhes em laranja", preview: { bg: "#0A0A0A", surface: "#161616", primary: "#F97316", text: "#FAFAFA", muted: "#71717A", sidebar: "#0F0F0F" } },
-  { id: "clean", name: "Clean", description: "Fundo claro, limpo e moderno", preview: { bg: "#FFFFFF", surface: "#F4F4F5", primary: "#2563EB", text: "#18181B", muted: "#71717A", sidebar: "#FAFAFA" } },
-  { id: "rustico", name: "Rústico", description: "Tons quentes, acolhedor e natural", preview: { bg: "#1C1917", surface: "#292524", primary: "#D97706", text: "#FAFAF9", muted: "#A8A29E", sidebar: "#1C1917" } },
-  { id: "premium", name: "Premium", description: "Escuro sofisticado com dourado", preview: { bg: "#09090B", surface: "#18181B", primary: "#EAB308", text: "#FAFAFA", muted: "#A1A1AA", sidebar: "#09090B" } },
-  { id: "fresh", name: "Fresh", description: "Claro e vibrante, ideal para fast food", preview: { bg: "#FFFFFF", surface: "#F0FDF4", primary: "#16A34A", text: "#14532D", muted: "#6B7280", sidebar: "#F0FDF4" } },
-  { id: "crimson", name: "Vermelho Intenso", description: "Ousado e marcante, ideal para hamburguerias", preview: { bg: "#0C0A09", surface: "#1C1917", primary: "#DC2626", text: "#FAFAF9", muted: "#A8A29E", sidebar: "#0C0A09" } },
+  { id: "italiano", name: "Italiano", description: "Claro elegante, tons quentes e verde oliva", preview: { bg: "#F5F2EC", surface: "#FFFFFF", primary: "#5E8C61", text: "#2B2B2B", muted: "#6B6B6B", sidebar: "#EDE7DD" } },
+  { id: "sorveteria", name: "Sorveteria", description: "Azul claro, leve e refrescante", preview: { bg: "#EAF4FF", surface: "#FFFFFF", primary: "#6BB6FF", text: "#1E2A38", muted: "#6C7A89", sidebar: "#DCEBFF" } },
+  { id: "darkroxo", name: "Dark Roxo", description: "Premium escuro com roxo, ideal para drinks", preview: { bg: "#0F0F14", surface: "#1A1A22", primary: "#8B5CF6", text: "#FFFFFF", muted: "#A1A1AA", sidebar: "#14141B" } },
+  { id: "hamburgueria", name: "Hamburgueria", description: "Preto com laranja forte, alto contraste", preview: { bg: "#0B0B0D", surface: "#151518", primary: "#FF7A00", text: "#FFFFFF", muted: "#A1A1AA", sidebar: "#101014" } },
+  { id: "teal", name: "Teal Moderno", description: "Dark com verde-azulado, visual tech moderno", preview: { bg: "#0A0F10", surface: "#121A1C", primary: "#14B8A6", text: "#FFFFFF", muted: "#94A3B8", sidebar: "#0E1416" } },
 ];
 
 // ── Mini Tablet Preview ──

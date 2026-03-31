@@ -37,25 +37,25 @@ export const THEME_MAP: Record<string, ThemeVars> = {
     bg: "#0A0A0A", surface: "#161616", text: "#FAFAFA", muted: "#71717A",
     primary: "#F97316", border: "#27272A", sidebarBg: "#0F0F0F",
   },
-  clean: {
-    bg: "#FFFFFF", surface: "#F4F4F5", text: "#18181B", muted: "#71717A",
-    primary: "#2563EB", border: "#E4E4E7", sidebarBg: "#FAFAFA",
+  italiano: {
+    bg: "#F5F2EC", surface: "#FFFFFF", text: "#2B2B2B", muted: "#6B6B6B",
+    primary: "#5E8C61", border: "#E0D9CE", sidebarBg: "#EDE7DD",
   },
-  rustico: {
-    bg: "#1C1917", surface: "#292524", text: "#FAFAF9", muted: "#A8A29E",
-    primary: "#D97706", border: "#44403C", sidebarBg: "#1C1917",
+  sorveteria: {
+    bg: "#EAF4FF", surface: "#FFFFFF", text: "#1E2A38", muted: "#6C7A89",
+    primary: "#6BB6FF", border: "#D6E4F5", sidebarBg: "#DCEBFF",
   },
-  premium: {
-    bg: "#09090B", surface: "#18181B", text: "#FAFAFA", muted: "#A1A1AA",
-    primary: "#EAB308", border: "#27272A", sidebarBg: "#09090B",
+  darkroxo: {
+    bg: "#0F0F14", surface: "#1A1A22", text: "#FFFFFF", muted: "#A1A1AA",
+    primary: "#8B5CF6", border: "#2A2A35", sidebarBg: "#14141B",
   },
-  fresh: {
-    bg: "#FFFFFF", surface: "#F0FDF4", text: "#14532D", muted: "#6B7280",
-    primary: "#16A34A", border: "#DCFCE7", sidebarBg: "#F0FDF4",
+  hamburgueria: {
+    bg: "#0B0B0D", surface: "#151518", text: "#FFFFFF", muted: "#A1A1AA",
+    primary: "#FF7A00", border: "#26262E", sidebarBg: "#101014",
   },
-  crimson: {
-    bg: "#0C0A09", surface: "#1C1917", text: "#FAFAF9", muted: "#A8A29E",
-    primary: "#DC2626", border: "#44403C", sidebarBg: "#0C0A09",
+  teal: {
+    bg: "#0A0F10", surface: "#121A1C", text: "#FFFFFF", muted: "#94A3B8",
+    primary: "#14B8A6", border: "#1F2A2E", sidebarBg: "#0E1416",
   },
 };
 
