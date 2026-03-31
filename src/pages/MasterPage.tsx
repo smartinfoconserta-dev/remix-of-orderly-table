@@ -93,7 +93,7 @@ const emptyForm = {
   segmento: "hamburgeria", diaVencimento: 10, valorMensalidade: 0,
   observacoes: "", historicoPagamentos: [] as any[],
   plano: "anual", dataInicio: new Date().toISOString().slice(0, 10), dataTermino: "",
-  planoModulos: "basico" as "basico" | "medio" | "pro" | "premium",
+  planoModulos: "restaurante" as "restaurante" | "fastfood" | "completo",
   criarContaAdmin: false, senhaAdmin: "", slugLoja: "",
 };
 

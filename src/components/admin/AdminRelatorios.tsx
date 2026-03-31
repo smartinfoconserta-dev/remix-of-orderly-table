@@ -282,9 +282,9 @@ const AdminRelatorios = ({ storeId }: Props) => {
             <span className="inline-block mt-1 px-3 py-0.5 rounded-md border border-primary/40 bg-primary/10 text-primary text-[10px] font-black uppercase tracking-widest">Plano atual</span>
           </div>
           {[
-            { label: "Módulos ilimitados", show: licencaConfig.plano === "premium" },
-            { label: "Delivery integrado", show: ["medio", "pro", "premium"].includes(licencaConfig.plano || "") },
-            { label: "Suporte prioritário", show: ["pro", "premium"].includes(licencaConfig.plano || "") },
+            { label: "Módulos ilimitados", show: licencaConfig.plano === "completo" },
+            { label: "Delivery integrado", show: sistemaConfig.deliveryAtivo === true },
+            { label: "Totem & TV", show: ["fastfood", "completo"].includes(licencaConfig.plano || "") },
           ].map((f) => (
             <div key={f.label} className="flex items-center gap-2">
               <div className={`h-5 w-5 rounded flex items-center justify-center text-xs ${f.show ? "bg-emerald-500/20 text-emerald-400" : "bg-muted text-muted-foreground"}`}>{f.show ? "✓" : "—"}</div>
