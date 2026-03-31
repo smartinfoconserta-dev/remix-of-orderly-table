@@ -276,7 +276,7 @@ export const dbInsertEvento = (e: EventoOperacional) => {
   if (!sid) return;
   const row = eventoToRow(e, sid);
   const params = { _data: row };
-  supabase.rpc("rpc_insert_evento" as any, params).then(({ error }: any) => {
+  Promise.resolve(supabase.rpc("rpc_insert_evento" as any, params)).then(({ error }: any) => {
     if (error) {
       if (isNetworkError(error)) { enqueue("rpc_insert_evento", params, `Evento: ${(e.descricao || "").slice(0, 30)}`); }
       else { console.error("DB insert evento", error); toast.error("Erro ao registrar evento"); }
