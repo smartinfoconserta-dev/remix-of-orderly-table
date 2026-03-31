@@ -166,7 +166,7 @@ const MasterPage = () => {
       diaVencimento: c.diaVencimento || 10, valorMensalidade: c.valorMensalidade || 0,
       observacoes: c.observacoes || "", historicoPagamentos: c.historicoPagamentos || [],
       plano: c.plano || "anual", dataInicio: c.dataInicio || "", dataTermino: c.dataTermino || "",
-      planoModulos: c.planoModulos || "basico",
+      planoModulos: c.planoModulos || "restaurante",
       criarContaAdmin: false, senhaAdmin: "", slugLoja: "",
     });
     setDialogOpen(true);

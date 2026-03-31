@@ -74,7 +74,7 @@ export async function getClientes(): Promise<Cliente[]> {
       plano: r.plano ?? "anual",
       dataInicio: r.data_inicio ?? "",
       dataTermino: r.data_termino ?? "",
-      planoModulos: (r.plano_modulos as Cliente["planoModulos"]) ?? "basico",
+      planoModulos: migratePlano(r.plano_modulos as string),
     }));
   } catch (err) {
     console.error("[masterStorage] erro:", err);
