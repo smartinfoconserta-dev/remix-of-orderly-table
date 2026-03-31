@@ -223,6 +223,46 @@ const AdminCardapio = ({ storeId }: Props) => {
     } catch { toast.error("Erro ao remover produto"); }
   }, [removeTarget, storeId, loadProducts]);
 
+  const renderCatActions = (c: CategoriaCustom, count: number) => (
+    <>
+      <Button variant="ghost" size="icon" className="h-5 w-5" onClick={async () => {
+        const cats = await ensureCustomCategorias();
+        const target = cats.find((cc) => cc.id === c.id || normalizeCategoryName(cc.nome) === normalizeCategoryName(c.nome));
+        if (target) { setCatEditando(target); setCatNomeInput(target.nome); setCatIconeInput(target.icone || "tag"); setCatParentInput(target.parentId ?? null); }
+        else { setCatEditando(c); setCatNomeInput(c.nome); setCatIconeInput(c.icone || "tag"); setCatParentInput(c.parentId ?? null); }
+        setCatDialogOpen(true);
+      }}><Pencil className="h-3 w-3" /></Button>
+      <Button variant="ghost" size="icon" className="h-5 w-5" onClick={async () => {
+        const cats = await ensureCustomCategorias();
+        const idx = cats.findIndex((cc) => cc.id === c.id || normalizeCategoryName(cc.nome) === normalizeCategoryName(c.nome));
+        if (idx <= 0) return;
+        const next = [...cats]; [next[idx - 1], next[idx]] = [next[idx], next[idx - 1]];
+        persistCategorias(next).catch(() => toast.error("Erro ao reordenar categoria"));
+      }}><span className="text-[10px]">▲</span></Button>
+      <Button variant="ghost" size="icon" className="h-5 w-5" onClick={async () => {
+        const cats = await ensureCustomCategorias();
+        const idx = cats.findIndex((cc) => cc.id === c.id || normalizeCategoryName(cc.nome) === normalizeCategoryName(c.nome));
+        if (idx < 0 || idx >= cats.length - 1) return;
+        const next = [...cats]; [next[idx], next[idx + 1]] = [next[idx + 1], next[idx]];
+        persistCategorias(next).catch(() => toast.error("Erro ao reordenar categoria"));
+      }}><span className="text-[10px]">▼</span></Button>
+      <Button variant="ghost" size="icon" className="h-5 w-5 text-destructive hover:bg-destructive/10" onClick={async () => {
+        if (count > 0) { toast.error("Remova os produtos desta categoria primeiro"); return; }
+        // Also check if this parent has children
+        const children = todasCategorias.filter((cc) => cc.parentId === c.id);
+        if (children.length > 0) { toast.error("Remova as subcategorias primeiro"); return; }
+        const cats = await ensureCustomCategorias();
+        const catNomeNormalizado = normalizeCategoryName(c.nome);
+        const next = cats.filter((cc) => {
+          if (cc.id === c.id) return false;
+          return normalizeCategoryName(cc.nome) !== catNomeNormalizado;
+        });
+        await persistCategorias(next);
+        toast.success("Categoria removida");
+      }}><Trash2 className="h-3 w-3" /></Button>
+    </>
+  );
+
   return (
     <div className="space-y-5 fade-in">
       <div className="flex items-center justify-between">
