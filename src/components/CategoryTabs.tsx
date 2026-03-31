@@ -24,8 +24,6 @@ const CategoryTabs = ({
     buttonRefs.current[categoriaAtiva]?.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
   }, [categoriaAtiva]);
 
-  const hideIcon = sidebarEstilo === "so-texto";
-
   return (
     <div className="relative w-full overflow-hidden">
       {!totemMode && <div className="pointer-events-none absolute bottom-0 left-0 top-0 z-10 w-8 bg-gradient-to-r from-background to-transparent" />}
