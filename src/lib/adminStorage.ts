@@ -188,7 +188,16 @@ const defaultSistemaConfig: SistemaConfig = {
 
 /** Leitura rápida do cache. Use getSistemaConfigAsync para dado do banco. */
 export function getSistemaConfig(): SistemaConfig {
-  return _configCache ?? { ...defaultSistemaConfig };
+  if (_configCache) return _configCache;
+  try {
+    const raw = localStorage.getItem("orderly-config-v1");
+    if (raw) {
+      const cached = JSON.parse(raw) as SistemaConfig;
+      _configCache = cached;
+      return cached;
+    }
+  } catch {}
+  return { ...defaultSistemaConfig };
 }
 
 /** Atualiza o cache em memória (usado pelo configService após fetch) */
