@@ -33,6 +33,9 @@ interface Props {
   storeId: string | null;
 }
 
+const UUID_REGEX =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
 const normalizeCategoryName = (value: string) =>
   value
     .normalize("NFD")
@@ -69,26 +72,28 @@ const AdminCardapio = ({ storeId }: Props) => {
 
   const dbCategorias = getCachedCategorias();
   const todasCategorias = useMemo(() => {
-    const seenIds = new Set<string>();
+    const source = categoriasCustom.length > 0
+      ? categoriasCustom
+      : dbCategorias.map((c, i) => ({ ...c, ordem: i }));
+
     const seenNames = new Set<string>();
     const merged: Array<CategoriaCustom & { _isDefault: boolean }> = [];
 
-    const pushUnique = (cat: CategoriaCustom & { _isDefault: boolean }) => {
+    const pushUnique = (cat: CategoriaCustom, idx: number) => {
       const normalizedName = normalizeCategoryName(cat.nome);
-      if (seenIds.has(cat.id) || seenNames.has(normalizedName)) return;
-      seenIds.add(cat.id);
+      if (seenNames.has(normalizedName)) return;
       seenNames.add(normalizedName);
-      merged.push(cat);
+      merged.push({
+        ...cat,
+        ordem: idx,
+        _isDefault: categoriasCustom.length === 0 && !UUID_REGEX.test(cat.id),
+      });
     };
 
-    categoriasCustom
+    source
       .slice()
       .sort((a, b) => (a.ordem ?? 0) - (b.ordem ?? 0))
-      .forEach((c) => pushUnique({ ...c, _isDefault: false }));
-
-    dbCategorias
-      .map((c, i) => ({ ...c, ordem: i, _isDefault: false }))
-      .forEach(pushUnique);
+      .forEach((c, idx) => pushUnique(c, idx));
 
     return merged;
   }, [categoriasCustom, dbCategorias]);
@@ -99,11 +104,18 @@ const AdminCardapio = ({ storeId }: Props) => {
   }, [allProducts, catFilter]);
 
   const persistCategorias = useCallback(async (nextCategorias: CategoriaCustom[]) => {
-    const ordered = nextCategorias.map((cat, index) => ({ ...cat, ordem: index }));
+    const ordered = nextCategorias.map((cat, index) => ({
+      ...cat,
+      id: UUID_REGEX.test(cat.id) ? cat.id : crypto.randomUUID(),
+      ordem: index,
+    }));
     setCategoriasCustom(ordered);
     if (!storeId) return;
     await saveCategoriasCustom(ordered, storeId);
-    await reloadProducts(storeId);
+    await Promise.all([
+      reloadProducts(storeId),
+      getCategoriasCustomAsync(storeId).then(setCategoriasCustom),
+    ]);
   }, [storeId]);
 
   const toggleAtivo = useCallback(async (id: string) => {
@@ -232,22 +244,22 @@ const AdminCardapio = ({ storeId }: Props) => {
                       const idx = categoriasCustom.findIndex((cc) => cc.id === c.id);
                       if (idx <= 0) return;
                       const next = [...categoriasCustom]; [next[idx - 1], next[idx]] = [next[idx], next[idx - 1]];
-                      void persistCategorias(next);
+                      persistCategorias(next).catch(() => toast.error("Erro ao reordenar categoria"));
                     }}><span className="text-[10px]">▲</span></Button>
                     <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => {
                       const idx = categoriasCustom.findIndex((cc) => cc.id === c.id);
                       if (idx < 0 || idx >= categoriasCustom.length - 1) return;
                       const next = [...categoriasCustom]; [next[idx], next[idx + 1]] = [next[idx + 1], next[idx]];
-                      void persistCategorias(next);
+                      persistCategorias(next).catch(() => toast.error("Erro ao reordenar categoria"));
                     }}><span className="text-[10px]">▼</span></Button>
-                    <Button variant="ghost" size="icon" className="h-5 w-5 text-destructive hover:bg-destructive/10" onClick={() => {
+                    <Button variant="ghost" size="icon" className="h-5 w-5 text-destructive hover:bg-destructive/10" onClick={async () => {
                       if (count > 0) { toast.error("Remova os produtos desta categoria primeiro"); return; }
                       const catNomeNormalizado = normalizeCategoryName(c.nome);
                       const next = categoriasCustom.filter((cc) => {
                         if (cc.id === c.id) return false;
                         return normalizeCategoryName(cc.nome) !== catNomeNormalizado;
                       });
-                      void persistCategorias(next);
+                      await persistCategorias(next);
                       toast.success("Categoria removida");
                     }}><Trash2 className="h-3 w-3" /></Button>
                   </>
@@ -520,11 +532,11 @@ const AdminCardapio = ({ storeId }: Props) => {
             </div>
             <div className="flex gap-3">
               <Button variant="outline" className="flex-1" onClick={() => setCatDialogOpen(false)}>Cancelar</Button>
-              <Button className="flex-1" disabled={!catNomeInput.trim()} onClick={() => {
+              <Button className="flex-1" disabled={!catNomeInput.trim()} onClick={async () => {
                 if (!catNomeInput.trim()) return;
                 if (catEditando) {
                   const next = categoriasCustom.map((c) => c.id === catEditando.id ? { ...c, nome: catNomeInput.trim(), icone: catIconeInput } : c);
-                  void persistCategorias(next);
+                  await persistCategorias(next);
                   toast.success("Categoria atualizada");
                 } else {
                   const nova: CategoriaCustom = {
@@ -534,7 +546,7 @@ const AdminCardapio = ({ storeId }: Props) => {
                     ordem: todasCategorias.length,
                   };
                   const next = [...categoriasCustom, nova];
-                  void persistCategorias(next);
+                  await persistCategorias(next);
                   toast.success("Categoria criada");
                 }
                 setCatDialogOpen(false);
