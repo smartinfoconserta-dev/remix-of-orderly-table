@@ -111,6 +111,7 @@ import CaixaQrScanner from "@/components/caixa/CaixaQrScanner";
 
 interface CaixaPageProps {
   accessMode?: Extract<UserRole, "caixa" | "gerente">;
+  deliveryOnly?: boolean;
 }
 
 /* ══════════════════════════════════════ */
