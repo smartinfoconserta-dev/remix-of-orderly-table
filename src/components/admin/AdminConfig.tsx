@@ -473,7 +473,7 @@ const AdminConfig = ({ storeId, storeName }: Props) => {
           </div>
           {/* Totem */}
           {(() => {
-            const plano = (licencaConfig.plano || sistemaConfig.plano || "basico") as PlanoModulos;
+            const plano = (licencaConfig.plano || sistemaConfig.plano || "restaurante") as PlanoModulos;
             const liberado = getModulosDoPlano(plano).totem;
             return (
               <div className="flex items-center justify-between rounded-xl border border-border p-4">
@@ -488,7 +488,7 @@ const AdminConfig = ({ storeId, storeName }: Props) => {
           })()}
           {/* Delivery */}
           {(() => {
-            const plano = (licencaConfig.plano || sistemaConfig.plano || "basico") as PlanoModulos;
+            const plano = (licencaConfig.plano || sistemaConfig.plano || "restaurante") as PlanoModulos;
             const liberado = getModulosDoPlano(plano).delivery;
             return (
               <div className="flex items-center justify-between rounded-xl border border-border p-4">
@@ -581,7 +581,7 @@ const AdminConfig = ({ storeId, storeName }: Props) => {
       {configSection === "modulos" && (
         <div className="space-y-4 max-w-lg">
           {TODOS_MODULOS.map(mod => {
-            const plano = (licencaConfig.plano || sistemaConfig.plano || "basico") as PlanoModulos;
+            const plano = (licencaConfig.plano || sistemaConfig.plano || "restaurante") as PlanoModulos;
             const modulosLiberados = getModulosDoPlano(plano);
             const liberado = !!(modulosLiberados as any)[mod.id];
             const ativo = !!(sistemaConfig.modulos as any)?.[mod.id];

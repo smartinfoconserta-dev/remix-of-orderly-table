@@ -31,7 +31,7 @@ export interface Cliente {
   plano: string;
   dataInicio: string;
   dataTermino: string;
-  planoModulos?: "basico" | "medio" | "pro" | "premium";
+  planoModulos?: "restaurante" | "fastfood" | "completo";
 }
 
 export interface Despesa {
@@ -40,6 +40,13 @@ export interface Despesa {
   valor: number;
   categoria: string;
   data: string;
+}
+
+function migratePlano(raw: string | null | undefined): Cliente["planoModulos"] {
+  if (raw === "restaurante" || raw === "fastfood" || raw === "completo") return raw;
+  if (raw === "pro" || raw === "premium") return "completo";
+  if (raw === "medio") return "fastfood";
+  return "restaurante"; // basico or fallback
 }
 
 // ─── CLIENTES ───────────────────────────────────
@@ -74,7 +81,7 @@ export async function getClientes(): Promise<Cliente[]> {
       plano: r.plano ?? "anual",
       dataInicio: r.data_inicio ?? "",
       dataTermino: r.data_termino ?? "",
-      planoModulos: (r.plano_modulos as Cliente["planoModulos"]) ?? "basico",
+      planoModulos: migratePlano(r.plano_modulos as string),
     }));
   } catch (err) {
     console.error("[masterStorage] erro:", err);

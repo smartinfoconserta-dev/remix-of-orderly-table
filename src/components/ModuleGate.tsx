@@ -17,8 +17,10 @@ const ModuleGate = ({ moduleKey, moduleName, children }: ModuleGateProps) => {
     const modulos = config?.modulos ?? {};
     // Mesas defaults to true (backward compat)
     if (moduleKey === "mesas") return modulos.mesas !== false;
-    // Motoboy follows delivery
-    if (moduleKey === "motoboy") return modulos.delivery !== false;
+    // Delivery e motoboy são controlados pelo toggle deliveryAtivo
+    if (moduleKey === "delivery" || moduleKey === "motoboy") {
+      return config?.deliveryAtivo === true || (modulos as any).delivery === true;
+    }
     return (modulos as any)[moduleKey] === true;
   }, [moduleKey]);
 

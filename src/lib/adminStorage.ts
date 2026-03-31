@@ -82,7 +82,9 @@ export interface SistemaConfig {
     motoboy?: boolean;
     garcomPdv?: boolean;
   };
-  plano?: "basico" | "medio" | "pro" | "premium";
+  tipoRestaurante?: "restaurante" | "fastfood" | "completo";
+  deliverySeparado?: boolean;
+  plano?: "restaurante" | "fastfood" | "completo";
   /** @deprecated Use modulos.mesas / modulos.balcao instead */
   modoOperacao?: "restaurante" | "fast_food";
   identificacaoFastFood?: "codigo" | "nome_cliente";
@@ -106,10 +108,10 @@ export interface LicencaConfig {
   nomeCliente: string;
   dataVencimento: string;
   ativo: boolean;
-  plano?: "basico" | "medio" | "pro" | "premium";
+  plano?: "restaurante" | "fastfood" | "completo";
 }
 
-export type PlanoModulos = "basico" | "medio" | "pro" | "premium";
+export type PlanoModulos = "restaurante" | "fastfood" | "completo";
 
 export function getModulosDoPlano(plano: PlanoModulos): {
   mesas: boolean;
@@ -119,16 +121,43 @@ export function getModulosDoPlano(plano: PlanoModulos): {
   motoboy: boolean;
   totem: boolean;
   tvRetirada: boolean;
+  garcomPdv: boolean;
 } {
-  return {
-    mesas: true,
-    balcao: true,
-    cozinha: true,
-    delivery: plano === "medio" || plano === "pro" || plano === "premium",
-    motoboy: plano === "pro" || plano === "premium",
-    totem: plano === "premium",
-    tvRetirada: plano === "premium",
-  };
+  switch (plano) {
+    case "restaurante":
+      return {
+        mesas: true,
+        balcao: true,
+        cozinha: true,
+        delivery: false,
+        motoboy: false,
+        totem: false,
+        tvRetirada: false,
+        garcomPdv: false,
+      };
+    case "fastfood":
+      return {
+        mesas: false,
+        balcao: true,
+        cozinha: true,
+        delivery: false,
+        motoboy: false,
+        totem: true,
+        tvRetirada: true,
+        garcomPdv: true,
+      };
+    case "completo":
+      return {
+        mesas: true,
+        balcao: true,
+        cozinha: true,
+        delivery: false,
+        motoboy: false,
+        totem: true,
+        tvRetirada: true,
+        garcomPdv: true,
+      };
+  }
 }
 
 // ─────────────────────────────────

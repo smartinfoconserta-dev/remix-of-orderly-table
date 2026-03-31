@@ -31,11 +31,11 @@ const AdminLicenca = ({ storeId }: Props) => {
     toast.success("Licença salva");
   }, [licencaConfig, storeId]);
 
-  const planoAtual = (licencaConfig.plano || sistemaConfig.plano || "basico") as PlanoModulos;
+  const planoAtual = (licencaConfig.plano || sistemaConfig.plano || "restaurante") as PlanoModulos;
   const modulosMaster = getModulosDoPlano(planoAtual);
   const modulosAtivos = sistemaConfig.modulos ?? {};
 
-  const planoNomeMap: Record<string, string> = { basico: "BÁSICO", medio: "MÉDIO", pro: "PROFISSIONAL", premium: "PREMIUM" };
+  const planoNomeMap: Record<string, string> = { restaurante: "RESTAURANTE", fastfood: "FAST FOOD", completo: "COMPLETO" };
 
   const allModules = [
     { id: "tabletCliente", label: "Tablet Cliente", desc: "Cardápio digital na mesa", icon: "📱", alwaysOn: true, alwaysEnabled: true },
@@ -49,9 +49,9 @@ const AdminLicenca = ({ storeId }: Props) => {
   ];
 
   const requiredPlan = (modId: string) => {
-    if (modId === "delivery" || modId === "cozinha") return "Médio";
-    if (modId === "motoboy") return "Pro";
-    if (modId === "totem" || modId === "tvRetirada") return "Profissional";
+    if (modId === "delivery" || modId === "motoboy") return "Addon Delivery";
+    if (modId === "totem" || modId === "tvRetirada" || modId === "garcomPdv") return "Fast Food / Completo";
+    if (modId === "cozinha") return "";
     return "";
   };
 
@@ -71,12 +71,12 @@ const AdminLicenca = ({ storeId }: Props) => {
   };
 
   const planos = [
-    { id: "basico", nome: "BÁSICO", preco: "R$ 149", cor: "border-border", modulos: ["Tablet Cliente", "Garçom", "Caixa", "Cozinha"] },
-    { id: "medio", nome: "MÉDIO", preco: "R$ 249", cor: "border-amber-500/50", modulos: ["Tudo do Básico", "Delivery", "Motoboy"] },
-    { id: "pro", nome: "PROFISSIONAL", preco: "R$ 399", cor: "border-primary/50", modulos: ["Tudo do Médio", "Totem", "TV Retirada"] },
+    { id: "restaurante", nome: "RESTAURANTE", preco: "R$ 149", cor: "border-border", modulos: ["Mesas", "Balcão", "Caixa", "Cozinha"] },
+    { id: "fastfood", nome: "FAST FOOD", preco: "R$ 249", cor: "border-amber-500/50", modulos: ["Balcão", "Totem", "TV Retirada", "Garçom PDV"] },
+    { id: "completo", nome: "COMPLETO", preco: "R$ 399", cor: "border-primary/50", modulos: ["Tudo incluso"] },
   ];
 
-  const planoOrder = ["basico", "medio", "pro", "premium"];
+  const planoOrder = ["restaurante", "fastfood", "completo"];
   const currentIdx = planoOrder.indexOf(planoAtual);
 
   return (

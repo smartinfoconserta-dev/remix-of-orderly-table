@@ -73,17 +73,15 @@ function calcDataTermino(plano: string, dataInicio: string): string {
 const todayStr = () => new Date().toISOString().slice(0, 10);
 
 const PLANOS_MODULOS = [
-  { value: "basico", label: "Básico" },
-  { value: "medio", label: "Médio" },
-  { value: "pro", label: "Pro" },
-  { value: "premium", label: "Premium" },
+  { value: "restaurante", label: "Restaurante" },
+  { value: "fastfood", label: "Fast Food" },
+  { value: "completo", label: "Completo" },
 ];
-const PLANO_MODULOS_LABELS: Record<string, string> = { basico: "Básico", medio: "Médio", pro: "Pro", premium: "Premium" };
+const PLANO_MODULOS_LABELS: Record<string, string> = { restaurante: "Restaurante", fastfood: "Fast Food", completo: "Completo" };
 const PLANO_MODULOS_BADGE: Record<string, string> = {
-  basico: "bg-muted text-muted-foreground",
-  medio: "bg-blue-600 hover:bg-blue-600 text-white",
-  pro: "bg-emerald-600 hover:bg-emerald-600 text-white",
-  premium: "bg-purple-600 hover:bg-purple-600 text-white",
+  restaurante: "bg-muted text-muted-foreground",
+  fastfood: "bg-blue-600 hover:bg-blue-600 text-white",
+  completo: "bg-emerald-600 hover:bg-emerald-600 text-white",
 };
 
 const emptyForm = {
@@ -93,7 +91,7 @@ const emptyForm = {
   segmento: "hamburgeria", diaVencimento: 10, valorMensalidade: 0,
   observacoes: "", historicoPagamentos: [] as any[],
   plano: "anual", dataInicio: new Date().toISOString().slice(0, 10), dataTermino: "",
-  planoModulos: "basico" as "basico" | "medio" | "pro" | "premium",
+  planoModulos: "restaurante" as "restaurante" | "fastfood" | "completo",
   criarContaAdmin: false, senhaAdmin: "", slugLoja: "",
 };
 
@@ -166,7 +164,7 @@ const MasterPage = () => {
       diaVencimento: c.diaVencimento || 10, valorMensalidade: c.valorMensalidade || 0,
       observacoes: c.observacoes || "", historicoPagamentos: c.historicoPagamentos || [],
       plano: c.plano || "anual", dataInicio: c.dataInicio || "", dataTermino: c.dataTermino || "",
-      planoModulos: c.planoModulos || "basico",
+      planoModulos: c.planoModulos || "restaurante",
       criarContaAdmin: false, senhaAdmin: "", slugLoja: "",
     });
     setDialogOpen(true);
@@ -818,7 +816,7 @@ const MasterPage = () => {
                   <div className="sm:col-span-2"><span className="text-muted-foreground">Endereço:</span> <span className="font-semibold text-foreground">{[detailClient.endereco, detailClient.cidade, detailClient.estado].filter(Boolean).join(", ") || "—"}</span></div>
                   <div><span className="text-muted-foreground">Mensalidade:</span> <span className="font-semibold text-foreground">R$ {(detailClient.valorMensalidade || 0).toFixed(2)}</span></div>
                   <div><span className="text-muted-foreground">Plano contratual:</span> <Badge className={PLANO_BADGE_CLASS[detailClient.plano] || "bg-muted text-muted-foreground"}>{PLANO_LABELS[detailClient.plano] || detailClient.plano || "—"}</Badge></div>
-                  <div><span className="text-muted-foreground">Plano módulos:</span> <Badge className={PLANO_MODULOS_BADGE[detailClient.planoModulos || "basico"]}>{PLANO_MODULOS_LABELS[detailClient.planoModulos || "basico"]}</Badge></div>
+                  <div><span className="text-muted-foreground">Plano módulos:</span> <Badge className={PLANO_MODULOS_BADGE[detailClient.planoModulos || "restaurante"]}>{PLANO_MODULOS_LABELS[detailClient.planoModulos || "restaurante"]}</Badge></div>
                   <div><span className="text-muted-foreground">Início contrato:</span> <span className="font-semibold text-foreground">{detailClient.dataInicio || "—"}</span></div>
                   <div><span className="text-muted-foreground">Dia vencimento:</span> <span className="font-semibold text-foreground">{detailClient.diaVencimento || "—"}</span></div>
                   <div><span className="text-muted-foreground">Licença:</span> <span className="font-semibold text-foreground">{detailClient.dataVencimento || "—"}</span></div>
