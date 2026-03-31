@@ -15,7 +15,7 @@ export const AdminBackButton = () => {
   return (
     <button
       onClick={() => navigate(authLevel === "master" ? "/master" : "/admin")}
-      className="fixed bottom-4 right-4 z-50 flex items-center gap-2 rounded-full bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground shadow-lg hover:bg-primary/90 transition-colors"
+      className="fixed bottom-20 right-4 z-40 flex items-center gap-2 rounded-full bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground shadow-lg hover:bg-primary/90 transition-colors"
       title="Voltar ao painel"
     >
       <ArrowLeft className="h-4 w-4" />
