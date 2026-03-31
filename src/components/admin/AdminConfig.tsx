@@ -94,10 +94,9 @@ const AdminConfig = ({ storeId, storeName }: Props) => {
         <div className="grid grid-cols-2 gap-3 max-w-xl">
           {[
             { id: "identidade", icon: "🎨", label: "Identidade Visual", desc: "Logo, nome, cor, banners" },
+            { id: "restaurante", icon: "🏪", label: "Meu Restaurante", desc: "Tipo de atendimento e funcionalidades" },
             { id: "delivery", icon: "🛵", label: "Delivery", desc: "Horários, bairros, taxas" },
-            { id: "salao", icon: "🍽️", label: "Salão", desc: "Boas-vindas, Wi-Fi, Instagram" },
-            { id: "operacao", icon: "⚙️", label: "Operação", desc: "Cozinha, couvert, modos" },
-            { id: "modulos", icon: "🧩", label: "Módulos", desc: "Ativar e desativar funcionalidades" },
+            { id: "salao", icon: "🍽️", label: "Ambiente", desc: "Wi-Fi, Instagram, boas-vindas" },
             { id: "impressoras", icon: "🖨️", label: "Impressoras", desc: "Impressoras térmicas" },
             { id: "sistema", icon: "💾", label: "Sistema", desc: "Backup e restauração" },
           ].map(card => (
