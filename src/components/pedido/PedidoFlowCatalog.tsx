@@ -34,7 +34,7 @@ const PedidoFlowCatalog = ({
       )}
       <div
         key={categoryFadeKey}
-        className={`grid ${isTotem ? "grid-cols-2 gap-4" : "grid-cols-2 gap-3 md:grid-cols-3 md:gap-4"}`}
+        className={`grid ${isTotem ? "grid-cols-2 gap-5 sm:grid-cols-3 lg:grid-cols-4" : "grid-cols-2 gap-3 md:grid-cols-3 md:gap-4"}`}
       >
         {produtos.map((produto, index) => {
           const isCardSelected = selectedProductCardId === produto.id;
