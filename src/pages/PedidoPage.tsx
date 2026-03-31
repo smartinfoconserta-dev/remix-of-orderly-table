@@ -14,6 +14,7 @@ import type { ItemCarrinho } from "@/contexts/RestaurantContext";
 import type { Bairro } from "@/lib/deliveryStorage";
 import type { HorariosSemana, HorarioFuncionamento, SistemaConfig } from "@/lib/adminStorage";
 import { preloadProducts } from "@/hooks/useProducts";
+import { applyThemeToElement, clearThemeFromElement, THEME_MAP } from "@/lib/themeEngine";
 
 const normStr = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
 
