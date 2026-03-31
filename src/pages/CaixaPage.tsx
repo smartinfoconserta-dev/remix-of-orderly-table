@@ -99,6 +99,7 @@ import CaixaHistoricoTab from "@/components/caixa/CaixaHistoricoTab";
 import CaixaHeader from "@/components/caixa/CaixaHeader";
 import CaixaMesasTab from "@/components/caixa/CaixaMesasTab";
 import CaixaDialogs from "@/components/caixa/CaixaDialogs";
+import CaixaStatusBar from "@/components/caixa/CaixaStatusBar";
 
 
 interface CaixaPageProps {
