@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Plus, Pencil, Save, Trash2, X, ImagePlus } from "lucide-react";
+import { iconGroups } from "@/components/CategoryIcon";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
@@ -458,12 +459,19 @@ const AdminCardapio = ({ storeId }: Props) => {
             <div className="space-y-1.5"><label className="text-xs font-bold text-muted-foreground">Nome da categoria</label><Input value={catNomeInput} onChange={(e) => setCatNomeInput(e.target.value)} placeholder="Ex.: Massas" maxLength={40} /></div>
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-muted-foreground">Ícone</label>
-              <div className="flex flex-wrap gap-1.5">
-                {["burger", "pizza", "coffee", "beer", "cake", "box", "flame", "star", "leaf", "tag", "beef", "popcorn", "cup-soda"].map((ic) => (
-                  <button key={ic} type="button" onClick={() => setCatIconeInput(ic)}
-                    className={`flex h-9 w-9 items-center justify-center rounded-lg border transition-all ${catIconeInput === ic ? "border-primary bg-primary/15 text-primary" : "border-border bg-card text-muted-foreground hover:bg-secondary"}`}>
-                    <CategoryIcon name={ic} className="h-4 w-4" />
-                  </button>
+              <div className="max-h-[40vh] overflow-y-auto space-y-3">
+                {iconGroups.map((group) => (
+                  <div key={group.label}>
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1.5">{group.label}</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {group.icons.map((ic) => (
+                        <button key={ic} type="button" onClick={() => setCatIconeInput(ic)}
+                          className={`flex h-9 w-9 items-center justify-center rounded-lg border transition-all ${catIconeInput === ic ? "border-primary bg-primary/15 text-primary" : "border-border bg-card text-muted-foreground hover:bg-secondary"}`}>
+                          <CategoryIcon name={ic} className="h-4 w-4" />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 ))}
               </div>
             </div>

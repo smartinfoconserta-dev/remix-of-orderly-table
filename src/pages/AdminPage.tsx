@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   ClipboardList, Grid3X3, LayoutDashboard, LogOut, Settings, Shield,
-  Users, Wallet, TabletSmartphone, ShoppingBag,
+  Users, Wallet, TabletSmartphone, ShoppingBag, Monitor,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useStore } from "@/contexts/StoreContext";
@@ -20,8 +20,9 @@ import AdminRelatorios from "@/components/admin/AdminRelatorios";
 import AdminCardapio from "@/components/admin/AdminCardapio";
 import AdminConfig from "@/components/admin/AdminConfig";
 import AdminLicenca from "@/components/admin/AdminLicenca";
+import AdminTotem from "@/components/admin/AdminTotem";
 
-type AdminTab = "dashboard" | "cardapio" | "mesas" | "tablets" | "equipe" | "caixas" | "configuracoes" | "licenca" | "ifood";
+type AdminTab = "dashboard" | "cardapio" | "mesas" | "tablets" | "equipe" | "caixas" | "configuracoes" | "licenca" | "ifood" | "totem";
 
 const sidebarSections = [
   { id: "dashboard" as const, label: "Início", icon: LayoutDashboard },
@@ -31,6 +32,7 @@ const sidebarSections = [
   { id: "equipe" as const, label: "Equipe", icon: Users },
   { id: "caixas" as const, label: "Caixas", icon: Wallet },
   { id: "ifood" as const, label: "iFood", icon: ShoppingBag },
+  { id: "totem" as const, label: "Totem", icon: Monitor },
   { id: "configuracoes" as const, label: "Configurações", icon: Settings },
   { id: "licenca" as const, label: "Meu Plano", icon: Shield },
 ];
@@ -115,6 +117,11 @@ const AdminPage = () => {
             </div>
           )}
           {tab === "ifood" && <div className="space-y-4 fade-in"><IfoodPainel /></div>}
+          {tab === "totem" && (() => {
+            const [tc, setTc] = useState(getSistemaConfig());
+            const saveTc = (c?: any) => { const s = c && typeof c === "object" && "nomeRestaurante" in c ? c : tc; import("@/lib/adminStorage").then(m => { m.saveSistemaConfig(s, storeId); import("@/lib/adminStorage").then(m2 => m2.saveSistemaConfigAsync(s, storeId)); }); };
+            return <AdminTotem sistemaConfig={tc} setSistemaConfig={setTc} storeId={storeId} onSave={saveTc} />;
+          })()}
         </main>
       </div>
       <LicenseBanner context="admin" />
