@@ -317,11 +317,11 @@ const MasterPage = () => {
     if (c.planoModulos) {
       const clientStoreId = resolveStoreId(c.nomeRestaurante);
       if (clientStoreId) {
-        const lic = getLicencaConfig();
+        const lic = await getLicencaConfigAsync(clientStoreId);
         lic.plano = c.planoModulos;
         lic.ativo = !c.ativo;
         await saveLicencaConfigAsync(lic, clientStoreId);
-        const cfg = getSistemaConfig();
+        const cfg = await getSistemaConfigAsync(clientStoreId);
         cfg.plano = c.planoModulos;
         await saveSistemaConfigAsync(cfg, clientStoreId);
       } else {
