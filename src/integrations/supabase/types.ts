@@ -938,6 +938,7 @@ export type Database = {
           id: string
           nome: string
           ordem: number | null
+          parent_id: string | null
           store_id: string | null
         }
         Insert: {
@@ -946,6 +947,7 @@ export type Database = {
           id?: string
           nome: string
           ordem?: number | null
+          parent_id?: string | null
           store_id?: string | null
         }
         Update: {
@@ -954,9 +956,17 @@ export type Database = {
           id?: string
           nome?: string
           ordem?: number | null
+          parent_id?: string | null
           store_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "restaurant_categories_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "restaurant_categories"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "restaurant_categories_store_id_fkey"
             columns: ["store_id"]
