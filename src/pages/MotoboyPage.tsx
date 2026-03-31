@@ -245,7 +245,16 @@ export default function MotoboyPage() {
         } else if (scanningPedidoId) {
           if (pedidoId === scanningPedidoId) {
             marcarBalcaoSaiu(pedidoId, sessao?.nome || "Motoboy");
-            toast.success("Retirada confirmada! Boa entrega. 🏍️");
+            const scannedPedido = pedidosBalcao.find((p) => p.id === pedidoId);
+            const tel = (scannedPedido as any)?.clienteTelefone;
+            const nome = (scannedPedido as any)?.clienteNome || "Cliente";
+            const num = scannedPedido?.numeroPedido ?? 0;
+            toast.success("Retirada confirmada! Boa entrega. 🏍️", {
+              action: tel ? {
+                label: "📱 Avisar cliente",
+                onClick: () => sendWhatsAppMessage(tel, buildDeliveryStatusMessage(NOME_REST, num, nome, "saiu", { motoboyNome: sessao?.nome })),
+              } : undefined,
+            });
           } else {
             toast.error("QR Code não corresponde a este pedido");
           }
