@@ -138,6 +138,13 @@ const GarcomPdvPage = () => {
     }
     setProcessando(true);
 
+    const mesa = mesas.find(m => m.id === pagamentoMesaId);
+    if (!mesa || mesa.total === 0) {
+      toast.error("Mesa sem consumo para fechar");
+      setProcessando(false);
+      return;
+    }
+
     fecharConta(pagamentoMesaId, {
       usuario: {
         id: currentGarcom.id,
@@ -155,14 +162,45 @@ const GarcomPdvPage = () => {
       p.formaPagamento === "pix" ? "PIX" : p.formaPagamento === "credito" ? "Crédito" : "Débito"
     ))].join(" + ");
 
-    toast.success(`Mesa ${pagamentoMesa?.numero} paga com ${formas}!`, { icon: "💳" });
+    const lastPedido = mesa.pedidos[mesa.pedidos.length - 1];
+    const allItens = mesa.pedidos.flatMap(p => p.itens);
+
+    setReceiptData({
+      mesaNumero: mesa.numero,
+      total: mesa.total,
+      formasLabel: formas,
+      pagamentos: [...pagamentos],
+      itens: allItens.map(i => ({ quantidade: i.quantidade, nome: i.nome, preco: i.precoUnitario })),
+      numeroPedido: lastPedido?.numeroPedido ?? 0,
+    });
 
     setPagamentoOpen(false);
     setPagamentoMesaId(null);
     setPagamentos([]);
     setProcessando(false);
+  }, [pagamentoMesaId, pagamentos, mesas, fecharConta, currentGarcom, fechamentoPronto]);
+
+  const handlePrintReceipt = useCallback(() => {
+    if (!receiptData) return;
+    const nomeRest = getSistemaConfig().nomeRestaurante || "Restaurante";
+    const now = new Date();
+    const dataHora = `${String(now.getDate()).padStart(2,"0")}/${String(now.getMonth()+1).padStart(2,"0")}/${now.getFullYear()} ${String(now.getHours()).padStart(2,"0")}:${String(now.getMinutes()).padStart(2,"0")}`;
+    printComanda({
+      tipo: `Mesa ${String(receiptData.mesaNumero).padStart(2, "0")}`,
+      numero: receiptData.numeroPedido,
+      dataHora,
+      itens: receiptData.itens,
+      subtotal: receiptData.total,
+      total: receiptData.total,
+      formaPagamento: receiptData.formasLabel,
+      origem: "mesa",
+    }, nomeRest);
+  }, [receiptData]);
+
+  const handleCloseReceipt = useCallback(() => {
+    setReceiptData(null);
     setSearchParams({});
-  }, [pagamentoMesaId, pagamentos, pagamentoMesa, fecharConta, currentGarcom, setSearchParams, fechamentoPronto]);
+  }, [setSearchParams]);
 
   if (!currentGarcom && !isAdminAccess) {
     return (
