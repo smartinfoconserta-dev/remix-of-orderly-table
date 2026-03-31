@@ -107,6 +107,7 @@ import CaixaEstornoDialog from "@/components/caixa/CaixaEstornoDialog";
 import CaixaHistoricoTab from "@/components/caixa/CaixaHistoricoTab";
 import CaixaCriticalActionDialog from "@/components/caixa/CaixaCriticalActionDialog";
 import CaixaQrScanner from "@/components/caixa/CaixaQrScanner";
+import CaixaHeader from "@/components/caixa/CaixaHeader";
 
 
 interface CaixaPageProps {
@@ -1234,72 +1235,19 @@ const CaixaPage = ({ accessMode = "caixa", deliveryOnly = false }: CaixaPageProp
             /* ─────────────── MAIN VIEW — PROFESSIONAL DESKTOP ─────────────── */
             <div className="flex flex-col h-full view-fade-in">
 
-              {/* ── Windows-style Title Bar ── */}
-               <div className="flex items-center px-4 py-2.5 shrink-0 border-b border-border bg-card">
-                <p className="text-sm font-black text-foreground truncate">{sistemaConfig.nomeRestaurante || "Orderly"}</p>
-                <div className="flex-1" />
-                <p className="text-xs text-muted-foreground">
-                  {currentOperator.nome} • {accessMode === "gerente" ? "Acesso completo" : "Operador de caixa"}
-                </p>
-                <div className="flex-1" />
-                <div className="flex items-center gap-1.5">
-                  <Clock className="h-3.5 w-3.5 text-muted-foreground" />
-                  <span className="text-sm font-black tabular-nums text-foreground">{clockStr}</span>
-                </div>
-              </div>
-
-              {/* ── Windows-style Toolbar ── */}
-              <div className="flex items-center gap-1 border-b border-border px-3 py-1.5 shrink-0 bg-card">
-                <button
-                  onClick={() => setBalcaoOpen(true)}
-                  className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded text-xs border border-border bg-secondary text-foreground hover:bg-primary/15 transition-colors"
-                  style={{ minWidth: 76 }}
-                >
-                  <ReceiptText className="h-5 w-5" />
-                  <span className="text-xs font-bold">Novo pedido</span>
-                </button>
-                <button
-                  onClick={() => setMovModalOpen(true)}
-                  className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded text-xs border border-border bg-secondary text-foreground hover:bg-primary/15 transition-colors"
-                  style={{ minWidth: 76 }}
-                >
-                  <Banknote className="h-5 w-5" />
-                  <span className="text-xs font-bold">Sangria</span>
-                </button>
-                <div className="w-px h-8 mx-1 bg-border" />
-                <button
-                  onClick={() => setTurnoReportOpen(true)}
-                  className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded text-xs border border-destructive/50 bg-secondary text-destructive hover:bg-destructive/15 transition-colors"
-                  style={{ minWidth: 76 }}
-                >
-                  <LockKeyhole className="h-5 w-5" />
-                  <span className="text-xs font-bold">Fechar turno</span>
-                </button>
-                <button
-                  onClick={() => setBuscaComandaOpen(true)}
-                  className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded text-xs border border-border bg-secondary text-foreground hover:bg-primary/15 transition-colors"
-                  style={{ minWidth: 76 }}
-                >
-                  <Search className="h-5 w-5" />
-                  <span className="text-xs font-bold">Buscar</span>
-                </button>
-                <button
-                  onClick={() => { setQrScanOpen(true); setQrScanInput(""); }}
-                  className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded text-xs border border-border bg-secondary text-foreground hover:bg-primary/15 transition-colors"
-                  style={{ minWidth: 76 }}
-                >
-                  <QrCode className="h-5 w-5" />
-                  <span className="text-xs font-bold">QR Code</span>
-                </button>
-                <button
-                  onClick={() => logout(accessMode)}
-                  className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded text-xs border border-border bg-secondary text-foreground hover:bg-primary/15 transition-colors"
-                  style={{ minWidth: 76 }}
-                >
-                  <LogOut className="h-5 w-5" />
-                  <span className="text-xs font-bold">Sair</span>
-                </button>
-              </div>
+              <CaixaHeader
+                caixaAberto={caixaAberto}
+                operadorNome={currentOperator.nome}
+                nomeRestaurante={sistemaConfig.nomeRestaurante || "Orderly"}
+                accessMode={accessMode}
+                onLogout={() => logout(accessMode)}
+                onOpenMovimentacao={() => setMovModalOpen(true)}
+                onOpenTurnoReport={() => setTurnoReportOpen(true)}
+                onOpenBuscaComanda={() => setBuscaComandaOpen(true)}
+                onOpenQrScanner={() => { setQrScanOpen(true); setQrScanInput(""); }}
+                onOpenBalcao={() => setBalcaoOpen(true)}
+                isAdminAccess={isAdminAccess}
+              />
 
               {/* ── Windows-style Tabs ── */}
               <div className="flex items-end px-3 pt-1 shrink-0 bg-card">
