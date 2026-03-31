@@ -772,7 +772,7 @@ export default function MotoboyPage() {
                         },
                         pedidos_ids: entregues.map(p => p.id),
                       };
-                       supabase.rpc("rpc_insert_motoboy_fechamento", { _data: fechamento as any }).then(({ error }) => {
+                       Promise.resolve(supabase.rpc("rpc_insert_motoboy_fechamento", { _data: fechamento as any })).then(({ error }) => {
                         if (error) {
                           if (isNetworkError(error)) {
                             enqueue("rpc_insert_motoboy_fechamento", { _data: fechamento }, "Fechamento motoboy " + sessao?.nome);
