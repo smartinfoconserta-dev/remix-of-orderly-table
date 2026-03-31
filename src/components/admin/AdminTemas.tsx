@@ -13,7 +13,7 @@ interface AdminTemasProps {
   sistemaConfig: SistemaConfig;
   setSistemaConfig: React.Dispatch<React.SetStateAction<SistemaConfig>>;
   storeId: string | null;
-  onSave: () => void;
+  onSave: (config?: SistemaConfig) => void;
 }
 
 interface ThemePreset {
@@ -135,7 +135,7 @@ const AdminTemas = ({ sistemaConfig, setSistemaConfig, storeId, onSave }: AdminT
     };
     setSistemaConfig(next);
     setTimeout(() => {
-      onSave();
+      onSave(next);
       toast.success(`Tema "${tema.name}" aplicado!`);
     }, 50);
   };
@@ -144,7 +144,7 @@ const AdminTemas = ({ sistemaConfig, setSistemaConfig, storeId, onSave }: AdminT
     const next: SistemaConfig = { ...sistemaConfig, temaPersonalizado: checked };
     setSistemaConfig(next);
     if (!checked) {
-      setTimeout(() => { onSave(); }, 50);
+      setTimeout(() => { onSave(next); }, 50);
     }
   };
 
@@ -164,7 +164,7 @@ const AdminTemas = ({ sistemaConfig, setSistemaConfig, storeId, onSave }: AdminT
     };
     setSistemaConfig(next);
     setTimeout(() => {
-      onSave();
+      onSave(next);
       toast.success("Tema personalizado salvo!");
     }, 50);
   };
