@@ -901,7 +901,7 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
         />
       </div>
       <div ref={mobileListTopRef} />
-      <main className={`pt-3 px-4 ${isGarcomMobile && carrinho.length > 0 ? "pb-32" : "pb-24"} ${isClientIdle ? "brightness-[0.2] saturate-50" : "brightness-100 saturate-100"} ${isTotem ? "bg-background" : ""}`}>
+      <main className={`pt-3 ${isTotem ? "px-6 pb-28" : "px-4"} ${!isTotem && isGarcomMobile && carrinho.length > 0 ? "pb-32" : !isTotem ? "pb-24" : ""} ${isClientIdle ? "brightness-[0.2] saturate-50" : "brightness-100 saturate-100"} ${isTotem ? "bg-background" : ""}`}>
         <div>{isGarcomMobile && !isTotem ? productGrid : isHomeActive && !isTotem ? homeContent : productGrid}</div>
       </main>
     </>
@@ -944,7 +944,7 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
   return (
     <div ref={themeContainerRef}>
     <>
-      <div className={`flex flex-col ${isTotem ? "bg-background max-w-[480px] mx-auto" : "bg-background"}`} style={{ minHeight: '100dvh' }}>
+      <div className={`flex flex-col bg-background`} style={{ minHeight: '100dvh' }}>
         <OfflineIndicator />
         {bannerHeader ? bannerHeader : header}
         {garcomBanner}
