@@ -18,7 +18,7 @@ import CategoryIcon from "@/components/CategoryIcon";
 import { type GrupoPersonalizacao, type OpcaoGrupo, type Produto } from "@/data/menuData";
 import {
   fetchAllProducts, upsertProduct, softDeleteProduct, toggleProductActive,
-  toggleProductDelivery, reloadProducts, getCachedCategorias,
+  toggleProductDelivery, reloadProducts, getCachedCategorias, preloadProducts,
 } from "@/hooks/useProducts";
 import {
   getCategoriasCustom, saveCategoriasCustom,
@@ -32,6 +32,13 @@ type AdminProduct = Produto & { ativo: boolean; removido: boolean; disponivelDel
 interface Props {
   storeId: string | null;
 }
+
+const normalizeCategoryName = (value: string) =>
+  value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .toLowerCase();
 
 const AdminCardapio = ({ storeId }: Props) => {
   const [allProducts, setAllProducts] = useState<AdminProduct[]>([]);
@@ -54,19 +61,50 @@ const AdminCardapio = ({ storeId }: Props) => {
   }, [storeId]);
 
   useEffect(() => { loadProducts(); }, [loadProducts]);
-  useEffect(() => { if (storeId) getCategoriasCustomAsync(storeId).then(setCategoriasCustom); }, [storeId]);
+  useEffect(() => {
+    if (!storeId) return;
+    preloadProducts(storeId).catch(() => undefined);
+    getCategoriasCustomAsync(storeId).then(setCategoriasCustom);
+  }, [storeId]);
 
   const dbCategorias = getCachedCategorias();
   const todasCategorias = useMemo(() => {
-    const dbCats = dbCategorias.map((c, i) => ({ ...c, ordem: i, _isDefault: false as const }));
-    const customCats = categoriasCustom.filter((c) => !dbCategorias.some((dc) => dc.id === c.id)).map((c) => ({ ...c, _isDefault: false as const }));
-    return [...dbCats, ...customCats];
+    const seenIds = new Set<string>();
+    const seenNames = new Set<string>();
+    const merged: Array<CategoriaCustom & { _isDefault: boolean }> = [];
+
+    const pushUnique = (cat: CategoriaCustom & { _isDefault: boolean }) => {
+      const normalizedName = normalizeCategoryName(cat.nome);
+      if (seenIds.has(cat.id) || seenNames.has(normalizedName)) return;
+      seenIds.add(cat.id);
+      seenNames.add(normalizedName);
+      merged.push(cat);
+    };
+
+    categoriasCustom
+      .slice()
+      .sort((a, b) => (a.ordem ?? 0) - (b.ordem ?? 0))
+      .forEach((c) => pushUnique({ ...c, _isDefault: false }));
+
+    dbCategorias
+      .map((c, i) => ({ ...c, ordem: i, _isDefault: false }))
+      .forEach(pushUnique);
+
+    return merged;
   }, [categoriasCustom, dbCategorias]);
 
   const filteredProducts = useMemo(() => {
     if (catFilter === "todas") return allProducts;
     return allProducts.filter((p) => p.categoria === catFilter);
   }, [allProducts, catFilter]);
+
+  const persistCategorias = useCallback(async (nextCategorias: CategoriaCustom[]) => {
+    const ordered = nextCategorias.map((cat, index) => ({ ...cat, ordem: index }));
+    setCategoriasCustom(ordered);
+    if (!storeId) return;
+    await saveCategoriasCustom(ordered, storeId);
+    await reloadProducts(storeId);
+  }, [storeId]);
 
   const toggleAtivo = useCallback(async (id: string) => {
     const product = allProducts.find((p) => p.id === id);
@@ -194,18 +232,23 @@ const AdminCardapio = ({ storeId }: Props) => {
                       const idx = categoriasCustom.findIndex((cc) => cc.id === c.id);
                       if (idx <= 0) return;
                       const next = [...categoriasCustom]; [next[idx - 1], next[idx]] = [next[idx], next[idx - 1]];
-                      next.forEach((cc, i) => cc.ordem = i); saveCategoriasCustom(next, storeId); setCategoriasCustom(next);
+                      void persistCategorias(next);
                     }}><span className="text-[10px]">▲</span></Button>
                     <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => {
                       const idx = categoriasCustom.findIndex((cc) => cc.id === c.id);
                       if (idx < 0 || idx >= categoriasCustom.length - 1) return;
                       const next = [...categoriasCustom]; [next[idx], next[idx + 1]] = [next[idx + 1], next[idx]];
-                      next.forEach((cc, i) => cc.ordem = i); saveCategoriasCustom(next, storeId); setCategoriasCustom(next);
+                      void persistCategorias(next);
                     }}><span className="text-[10px]">▼</span></Button>
                     <Button variant="ghost" size="icon" className="h-5 w-5 text-destructive hover:bg-destructive/10" onClick={() => {
                       if (count > 0) { toast.error("Remova os produtos desta categoria primeiro"); return; }
-                      const next = categoriasCustom.filter((cc) => cc.id !== c.id);
-                      saveCategoriasCustom(next, storeId); setCategoriasCustom(next); toast.success("Categoria removida");
+                      const catNomeNormalizado = normalizeCategoryName(c.nome);
+                      const next = categoriasCustom.filter((cc) => {
+                        if (cc.id === c.id) return false;
+                        return normalizeCategoryName(cc.nome) !== catNomeNormalizado;
+                      });
+                      void persistCategorias(next);
+                      toast.success("Categoria removida");
                     }}><Trash2 className="h-3 w-3" /></Button>
                   </>
                 )}
@@ -481,12 +524,18 @@ const AdminCardapio = ({ storeId }: Props) => {
                 if (!catNomeInput.trim()) return;
                 if (catEditando) {
                   const next = categoriasCustom.map((c) => c.id === catEditando.id ? { ...c, nome: catNomeInput.trim(), icone: catIconeInput } : c);
-                  saveCategoriasCustom(next, storeId); setCategoriasCustom(next); toast.success("Categoria atualizada");
+                  void persistCategorias(next);
+                  toast.success("Categoria atualizada");
                 } else {
-                  const slug = catNomeInput.trim().toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
-                  const nova: CategoriaCustom = { id: `${slug}-${Date.now()}`, nome: catNomeInput.trim(), icone: catIconeInput, ordem: todasCategorias.length };
+                  const nova: CategoriaCustom = {
+                    id: crypto.randomUUID(),
+                    nome: catNomeInput.trim(),
+                    icone: catIconeInput,
+                    ordem: todasCategorias.length,
+                  };
                   const next = [...categoriasCustom, nova];
-                  saveCategoriasCustom(next, storeId); setCategoriasCustom(next); toast.success("Categoria criada");
+                  void persistCategorias(next);
+                  toast.success("Categoria criada");
                 }
                 setCatDialogOpen(false);
               }}><Save className="mr-1 h-4 w-4" /> Salvar</Button>
