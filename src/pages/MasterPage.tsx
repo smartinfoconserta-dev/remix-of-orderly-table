@@ -21,7 +21,7 @@ import {
   getClientes, addCliente, updateCliente, removeCliente,
   getDespesas, addDespesa,
 } from "@/lib/masterStorage";
-import { getLicencaConfig, saveLicencaConfigAsync, getSistemaConfig, saveSistemaConfigAsync } from "@/lib/adminStorage";
+import { getLicencaConfig, saveLicencaConfigAsync, getLicencaConfigAsync, getSistemaConfig, getSistemaConfigAsync, saveSistemaConfigAsync } from "@/lib/adminStorage";
 
 const SEGMENTOS = ["hamburgeria", "pizzaria", "sushi", "pastel", "a-la-carte", "outro"];
 const SEGMENTO_LABELS: Record<string, string> = {
@@ -291,10 +291,10 @@ const MasterPage = () => {
       if (!clientStoreId) {
         console.warn("[MasterPage] storeId não encontrado para cliente:", form.nomeRestaurante);
       } else {
-        const lic = getLicencaConfig();
+        const lic = await getLicencaConfigAsync(clientStoreId);
         lic.plano = form.planoModulos;
         await saveLicencaConfigAsync(lic, clientStoreId);
-        const cfg = getSistemaConfig();
+        const cfg = await getSistemaConfigAsync(clientStoreId);
         cfg.plano = form.planoModulos;
         await saveSistemaConfigAsync(cfg, clientStoreId);
       }
@@ -317,11 +317,11 @@ const MasterPage = () => {
     if (c.planoModulos) {
       const clientStoreId = resolveStoreId(c.nomeRestaurante);
       if (clientStoreId) {
-        const lic = getLicencaConfig();
+        const lic = await getLicencaConfigAsync(clientStoreId);
         lic.plano = c.planoModulos;
         lic.ativo = !c.ativo;
         await saveLicencaConfigAsync(lic, clientStoreId);
-        const cfg = getSistemaConfig();
+        const cfg = await getSistemaConfigAsync(clientStoreId);
         cfg.plano = c.planoModulos;
         await saveSistemaConfigAsync(cfg, clientStoreId);
       } else {
