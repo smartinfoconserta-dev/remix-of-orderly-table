@@ -117,7 +117,11 @@ const AdminPage = () => {
             </div>
           )}
           {tab === "ifood" && <div className="space-y-4 fade-in"><IfoodPainel /></div>}
-          {tab === "totem" && <AdminConfig storeId={storeId} storeName={nomeRestaurante} initialTab="totem" />}
+          {tab === "totem" && (() => {
+            const [tc, setTc] = useState(getSistemaConfig());
+            const saveTc = (c?: any) => { const s = c && typeof c === "object" && "nomeRestaurante" in c ? c : tc; import("@/lib/adminStorage").then(m => { m.saveSistemaConfig(s, storeId); import("@/lib/adminStorage").then(m2 => m2.saveSistemaConfigAsync(s, storeId)); }); };
+            return <AdminTotem sistemaConfig={tc} setSistemaConfig={setTc} storeId={storeId} onSave={saveTc} />;
+          })()}
         </main>
       </div>
       <LicenseBanner context="admin" />
