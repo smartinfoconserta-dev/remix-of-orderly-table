@@ -471,7 +471,6 @@ const GarcomPdvPage = () => {
     );
   }
 
-  const chamadoCount = mesas.filter((m) => m.chamarGarcom).length;
 
   const mesasFiltradas = mesas.filter((m) => {
     if (filtro === "consumo" && m.status !== "consumo") return false;
