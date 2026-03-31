@@ -133,10 +133,11 @@ const TvInner = ({ storeId }: { storeId: string }) => {
 
   const CardPedido = ({ p, variant }: { p: PedidoTV; variant: "preparando" | "pronto" }) => {
     const isPronto = variant === "pronto";
+    const showName = p.nome && p.nome !== "Totem" && p.nome !== "Balcão";
     return (
       <div className={`rounded-2xl px-5 py-5 text-center transition-all ${isPronto ? "tv-pulse" : ""}`} style={{ background: isPronto ? "#FF6B00" : "#FFF8F0", border: isPronto ? "2px solid #FF6B00" : "2px solid #FFD4AD" }}>
         <p className="text-4xl xl:text-5xl font-black tabular-nums" style={{ color: isPronto ? "#FFFFFF" : "#FF6B00" }}>#{String(p.numero).padStart(3, "0")}</p>
-        <p className="text-sm xl:text-base font-bold mt-2 truncate" style={{ color: isPronto ? "rgba(255,255,255,0.85)" : "#1A1A1A" }}>{p.nome}</p>
+        {showName && <p className="text-sm xl:text-base font-bold mt-2 truncate" style={{ color: isPronto ? "rgba(255,255,255,0.85)" : "#1A1A1A" }}>{p.nome}</p>}
       </div>
     );
   };
