@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { UtensilsCrossed } from "lucide-react";
+import { SearchX, UtensilsCrossed } from "lucide-react";
 import { formatPrice } from "@/components/caixa/caixaHelpers";
+import CategoryIcon from "@/components/CategoryIcon";
 import {
   applyThemeToElement,
   applyCustomThemeToElement,
@@ -29,9 +30,9 @@ interface Produto {
 
 const CardapioPublico = () => {
   const { slug } = useParams<{ slug: string }>();
-  const [storeId, setStoreId] = useState<string | null>(null);
   const [storeName, setStoreName] = useState("");
   const [logoUrl, setLogoUrl] = useState("");
+  const [logoEstilo, setLogoEstilo] = useState<"quadrada" | "circular">("quadrada");
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [produtos, setProdutos] = useState<Produto[]>([]);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
@@ -43,25 +44,22 @@ const CardapioPublico = () => {
     if (!slug) { setNotFound(true); setLoading(false); return; }
 
     const load = async () => {
-      // 1. Lookup store by slug
       const { data: storeData } = await supabase.rpc("get_store_by_slug", { _slug: slug });
       if (!storeData || storeData.length === 0) { setNotFound(true); setLoading(false); return; }
       const sid = storeData[0].id;
-      setStoreId(sid);
 
-      // 2. Parallel fetch
       const [configRes, catRes, prodRes] = await Promise.all([
-        supabase.from("restaurant_config").select("nome_restaurante, logo_url, logo_base64, tema_cardapio, cor_primaria, tema_personalizado, fundo_tipo, fundo_cor, fundo_gradiente, letra_cor, sidebar_cor, cards_cor").eq("store_id", sid).maybeSingle(),
+        supabase.from("restaurant_config").select("nome_restaurante, logo_url, logo_base64, logo_estilo, tema_cardapio, cor_primaria, tema_personalizado, fundo_tipo, fundo_cor, fundo_gradiente, letra_cor, sidebar_cor, cards_cor").eq("store_id", sid).maybeSingle(),
         supabase.from("restaurant_categories").select("id, nome, icone, ordem").eq("store_id", sid).order("ordem"),
         supabase.from("produtos").select("id, nome, descricao, preco, imagem, categoria_id, controle_estoque, quantidade_estoque").eq("store_id", sid).eq("ativo", true).eq("removido", false).order("ordem"),
       ]);
 
       if (configRes.data) {
-        setStoreName(configRes.data.nome_restaurante || "");
-        setLogoUrl(configRes.data.logo_url || configRes.data.logo_base64 || "");
-
-        // Apply theme
         const cfg = configRes.data;
+        setStoreName(cfg.nome_restaurante || "");
+        setLogoUrl(cfg.logo_url || cfg.logo_base64 || "");
+        setLogoEstilo((cfg.logo_estilo as "quadrada" | "circular") || "quadrada");
+
         if (containerRef.current) {
           clearThemeFromElement(containerRef.current);
           if (cfg.tema_personalizado) {
@@ -75,10 +73,9 @@ const CardapioPublico = () => {
               cardsCor: cfg.cards_cor || undefined,
             });
           } else {
-            const themeId = cfg.tema_cardapio || "obsidian";
             applyThemeToElement(
               containerRef.current,
-              themeId,
+              cfg.tema_cardapio || "obsidian",
               cfg.cor_primaria || undefined,
             );
           }
@@ -86,24 +83,16 @@ const CardapioPublico = () => {
       }
 
       const cats = (catRes.data ?? []).map((c) => ({
-        id: c.id,
-        nome: c.nome,
-        icone: c.icone,
-        ordem: c.ordem ?? 0,
+        id: c.id, nome: c.nome, icone: c.icone, ordem: c.ordem ?? 0,
       }));
       setCategorias(cats);
       if (cats.length > 0) setActiveCategory(cats[0].id);
 
       setProdutos(
         (prodRes.data ?? []).map((p) => ({
-          id: p.id,
-          nome: p.nome,
-          descricao: p.descricao ?? "",
-          preco: p.preco,
-          imagem: p.imagem ?? "",
-          categoriaId: p.categoria_id,
-          quantidadeEstoque: p.quantidade_estoque ?? 0,
-          controleEstoque: p.controle_estoque ?? false,
+          id: p.id, nome: p.nome, descricao: p.descricao ?? "",
+          preco: p.preco, imagem: p.imagem ?? "", categoriaId: p.categoria_id,
+          quantidadeEstoque: p.quantidade_estoque ?? 0, controleEstoque: p.controle_estoque ?? false,
         }))
       );
 
@@ -135,15 +124,17 @@ const CardapioPublico = () => {
     ? produtos.filter((p) => p.categoriaId === activeCategory)
     : produtos;
 
+  const logoRounded = logoEstilo === "circular" ? "rounded-full" : "rounded-xl";
+
   return (
-    <div ref={containerRef} className="min-h-svh bg-background">
+    <div ref={containerRef} className="min-h-svh bg-background flex flex-col">
       {/* Header */}
       <header className="sticky top-0 z-20 border-b border-border bg-card/95 backdrop-blur-sm px-4 py-4">
         <div className="mx-auto max-w-2xl flex items-center gap-3">
           {logoUrl ? (
-            <img src={logoUrl} alt={storeName} className="h-10 w-10 rounded-xl object-cover shrink-0" />
+            <img src={logoUrl} alt={storeName} className={`h-11 w-11 ${logoRounded} object-cover shrink-0 ring-2 ring-primary/20`} />
           ) : (
-            <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+            <div className={`h-11 w-11 ${logoRounded} bg-primary/10 flex items-center justify-center shrink-0`}>
               <UtensilsCrossed className="h-5 w-5 text-primary" />
             </div>
           )}
@@ -158,29 +149,39 @@ const CardapioPublico = () => {
       {categorias.length > 0 && (
         <div className="sticky top-[73px] z-10 border-b border-border bg-card/90 backdrop-blur-sm">
           <div className="mx-auto max-w-2xl overflow-x-auto scrollbar-hide">
-            <div className="flex gap-1 px-4 py-2">
-              {categorias.map((cat) => (
-                <button
-                  key={cat.id}
-                  onClick={() => setActiveCategory(cat.id)}
-                  className={`shrink-0 rounded-full px-4 py-1.5 text-sm font-bold transition-colors ${
-                    activeCategory === cat.id
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-secondary text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  {cat.icone} {cat.nome}
-                </button>
-              ))}
+            <div className="flex gap-1.5 px-4 py-2.5">
+              {categorias.map((cat) => {
+                const isActive = activeCategory === cat.id;
+                return (
+                  <button
+                    key={cat.id}
+                    onClick={() => setActiveCategory(cat.id)}
+                    className={`shrink-0 rounded-full px-4 py-1.5 text-sm font-bold transition-all flex items-center gap-1.5 ${
+                      isActive
+                        ? "bg-primary text-primary-foreground shadow-md shadow-primary/25"
+                        : "bg-secondary text-muted-foreground hover:text-foreground hover:bg-accent"
+                    }`}
+                  >
+                    <CategoryIcon name={cat.icone} className="w-4 h-4" />
+                    {cat.nome}
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>
       )}
 
-      {/* Products grid */}
-      <main className="mx-auto max-w-2xl px-4 py-6">
+      {/* Products */}
+      <main className="mx-auto max-w-2xl w-full px-4 py-6 flex-1">
         {filteredProducts.length === 0 ? (
-          <p className="text-center text-muted-foreground py-12">Nenhum produto nesta categoria.</p>
+          <div className="flex flex-col items-center justify-center py-16 gap-3 text-center">
+            <div className="h-16 w-16 rounded-2xl bg-secondary flex items-center justify-center">
+              <SearchX className="h-8 w-8 text-muted-foreground/40" />
+            </div>
+            <p className="text-sm font-bold text-muted-foreground">Nenhum produto nesta categoria</p>
+            <p className="text-xs text-muted-foreground/70">Volte em breve, novidades chegando!</p>
+          </div>
         ) : (
           <div className="grid gap-3">
             {filteredProducts.map((prod) => {
@@ -188,7 +189,7 @@ const CardapioPublico = () => {
               return (
                 <div
                   key={prod.id}
-                  className={`flex gap-3 rounded-2xl border border-border bg-card p-3 ${esgotado ? "opacity-50" : ""}`}
+                  className={`flex gap-3 rounded-2xl border border-border bg-card p-3 shadow-sm transition-transform duration-150 hover:scale-[1.01] ${esgotado ? "opacity-50 grayscale" : ""}`}
                 >
                   {prod.imagem ? (
                     <img
@@ -224,6 +225,13 @@ const CardapioPublico = () => {
           </div>
         )}
       </main>
+
+      {/* Footer */}
+      <footer className="py-6 text-center">
+        <p className="text-[10px] text-muted-foreground/40 font-medium tracking-wide">
+          Cardápio digital por <span className="font-bold">Orderly Table</span>
+        </p>
+      </footer>
     </div>
   );
 };
