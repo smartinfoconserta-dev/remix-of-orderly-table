@@ -503,6 +503,7 @@ export default function MotoboyPage() {
   return (
     <ModuleGate moduleKey="motoboy" moduleName="Delivery / Motoboy">
     <div className="min-h-screen bg-background text-foreground flex flex-col">
+      <OfflineIndicator />
       {/* Hidden file input for QR scanning */}
       <input ref={fileInputRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handleFileSelected} />
 
