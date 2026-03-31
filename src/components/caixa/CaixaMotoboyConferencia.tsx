@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
+import { enqueue, isNetworkError } from "@/lib/offlineQueue";
 
 interface CaixaMotoboyConferenciaProps {
   fechamentoSelecionado: any | null;
@@ -129,8 +130,19 @@ const CaixaMotoboyConferencia = ({
                 conferidoPor: nomeGerente,
               });
 
-              supabase.from("motoboy_fechamentos").update({ status: "conferido", conferido_por: nomeGerente, conferido_em: new Date().toISOString() }).eq("id", f.id)
-                .then(({ error }) => { if (error) console.error("Erro ao atualizar fechamento motoboy", error); });
+              const updateData = { status: "conferido", conferido_por: nomeGerente, conferido_em: new Date().toISOString() };
+              supabase.from("motoboy_fechamentos").update(updateData).eq("id", f.id)
+                .then(({ error }) => {
+                  if (error) {
+                    if (isNetworkError(error)) {
+                      enqueue("rpc_insert_motoboy_fechamento", { _data: { ...f, ...updateData } }, `Conferência motoboy ${f.motoboy_nome}`);
+                      toast.warning("Sem conexão — conferência salva localmente.");
+                    } else {
+                      console.error("Erro ao atualizar fechamento motoboy", error);
+                      toast.error("Erro ao conferir fechamento");
+                    }
+                  }
+                });
               setFechamentosPendentes(prev => prev.filter((item: any) => item.id !== f.id));
 
               setFechamentoSelecionado(null);
