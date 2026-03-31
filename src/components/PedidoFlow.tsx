@@ -45,7 +45,7 @@ import { Input } from "@/components/ui/input";
 import {
   clearTabletLoginUser,
 } from "@/lib/tabletBinding";
-import { getStoredDeviceId } from "@/lib/deviceAuth";
+import { getStoredDeviceId, updateDeviceMesa } from "@/lib/deviceAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { getActiveStoreId } from "@/lib/sessionManager";
 
