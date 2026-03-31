@@ -62,7 +62,7 @@ const PedidoFlowCart = ({
             onClick={onStickyBarClick}
             className={`w-full flex items-center justify-between gap-3 rounded-2xl px-5 py-4 shadow-lg active:scale-[0.98] transition-transform ${
               isTotemMode
-                ? "bg-[#FF6B00] text-white"
+                ? "bg-primary text-primary-foreground"
                 : "bg-primary text-primary-foreground shadow-[0_8px_32px_-8px_hsl(var(--primary)/0.6)]"
             }`}
           >
