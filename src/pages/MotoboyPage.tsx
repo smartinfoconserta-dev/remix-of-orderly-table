@@ -794,8 +794,6 @@ export default function MotoboyPage() {
         usbScanInputRef={usbScanInputRef}
         onUsbScan={handleUsbQrScan}
       />
-          <div className="flex-1 overflow-y-auto p-4 space-y-3">
-            {pedidosDisponiveis.length === 0 ? (
               <div className="text-center py-16 text-muted-foreground">
                 <p>Nenhum pedido disponível para retirada</p>
               </div>
