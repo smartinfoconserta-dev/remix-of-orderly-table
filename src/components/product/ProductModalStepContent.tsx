@@ -133,8 +133,8 @@ const renderGrupoStep = (
     return (
       <div className="space-y-4">
         <div>
-          <h3 className="text-base font-black text-foreground">{grupo.nome}</h3>
-          <p className="mt-1 text-sm text-muted-foreground">Marque o que deseja retirar (opcional)</p>
+          <h3 className="text-base font-black text-foreground">Retirar algum item?</h3>
+          <p className="mt-1 text-sm text-muted-foreground">Toque nos ingredientes que deseja remover (opcional)</p>
         </div>
         <div className="space-y-3">
           {grupo.opcoes.map((opcao) => {
@@ -260,8 +260,8 @@ const ProductModalStepContent = ({
     return (
       <div className="space-y-4">
         <div>
-          <h3 className="text-base font-black text-foreground">Remover ingredientes</h3>
-          <p className="mt-1 text-sm text-muted-foreground">Marque somente o que deve sair do preparo.</p>
+          <h3 className="text-base font-black text-foreground">Retirar algum item?</h3>
+          <p className="mt-1 text-sm text-muted-foreground">Toque nos ingredientes que deseja remover (opcional)</p>
         </div>
         <div className="space-y-3">
           {produto.ingredientesRemoviveis?.map((ingrediente) =>
