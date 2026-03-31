@@ -298,6 +298,7 @@ function PedidoPageInner({ storeId, config, bairros }: {
     deliveryAtivo: boolean; modoIdentificacao: string;
     taxaEntrega: number; mensagemFechado: string;
     mensagemBoasVindas: string; horarios: HorariosSemana;
+    temaCardapio?: string; corPrimaria?: string;
   };
   bairros: Bairro[];
 }) {
@@ -305,6 +306,18 @@ function PedidoPageInner({ storeId, config, bairros }: {
   const RESTAURANTE_LOGO = config.logo;
   const RESTAURANTE_INITIALS = RESTAURANTE_NOME.slice(0, 2).toUpperCase();
   const isCadastro = config.modoIdentificacao === "cadastro";
+
+  // ── Theme engine ──
+  const themeInnerRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = themeInnerRef.current;
+    if (!el) return;
+    const themeId = config.temaCardapio || "obsidian";
+    const customColor = config.corPrimaria;
+    const themeDefault = THEME_MAP[themeId]?.primary;
+    applyThemeToElement(el, themeId, customColor && customColor !== themeDefault ? customColor : undefined);
+    return () => { if (el) clearThemeFromElement(el); };
+  }, [config.temaCardapio, config.corPrimaria]);
 
   const [etapa, setEtapa] = useState<Etapa>(() => isCadastro ? "login" : "cardapio");
 
