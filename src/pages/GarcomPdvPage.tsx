@@ -45,6 +45,17 @@ const GarcomPdvPage = () => {
   const [pagamentoValue, setPagamentoValue] = useState("");
   const [processando, setProcessando] = useState(false);
   const [actionMesaId, setActionMesaId] = useState<string | null>(null);
+
+  // Alerta sonoro/tátil quando mesa chama garçom
+  const chamadoCount = mesas.filter((m) => m.chamarGarcom).length;
+  const prevChamadoRef = useRef(chamadoCount);
+  useEffect(() => {
+    if (chamadoCount > prevChamadoRef.current) {
+      playAlertSound();
+      vibrateAlert();
+    }
+    prevChamadoRef.current = chamadoCount;
+  }, [chamadoCount]);
   const [receiptData, setReceiptData] = useState<{
     mesaNumero: number;
     total: number;
