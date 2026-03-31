@@ -303,6 +303,7 @@ const AdminConfig = ({ storeId, storeName }: Props) => {
           const next: SistemaConfig = {
             ...sistemaConfig,
             tipoRestaurante: tipo,
+            modoOperacao: tipo === "fastfood" ? "fast_food" : tipo,
             modulos: {
               ...planoModulos,
               delivery: sistemaConfig.deliveryAtivo === true,
