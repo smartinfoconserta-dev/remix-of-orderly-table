@@ -291,10 +291,10 @@ const MasterPage = () => {
       if (!clientStoreId) {
         console.warn("[MasterPage] storeId não encontrado para cliente:", form.nomeRestaurante);
       } else {
-        const lic = getLicencaConfig();
+        const lic = await getLicencaConfigAsync(clientStoreId);
         lic.plano = form.planoModulos;
         await saveLicencaConfigAsync(lic, clientStoreId);
-        const cfg = getSistemaConfig();
+        const cfg = await getSistemaConfigAsync(clientStoreId);
         cfg.plano = form.planoModulos;
         await saveSistemaConfigAsync(cfg, clientStoreId);
       }
