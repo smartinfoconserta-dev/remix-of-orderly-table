@@ -15,7 +15,8 @@ import { useRestaurant } from "@/contexts/RestaurantContext";
 import { useRouteLock } from "@/hooks/use-route-lock";
 import type { PaymentMethod, SplitPayment, FiltroMesa } from "@/types/operations";
 import { toast } from "sonner";
-import { formatPrice } from "@/components/caixa/caixaHelpers";
+import { formatPrice, printComanda } from "@/components/caixa/caixaHelpers";
+import { getSistemaConfig } from "@/lib/adminStorage";
 
 
 const PAYMENT_OPTIONS: { value: PaymentMethod; label: string; icon: typeof CreditCard }[] = [
