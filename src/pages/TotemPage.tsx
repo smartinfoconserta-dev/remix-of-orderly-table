@@ -9,8 +9,9 @@ import type { PaymentMethod } from "@/types/operations";
 import { formatPrice } from "@/components/caixa/caixaHelpers";
 
 const AUTO_RESET_MS = 10_000;
+const PAYMENT_TIMEOUT_MS = 120_000; // 2 minutes
 
-type TotemStep = "menu" | "name" | "cpf" | "payment" | "confirmed";
+type TotemStep = "menu" | "name" | "cpf" | "payment" | "aguardando_pagamento" | "confirmed";
 
 const TotemInner = ({ storeId }: { storeId: string }) => {
   const { criarPedidoBalcao } = useRestaurant();
