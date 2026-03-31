@@ -117,7 +117,7 @@ interface CaixaPageProps {
 /* ══════════════════════════════════════ */
 /*            CAIXA PAGE                  */
 /* ══════════════════════════════════════ */
-const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
+const CaixaPage = ({ accessMode = "caixa", deliveryOnly = false }: CaixaPageProps) => {
   const {
     mesas,
     eventos,
