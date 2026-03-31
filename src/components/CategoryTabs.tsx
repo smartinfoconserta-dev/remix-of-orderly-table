@@ -8,6 +8,7 @@ interface Props {
   onSelect: (id: string) => void;
   paddingClassName?: string;
   totemMode?: boolean;
+  sidebarEstilo?: "icone-texto" | "icone-acima" | "so-texto";
 }
 
 const CategoryTabs = ({
@@ -16,6 +17,7 @@ const CategoryTabs = ({
   onSelect,
   paddingClassName = "px-4 py-3",
   totemMode = false,
+  sidebarEstilo = "icone-texto",
 }: Props) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const buttonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
@@ -23,6 +25,8 @@ const CategoryTabs = ({
   useEffect(() => {
     buttonRefs.current[categoriaAtiva]?.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
   }, [categoriaAtiva]);
+
+  const hideIcon = sidebarEstilo === "so-texto";
 
   return (
     <div className="relative w-full overflow-hidden">
@@ -51,10 +55,12 @@ const CategoryTabs = ({
                   : "border-transparent bg-secondary/60 text-muted-foreground hover:bg-secondary hover:text-foreground"
             }`}
           >
-            <CategoryIcon
-              name={cat.icone}
-              className={`h-4 w-4 transition-opacity duration-300 ${categoriaAtiva === cat.id ? "opacity-100" : "opacity-70"}`}
-            />
+            {!hideIcon && (
+              <CategoryIcon
+                name={cat.icone}
+                className={`h-4 w-4 transition-opacity duration-300 ${categoriaAtiva === cat.id ? "opacity-100" : "opacity-70"}`}
+              />
+            )}
             <span>{cat.nome}</span>
           </button>
         ))}

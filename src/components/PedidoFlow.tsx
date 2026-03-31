@@ -893,9 +893,45 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
   const desktopContent = (
     <div className={`flex flex-1 items-stretch transition-all duration-500 ${isClientIdle ? "brightness-[0.2] saturate-50" : "brightness-100 saturate-100"}`}>
       <aside className={`w-[9.5rem] shrink-0 overflow-y-auto border-r border-border bg-card/95 px-2.5 py-4 lg:w-[11rem] lg:px-3 sticky top-[73px] max-h-[calc(100vh-73px)] scrollbar-hide flex flex-col justify-start`} style={{ scrollbarWidth: "none" }}>
-        <nav className="flex flex-col gap-1">
+        <nav className={`flex flex-col gap-1`}>
           {[HOME_TAB, ...allCategorias].map((cat) => {
             const selected = categoriaAtiva === cat.id;
+            const sidebarEstilo = sysConfig.sidebarEstilo || "icone-texto";
+
+            if (sidebarEstilo === "icone-acima") {
+              return (
+                <button
+                  key={cat.id}
+                  onClick={() => handleSelectCategoria(cat.id)}
+                  className={`flex flex-col items-center gap-1.5 rounded-xl border px-3 py-3 text-center text-sm font-semibold transition-all duration-200 ${
+                    selected
+                      ? "border-primary/40 bg-primary/10 text-foreground"
+                      : "border-transparent bg-transparent text-muted-foreground hover:bg-secondary/50 hover:text-foreground"
+                  }`}
+                >
+                  <div className={`flex h-9 w-9 items-center justify-center rounded-xl ${selected ? "bg-primary/15 text-primary" : "bg-secondary/60 text-muted-foreground"}`}>
+                    <CategoryIcon name={cat.icone} className="h-5 w-5" />
+                  </div>
+                  <span className="text-xs font-semibold leading-tight">{cat.nome}</span>
+                </button>
+              );
+            }
+
+            if (sidebarEstilo === "so-texto") {
+              return (
+                <button
+                  key={cat.id}
+                  onClick={() => handleSelectCategoria(cat.id)}
+                  className={`flex items-center rounded-xl border px-3 py-2.5 text-left text-sm font-semibold transition-all duration-200 ${
+                    selected
+                      ? "border-primary/40 bg-primary/10 text-foreground"
+                      : "border-transparent bg-transparent text-muted-foreground hover:bg-secondary/50 hover:text-foreground"
+                  }`}
+                >
+                  <span className="truncate">{cat.nome}</span>
+                </button>
+              );
+            }
 
             return (
               <button
