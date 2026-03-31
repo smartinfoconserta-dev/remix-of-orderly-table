@@ -19,7 +19,7 @@ import {
   RotateCcw,
   ScrollText,
   ShieldCheck,
-  ShoppingBag,
+  
   ShoppingCart,
   Smartphone,
   Trash2,
