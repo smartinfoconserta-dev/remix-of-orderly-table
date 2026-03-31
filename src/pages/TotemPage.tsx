@@ -173,14 +173,6 @@ const TotemInner = ({ storeId }: { storeId: string }) => {
     setStep("confirmed");
   }, [criarPedidoBalcao, pendingItens, identificacaoFastFood, clienteNome, clienteCpf, pendingPaymentMethod]);
 
-  const handleBackToMenu = useCallback(() => {
-    setStep("menu");
-    setPendingItens([]);
-    setClienteNome("");
-    setClienteCpf("");
-    setCpfWanted(null);
-    setPendingPaymentMethod(null);
-  }, []);
 
   // Auto-skip CPF step when cpfNotaAtivo is off
   useEffect(() => {
