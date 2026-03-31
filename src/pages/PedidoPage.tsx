@@ -17,6 +17,31 @@ import { checkDeliveryAberto } from "@/lib/adminStorage";
 import { preloadProducts } from "@/hooks/useProducts";
 import { applyThemeToElement, applyCustomThemeToElement, clearThemeFromElement, THEME_MAP } from "@/lib/themeEngine";
 
+const normStr = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+
+// ── Etapas por modo ──
+type Etapa = "login" | "cadastro" | "identificacao" | "cardapio" | "confirmacao" | "sucesso";
+
+const etapaProgressVisitante: Record<string, number> = { cardapio: 25, identificacao: 50, confirmacao: 75, sucesso: 100 };
+const etapaProgressCadastro: Record<string, number> = { login: 10, cadastro: 25, cardapio: 50, confirmacao: 75, sucesso: 100 };
+
+const etapaLabel: Record<Etapa, string> = {
+  login: "Login", cadastro: "Cadastro", identificacao: "Identificação",
+  cardapio: "Cardápio", confirmacao: "Confirmação", sucesso: "Pedido enviado",
+};
+
+interface ClienteDelivery {
+  id: string; nome: string; cpf: string; telefone: string;
+  endereco: string; numero: string; bairro: string;
+  complemento: string; referencia: string; senhaHash?: string;
+}
+
+const defaultHorario: HorarioFuncionamento = { ativo: true, abertura: "18:00", fechamento: "23:00" };
+const defaultHorariosSemana: HorariosSemana = {
+  dom: { ...defaultHorario, ativo: false }, seg: { ...defaultHorario }, ter: { ...defaultHorario },
+  qua: { ...defaultHorario }, qui: { ...defaultHorario }, sex: { ...defaultHorario }, sab: { ...defaultHorario },
+};
+
 // ── Confirmação sub-component ──
 function ConfirmacaoEtapa({ nome, endereco, numero, complemento, bairro, itens, taxaEntrega, totalPedido, formaPag, setFormaPag, troco, setTroco, onVoltar, onConfirmar, editEndereco }: {
   nome: string; endereco: string; numero: string; complemento: string; bairro: string;
