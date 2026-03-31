@@ -970,6 +970,7 @@ export type Database = {
           cardapio_banner_base64: string | null
           cardapio_header_estilo: string | null
           cardapio_overrides: Json | null
+          cards_cor: string | null
           cor_primaria: string | null
           couvert_ativo: boolean | null
           couvert_obrigatorio: boolean | null
@@ -978,12 +979,18 @@ export type Database = {
           cpf_nota_ativo: boolean | null
           created_at: string | null
           delivery_ativo: boolean | null
+          fundo_cor: string | null
+          fundo_gradiente: Json | null
+          fundo_tipo: string | null
           horario_funcionamento: Json | null
           id: string
           identificacao_fast_food: string
           impressao_por_setor: boolean | null
           instagram_bg: string | null
           instagram_url: string | null
+          letra_cor: string | null
+          letra_gradiente: Json | null
+          letra_tipo: string | null
           logo_base64: string | null
           logo_estilo: string | null
           logo_url: string | null
@@ -998,10 +1005,12 @@ export type Database = {
           nome_restaurante: string
           plano: string | null
           senha_wifi: string | null
+          sidebar_cor: string | null
           store_id: string | null
           taxa_entrega: number | null
           telefone: string | null
           tema_cardapio: string | null
+          tema_personalizado: boolean | null
           tempo_entrega: string | null
           total_mesas: number | null
           updated_at: string | null
@@ -1013,6 +1022,7 @@ export type Database = {
           cardapio_banner_base64?: string | null
           cardapio_header_estilo?: string | null
           cardapio_overrides?: Json | null
+          cards_cor?: string | null
           cor_primaria?: string | null
           couvert_ativo?: boolean | null
           couvert_obrigatorio?: boolean | null
@@ -1021,12 +1031,18 @@ export type Database = {
           cpf_nota_ativo?: boolean | null
           created_at?: string | null
           delivery_ativo?: boolean | null
+          fundo_cor?: string | null
+          fundo_gradiente?: Json | null
+          fundo_tipo?: string | null
           horario_funcionamento?: Json | null
           id?: string
           identificacao_fast_food?: string
           impressao_por_setor?: boolean | null
           instagram_bg?: string | null
           instagram_url?: string | null
+          letra_cor?: string | null
+          letra_gradiente?: Json | null
+          letra_tipo?: string | null
           logo_base64?: string | null
           logo_estilo?: string | null
           logo_url?: string | null
@@ -1041,10 +1057,12 @@ export type Database = {
           nome_restaurante?: string
           plano?: string | null
           senha_wifi?: string | null
+          sidebar_cor?: string | null
           store_id?: string | null
           taxa_entrega?: number | null
           telefone?: string | null
           tema_cardapio?: string | null
+          tema_personalizado?: boolean | null
           tempo_entrega?: string | null
           total_mesas?: number | null
           updated_at?: string | null
@@ -1056,6 +1074,7 @@ export type Database = {
           cardapio_banner_base64?: string | null
           cardapio_header_estilo?: string | null
           cardapio_overrides?: Json | null
+          cards_cor?: string | null
           cor_primaria?: string | null
           couvert_ativo?: boolean | null
           couvert_obrigatorio?: boolean | null
@@ -1064,12 +1083,18 @@ export type Database = {
           cpf_nota_ativo?: boolean | null
           created_at?: string | null
           delivery_ativo?: boolean | null
+          fundo_cor?: string | null
+          fundo_gradiente?: Json | null
+          fundo_tipo?: string | null
           horario_funcionamento?: Json | null
           id?: string
           identificacao_fast_food?: string
           impressao_por_setor?: boolean | null
           instagram_bg?: string | null
           instagram_url?: string | null
+          letra_cor?: string | null
+          letra_gradiente?: Json | null
+          letra_tipo?: string | null
           logo_base64?: string | null
           logo_estilo?: string | null
           logo_url?: string | null
@@ -1084,10 +1109,12 @@ export type Database = {
           nome_restaurante?: string
           plano?: string | null
           senha_wifi?: string | null
+          sidebar_cor?: string | null
           store_id?: string | null
           taxa_entrega?: number | null
           telefone?: string | null
           tema_cardapio?: string | null
+          tema_personalizado?: boolean | null
           tempo_entrega?: string | null
           total_mesas?: number | null
           updated_at?: string | null
