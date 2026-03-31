@@ -39,16 +39,6 @@ const AdminPage = () => {
   const { logout } = useAuth();
   const { storeId, storeName: ctxStoreName } = useStore();
   const [tab, setTab] = useState<AdminTab>("dashboard");
-  const [totemConfig, setTotemConfig] = useState(() => getSistemaConfig());
-
-  const saveTotemConfig = useCallback((config?: any) => {
-    const configToSave = config
-      && typeof config === "object"
-      && "nomeRestaurante" in config
-        ? config
-        : totemConfig;
-    saveSistemaConfig(configToSave, storeId);
-  }, [totemConfig, storeId]);
 
   const nomeRestaurante = getSistemaConfig().nomeRestaurante || "Restaurante";
 
