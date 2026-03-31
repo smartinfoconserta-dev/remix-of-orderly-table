@@ -335,7 +335,7 @@ export const dbSyncEstadoMesa = (mesa: Mesa) => {
     store_id: sid,
   };
   const params = { _data: row };
-  supabase.rpc("rpc_upsert_estado_mesa" as any, params).then(({ error }: any) => {
+  Promise.resolve(supabase.rpc("rpc_upsert_estado_mesa" as any, params)).then(({ error }: any) => {
     if (error) {
       if (isNetworkError(error)) { enqueue("rpc_upsert_estado_mesa", params, `Sync mesa ${mesa.numero}`); }
       else { console.error("DB sync mesa via RPC", error); toast.error("Erro ao sincronizar mesa"); }
