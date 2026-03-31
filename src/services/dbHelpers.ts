@@ -334,7 +334,14 @@ export const dbSyncEstadoMesa = (mesa: Mesa) => {
     chamar_garcom: mesa.chamarGarcom, chamado_em: mesa.chamadoEm,
     store_id: sid,
   };
-  supabase.rpc("rpc_upsert_estado_mesa" as any, { _data: row }).then(({ error }: any) => {
-    if (error) { console.error("DB sync mesa via RPC", error); toast.error("Erro ao sincronizar mesa"); }
+  const params = { _data: row };
+  supabase.rpc("rpc_upsert_estado_mesa" as any, params).then(({ error }: any) => {
+    if (error) {
+      if (isNetworkError(error)) { enqueue("rpc_upsert_estado_mesa", params, `Sync mesa ${mesa.numero}`); }
+      else { console.error("DB sync mesa via RPC", error); toast.error("Erro ao sincronizar mesa"); }
+    }
+  }).catch((err: any) => {
+    if (isNetworkError(err)) { enqueue("rpc_upsert_estado_mesa", params, `Sync mesa ${mesa.numero}`); }
+    else { console.error("dbSyncEstadoMesa unexpected", err); }
   });
 };
