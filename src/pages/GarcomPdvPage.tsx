@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { LogOut, Bell, Search, CreditCard, Smartphone, Wallet, ShoppingBag, Trash2, Plus, Check, Printer } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,7 @@ import type { PaymentMethod, SplitPayment, FiltroMesa } from "@/types/operations
 import { toast } from "sonner";
 import { formatPrice, printComanda } from "@/components/caixa/caixaHelpers";
 import { getSistemaConfig } from "@/lib/adminStorage";
+import { playSuccessSound, playAlertSound, vibrateSuccess, vibrateAlert } from "@/lib/sounds";
 
 
 const PAYMENT_OPTIONS: { value: PaymentMethod; label: string; icon: typeof CreditCard }[] = [
@@ -44,6 +45,17 @@ const GarcomPdvPage = () => {
   const [pagamentoValue, setPagamentoValue] = useState("");
   const [processando, setProcessando] = useState(false);
   const [actionMesaId, setActionMesaId] = useState<string | null>(null);
+
+  // Alerta sonoro/tátil quando mesa chama garçom
+  const chamadoCount = mesas.filter((m) => m.chamarGarcom).length;
+  const prevChamadoRef = useRef(chamadoCount);
+  useEffect(() => {
+    if (chamadoCount > prevChamadoRef.current) {
+      playAlertSound();
+      vibrateAlert();
+    }
+    prevChamadoRef.current = chamadoCount;
+  }, [chamadoCount]);
   const [receiptData, setReceiptData] = useState<{
     mesaNumero: number;
     total: number;
@@ -173,6 +185,9 @@ const GarcomPdvPage = () => {
       itens: allItens.map(i => ({ quantidade: i.quantidade, nome: i.nome, preco: i.precoUnitario })),
       numeroPedido: lastPedido?.numeroPedido ?? 0,
     });
+
+    playSuccessSound();
+    vibrateSuccess();
 
     setPagamentoOpen(false);
     setPagamentoMesaId(null);
@@ -456,8 +471,6 @@ const GarcomPdvPage = () => {
     );
   }
 
-  // Tela de lista de mesas
-  const chamadoCount = mesas.filter((m) => m.chamarGarcom).length;
 
   const mesasFiltradas = mesas.filter((m) => {
     if (filtro === "consumo" && m.status !== "consumo") return false;
