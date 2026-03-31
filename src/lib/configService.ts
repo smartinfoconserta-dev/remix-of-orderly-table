@@ -125,6 +125,7 @@ function configToDbRow(config: SistemaConfig) {
     cpf_nota_ativo: config.cpfNotaAtivo ?? false,
     cardapio_header_estilo: config.cardapioHeaderEstilo ?? "padrao",
     cardapio_banner_base64: config.cardapioBannerBase64 ?? "",
+    tema_cardapio: config.temaCardapio ?? null,
     total_mesas: 20,
     updated_at: new Date().toISOString(),
   };
