@@ -796,6 +796,7 @@ const MasterPage = () => {
                 <div><Label>Dia de vencimento</Label><Select value={String(form.diaVencimento)} onValueChange={(v) => ff("diaVencimento", Number(v))}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent container={document.body} position="popper" className="z-[80]">{DIAS_VENCIMENTO.map((d) => <SelectItem key={d} value={String(d)}>Dia {d}</SelectItem>)}</SelectContent></Select></div>
                 <div><Label>Data de vencimento da licença</Label><Input type="date" value={form.dataVencimento} onChange={(e) => ff("dataVencimento", e.target.value)} /></div>
                 <div className="flex items-center gap-2 pt-5"><Switch checked={form.ativo} onCheckedChange={(v) => ff("ativo", v)} /><Label>{form.ativo ? "Ativo" : "Bloqueado"}</Label></div>
+                <div className="flex items-center gap-2 pt-5"><Switch checked={form.deliveryAtivo ?? false} onCheckedChange={(v) => ff("deliveryAtivo", v)} /><Label>Delivery ativo</Label></div>
               </div>
             </div>
             <div className="space-y-3">
