@@ -16,7 +16,6 @@ const CategoryTabs = ({
   onSelect,
   paddingClassName = "px-4 py-3",
   totemMode = false,
-  sidebarEstilo = "icone-texto",
 }: Props) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const buttonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
