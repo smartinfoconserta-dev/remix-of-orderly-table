@@ -167,22 +167,16 @@ export async function upsertClienteDelivery(
     }
 
     const novoId = `cli-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
-    const novo = {
-      id: novoId,
-      nome: dados.nome,
-      cpf: dados.cpf,
-      telefone: dados.telefone,
-      endereco: dados.endereco,
-      numero: dados.numero,
-      bairro: dados.bairro,
-      complemento: dados.complemento,
-      referencia: dados.referencia,
-      senha_hash: dados.senhaHash ?? null,
-      criado_em: now,
-      ultimo_pedido: now,
-      ...(storeId ? { store_id: storeId } : {}),
-    };
-    await (supabase.from as any)("clientes_delivery").insert(novo);
+    if (storeId) {
+      await supabase.rpc("rpc_upsert_cliente_delivery", {
+        _store_id: storeId,
+        _data: {
+          nome: dados.nome, cpf: dados.cpf, telefone: dados.telefone,
+          endereco: dados.endereco, numero: dados.numero, bairro: dados.bairro,
+          complemento: dados.complemento, referencia: dados.referencia,
+        } as any,
+      });
+    }
 
     return {
       id: novoId,
