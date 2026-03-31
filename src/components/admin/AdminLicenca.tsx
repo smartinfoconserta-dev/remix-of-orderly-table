@@ -110,7 +110,8 @@ const AdminLicenca = ({ storeId }: Props) => {
         </div>
         <div className="divide-y divide-border/50">
           {allModules.map((mod) => {
-            const isLiberado = mod.alwaysEnabled || (mod.masterKey ? modulosMaster[mod.masterKey] : false);
+            const isDeliveryAddon = mod.id === "delivery" || mod.id === "motoboy";
+            const isLiberado = mod.alwaysEnabled || (isDeliveryAddon ? (sistemaConfig.deliveryAtivo === true || modulosMaster[mod.masterKey!]) : (mod.masterKey ? modulosMaster[mod.masterKey] : false));
             const isAlwaysOn = mod.alwaysOn;
             const isChecked = isAlwaysOn || (mod.masterKey ? !!(modulosAtivos as any)[mod.masterKey] : true);
             const blocked = !isLiberado;
