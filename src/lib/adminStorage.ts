@@ -92,6 +92,7 @@ export interface SistemaConfig {
   cpfNotaAtivo?: boolean;
   cardapioHeaderEstilo?: "padrao" | "banner";
   cardapioBannerBase64?: string;
+  temaCardapio?: string;
 }
 
 export interface ImpressoraConfig {
