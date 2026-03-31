@@ -166,4 +166,6 @@ export function clearThemeFromElement(element: HTMLElement): void {
     "--sidebar-primary", "--sidebar-border",
   ];
   vars.forEach(v => element.style.removeProperty(v));
+  element.style.background = "";
+  element.style.minHeight = "";
 }
