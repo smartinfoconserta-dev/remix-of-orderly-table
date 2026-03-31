@@ -60,7 +60,7 @@ const PedidoFlowCatalog = ({
                   <h2 className={`line-clamp-2 font-black leading-tight ${isTotem ? "text-lg text-foreground" : "text-[1.05rem] text-foreground"}`}>{produto.nome}</h2>
                   {!isTotem && <p className="line-clamp-3 flex-1 text-sm leading-relaxed text-muted-foreground">{produto.descricao}</p>}
                   <div className="mt-1 flex items-end justify-between gap-2">
-                    <p className={`font-black tracking-tight ${isTotem ? "text-lg text-[#FF6B00]" : "text-[1.05rem] text-foreground"}`}>{formatPrice(produto.preco)}</p>
+                    <p className={`font-black tracking-tight ${isTotem ? "text-lg text-primary" : "text-[1.05rem] text-foreground"}`}>{formatPrice(produto.preco)}</p>
                     <button
                       type="button"
                       onClick={(event) => {
