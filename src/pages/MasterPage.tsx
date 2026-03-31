@@ -73,17 +73,15 @@ function calcDataTermino(plano: string, dataInicio: string): string {
 const todayStr = () => new Date().toISOString().slice(0, 10);
 
 const PLANOS_MODULOS = [
-  { value: "basico", label: "Básico" },
-  { value: "medio", label: "Médio" },
-  { value: "pro", label: "Pro" },
-  { value: "premium", label: "Premium" },
+  { value: "restaurante", label: "Restaurante" },
+  { value: "fastfood", label: "Fast Food" },
+  { value: "completo", label: "Completo" },
 ];
-const PLANO_MODULOS_LABELS: Record<string, string> = { basico: "Básico", medio: "Médio", pro: "Pro", premium: "Premium" };
+const PLANO_MODULOS_LABELS: Record<string, string> = { restaurante: "Restaurante", fastfood: "Fast Food", completo: "Completo" };
 const PLANO_MODULOS_BADGE: Record<string, string> = {
-  basico: "bg-muted text-muted-foreground",
-  medio: "bg-blue-600 hover:bg-blue-600 text-white",
-  pro: "bg-emerald-600 hover:bg-emerald-600 text-white",
-  premium: "bg-purple-600 hover:bg-purple-600 text-white",
+  restaurante: "bg-muted text-muted-foreground",
+  fastfood: "bg-blue-600 hover:bg-blue-600 text-white",
+  completo: "bg-emerald-600 hover:bg-emerald-600 text-white",
 };
 
 const emptyForm = {
