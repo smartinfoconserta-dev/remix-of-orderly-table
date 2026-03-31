@@ -31,8 +31,9 @@ const AdminLicenca = ({ storeId }: Props) => {
     toast.success("Licença salva");
   }, [licencaConfig, storeId]);
 
-  const planoAtual = (licencaConfig.plano || sistemaConfig.plano || "restaurante") as PlanoModulos;
-  const modulosMaster = getModulosDoPlano(planoAtual);
+  const rawPlano = licencaConfig.plano || sistemaConfig.plano || "restaurante";
+  const planoAtual = (["restaurante", "fastfood", "completo"].includes(rawPlano) ? rawPlano : "restaurante") as PlanoModulos;
+  const modulosMaster = getModulosDoPlano(planoAtual) ?? { cozinha: false, delivery: false, motoboy: false, totem: false, tvRetirada: false, mesas: true };
   const modulosAtivos = sistemaConfig.modulos ?? {};
 
   const planoNomeMap: Record<string, string> = { restaurante: "RESTAURANTE", fastfood: "FAST FOOD", completo: "COMPLETO" };
