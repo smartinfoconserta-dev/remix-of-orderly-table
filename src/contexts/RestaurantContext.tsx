@@ -898,7 +898,16 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     try {
       const { data: nextNum } = await supabase.rpc("next_order_number", { _store_id: sid });
       if (typeof nextNum === "number") numeroPedido = nextNum;
-    } catch { /* use fallback */ }
+    } catch {
+      const deviceOffset = parseInt(localStorage.getItem("device-order-offset") || "0", 10);
+      if (!deviceOffset) {
+        const offset = Math.floor(Math.random() * 900) + 100;
+        localStorage.setItem("device-order-offset", String(offset));
+        numeroPedido += offset;
+      } else {
+        numeroPedido += deviceOffset;
+      }
+    }
 
     const now = new Date();
     const totalPedido = calcularTotalItens(input.itens) + (input.origem === "delivery" ? (input.taxaEntrega ?? 0) : 0);
