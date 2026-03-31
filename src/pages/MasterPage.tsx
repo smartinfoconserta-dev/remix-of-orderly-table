@@ -326,7 +326,10 @@ const MasterPage = () => {
         lic.ativo = !c.ativo;
         await saveLicencaConfigAsync(lic, clientStoreId);
         const cfg = await getSistemaConfigAsync(clientStoreId);
+        const modulosBase = getModulosDoPlano(c.planoModulos as PlanoModulos);
+        cfg.modulos = { ...modulosBase, delivery: cfg.deliveryAtivo ?? false, motoboy: cfg.deliveryAtivo ?? false };
         cfg.plano = c.planoModulos;
+        cfg.tipoRestaurante = c.planoModulos as any;
         await saveSistemaConfigAsync(cfg, clientStoreId);
       } else {
         console.warn("[MasterPage] storeId não encontrado para cliente:", c.nomeRestaurante);
