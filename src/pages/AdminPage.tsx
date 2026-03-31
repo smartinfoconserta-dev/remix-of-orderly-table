@@ -117,6 +117,7 @@ const AdminPage = () => {
             </div>
           )}
           {tab === "ifood" && <div className="space-y-4 fade-in"><IfoodPainel /></div>}
+          {tab === "totem" && <AdminConfig storeId={storeId} storeName={nomeRestaurante} initialTab="totem" />}
         </main>
       </div>
       <LicenseBanner context="admin" />
