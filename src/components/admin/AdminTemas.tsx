@@ -118,12 +118,13 @@ const AdminTemas = ({ sistemaConfig, setSistemaConfig, storeId, onSave }: AdminT
   // Live preview colors for custom mode
   const customPreview = useMemo(() => ({
     bg: fundoTipo === "gradiente" ? fundoGrad1 : fundoCor,
+    bgGradient: fundoTipo === "gradiente" ? `linear-gradient(${fundoDir}, ${fundoGrad1}, ${fundoGrad2})` : undefined,
     surface: cardsCor,
     text: letraCor,
     muted: "#71717A",
     primary: corPrimaria,
     sidebar: sidebarCor,
-  }), [fundoTipo, fundoCor, fundoGrad1, cardsCor, letraCor, corPrimaria, sidebarCor]);
+  }), [fundoTipo, fundoCor, fundoGrad1, fundoGrad2, fundoDir, cardsCor, letraCor, corPrimaria, sidebarCor]);
 
   const handleSelectTheme = (tema: ThemePreset) => {
     const next: SistemaConfig = {
