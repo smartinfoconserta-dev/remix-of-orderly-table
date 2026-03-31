@@ -6,6 +6,7 @@ import { Bike, LogOut, MapPin, Phone, DollarSign, Clock, Map, Navigation, QrCode
 import { savePreferencia, loadPreferencias } from "@/hooks/usePreferencias";
 import { playAlertSound, vibrateAlert } from "@/lib/sounds";
 import { sendWhatsAppMessage, buildDeliveryStatusMessage } from "@/lib/whatsappNotify";
+import { enqueue, isNetworkError } from "@/lib/offlineQueue";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
