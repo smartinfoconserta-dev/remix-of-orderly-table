@@ -79,14 +79,19 @@ const resolveSteps = (produto: Produto | null, skipEmbalagemDefault = false): St
   if (!produto) return ["quantidade"];
   const baseSteps = standardFlowOrder.filter((step) => isBaseStepAvailable(produto, step, skipEmbalagemDefault));
   const sortedGrupos = getSortedGrupos(produto);
-  const grupoSteps: StepId[] = sortedGrupos.map((g) => `grupo-${g.id}` as StepId);
+
+  // "retirar" groups go FIRST (composition / ingredients)
+  const retirarSteps: StepId[] = sortedGrupos.filter((g) => g.tipo === "retirar").map((g) => `grupo-${g.id}` as StepId);
+  const otherGrupoSteps: StepId[] = sortedGrupos.filter((g) => g.tipo !== "retirar").map((g) => `grupo-${g.id}` as StepId);
+
   const quantidadeIndex = baseSteps.indexOf("quantidade");
   if (quantidadeIndex === -1) {
-    return [...baseSteps, ...grupoSteps, "quantidade"];
+    return [...retirarSteps, ...baseSteps, ...otherGrupoSteps, "quantidade"];
   }
   return [
+    ...retirarSteps,
     ...baseSteps.slice(0, quantidadeIndex),
-    ...grupoSteps,
+    ...otherGrupoSteps,
     ...baseSteps.slice(quantidadeIndex),
   ];
 };
