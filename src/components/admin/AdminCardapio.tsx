@@ -465,40 +465,7 @@ const AdminCardapio = ({ storeId }: Props) => {
                   </div>
                   <p className="text-[10px] text-muted-foreground">Define em qual monitor este item aparece na cozinha</p>
                 </div>
-                {/* Ingredientes removíveis */}
-                <div className="space-y-3 border-t border-border pt-4">
-                  <div className="flex items-center justify-between">
-                    <label className="text-xs font-bold text-muted-foreground">Ingredientes removíveis</label>
-                    <Button size="sm" variant="outline" className="text-xs gap-1 h-7" onClick={() => {
-                      setEditProduct((prev) => prev ? { ...prev, ingredientesRemoviveis: [...(prev.ingredientesRemoviveis || []), ""] } : prev);
-                    }}><Plus className="h-3 w-3" /> Adicionar</Button>
-                  </div>
-                  <p className="text-[10px] text-muted-foreground">Itens que o cliente pode pedir para remover (ex: Cebola, Tomate, Molho)</p>
-                  <div className="space-y-1.5 pl-2">
-                    {(editProduct?.ingredientesRemoviveis || []).map((ing, idx) => (
-                      <div key={idx} className="flex items-center gap-2">
-                        <Input value={ing} onChange={(e) => {
-                          const val = e.target.value;
-                          setEditProduct((prev) => {
-                            if (!prev) return prev;
-                            const list = [...(prev.ingredientesRemoviveis || [])];
-                            list[idx] = val;
-                            return { ...prev, ingredientesRemoviveis: list };
-                          });
-                        }} placeholder="Ex: Cebola" className="text-sm h-7 flex-1" />
-                        <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => {
-                          setEditProduct((prev) => {
-                            if (!prev) return prev;
-                            const list = [...(prev.ingredientesRemoviveis || [])];
-                            list.splice(idx, 1);
-                            return { ...prev, ingredientesRemoviveis: list };
-                          });
-                        }}><X className="h-3 w-3" /></Button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                {/* Personalização */}
+                {/* Personalização — auto-gerar retirar */}
                 <div className="space-y-3 border-t border-border pt-4">
                   <div className="flex items-center justify-between">
                     <label className="text-xs font-bold text-muted-foreground">Personalização do produto</label>
