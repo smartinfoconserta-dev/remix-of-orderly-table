@@ -113,7 +113,7 @@ const DevicePinsManager = ({ storeId }: Props) => {
     toast.success(current?.exists ? `Novo PIN de ${label} gerado! Dispositivos antigos foram desativados.` : `PIN de ${label} criado!`);
   };
 
-  // "Ver PIN" — generates a new PIN WITHOUT deactivating existing devices
+  // "Ver PIN" — fetches the existing plain PIN from DB (requires password verification)
   const handleVerPin = async () => {
     if (!verPinModule || !verPinPassword.trim()) return;
     setVerPinLoading(true);
@@ -137,38 +137,54 @@ const DevicePinsManager = ({ storeId }: Props) => {
       return;
     }
 
-    // Generate new PIN without deactivating old one or devices
-    const newPin = generatePin();
     const current = pins[verPinModule];
     const label = DEVICE_TYPES.find(d => d.module === verPinModule)?.label ?? verPinModule;
 
-    // Deactivate old PIN record (but NOT devices)
-    if (current?.pinId) {
-      await supabase.from("module_pins").update({ active: false }).eq("id", current.pinId);
-    }
-
-    const { data: pinId, error } = await supabase.rpc("create_module_pin", {
-      _store_id: storeId,
-      _module: verPinModule,
-      _pin: newPin,
-      _label: `PIN ${label}`,
-    });
-
-    if (error || !pinId) {
-      toast.error("Erro ao gerar PIN");
+    if (!current?.pinId) {
+      toast.error("PIN não encontrado");
       setVerPinLoading(false);
       return;
     }
 
-    setPins(prev => ({
-      ...prev,
-      [verPinModule!]: { pinId, pinCode: newPin, exists: true },
-    }));
+    // Fetch existing plain PIN from DB
+    const { data: plainPin, error } = await supabase.rpc("get_module_pin_plain" as any, {
+      _pin_id: current.pinId,
+    });
+
+    if (error || !plainPin) {
+      // PIN was created before pin_plain existed — generate a new one
+      const newPin = generatePin();
+      if (current.pinId) {
+        await supabase.from("module_pins").update({ active: false } as any).eq("id", current.pinId);
+      }
+      const { data: newPinId, error: createErr } = await supabase.rpc("create_module_pin", {
+        _store_id: storeId,
+        _module: verPinModule,
+        _pin: newPin,
+        _label: `PIN ${label}`,
+      });
+      if (createErr || !newPinId) {
+        toast.error("Erro ao gerar PIN");
+        setVerPinLoading(false);
+        return;
+      }
+      setPins(prev => ({
+        ...prev,
+        [verPinModule!]: { pinId: newPinId, pinCode: newPin, exists: true },
+      }));
+      toast.success(`PIN antigo não tinha registro legível. Novo PIN de ${label} gerado!`);
+    } else {
+      // Show existing PIN
+      setPins(prev => ({
+        ...prev,
+        [verPinModule!]: { ...prev[verPinModule!], pinCode: plainPin as string },
+      }));
+      toast.success(`PIN de ${label} recuperado!`);
+    }
 
     setVerPinLoading(false);
     setVerPinModule(null);
     setVerPinPassword("");
-    toast.success(`Novo PIN de ${label} gerado! Dispositivos existentes continuam ativos.`);
   };
 
   const copyPin = (module: string) => {
@@ -237,7 +253,7 @@ const DevicePinsManager = ({ storeId }: Props) => {
                       <RefreshCw className={`h-3 w-3 ${isRegen ? "animate-spin" : ""}`} /> Regenerar
                     </Button>
                   </div>
-                  <p className="text-[10px] text-muted-foreground text-center">"Ver PIN" gera um novo sem desativar dispositivos.</p>
+                  <p className="text-[10px] text-muted-foreground text-center">"Ver PIN" mostra o PIN atual sem alterações.</p>
                 </div>
               ) : (
                 <Button onClick={() => handleCreateOrRegenerate(module)} disabled={isRegen} className="h-10 w-full rounded-xl font-bold gap-2 text-sm">
@@ -258,7 +274,7 @@ const DevicePinsManager = ({ storeId }: Props) => {
           </DialogHeader>
           <div className="flex flex-col gap-4">
             <p className="text-sm text-muted-foreground">
-              Digite sua senha para gerar um novo PIN de <span className="font-semibold text-foreground">{DEVICE_TYPES.find(d => d.module === verPinModule)?.label}</span> sem desativar dispositivos existentes.
+              Digite sua senha para ver o PIN atual de <span className="font-semibold text-foreground">{DEVICE_TYPES.find(d => d.module === verPinModule)?.label}</span>.
             </p>
             <div className="space-y-1">
               <label className="text-xs font-bold text-muted-foreground">Senha</label>
