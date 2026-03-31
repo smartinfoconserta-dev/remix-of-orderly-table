@@ -28,7 +28,7 @@ const PedidoFlowCatalog = ({
   return (
     <div>
       {searchQuery.trim() && (
-        <p className={`text-xs px-4 pb-2 ${isTotem ? "text-gray-500" : "text-muted-foreground"}`}>
+        <p className={`text-xs px-4 pb-2 ${isTotem ? "text-muted-foreground" : "text-muted-foreground"}`}>
           {searchResultCount} resultado(s) para "{searchQuery}"
         </p>
       )}
@@ -42,7 +42,7 @@ const PedidoFlowCatalog = ({
           return (
             <article
               key={produto.id}
-              className={`group overflow-hidden ${isTotem ? "rounded-2xl border border-gray-200 bg-white shadow-md" : "rounded-[1.75rem] border border-border bg-card shadow-[0_20px_45px_-30px_hsl(var(--foreground)/0.8)]"} text-left transition-all duration-300 hover:-translate-y-0.5 ${isTotem ? "hover:border-[#FF6B00]/30" : "hover:border-primary/30"} card-fade-up ${
+              className={`group overflow-hidden ${isTotem ? "rounded-2xl border border-border bg-card shadow-md" : "rounded-[1.75rem] border border-border bg-card shadow-[0_20px_45px_-30px_hsl(var(--foreground)/0.8)]"} text-left transition-all duration-300 hover:-translate-y-0.5 ${isTotem ? "hover:border-primary/30" : "hover:border-primary/30"} card-fade-up ${
                 isCardSelected ? `scale-[1.01] ${isTotem ? "shadow-lg" : "shadow-[0_20px_44px_-24px_hsl(var(--foreground)/0.92)]"}` : ""
               }`}
               style={{
@@ -57,10 +57,10 @@ const PedidoFlowCatalog = ({
                   <img src={produto.imagem} alt={produto.nome} className="h-full w-full object-cover" loading="lazy" />
                 </div>
                 <div className={`flex flex-1 flex-col gap-2 p-4 ${isTotem ? "min-h-[7rem]" : "min-h-[9rem]"}`}>
-                  <h2 className={`line-clamp-2 font-black leading-tight ${isTotem ? "text-lg text-[#1A1A1A]" : "text-[1.05rem] text-foreground"}`}>{produto.nome}</h2>
+                  <h2 className={`line-clamp-2 font-black leading-tight ${isTotem ? "text-lg text-foreground" : "text-[1.05rem] text-foreground"}`}>{produto.nome}</h2>
                   {!isTotem && <p className="line-clamp-3 flex-1 text-sm leading-relaxed text-muted-foreground">{produto.descricao}</p>}
                   <div className="mt-1 flex items-end justify-between gap-2">
-                    <p className={`font-black tracking-tight ${isTotem ? "text-lg text-[#FF6B00]" : "text-[1.05rem] text-foreground"}`}>{formatPrice(produto.preco)}</p>
+                    <p className={`font-black tracking-tight ${isTotem ? "text-lg text-primary" : "text-[1.05rem] text-foreground"}`}>{formatPrice(produto.preco)}</p>
                     <button
                       type="button"
                       onClick={(event) => {
@@ -69,7 +69,7 @@ const PedidoFlowCatalog = ({
                       }}
                       className={`flex items-center justify-center transition-transform active:scale-95 ${
                         isTotem
-                          ? "h-12 rounded-xl bg-[#FF6B00] px-4 text-white font-black text-sm shadow-md gap-1"
+                          ? "h-12 rounded-xl bg-primary px-4 text-primary-foreground font-black text-sm shadow-md gap-1"
                           : "h-11 w-11 rounded-full bg-primary text-primary-foreground shadow-[0_18px_32px_-22px_hsl(var(--primary)/0.95)]"
                       }`}
                       aria-label={`Adicionar ${produto.nome}`}

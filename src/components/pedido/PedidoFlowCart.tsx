@@ -62,7 +62,7 @@ const PedidoFlowCart = ({
             onClick={onStickyBarClick}
             className={`w-full flex items-center justify-between gap-3 rounded-2xl px-5 py-4 shadow-lg active:scale-[0.98] transition-transform ${
               isTotemMode
-                ? "bg-[#FF6B00] text-white"
+                ? "bg-primary text-primary-foreground"
                 : "bg-primary text-primary-foreground shadow-[0_8px_32px_-8px_hsl(var(--primary)/0.6)]"
             }`}
           >
@@ -70,7 +70,7 @@ const PedidoFlowCart = ({
               <div className="relative">
                 <ShoppingCart className="h-5 w-5" />
                 <span className={`absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-black ${
-                  isTotemMode ? "bg-white text-[#FF6B00]" : "bg-white text-primary"
+                  isTotemMode ? "bg-background text-primary" : "bg-background text-primary"
                 }`}>
                   {cartItemCount}
                 </span>

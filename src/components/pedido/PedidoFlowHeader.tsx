@@ -126,10 +126,10 @@ export function buildPedidoFlowHeader(props: PedidoFlowHeaderProps) {
       <div style={{ backgroundImage: `url(${cardapioBannerBase64})`, backgroundSize: "cover", backgroundPosition: "center", height: "90px", position: "relative" }}>
         <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: "50%", background: "linear-gradient(to bottom, transparent, hsl(var(--background)))" }} />
         {RESTAURANTE.logoUrl && (
-          <img src={RESTAURANTE.logoUrl} alt={RESTAURANTE.nome} className="absolute left-3 top-3 h-10 w-10 rounded-xl object-contain bg-black/40 p-1" />
+          <img src={RESTAURANTE.logoUrl} alt={RESTAURANTE.nome} className="absolute left-3 top-3 h-10 w-10 rounded-xl object-contain bg-foreground/40 p-1" />
         )}
         {mesaLabel && (
-          <div className="absolute right-3 top-3 rounded-lg bg-black/50 px-3 py-1 text-sm font-bold text-white">
+          <div className="absolute right-3 top-3 rounded-lg bg-foreground/50 px-3 py-1 text-sm font-bold text-background">
             {mesaLabel}
           </div>
         )}
@@ -140,7 +140,7 @@ export function buildPedidoFlowHeader(props: PedidoFlowHeaderProps) {
   const header = (
     <header
       className={`sticky top-0 z-50 flex items-center justify-between gap-3 border-b relative ${
-        isTotem ? "border-gray-200 bg-white" : "border-border bg-background/95 backdrop-blur-md"
+        isTotem ? "border-border bg-background" : "border-border bg-background/95 backdrop-blur-md"
       } ${
         isGarcomMobile ? "px-4 py-4" : "px-4 py-3 md:px-6"
       }`}
@@ -166,7 +166,7 @@ export function buildPedidoFlowHeader(props: PedidoFlowHeaderProps) {
       <div className="flex shrink-0 items-center gap-2">
         {(modo === "delivery" || modo === "cliente" || modo === "totem") && (
           <div className="relative">
-            <Search className={`absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 pointer-events-none ${isTotem ? "text-gray-400" : "text-muted-foreground"}`} />
+            <Search className={`absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 pointer-events-none ${isTotem ? "text-muted-foreground" : "text-muted-foreground"}`} />
             <input
               type="text"
               placeholder="Buscar..."
@@ -174,12 +174,12 @@ export function buildPedidoFlowHeader(props: PedidoFlowHeaderProps) {
               onChange={e => setSearchQuery(e.target.value)}
               className={`h-9 w-36 rounded-xl border pl-9 pr-3 text-sm focus:outline-none focus:ring-2 focus:w-48 transition-all ${
                 isTotem
-                  ? "border-gray-200 bg-gray-50 text-gray-900 placeholder:text-gray-400 focus:ring-[#FF6B00]"
+                  ? "border-border bg-secondary text-foreground placeholder:text-muted-foreground focus:ring-primary"
                   : "border-border bg-secondary text-foreground placeholder:text-muted-foreground focus:ring-primary"
               }`}
             />
             {searchQuery && (
-              <button onClick={() => setSearchQuery("")} className={`absolute right-2 top-1/2 -translate-y-1/2 ${isTotem ? "text-gray-400 hover:text-gray-700" : "text-muted-foreground hover:text-foreground"}`}>
+              <button onClick={() => setSearchQuery("")} className={`absolute right-2 top-1/2 -translate-y-1/2 ${isTotem ? "text-muted-foreground hover:text-foreground" : "text-muted-foreground hover:text-foreground"}`}>
                 <X className="h-3.5 w-3.5" />
               </button>
             )}

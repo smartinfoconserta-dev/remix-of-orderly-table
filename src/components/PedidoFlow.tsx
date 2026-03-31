@@ -879,7 +879,7 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
 
   const mobileContent = (
     <>
-      <div className={`sticky ${isTotem ? "top-[57px] z-40 border-b border-gray-200 bg-white pt-2" : "top-[57px] z-40 border-b border-border bg-background/95 pt-2 backdrop-blur-md"}`}>
+      <div className={`sticky ${isTotem ? "top-[57px] z-40 border-b border-border bg-background pt-2" : "top-[57px] z-40 border-b border-border bg-background/95 pt-2 backdrop-blur-md"}`}>
         <CategoryTabs
           categorias={navigationItems}
           categoriaAtiva={categoriaAtiva}
@@ -889,7 +889,7 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
         />
       </div>
       <div ref={mobileListTopRef} />
-      <main className={`pt-3 px-4 ${isGarcomMobile && carrinho.length > 0 ? "pb-32" : "pb-24"} ${isClientIdle ? "brightness-[0.2] saturate-50" : "brightness-100 saturate-100"} ${isTotem ? "bg-white" : ""}`}>
+      <main className={`pt-3 px-4 ${isGarcomMobile && carrinho.length > 0 ? "pb-32" : "pb-24"} ${isClientIdle ? "brightness-[0.2] saturate-50" : "brightness-100 saturate-100"} ${isTotem ? "bg-background" : ""}`}>
         <div>{isGarcomMobile && !isTotem ? productGrid : isHomeActive && !isTotem ? homeContent : productGrid}</div>
       </main>
     </>
@@ -932,7 +932,7 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
   return (
     <div ref={themeContainerRef}>
     <>
-      <div className={`flex flex-col ${isTotem ? "bg-white max-w-[480px] mx-auto" : "bg-background"}`} style={{ minHeight: '100dvh' }}>
+      <div className={`flex flex-col ${isTotem ? "bg-background max-w-[480px] mx-auto" : "bg-background"}`} style={{ minHeight: '100dvh' }}>
         <OfflineIndicator />
         {bannerHeader ? bannerHeader : header}
         {garcomBanner}

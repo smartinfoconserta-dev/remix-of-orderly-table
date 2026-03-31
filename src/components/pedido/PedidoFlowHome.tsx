@@ -56,27 +56,27 @@ const PedidoFlowHome = ({
                     <div className="absolute inset-0 bg-[hsl(var(--card))]" />
                   )}
                   {/* Dark overlay */}
-                  <div className="absolute inset-0 bg-black/55" />
+                  <div className="absolute inset-0 bg-foreground/55" />
 
                   {/* Content */}
                   <div className="relative flex h-full items-center justify-between gap-4 p-5">
                     {/* Left: icon + text */}
                     <div className="flex min-w-0 flex-1 items-start gap-3">
-                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/15 text-white backdrop-blur-sm">
+                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-background/15 text-background backdrop-blur-sm">
                         <Icon className="h-5 w-5" />
                       </div>
                       <div className="min-w-0 space-y-1 pt-0.5">
-                        <span className="inline-flex rounded-full border border-white/20 bg-white/10 px-3 py-0.5 text-[10px] font-bold uppercase tracking-widest text-white/90 backdrop-blur-sm">
+                        <span className="inline-flex rounded-full border border-background/20 bg-background/10 px-3 py-0.5 text-[10px] font-bold uppercase tracking-widest text-background/90 backdrop-blur-sm">
                           {card.badge}
                         </span>
-                        <h2 className="text-[0.95rem] font-black leading-tight text-white md:text-base">
+                        <h2 className="text-[0.95rem] font-black leading-tight text-background md:text-base">
                           {card.title}
                         </h2>
-                        <p className="text-xs leading-snug text-white/70">{card.subtitle}</p>
+                        <p className="text-xs leading-snug text-background/70">{card.subtitle}</p>
                       </div>
                     </div>
                     {/* Right: QR code */}
-                    <div className="shrink-0 rounded-xl bg-white p-2 shadow-lg">
+                    <div className="shrink-0 rounded-xl bg-card p-2 shadow-lg">
                       <img
                         src={card.qrUrl}
                         alt={`QR Code ${card.badge}`}
