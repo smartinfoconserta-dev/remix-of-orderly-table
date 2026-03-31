@@ -469,16 +469,40 @@ const AdminCardapio = ({ storeId }: Props) => {
                 <div className="space-y-3 border-t border-border pt-4">
                   <div className="flex items-center justify-between">
                     <label className="text-xs font-bold text-muted-foreground">Personalização do produto</label>
-                    <Button size="sm" variant="outline" className="text-xs gap-1 h-7" onClick={() => {
-                      const novoGrupo: GrupoPersonalizacao = { id: `grp-${Date.now()}`, nome: "", obrigatorio: true, tipo: "escolha", opcoes: [] };
-                      setEditProduct((prev) => prev ? { ...prev, grupos: [...(prev.grupos || []), novoGrupo] } : prev);
-                    }}><Plus className="h-3 w-3" /> Criar grupo</Button>
+                    <div className="flex gap-1.5">
+                      <Button size="sm" variant="outline" className="text-xs gap-1 h-7" onClick={() => {
+                        const desc = editForm.descricao.trim();
+                        if (!desc) { toast.error("Preencha a descrição primeiro"); return; }
+                        const itens = desc.split(",").map((s) => s.trim()).filter(Boolean);
+                        if (itens.length === 0) { toast.error("Nenhum ingrediente encontrado na descrição"); return; }
+                        const jaTemRetirar = (editProduct?.grupos || []).some((g) => g.tipo === "retirar");
+                        if (jaTemRetirar) {
+                          setEditProduct((prev) => {
+                            if (!prev) return prev;
+                            const g = (prev.grupos || []).map((gr) => {
+                              if (gr.tipo !== "retirar") return gr;
+                              const existentes = new Set(gr.opcoes.map((o) => o.nome.toLowerCase()));
+                              const novas = itens.filter((i) => !existentes.has(i.toLowerCase())).map((nome) => ({ id: `op-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`, nome, preco: 0 }));
+                              return { ...gr, opcoes: [...gr.opcoes, ...novas] };
+                            });
+                            return { ...prev, grupos: g };
+                          });
+                        } else {
+                          const novoGrupo: GrupoPersonalizacao = {
+                            id: `grp-${Date.now()}`, nome: "Retirar ingredientes", obrigatorio: false, tipo: "retirar",
+                            opcoes: itens.map((nome) => ({ id: `op-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`, nome, preco: 0 })),
+                          };
+                          setEditProduct((prev) => prev ? { ...prev, grupos: [...(prev.grupos || []), novoGrupo] } : prev);
+                        }
+                        toast.success(`${itens.length} ingrediente(s) adicionados ao grupo "Retirar"`);
+                      }}>➖ Auto retirar</Button>
+                      <Button size="sm" variant="outline" className="text-xs gap-1 h-7" onClick={() => {
+                        const novoGrupo: GrupoPersonalizacao = { id: `grp-${Date.now()}`, nome: "", obrigatorio: true, tipo: "escolha", opcoes: [] };
+                        setEditProduct((prev) => prev ? { ...prev, grupos: [...(prev.grupos || []), novoGrupo] } : prev);
+                      }}><Plus className="h-3 w-3" /> Criar grupo</Button>
+                    </div>
                   </div>
-                  <div className="text-[10px] text-muted-foreground space-y-0.5">
-                    <p><strong>Escolha obrigatória</strong> = cliente tem que escolher 1 opção</p>
-                    <p><strong>Adicional</strong> = cliente pode adicionar itens com preço extra</p>
-                    <p><strong>Retirar</strong> = cliente marca o que não quer</p>
-                  </div>
+                  <p className="text-[10px] text-muted-foreground">Clique em <strong>"Auto retirar"</strong> para gerar automaticamente as opções de remoção a partir da descrição do produto (separada por vírgula).</p>
                   {(editProduct?.grupos || []).map((grupo, gi) => (
                     <div key={grupo.id} className="rounded-lg border border-border bg-secondary/30 p-3 space-y-2">
                       <div className="flex items-center gap-2">
