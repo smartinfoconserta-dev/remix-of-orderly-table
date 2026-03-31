@@ -530,10 +530,7 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
   }, []);
 
   const handleAdminSelectNewMesa = useCallback(async (newMesaId: string) => {
-    const deviceId = getStoredDeviceId();
-    if (deviceId) {
-      await supabase.from("devices").update({ mesa_id: newMesaId } as any).eq("device_id", deviceId);
-    }
+    await updateDeviceMesa(newMesaId);
     // Save to sessionStorage
     try { sessionStorage.setItem("orderly-tablet-mesa", newMesaId); } catch {}
     // Find mesa numbers for logging
@@ -541,19 +538,7 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
     const newMesaNum = mesas.find((m) => m.id === newMesaId)?.numero;
     // Log event
     if (deviceStoreId) {
-      try {
-        await supabase.rpc("rpc_insert_evento", {
-          _data: {
-            id: crypto.randomUUID(),
-            store_id: deviceStoreId,
-            tipo: "tablet_mesa_trocada",
-            usuario_nome: adminUserEmail,
-            descricao: `Mesa trocada de ${oldMesaNum ?? "?"} para ${newMesaNum ?? "?"} por ${adminUserEmail}`,
-            criado_em: new Date().toLocaleString("pt-BR"),
-            criado_em_iso: new Date().toISOString(),
-          },
-        });
-      } catch {}
+      await logEvento(deviceStoreId, "tablet_mesa_trocada", adminUserEmail, `Mesa trocada de ${oldMesaNum ?? "?"} para ${newMesaNum ?? "?"} por ${adminUserEmail}`);
     }
     await supabase.auth.signOut();
     setAdminModalOpen(false);
