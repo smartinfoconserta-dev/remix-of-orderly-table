@@ -60,7 +60,7 @@ const AdminLicenca = ({ storeId }: Props) => {
   const planos = [
     { id: "restaurante", nome: "RESTAURANTE", preco: "R$ 149", cor: "border-border", modulos: ["Mesas", "Balcão", "Caixa", "Cozinha"] },
     { id: "fastfood", nome: "FAST FOOD", preco: "R$ 249", cor: "border-amber-500/50", modulos: ["Balcão", "Totem", "TV Retirada", "Garçom PDV"] },
-    { id: "completo", nome: "COMPLETO", preco: "R$ 399", cor: "border-primary/50", modulos: ["Tudo incluso"] },
+    { id: "completo", nome: "COMPLETO", preco: "R$ 399", cor: "border-primary/50", modulos: ["Mesas", "Balcão", "Caixa", "Cozinha", "Totem", "TV Retirada", "Garçom PDV", "Delivery", "Motoboy"] },
   ];
 
   const getModuleActive = (mod: typeof allModules[0]) => {
