@@ -42,7 +42,7 @@ const PedidoFlowCatalog = ({
           return (
             <article
               key={produto.id}
-              className={`group overflow-hidden ${isTotem ? "rounded-2xl border border-gray-200 bg-white shadow-md" : "rounded-[1.75rem] border border-border bg-card shadow-[0_20px_45px_-30px_hsl(var(--foreground)/0.8)]"} text-left transition-all duration-300 hover:-translate-y-0.5 ${isTotem ? "hover:border-[#FF6B00]/30" : "hover:border-primary/30"} card-fade-up ${
+              className={`group overflow-hidden ${isTotem ? "rounded-2xl border border-border bg-card shadow-md" : "rounded-[1.75rem] border border-border bg-card shadow-[0_20px_45px_-30px_hsl(var(--foreground)/0.8)]"} text-left transition-all duration-300 hover:-translate-y-0.5 ${isTotem ? "hover:border-primary/30" : "hover:border-primary/30"} card-fade-up ${
                 isCardSelected ? `scale-[1.01] ${isTotem ? "shadow-lg" : "shadow-[0_20px_44px_-24px_hsl(var(--foreground)/0.92)]"}` : ""
               }`}
               style={{
