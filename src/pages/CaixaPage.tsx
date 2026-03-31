@@ -1026,8 +1026,23 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
       return t < min ? t : min;
     }, Infinity);
     const mins = Math.floor((currentTime.getTime() - earliest) / 60000);
-    if (mins < 1) return "< 1 min";
-    return `${mins} min`;
+    if (mins < 1) return "< 1min";
+    if (mins < 60) return `${mins}min`;
+    const h = Math.floor(mins / 60);
+    const m2 = mins % 60;
+    return m2 > 0 ? `${h}h${String(m2).padStart(2, "0")}` : `${h}h`;
+  };
+
+  const getMesaTimeColor = (m: typeof mesas[0]): "green" | "amber" | "red" | undefined => {
+    if (m.status !== "consumo" || m.pedidos.length === 0) return undefined;
+    const earliest = m.pedidos.reduce((min, p) => {
+      const t = new Date(p.criadoEmIso).getTime();
+      return t < min ? t : min;
+    }, Infinity);
+    const mins = Math.floor((currentTime.getTime() - earliest) / 60000);
+    if (mins >= 60) return "red";
+    if (mins >= 30) return "amber";
+    return "green";
   };
 
   /* ── turno close handler ── */
