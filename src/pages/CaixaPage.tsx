@@ -292,6 +292,42 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
 
   useRouteLock(accessMode === "gerente" ? "/gerente" : "/caixa");
 
+  // Atalhos de teclado
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      // Ignore if user is typing in an input/textarea
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+
+      switch (e.key) {
+        case "F2":
+          e.preventDefault();
+          setBuscaComandaOpen(true);
+          break;
+        case "F3":
+          e.preventDefault();
+          setQrScanOpen(true);
+          break;
+        case "F4":
+          e.preventDefault();
+          setBalcaoTipo("balcao");
+          setBalcaoOpen(true);
+          break;
+        case "F5":
+          e.preventDefault();
+          setBalcaoTipo("delivery");
+          setBalcaoOpen(true);
+          break;
+        case "Escape":
+          e.preventDefault();
+          handleVoltar();
+          break;
+      }
+    };
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, [handleVoltar, setBuscaComandaOpen, setQrScanOpen, setBalcaoTipo, setBalcaoOpen]);
+
   // (legacy modoOperacao removed — modules now control tabs)
 
   // Poll motoboy fechamentos from Supabase every 5s
@@ -1813,6 +1849,11 @@ const CaixaPage = ({ accessMode = "caixa" }: CaixaPageProps) => {
       />
 
       <LicenseBanner context="operational" />
+
+      {/* Atalhos de teclado - tooltip */}
+      <div className="fixed bottom-2 left-1/2 -translate-x-1/2 z-40 px-3 py-1 rounded-full bg-muted/80 backdrop-blur text-[10px] text-muted-foreground font-mono tracking-wide pointer-events-none select-none">
+        F2 Busca · F3 QR · F4 Balcão · F5 Delivery · Esc Voltar
+      </div>
     </>
   );
 };
