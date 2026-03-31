@@ -99,6 +99,7 @@ import CaixaHistoricoTab from "@/components/caixa/CaixaHistoricoTab";
 import CaixaHeader from "@/components/caixa/CaixaHeader";
 import CaixaMesasTab from "@/components/caixa/CaixaMesasTab";
 import CaixaDialogs from "@/components/caixa/CaixaDialogs";
+import CaixaStatusBar from "@/components/caixa/CaixaStatusBar";
 
 
 interface CaixaPageProps {
@@ -1378,43 +1379,24 @@ const CaixaPage = ({ accessMode = "caixa", deliveryOnly = false }: CaixaPageProp
               </div>
 
               {/* ── Windows-style Status Bar ── */}
-              <div className="flex items-center shrink-0 divide-x divide-border text-[10px] bg-card border-t border-border text-muted-foreground">
-                <span className="flex items-center gap-1.5 px-3 py-1.5">
-                  <span className="h-2 w-2 rounded-full bg-green-500 inline-block" /> Online
-                </span>
-                <span className="px-3 py-1.5 font-bold">
-                  Operador: {currentOperator.nome}
-                </span>
-                {caixaOpenTime && (
-                  <span className="px-3 py-1.5">
-                    Turno: aberto {caixaOpenTime}
-                  </span>
-                )}
-                {moduloMesas && (
-                  <span className="px-3 py-1.5">Consumo: {mesasConsumo}</span>
-                )}
-                {moduloMesas && (
-                  <span className="px-3 py-1.5">Livres: {mesasLivre}</span>
-                )}
-                <span className="px-3 py-1.5">Fechadas: {fechamentos.length}</span>
-                <span className="px-3 py-1.5">
-                  Último: {fechamentos.length > 0 ? (() => {
-                    const f = fechamentos[0];
-                    const id = f.mesaId || "";
-                    if (id.includes("delivery")) return "Delivery";
-                    if (id.includes("balcao") || f.mesaNumero === 0) return "Balcão";
-                    return `Mesa ${String(f.mesaNumero).padStart(2, "0")}`;
-                  })() : "—"}
-                </span>
-                {showDeliveryTab && pedidosAguardandoConfirmacao.length > 0 && (
-                  <button
-                    onClick={() => setCaixaView("delivery")}
-                    className="px-3 py-1.5 font-bold animate-pulse bg-amber-500/15 text-amber-500"
-                  >
-                    🛵 {pedidosAguardandoConfirmacao.length} delivery aguardando
-                  </button>
-                )}
-              </div>
+              <CaixaStatusBar
+                currentOperatorNome={currentOperator.nome}
+                caixaOpenTime={caixaOpenTime}
+                mesasConsumo={mesasConsumo}
+                mesasLivre={mesasLivre}
+                fechamentosCount={fechamentos.length}
+                ultimoFechamento={fechamentos.length > 0 ? (() => {
+                  const f = fechamentos[0];
+                  const id = f.mesaId || "";
+                  if (id.includes("delivery")) return "Delivery";
+                  if (id.includes("balcao") || f.mesaNumero === 0) return "Balcão";
+                  return `Mesa ${String(f.mesaNumero).padStart(2, "0")}`;
+                })() : "—"}
+                moduloMesas={moduloMesas}
+                showDeliveryTab={showDeliveryTab}
+                pedidosAguardando={pedidosAguardandoConfirmacao.length}
+                onGoToDelivery={() => setCaixaView("delivery")}
+              />
             </div>
           ) : mesa ? (
             <CaixaMesaDetail
