@@ -5,6 +5,7 @@ import MotoboyDialogs from "@/components/motoboy/MotoboyDialogs";
 import { Bike, LogOut, MapPin, Phone, DollarSign, Clock, Map, Navigation, QrCode, GripVertical, CheckCircle2, Package, XCircle, Camera, X } from "lucide-react";
 import { savePreferencia, loadPreferencias } from "@/hooks/usePreferencias";
 import { playAlertSound, vibrateAlert } from "@/lib/sounds";
+import { sendWhatsAppMessage, buildDeliveryStatusMessage } from "@/lib/whatsappNotify";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -94,8 +95,18 @@ export default function MotoboyPage() {
     if (pedido.statusBalcao === "saiu") { toast("Pedido já está em rota"); return; }
     if (pedido.statusBalcao !== "pronto") { toast.error("Pedido não está pronto para retirada"); return; }
     marcarBalcaoSaiu(pedido.id, sessao?.nome || "Motoboy");
-    toast.success(`Pedido #${String(pedido.numeroPedido).padStart(3, "0")} — saindo para entrega!`);
-  }, [pedidosBalcao, marcarBalcaoSaiu, sessao]);
+    const tel = (pedido as any).clienteTelefone;
+    const nome = (pedido as any).clienteNome || "Cliente";
+    toast.success(`Pedido #${String(pedido.numeroPedido).padStart(3, "0")} — saindo para entrega!`, {
+      action: tel ? {
+        label: "📱 Avisar cliente",
+        onClick: () => {
+          const msg = buildDeliveryStatusMessage(NOME_REST, pedido.numeroPedido, nome, "saiu", { motoboyNome: sessao?.nome });
+          sendWhatsAppMessage(tel, msg);
+        },
+      } : undefined,
+    });
+  }, [pedidosBalcao, marcarBalcaoSaiu, sessao, NOME_REST]);
 
   // Load preferences from DB on mount
   useEffect(() => {
@@ -220,14 +231,30 @@ export default function MotoboyPage() {
           const found = pedidosBalcao.find((p) => p.id === pedidoId && p.origem === "delivery" && p.statusBalcao === "pronto");
           if (found) {
             marcarBalcaoSaiu(pedidoId, sessao?.nome || "Motoboy");
-            toast.success(`Pedido #${found.numeroPedido} retirado! Boa entrega. 🏍️`);
+            const tel = (found as any).clienteTelefone;
+            const nome = (found as any).clienteNome || "Cliente";
+            toast.success(`Pedido #${found.numeroPedido} retirado! Boa entrega. 🏍️`, {
+              action: tel ? {
+                label: "📱 Avisar cliente",
+                onClick: () => sendWhatsAppMessage(tel, buildDeliveryStatusMessage(NOME_REST, found.numeroPedido, nome, "saiu", { motoboyNome: sessao?.nome })),
+              } : undefined,
+            });
           } else {
             toast.error("Pedido não encontrado ou já retirado");
           }
         } else if (scanningPedidoId) {
           if (pedidoId === scanningPedidoId) {
             marcarBalcaoSaiu(pedidoId, sessao?.nome || "Motoboy");
-            toast.success("Retirada confirmada! Boa entrega. 🏍️");
+            const scannedPedido = pedidosBalcao.find((p) => p.id === pedidoId);
+            const tel = (scannedPedido as any)?.clienteTelefone;
+            const nome = (scannedPedido as any)?.clienteNome || "Cliente";
+            const num = scannedPedido?.numeroPedido ?? 0;
+            toast.success("Retirada confirmada! Boa entrega. 🏍️", {
+              action: tel ? {
+                label: "📱 Avisar cliente",
+                onClick: () => sendWhatsAppMessage(tel, buildDeliveryStatusMessage(NOME_REST, num, nome, "saiu", { motoboyNome: sessao?.nome })),
+              } : undefined,
+            });
           } else {
             toast.error("QR Code não corresponde a este pedido");
           }
@@ -767,7 +794,14 @@ export default function MotoboyPage() {
         setConfirmandoPedido={setConfirmandoPedido}
         onConfirmarRetirada={(pedido) => {
           marcarBalcaoSaiu(pedido.id, sessao?.nome || "Motoboy");
-          toast.success(`Pedido #${pedido.numeroPedido} retirado! Boa entrega 🏍️`);
+          const tel = (pedido as any).clienteTelefone;
+          const nome = (pedido as any).clienteNome || "Cliente";
+          toast.success(`Pedido #${pedido.numeroPedido} retirado! Boa entrega 🏍️`, {
+            action: tel ? {
+              label: "📱 Avisar cliente",
+              onClick: () => sendWhatsAppMessage(tel, buildDeliveryStatusMessage(NOME_REST, pedido.numeroPedido, nome, "saiu", { motoboyNome: sessao?.nome })),
+            } : undefined,
+          });
           setConfirmandoPedido(null);
           setShowManualPick(false);
         }}
