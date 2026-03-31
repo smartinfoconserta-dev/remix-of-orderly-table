@@ -84,7 +84,6 @@ const AdminTemas = ({ sistemaConfig, setSistemaConfig, storeId, onSave }: AdminT
     const next: SistemaConfig = { ...sistemaConfig, corPrimaria: customColor };
     setSistemaConfig(next);
     onSave();
-    toast.success("Cor personalizada salva!");
   };
 
   return (
