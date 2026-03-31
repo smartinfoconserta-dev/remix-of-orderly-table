@@ -568,34 +568,6 @@ const AdminConfig = ({ storeId, storeName }: Props) => {
         </div>
       )}
 
-      {/* MÓDULOS */}
-      {configSection === "modulos" && (
-        <div className="space-y-4 max-w-lg">
-          {TODOS_MODULOS.map(mod => {
-            const plano = (licencaConfig.plano || sistemaConfig.plano || "restaurante") as PlanoModulos;
-            const modulosLiberados = getModulosDoPlano(plano);
-            const liberado = !!(modulosLiberados as any)[mod.id];
-            const ativo = !!(sistemaConfig.modulos as any)?.[mod.id];
-            return (
-              <div key={mod.id} className="rounded-2xl border border-border bg-card p-5">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <span className="text-2xl">{mod.icon}</span>
-                    <div><p className="text-sm font-black text-foreground">{mod.label}</p><p className="text-xs text-muted-foreground mt-0.5">{mod.desc}</p></div>
-                  </div>
-                  {liberado ? (
-                    <Switch checked={ativo} onCheckedChange={(v) => {
-                      const next = { ...sistemaConfig, modulos: { ...sistemaConfig.modulos, [mod.id]: v } };
-                      setSistemaConfig(next); saveSistemaConfig(next, storeId); saveSistemaConfigAsync(next, storeId);
-                      toast.success(v ? `${mod.label} ativado` : `${mod.label} desativado`);
-                    }} />
-                  ) : (<span className="text-xs text-muted-foreground flex items-center gap-1">🔒 Bloqueado — upgrade</span>)}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
 
       {/* IMPRESSORAS */}
       {configSection === "impressoras" && (() => {
