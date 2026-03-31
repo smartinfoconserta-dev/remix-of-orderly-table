@@ -94,13 +94,16 @@ export async function processQueue(): Promise<number> {
 
   return processed;
 }
+// ── Cached snapshots for useSyncExternalStore ──
+let _cachedSize: number = loadQueue().length;
+let _cachedItems: QueuedOperation[] = loadQueue();
 
 export function getQueueSize(): number {
-  return loadQueue().length;
+  return _cachedSize;
 }
 
 export function getQueueItems(): QueuedOperation[] {
-  return loadQueue();
+  return _cachedItems;
 }
 
 // ── Listener pattern for React ──
@@ -114,6 +117,9 @@ export function subscribeQueue(fn: Listener): () => void {
 }
 
 function notifyListeners() {
+  const q = loadQueue();
+  _cachedSize = q.length;
+  _cachedItems = q;
   listeners.forEach((fn) => fn());
 }
 
