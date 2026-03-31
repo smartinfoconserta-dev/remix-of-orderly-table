@@ -1001,6 +1001,7 @@ export type Database = {
           store_id: string | null
           taxa_entrega: number | null
           telefone: string | null
+          tema_cardapio: string | null
           tempo_entrega: string | null
           total_mesas: number | null
           updated_at: string | null
@@ -1043,6 +1044,7 @@ export type Database = {
           store_id?: string | null
           taxa_entrega?: number | null
           telefone?: string | null
+          tema_cardapio?: string | null
           tempo_entrega?: string | null
           total_mesas?: number | null
           updated_at?: string | null
@@ -1085,6 +1087,7 @@ export type Database = {
           store_id?: string | null
           taxa_entrega?: number | null
           telefone?: string | null
+          tema_cardapio?: string | null
           tempo_entrega?: string | null
           total_mesas?: number | null
           updated_at?: string | null

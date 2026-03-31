@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useParams } from "react-router-dom";
 import { CheckCircle, Search, Loader2, ArrowLeft, LockKeyhole, AlertTriangle } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -14,6 +14,7 @@ import type { ItemCarrinho } from "@/contexts/RestaurantContext";
 import type { Bairro } from "@/lib/deliveryStorage";
 import type { HorariosSemana, HorarioFuncionamento, SistemaConfig } from "@/lib/adminStorage";
 import { preloadProducts } from "@/hooks/useProducts";
+import { applyThemeToElement, clearThemeFromElement, THEME_MAP } from "@/lib/themeEngine";
 
 const normStr = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
 
@@ -178,6 +179,7 @@ export default function PedidoPage() {
     deliveryAtivo: boolean; modoIdentificacao: string;
     taxaEntrega: number; mensagemFechado: string;
     mensagemBoasVindas: string; horarios: HorariosSemana;
+    temaCardapio?: string; corPrimaria?: string;
   } | null>(null);
 
   const [bairrosDisponiveis, setBairrosDisponiveis] = useState<Bairro[]>([]);
@@ -214,6 +216,8 @@ export default function PedidoPage() {
           mensagemFechado: configData?.mensagem_fechado || "",
           mensagemBoasVindas: configData?.mensagem_boas_vindas || "",
           horarios,
+          temaCardapio: (configData as any)?.tema_cardapio || undefined,
+          corPrimaria: configData?.cor_primaria || undefined,
         });
 
         // Load bairros
@@ -282,6 +286,7 @@ function PedidoPageInner({ storeId, config, bairros }: {
     deliveryAtivo: boolean; modoIdentificacao: string;
     taxaEntrega: number; mensagemFechado: string;
     mensagemBoasVindas: string; horarios: HorariosSemana;
+    temaCardapio?: string; corPrimaria?: string;
   };
   bairros: Bairro[];
 }) {
@@ -289,6 +294,18 @@ function PedidoPageInner({ storeId, config, bairros }: {
   const RESTAURANTE_LOGO = config.logo;
   const RESTAURANTE_INITIALS = RESTAURANTE_NOME.slice(0, 2).toUpperCase();
   const isCadastro = config.modoIdentificacao === "cadastro";
+
+  // ── Theme engine ──
+  const themeInnerRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = themeInnerRef.current;
+    if (!el) return;
+    const themeId = config.temaCardapio || "obsidian";
+    const customColor = config.corPrimaria;
+    const themeDefault = THEME_MAP[themeId]?.primary;
+    applyThemeToElement(el, themeId, customColor && customColor !== themeDefault ? customColor : undefined);
+    return () => { if (el) clearThemeFromElement(el); };
+  }, [config.temaCardapio, config.corPrimaria]);
 
   const [etapa, setEtapa] = useState<Etapa>(() => isCadastro ? "login" : "cardapio");
 
@@ -549,6 +566,7 @@ function PedidoPageInner({ storeId, config, bairros }: {
   // ── Delivery desativado ──
   if (!config.deliveryAtivo) {
     return (
+      <div ref={themeInnerRef}>
       <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center p-6 text-center space-y-6">
         {RESTAURANTE_LOGO ? (
           <img src={RESTAURANTE_LOGO} alt={RESTAURANTE_NOME} className="w-20 h-20 rounded-2xl object-cover border border-border" />
@@ -560,6 +578,7 @@ function PedidoPageInner({ storeId, config, bairros }: {
           <h1 className="text-3xl font-black text-foreground">Delivery indisponível</h1>
           <p className="text-sm text-muted-foreground">{config.mensagemFechado || "Voltamos em breve!"}</p>
         </div>
+      </div>
       </div>
     );
   }
@@ -573,6 +592,7 @@ function PedidoPageInner({ storeId, config, bairros }: {
     const horarioDiaTexto = horarioDia.ativo ? `${horarioDia.abertura} — ${horarioDia.fechamento}` : "";
 
     return (
+      <div ref={themeInnerRef}>
       <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center p-6 text-center space-y-6">
         {RESTAURANTE_LOGO ? (
           <img src={RESTAURANTE_LOGO} alt={RESTAURANTE_NOME} className="w-20 h-20 rounded-2xl object-cover border border-border" />
@@ -605,6 +625,7 @@ function PedidoPageInner({ storeId, config, bairros }: {
         )}
         <p className="text-xs text-muted-foreground/60">Delivery indisponível fora do horário de funcionamento</p>
       </div>
+      </div>
     );
   }
 
@@ -624,6 +645,7 @@ function PedidoPageInner({ storeId, config, bairros }: {
   }
 
   return (
+    <div ref={themeInnerRef}>
     <div className="min-h-screen bg-background text-foreground flex flex-col">
       {/* Header */}
       <div className="shrink-0 flex items-center gap-3 px-4 py-3 border-b border-border">
@@ -815,6 +837,7 @@ function PedidoPageInner({ storeId, config, bairros }: {
           </div>
         )}
       </div>
+    </div>
     </div>
   );
 }

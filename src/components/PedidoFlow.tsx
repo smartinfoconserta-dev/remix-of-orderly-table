@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { applyThemeToElement, clearThemeFromElement, THEME_MAP } from "@/lib/themeEngine";
 import { useNavigate } from "react-router-dom";
 import { AlertTriangle, Instagram, LockKeyhole, RefreshCw, ShoppingBag, Unlink, Wifi, X } from "lucide-react";
 import qrInstagramFallback from "@/assets/qr-instagram-premium.png";
@@ -100,6 +101,18 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
 
   // ── sysConfig as reactive state (loads from DB) ──
   const [sysConfig, setSysConfig] = useState<SistemaConfig>(() => getSistemaConfig());
+
+  // ── Theme engine ──
+  const themeContainerRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = themeContainerRef.current;
+    if (!el) return;
+    const themeId = sysConfig.temaCardapio || "obsidian";
+    const customColor = sysConfig.corPrimaria;
+    const themeDefault = THEME_MAP[themeId]?.primary;
+    applyThemeToElement(el, themeId, customColor && customColor !== themeDefault ? customColor : undefined);
+    return () => { if (el) clearThemeFromElement(el); };
+  }, [sysConfig.temaCardapio, sysConfig.corPrimaria]);
 
   // Reactive product/category loading from Supabase cache
   const [produtos, setProdutos] = useState<Produto[]>(() => getCachedProdutos());
@@ -917,6 +930,7 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
   const garcomBanner = null;
 
   return (
+    <div ref={themeContainerRef}>
     <>
       <div className={`flex flex-col ${isTotem ? "bg-white max-w-[480px] mx-auto" : "bg-background"}`} style={{ minHeight: '100dvh' }}>
         <OfflineIndicator />
@@ -1051,6 +1065,7 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
         </Dialog>
       )}
     </>
+    </div>
   );
 };
 

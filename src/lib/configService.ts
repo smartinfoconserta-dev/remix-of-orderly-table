@@ -88,6 +88,7 @@ function dbRowToConfig(row: any): SistemaConfig {
     cpfNotaAtivo: row.cpf_nota_ativo ?? false,
     cardapioHeaderEstilo: row.cardapio_header_estilo ?? "padrao",
     cardapioBannerBase64: row.cardapio_banner_base64 ?? "",
+    temaCardapio: row.tema_cardapio ?? undefined,
   };
 }
 
@@ -125,6 +126,7 @@ function configToDbRow(config: SistemaConfig) {
     cpf_nota_ativo: config.cpfNotaAtivo ?? false,
     cardapio_header_estilo: config.cardapioHeaderEstilo ?? "padrao",
     cardapio_banner_base64: config.cardapioBannerBase64 ?? "",
+    tema_cardapio: config.temaCardapio ?? null,
     total_mesas: 20,
     updated_at: new Date().toISOString(),
   };
