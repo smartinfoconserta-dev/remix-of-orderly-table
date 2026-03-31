@@ -3,6 +3,8 @@ import CaixaCriticalActionDialog from "./CaixaCriticalActionDialog";
 import CaixaTurnoReport from "./CaixaTurnoReport";
 import CaixaMovimentacaoDialog from "./CaixaMovimentacaoDialog";
 import CaixaBalcaoFormDialog from "./CaixaBalcaoFormDialog";
+import type { ClienteDelivery } from "@/lib/deliveryStorage";
+import type { PaymentMethod } from "@/types/operations";
 import CaixaDeliveryConfirmDialog from "./CaixaDeliveryConfirmDialog";
 import CaixaRejectDialog from "./CaixaRejectDialog";
 import CaixaMotoboyConferencia from "./CaixaMotoboyConferencia";
