@@ -166,6 +166,7 @@ const MasterPage = () => {
       observacoes: c.observacoes || "", historicoPagamentos: c.historicoPagamentos || [],
       plano: c.plano || "anual", dataInicio: c.dataInicio || "", dataTermino: c.dataTermino || "",
       planoModulos: c.planoModulos || "restaurante",
+      deliveryAtivo: false,
       criarContaAdmin: false, senhaAdmin: "", slugLoja: "",
     });
     setDialogOpen(true);
