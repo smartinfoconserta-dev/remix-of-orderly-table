@@ -292,7 +292,7 @@ export const dbInsertMovimentacao = (m: MovimentacaoCaixa) => {
   if (!sid) { console.warn("dbInsertMovimentacao: storeId is null"); return; }
   const row = movToRow(m, sid);
   const params = { _data: row };
-  supabase.rpc("rpc_insert_movimentacao" as any, params).then(({ error }: any) => {
+  Promise.resolve(supabase.rpc("rpc_insert_movimentacao" as any, params)).then(({ error }: any) => {
     if (error) {
       if (isNetworkError(error)) { enqueue("rpc_insert_movimentacao", params, `Movimentação: ${(m.descricao || "").slice(0, 30)}`); }
       else { console.error("DB insert mov", error); toast.error("Erro ao salvar movimentação"); }
