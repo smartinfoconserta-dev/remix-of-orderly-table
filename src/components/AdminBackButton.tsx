@@ -1,16 +1,20 @@
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
 /**
  * Floating button shown only when an admin/master is viewing an operational page.
- * Allows quick return to the admin panel.
+ * Hidden on admin/master/gerente panels and login.
  */
 export const AdminBackButton = () => {
   const { authLevel } = useAuth();
   const navigate = useNavigate();
+  const { pathname } = useLocation();
 
   if (authLevel !== "admin" && authLevel !== "master") return null;
+
+  const hiddenRoutes = ["/admin", "/master", "/gerente", "/"];
+  if (hiddenRoutes.some((r) => pathname === r || (r !== "/" && pathname.startsWith(r + "/")))) return null;
 
   return (
     <button
