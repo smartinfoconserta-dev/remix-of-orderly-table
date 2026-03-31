@@ -48,7 +48,7 @@ import {
 import { getStoredDeviceId, updateDeviceMesa } from "@/lib/deviceAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { getActiveStoreId } from "@/lib/sessionManager";
-
+import { logEvento } from "@/services/dbHelpers";
 
 interface PedidoFlowProps {
   modo: "cliente" | "garcom" | "caixa" | "balcao" | "delivery" | "totem";
