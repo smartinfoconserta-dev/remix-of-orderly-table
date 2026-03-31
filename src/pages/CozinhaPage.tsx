@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import LicenseBanner from "@/components/LicenseBanner";
+import OfflineIndicator from "@/components/OfflineIndicator";
 import { Check, ChefHat, Clock, LogOut, ShoppingBag, User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useRestaurant } from "@/contexts/RestaurantContext";
@@ -551,6 +552,7 @@ ${itensSetorHtml}
 
   return (
     <div className="min-h-svh bg-background p-4 md:p-6">
+      <OfflineIndicator />
       <div className="mb-5 flex items-center gap-3">
         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/15 text-primary">
           <ChefHat className="h-5 w-5" />

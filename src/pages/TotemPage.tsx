@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import PedidoFlow from "@/components/PedidoFlow";
+import OfflineIndicator from "@/components/OfflineIndicator";
 import { RestaurantProvider, useRestaurant } from "@/contexts/RestaurantContext";
 import { CheckCircle2, CreditCard, FileText, QrCode, Smartphone, User, Timer, Wifi } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -551,6 +552,7 @@ const TotemInner = ({ storeId }: { storeId: string }) => {
   // ─── Menu ───
   return (
     <div style={{ minHeight: "100dvh", background: "#FFFFFF" }}>
+      <OfflineIndicator />
       <PedidoFlow modo="totem" onPedidoConfirmado={handlePedidoConfirmado} deviceStoreId={storeId} />
     </div>
   );

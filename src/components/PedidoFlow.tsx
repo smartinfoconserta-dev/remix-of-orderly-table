@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import CategoryTabs from "@/components/CategoryTabs";
 import CategoryIcon from "@/components/CategoryIcon";
 import ProductModal from "@/components/ProductModal";
+import OfflineIndicator from "@/components/OfflineIndicator";
 import PedidoFlowCart from "@/components/pedido/PedidoFlowCart";
 import PedidoFlowCatalog from "@/components/pedido/PedidoFlowCatalog";
 import PedidoFlowHome from "@/components/pedido/PedidoFlowHome";
@@ -918,6 +919,7 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
   return (
     <>
       <div className={`flex flex-col ${isTotem ? "bg-white max-w-[480px] mx-auto" : "bg-background"}`} style={{ minHeight: '100dvh' }}>
+        <OfflineIndicator />
         {bannerHeader ? bannerHeader : header}
         {garcomBanner}
         {(isMobile || modo === "garcom" || modo === "delivery" || isTotem) ? mobileContent : desktopContent}
