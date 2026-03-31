@@ -278,7 +278,7 @@ const AdminRelatorios = ({ storeId }: Props) => {
             <Shield className="h-6 w-6 text-primary-foreground" />
           </div>
           <div className="mr-auto">
-            <p className="text-lg font-black text-foreground">{PLANO_LABELS[licencaConfig.plano || "basico"] || "Básico"}</p>
+            <p className="text-lg font-black text-foreground">{PLANO_LABELS[licencaConfig.plano || "restaurante"] || "Restaurante"}</p>
             <span className="inline-block mt-1 px-3 py-0.5 rounded-md border border-primary/40 bg-primary/10 text-primary text-[10px] font-black uppercase tracking-widest">Plano atual</span>
           </div>
           {[
