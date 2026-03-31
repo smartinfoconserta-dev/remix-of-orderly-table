@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { applyThemeToElement, applyCustomThemeToElement, clearThemeFromElement, THEME_MAP } from "@/lib/themeEngine";
+import { getTotemAparencia } from "@/lib/adminStorage";
 import { useNavigate } from "react-router-dom";
 import { AlertTriangle, Instagram, LockKeyhole, RefreshCw, ShoppingBag, Unlink, Wifi, X } from "lucide-react";
 import qrInstagramFallback from "@/assets/qr-instagram-premium.png";
