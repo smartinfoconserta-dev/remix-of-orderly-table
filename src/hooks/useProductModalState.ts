@@ -15,7 +15,7 @@ export interface UseProductModalStateParams {
 const baseStepMeta: Record<ProductStep, { label: string; optional: boolean }> = {
   adicionais: { label: "Adicionais", optional: true },
   bebida: { label: "Bebida", optional: true },
-  remover: { label: "Remover ingredientes", optional: true },
+  remover: { label: "Retirar algum item?", optional: true },
   tipo: { label: "Tipo", optional: false },
   embalagem: { label: "Embalagem", optional: false },
   quantidade: { label: "Quantidade", optional: false },

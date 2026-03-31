@@ -489,7 +489,7 @@ const AdminCardapio = ({ storeId }: Props) => {
                           });
                         } else {
                           const novoGrupo: GrupoPersonalizacao = {
-                            id: `grp-${Date.now()}`, nome: "Retirar ingredientes", obrigatorio: false, tipo: "retirar",
+                            id: `grp-${Date.now()}`, nome: "Retirar algum item?", obrigatorio: false, tipo: "retirar",
                             opcoes: itens.map((nome) => ({ id: `op-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`, nome, preco: 0 })),
                           };
                           setEditProduct((prev) => prev ? { ...prev, grupos: [...(prev.grupos || []), novoGrupo] } : prev);
