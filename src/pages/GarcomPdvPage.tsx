@@ -17,6 +17,7 @@ import type { PaymentMethod, SplitPayment, FiltroMesa } from "@/types/operations
 import { toast } from "sonner";
 import { formatPrice, printComanda } from "@/components/caixa/caixaHelpers";
 import { getSistemaConfig } from "@/lib/adminStorage";
+import { playSuccessSound, playAlertSound, vibrateSuccess, vibrateAlert } from "@/lib/sounds";
 
 
 const PAYMENT_OPTIONS: { value: PaymentMethod; label: string; icon: typeof CreditCard }[] = [
