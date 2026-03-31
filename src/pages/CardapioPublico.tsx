@@ -136,7 +136,7 @@ const CardapioPublico = () => {
     : produtos;
 
   return (
-    <div className="min-h-svh bg-background">
+    <div ref={containerRef} className="min-h-svh bg-background">
       {/* Header */}
       <header className="sticky top-0 z-20 border-b border-border bg-card/95 backdrop-blur-sm px-4 py-4">
         <div className="mx-auto max-w-2xl flex items-center gap-3">
