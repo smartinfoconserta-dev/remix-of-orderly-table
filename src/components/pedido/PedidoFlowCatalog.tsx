@@ -56,7 +56,7 @@ const PedidoFlowCatalog = ({
                 <div className={isTotem ? "aspect-[4/3] overflow-hidden" : "aspect-[3/2] overflow-hidden"}>
                   <img src={produto.imagem} alt={produto.nome} className="h-full w-full object-cover" loading="lazy" />
                 </div>
-                <div className={`flex flex-1 flex-col gap-2 p-4 ${isTotem ? "min-h-[7rem]" : "min-h-[9rem]"}`}>
+                <div className={`flex flex-1 flex-col gap-1.5 ${isTotem ? "p-3 min-h-0" : "p-4 min-h-[9rem]"}`}>
                   <h2 className={`line-clamp-2 font-black leading-tight ${isTotem ? "text-lg text-foreground" : "text-[1.05rem] text-foreground"}`}>{produto.nome}</h2>
                   {!isTotem && <p className="line-clamp-3 flex-1 text-sm leading-relaxed text-muted-foreground">{produto.descricao}</p>}
                   <div className="mt-1 flex items-end justify-between gap-2">
