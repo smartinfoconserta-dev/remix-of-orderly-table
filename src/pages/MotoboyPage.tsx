@@ -705,9 +705,11 @@ export default function MotoboyPage() {
                   <Button
                     className="w-full mt-2 font-black h-12 bg-primary hover:bg-primary/90"
                     onClick={() => {
+                      if (fechamentoEnviado) return;
                       if (entregues.length === 0) { toast.error("Nenhuma entrega para fechar."); return; }
                       const storeId = effectiveStoreId;
                       if (!storeId) { toast.error("Erro: loja não identificada"); return; }
+                      setFechamentoEnviado(true);
                       const fechamento = {
                         id: `fechamento-${Date.now()}`,
                         store_id: storeId,
@@ -729,8 +731,7 @@ export default function MotoboyPage() {
                         pedidos_ids: entregues.map(p => p.id),
                       };
                       supabase.from("motoboy_fechamentos").insert(fechamento as any).then(({ error }) => {
-                        if (error) { console.error("Erro ao salvar fechamento motoboy", error); toast.error("Erro ao solicitar fechamento"); return; }
-                        setFechamentoEnviado(true);
+                        if (error) { console.error("Erro ao salvar fechamento motoboy", error); toast.error("Erro ao solicitar fechamento"); setFechamentoEnviado(false); return; }
                         toast.success("Fechamento solicitado! Aguarde o caixa conferir.", { duration: 3000 });
                       });
                     }}

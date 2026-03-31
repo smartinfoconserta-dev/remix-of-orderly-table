@@ -734,13 +734,10 @@ ${itensSetorHtml}
 
               <div className="p-3 pt-0 flex gap-2">
                 {/* Preparando button — only for aberto/undefined, not yet preparing or pronto */}
-                {!pedido.pronto && pedido.statusBalcao !== "preparando" && pedido.statusBalcao !== "pronto" && (
+                {!pedido.pronto && (pedido as any).isBalcao && pedido.statusBalcao !== "preparando" && pedido.statusBalcao !== "pronto" && (
                   <button
                     type="button"
-                    onClick={() => {
-                      if ((pedido as any).isBalcao) marcarBalcaoPreparando(pedido.id);
-                      // For mesa orders, no "preparando" state — skip
-                    }}
+                    onClick={() => marcarBalcaoPreparando(pedido.id)}
                     className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-amber-500 py-3.5 text-sm font-black text-white transition-all hover:bg-amber-600 active:scale-[0.98]"
                   >
                     <Clock className="h-4 w-4" />
