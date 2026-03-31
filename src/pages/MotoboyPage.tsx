@@ -252,6 +252,16 @@ export default function MotoboyPage() {
     [pedidosBalcao]
   );
 
+  // Alert sound when new pedidos become available for pickup
+  const prevDisponiveisCountRef = useRef<number | null>(null);
+  useEffect(() => {
+    if (prevDisponiveisCountRef.current !== null && pedidosDisponiveis.length > prevDisponiveisCountRef.current) {
+      playAlertSound();
+      vibrateAlert();
+    }
+    prevDisponiveisCountRef.current = pedidosDisponiveis.length;
+  }, [pedidosDisponiveis.length]);
+
   // ── Data — only show pedidos scanned by this motoboy ──
   const emRota = useMemo(() => {
     const pending = pedidosBalcao.filter(
