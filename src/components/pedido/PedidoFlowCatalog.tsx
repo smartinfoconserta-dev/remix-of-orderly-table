@@ -28,7 +28,7 @@ const PedidoFlowCatalog = ({
   return (
     <div>
       {searchQuery.trim() && (
-        <p className={`text-xs px-4 pb-2 ${isTotem ? "text-gray-500" : "text-muted-foreground"}`}>
+        <p className={`text-xs px-4 pb-2 ${isTotem ? "text-muted-foreground" : "text-muted-foreground"}`}>
           {searchResultCount} resultado(s) para "{searchQuery}"
         </p>
       )}
