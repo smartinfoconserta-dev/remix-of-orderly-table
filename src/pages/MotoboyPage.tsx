@@ -794,13 +794,6 @@ export default function MotoboyPage() {
         usbScanInputRef={usbScanInputRef}
         onUsbScan={handleUsbQrScan}
       />
-              <p className="text-xs text-muted-foreground">Toque no pedido que você vai entregar</p>
-            </div>
-            <button onClick={() => setShowManualPick(false)}
-              className="h-10 w-10 flex items-center justify-center rounded-full border border-border bg-card">
-              <X className="w-5 h-5" />
-            </button>
-          </div>
           <div className="flex-1 overflow-y-auto p-4 space-y-3">
             {pedidosDisponiveis.length === 0 ? (
               <div className="text-center py-16 text-muted-foreground">
