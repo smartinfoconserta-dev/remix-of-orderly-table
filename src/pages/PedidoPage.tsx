@@ -179,6 +179,7 @@ export default function PedidoPage() {
     deliveryAtivo: boolean; modoIdentificacao: string;
     taxaEntrega: number; mensagemFechado: string;
     mensagemBoasVindas: string; horarios: HorariosSemana;
+    temaCardapio?: string; corPrimaria?: string;
   } | null>(null);
 
   const [bairrosDisponiveis, setBairrosDisponiveis] = useState<Bairro[]>([]);
