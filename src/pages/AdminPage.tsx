@@ -1,13 +1,13 @@
-import { useState, useCallback } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   ClipboardList, Grid3X3, LayoutDashboard, LogOut, Settings, Shield,
-  Users, Wallet, TabletSmartphone, ShoppingBag, Monitor,
+  Users, Wallet, TabletSmartphone, ShoppingBag,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useStore } from "@/contexts/StoreContext";
 import { useAuth } from "@/contexts/AuthContext";
-import { getSistemaConfig, getLicenseLevel, saveSistemaConfig } from "@/lib/adminStorage";
+import { getSistemaConfig, getLicenseLevel } from "@/lib/adminStorage";
 import TeamManager from "@/components/TeamManager";
 import MesasManager from "@/components/MesasManager";
 import DevicesManager from "@/components/DevicesManager";
@@ -20,9 +20,8 @@ import AdminRelatorios from "@/components/admin/AdminRelatorios";
 import AdminCardapio from "@/components/admin/AdminCardapio";
 import AdminConfig from "@/components/admin/AdminConfig";
 import AdminLicenca from "@/components/admin/AdminLicenca";
-import AdminTotem from "@/components/admin/AdminTotem";
 
-type AdminTab = "dashboard" | "cardapio" | "mesas" | "tablets" | "equipe" | "caixas" | "configuracoes" | "licenca" | "ifood" | "totem";
+type AdminTab = "dashboard" | "cardapio" | "mesas" | "tablets" | "equipe" | "caixas" | "configuracoes" | "licenca" | "ifood";
 
 const sidebarSections = [
   { id: "dashboard" as const, label: "Início", icon: LayoutDashboard },
@@ -32,7 +31,6 @@ const sidebarSections = [
   { id: "equipe" as const, label: "Equipe", icon: Users },
   { id: "caixas" as const, label: "Caixas", icon: Wallet },
   { id: "ifood" as const, label: "iFood", icon: ShoppingBag },
-  { id: "totem" as const, label: "Totem", icon: Monitor },
   { id: "configuracoes" as const, label: "Configurações", icon: Settings },
   { id: "licenca" as const, label: "Meu Plano", icon: Shield },
 ];
@@ -41,16 +39,6 @@ const AdminPage = () => {
   const { logout } = useAuth();
   const { storeId, storeName: ctxStoreName } = useStore();
   const [tab, setTab] = useState<AdminTab>("dashboard");
-  const [totemConfig, setTotemConfig] = useState(() => getSistemaConfig());
-
-  const saveTotemConfig = useCallback((config?: any) => {
-    const configToSave = config
-      && typeof config === "object"
-      && "nomeRestaurante" in config
-        ? config
-        : totemConfig;
-    saveSistemaConfig(configToSave, storeId);
-  }, [totemConfig, storeId]);
 
   const nomeRestaurante = getSistemaConfig().nomeRestaurante || "Restaurante";
 
@@ -127,14 +115,6 @@ const AdminPage = () => {
             </div>
           )}
           {tab === "ifood" && <div className="space-y-4 fade-in"><IfoodPainel /></div>}
-          {tab === "totem" && (
-            <AdminTotem
-              sistemaConfig={totemConfig}
-              setSistemaConfig={setTotemConfig}
-              storeId={storeId}
-              onSave={saveTotemConfig}
-            />
-          )}
         </main>
       </div>
       <LicenseBanner context="admin" />
