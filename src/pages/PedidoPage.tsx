@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useParams } from "react-router-dom";
 import { CheckCircle, Search, Loader2, ArrowLeft, LockKeyhole, AlertTriangle } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
