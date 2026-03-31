@@ -1,18 +1,7 @@
-import { useMemo } from "react";
 import { ShoppingBag, Wallet } from "lucide-react";
 import MesaCard from "@/components/MesaCard";
 import { formatPrice } from "./caixaHelpers";
-
-interface Mesa {
-  id: string;
-  numero: number;
-  status: "livre" | "pendente" | "consumo";
-  carrinho: any[];
-  pedidos: any[];
-  total: number;
-  chamarGarcom?: boolean;
-  chamadoEm?: number | null;
-}
+import type { Mesa } from "@/types/restaurant";
 
 interface PedidoBalcao {
   id: string;
