@@ -85,6 +85,15 @@ const TotemInner = ({ storeId }: { storeId: string }) => {
     return () => { if (timerRef.current) clearTimeout(timerRef.current); };
   }, [step]);
 
+  const handleBackToMenu = useCallback(() => {
+    setStep("menu");
+    setPendingItens([]);
+    setClienteNome("");
+    setClienteCpf("");
+    setCpfWanted(null);
+    setPendingPaymentMethod(null);
+  }, []);
+
   // Auto-timeout for aguardando_pagamento (2 min)
   const paymentTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
