@@ -274,7 +274,7 @@ const DevicePinsManager = ({ storeId }: Props) => {
           </DialogHeader>
           <div className="flex flex-col gap-4">
             <p className="text-sm text-muted-foreground">
-              Digite sua senha para gerar um novo PIN de <span className="font-semibold text-foreground">{DEVICE_TYPES.find(d => d.module === verPinModule)?.label}</span> sem desativar dispositivos existentes.
+              Digite sua senha para ver o PIN atual de <span className="font-semibold text-foreground">{DEVICE_TYPES.find(d => d.module === verPinModule)?.label}</span>.
             </p>
             <div className="space-y-1">
               <label className="text-xs font-bold text-muted-foreground">Senha</label>
