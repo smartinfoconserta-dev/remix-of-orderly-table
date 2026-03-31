@@ -657,6 +657,7 @@ function PedidoPageInner({ storeId, config, bairros }: {
   }
 
   return (
+    <div ref={themeInnerRef}>
     <div className="min-h-screen bg-background text-foreground flex flex-col">
       {/* Header */}
       <div className="shrink-0 flex items-center gap-3 px-4 py-3 border-b border-border">
