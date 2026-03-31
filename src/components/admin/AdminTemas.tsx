@@ -33,13 +33,13 @@ const THEME_PRESETS: ThemePreset[] = [
 ];
 
 // ── Mini Tablet Preview ──
-const MiniTabletPreview = ({ bg, surface, text, muted, primary, sidebar, size = "sm" }: {
-  bg: string; surface: string; text: string; muted: string; primary: string; sidebar: string; size?: "sm" | "lg";
+const MiniTabletPreview = ({ bg, bgGradient, surface, text, muted, primary, sidebar, size = "sm" }: {
+  bg: string; bgGradient?: string; surface: string; text: string; muted: string; primary: string; sidebar: string; size?: "sm" | "lg";
 }) => {
   const w = size === "lg" ? "w-[380px]" : "w-full";
   const h = size === "lg" ? "h-[240px]" : "h-[120px]";
   return (
-    <div className={`${w} ${h} rounded-xl border-[3px] border-zinc-600 overflow-hidden flex shadow-lg`} style={{ backgroundColor: bg }}>
+    <div className={`${w} ${h} rounded-xl border-[3px] border-zinc-600 overflow-hidden flex shadow-lg`} style={{ background: bgGradient || bg }}>
       {/* Sidebar */}
       <div className="w-[18%] flex flex-col gap-1 p-1.5 pt-3" style={{ backgroundColor: sidebar }}>
         <div className="h-1.5 w-full rounded-full" style={{ backgroundColor: primary, opacity: 0.9 }} />
@@ -118,12 +118,13 @@ const AdminTemas = ({ sistemaConfig, setSistemaConfig, storeId, onSave }: AdminT
   // Live preview colors for custom mode
   const customPreview = useMemo(() => ({
     bg: fundoTipo === "gradiente" ? fundoGrad1 : fundoCor,
+    bgGradient: fundoTipo === "gradiente" ? `linear-gradient(${fundoDir}, ${fundoGrad1}, ${fundoGrad2})` : undefined,
     surface: cardsCor,
     text: letraCor,
     muted: "#71717A",
     primary: corPrimaria,
     sidebar: sidebarCor,
-  }), [fundoTipo, fundoCor, fundoGrad1, cardsCor, letraCor, corPrimaria, sidebarCor]);
+  }), [fundoTipo, fundoCor, fundoGrad1, fundoGrad2, fundoDir, cardsCor, letraCor, corPrimaria, sidebarCor]);
 
   const handleSelectTheme = (tema: ThemePreset) => {
     const next: SistemaConfig = {
