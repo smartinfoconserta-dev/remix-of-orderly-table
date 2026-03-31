@@ -164,7 +164,7 @@ const AdminTemas = ({ sistemaConfig, setSistemaConfig, storeId, onSave }: AdminT
     };
     setSistemaConfig(next);
     setTimeout(() => {
-      onSave();
+      onSave(next);
       toast.success("Tema personalizado salvo!");
     }, 50);
   };
