@@ -18,7 +18,7 @@ import {
 } from "@/lib/adminStorage";
 
 const PLANO_LABELS: Record<string, string> = {
-  basico: "Básico", medio: "Médio", pro: "Pro", premium: "Premium",
+  restaurante: "Restaurante", fastfood: "Fast Food", completo: "Completo",
 };
 
 interface Props {
