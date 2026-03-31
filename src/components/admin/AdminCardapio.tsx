@@ -109,6 +109,7 @@ const AdminCardapio = ({ storeId }: Props) => {
       nome: c.nome,
       icone: c.icone,
       ordem: i,
+      parentId: c.parentId ?? null,
     }));
     setCategoriasCustom(defaults);
     if (storeId) {
