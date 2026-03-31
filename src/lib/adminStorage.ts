@@ -82,7 +82,9 @@ export interface SistemaConfig {
     motoboy?: boolean;
     garcomPdv?: boolean;
   };
-  plano?: "basico" | "medio" | "pro" | "premium";
+  tipoRestaurante?: "restaurante" | "fastfood" | "completo";
+  deliverySeparado?: boolean;
+  plano?: "restaurante" | "fastfood" | "completo";
   /** @deprecated Use modulos.mesas / modulos.balcao instead */
   modoOperacao?: "restaurante" | "fast_food";
   identificacaoFastFood?: "codigo" | "nome_cliente";
