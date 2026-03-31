@@ -253,6 +253,7 @@ const GarcomPdvPage = () => {
   if (pagamentoOpen && pagamentoMesaId) {
     return (
       <ModuleGate moduleKey="garcomPdv" moduleName="Garçom PDV">
+        {floatingChamadoBadge}
         <div className="min-h-svh bg-background flex flex-col">
           {/* Header */}
           <div className="shrink-0 border-b border-border bg-card px-4 py-3 flex items-center justify-between">
