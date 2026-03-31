@@ -88,8 +88,8 @@ const AdminConfig = ({ storeId, storeName }: Props) => {
     getBairrosAsync(storeId).then(setBairros);
   }, [storeId]);
 
-  const saveSistema = useCallback((configOverride?: SistemaConfig) => {
-    const toSave = configOverride || sistemaConfig;
+  const saveSistema = useCallback((configOverride?: SistemaConfig | unknown) => {
+    const toSave = (configOverride && typeof configOverride === "object" && "nomeRestaurante" in (configOverride as any)) ? configOverride as SistemaConfig : sistemaConfig;
     saveSistemaConfig(toSave, storeId);
     saveSistemaConfigAsync(toSave, storeId);
     applyCustomPrimaryColor();
