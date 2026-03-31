@@ -31,7 +31,7 @@ const AdminLicenca = ({ storeId }: Props) => {
     toast.success("Licença salva");
   }, [licencaConfig, storeId]);
 
-  const planoAtual = (licencaConfig.plano || sistemaConfig.plano || "basico") as PlanoModulos;
+  const planoAtual = (licencaConfig.plano || sistemaConfig.plano || "restaurante") as PlanoModulos;
   const modulosMaster = getModulosDoPlano(planoAtual);
   const modulosAtivos = sistemaConfig.modulos ?? {};
 
