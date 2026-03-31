@@ -1358,14 +1358,26 @@ export type Database = {
       }
       rpc_insert_evento: { Args: { _data: Json }; Returns: undefined }
       rpc_insert_fechamento: { Args: { _data: Json }; Returns: undefined }
+      rpc_insert_motoboy_fechamento: {
+        Args: { _data: Json }
+        Returns: undefined
+      }
       rpc_insert_movimentacao: { Args: { _data: Json }; Returns: undefined }
       rpc_insert_pedido: { Args: { _data: Json }; Returns: undefined }
+      rpc_sync_bairros_delivery: {
+        Args: { _bairros: Json; _store_id: string }
+        Returns: undefined
+      }
       rpc_update_fechamento: {
         Args: { _id: string; _store_id: string; _updates: Json }
         Returns: undefined
       }
       rpc_update_pedido: {
         Args: { _id: string; _store_id: string; _updates: Json }
+        Returns: undefined
+      }
+      rpc_upsert_cliente_delivery: {
+        Args: { _data: Json; _store_id: string }
         Returns: undefined
       }
       rpc_upsert_estado_caixa: {
