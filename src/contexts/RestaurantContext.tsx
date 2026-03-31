@@ -584,14 +584,11 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         fechamentos: store.fechamentos, pedidosBalcao: store.pedidosBalcao,
         caixaAberto: store.caixaAberto, fundoTroco: store.fundoTroco,
         allFechamentos, allEventos, allMovimentacoesCaixa,
-        getMesa, updateMesa, addToCart, updateCartItemQty, removeFromCart,
-        confirmarPedido, chamarGarcom: chamarGarcomFn, dismissChamarGarcom,
-        fecharConta, estornarFechamento, zerarMesa, ajustarItemPedido, cancelarPedido,
-        marcarPedidoPronto, registrarMovimentacaoCaixa, abrirCaixa, fecharCaixaDoDia,
-        criarPedidoBalcao, marcarPedidoBalcaoPronto, marcarBalcaoSaiu, marcarBalcaoEntregue,
-        cancelarEntregaMotoboy, marcarBalcaoPronto, fecharContaBalcao, confirmarPedidoBalcao,
-        rejeitarPedidoBalcao, cancelarPedidoBalcao, marcarBalcaoRetirado, marcarBalcaoPreparando,
-        registrarFechamentoMotoboy,
+        getMesa, updateMesa,
+        ...mesaActions,
+        chamarGarcom: mesaActions.chamarGarcom,
+        ...caixaActions,
+        ...balcaoActions,
       }}
     >
       {children}
