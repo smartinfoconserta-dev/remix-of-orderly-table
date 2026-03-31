@@ -208,7 +208,7 @@ const GarcomPdvPage = () => {
                       <span className="text-sm text-foreground truncate">{item.nome}</span>
                     </div>
                     <span className="text-sm font-bold text-foreground tabular-nums shrink-0 ml-2">
-                      {formatPrice(item.preco * item.qtd)}
+                      {formatPrice(item.precoUnit * item.qtd)}
                     </span>
                   </div>
                 ))}
