@@ -221,7 +221,6 @@ const CaixaPage = ({ accessMode = "caixa", deliveryOnly = false }: CaixaPageProp
   const moduloBalcao = globalModulos.balcao === true;
   // isFastFoodGlobal backward compat: true when no mesas and has totem/balcao
   const isFastFoodGlobal = !moduloMesas && (moduloTotem || moduloBalcao);
-  const caixaTitle = deliveryOnly ? "Caixa Delivery" : (accessMode === "gerente" ? "Gerente" : "Caixa");
 
   const [caixaView, setCaixaView] = useState<"mesas" | "delivery" | "totem" | "historico" | "ifood">(() => {
     if (deliveryOnly) return "delivery";
