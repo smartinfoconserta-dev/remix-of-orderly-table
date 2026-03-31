@@ -56,7 +56,7 @@ const PedidoFlowHome = ({
                     <div className="absolute inset-0 bg-[hsl(var(--card))]" />
                   )}
                   {/* Dark overlay */}
-                  <div className="absolute inset-0 bg-black/55" />
+                  <div className="absolute inset-0 bg-foreground/55" />
 
                   {/* Content */}
                   <div className="relative flex h-full items-center justify-between gap-4 p-5">
