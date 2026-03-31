@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { LogIn } from "lucide-react";
+import { LogIn, UtensilsCrossed } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -89,52 +89,62 @@ const Index = () => {
   }
 
   return (
-    <div className="min-h-svh bg-background flex flex-col items-center justify-center p-6 gap-6">
-      <div className="text-center mb-2">
-        <h1 className="text-foreground text-3xl md:text-4xl font-black tracking-tight">
-          Orderly Table
-        </h1>
-        <p className="text-muted-foreground text-sm md:text-base mt-2">
-          Acesse o sistema
-        </p>
-      </div>
+    <div className="min-h-svh bg-background flex flex-col items-center justify-center p-6">
+      <div className="flex-1 flex flex-col items-center justify-center gap-6 w-full">
+        <div className="text-center mb-2">
+          <div className="inline-flex items-center justify-center h-14 w-14 rounded-2xl bg-primary/10 mb-4">
+            <UtensilsCrossed className="h-7 w-7 text-primary" />
+          </div>
+          <h1 className="text-foreground text-3xl md:text-4xl font-black tracking-tight">
+            Orderly Table
+          </h1>
+          <p className="text-muted-foreground text-sm md:text-base mt-2">
+            Acesse o sistema
+          </p>
+        </div>
 
-      <div className="w-full max-w-sm">
-        <div className="surface-card p-6 md:p-7">
-          <div className="flex flex-col gap-4">
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-foreground">Email</label>
-              <Input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="seu@email.com"
-                autoComplete="email"
-              />
+        <div className="w-full max-w-sm">
+          <div className="surface-card p-6 md:p-7">
+            <div className="flex flex-col gap-4">
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-foreground">Email</label>
+                <Input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="seu@email.com"
+                  autoComplete="email"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-foreground">Senha</label>
+                <Input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  autoComplete="current-password"
+                  onKeyDown={(e) => e.key === "Enter" && handleLogin()}
+                />
+              </div>
+              {error && (
+                <p className="rounded-xl border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive">
+                  {error}
+                </p>
+              )}
+              <Button onClick={handleLogin} disabled={loading} className="h-11 rounded-xl text-base font-bold gap-2">
+                <LogIn className="h-4 w-4" />
+                {loading ? "Entrando…" : "Entrar"}
+              </Button>
             </div>
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-foreground">Senha</label>
-              <Input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                autoComplete="current-password"
-                onKeyDown={(e) => e.key === "Enter" && handleLogin()}
-              />
-            </div>
-            {error && (
-              <p className="rounded-xl border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive">
-                {error}
-              </p>
-            )}
-            <Button onClick={handleLogin} disabled={loading} className="h-11 rounded-xl text-base font-bold gap-2">
-              <LogIn className="h-4 w-4" />
-              {loading ? "Entrando…" : "Entrar"}
-            </Button>
           </div>
         </div>
       </div>
+
+      {/* Footer */}
+      <p className="text-[10px] text-muted-foreground/40 font-medium tracking-wide pb-2">
+        v1.0 • Orderly Table
+      </p>
 
       {showInstallBanner && (
         <div className="fixed bottom-0 inset-x-0 z-50 p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
