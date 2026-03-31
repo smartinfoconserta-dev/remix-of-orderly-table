@@ -62,7 +62,7 @@ const PedidoFlowHome = ({
                   <div className="relative flex h-full items-center justify-between gap-4 p-5">
                     {/* Left: icon + text */}
                     <div className="flex min-w-0 flex-1 items-start gap-3">
-                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/15 text-white backdrop-blur-sm">
+                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-background/15 text-background backdrop-blur-sm">
                         <Icon className="h-5 w-5" />
                       </div>
                       <div className="min-w-0 space-y-1 pt-0.5">
