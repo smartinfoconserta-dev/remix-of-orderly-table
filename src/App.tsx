@@ -65,7 +65,7 @@ const App = () => {
         <Route path="/garcom-pdv" element={<ProtectedRoute requiredLevel="operational" requiredModule="garcom"><GarcomPdvPage /></ProtectedRoute>} />
         <Route path="/mesa/:id" element={<ProtectedRoute requiredLevel="operational" requiredModule="garcom"><MesaPage /></ProtectedRoute>} />
         <Route path="/caixa" element={<ProtectedRoute requiredLevel="operational" requiredModule="caixa"><CaixaPage accessMode="caixa" /></ProtectedRoute>} />
-        <Route path="/delivery" element={<ProtectedRoute requiredLevel="operational" requiredModule="delivery"><CaixaPage accessMode="caixa" /></ProtectedRoute>} />
+        <Route path="/delivery" element={<ProtectedRoute requiredLevel="operational" requiredModule="delivery"><CaixaPage accessMode="caixa" deliveryOnly /></ProtectedRoute>} />
         <Route path="/gerente" element={<ProtectedRoute requiredLevel="operational" requiredModule="gerente"><GerentePage /></ProtectedRoute>} />
         <Route path="/cozinha" element={<ProtectedRoute requiredLevel="operational" requiredModule="cozinha"><CozinhaPage /></ProtectedRoute>} />
         <Route path="/motoboy" element={<ProtectedRoute requiredLevel="operational" requiredModule="motoboy"><MotoboyPage /></ProtectedRoute>} />

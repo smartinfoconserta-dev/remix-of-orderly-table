@@ -221,7 +221,15 @@ const CaixaPage = ({ accessMode = "caixa", deliveryOnly = false }: CaixaPageProp
   const moduloBalcao = globalModulos.balcao === true;
   // isFastFoodGlobal backward compat: true when no mesas and has totem/balcao
   const isFastFoodGlobal = !moduloMesas && (moduloTotem || moduloBalcao);
+  const deliverySeparado = sistemaConfig.deliverySeparado === true;
+  const showMesasTab = moduloMesas && !isFastFoodGlobal && !deliveryOnly;
+  const showDeliveryTab = deliveryOnly || (!deliverySeparado && sistemaConfig.deliveryAtivo !== false);
+  const showTotemTab = (moduloTotem || pedidosTotemAtivos.length > 0) && !deliveryOnly;
+  const showIfoodTab = !deliveryOnly;
+  const caixaTitle = deliveryOnly ? "Caixa Delivery" : (accessMode === "gerente" ? "Gerente" : "Caixa");
+
   const [caixaView, setCaixaView] = useState<"mesas" | "delivery" | "totem" | "historico" | "ifood">(() => {
+    if (deliveryOnly) return "delivery";
     if (moduloMesas) return "mesas";
     if (moduloTotem) return "totem";
     if (moduloBalcao) return "delivery";
