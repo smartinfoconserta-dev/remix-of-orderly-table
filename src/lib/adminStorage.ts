@@ -86,7 +86,7 @@ export interface SistemaConfig {
   deliverySeparado?: boolean;
   plano?: "restaurante" | "fastfood" | "completo";
   /** @deprecated Use modulos.mesas / modulos.balcao instead */
-  modoOperacao?: "restaurante" | "fast_food";
+  modoOperacao?: "restaurante" | "fast_food" | "completo";
   identificacaoFastFood?: "codigo" | "nome_cliente";
   impressoras?: ImpressoraConfig[];
   cpfNotaAtivo?: boolean;

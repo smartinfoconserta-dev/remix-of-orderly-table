@@ -84,6 +84,7 @@ function dbRowToConfig(row: any): SistemaConfig {
     })(),
     plano: row.plano ?? "basico",
     modoOperacao: row.modo_operacao ?? "restaurante",
+    tipoRestaurante: row.modo_operacao === "fast_food" ? "fastfood" : (row.modo_operacao === "completo" ? "completo" : "restaurante"),
     identificacaoFastFood: row.identificacao_fast_food ?? "codigo",
     cpfNotaAtivo: row.cpf_nota_ativo ?? false,
     cardapioHeaderEstilo: row.cardapio_header_estilo ?? "padrao",
