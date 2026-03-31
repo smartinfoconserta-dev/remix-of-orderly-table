@@ -90,6 +90,15 @@ function dbRowToConfig(row: any): SistemaConfig {
     cardapioHeaderEstilo: row.cardapio_header_estilo ?? "padrao",
     cardapioBannerBase64: row.cardapio_banner_base64 ?? "",
     temaCardapio: row.tema_cardapio ?? undefined,
+    temaPersonalizado: row.tema_personalizado ?? false,
+    fundoTipo: row.fundo_tipo ?? "solido",
+    fundoCor: row.fundo_cor ?? undefined,
+    fundoGradiente: row.fundo_gradiente ?? undefined,
+    letraTipo: row.letra_tipo ?? "solido",
+    letraCor: row.letra_cor ?? undefined,
+    letraGradiente: row.letra_gradiente ?? undefined,
+    sidebarCor: row.sidebar_cor ?? undefined,
+    cardsCor: row.cards_cor ?? undefined,
   };
 }
 
