@@ -345,9 +345,19 @@ const CaixaDeliveryPanel = ({
                   {pb.clienteTelefone && (
                     <div className="flex items-center gap-1 mt-0.5">
                       <p className="text-xs text-muted-foreground">{pb.clienteTelefone}</p>
-                      <a href={`https://wa.me/55${pb.clienteTelefone.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer" title="Abrir WhatsApp" className="inline-flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground hover:text-emerald-500 hover:bg-secondary transition-colors">
+                      <button
+                        type="button"
+                        title="Enviar mensagem WhatsApp"
+                        className="inline-flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground hover:text-emerald-500 hover:bg-secondary transition-colors"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const nomeRest = sistemaConfig?.nomeRestaurante || "Restaurante";
+                          const msg = buildDeliveryStatusMessage(nomeRest, pb.numeroPedido, pb.clienteNome || "Cliente", "confirmado", { total: pb.total });
+                          sendWhatsAppMessage(pb.clienteTelefone!, msg);
+                        }}
+                      >
                         <MessageCircle className="h-3.5 w-3.5" />
-                      </a>
+                      </button>
                     </div>
                   )}
                   {(() => {
