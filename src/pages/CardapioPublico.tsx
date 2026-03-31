@@ -37,6 +37,7 @@ const CardapioPublico = () => {
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!slug) { setNotFound(true); setLoading(false); return; }
