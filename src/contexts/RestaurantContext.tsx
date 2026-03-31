@@ -42,7 +42,7 @@ interface MovimentacaoInput {
   usuario: OperationalUser;
 }
 
-interface ActionAuditInput {
+export interface ActionAuditInput {
   usuario: OperationalUser;
   motivo?: string;
 }
