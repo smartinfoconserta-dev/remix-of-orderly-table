@@ -95,8 +95,18 @@ export default function MotoboyPage() {
     if (pedido.statusBalcao === "saiu") { toast("Pedido já está em rota"); return; }
     if (pedido.statusBalcao !== "pronto") { toast.error("Pedido não está pronto para retirada"); return; }
     marcarBalcaoSaiu(pedido.id, sessao?.nome || "Motoboy");
-    toast.success(`Pedido #${String(pedido.numeroPedido).padStart(3, "0")} — saindo para entrega!`);
-  }, [pedidosBalcao, marcarBalcaoSaiu, sessao]);
+    const tel = (pedido as any).clienteTelefone;
+    const nome = (pedido as any).clienteNome || "Cliente";
+    toast.success(`Pedido #${String(pedido.numeroPedido).padStart(3, "0")} — saindo para entrega!`, {
+      action: tel ? {
+        label: "📱 Avisar cliente",
+        onClick: () => {
+          const msg = buildDeliveryStatusMessage(NOME_REST, pedido.numeroPedido, nome, "saiu", { motoboyNome: sessao?.nome });
+          sendWhatsAppMessage(tel, msg);
+        },
+      } : undefined,
+    });
+  }, [pedidosBalcao, marcarBalcaoSaiu, sessao, NOME_REST]);
 
   // Load preferences from DB on mount
   useEffect(() => {
