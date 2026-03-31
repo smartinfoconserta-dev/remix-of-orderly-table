@@ -69,7 +69,7 @@ const PedidoFlowCatalog = ({
                       }}
                       className={`flex items-center justify-center transition-transform active:scale-95 ${
                         isTotem
-                          ? "h-12 rounded-xl bg-[#FF6B00] px-4 text-white font-black text-sm shadow-md gap-1"
+                          ? "h-12 rounded-xl bg-primary px-4 text-primary-foreground font-black text-sm shadow-md gap-1"
                           : "h-11 w-11 rounded-full bg-primary text-primary-foreground shadow-[0_18px_32px_-22px_hsl(var(--primary)/0.95)]"
                       }`}
                       aria-label={`Adicionar ${produto.nome}`}

@@ -70,7 +70,7 @@ const PedidoFlowCart = ({
               <div className="relative">
                 <ShoppingCart className="h-5 w-5" />
                 <span className={`absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-black ${
-                  isTotemMode ? "bg-white text-[#FF6B00]" : "bg-white text-primary"
+                  isTotemMode ? "bg-background text-primary" : "bg-background text-primary"
                 }`}>
                   {cartItemCount}
                 </span>
