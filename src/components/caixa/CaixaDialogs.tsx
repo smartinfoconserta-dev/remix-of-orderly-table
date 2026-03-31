@@ -116,8 +116,8 @@ interface CaixaDialogsProps {
   onCloseDeliveryConfirm: () => void;
   deliveryPendingItens: ItemCarrinho[];
   sistemaConfig: any;
-  balcaoFormaPag: string;
-  setBalcaoFormaPag: (v: string) => void;
+  balcaoFormaPag: PaymentMethod;
+  setBalcaoFormaPag: (v: PaymentMethod) => void;
   balcaoTroco: string;
   setBalcaoTroco: (v: string) => void;
   deliveryTempoEstimado: string;
