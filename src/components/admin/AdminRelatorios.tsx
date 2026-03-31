@@ -62,14 +62,17 @@ const AdminRelatorios = ({ storeId }: Props) => {
 
   // Load counts on mount
   useEffect(() => {
-    setSistemaConfig(getSistemaConfig());
-    setLicencaConfig(getLicencaConfig());
-    if (storeId) {
-      getMesasConfigAsync(storeId).then(c => setMesasCount(c.totalMesas));
-      supabase.from("produtos").select("id", { count: "exact", head: true })
-        .eq("store_id", storeId).eq("ativo", true).eq("removido", false)
-        .then(({ count }) => setProductsCount(count ?? 0));
+    if (!storeId) {
+      setSistemaConfig(getSistemaConfig());
+      setLicencaConfig(getLicencaConfig());
+      return;
     }
+    getSistemaConfigAsync(storeId).then(setSistemaConfig);
+    getLicencaConfigAsync(storeId).then(setLicencaConfig);
+    getMesasConfigAsync(storeId).then(c => setMesasCount(c.totalMesas));
+    supabase.from("produtos").select("id", { count: "exact", head: true })
+      .eq("store_id", storeId).eq("ativo", true).eq("removido", false)
+      .then(({ count }) => setProductsCount(count ?? 0));
   }, [storeId]);
 
   const getRelPeriodoDates = useCallback(() => {
