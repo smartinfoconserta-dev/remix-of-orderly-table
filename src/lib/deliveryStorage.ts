@@ -41,24 +41,13 @@ export const getBairrosAsync = async (storeId?: string | null): Promise<Bairro[]
 export const saveBairros = async (bairros: Bairro[], storeId?: string | null): Promise<void> => {
   _bairrosCache = bairros;
   try {
-    let del = (supabase.from as any)("bairros_delivery").delete();
-    if (storeId) {
-      del = del.eq("store_id", storeId);
-    } else {
-      del = del.neq("id", "____never____");
-    }
-    await del;
-
-    if (bairros.length > 0) {
-      const rows = bairros.map((b) => ({
-        id: b.id,
-        nome: b.nome,
-        taxa: b.taxa,
-        ativo: b.ativo,
-        ...(storeId ? { store_id: storeId } : {}),
-      }));
-      await (supabase.from as any)("bairros_delivery").insert(rows);
-    }
+    if (!storeId) { console.warn("saveBairros: storeId obrigatório"); return; }
+    const payload = bairros.map((b) => ({ nome: b.nome, taxa: b.taxa, ativo: b.ativo }));
+    const { error } = await supabase.rpc("rpc_sync_bairros_delivery", {
+      _store_id: storeId,
+      _bairros: payload as any,
+    });
+    if (error) throw error;
   } catch (err) {
     console.error("Erro ao salvar bairros:", err);
   }
@@ -151,38 +140,31 @@ export async function upsertClienteDelivery(
     );
 
     if (existing) {
-      const updated = {
-        nome: dados.nome || existing.nome,
-        cpf: dados.cpf || existing.cpf,
-        telefone: dados.telefone || existing.telefone,
-        endereco: dados.endereco || existing.endereco,
-        numero: dados.numero || existing.numero,
-        bairro: dados.bairro || existing.bairro,
-        complemento: dados.complemento || existing.complemento,
-        referencia: dados.referencia || existing.referencia,
-        ultimo_pedido: now,
-      };
-      await (supabase.from as any)("clientes_delivery").update(updated).eq("id", existing.id);
+      if (storeId) {
+        await supabase.rpc("rpc_upsert_cliente_delivery", {
+          _store_id: storeId,
+          _data: {
+            nome: dados.nome || existing.nome, cpf: dados.cpf || existing.cpf,
+            telefone: dados.telefone || existing.telefone, endereco: dados.endereco || existing.endereco,
+            numero: dados.numero || existing.numero, bairro: dados.bairro || existing.bairro,
+            complemento: dados.complemento || existing.complemento, referencia: dados.referencia || existing.referencia,
+          } as any,
+        });
+      }
       return { ...existing, ...dados, ultimoPedido: now };
     }
 
     const novoId = `cli-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
-    const novo = {
-      id: novoId,
-      nome: dados.nome,
-      cpf: dados.cpf,
-      telefone: dados.telefone,
-      endereco: dados.endereco,
-      numero: dados.numero,
-      bairro: dados.bairro,
-      complemento: dados.complemento,
-      referencia: dados.referencia,
-      senha_hash: dados.senhaHash ?? null,
-      criado_em: now,
-      ultimo_pedido: now,
-      ...(storeId ? { store_id: storeId } : {}),
-    };
-    await (supabase.from as any)("clientes_delivery").insert(novo);
+    if (storeId) {
+      await supabase.rpc("rpc_upsert_cliente_delivery", {
+        _store_id: storeId,
+        _data: {
+          nome: dados.nome, cpf: dados.cpf, telefone: dados.telefone,
+          endereco: dados.endereco, numero: dados.numero, bairro: dados.bairro,
+          complemento: dados.complemento, referencia: dados.referencia,
+        } as any,
+      });
+    }
 
     return {
       id: novoId,
