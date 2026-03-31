@@ -419,6 +419,7 @@ const GarcomPdvPage = () => {
   if (receiptData) {
     return (
       <ModuleGate moduleKey="garcomPdv" moduleName="Garçom PDV">
+        {floatingChamadoBadge}
         <div className="min-h-svh bg-background flex flex-col items-center justify-center p-6">
           <div className="w-full max-w-sm space-y-5">
             {/* Success header */}
