@@ -239,8 +239,20 @@ export const dbUpdatePedido = (pedidoId: string, updates: Record<string, any>) =
 export const dbInsertFechamento = (f: FechamentoConta) => {
   const sid = getActiveStoreId();
   if (!sid) { console.warn("dbInsertFechamento: storeId is null, skipping"); return; }
-  supabase.rpc("rpc_insert_fechamento" as any, { _data: fechamentoToRow(f, sid) }).then(({ error }: any) => {
-    if (error) { console.error("DB insert fechamento", error); toast.error("Erro ao salvar fechamento no banco"); }
+  const row = fechamentoToRow(f, sid);
+  supabase.rpc("rpc_insert_fechamento" as any, { _data: row }).then(({ error }: any) => {
+    if (error) {
+      if (isNetworkError(error)) {
+        enqueue("rpc_insert_fechamento", { _data: row }, `Fechamento mesa ${f.mesaNumero}`);
+      } else {
+        console.error("DB insert fechamento", error);
+        toast.error("Erro ao salvar fechamento no banco");
+      }
+    }
+  }).catch((err: any) => {
+    if (isNetworkError(err)) {
+      enqueue("rpc_insert_fechamento", { _data: row }, `Fechamento mesa ${f.mesaNumero}`);
+    }
   });
 };
 
