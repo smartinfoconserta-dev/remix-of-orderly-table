@@ -49,12 +49,8 @@ import {
   normStr,
   formatPrice,
   toCents,
-  formatCpfMask,
   parseCurrencyInput,
-  paymentMethodOptions,
   getPaymentMethodLabel,
-  getPaymentMethodStyle,
-  QUICK_VALUES,
   printComanda as printComandaFn,
 } from "@/components/caixa/caixaHelpers";
 import CaixaDeliveryPanel from "@/components/caixa/CaixaDeliveryPanel";
