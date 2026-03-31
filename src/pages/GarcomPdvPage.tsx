@@ -65,14 +65,14 @@ const GarcomPdvPage = () => {
 
   const allItens = useMemo(() => {
     if (!pagamentoMesa) return [];
-    const items: { nome: string; qtd: number; preco: number }[] = [];
+    const items: { nome: string; qtd: number; precoUnit: number }[] = [];
     for (const pedido of pagamentoMesa.pedidos) {
       for (const item of pedido.itens) {
-        const existing = items.find(i => i.nome === item.nome && i.preco === item.preco);
+        const existing = items.find(i => i.nome === item.nome && i.precoUnit === item.precoUnitario);
         if (existing) {
           existing.qtd += item.quantidade;
         } else {
-          items.push({ nome: item.nome, qtd: item.quantidade, preco: item.preco });
+          items.push({ nome: item.nome, qtd: item.quantidade, precoUnit: item.precoUnitario });
         }
       }
     }
