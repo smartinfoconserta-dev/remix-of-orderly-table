@@ -94,8 +94,8 @@ interface CaixaDialogsProps {
   setBalcaoComplemento: (v: string) => void;
   balcaoReferencia: string;
   setBalcaoReferencia: (v: string) => void;
-  deliveryStep: string;
-  setDeliveryStep: (v: any) => void;
+  deliveryStep: "busca" | "form";
+  setDeliveryStep: (v: "busca" | "form") => void;
   deliveryBusca: string;
   setDeliveryBusca: (v: string) => void;
   deliveryResultados: any[];
