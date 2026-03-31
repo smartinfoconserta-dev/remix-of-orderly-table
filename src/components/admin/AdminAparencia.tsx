@@ -104,6 +104,35 @@ const AdminAparencia = ({ sistemaConfig, setSistemaConfig, onSave }: AdminAparen
             <span className="text-sm text-muted-foreground font-mono">{sistemaConfig.corPrimaria || "#f97316"}</span>
           </div>
         </div>
+
+        {/* Estilo da sidebar / categorias */}
+        <div className="space-y-2">
+          <label className="text-sm font-bold text-muted-foreground">Estilo do menu de categorias</label>
+          <p className="text-xs text-muted-foreground">Como as categorias aparecem no cardápio digital</p>
+          <div className="flex flex-col gap-2">
+            {([
+              { id: "icone-texto" as const, label: "Ícone + Texto", desc: "Ícone ao lado do nome (padrão)" },
+              { id: "icone-acima" as const, label: "Ícone em cima", desc: "Ícone centralizado acima do nome" },
+              { id: "so-texto" as const, label: "Só texto", desc: "Apenas o nome da categoria" },
+            ]).map(opt => (
+              <button
+                key={opt.id}
+                type="button"
+                onClick={() => setSistemaConfig(c => ({ ...c, sidebarEstilo: opt.id }))}
+                className={`flex items-center gap-3 rounded-xl border px-4 py-3 text-left transition-colors ${
+                  (sistemaConfig.sidebarEstilo || "icone-texto") === opt.id
+                    ? "border-primary bg-primary/10 text-primary"
+                    : "border-border bg-secondary text-muted-foreground hover:border-primary/30"
+                }`}
+              >
+                <div className="flex-1">
+                  <span className="text-sm font-bold">{opt.label}</span>
+                  <p className="text-xs text-muted-foreground mt-0.5">{opt.desc}</p>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
 
       <Button onClick={onSave} className="rounded-xl font-black w-full mt-4"><Save className="mr-1 h-4 w-4" /> Salvar</Button>
