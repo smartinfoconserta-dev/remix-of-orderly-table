@@ -371,6 +371,8 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       })
       .on("postgres_changes", { event: "*", schema: "public", table: "estado_caixa", filter: `store_id=eq.${sid}` }, (payload) => {
         if (payload.eventType === "INSERT" || payload.eventType === "UPDATE") {
+          // Skip if a local caixa change happened recently (debounce race condition)
+          if (Date.now() - caixaLocalChangeTs.current < 15_000) return;
           setStore(prev => ({ ...prev, caixaAberto: payload.new.aberto ?? false, fundoTroco: Number(payload.new.fundo_troco ?? 0) }));
         }
       })
