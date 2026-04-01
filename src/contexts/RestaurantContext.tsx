@@ -166,6 +166,8 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const [allFechamentos, setAllFechamentos] = useState<FechamentoConta[]>([]);
   const [allEventos, setAllEventos] = useState<EventoOperacional[]>([]);
   const [allMovimentacoesCaixa, setAllMovimentacoesCaixa] = useState<MovimentacaoCaixa[]>([]);
+  // Debounce: ignore Realtime/polling caixa overrides for 15s after a local change
+  const caixaLocalChangeTs = useRef(0);
   const { operationalSession, authLevel } = useAuth();
   const { storeId: contextStoreId } = useStore();
   const loadedStoreRef = useRef<string | null>(null);
@@ -369,6 +371,8 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       })
       .on("postgres_changes", { event: "*", schema: "public", table: "estado_caixa", filter: `store_id=eq.${sid}` }, (payload) => {
         if (payload.eventType === "INSERT" || payload.eventType === "UPDATE") {
+          // Skip if a local caixa change happened recently (debounce race condition)
+          if (Date.now() - caixaLocalChangeTs.current < 15_000) return;
           setStore(prev => ({ ...prev, caixaAberto: payload.new.aberto ?? false, fundoTroco: Number(payload.new.fundo_troco ?? 0) }));
         }
       })
@@ -517,7 +521,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       }
 
       const { data: caixaData } = caixaRes;
-      if (caixaData?.[0]) {
+      if (caixaData?.[0] && Date.now() - caixaLocalChangeTs.current >= 15_000) {
         const row = caixaData[0];
         setStore(prev => {
           const newAberto = row.aberto ?? false;
@@ -577,6 +581,16 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const balcaoActions = useBalcaoActions(setStore);
   const caixaActions = useCaixaActions(setStore);
 
+  // Wrap caixa actions to stamp local change timestamp (prevents Realtime/polling race)
+  const wrappedAbrirCaixa = useCallback((...args: Parameters<typeof caixaActions.abrirCaixa>) => {
+    caixaLocalChangeTs.current = Date.now();
+    caixaActions.abrirCaixa(...args);
+  }, [caixaActions.abrirCaixa]);
+  const wrappedFecharCaixaDoDia = useCallback((...args: Parameters<typeof caixaActions.fecharCaixaDoDia>) => {
+    caixaLocalChangeTs.current = Date.now();
+    caixaActions.fecharCaixaDoDia(...args);
+  }, [caixaActions.fecharCaixaDoDia]);
+
   return (
     <RestaurantContext.Provider
       value={{
@@ -588,6 +602,8 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         ...mesaActions,
         chamarGarcom: mesaActions.chamarGarcom,
         ...caixaActions,
+        abrirCaixa: wrappedAbrirCaixa,
+        fecharCaixaDoDia: wrappedFecharCaixaDoDia,
         ...balcaoActions,
       }}
     >
