@@ -377,7 +377,7 @@ const CaixaTurnoReport = ({
               </DialogTitle>
               <DialogDescription>Autorização de gerente necessária para confirmar o fechamento.</DialogDescription>
             </DialogHeader>
-            <TurnoCloseContent />
+            {renderTurnoCloseContent()}
             <DialogFooter className="gap-3 sm:gap-0">
               <Button variant="outline" onClick={() => setTurnoModalOpen(false)} className="rounded-xl font-bold">Cancelar</Button>
               <Button variant="destructive" onClick={handleCloseTurno} className="rounded-xl font-black" disabled={isClosingTurno}>
