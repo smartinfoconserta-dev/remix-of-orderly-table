@@ -521,7 +521,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       }
 
       const { data: caixaData } = caixaRes;
-      if (caixaData?.[0]) {
+      if (caixaData?.[0] && Date.now() - caixaLocalChangeTs.current >= 15_000) {
         const row = caixaData[0];
         setStore(prev => {
           const newAberto = row.aberto ?? false;
