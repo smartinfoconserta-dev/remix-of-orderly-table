@@ -63,30 +63,50 @@ const DeviceGate = ({ type, children }: DeviceGateProps) => {
   const [attempts, setAttempts] = useState(0);
   const [lockedUntil, setLockedUntil] = useState<number | null>(null);
 
-  // On mount, check if device is already registered
+  // On mount, check if device is already registered (with retry on network errors)
   useEffect(() => {
+    let cancelled = false;
+    let retryTimer: ReturnType<typeof setTimeout> | null = null;
+
     const check = async () => {
+      if (cancelled) return;
       const deviceId = getStoredDeviceId();
       if (!deviceId) {
         setStatus("activate");
         return;
       }
       const result = await validateDevice(deviceId, type);
+      if (cancelled) return;
+
       if (result.ok && result.storeId) {
         setStoreId(result.storeId);
         setMesaId(result.mesaId ?? null);
-        // Persist storeId so RestaurantContext can find it (devices have no auth session)
-        // Use localStorage so it survives browser restarts (not just sessionStorage)
         localStorage.setItem("orderly-device-store-id", result.storeId);
         sessionStorage.setItem("orderly-device-store-id", result.storeId);
         setStatus("ready");
-      } else {
+      } else if (result.error?.includes("desativado")) {
+        // Admin desativou o device — limpar
+        clearStoredDeviceId();
+        setError(result.error);
+        setStatus("blocked");
+      } else if (result.error?.includes("não encontrado") || result.error?.includes("outro tipo")) {
+        // Device foi removido do banco — limpar
         clearStoredDeviceId();
         setError(result.error ?? null);
-        setStatus(result.error?.includes("desativado") ? "blocked" : "activate");
+        setStatus("activate");
+      } else {
+        // Erro de rede ou outro — NÃO limpar, tentar de novo em 5s
+        setError("Sem conexão. Tentando reconectar...");
+        retryTimer = setTimeout(check, 5000);
       }
     };
+
     check();
+
+    return () => {
+      cancelled = true;
+      if (retryTimer) clearTimeout(retryTimer);
+    };
   }, []);
 
   const handleActivate = useCallback(async () => {
