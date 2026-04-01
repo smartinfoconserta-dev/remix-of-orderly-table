@@ -126,8 +126,8 @@ const GerentePage = () => {
     );
   }
 
-  const handleFecharDia = () => {
-    fecharCaixaDoDia(effectiveGerente);
+  const handleFecharDia = async () => {
+    await fecharCaixaDoDia(effectiveGerente);
     toast.success("Caixa do dia fechado com sucesso. Estado resetado.", { duration: 2000, icon: "🔒" });
   };
 

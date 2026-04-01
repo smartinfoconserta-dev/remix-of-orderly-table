@@ -303,7 +303,7 @@ export const dbInsertMovimentacao = (m: MovimentacaoCaixa) => {
   });
 };
 
-export const dbUpsertEstadoCaixa = (aberto: boolean, fundoTroco: number, nome: string, extras?: { diferenca_dinheiro?: number; diferenca_motivo?: string; fundo_proximo?: number }) => {
+export const dbUpsertEstadoCaixa = async (aberto: boolean, fundoTroco: number, nome: string, extras?: { diferenca_dinheiro?: number; diferenca_motivo?: string; fundo_proximo?: number }) => {
   const sid = getActiveStoreId();
   if (!sid) return;
   const data: Record<string, any> = { aberto, fundo_troco: fundoTroco };
@@ -313,18 +313,20 @@ export const dbUpsertEstadoCaixa = (aberto: boolean, fundoTroco: number, nome: s
   if (extras?.diferenca_motivo !== undefined) data.diferenca_motivo = extras.diferenca_motivo;
   if (extras?.fundo_proximo !== undefined) data.fundo_proximo = extras.fundo_proximo;
   const params = { _store_id: sid, _data: data };
-  Promise.resolve(supabase.rpc("rpc_upsert_estado_caixa" as any, params)).then(({ error }: any) => {
+
+  try {
+    const { error } = await supabase.rpc("rpc_upsert_estado_caixa" as any, params);
     if (error) {
       if (isNetworkError(error)) { enqueue("rpc_upsert_estado_caixa", params, "Estado do caixa"); }
       else { console.error("DB upsert caixa", error); toast.error("Erro ao atualizar caixa"); }
     }
-  }).catch((err: any) => {
+  } catch (err: any) {
     if (isNetworkError(err)) { enqueue("rpc_upsert_estado_caixa", params, "Estado do caixa"); }
     else { console.error("dbUpsertEstadoCaixa unexpected", err); }
-  });
+  }
 };
 
-export const dbSyncEstadoMesa = (mesa: Mesa) => {
+export const dbSyncEstadoMesa = async (mesa: Mesa) => {
   const sid = getActiveStoreId();
   if (!sid) return;
   const row = {
@@ -335,15 +337,17 @@ export const dbSyncEstadoMesa = (mesa: Mesa) => {
     store_id: sid,
   };
   const params = { _data: row };
-  Promise.resolve(supabase.rpc("rpc_upsert_estado_mesa" as any, params)).then(({ error }: any) => {
+
+  try {
+    const { error } = await supabase.rpc("rpc_upsert_estado_mesa" as any, params);
     if (error) {
       if (isNetworkError(error)) { enqueue("rpc_upsert_estado_mesa", params, `Sync mesa ${mesa.numero}`); }
       else { console.error("DB sync mesa via RPC", error); toast.error("Erro ao sincronizar mesa"); }
     }
-  }).catch((err: any) => {
+  } catch (err: any) {
     if (isNetworkError(err)) { enqueue("rpc_upsert_estado_mesa", params, `Sync mesa ${mesa.numero}`); }
     else { console.error("dbSyncEstadoMesa unexpected", err); }
-  });
+  }
 };
 
 /** Centralized logEvento for tablet/totem/device flows */
