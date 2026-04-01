@@ -385,10 +385,12 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
             mesas: prev.mesas.map(m => {
               if (m.id !== mesaId) return m;
               const carrinho = Array.isArray(row.carrinho) ? row.carrinho.map((it: any, i: number) => normalizeItem(it, i)) : m.carrinho;
+              const pedidos = Array.isArray(row.pedidos) ? row.pedidos.map((p: any) => normalizeItem(p, 0)) : m.pedidos;
+              const total = typeof row.total === "number" ? row.total : m.total;
               const chamarGarcom = row.chamar_garcom ?? m.chamarGarcom;
               const chamadoEm = row.chamado_em ?? m.chamadoEm;
-              const updated = { ...m, carrinho, chamarGarcom, chamadoEm };
-              updated.status = derivarStatus(updated);
+              const status = row.status ?? m.status;
+              const updated = { ...m, carrinho, pedidos, total, chamarGarcom, chamadoEm, status };
               return updated;
             }),
           }));
