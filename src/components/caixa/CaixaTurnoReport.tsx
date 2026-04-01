@@ -127,7 +127,7 @@ const CaixaTurnoReport = ({
   );
 
   /* ── Shared content: financial summary ── */
-  const FinancialSummary = ({ compact = false }: { compact?: boolean }) => (
+  const renderFinancialSummary = (compact = false) => (
     <div className={`rounded-xl border border-border bg-card ${compact ? "p-4 space-y-2 text-sm" : "p-6 space-y-3"}`}>
       <div className="flex justify-between"><span className="text-muted-foreground">Sangrias (saídas)</span><span className="font-black tabular-nums text-destructive">{formatPrice(resumoFinanceiro.saidas)}</span></div>
       <div className="flex justify-between"><span className="text-muted-foreground">Suprimentos (entradas)</span><span className="font-black tabular-nums text-emerald-400">{formatPrice(resumoFinanceiro.entradasExtras)}</span></div>
