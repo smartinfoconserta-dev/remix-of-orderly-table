@@ -106,47 +106,68 @@ const CaixaTurnoReport = ({
     setTurnoError(null);
   };
 
-  /* ── Shared content: payment summary cards ── */
+  /* ── Shared content: payment summary cards + total vendas ── */
   const renderPaymentSummaryCards = () => (
-    <div className="grid grid-cols-2 gap-3">
-      {paymentMethodOptions.map((pm) => {
-        const val = resumoFinanceiro[pm.value as keyof typeof resumoFinanceiro] as number;
-        return (
-          <div key={pm.value} className="rounded-xl border border-border bg-card p-3 flex items-center gap-3">
-            <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${pm.bgColor} ${pm.color}`}>
-              {(() => { const Icon = pm.icon; return <Icon className="h-4 w-4" />; })()}
+    <div className="space-y-3">
+      <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">Faturamento do dia</p>
+      <div className="grid grid-cols-2 gap-3">
+        {paymentMethodOptions.map((pm) => {
+          const val = resumoFinanceiro[pm.value as keyof typeof resumoFinanceiro] as number;
+          return (
+            <div key={pm.value} className="rounded-xl border border-border bg-card p-3 flex items-center gap-3">
+              <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${pm.bgColor} ${pm.color}`}>
+                {(() => { const Icon = pm.icon; return <Icon className="h-4 w-4" />; })()}
+              </div>
+              <div>
+                <p className="text-[10px] font-bold text-muted-foreground">{pm.label}</p>
+                <p className={`text-sm font-black tabular-nums ${pm.color}`}>{formatPrice(val)}</p>
+              </div>
             </div>
-            <div>
-              <p className="text-[10px] font-bold text-muted-foreground">{pm.label}</p>
-              <p className={`text-sm font-black tabular-nums ${pm.color}`}>{formatPrice(val)}</p>
-            </div>
-          </div>
-        );
-      })}
+          );
+        })}
+      </div>
+      <div className="rounded-xl border border-primary/30 bg-primary/5 p-3 flex justify-between items-center">
+        <span className="font-black text-foreground">Total vendas</span>
+        <span className="font-black tabular-nums text-primary text-lg">{formatPrice(resumoFinanceiro.totalDia)}</span>
+      </div>
     </div>
   );
 
   /* ── Shared content: financial summary ── */
   const renderFinancialSummary = (compact = false) => (
-    <div className={`rounded-xl border border-border bg-card ${compact ? "p-4 space-y-2 text-sm" : "p-6 space-y-3"}`}>
-      <div className="flex justify-between"><span className="text-muted-foreground">Sangrias (saídas)</span><span className="font-black tabular-nums text-destructive">{formatPrice(resumoFinanceiro.saidas)}</span></div>
-      <div className="flex justify-between"><span className="text-muted-foreground">Suprimentos (entradas)</span><span className="font-black tabular-nums text-emerald-400">{formatPrice(resumoFinanceiro.entradasExtras)}</span></div>
-      <div className="flex justify-between"><span className="text-muted-foreground">Fundo de troco inicial</span><span className="font-black tabular-nums text-foreground">{formatPrice(fundoTroco)}</span></div>
-      <div className="flex justify-between"><span className="text-muted-foreground">Comandas fechadas</span><span className="font-black tabular-nums text-foreground">{fechamentos.length}</span></div>
-      {movimentacoesCaixa.length > 0 && (
-        <div className="space-y-1.5 border-t border-border pt-3">
+    <div className="space-y-4">
+      {/* Movimentações */}
+      {(resumoFinanceiro.entradasExtras > 0 || resumoFinanceiro.saidas > 0 || movimentacoesCaixa.length > 0) && (
+        <div className={`rounded-xl border border-border bg-card ${compact ? "p-4 space-y-2 text-sm" : "p-6 space-y-3"}`}>
           <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">Movimentações</p>
-          {movimentacoesCaixa.slice(0, 5).map((mov) => (
-            <div key={mov.id} className="flex justify-between text-sm">
-              <span className="text-muted-foreground truncate flex-1">{mov.tipo === "entrada" ? "↑ Suprimento" : "↓ Sangria"} — {mov.descricao}</span>
-              <span className={`font-bold tabular-nums ml-2 ${mov.tipo === "entrada" ? "text-emerald-400" : "text-destructive"}`}>{formatPrice(mov.valor)}</span>
+          <div className="flex justify-between"><span className="text-muted-foreground">Suprimentos (entradas)</span><span className="font-black tabular-nums text-emerald-400">{formatPrice(resumoFinanceiro.entradasExtras)}</span></div>
+          <div className="flex justify-between"><span className="text-muted-foreground">Sangrias (saídas)</span><span className="font-black tabular-nums text-destructive">{formatPrice(resumoFinanceiro.saidas)}</span></div>
+          {movimentacoesCaixa.length > 0 && (
+            <div className="space-y-1.5 border-t border-border pt-3">
+              <p className="text-xs font-bold text-muted-foreground">Detalhamento</p>
+              {movimentacoesCaixa.slice(0, 5).map((mov) => (
+                <div key={mov.id} className="flex justify-between text-sm">
+                  <span className="text-muted-foreground truncate flex-1">{mov.tipo === "entrada" ? "↑ Suprimento" : "↓ Sangria"} — {mov.descricao}</span>
+                  <span className={`font-bold tabular-nums ml-2 ${mov.tipo === "entrada" ? "text-emerald-400" : "text-destructive"}`}>{formatPrice(mov.valor)}</span>
+                </div>
+              ))}
             </div>
-          ))}
+          )}
         </div>
       )}
-      <div className="border-t border-border pt-2 flex justify-between">
-        <span className="font-black text-foreground">Total líquido em caixa</span>
-        <span className="font-black tabular-nums text-primary text-lg">{formatPrice(fundoTroco + resumoFinanceiro.totalDia + resumoFinanceiro.entradasExtras - resumoFinanceiro.saidas)}</span>
+
+      {/* Resumo do caixa (gaveta) */}
+      <div className={`rounded-xl border border-border bg-card ${compact ? "p-4 space-y-2 text-sm" : "p-6 space-y-3"}`}>
+        <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">Resumo do caixa (gaveta)</p>
+        <div className="flex justify-between"><span className="text-muted-foreground">Fundo de troco</span><span className="font-black tabular-nums text-foreground">{formatPrice(fundoTroco)}</span></div>
+        <div className="flex justify-between"><span className="text-muted-foreground">(+) Vendas em dinheiro</span><span className="font-black tabular-nums text-foreground">{formatPrice(resumoFinanceiro.dinheiro)}</span></div>
+        <div className="flex justify-between"><span className="text-muted-foreground">(+) Entradas extras</span><span className="font-black tabular-nums text-emerald-400">{formatPrice(resumoFinanceiro.entradasExtras)}</span></div>
+        <div className="flex justify-between"><span className="text-muted-foreground">(−) Saídas (sangria)</span><span className="font-black tabular-nums text-destructive">{formatPrice(resumoFinanceiro.saidas)}</span></div>
+        <div className="border-t border-border pt-2 flex justify-between">
+          <span className="font-black text-foreground">Total em caixa (gaveta)</span>
+          <span className="font-black tabular-nums text-primary text-lg">{formatPrice(fundoTroco + resumoFinanceiro.dinheiro + resumoFinanceiro.entradasExtras - resumoFinanceiro.saidas)}</span>
+        </div>
+        <div className="flex justify-between"><span className="text-muted-foreground">Comandas fechadas</span><span className="font-black tabular-nums text-foreground">{fechamentos.length}</span></div>
       </div>
     </div>
   );
