@@ -581,6 +581,16 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const balcaoActions = useBalcaoActions(setStore);
   const caixaActions = useCaixaActions(setStore);
 
+  // Wrap caixa actions to stamp local change timestamp (prevents Realtime/polling race)
+  const wrappedAbrirCaixa = useCallback((...args: Parameters<typeof caixaActions.abrirCaixa>) => {
+    caixaLocalChangeTs.current = Date.now();
+    caixaActions.abrirCaixa(...args);
+  }, [caixaActions.abrirCaixa]);
+  const wrappedFecharCaixaDoDia = useCallback((...args: Parameters<typeof caixaActions.fecharCaixaDoDia>) => {
+    caixaLocalChangeTs.current = Date.now();
+    caixaActions.fecharCaixaDoDia(...args);
+  }, [caixaActions.fecharCaixaDoDia]);
+
   return (
     <RestaurantContext.Provider
       value={{
@@ -592,6 +602,8 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         ...mesaActions,
         chamarGarcom: mesaActions.chamarGarcom,
         ...caixaActions,
+        abrirCaixa: wrappedAbrirCaixa,
+        fecharCaixaDoDia: wrappedFecharCaixaDoDia,
         ...balcaoActions,
       }}
     >
