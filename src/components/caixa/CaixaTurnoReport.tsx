@@ -152,7 +152,7 @@ const CaixaTurnoReport = ({
   );
 
   /* ── Shared: Cash count section ── */
-  const CashCountSection = ({ compact = false }: { compact?: boolean }) => (
+  const renderCashCountSection = (compact = false) => (
     <div className={`rounded-xl border border-border bg-card ${compact ? "p-4 space-y-3" : "p-6 space-y-4"}`}>
       <h3 className={`${compact ? "text-sm" : "text-base"} font-black text-foreground`}>Conferência de caixa</h3>
       <div className="space-y-1">
