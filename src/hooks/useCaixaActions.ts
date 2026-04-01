@@ -52,7 +52,7 @@ export function useCaixaActions(setStore: Dispatch<SetStateAction<RestaurantStor
         return f;
       });
       const mesasReset = prev.mesas.map(m => resetMesa(m));
-      mesasReset.forEach(m => dbSyncEstadoMesa(m));
+      for (const m of mesasReset) { dbSyncEstadoMesa(m); }
       return {
         mesas: mesasReset,
         eventos: appendEventAndPersist(prev.eventos, { tipo: "caixa", descricao: `Gerente ${usuario.nome} fechou o caixa do dia`, usuarioId: usuario.id, usuarioNome: usuario.nome, acao: "fechamento_dia" }),
