@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useRestaurant } from "@/contexts/RestaurantContext";
 import DeviceGate from "@/components/DeviceGate";
-import { getStoredDeviceId, clearStoredDeviceId, updateDeviceMesa } from "@/lib/deviceAuth";
+import { getStoredDeviceId, clearStoredDeviceId, updateDeviceMesa, verifyUserBelongsToStore } from "@/lib/deviceAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { LockKeyhole, LogOut } from "lucide-react";
@@ -76,22 +76,31 @@ const TabletInner = ({ storeId, initialMesaId }: { storeId: string; initialMesaI
     setAuthError(null);
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data: authData, error } = await supabase.auth.signInWithPassword({
         email: authEmail.trim(),
         password: authPassword,
       });
 
-      if (error) {
+      if (error || !authData.user) {
         setAuthError("Email ou senha inválidos");
         setAuthLoading(false);
         return;
       }
 
-      // Salva email ANTES do signOut
-      const userEmail = authEmail.trim();
-      
+      // Verificar se pertence a esta loja
+      const belongs = await verifyUserBelongsToStore(authData.user.id, storeId);
+
       // SignOut IMEDIATO para não contaminar AuthContext
       await supabase.auth.signOut();
+
+      if (!belongs) {
+        setAuthError("Este usuário não pertence a esta loja");
+        setAuthLoading(false);
+        return;
+      }
+
+      // Salva email ANTES de continuar
+      const userEmail = authEmail.trim();
       
       setAuthUserEmail(userEmail);
       setAuthOpen(false);
