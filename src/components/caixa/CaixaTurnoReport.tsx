@@ -107,7 +107,7 @@ const CaixaTurnoReport = ({
   };
 
   /* ── Shared content: payment summary cards ── */
-  const PaymentSummaryCards = () => (
+  const renderPaymentSummaryCards = () => (
     <div className="grid grid-cols-2 gap-3">
       {paymentMethodOptions.map((pm) => {
         const val = resumoFinanceiro[pm.value as keyof typeof resumoFinanceiro] as number;
