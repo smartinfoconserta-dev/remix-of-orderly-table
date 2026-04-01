@@ -582,6 +582,9 @@ const CaixaPage = ({ accessMode = "caixa", deliveryOnly = false }: CaixaPageProp
               </div>
               <div className="space-y-3">
                 <label className="text-sm font-bold text-foreground">Fundo de troco (R$)</label>
+                {fundoTrocoInput && (
+                  <p className="text-xs text-muted-foreground -mt-1">Sugestão do turno anterior</p>
+                )}
                 <Input
                   type="text"
                   inputMode="decimal"
@@ -950,9 +953,11 @@ const CaixaPage = ({ accessMode = "caixa", deliveryOnly = false }: CaixaPageProp
       extras.fundo_proximo = contadoFinal;
     }
 
-    fecharCaixaDoDia(currentOperator, Object.keys(extras).length > 0 ? extras : undefined);
-    // Clear operator shift tracking
+    // FIRST clear operators to prevent auto-reopen on re-render
     try { localStorage.removeItem("obsidian-caixa-operadores-v1"); } catch {}
+
+    // THEN close the caixa
+    fecharCaixaDoDia(currentOperator, Object.keys(extras).length > 0 ? extras : undefined);
     
     // motoboy fechamentos now managed in Supabase
     setTurnoModalOpen(false);

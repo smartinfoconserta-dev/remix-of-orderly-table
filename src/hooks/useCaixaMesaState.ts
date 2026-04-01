@@ -64,7 +64,7 @@ export function useCaixaMesaState({
     supabase.from("estado_caixa").select("fundo_proximo").eq("store_id", storeId).order("updated_at", { ascending: false }).limit(1)
       .then(({ data }) => {
         const val = Number(data?.[0]?.fundo_proximo ?? 0);
-        if (val > 0) setFundoTrocoInput(val.toFixed(2).replace(".", ","));
+        if (val > 0) setFundoTrocoInput(String(Math.round(val)));
       });
   }, []);
 
