@@ -15,15 +15,15 @@ import { logEvento } from "@/services/dbHelpers";
 const MESA_STORAGE_KEY = "orderly-tablet-mesa";
 
 function saveMesaToStorage(mesaId: string) {
-  try { sessionStorage.setItem(MESA_STORAGE_KEY, mesaId); } catch {}
+  try { localStorage.setItem(MESA_STORAGE_KEY, mesaId); } catch {}
 }
 
 function getMesaFromStorage(): string | null {
-  try { return sessionStorage.getItem(MESA_STORAGE_KEY); } catch { return null; }
+  try { return localStorage.getItem(MESA_STORAGE_KEY); } catch { return null; }
 }
 
 function clearMesaFromStorage() {
-  try { sessionStorage.removeItem(MESA_STORAGE_KEY); } catch {}
+  try { localStorage.removeItem(MESA_STORAGE_KEY); } catch {}
 }
 
 const TabletInner = ({ storeId, initialMesaId }: { storeId: string; initialMesaId?: string | null }) => {
