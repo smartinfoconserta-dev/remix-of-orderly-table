@@ -953,10 +953,7 @@ const CaixaPage = ({ accessMode = "caixa", deliveryOnly = false }: CaixaPageProp
       extras.fundo_proximo = contadoFinal;
     }
 
-    // FIRST clear operators to prevent auto-reopen on re-render
-    try { localStorage.removeItem("obsidian-caixa-operadores-v1"); } catch {}
-
-    // THEN close the caixa
+    // Close action also clears auto-open memory before persisting the fechamento
     fecharCaixaDoDia(currentOperator, Object.keys(extras).length > 0 ? extras : undefined);
     
     // motoboy fechamentos now managed in Supabase

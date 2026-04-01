@@ -37,6 +37,7 @@ export function useCaixaActions(setStore: Dispatch<SetStateAction<RestaurantStor
   }, [setStore]);
 
   const fecharCaixaDoDia = useCallback((usuario: OperationalUser, extras?: { diferenca_dinheiro?: number; diferenca_motivo?: string; fundo_proximo?: number }) => {
+    try { localStorage.removeItem("obsidian-caixa-operadores-v1"); } catch {}
     dbUpsertEstadoCaixa(false, 0, usuario.nome, extras);
     setStore((prev) => {
       const now = new Date();
