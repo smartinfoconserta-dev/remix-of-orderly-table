@@ -469,8 +469,9 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           return changed ? { ...prev, pedidosBalcao: updatedBalcao } : prev;
         });
 
+        // Skip mesa re-population during debounce window (after fecharCaixaDoDia)
         const freshMesa = freshPedidos.filter(p => !(BALCAO_ORIGINS as ReadonlyArray<string>).includes(p.origem));
-        if (freshMesa.length > 0) {
+        if (freshMesa.length > 0 && Date.now() - caixaLocalChangeTs.current >= 15_000) {
           setStore(prev => {
             let changed = false;
             const mesas = prev.mesas.map(m => {
