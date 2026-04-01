@@ -263,7 +263,7 @@ const CaixaTurnoReport = ({
   };
 
   /* ── Turno Close Modal content ── */
-  const TurnoCloseContent = () => (
+  const renderTurnoCloseContent = () => (
     <div className="space-y-4">
       <div className="space-y-2">
         <label className="text-sm font-semibold text-foreground">Nome do gerente</label>
