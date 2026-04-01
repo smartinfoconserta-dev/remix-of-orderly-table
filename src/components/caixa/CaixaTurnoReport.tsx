@@ -357,7 +357,7 @@ const CaixaTurnoReport = ({
                 </button>
               </div>
               <p className="text-sm text-muted-foreground">Autorização de gerente necessária para confirmar o fechamento.</p>
-              <TurnoCloseContent />
+              {renderTurnoCloseContent()}
               <div className="flex justify-end gap-3 pt-2">
                 <Button variant="outline" onClick={() => setTurnoModalOpen(false)} className="rounded-xl font-bold">Cancelar</Button>
                 <Button variant="destructive" onClick={handleCloseTurno} className="rounded-xl font-black" disabled={isClosingTurno}>
