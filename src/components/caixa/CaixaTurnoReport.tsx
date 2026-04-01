@@ -107,7 +107,7 @@ const CaixaTurnoReport = ({
   };
 
   /* ── Shared content: payment summary cards ── */
-  const PaymentSummaryCards = () => (
+  const renderPaymentSummaryCards = () => (
     <div className="grid grid-cols-2 gap-3">
       {paymentMethodOptions.map((pm) => {
         const val = resumoFinanceiro[pm.value as keyof typeof resumoFinanceiro] as number;
@@ -127,7 +127,7 @@ const CaixaTurnoReport = ({
   );
 
   /* ── Shared content: financial summary ── */
-  const FinancialSummary = ({ compact = false }: { compact?: boolean }) => (
+  const renderFinancialSummary = (compact = false) => (
     <div className={`rounded-xl border border-border bg-card ${compact ? "p-4 space-y-2 text-sm" : "p-6 space-y-3"}`}>
       <div className="flex justify-between"><span className="text-muted-foreground">Sangrias (saídas)</span><span className="font-black tabular-nums text-destructive">{formatPrice(resumoFinanceiro.saidas)}</span></div>
       <div className="flex justify-between"><span className="text-muted-foreground">Suprimentos (entradas)</span><span className="font-black tabular-nums text-emerald-400">{formatPrice(resumoFinanceiro.entradasExtras)}</span></div>
@@ -152,7 +152,7 @@ const CaixaTurnoReport = ({
   );
 
   /* ── Shared: Cash count section ── */
-  const CashCountSection = ({ compact = false }: { compact?: boolean }) => (
+  const renderCashCountSection = (compact = false) => (
     <div className={`rounded-xl border border-border bg-card ${compact ? "p-4 space-y-3" : "p-6 space-y-4"}`}>
       <h3 className={`${compact ? "text-sm" : "text-base"} font-black text-foreground`}>Conferência de caixa</h3>
       <div className="space-y-1">
@@ -196,7 +196,7 @@ const CaixaTurnoReport = ({
   );
 
   /* ── Shared: Delivery do turno ── */
-  const DeliveryTurnoSection = ({ compact = false }: { compact?: boolean }) => {
+  const renderDeliveryTurnoSection = (compact = false) => {
     const deliveryPedidos = pedidosBalcao.filter((p) => p.origem === "delivery" && p.statusBalcao !== "aguardando_confirmacao");
     if (deliveryPedidos.length === 0) return null;
     const entregues = deliveryPedidos.filter(p => p.statusBalcao === "entregue" || p.statusBalcao === "pago");
@@ -225,7 +225,7 @@ const CaixaTurnoReport = ({
   };
 
   /* ── Shared: Motoboy fechamentos ── */
-  const MotoboyFechamentosSection = ({ compact = false }: { compact?: boolean }) => {
+  const renderMotoboyFechamentosSection = (compact = false) => {
     if (resumoDeliveryTurno.totalEntregas <= 0) return null;
     return (
       <div className={`rounded-xl border border-blue-500/20 bg-blue-500/5 ${compact ? "p-4 space-y-2" : "p-6 space-y-3"}`}>
@@ -263,7 +263,7 @@ const CaixaTurnoReport = ({
   };
 
   /* ── Turno Close Modal content ── */
-  const TurnoCloseContent = () => (
+  const renderTurnoCloseContent = () => (
     <div className="space-y-4">
       <div className="space-y-2">
         <label className="text-sm font-semibold text-foreground">Nome do gerente</label>
@@ -293,11 +293,11 @@ const CaixaTurnoReport = ({
             </header>
             <div className="flex-1 overflow-y-auto">
               <div className="max-w-3xl mx-auto p-8 space-y-6">
-                <PaymentSummaryCards />
-                <FinancialSummary />
-                <CashCountSection />
-                <DeliveryTurnoSection />
-                <MotoboyFechamentosSection />
+                {renderPaymentSummaryCards()}
+                {renderFinancialSummary()}
+                {renderCashCountSection()}
+                {renderDeliveryTurnoSection()}
+                {renderMotoboyFechamentosSection()}
                 <div className="flex justify-between text-xs text-muted-foreground">
                   <span>Aberto: {caixaOpenTime || "—"}</span>
                   <span>Agora: {clockStr}</span>
@@ -323,11 +323,11 @@ const CaixaTurnoReport = ({
               <DialogDescription>Confira o resumo antes de fechar o turno.</DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
-              <PaymentSummaryCards />
-              <FinancialSummary compact />
-              <CashCountSection compact />
-              <DeliveryTurnoSection compact />
-              <MotoboyFechamentosSection compact />
+              {renderPaymentSummaryCards()}
+              {renderFinancialSummary(true)}
+              {renderCashCountSection(true)}
+              {renderDeliveryTurnoSection(true)}
+              {renderMotoboyFechamentosSection(true)}
               <div className="flex justify-between text-xs text-muted-foreground">
                 <span>Aberto: {caixaOpenTime || "—"}</span>
                 <span>Agora: {clockStr}</span>
@@ -357,7 +357,7 @@ const CaixaTurnoReport = ({
                 </button>
               </div>
               <p className="text-sm text-muted-foreground">Autorização de gerente necessária para confirmar o fechamento.</p>
-              <TurnoCloseContent />
+              {renderTurnoCloseContent()}
               <div className="flex justify-end gap-3 pt-2">
                 <Button variant="outline" onClick={() => setTurnoModalOpen(false)} className="rounded-xl font-bold">Cancelar</Button>
                 <Button variant="destructive" onClick={handleCloseTurno} className="rounded-xl font-black" disabled={isClosingTurno}>
@@ -377,7 +377,7 @@ const CaixaTurnoReport = ({
               </DialogTitle>
               <DialogDescription>Autorização de gerente necessária para confirmar o fechamento.</DialogDescription>
             </DialogHeader>
-            <TurnoCloseContent />
+            {renderTurnoCloseContent()}
             <DialogFooter className="gap-3 sm:gap-0">
               <Button variant="outline" onClick={() => setTurnoModalOpen(false)} className="rounded-xl font-bold">Cancelar</Button>
               <Button variant="destructive" onClick={handleCloseTurno} className="rounded-xl font-black" disabled={isClosingTurno}>
