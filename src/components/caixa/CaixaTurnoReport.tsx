@@ -293,11 +293,11 @@ const CaixaTurnoReport = ({
             </header>
             <div className="flex-1 overflow-y-auto">
               <div className="max-w-3xl mx-auto p-8 space-y-6">
-                <PaymentSummaryCards />
-                <FinancialSummary />
-                <CashCountSection />
-                <DeliveryTurnoSection />
-                <MotoboyFechamentosSection />
+                {renderPaymentSummaryCards()}
+                {renderFinancialSummary()}
+                {renderCashCountSection()}
+                {renderDeliveryTurnoSection()}
+                {renderMotoboyFechamentosSection()}
                 <div className="flex justify-between text-xs text-muted-foreground">
                   <span>Aberto: {caixaOpenTime || "—"}</span>
                   <span>Agora: {clockStr}</span>
