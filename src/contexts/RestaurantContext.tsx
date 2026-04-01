@@ -166,6 +166,8 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const [allFechamentos, setAllFechamentos] = useState<FechamentoConta[]>([]);
   const [allEventos, setAllEventos] = useState<EventoOperacional[]>([]);
   const [allMovimentacoesCaixa, setAllMovimentacoesCaixa] = useState<MovimentacaoCaixa[]>([]);
+  // Debounce: ignore Realtime/polling caixa overrides for 15s after a local change
+  const caixaLocalChangeTs = useRef(0);
   const { operationalSession, authLevel } = useAuth();
   const { storeId: contextStoreId } = useStore();
   const loadedStoreRef = useRef<string | null>(null);
