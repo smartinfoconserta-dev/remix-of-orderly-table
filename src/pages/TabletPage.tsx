@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useRestaurant } from "@/contexts/RestaurantContext";
 import DeviceGate from "@/components/DeviceGate";
-import { getStoredDeviceId, clearStoredDeviceId, updateDeviceMesa } from "@/lib/deviceAuth";
+import { getStoredDeviceId, clearStoredDeviceId, updateDeviceMesa, verifyUserBelongsToStore } from "@/lib/deviceAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { LockKeyhole, LogOut } from "lucide-react";
