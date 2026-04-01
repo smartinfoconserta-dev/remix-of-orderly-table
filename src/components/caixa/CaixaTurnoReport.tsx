@@ -196,7 +196,7 @@ const CaixaTurnoReport = ({
   );
 
   /* ── Shared: Delivery do turno ── */
-  const DeliveryTurnoSection = ({ compact = false }: { compact?: boolean }) => {
+  const renderDeliveryTurnoSection = (compact = false) => {
     const deliveryPedidos = pedidosBalcao.filter((p) => p.origem === "delivery" && p.statusBalcao !== "aguardando_confirmacao");
     if (deliveryPedidos.length === 0) return null;
     const entregues = deliveryPedidos.filter(p => p.statusBalcao === "entregue" || p.statusBalcao === "pago");
