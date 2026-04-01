@@ -109,6 +109,32 @@ export const activateDevice = async (
   }
 };
 
+/** Verify if a user belongs to the given store (or is master) */
+export const verifyUserBelongsToStore = async (
+  userId: string,
+  storeId: string
+): Promise<boolean> => {
+  try {
+    // Master sempre pode
+    const { data: roles } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userId);
+    if (roles?.some((r) => r.role === "master")) {
+      return true;
+    }
+    // Verificar se é membro desta loja
+    const { data: members } = await supabase
+      .from("store_members")
+      .select("store_id")
+      .eq("user_id", userId)
+      .eq("store_id", storeId);
+    return !!(members && members.length > 0);
+  } catch {
+    return false;
+  }
+};
+
 /** Update mesa_id on the devices table for this device */
 export const updateDeviceMesa = async (mesaId: string | null): Promise<void> => {
   const deviceId = getStoredDeviceId();

@@ -76,22 +76,31 @@ const TabletInner = ({ storeId, initialMesaId }: { storeId: string; initialMesaI
     setAuthError(null);
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data: authData, error } = await supabase.auth.signInWithPassword({
         email: authEmail.trim(),
         password: authPassword,
       });
 
-      if (error) {
+      if (error || !authData.user) {
         setAuthError("Email ou senha inválidos");
         setAuthLoading(false);
         return;
       }
 
-      // Salva email ANTES do signOut
-      const userEmail = authEmail.trim();
-      
+      // Verificar se pertence a esta loja
+      const belongs = await verifyUserBelongsToStore(authData.user.id, storeId);
+
       // SignOut IMEDIATO para não contaminar AuthContext
       await supabase.auth.signOut();
+
+      if (!belongs) {
+        setAuthError("Este usuário não pertence a esta loja");
+        setAuthLoading(false);
+        return;
+      }
+
+      // Salva email ANTES de continuar
+      const userEmail = authEmail.trim();
       
       setAuthUserEmail(userEmail);
       setAuthOpen(false);

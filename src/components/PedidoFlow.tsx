@@ -518,25 +518,39 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
     setIsAdminLoggingIn(true);
     setAdminError(null);
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data: authData, error } = await supabase.auth.signInWithPassword({
         email: adminEmail.trim(),
         password: adminPassword,
       });
-      if (error) {
+      if (error || !authData.user) {
         setAdminError("Email ou senha inválidos");
         setIsAdminLoggingIn(false);
         return;
       }
+
+      // Verificar se pertence a esta loja
+      const belongs = await verifyUserBelongsToStore(authData.user.id, deviceStoreId || "");
+
+      // Sempre fazer signOut para não poluir o auth state do tablet
+      await supabase.auth.signOut();
+
+      if (!belongs) {
+        setAdminError("Este usuário não pertence a esta loja");
+        setIsAdminLoggingIn(false);
+        return;
+      }
+
       setAdminAuthenticated(true);
       setAdminUserEmail(adminEmail.trim());
       setAdminPassword("");
       setAdminError(null);
       setIsAdminLoggingIn(false);
     } catch {
+      await supabase.auth.signOut().catch(() => {});
       setAdminError("Erro ao autenticar");
       setIsAdminLoggingIn(false);
     }
-  }, [adminEmail, adminPassword, isAdminLoggingIn]);
+  }, [adminEmail, adminPassword, isAdminLoggingIn, deviceStoreId]);
 
   const handleAdminTrocarMesa = useCallback(() => {
     setShowMesaSelector(true);
