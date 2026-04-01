@@ -323,11 +323,11 @@ const CaixaTurnoReport = ({
               <DialogDescription>Confira o resumo antes de fechar o turno.</DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
-              <PaymentSummaryCards />
-              <FinancialSummary compact />
-              <CashCountSection compact />
-              <DeliveryTurnoSection compact />
-              <MotoboyFechamentosSection compact />
+              {renderPaymentSummaryCards()}
+              {renderFinancialSummary(true)}
+              {renderCashCountSection(true)}
+              {renderDeliveryTurnoSection(true)}
+              {renderMotoboyFechamentosSection(true)}
               <div className="flex justify-between text-xs text-muted-foreground">
                 <span>Aberto: {caixaOpenTime || "—"}</span>
                 <span>Agora: {clockStr}</span>
