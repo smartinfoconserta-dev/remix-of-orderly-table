@@ -225,7 +225,7 @@ const CaixaTurnoReport = ({
   };
 
   /* ── Shared: Motoboy fechamentos ── */
-  const MotoboyFechamentosSection = ({ compact = false }: { compact?: boolean }) => {
+  const renderMotoboyFechamentosSection = (compact = false) => {
     if (resumoDeliveryTurno.totalEntregas <= 0) return null;
     return (
       <div className={`rounded-xl border border-blue-500/20 bg-blue-500/5 ${compact ? "p-4 space-y-2" : "p-6 space-y-3"}`}>
