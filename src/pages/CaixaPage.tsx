@@ -582,6 +582,9 @@ const CaixaPage = ({ accessMode = "caixa", deliveryOnly = false }: CaixaPageProp
               </div>
               <div className="space-y-3">
                 <label className="text-sm font-bold text-foreground">Fundo de troco (R$)</label>
+                {fundoTrocoInput && (
+                  <p className="text-xs text-muted-foreground -mt-1">Sugestão do turno anterior</p>
+                )}
                 <Input
                   type="text"
                   inputMode="decimal"
