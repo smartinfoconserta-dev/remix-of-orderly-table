@@ -101,7 +101,7 @@ export function useCaixaBalcaoState(pedidosBalcao: PedidoRealizado[]) {
     ? balcaoValorEntregueNum - balcaoValorRestante : 0;
 
   /* ── derived order lists ── */
-  const pedidosBalcaoAtivos = useMemo(() => pedidosBalcao.filter((p) => p.statusBalcao !== "pago"), [pedidosBalcao]);
+  const pedidosBalcaoAtivos = useMemo(() => pedidosBalcao.filter((p) => p.statusBalcao !== "pago" && p.statusBalcao !== "cancelado"), [pedidosBalcao]);
   const pedidosDeliveryAtivos = useMemo(() => pedidosBalcaoAtivos.filter((p) => p.origem === "delivery" && p.statusBalcao !== "aguardando_confirmacao"), [pedidosBalcaoAtivos]);
   const pedidosAguardandoConfirmacao = useMemo(() =>
     [...pedidosBalcao.filter((p) => p.origem === "delivery" && p.statusBalcao === "aguardando_confirmacao")]
