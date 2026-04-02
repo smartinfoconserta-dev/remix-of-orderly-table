@@ -151,6 +151,12 @@ const estadoInicial = (): RestaurantStore => ({
   mesas: [], eventos: [], movimentacoesCaixa: [], fechamentos: [], caixaAberto: false, fundoTroco: 0, pedidosBalcao: [],
 });
 
+const isMesaPedidoAtivo = (pedido: PedidoRealizado) =>
+  !(BALCAO_ORIGINS as ReadonlyArray<string>).includes(pedido.origem)
+  && pedido.statusBalcao !== "pago"
+  && pedido.statusBalcao !== "cancelado"
+  && !pedido.cancelado;
+
 // ── Enhanced appendEvent that also persists ──
 const appendEventAndPersist = (
   eventos: EventoOperacional[],
@@ -245,7 +251,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       setNextPedidoNumber((maxPedidoData?.[0]?.numero_pedido ?? 0) + 1);
 
       const allPedidos = (pedidosRes.data ?? []).map(rowToPedido);
-      const pedidosMesa = allPedidos.filter(p => !(BALCAO_ORIGINS as ReadonlyArray<string>).includes(p.origem));
+      const pedidosMesa = allPedidos.filter(isMesaPedidoAtivo);
       const pedidosBalcao = allPedidos.filter(p => (BALCAO_ORIGINS as ReadonlyArray<string>).includes(p.origem));
       const fechamentos = (fechRes.data ?? []).map(rowToFechamento);
       const maxComanda = fechamentos.reduce((max, f) => Math.max(max, f.numeroComanda ?? 0), 0);
@@ -348,10 +354,16 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
             } else {
               pedidosBalcao = prev.pedidosBalcao.map(x => x.id === p.id ? p : x);
             }
-            const mesas = prev.mesas.map(m => ({
-              ...m,
-              pedidos: m.pedidos.map(x => x.id === p.id ? p : x),
-            }));
+            const mesas = prev.mesas.map(m => {
+              if (!m.pedidos.some(x => x.id === p.id)) return m;
+              const pedidos = isMesaPedidoAtivo(p)
+                ? m.pedidos.map(x => x.id === p.id ? p : x)
+                : m.pedidos.filter(x => x.id !== p.id);
+              const total = pedidos.reduce((acc, pedido) => acc + pedido.total, 0);
+              const updated = { ...m, pedidos, total };
+              updated.status = derivarStatus(updated);
+              return updated;
+            });
             return { ...prev, pedidosBalcao, mesas };
           });
         }
@@ -472,31 +484,34 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         });
 
         // Skip mesa re-population during debounce window (after fecharCaixaDoDia)
-        const freshMesa = freshPedidos.filter(p => !(BALCAO_ORIGINS as ReadonlyArray<string>).includes(p.origem));
-        if (freshMesa.length > 0 && Date.now() - caixaLocalChangeTs.current >= 15_000) {
+        const freshMesa = freshPedidos.filter(isMesaPedidoAtivo);
+        if (Date.now() - caixaLocalChangeTs.current >= 15_000) {
+          const freshMesaMap = new Map<string, PedidoRealizado[]>();
+          freshMesa.forEach((pedido) => {
+            const pedidosDaMesa = freshMesaMap.get(pedido.mesaId) ?? [];
+            pedidosDaMesa.push(pedido);
+            freshMesaMap.set(pedido.mesaId, pedidosDaMesa);
+          });
+
           setStore(prev => {
             let changed = false;
             const mesas = prev.mesas.map(m => {
-              const mesaPedidos = freshMesa.filter(p => p.mesaId === m.id);
-              if (mesaPedidos.length === 0) return m;
-              const existingIds = new Set(m.pedidos.map(p => p.id));
-              const newPedidos = mesaPedidos.filter(p => !existingIds.has(p.id));
-              if (newPedidos.length === 0) {
-                const updatedPedidos = m.pedidos.map(existing => {
-                  const fresh = mesaPedidos.find(f => f.id === existing.id);
-                  return fresh ?? existing;
-                });
-                const pedidoChanged = updatedPedidos.some((p, i) => p.pronto !== m.pedidos[i]?.pronto);
-                if (!pedidoChanged) return m;
-                changed = true;
-                const updated = { ...m, pedidos: updatedPedidos };
-                updated.status = derivarStatus(updated);
-                return updated;
-              }
+              const mesaPedidos = freshMesaMap.get(m.id) ?? [];
+              const sameLength = mesaPedidos.length === m.pedidos.length;
+              const samePedidos = sameLength && mesaPedidos.every((pedido, index) => {
+                const atual = m.pedidos[index];
+                return atual
+                  && atual.id === pedido.id
+                  && atual.total === pedido.total
+                  && atual.pronto === pedido.pronto
+                  && atual.statusBalcao === pedido.statusBalcao
+                  && atual.cancelado === pedido.cancelado;
+              });
+              if (samePedidos) return m;
+              if (mesaPedidos.length === 0 && m.pedidos.length === 0) return m;
               changed = true;
-              const allPedidos = [...m.pedidos, ...newPedidos];
-              const total = allPedidos.reduce((acc, p) => acc + p.total, 0);
-              const updated = { ...m, pedidos: allPedidos, total };
+              const total = mesaPedidos.reduce((acc, p) => acc + p.total, 0);
+              const updated = { ...m, pedidos: mesaPedidos, total };
               updated.status = derivarStatus(updated);
               return updated;
             });
