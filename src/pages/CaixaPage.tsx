@@ -519,19 +519,23 @@ const CaixaPage = ({ accessMode = "caixa", deliveryOnly = false }: CaixaPageProp
     );
   }
 
+  /* ── auto-reopen: moved to useEffect to avoid render-loop ── */
+  const [autoReopenDone, setAutoReopenDone] = useState(false);
+  useEffect(() => {
+    if (accessMode !== "caixa" || caixaAberto || autoReopenDone || !currentOperator) return;
+    const OPERADORES_KEY = "obsidian-caixa-operadores-v1";
+    try {
+      const raw = localStorage.getItem(OPERADORES_KEY);
+      const ops: string[] = raw ? JSON.parse(raw) : [];
+      if (ops.includes(currentOperator.id)) {
+        abrirCaixa(0, currentOperator);
+      }
+    } catch {}
+    setAutoReopenDone(true);
+  }, [accessMode, caixaAberto, autoReopenDone, currentOperator, abrirCaixa]);
+
   /* ── cash register opening guard (caixa role only) ── */
   if (accessMode === "caixa" && !caixaAberto) {
-    // Check if this operator already opened caixa this shift
-    const OPERADORES_KEY = "obsidian-caixa-operadores-v1";
-    const getOperadoresShift = (): string[] => {
-      try { const raw = localStorage.getItem(OPERADORES_KEY); return raw ? JSON.parse(raw) : []; } catch { return []; }
-    };
-    const operadorJaAbriu = currentOperator ? getOperadoresShift().includes(currentOperator.id) : false;
-
-    if (operadorJaAbriu) {
-      // Re-open caixa automatically with 0 fundo (already contributed before)
-      abrirCaixa(0, currentOperator);
-    }
 
     const handleAbrirCaixa = () => {
       const valor = parseCurrencyInput(fundoTrocoInput);
