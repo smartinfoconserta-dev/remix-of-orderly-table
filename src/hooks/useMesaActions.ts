@@ -196,6 +196,9 @@ export function useMesaActions(setStore: Dispatch<SetStateAction<RestaurantStore
             cpfNota: input?.cpfNota,
           };
           dbInsertFechamento(fechamento);
+          mesa.pedidos.forEach((pedido) => {
+            dbUpdatePedido(pedido.id, { status_balcao: "pago" });
+          });
           eventInput = { tipo: "caixa", descricao: `Caixa ${input.usuario.nome} fechou conta da ${formatMesaNumero(mesa.numero)} com ${resumoPagamento}`, mesaId, usuarioId: input.usuario.id, usuarioNome: input.usuario.nome, acao: "fechar_conta", valor: mesa.total };
         }
         const reset = resetMesa(mesa);
