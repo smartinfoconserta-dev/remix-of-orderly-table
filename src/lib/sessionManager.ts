@@ -27,9 +27,10 @@ export const getActiveStoreId = (): string | null => {
     }
   } catch {}
 
-  // 3. Try admin store (Supabase auth login)
+  // 3. Try admin store (Supabase auth login) — now in localStorage
   try {
-    const saved = sessionStorage.getItem("orderly-active-store");
+    const saved = localStorage.getItem("orderly-active-store")
+      || sessionStorage.getItem("orderly-active-store");
     if (saved) { _cachedStoreId = saved; return saved; }
   } catch {}
 

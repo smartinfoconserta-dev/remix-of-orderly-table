@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import { supabase } from "@/integrations/supabase/client";
 
 const ACTIVE_STORE_KEY = "orderly-active-store";
+const ACTIVE_STORE_STORAGE = localStorage; // survives browser close
 
 interface StoreContextType {
   storeId: string | null;
@@ -40,9 +41,9 @@ export const StoreProvider = ({ children }: { children: React.ReactNode }) => {
 
     try {
       if (nextStoreId) {
-        sessionStorage.setItem(ACTIVE_STORE_KEY, nextStoreId);
+        ACTIVE_STORE_STORAGE.setItem(ACTIVE_STORE_KEY, nextStoreId);
       } else {
-        sessionStorage.removeItem(ACTIVE_STORE_KEY);
+        ACTIVE_STORE_STORAGE.removeItem(ACTIVE_STORE_KEY);
       }
     } catch {}
 
@@ -69,7 +70,7 @@ export const StoreProvider = ({ children }: { children: React.ReactNode }) => {
         setStores(allStores ?? []);
         
         // Restore last selected store (usando sessionStorage — dura só enquanto o navegador está aberto)
-        const saved = sessionStorage.getItem(ACTIVE_STORE_KEY);
+        const saved = ACTIVE_STORE_STORAGE.getItem(ACTIVE_STORE_KEY);
         if (saved && allStores?.find((s) => s.id === saved)) {
           syncActiveStore(saved, allStores.find((s) => s.id === saved)?.name ?? null);
         } else if (allStores && allStores.length > 0) {

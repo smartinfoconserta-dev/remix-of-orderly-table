@@ -18,6 +18,7 @@ import { useRouteLock } from "@/hooks/use-route-lock";
 import { getSistemaConfig } from "@/lib/adminStorage";
 import StorePinsManager from "@/components/StorePinsManager";
 import { useStore } from "@/contexts/StoreContext";
+import OfflineIndicator from "@/components/OfflineIndicator";
 import { supabase } from "@/integrations/supabase/client";
 import IfoodPainel from "@/components/IfoodPainel";
 import GerenteFechamento from "@/components/gerente/GerenteFechamento";
@@ -171,6 +172,7 @@ const GerentePage = () => {
 
   return (
     <div className="flex flex-col h-screen bg-background">
+      <OfflineIndicator />
       {/* Title bar — Windows style */}
       <div className="flex items-center justify-between px-4 py-2.5 shrink-0 border-b border-border bg-card">
         <span className="text-sm font-bold text-foreground">Gerente — {nomeRestaurante}</span>
