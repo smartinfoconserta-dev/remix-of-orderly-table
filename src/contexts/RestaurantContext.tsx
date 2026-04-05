@@ -604,9 +604,9 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     caixaLocalChangeTs.current = Date.now();
     caixaActions.abrirCaixa(...args);
   }, [caixaActions.abrirCaixa]);
-  const wrappedFecharCaixaDoDia = useCallback((...args: Parameters<typeof caixaActions.fecharCaixaDoDia>) => {
+  const wrappedFecharCaixaDoDia = useCallback(async (...args: Parameters<typeof caixaActions.fecharCaixaDoDia>) => {
     caixaLocalChangeTs.current = Date.now();
-    caixaActions.fecharCaixaDoDia(...args);
+    return caixaActions.fecharCaixaDoDia(...args);
   }, [caixaActions.fecharCaixaDoDia]);
 
   return (
