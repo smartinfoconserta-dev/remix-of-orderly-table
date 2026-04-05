@@ -13,6 +13,23 @@ let _contadorComanda = 0;
 export const proximoNumeroComanda = () => { _contadorComanda += 1; return _contadorComanda; };
 export const setContadorComanda = (n: number) => { _contadorComanda = n; };
 
+/** Attempt to get next comanda number atomically from DB, fallback to local */
+export const proximoNumeroComandaAsync = async (): Promise<number> => {
+  try {
+    const sid = getActiveStoreId();
+    if (sid) {
+      const { data, error } = await supabase.rpc("next_comanda_number" as any, { _store_id: sid });
+      if (!error && typeof data === "number") {
+        if (data > _contadorComanda) _contadorComanda = data;
+        return data;
+      }
+    }
+  } catch (err) {
+    console.error("proximoNumeroComandaAsync: fallback to local", err);
+  }
+  return proximoNumeroComanda();
+};
+
 export let _nextPedidoNumber = 1;
 export const setNextPedidoNumber = (n: number) => { _nextPedidoNumber = n; };
 export const proximoNumeroPedido = () => { const n = _nextPedidoNumber; _nextPedidoNumber += 1; return n; };
