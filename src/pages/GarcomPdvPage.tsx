@@ -516,6 +516,7 @@ const GarcomPdvPage = () => {
 
   return (
     <ModuleGate moduleKey="garcomPdv" moduleName="Garçom PDV">
+      <OfflineIndicator />
       <AppLayout
         title="Garçom PDV"
         headerRight={
