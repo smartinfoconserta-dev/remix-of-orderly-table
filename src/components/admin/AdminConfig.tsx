@@ -349,6 +349,21 @@ const AdminConfig = ({ storeId, storeName, onOpenWizard }: Props) => {
 
         return (
           <div className="space-y-5 max-w-lg">
+            {/* Mode indicator + reconfig button */}
+            <div className="surface-card rounded-2xl p-5 flex items-center justify-between">
+              <div>
+                <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Modo atual</p>
+                <p className="text-base font-black text-foreground mt-0.5">
+                  {tipoAtual === "fastfood" ? "Fast Food" : tipoAtual === "completo" ? "Completo" : "Restaurante com Mesas"}
+                </p>
+              </div>
+              {onOpenWizard && (
+                <Button variant="outline" size="sm" className="rounded-xl font-bold text-xs" onClick={onOpenWizard}>
+                  Reconfigurar
+                </Button>
+              )}
+            </div>
+
             {/* A) Tipo do restaurante */}
             <div className="space-y-3">
               <p className="text-base font-bold text-muted-foreground">Tipo de atendimento</p>
