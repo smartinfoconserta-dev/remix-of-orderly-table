@@ -396,13 +396,17 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
             ...prev,
             mesas: prev.mesas.map(m => {
               if (m.id !== mesaId) return m;
+              // Only update carrinho/visual state from estado_mesas, NOT pedidos
+              // Pedidos come from the pedidos table (source of truth)
               const carrinho = Array.isArray(row.carrinho) ? row.carrinho.map((it: any, i: number) => normalizeItem(it, i)) : m.carrinho;
-              const pedidos = Array.isArray(row.pedidos) ? (row.pedidos as any[]) as typeof m.pedidos : m.pedidos;
-              const total = typeof row.total === "number" ? row.total : m.total;
               const chamarGarcom = row.chamar_garcom ?? m.chamarGarcom;
               const chamadoEm = row.chamado_em ?? m.chamadoEm;
-              const status = row.status ?? m.status;
-              const updated = { ...m, carrinho, pedidos, total, chamarGarcom, chamadoEm, status };
+              // If estado_mesas says "livre" and has no pedidos, respect it (mesa was reset)
+              if (row.status === "livre") {
+                return { ...m, carrinho: [], pedidos: [], total: 0, chamarGarcom: false, chamadoEm: null, status: "livre" as const };
+              }
+              const updated = { ...m, carrinho, chamarGarcom, chamadoEm };
+              updated.status = derivarStatus(updated);
               return updated;
             }),
           }));

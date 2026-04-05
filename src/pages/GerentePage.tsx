@@ -126,8 +126,12 @@ const GerentePage = () => {
     );
   }
 
+  const [isClosingDia, setIsClosingDia] = useState(false);
   const handleFecharDia = async () => {
+    if (isClosingDia) return;
+    setIsClosingDia(true);
     await fecharCaixaDoDia(effectiveGerente);
+    setIsClosingDia(false);
     toast.success("Caixa do dia fechado com sucesso. Estado resetado.", { duration: 2000, icon: "🔒" });
   };
 
