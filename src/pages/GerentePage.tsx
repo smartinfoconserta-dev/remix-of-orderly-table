@@ -127,8 +127,8 @@ const GerentePage = () => {
     );
   }
 
-  const [isClosingDia, setIsClosingDia] = useState(false);
   const handleFecharDia = async () => {
+    if (isClosingDia) return;
     if (isClosingDia) return;
     setIsClosingDia(true);
     await fecharCaixaDoDia(effectiveGerente);
