@@ -251,13 +251,11 @@ export function getSistemaConfig(): SistemaConfig {
   if (_configCache) return _configCache;
   // Try store-scoped key first, then legacy key
   try {
-    const { getActiveStoreId } = require("./sessionManager");
     const sid = getActiveStoreId();
     if (sid) {
       const raw = localStorage.getItem(`orderly-config-v1-${sid}`);
       if (raw) {
         const cached = JSON.parse(raw) as SistemaConfig;
-        // Ensure modulos always has safe defaults
         if (!cached.modulos || typeof cached.modulos !== "object") {
           cached.modulos = { mesas: true };
         }
