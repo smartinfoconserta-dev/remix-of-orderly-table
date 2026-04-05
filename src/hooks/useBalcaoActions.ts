@@ -10,7 +10,7 @@ import { getSistemaConfig } from "@/lib/adminStorage";
 import {
   dbInsertPedido, dbUpdatePedido, dbInsertFechamento,
   cloneItem, calcularTotalItens, buildEvent, dbInsertEvento,
-  proximoNumeroPedido, proximoNumeroComanda,
+  proximoNumeroPedido, proximoNumeroComanda, proximoNumeroComandaAsync,
   formatClock, formatDateTime,
 } from "@/services/dbHelpers";
 
@@ -24,7 +24,7 @@ const appendEventAndPersist = (
   return [evt, ...eventos].slice(0, 300);
 };
 
-export function useBalcaoActions(setStore: Dispatch<SetStateAction<RestaurantStore>>) {
+export function useBalcaoActions(setStore: Dispatch<SetStateAction<RestaurantStore>>, getStoreSnapshot: () => RestaurantStore) {
   const criarPedidoBalcao = useCallback(async (input: CriarPedidoBalcaoInput): Promise<number> => {
     const sid = getActiveStoreId();
     const fallback = proximoNumeroPedido();
@@ -124,18 +124,16 @@ export function useBalcaoActions(setStore: Dispatch<SetStateAction<RestaurantSto
 
   const fecharContaBalcao = useCallback(async (pedidoId: string, input: FecharContaInput): Promise<{ ok: boolean }> => {
     // Read current store
-    let currentStore: RestaurantStore | null = null;
-    setStore(prev => { currentStore = prev; return prev; });
-    if (!currentStore) return { ok: false };
+    const currentStore = getStoreSnapshot();
 
-    const pedido = (currentStore as RestaurantStore).pedidosBalcao.find((p) => p.id === pedidoId);
+    const pedido = currentStore.pedidosBalcao.find((p) => p.id === pedidoId);
     if (!pedido) return { ok: false };
 
     const now = new Date();
     const pagamentos = input.pagamentos.map((p) => ({ ...p }));
     const resumoPagamento = pagamentos.length === 1 ? pagamentos[0].formaPagamento : `${pagamentos.length} formas de pagamento`;
     const fechamento: FechamentoConta = {
-      id: `fechamento-${now.getTime()}-${pedido.id}`, numeroComanda: proximoNumeroComanda(),
+      id: `fechamento-${now.getTime()}-${pedido.id}`, numeroComanda: await proximoNumeroComandaAsync(),
       mesaId: pedido.mesaId, mesaNumero: 0,
       origem: (pedido.origem === "delivery" ? "delivery" : pedido.origem === "totem" ? "totem" : "balcao") as FechamentoConta["origem"],
       total: Math.max(pedido.total - (input.desconto ?? 0), 0),

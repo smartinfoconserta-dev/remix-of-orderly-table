@@ -29,7 +29,7 @@ const appendEventAndPersist = (
   return [evt, ...eventos].slice(0, 300);
 };
 
-export function useCaixaActions(setStore: Dispatch<SetStateAction<RestaurantStore>>) {
+export function useCaixaActions(setStore: Dispatch<SetStateAction<RestaurantStore>>, getStoreSnapshot: () => RestaurantStore) {
   const abrirCaixa = useCallback((fundoTroco: number, usuario: OperationalUser) => {
     dbUpsertEstadoCaixa(true, fundoTroco, usuario.nome);
     setStore((prev) => ({
@@ -41,12 +41,7 @@ export function useCaixaActions(setStore: Dispatch<SetStateAction<RestaurantStor
   const fecharCaixaDoDia = useCallback(async (usuario: OperationalUser, extras?: { diferenca_dinheiro?: number; diferenca_motivo?: string; fundo_proximo?: number }): Promise<{ ok: boolean }> => {
     try { localStorage.removeItem("obsidian-caixa-operadores-v1"); } catch {}
 
-    // 1. Read current store state
-    let currentStore: RestaurantStore | null = null;
-    setStore(prev => { currentStore = prev; return prev; });
-    if (!currentStore) return { ok: false };
-
-    const prev = currentStore as RestaurantStore;
+    const prev = getStoreSnapshot();
     const now = new Date();
 
     // Fix fundo_proximo: save original fundoTroco, not counted total
@@ -162,11 +157,9 @@ export function useCaixaActions(setStore: Dispatch<SetStateAction<RestaurantStor
   }, [setStore]);
 
   const estornarFechamento = useCallback(async (fechamentoId: string, motivo: string, operador: OperationalUser) => {
-    let currentStore: RestaurantStore | null = null;
-    setStore(prev => { currentStore = prev; return prev; });
-    if (!currentStore) return;
+    const currentStore = getStoreSnapshot();
 
-    const fechamento = (currentStore as RestaurantStore).fechamentos.find(f => f.id === fechamentoId);
+    const fechamento = currentStore.fechamentos.find(f => f.id === fechamentoId);
     if (!fechamento) return;
 
     // 1. Mark fechamento as cancelled
@@ -174,7 +167,6 @@ export function useCaixaActions(setStore: Dispatch<SetStateAction<RestaurantStor
 
     // 2. Reopen pedidos from this fechamento (set them back to "aberto")
     // Find pedidos by mesaId that were paid around the same time
-    const prev = currentStore as RestaurantStore;
     if (fechamento.mesaId) {
       // For mesa fechamentos, find all pedidos from this mesa that were marked as "pago"
       // and reopen them so the mesa reappears

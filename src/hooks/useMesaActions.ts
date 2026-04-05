@@ -9,7 +9,7 @@ import { getActiveStoreId } from "@/lib/sessionManager";
 import {
   dbInsertPedido, dbUpdatePedido, dbInsertFechamento, dbSyncEstadoMesa,
   cloneItem, calcularTotalItens, derivarStatus, resetMesa, buildEvent,
-  dbInsertEvento, proximoNumeroPedido, proximoNumeroComanda,
+  dbInsertEvento, proximoNumeroPedido, proximoNumeroComandaAsync,
   _nextPedidoNumber, setNextPedidoNumber,
   formatMesaNumero, formatClock, formatDateTime,
 } from "@/services/dbHelpers";
@@ -24,7 +24,7 @@ const appendEventAndPersist = (
   return [evt, ...eventos].slice(0, 300);
 };
 
-export function useMesaActions(setStore: Dispatch<SetStateAction<RestaurantStore>>) {
+export function useMesaActions(setStore: Dispatch<SetStateAction<RestaurantStore>>, getStoreSnapshot: () => RestaurantStore) {
   const addToCart = useCallback((mesaId: string, item: ItemCarrinho) => {
     setStore((prev) => ({
       ...prev,
@@ -180,11 +180,9 @@ export function useMesaActions(setStore: Dispatch<SetStateAction<RestaurantStore
     let mesaSnapshot: Mesa | null = null;
 
     // We need to read the current store state first
-    let currentStore: RestaurantStore | null = null;
-    setStore(prev => { currentStore = prev; return prev; });
-    if (!currentStore) return { ok: false };
+    const currentStore = getStoreSnapshot();
 
-    const mesa = (currentStore as RestaurantStore).mesas.find(m => m.id === mesaId);
+    const mesa = currentStore.mesas.find(m => m.id === mesaId);
     if (!mesa) return { ok: false };
 
     const hasContent = mesa.total > 0 || mesa.pedidos.length > 0 || mesa.carrinho.length > 0;
@@ -195,7 +193,7 @@ export function useMesaActions(setStore: Dispatch<SetStateAction<RestaurantStore
       const pagamentos = input.pagamentos.map((p) => ({ ...p }));
       const resumoPagamento = pagamentos.length === 1 ? pagamentos[0].formaPagamento : `${pagamentos.length} formas de pagamento`;
       fechamento = {
-        id: `fechamento-${now.getTime()}-${mesa.id}`, numeroComanda: proximoNumeroComanda(),
+        id: `fechamento-${now.getTime()}-${mesa.id}`, numeroComanda: await proximoNumeroComandaAsync(),
         mesaId, mesaNumero: mesa.numero, origem: (input.origemOverride ?? "mesa") as FechamentoConta["origem"],
         total: Math.max(mesa.total - (input?.desconto ?? 0), 0), formaPagamento: pagamentos[0].formaPagamento,
         pagamentos, itens: mesa.pedidos.flatMap((p) => p.itens.map(cloneItem)),
@@ -239,11 +237,9 @@ export function useMesaActions(setStore: Dispatch<SetStateAction<RestaurantStore
 
   const zerarMesa = useCallback(async (mesaId: string, audit?: ActionAuditInput): Promise<{ ok: boolean }> => {
     // Read current store
-    let currentStore: RestaurantStore | null = null;
-    setStore(prev => { currentStore = prev; return prev; });
-    if (!currentStore) return { ok: false };
+    const currentStore = getStoreSnapshot();
 
-    const mesa = (currentStore as RestaurantStore).mesas.find(m => m.id === mesaId);
+    const mesa = currentStore.mesas.find(m => m.id === mesaId);
     if (!mesa) return { ok: false };
 
     // 1. Mark all pedidos as cancelado in DB
