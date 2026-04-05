@@ -116,7 +116,7 @@ const CaixaMotoboyConferencia = ({
               if (!result.ok) { setPinConferenciaErro("PIN incorreto ou sem permissão"); return; }
 
               const f = fechamentoSelecionado;
-              registrarFechamentoMotoboy({
+              await registrarFechamentoMotoboy({
                 motoboyNome: f.motoboy_nome,
                 motoboyId: f.motoboy_id,
                 dinheiro: f.resumo.dinheiroRecebido,
