@@ -786,13 +786,18 @@ const CaixaPage = ({ accessMode = "caixa", deliveryOnly = false }: CaixaPageProp
     toast.success("Fechamento estornado — registrado no log", { duration: 2500, icon: "↩️" });
   };
 
-  const handleFechar = () => {
+  const [isClosingMesa, setIsClosingMesa] = useState(false);
+  const handleFechar = async () => {
     if (!mesaSelecionada || !mesa) return;
+    if (isClosingMesa) return;
     if (!fechamentoPronto) {
       toast.error("O fechamento só pode ser confirmado quando o total pago for igual ao total da conta", { duration: 1600 });
       return;
     }
-    fecharConta(mesaSelecionada, { usuario: currentOperator, pagamentos: closingPayments, troco: trocoRegistrado, desconto: descontoAplicado, couvert: couvertTotal, numeroPessoas: couvertPessoas, cpfNota: cpfNotaMesa.trim() || undefined });
+    setIsClosingMesa(true);
+    const result = await fecharConta(mesaSelecionada, { usuario: currentOperator, pagamentos: closingPayments, troco: trocoRegistrado, desconto: descontoAplicado, couvert: couvertTotal, numeroPessoas: couvertPessoas, cpfNota: cpfNotaMesa.trim() || undefined });
+    setIsClosingMesa(false);
+    if (!result.ok) return;
     toast.success(
       trocoRegistrado > 0
         ? `Conta fechada — Troco: ${formatPrice(trocoRegistrado)}`
@@ -825,13 +830,18 @@ const CaixaPage = ({ accessMode = "caixa", deliveryOnly = false }: CaixaPageProp
     setBalcaoPaymentValue("");
   };
 
-  const handleFecharBalcao = () => {
+  const [isClosingBalcao, setIsClosingBalcao] = useState(false);
+  const handleFecharBalcao = async () => {
     if (!balcaoPedidoSelecionado || !balcaoPedido) return;
+    if (isClosingBalcao) return;
     if (!balcaoFechamentoPronto) {
       toast.error("O total pago deve ser igual ao total da conta", { duration: 1600 });
       return;
     }
-    fecharContaBalcao(balcaoPedidoSelecionado, { usuario: currentOperator, pagamentos: balcaoPayments, troco: trocoRegistrado, desconto: descontoAplicado, cpfNota: cpfNotaBalcao.trim() || undefined });
+    setIsClosingBalcao(true);
+    const result = await fecharContaBalcao(balcaoPedidoSelecionado, { usuario: currentOperator, pagamentos: balcaoPayments, troco: trocoRegistrado, desconto: descontoAplicado, cpfNota: cpfNotaBalcao.trim() || undefined });
+    setIsClosingBalcao(false);
+    if (!result.ok) return;
     const trocoFinal = trocoRegistrado;
     toast.success(
       trocoFinal > 0
@@ -962,7 +972,7 @@ const CaixaPage = ({ accessMode = "caixa", deliveryOnly = false }: CaixaPageProp
     }
 
     // Close action also clears auto-open memory before persisting the fechamento
-    fecharCaixaDoDia(currentOperator, Object.keys(extras).length > 0 ? extras : undefined);
+    const result = await fecharCaixaDoDia(currentOperator, Object.keys(extras).length > 0 ? extras : undefined);
     
     // motoboy fechamentos now managed in Supabase
     setTurnoModalOpen(false);
