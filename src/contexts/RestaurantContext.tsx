@@ -107,7 +107,7 @@ interface RestaurantContextType {
   confirmarPedido: (mesaId: string, meta?: PedidoMeta) => Promise<void>;
   chamarGarcom: (mesaId: string) => void;
   dismissChamarGarcom: (mesaId: string) => void;
-  fecharConta: (mesaId: string, input?: FecharContaInput) => void;
+  fecharConta: (mesaId: string, input?: FecharContaInput) => Promise<{ ok: boolean }>;
   estornarFechamento: (fechamentoId: string, motivo: string, operador: OperationalUser) => void;
   zerarMesa: (mesaId: string, audit?: ActionAuditInput) => void;
   ajustarItemPedido: (mesaId: string, pedidoId: string, itemUid: string, delta: number, audit: ActionAuditInput) => void;
@@ -115,14 +115,14 @@ interface RestaurantContextType {
   marcarPedidoPronto: (mesaId: string, pedidoId: string) => void;
   registrarMovimentacaoCaixa: (input: MovimentacaoInput) => void;
   abrirCaixa: (fundoTroco: number, usuario: OperationalUser) => void;
-  fecharCaixaDoDia: (usuario: OperationalUser, extras?: { diferenca_dinheiro?: number; diferenca_motivo?: string; fundo_proximo?: number }) => void;
+  fecharCaixaDoDia: (usuario: OperationalUser, extras?: { diferenca_dinheiro?: number; diferenca_motivo?: string; fundo_proximo?: number }) => Promise<{ ok: boolean }>;
   criarPedidoBalcao: (input: CriarPedidoBalcaoInput) => Promise<number>;
   marcarPedidoBalcaoPronto: (pedidoId: string) => void;
   marcarBalcaoSaiu: (pedidoId: string, motoboyNome: string) => void;
   marcarBalcaoEntregue: (pedidoId: string) => void;
   cancelarEntregaMotoboy: (pedidoId: string, motivo?: string) => void;
   marcarBalcaoPronto: (pedidoId: string) => void;
-  fecharContaBalcao: (pedidoId: string, input: FecharContaInput) => void;
+  fecharContaBalcao: (pedidoId: string, input: FecharContaInput) => Promise<{ ok: boolean }>;
   confirmarPedidoBalcao: (pedidoId: string, taxaEntrega?: number) => void;
   rejeitarPedidoBalcao: (pedidoId: string, motivo: string) => void;
   cancelarPedidoBalcao: (pedidoId: string, motivo: string, operador: OperationalUser) => void;
