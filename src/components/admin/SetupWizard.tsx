@@ -86,7 +86,7 @@ const SetupWizard = ({ storeId, currentConfig, onComplete }: SetupWizardProps) =
         delivery: tipo === "fastfood",
         motoboy: tipo === "fastfood",
       },
-      identificacaoFastFood: tipo === "fastfood" ? identificacao : (currentConfig.identificacaoFastFood ?? "codigo"),
+      identificacaoFastFood: tipo === "fastfood" ? (identificacao === "nome" ? "nome_cliente" : "codigo") : (currentConfig.identificacaoFastFood ?? "codigo"),
       impressaoPorSetor: doisSetores && tipo === "fastfood",
       nomeImpressoraCozinha: doisSetores ? nomeSetor1 : undefined,
       nomeImpressoraBar: doisSetores ? nomeSetor2 : undefined,
