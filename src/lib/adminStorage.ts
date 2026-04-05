@@ -8,6 +8,7 @@ import {
   syncPending,
 } from "./configService";
 import { supabase } from "@/integrations/supabase/client";
+import { getActiveStoreId } from "./sessionManager";
 
 export interface CategoriaCustom {
   id: string;
@@ -239,6 +240,7 @@ const defaultSistemaConfig: SistemaConfig = {
   couvertAtivo: false,
   couvertValor: 0,
   couvertObrigatorio: false,
+  modulos: { mesas: true },
 };
 
 // ─────────────────────────────────
@@ -248,10 +250,27 @@ const defaultSistemaConfig: SistemaConfig = {
 /** Leitura rápida do cache. Use getSistemaConfigAsync para dado do banco. */
 export function getSistemaConfig(): SistemaConfig {
   if (_configCache) return _configCache;
+  // Try store-scoped key first, then legacy key
   try {
+    const sid = getActiveStoreId();
+    if (sid) {
+      const raw = localStorage.getItem(`orderly-config-v1-${sid}`);
+      if (raw) {
+        const cached = JSON.parse(raw) as SistemaConfig;
+        if (!cached.modulos || typeof cached.modulos !== "object") {
+          cached.modulos = { mesas: true };
+        }
+        _configCache = cached;
+        return cached;
+      }
+    }
+    // Fallback to legacy key
     const raw = localStorage.getItem("orderly-config-v1");
     if (raw) {
       const cached = JSON.parse(raw) as SistemaConfig;
+      if (!cached.modulos || typeof cached.modulos !== "object") {
+        cached.modulos = { mesas: true };
+      }
       _configCache = cached;
       return cached;
     }

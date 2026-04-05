@@ -491,7 +491,7 @@ function PedidoPageInner({ storeId, config, bairros }: {
       referencia: referencia.trim(),
       forma_pagamento_delivery: formaPag,
       troco_para_quanto: formaPag === "dinheiro" && troco ? parseFloat(troco.replace(",", ".")) : null,
-      status_balcao: "aberto",
+      status_balcao: "aguardando_confirmacao",
     };
 
     const { error } = await supabase.rpc("rpc_insert_pedido" as any, { _data: pedidoRow });
