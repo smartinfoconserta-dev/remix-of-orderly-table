@@ -13,6 +13,7 @@ import {
   X,
   MoreHorizontal,
 } from "lucide-react";
+import OfflineIndicator from "@/components/OfflineIndicator";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -1013,6 +1014,7 @@ const CaixaPage = ({ accessMode = "caixa", deliveryOnly = false }: CaixaPageProp
 
   return (
     <>
+      <OfflineIndicator />
       <div className="h-svh flex flex-col bg-background overflow-hidden">
         {/* Master aviso banner */}
         {masterAviso && (
