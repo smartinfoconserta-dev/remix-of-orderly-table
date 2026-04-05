@@ -61,14 +61,18 @@ export function useBalcaoActions(setStore: Dispatch<SetStateAction<RestaurantSto
     };
     dbInsertPedido(novoPedido);
     const totemPayMethod = input.formaPagamentoTotem ?? "pix";
-    const fechamentoTotem: FechamentoConta | null = input.origem === "totem" ? {
-      id: `fechamento-totem-${now.getTime()}-${Math.random().toString(36).slice(2, 7)}`,
-      numeroComanda: proximoNumeroComanda(), mesaId: mesaIdGerado, mesaNumero: 0, origem: "totem" as const, total: totalPedido,
-      formaPagamento: totemPayMethod, pagamentos: [{ id: `pag-totem-${now.getTime()}`, formaPagamento: totemPayMethod, valor: totalPedido }],
-      itens: input.itens.map(cloneItem), criadoEm: formatDateTime(now), criadoEmIso: now.toISOString(),
-      caixaId: "totem-auto", caixaNome: "Totem Autoatendimento", troco: 0, subtotal: totalPedido, desconto: 0,
-    } : null;
-    if (fechamentoTotem) dbInsertFechamento(fechamentoTotem);
+    let fechamentoTotem: FechamentoConta | null = null;
+    if (input.origem === "totem") {
+      const numComanda = await proximoNumeroComandaAsync();
+      fechamentoTotem = {
+        id: `fechamento-totem-${now.getTime()}-${Math.random().toString(36).slice(2, 7)}`,
+        numeroComanda: numComanda, mesaId: mesaIdGerado, mesaNumero: 0, origem: "totem" as const, total: totalPedido,
+        formaPagamento: totemPayMethod, pagamentos: [{ id: `pag-totem-${now.getTime()}`, formaPagamento: totemPayMethod, valor: totalPedido }],
+        itens: input.itens.map(cloneItem), criadoEm: formatDateTime(now), criadoEmIso: now.toISOString(),
+        caixaId: "totem-auto", caixaNome: "Totem Autoatendimento", troco: 0, subtotal: totalPedido, desconto: 0,
+      };
+      await dbInsertFechamento(fechamentoTotem);
+    }
     setStore((prev) => ({
       ...prev,
       pedidosBalcao: [...prev.pedidosBalcao, novoPedido],
