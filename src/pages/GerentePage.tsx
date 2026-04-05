@@ -129,10 +129,13 @@ const GerentePage = () => {
 
   const handleFecharDia = async () => {
     if (isClosingDia) return;
-    if (isClosingDia) return;
     setIsClosingDia(true);
-    await fecharCaixaDoDia(effectiveGerente);
+    const result = await fecharCaixaDoDia(effectiveGerente);
     setIsClosingDia(false);
+    if (!result.ok) {
+      toast.error("Erro ao fechar o caixa. Tente novamente.");
+      return;
+    }
     toast.success("Caixa do dia fechado com sucesso. Estado resetado.", { duration: 2000, icon: "🔒" });
   };
 
