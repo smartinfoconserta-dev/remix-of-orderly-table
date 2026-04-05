@@ -13,6 +13,8 @@ export interface QueuedOperation {
 
 const STORAGE_KEY = "offline_queue";
 const RETRY_INTERVAL_MS = 10_000;
+const MAX_QUEUE_SIZE = 500;
+const EXPIRY_MS = 24 * 60 * 60 * 1000; // 24 hours
 
 // ── Helpers ──
 
@@ -46,6 +48,10 @@ export function isNetworkError(err: unknown): boolean {
 
 export function enqueue(rpcName: string, params: Record<string, any>, label: string) {
   const queue = loadQueue();
+  if (queue.length >= MAX_QUEUE_SIZE) {
+    toast.error("Fila offline cheia — reconecte à internet urgente!", { duration: 5000 });
+    return;
+  }
   queue.push({
     id: `oq-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
     rpcName,
@@ -61,10 +67,25 @@ export async function processQueue(): Promise<number> {
   const queue = loadQueue();
   if (queue.length === 0) return 0;
 
+  // Filter expired operations (older than 24h)
+  const now = Date.now();
+  const validOps = queue.filter(op => {
+    const age = now - new Date(op.createdAt).getTime();
+    if (age > EXPIRY_MS) {
+      console.warn(`[offlineQueue] Descartando operação expirada: ${op.label}`);
+      return false;
+    }
+    return true;
+  });
+  if (validOps.length < queue.length) {
+    saveQueue(validOps);
+  }
+  if (validOps.length === 0) return 0;
+
   const remaining: QueuedOperation[] = [];
   let processed = 0;
 
-  for (const op of queue) {
+  for (const op of validOps) {
     try {
       const { error } = await supabase.rpc(op.rpcName as any, op.params as any);
       if (error) {

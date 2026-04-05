@@ -196,7 +196,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     window.addEventListener("storage", handleCustomSync);
     window.addEventListener("obsidian-store-context-changed", handleCustomSync);
 
-    const interval = setInterval(syncActiveStoreId, 1000);
+    const interval = setInterval(syncActiveStoreId, 5000);
     return () => {
       clearInterval(interval);
       window.removeEventListener("storage", handleCustomSync);
@@ -457,11 +457,11 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     const sid = activeStoreId;
     if (!sid) return;
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const todayIso = today.toISOString();
-
     const pollAll = async () => {
+      // Recalculate "today" on each poll to handle midnight rollover
+      const todayNow = new Date();
+      todayNow.setHours(0, 0, 0, 0);
+      const todayIso = todayNow.toISOString();
       const [pedidosRes, fechRes, caixaRes] = await Promise.all([
         supabase.rpc("rpc_get_operational_pedidos" as any, { _store_id: sid }),
         supabase.from("fechamentos").select("*").eq("store_id", sid).gte("criado_em_iso", todayIso).order("criado_em_iso", { ascending: false }),
