@@ -950,8 +950,8 @@ const CaixaPage = ({ accessMode = "caixa", deliveryOnly = false }: CaixaPageProp
     if (!/^\d{4,6}$/.test(turnoManagerPin)) { setTurnoError("PIN inválido"); return; }
     setIsClosingTurno(true);
     setTurnoError(null);
-    const result = await verifyManagerAccess(turnoManagerName, turnoManagerPin);
-    if (!result.ok) { setTurnoError(result.error ?? "Não autorizado"); setIsClosingTurno(false); return; }
+    const authResult = await verifyManagerAccess(turnoManagerName, turnoManagerPin);
+    if (!authResult.ok) { setTurnoError(authResult.error ?? "Não autorizado"); setIsClosingTurno(false); return; }
 
     // Save counted cash as next shift's fund
     const contadoFinal = parseCurrencyInput(dinheiroContado);
@@ -972,7 +972,7 @@ const CaixaPage = ({ accessMode = "caixa", deliveryOnly = false }: CaixaPageProp
     }
 
     // Close action also clears auto-open memory before persisting the fechamento
-    const result = await fecharCaixaDoDia(currentOperator, Object.keys(extras).length > 0 ? extras : undefined);
+    await fecharCaixaDoDia(currentOperator, Object.keys(extras).length > 0 ? extras : undefined);
     
     // motoboy fechamentos now managed in Supabase
     setTurnoModalOpen(false);
