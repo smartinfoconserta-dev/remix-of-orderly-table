@@ -372,13 +372,14 @@ const CaixaPage = ({ accessMode = "caixa", deliveryOnly = false }: CaixaPageProp
     return () => { document.title = "Orderly Table"; };
   }, [aguardandoCount]);
 
-  /* ── financial summary ── */
+  /* ── financial summary (excludes cancelled) ── */
   const resumoFinanceiro = useMemo(() => {
-    const totalDia = fechamentos.reduce((acc, f) => acc + f.total, 0);
+    const activeFech = fechamentos.filter(f => !f.cancelado);
+    const totalDia = activeFech.reduce((acc, f) => acc + f.total, 0);
     const entradasExtras = movimentacoesCaixa.filter((m) => m.tipo === "entrada").reduce((acc, m) => acc + m.valor, 0);
     const saidas = movimentacoesCaixa.filter((m) => m.tipo === "saida").reduce((acc, m) => acc + m.valor, 0);
     const sumByMethod = (method: PaymentMethod) =>
-      fechamentos.reduce((acc, f) => {
+      activeFech.reduce((acc, f) => {
         const pags = f.pagamentos?.length ? f.pagamentos : [{ id: f.id, formaPagamento: f.formaPagamento, valor: f.total }];
         return acc + pags.filter((p) => p.formaPagamento === method).reduce((s, p) => s + p.valor, 0);
       }, 0);

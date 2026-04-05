@@ -237,20 +237,43 @@ export function useMesaActions(setStore: Dispatch<SetStateAction<RestaurantStore
     return { ok: true };
   }, [setStore]);
 
-  const zerarMesa = useCallback((mesaId: string, audit?: ActionAuditInput) => {
-    setStore((prev) => {
-      let eventInput: Omit<EventoOperacional, "id" | "criadoEm" | "criadoEmIso"> | null = null;
-      const mesas = prev.mesas.map((mesa) => {
-        if (mesa.id !== mesaId) return mesa;
-        if (audit?.usuario) {
-          eventInput = { tipo: "caixa", descricao: `Caixa ${audit.usuario.nome} zerou a ${formatMesaNumero(mesa.numero)}`, mesaId, usuarioId: audit.usuario.id, usuarioNome: audit.usuario.nome, acao: "zerar_mesa", motivo: audit.motivo };
-        }
-        const reset = resetMesa(mesa);
-        dbSyncEstadoMesa(reset);
-        return reset;
-      });
-      return { ...prev, mesas, eventos: eventInput ? appendEventAndPersist(prev.eventos, eventInput) : prev.eventos };
-    });
+  const zerarMesa = useCallback(async (mesaId: string, audit?: ActionAuditInput): Promise<{ ok: boolean }> => {
+    // Read current store
+    let currentStore: RestaurantStore | null = null;
+    setStore(prev => { currentStore = prev; return prev; });
+    if (!currentStore) return { ok: false };
+
+    const mesa = (currentStore as RestaurantStore).mesas.find(m => m.id === mesaId);
+    if (!mesa) return { ok: false };
+
+    // 1. Mark all pedidos as cancelado in DB
+    const cancelResults = await Promise.all(
+      mesa.pedidos.map(p => dbUpdatePedido(p.id, {
+        status_balcao: "cancelado",
+        cancelado: true,
+        cancelado_em: new Date().toISOString(),
+        cancelado_motivo: audit?.motivo || "Mesa zerada",
+        cancelado_por: audit?.usuario?.nome || "Sistema",
+      }))
+    );
+
+    // 2. Sync mesa reset to DB
+    const reset = resetMesa(mesa);
+    await dbSyncEstadoMesa(reset);
+
+    // 3. Update local state
+    let eventInput: Omit<EventoOperacional, "id" | "criadoEm" | "criadoEmIso"> | null = null;
+    if (audit?.usuario) {
+      eventInput = { tipo: "caixa", descricao: `Caixa ${audit.usuario.nome} zerou a ${formatMesaNumero(mesa.numero)}`, mesaId, usuarioId: audit.usuario.id, usuarioNome: audit.usuario.nome, acao: "zerar_mesa", motivo: audit.motivo };
+    }
+
+    setStore((prev) => ({
+      ...prev,
+      mesas: prev.mesas.map(m => m.id === mesaId ? reset : m),
+      eventos: eventInput ? appendEventAndPersist(prev.eventos, eventInput) : prev.eventos,
+    }));
+
+    return { ok: true };
   }, [setStore]);
 
   const ajustarItemPedido = useCallback((mesaId: string, pedidoId: string, itemUid: string, delta: number, audit: ActionAuditInput) => {

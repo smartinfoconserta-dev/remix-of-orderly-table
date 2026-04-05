@@ -159,7 +159,7 @@ const GarcomPdvPage = () => {
     setPagamentoValue(novoRestante > 0 ? novoRestante.toFixed(2) : "");
   }, [pagamentos, totalConta]);
 
-  const handleConfirmarPagamento = useCallback(() => {
+  const handleConfirmarPagamento = useCallback(async () => {
     if (processando) return;
     if (!pagamentoMesaId || !currentGarcom) return;
     if (!fechamentoPronto) {
@@ -175,7 +175,7 @@ const GarcomPdvPage = () => {
       return;
     }
 
-    fecharConta(pagamentoMesaId, {
+    const result = await fecharConta(pagamentoMesaId, {
       usuario: {
         id: currentGarcom.id,
         nome: currentGarcom.nome,
@@ -188,19 +188,25 @@ const GarcomPdvPage = () => {
       origemOverride: "garcom_pdv",
     });
 
+    if (!result.ok) {
+      toast.error("Erro ao fechar conta. Tente novamente.");
+      setProcessando(false);
+      return;
+    }
+
     const formas = [...new Set(pagamentos.map(p =>
       p.formaPagamento === "pix" ? "PIX" : p.formaPagamento === "credito" ? "Crédito" : "Débito"
     ))].join(" + ");
 
     const lastPedido = mesa.pedidos[mesa.pedidos.length - 1];
-    const allItens = mesa.pedidos.flatMap(p => p.itens);
+    const allItensSnapshot = mesa.pedidos.flatMap(p => p.itens);
 
     setReceiptData({
       mesaNumero: mesa.numero,
       total: mesa.total,
       formasLabel: formas,
       pagamentos: [...pagamentos],
-      itens: allItens.map(i => ({ quantidade: i.quantidade, nome: i.nome, preco: i.precoUnitario })),
+      itens: allItensSnapshot.map(i => ({ quantidade: i.quantidade, nome: i.nome, preco: i.precoUnitario })),
       numeroPedido: lastPedido?.numeroPedido ?? 0,
     });
 
@@ -211,7 +217,7 @@ const GarcomPdvPage = () => {
     setPagamentoMesaId(null);
     setPagamentos([]);
     setProcessando(false);
-  }, [pagamentoMesaId, pagamentos, mesas, fecharConta, currentGarcom, fechamentoPronto]);
+  }, [pagamentoMesaId, pagamentos, mesas, fecharConta, currentGarcom, fechamentoPronto, processando]);
 
   const handlePrintReceipt = useCallback(() => {
     if (!receiptData) return;
