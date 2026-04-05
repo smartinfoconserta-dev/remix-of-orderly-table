@@ -17,6 +17,7 @@ import LicenseBanner from "@/components/LicenseBanner";
 import IfoodPainel from "@/components/IfoodPainel";
 import { formatPrice } from "@/components/caixa/caixaHelpers";
 import AdminRelatorios from "@/components/admin/AdminRelatorios";
+import AdminDashboard from "@/components/admin/AdminDashboard";
 import AdminCardapio from "@/components/admin/AdminCardapio";
 import AdminConfig from "@/components/admin/AdminConfig";
 import AdminLicenca from "@/components/admin/AdminLicenca";
@@ -123,7 +124,7 @@ const AdminPage = () => {
 
         {/* Content */}
         <main className="flex-1 overflow-y-auto p-8 bg-background" key={tab}>
-          {tab === "dashboard" && <AdminRelatorios storeId={storeId} />}
+          {tab === "dashboard" && <AdminDashboard storeId={storeId} />}
           {tab === "cardapio" && <AdminCardapio storeId={storeId} />}
           {tab === "caixas" && <CaixasSection storeId={storeId} formatPrice={formatPrice} />}
           {tab === "configuracoes" && <AdminConfig storeId={storeId} storeName={nomeRestaurante} onOpenWizard={handleOpenWizard} />}
