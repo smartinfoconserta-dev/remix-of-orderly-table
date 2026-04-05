@@ -140,7 +140,7 @@ interface RestaurantContextType {
     totalEntregas: number;
     pedidosIds: string[];
     conferidoPor: string;
-  }) => void;
+  }) => Promise<void>;
 }
 
 const _global = globalThis as unknown as { __restaurantCtx?: React.Context<RestaurantContextType | null> };

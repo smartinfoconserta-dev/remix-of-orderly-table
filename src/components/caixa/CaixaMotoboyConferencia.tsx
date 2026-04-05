@@ -18,7 +18,7 @@ interface CaixaMotoboyConferenciaProps {
   setPinConferenciaErro: (v: string) => void;
   verifyManagerAccess: (nome: string, pin: string) => Promise<{ ok: boolean; error?: string }>;
   currentOperator: { nome: string; [key: string]: any };
-  registrarFechamentoMotoboy: (data: any) => void;
+  registrarFechamentoMotoboy: (data: any) => Promise<void>;
   setFechamentosPendentes: React.Dispatch<React.SetStateAction<any[]>>;
 }
 
@@ -116,7 +116,7 @@ const CaixaMotoboyConferencia = ({
               if (!result.ok) { setPinConferenciaErro("PIN incorreto ou sem permissão"); return; }
 
               const f = fechamentoSelecionado;
-              registrarFechamentoMotoboy({
+              await registrarFechamentoMotoboy({
                 motoboyNome: f.motoboy_nome,
                 motoboyId: f.motoboy_id,
                 dinheiro: f.resumo.dinheiroRecebido,
