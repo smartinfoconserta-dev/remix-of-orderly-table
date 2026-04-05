@@ -11,7 +11,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { LogOut, Plus, Pencil, Trash2, Phone, Mail, MapPin, DollarSign, Users, TrendingUp, TrendingDown, Receipt, Eye, AlertTriangle, ShieldOff, RefreshCw, Search, Send, Bell, KeyRound, Shield } from "lucide-react";
+import { LogOut, Plus, Pencil, Trash2, Phone, Mail, MapPin, DollarSign, Users, TrendingUp, TrendingDown, Receipt, Eye, AlertTriangle, ShieldOff, RefreshCw, Search, Send, Bell, KeyRound, Shield, LayoutDashboard } from "lucide-react";
+import AdminDashboard from "@/components/admin/AdminDashboard";
 import StorePinsManager from "@/components/StorePinsManager";
 import { supabase } from "@/integrations/supabase/client";
 import type { Pagamento } from "@/lib/masterStorage";
@@ -124,7 +125,8 @@ const MasterPage = () => {
   const [busca, setBusca] = useState("");
   const [filtroStatus, setFiltroStatus] = useState<"todos" | "ativos" | "bloqueados" | "vencidos">("todos");
   const [filtroPlano, setFiltroPlano] = useState("todos");
-  const [activeTab, setActiveTab] = useState("clientes");
+  const [activeTab, setActiveTab] = useState("dashboard");
+  const [dashboardStoreId, setDashboardStoreId] = useState<string | null>(null);
 
   const [avisoMensagem, setAvisoMensagem] = useState("");
   const [avisoTipo, setAvisoTipo] = useState<"info" | "alerta" | "urgente">("info");
@@ -456,6 +458,7 @@ const MasterPage = () => {
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="w-full flex flex-wrap gap-1">
+            <TabsTrigger value="dashboard" className="px-4 py-2"><LayoutDashboard className="w-4 h-4 mr-1" />Dashboard</TabsTrigger>
             <TabsTrigger value="clientes" className="px-4 py-2"><Users className="w-4 h-4 mr-1" />Clientes</TabsTrigger>
             <TabsTrigger value="pins" className="px-4 py-2"><KeyRound className="w-4 h-4 mr-1" />PINs</TabsTrigger>
             <TabsTrigger value="financeiro" className="px-4 py-2"><DollarSign className="w-4 h-4 mr-1" />Financeiro</TabsTrigger>
@@ -469,6 +472,14 @@ const MasterPage = () => {
               <Button size="sm" variant="outline" className="border-orange-500/50 text-orange-400 hover:bg-orange-500/20" onClick={() => setActiveTab("cobrancas")}>Ver cobranças</Button>
             </div>
           )}
+
+          <TabsContent value="dashboard" className="mt-4">
+            <AdminDashboard
+              storeId={dashboardStoreId}
+              stores={stores.map(s => ({ id: s.id, name: s.name }))}
+              onSelectStore={setDashboardStoreId}
+            />
+          </TabsContent>
 
           <TabsContent value="pins" className="mt-4">
             {stores.length === 0 ? (
