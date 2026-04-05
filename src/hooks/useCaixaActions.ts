@@ -167,7 +167,6 @@ export function useCaixaActions(setStore: Dispatch<SetStateAction<RestaurantStor
 
     // 2. Reopen pedidos from this fechamento (set them back to "aberto")
     // Find pedidos by mesaId that were paid around the same time
-    const prev = currentStore as RestaurantStore;
     if (fechamento.mesaId) {
       // For mesa fechamentos, find all pedidos from this mesa that were marked as "pago"
       // and reopen them so the mesa reappears
