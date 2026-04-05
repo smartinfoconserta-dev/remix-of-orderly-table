@@ -606,9 +606,10 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   }, []);
 
   // ── Hooks for actions ──
-  const mesaActions = useMesaActions(setStore);
-  const balcaoActions = useBalcaoActions(setStore);
-  const caixaActions = useCaixaActions(setStore);
+  const getStoreSnapshot = useCallback(() => storeRef.current, []);
+  const mesaActions = useMesaActions(setStore, getStoreSnapshot);
+  const balcaoActions = useBalcaoActions(setStore, getStoreSnapshot);
+  const caixaActions = useCaixaActions(setStore, getStoreSnapshot);
 
   // Wrap caixa actions to stamp local change timestamp (prevents Realtime/polling race)
   const wrappedAbrirCaixa = useCallback((...args: Parameters<typeof caixaActions.abrirCaixa>) => {
