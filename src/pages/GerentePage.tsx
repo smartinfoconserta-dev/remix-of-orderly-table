@@ -50,6 +50,7 @@ const GerentePage = () => {
   const [pinVerificado, setPinVerificado] = useState(isAdminAccess || isAuthenticatedByPassword);
   const [pinInput, setPinInput] = useState("");
   const [pinError, setPinError] = useState("");
+  const [isClosingDia, setIsClosingDia] = useState(false);
 
 
   // Store ID for PIN management  
