@@ -1,0 +1,1 @@
+ALTER TABLE public.restaurant_config ADD COLUMN IF NOT EXISTS setup_completo boolean DEFAULT false;

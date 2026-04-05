@@ -114,6 +114,7 @@ function dbRowToConfig(row: any): SistemaConfig {
     totemLetraCor: row.totem_letra_cor ?? undefined,
     totemSidebarCor: row.totem_sidebar_cor ?? undefined,
     totemCardsCor: row.totem_cards_cor ?? undefined,
+    setupCompleto: row.setup_completo ?? false,
   };
 }
 
@@ -171,6 +172,7 @@ function configToDbRow(config: SistemaConfig) {
     totem_letra_cor: config.totemLetraCor ?? null,
     totem_sidebar_cor: config.totemSidebarCor ?? null,
     totem_cards_cor: config.totemCardsCor ?? null,
+    setup_completo: config.setupCompleto ?? false,
     total_mesas: 20,
     updated_at: new Date().toISOString(),
   };

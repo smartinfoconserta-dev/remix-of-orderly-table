@@ -1018,6 +1018,7 @@ export type Database = {
           nome_restaurante: string
           plano: string | null
           senha_wifi: string | null
+          setup_completo: boolean | null
           sidebar_cor: string | null
           sidebar_estilo: string | null
           store_id: string | null
@@ -1080,6 +1081,7 @@ export type Database = {
           nome_restaurante?: string
           plano?: string | null
           senha_wifi?: string | null
+          setup_completo?: boolean | null
           sidebar_cor?: string | null
           sidebar_estilo?: string | null
           store_id?: string | null
@@ -1142,6 +1144,7 @@ export type Database = {
           nome_restaurante?: string
           plano?: string | null
           senha_wifi?: string | null
+          setup_completo?: boolean | null
           sidebar_cor?: string | null
           sidebar_estilo?: string | null
           store_id?: string | null

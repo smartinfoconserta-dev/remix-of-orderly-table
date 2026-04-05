@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   ClipboardList, Grid3X3, LayoutDashboard, LogOut, Settings, Shield,
@@ -7,7 +7,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useStore } from "@/contexts/StoreContext";
 import { useAuth } from "@/contexts/AuthContext";
-import { getSistemaConfig, getLicenseLevel } from "@/lib/adminStorage";
+import { getSistemaConfig, getSistemaConfigAsync, getLicenseLevel, type SistemaConfig } from "@/lib/adminStorage";
 import TeamManager from "@/components/TeamManager";
 import MesasManager from "@/components/MesasManager";
 import DevicesManager from "@/components/DevicesManager";
@@ -20,6 +20,7 @@ import AdminRelatorios from "@/components/admin/AdminRelatorios";
 import AdminCardapio from "@/components/admin/AdminCardapio";
 import AdminConfig from "@/components/admin/AdminConfig";
 import AdminLicenca from "@/components/admin/AdminLicenca";
+import SetupWizard from "@/components/admin/SetupWizard";
 
 type AdminTab = "dashboard" | "cardapio" | "mesas" | "tablets" | "equipe" | "caixas" | "configuracoes" | "licenca" | "ifood";
 
@@ -39,8 +40,34 @@ const AdminPage = () => {
   const { logout } = useAuth();
   const { storeId, storeName: ctxStoreName } = useStore();
   const [tab, setTab] = useState<AdminTab>("dashboard");
+  const [showWizard, setShowWizard] = useState(false);
+  const [configLoaded, setConfigLoaded] = useState(false);
+  const [currentConfig, setCurrentConfig] = useState<SistemaConfig>(getSistemaConfig);
 
-  const nomeRestaurante = getSistemaConfig().nomeRestaurante || "Restaurante";
+  const nomeRestaurante = currentConfig.nomeRestaurante || "Restaurante";
+
+  // Check if setup wizard should be shown
+  useEffect(() => {
+    if (!storeId) return;
+    getSistemaConfigAsync(storeId).then((cfg) => {
+      setCurrentConfig(cfg);
+      setConfigLoaded(true);
+      if (!cfg.setupCompleto) {
+        setShowWizard(true);
+      }
+    });
+  }, [storeId]);
+
+  const handleWizardComplete = (cfg: SistemaConfig) => {
+    setCurrentConfig(cfg);
+    setShowWizard(false);
+  };
+
+  const handleOpenWizard = () => setShowWizard(true);
+
+  if (showWizard && configLoaded) {
+    return <SetupWizard storeId={storeId} currentConfig={currentConfig} onComplete={handleWizardComplete} />;
+  }
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
@@ -99,7 +126,7 @@ const AdminPage = () => {
           {tab === "dashboard" && <AdminRelatorios storeId={storeId} />}
           {tab === "cardapio" && <AdminCardapio storeId={storeId} />}
           {tab === "caixas" && <CaixasSection storeId={storeId} formatPrice={formatPrice} />}
-          {tab === "configuracoes" && <AdminConfig storeId={storeId} storeName={nomeRestaurante} />}
+          {tab === "configuracoes" && <AdminConfig storeId={storeId} storeName={nomeRestaurante} onOpenWizard={handleOpenWizard} />}
           {tab === "licenca" && <AdminLicenca storeId={storeId} />}
           {tab === "mesas" && (
             storeId ? <MesasManager storeId={storeId} storeName={nomeRestaurante} /> : <p className="text-sm text-muted-foreground py-8 text-center">Loja não identificada.</p>
