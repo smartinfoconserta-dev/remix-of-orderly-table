@@ -50,6 +50,7 @@ const TabletInner = ({ storeId, initialMesaId }: { storeId: string; initialMesaI
   // Track if user is authenticated for mesa selection
   const [authenticated, setAuthenticated] = useState(false);
   const [authUserEmail, setAuthUserEmail] = useState("");
+  const [mesaInvalida, setMesaInvalida] = useState(false);
 
   // When mesaId changes, persist to DB and sessionStorage
   useEffect(() => {
@@ -58,6 +59,18 @@ const TabletInner = ({ storeId, initialMesaId }: { storeId: string; initialMesaI
       saveMesaToStorage(mesaId);
     }
   }, [mesaId]);
+
+  // Validate that saved mesa still exists after mesas load
+  useEffect(() => {
+    if (!mesaId || mesas.length === 0) return;
+    const mesaExists = mesas.some(m => m.id === mesaId);
+    if (!mesaExists) {
+      clearMesaFromStorage();
+      setMesaId(null);
+      setMesaInvalida(true);
+      toast.error("A mesa anteriormente vinculada não está mais disponível. Por favor, vincule uma nova mesa.");
+    }
+  }, [mesaId, mesas]);
 
   const mesasOrdenadas = useMemo(() => [...mesas].sort((a, b) => a.numero - b.numero), [mesas]);
 

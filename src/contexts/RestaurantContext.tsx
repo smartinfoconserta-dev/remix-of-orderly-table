@@ -169,6 +169,10 @@ const appendEventAndPersist = (
 
 export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [store, setStore] = useState<RestaurantStore>(estadoInicial);
+  const storeRef = useRef<RestaurantStore>(store);
+  // Keep ref in sync with store
+  useEffect(() => { storeRef.current = store; }, [store]);
+
   const [allFechamentos, setAllFechamentos] = useState<FechamentoConta[]>([]);
   const [allEventos, setAllEventos] = useState<EventoOperacional[]>([]);
   const [allMovimentacoesCaixa, setAllMovimentacoesCaixa] = useState<MovimentacaoCaixa[]>([]);
