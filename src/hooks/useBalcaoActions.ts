@@ -10,7 +10,7 @@ import { getSistemaConfig } from "@/lib/adminStorage";
 import {
   dbInsertPedido, dbUpdatePedido, dbInsertFechamento,
   cloneItem, calcularTotalItens, buildEvent, dbInsertEvento,
-  proximoNumeroPedido, proximoNumeroComanda,
+  proximoNumeroPedido, proximoNumeroComanda, proximoNumeroComandaAsync,
   formatClock, formatDateTime,
 } from "@/services/dbHelpers";
 
@@ -135,7 +135,7 @@ export function useBalcaoActions(setStore: Dispatch<SetStateAction<RestaurantSto
     const pagamentos = input.pagamentos.map((p) => ({ ...p }));
     const resumoPagamento = pagamentos.length === 1 ? pagamentos[0].formaPagamento : `${pagamentos.length} formas de pagamento`;
     const fechamento: FechamentoConta = {
-      id: `fechamento-${now.getTime()}-${pedido.id}`, numeroComanda: proximoNumeroComanda(),
+      id: `fechamento-${now.getTime()}-${pedido.id}`, numeroComanda: await proximoNumeroComandaAsync(),
       mesaId: pedido.mesaId, mesaNumero: 0,
       origem: (pedido.origem === "delivery" ? "delivery" : pedido.origem === "totem" ? "totem" : "balcao") as FechamentoConta["origem"],
       total: Math.max(pedido.total - (input.desconto ?? 0), 0),
