@@ -18,7 +18,7 @@ interface CaixaMotoboyConferenciaProps {
   setPinConferenciaErro: (v: string) => void;
   verifyManagerAccess: (nome: string, pin: string) => Promise<{ ok: boolean; error?: string }>;
   currentOperator: { nome: string; [key: string]: any };
-  registrarFechamentoMotoboy: (data: any) => void;
+  registrarFechamentoMotoboy: (data: any) => Promise<void>;
   setFechamentosPendentes: React.Dispatch<React.SetStateAction<any[]>>;
 }
 
