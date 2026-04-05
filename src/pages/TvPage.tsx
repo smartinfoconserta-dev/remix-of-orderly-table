@@ -83,7 +83,7 @@ const TvInner = ({ storeId }: { storeId: string }) => {
   const pedidosProntos = useMemo(() => {
     const list: PedidoTV[] = [];
     for (const p of pedidosBalcao) {
-      if (origensTV.includes(p.origem) && p.statusBalcao === "pronto") {
+      if (origensTV.includes(p.origem) && (p.statusBalcao === "pronto" || p.statusBalcao === "devolvido")) {
         list.push({ id: p.id, numero: p.numeroPedido, nome: p.origem === "totem" ? "Totem" : (p.clienteNome || "Balcão"), origem: p.origem, timestamp: p.criadoEmIso });
       }
     }
