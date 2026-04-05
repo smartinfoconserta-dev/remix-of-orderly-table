@@ -5,7 +5,7 @@ import type { ItemCarrinho, PedidoRealizado, EventoOperacional, MovimentacaoCaix
 import type { RestaurantStore } from "@/contexts/RestaurantContext";
 import {
   dbInsertFechamento, dbUpdateFechamento, dbInsertMovimentacao,
-  dbUpsertEstadoCaixa, dbSyncEstadoMesa, dbInsertEvento,
+  dbUpsertEstadoCaixa, dbSyncEstadoMesa, dbInsertEvento, dbUpdatePedido,
   cloneItem, resetMesa, buildEvent,
   proximoNumeroComanda, formatDateTime,
 } from "@/services/dbHelpers";
