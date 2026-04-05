@@ -458,6 +458,7 @@ const MasterPage = () => {
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="w-full flex flex-wrap gap-1">
+            <TabsTrigger value="dashboard" className="px-4 py-2"><LayoutDashboard className="w-4 h-4 mr-1" />Dashboard</TabsTrigger>
             <TabsTrigger value="clientes" className="px-4 py-2"><Users className="w-4 h-4 mr-1" />Clientes</TabsTrigger>
             <TabsTrigger value="pins" className="px-4 py-2"><KeyRound className="w-4 h-4 mr-1" />PINs</TabsTrigger>
             <TabsTrigger value="financeiro" className="px-4 py-2"><DollarSign className="w-4 h-4 mr-1" />Financeiro</TabsTrigger>
