@@ -109,7 +109,7 @@ interface RestaurantContextType {
   dismissChamarGarcom: (mesaId: string) => void;
   fecharConta: (mesaId: string, input?: FecharContaInput) => Promise<{ ok: boolean }>;
   estornarFechamento: (fechamentoId: string, motivo: string, operador: OperationalUser) => void;
-  zerarMesa: (mesaId: string, audit?: ActionAuditInput) => void;
+  zerarMesa: (mesaId: string, audit?: ActionAuditInput) => Promise<{ ok: boolean }>;
   ajustarItemPedido: (mesaId: string, pedidoId: string, itemUid: string, delta: number, audit: ActionAuditInput) => void;
   cancelarPedido: (mesaId: string, pedidoId: string, audit: ActionAuditInput) => void;
   marcarPedidoPronto: (mesaId: string, pedidoId: string) => void;
