@@ -3,6 +3,8 @@ import type { Dispatch, SetStateAction } from "react";
 import type { OperationalUser, CashMovementType, SplitPayment } from "@/types/operations";
 import type { ItemCarrinho, PedidoRealizado, EventoOperacional, MovimentacaoCaixa, FechamentoConta } from "@/types/restaurant";
 import type { RestaurantStore } from "@/contexts/RestaurantContext";
+import { supabase } from "@/integrations/supabase/client";
+import { getActiveStoreId } from "@/lib/sessionManager";
 import {
   dbInsertFechamento, dbUpdateFechamento, dbInsertMovimentacao,
   dbUpsertEstadoCaixa, dbSyncEstadoMesa, dbInsertEvento, dbUpdatePedido,
@@ -39,16 +41,22 @@ export function useCaixaActions(setStore: Dispatch<SetStateAction<RestaurantStor
   const fecharCaixaDoDia = useCallback(async (usuario: OperationalUser, extras?: { diferenca_dinheiro?: number; diferenca_motivo?: string; fundo_proximo?: number }): Promise<{ ok: boolean }> => {
     try { localStorage.removeItem("obsidian-caixa-operadores-v1"); } catch {}
 
-    // 1. Persist caixa state FIRST
-    await dbUpsertEstadoCaixa(false, 0, usuario.nome, extras);
-
-    // 2. Read current store state
+    // 1. Read current store state
     let currentStore: RestaurantStore | null = null;
     setStore(prev => { currentStore = prev; return prev; });
     if (!currentStore) return { ok: false };
 
     const prev = currentStore as RestaurantStore;
     const now = new Date();
+
+    // Fix fundo_proximo: save original fundoTroco, not counted total
+    const fixedExtras = { ...extras };
+    if (fixedExtras.fundo_proximo !== undefined) {
+      fixedExtras.fundo_proximo = prev.fundoTroco; // save original fund, not counted cash
+    }
+
+    // 2. Persist caixa state FIRST
+    await dbUpsertEstadoCaixa(false, 0, usuario.nome, fixedExtras);
 
     // 3. Close open totem orders
     const pedidosTotemAbertos = prev.pedidosBalcao.filter((p) => p.origem === "totem" && p.statusBalcao !== "pago" && p.statusBalcao !== "cancelado");
@@ -64,7 +72,21 @@ export function useCaixaActions(setStore: Dispatch<SetStateAction<RestaurantStor
       fechamentosTotemExtras.push(f);
     }
 
-    // 4. Reset all mesas and mark mesa orders as paid
+    // 4. Mark open balcão/delivery pedidos as cancelado
+    const pedidosBalcaoAbertos = prev.pedidosBalcao.filter((p) =>
+      p.origem !== "totem" && p.statusBalcao !== "pago" && p.statusBalcao !== "cancelado"
+    );
+    for (const p of pedidosBalcaoAbertos) {
+      await dbUpdatePedido(p.id, {
+        status_balcao: "cancelado",
+        cancelado: true,
+        cancelado_em: now.toISOString(),
+        cancelado_motivo: "Fechamento do turno",
+        cancelado_por: usuario.nome,
+      });
+    }
+
+    // 5. Reset all mesas and mark mesa orders as paid
     const mesasReset = prev.mesas.map(m => resetMesa(m));
     for (const mesa of prev.mesas) {
       for (const pedido of mesa.pedidos) {
@@ -73,7 +95,7 @@ export function useCaixaActions(setStore: Dispatch<SetStateAction<RestaurantStor
     }
     for (const m of mesasReset) { await dbSyncEstadoMesa(m); }
 
-    // 5. NOW update local state
+    // 6. NOW update local state
     setStore((prevState) => ({
       ...prevState,
       mesas: mesasReset,
@@ -139,17 +161,39 @@ export function useCaixaActions(setStore: Dispatch<SetStateAction<RestaurantStor
     });
   }, [setStore]);
 
-  const estornarFechamento = useCallback((fechamentoId: string, motivo: string, operador: OperationalUser) => {
-    setStore(prev => {
-      const fechamento = prev.fechamentos.find(f => f.id === fechamentoId);
-      if (!fechamento) return prev;
-      dbUpdateFechamento(fechamentoId, { cancelado: true, cancelado_em: new Date().toISOString(), cancelado_motivo: motivo, cancelado_por: operador.nome });
-      return {
-        ...prev,
-        fechamentos: prev.fechamentos.map(f => f.id === fechamentoId ? { ...f, cancelado: true, canceladoEm: new Date().toISOString(), canceladoMotivo: motivo, canceladoPor: operador.nome } : f),
-        eventos: appendEventAndPersist(prev.eventos, { tipo: "caixa", descricao: `Estorno do fechamento da Mesa ${String(fechamento.mesaNumero).padStart(2, "0")} — ${motivo}`, mesaId: fechamento.mesaId, usuarioId: operador.id, usuarioNome: operador.nome, acao: "cancelar_pedido", valor: fechamento.total }),
-      };
-    });
+  const estornarFechamento = useCallback(async (fechamentoId: string, motivo: string, operador: OperationalUser) => {
+    let currentStore: RestaurantStore | null = null;
+    setStore(prev => { currentStore = prev; return prev; });
+    if (!currentStore) return;
+
+    const fechamento = (currentStore as RestaurantStore).fechamentos.find(f => f.id === fechamentoId);
+    if (!fechamento) return;
+
+    // 1. Mark fechamento as cancelled
+    dbUpdateFechamento(fechamentoId, { cancelado: true, cancelado_em: new Date().toISOString(), cancelado_motivo: motivo, cancelado_por: operador.nome });
+
+    // 2. Reopen pedidos from this fechamento (set them back to "aberto")
+    // Find pedidos by mesaId that were paid around the same time
+    const prev = currentStore as RestaurantStore;
+    if (fechamento.mesaId) {
+      // For mesa fechamentos, find all pedidos from this mesa that were marked as "pago"
+      // and reopen them so the mesa reappears
+      const allPedidosRes = await supabase.rpc("rpc_get_operational_pedidos" as any, { _store_id: getActiveStoreId() });
+      const allPedidos = (allPedidosRes.data ?? []) as any[];
+      const mesaPedidosPagos = allPedidos.filter((p: any) =>
+        p.mesa_id === fechamento.mesaId && p.status_balcao === "pago" && !p.cancelado
+      );
+      for (const p of mesaPedidosPagos) {
+        await dbUpdatePedido(p.id, { status_balcao: "aberto" });
+      }
+    }
+
+    // 3. Update local state
+    setStore(prev => ({
+      ...prev,
+      fechamentos: prev.fechamentos.map(f => f.id === fechamentoId ? { ...f, cancelado: true, canceladoEm: new Date().toISOString(), canceladoMotivo: motivo, canceladoPor: operador.nome } : f),
+      eventos: appendEventAndPersist(prev.eventos, { tipo: "caixa", descricao: `Estorno do fechamento da Mesa ${String(fechamento.mesaNumero).padStart(2, "0")} — ${motivo}`, mesaId: fechamento.mesaId, usuarioId: operador.id, usuarioNome: operador.nome, acao: "cancelar_pedido", valor: fechamento.total }),
+    }));
   }, [setStore]);
 
   return {

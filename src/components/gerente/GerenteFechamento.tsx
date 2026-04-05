@@ -41,13 +41,14 @@ const GerenteFechamento = ({
   caixaAberto,
   onFecharDia,
 }: GerenteFechamentoProps) => {
+  const activeFech = fechamentos.filter(f => !f.cancelado);
   const sumByMethod = (method: PaymentMethod) =>
-    fechamentos.reduce((acc, f) => {
+    activeFech.reduce((acc, f) => {
       const pags = f.pagamentos?.length ? f.pagamentos : [{ id: f.id, formaPagamento: f.formaPagamento, valor: f.total }];
       return acc + pags.filter(p => p.formaPagamento === method).reduce((a, p) => a + p.valor, 0);
     }, 0);
 
-  const totalVendas = fechamentos.reduce((acc, f) => acc + f.total, 0);
+  const totalVendas = activeFech.reduce((acc, f) => acc + f.total, 0);
   const entradasExtras = movimentacoesCaixa.filter((m) => m.tipo === "entrada").reduce((acc, m) => acc + m.valor, 0);
   const saidas = movimentacoesCaixa.filter((m) => m.tipo === "saida").reduce((acc, m) => acc + m.valor, 0);
   const dinheiroEmCaixa = fundoTroco + sumByMethod("dinheiro") + entradasExtras - saidas;

@@ -177,9 +177,11 @@ export function useBalcaoActions(setStore: Dispatch<SetStateAction<RestaurantSto
       const cozinhaLigada = !!(cfg.modulos as any)?.cozinha;
       const statusInicial = isDelivery ? "pronto" as const : (cozinhaLigada ? "aberto" as const : "pronto" as const);
       const taxa = taxaEntrega && taxaEntrega > 0 ? taxaEntrega : 0;
+      // Guard: don't add taxa if already present
+      const alreadyHasTaxa = pedido.itens.some(it => it.produtoId === "taxa-entrega");
       const taxaItem: ItemCarrinho = { uid: `taxa-${Date.now()}`, produtoId: "taxa-entrega", nome: "Taxa de entrega", precoBase: taxa, quantidade: 1, removidos: [], adicionais: [], precoUnitario: taxa };
-      const itensAtualizados = taxa > 0 ? [...pedido.itens, taxaItem] : pedido.itens;
-      const newTotal = pedido.total + taxa;
+      const itensAtualizados = taxa > 0 && !alreadyHasTaxa ? [...pedido.itens, taxaItem] : pedido.itens;
+      const newTotal = alreadyHasTaxa ? pedido.total : pedido.total + taxa;
       dbUpdatePedido(pedidoId, { status_balcao: statusInicial, pronto: statusInicial === "pronto", itens: JSON.parse(JSON.stringify(itensAtualizados)), total: newTotal });
       return {
         ...prev,
@@ -206,7 +208,7 @@ export function useBalcaoActions(setStore: Dispatch<SetStateAction<RestaurantSto
       if (!pedido) return prev;
       return {
         ...prev,
-        pedidosBalcao: prev.pedidosBalcao.map((p) => p.id === pedidoId ? { ...p, statusBalcao: "cancelado" as const, cancelado: true, canceladoEm: now.toISOString(), canceladoMotivo: motivo, canceladoPor: operador.nome } : p),
+        pedidosBalcao: prev.pedidosBalcao.filter((p) => p.id !== pedidoId),
         eventos: appendEventAndPersist(prev.eventos, { tipo: "caixa", descricao: `Pedido ${pedido.origem === "totem" ? "TOTEM" : pedido.origem === "delivery" ? "DELIVERY" : "BALCÃO"} #${pedido.numeroPedido} cancelado por ${operador.nome} — ${motivo}`, usuarioId: operador.id, usuarioNome: operador.nome, acao: "cancelar_pedido", motivo, valor: pedido.total }),
       };
     });

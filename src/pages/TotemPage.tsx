@@ -139,24 +139,35 @@ const TotemInner = ({ storeId }: { storeId: string }) => {
     }
   }, [cpfNotaAtivo]);
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const handleCpfConfirmed = useCallback(async () => {
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+
     const nome = identificacaoFastFood === "nome_cliente" && clienteNome.trim()
       ? clienteNome.trim()
       : "Totem";
 
     const observacaoCpf = clienteCpf.trim() ? `CPF: ${clienteCpf.trim()}` : undefined;
 
-    const numeroPedido = await criarPedidoBalcao({
-      itens: pendingItens,
-      origem: "totem",
-      operador: { id: "totem-auto", nome: "Totem", role: "caixa", criadoEm: new Date().toISOString() },
-      clienteNome: nome,
-      formaPagamentoTotem: pendingPaymentMethod ?? "pix",
-      observacaoGeral: observacaoCpf,
-    });
-    setPedidoConfirmado(numeroPedido);
-    setStep("confirmed");
-  }, [criarPedidoBalcao, pendingItens, identificacaoFastFood, clienteNome, clienteCpf, pendingPaymentMethod]);
+    try {
+      const numeroPedido = await criarPedidoBalcao({
+        itens: pendingItens,
+        origem: "totem",
+        operador: { id: "totem-auto", nome: "Totem", role: "caixa", criadoEm: new Date().toISOString() },
+        clienteNome: nome,
+        formaPagamentoTotem: pendingPaymentMethod ?? "pix",
+        observacaoGeral: observacaoCpf,
+      });
+      setPedidoConfirmado(numeroPedido);
+      setStep("confirmed");
+    } catch (err) {
+      console.error("Totem: erro ao criar pedido", err);
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, [isSubmitting, criarPedidoBalcao, pendingItens, identificacaoFastFood, clienteNome, clienteCpf, pendingPaymentMethod]);
 
   useEffect(() => {
     if (step === "cpf" && skipCpfRef.current) {

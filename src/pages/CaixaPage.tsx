@@ -372,13 +372,14 @@ const CaixaPage = ({ accessMode = "caixa", deliveryOnly = false }: CaixaPageProp
     return () => { document.title = "Orderly Table"; };
   }, [aguardandoCount]);
 
-  /* ── financial summary ── */
+  /* ── financial summary (excludes cancelled) ── */
   const resumoFinanceiro = useMemo(() => {
-    const totalDia = fechamentos.reduce((acc, f) => acc + f.total, 0);
+    const activeFech = fechamentos.filter(f => !f.cancelado);
+    const totalDia = activeFech.reduce((acc, f) => acc + f.total, 0);
     const entradasExtras = movimentacoesCaixa.filter((m) => m.tipo === "entrada").reduce((acc, m) => acc + m.valor, 0);
     const saidas = movimentacoesCaixa.filter((m) => m.tipo === "saida").reduce((acc, m) => acc + m.valor, 0);
     const sumByMethod = (method: PaymentMethod) =>
-      fechamentos.reduce((acc, f) => {
+      activeFech.reduce((acc, f) => {
         const pags = f.pagamentos?.length ? f.pagamentos : [{ id: f.id, formaPagamento: f.formaPagamento, valor: f.total }];
         return acc + pags.filter((p) => p.formaPagamento === method).reduce((s, p) => s + p.valor, 0);
       }, 0);
@@ -910,7 +911,8 @@ const CaixaPage = ({ accessMode = "caixa", deliveryOnly = false }: CaixaPageProp
     const motivo = criticalReason.trim();
     switch (criticalAction.type) {
       case "zerar_mesa":
-        zerarMesa(criticalAction.mesaId, { usuario: currentOperator, motivo });
+        const zerarResult = await zerarMesa(criticalAction.mesaId, { usuario: currentOperator, motivo });
+        if (!zerarResult.ok) { toast.error("Erro ao zerar mesa. Tente novamente."); setIsAuthorizingCriticalAction(false); return; }
         setMesaSelecionada(null);
         toast.success("Mesa zerada com autorização do gerente", { duration: 1200, icon: "🧹" });
         break;
@@ -966,9 +968,8 @@ const CaixaPage = ({ accessMode = "caixa", deliveryOnly = false }: CaixaPageProp
       extras.diferenca_dinheiro = diff;
       extras.diferenca_motivo = motivoDiferenca.trim() || "Não informado";
     }
-    if (Number.isFinite(contadoFinal) && contadoFinal > 0) {
-      extras.fundo_proximo = contadoFinal;
-    }
+    // Always save fundo_proximo so the next shift gets a suggestion
+    extras.fundo_proximo = fundoTroco; // save original fund, not counted cash
 
     // Close action also clears auto-open memory before persisting the fechamento
     await fecharCaixaDoDia(currentOperator, Object.keys(extras).length > 0 ? extras : undefined);
