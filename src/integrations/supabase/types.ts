@@ -1395,6 +1395,7 @@ export type Database = {
         Returns: boolean
       }
       is_master: { Args: { _user_id: string }; Returns: boolean }
+      next_comanda_number: { Args: { _store_id: string }; Returns: number }
       next_order_number: { Args: { _store_id: string }; Returns: number }
       rpc_get_operational_pedidos: {
         Args: { _store_id: string }
