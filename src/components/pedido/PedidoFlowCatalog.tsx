@@ -1,4 +1,4 @@
-import { Plus } from "lucide-react";
+import { Plus, AlertTriangle } from "lucide-react";
 import { type Produto } from "@/data/menuData";
 import { formatPrice } from "@/components/caixa/caixaHelpers";
 
@@ -38,13 +38,15 @@ const PedidoFlowCatalog = ({
       >
         {produtos.map((produto, index) => {
           const isCardSelected = selectedProductCardId === produto.id;
+          const esgotado = produto.controleEstoque && (produto.quantidadeEstoque ?? 0) <= 0;
+          const estoqueBaixo = produto.controleEstoque && !esgotado && (produto.quantidadeEstoque ?? 0) <= (produto.estoqueMinimo ?? 0) && (produto.estoqueMinimo ?? 0) > 0;
 
           return (
             <article
               key={produto.id}
               className={`group overflow-hidden ${isTotem ? "rounded-2xl border border-border bg-card shadow-md" : "rounded-[1.75rem] border border-border bg-card shadow-[0_20px_45px_-30px_hsl(var(--foreground)/0.8)]"} text-left transition-all duration-300 hover:-translate-y-0.5 ${isTotem ? "hover:border-primary/30" : "hover:border-primary/30"} card-fade-up ${
                 isCardSelected ? `scale-[1.01] ${isTotem ? "shadow-lg" : "shadow-[0_20px_44px_-24px_hsl(var(--foreground)/0.92)]"}` : ""
-              }`}
+              } ${esgotado ? "opacity-60 grayscale pointer-events-none" : ""}`}
               style={{
                 animationDelay: `${index * 30}ms`,
                 transitionProperty: "transform, box-shadow",
@@ -52,31 +54,48 @@ const PedidoFlowCatalog = ({
                 transitionTimingFunction: "ease-out",
               }}
             >
-              <button type="button" onClick={() => onSelectProduto(produto)} className="flex w-full flex-col text-left">
-                <div className={isTotem ? "aspect-[4/3] overflow-hidden" : "aspect-[3/2] overflow-hidden"}>
+              <button type="button" onClick={() => !esgotado && onSelectProduto(produto)} className="flex w-full flex-col text-left" disabled={esgotado}>
+                <div className={`relative ${isTotem ? "aspect-[4/3] overflow-hidden" : "aspect-[3/2] overflow-hidden"}`}>
                   <img src={produto.imagem} alt={produto.nome} className="h-full w-full object-cover" loading="lazy" />
+                  {esgotado && (
+                    <div className="absolute inset-0 bg-background/70 flex items-center justify-center">
+                      <span className="px-3 py-1.5 rounded-full bg-destructive/90 text-destructive-foreground text-xs font-black uppercase tracking-wider">
+                        Esgotado
+                      </span>
+                    </div>
+                  )}
+                  {estoqueBaixo && (
+                    <div className="absolute top-2 right-2">
+                      <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/90 text-white text-[10px] font-black">
+                        <AlertTriangle className="h-3 w-3" />
+                        Últimas un.
+                      </span>
+                    </div>
+                  )}
                 </div>
                 <div className={`flex flex-1 flex-col gap-1.5 ${isTotem ? "p-3 min-h-0" : "p-4 min-h-[9rem]"}`}>
                   <h2 className={`line-clamp-2 font-black leading-tight ${isTotem ? "text-base text-foreground" : "text-[1.05rem] text-foreground"}`}>{produto.nome}</h2>
                   {!isTotem && <p className="line-clamp-3 flex-1 text-sm leading-relaxed text-muted-foreground">{produto.descricao}</p>}
                   <div className={`flex items-end justify-between gap-2 ${isTotem ? "mt-auto" : "mt-1"}`}>
                     <p className={`font-black tracking-tight ${isTotem ? "text-base text-primary" : "text-[1.05rem] text-foreground"}`}>{formatPrice(produto.preco)}</p>
-                    <button
-                      type="button"
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        onSelectProduto(produto);
-                      }}
-                      className={`flex items-center justify-center transition-transform active:scale-95 ${
-                        isTotem
-                          ? "h-10 rounded-lg bg-primary px-3 text-primary-foreground font-black text-xs gap-1"
-                          : "h-11 w-11 rounded-full bg-primary text-primary-foreground shadow-[0_18px_32px_-22px_hsl(var(--primary)/0.95)]"
-                      }`}
-                      aria-label={`Adicionar ${produto.nome}`}
-                    >
-                      <Plus className={isTotem ? "h-3.5 w-3.5" : "h-5 w-5"} />
-                      {isTotem && <span>ADICIONAR</span>}
-                    </button>
+                    {!esgotado && (
+                      <button
+                        type="button"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          onSelectProduto(produto);
+                        }}
+                        className={`flex items-center justify-center transition-transform active:scale-95 ${
+                          isTotem
+                            ? "h-10 rounded-lg bg-primary px-3 text-primary-foreground font-black text-xs gap-1"
+                            : "h-11 w-11 rounded-full bg-primary text-primary-foreground shadow-[0_18px_32px_-22px_hsl(var(--primary)/0.95)]"
+                        }`}
+                        aria-label={`Adicionar ${produto.nome}`}
+                      >
+                        <Plus className={isTotem ? "h-3.5 w-3.5" : "h-5 w-5"} />
+                        {isTotem && <span>ADICIONAR</span>}
+                      </button>
+                    )}
                   </div>
                 </div>
               </button>

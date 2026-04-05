@@ -1,13 +1,19 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { SistemaConfig, LicencaConfig, CategoriaCustom, HorariosSemana } from "./adminStorage";
 import { setConfigCache, setLicencaCache } from "./adminStorage";
+import { getActiveStoreId } from "./sessionManager";
 
-const CONFIG_CACHE_KEY = "orderly-config-v1";
-const LICENCA_CACHE_KEY = "orderly-licenca-v1";
-const CATEGORIAS_CACHE_KEY = "orderly-categorias-v1";
+// ── helpers: store-scoped cache keys ──
+
+function cacheKey(base: string, storeId?: string | null): string {
+  const sid = storeId || getActiveStoreId();
+  return sid ? `${base}-${sid}` : base;
+}
+
+const CONFIG_BASE = "orderly-config-v1";
+const LICENCA_BASE = "orderly-licenca-v1";
+const CATEGORIAS_BASE = "orderly-categorias-v1";
 const SYNC_PENDING_KEY = "orderly-sync-pending-v1";
-
-// ── helpers ──
 
 function getLocalCache<T>(key: string): T | null {
   try {
@@ -70,7 +76,6 @@ function dbRowToConfig(row: any): SistemaConfig {
     nomeImpressoraBar: row.nome_impressora_bar ?? undefined,
     modulos: (() => {
       const m = row.modulos ?? {};
-      // Backward compat: derive mesas/balcao from modo_operacao if not explicitly set
       if (m.mesas === undefined && m.balcao === undefined) {
         if (row.modo_operacao === "fast_food") {
           m.mesas = false;
@@ -197,6 +202,7 @@ function licencaToDbRow(lic: LicencaConfig) {
 // ══════════════════════════════════════
 
 export async function fetchConfig(storeId?: string | null): Promise<SistemaConfig> {
+  const key = cacheKey(CONFIG_BASE, storeId);
   try {
     let query = supabase.from("restaurant_config").select("*");
     if (storeId) {
@@ -209,30 +215,28 @@ export async function fetchConfig(storeId?: string | null): Promise<SistemaConfi
     if (data) {
       const config = dbRowToConfig(data);
       setConfigCache(config);
-      setLocalCache(CONFIG_CACHE_KEY, config);
+      setLocalCache(key, config);
       clearPendingSync("config");
       return config;
     }
 
-    // No row yet — return local cache or defaults
-    const cached = getLocalCache<SistemaConfig>(CONFIG_CACHE_KEY);
-    return cached ?? { nomeRestaurante: "Obsidian", logoUrl: "", corPrimaria: "" };
+    const cached = getLocalCache<SistemaConfig>(key);
+    return cached ?? { nomeRestaurante: "Obsidian", logoUrl: "", corPrimaria: "", modulos: { mesas: true } };
   } catch (err) {
     console.error("[configService] erro:", err);
-    const cached = getLocalCache<SistemaConfig>(CONFIG_CACHE_KEY);
-    return cached ?? { nomeRestaurante: "Obsidian", logoUrl: "", corPrimaria: "" };
+    const cached = getLocalCache<SistemaConfig>(key);
+    return cached ?? { nomeRestaurante: "Obsidian", logoUrl: "", corPrimaria: "", modulos: { mesas: true } };
   }
 }
 
 export async function saveConfig(config: SistemaConfig, storeId?: string | null): Promise<void> {
-  // Always update local cache immediately
-  setLocalCache(CONFIG_CACHE_KEY, config);
+  const key = cacheKey(CONFIG_BASE, storeId);
+  setLocalCache(key, config);
 
   try {
     const row: any = configToDbRow(config);
     if (storeId) row.store_id = storeId;
 
-    // Check if a row exists for this store
     let existingQuery = supabase.from("restaurant_config").select("id").limit(1);
     if (storeId) existingQuery = existingQuery.eq("store_id", storeId);
     const { data: existing } = await existingQuery.maybeSingle();
@@ -254,6 +258,7 @@ export async function saveConfig(config: SistemaConfig, storeId?: string | null)
 // ══════════════════════════════════════
 
 export async function fetchLicenca(storeId?: string | null): Promise<LicencaConfig> {
+  const key = cacheKey(LICENCA_BASE, storeId);
   try {
     let query = supabase.from("restaurant_license").select("*");
     if (storeId) query = query.eq("store_id", storeId);
@@ -264,22 +269,23 @@ export async function fetchLicenca(storeId?: string | null): Promise<LicencaConf
     if (data) {
       const lic = dbRowToLicenca(data);
       setLicencaCache(lic);
-      setLocalCache(LICENCA_CACHE_KEY, lic);
+      setLocalCache(key, lic);
       clearPendingSync("licenca");
       return lic;
     }
 
-    const cached = getLocalCache<LicencaConfig>(LICENCA_CACHE_KEY);
+    const cached = getLocalCache<LicencaConfig>(key);
     return cached ?? { nomeCliente: "", dataVencimento: "", ativo: true };
   } catch (err) {
     console.error("[configService] erro:", err);
-    const cached = getLocalCache<LicencaConfig>(LICENCA_CACHE_KEY);
+    const cached = getLocalCache<LicencaConfig>(key);
     return cached ?? { nomeCliente: "", dataVencimento: "", ativo: true };
   }
 }
 
 export async function saveLicenca(lic: LicencaConfig, storeId?: string | null): Promise<void> {
-  setLocalCache(LICENCA_CACHE_KEY, lic);
+  const key = cacheKey(LICENCA_BASE, storeId);
+  setLocalCache(key, lic);
 
   try {
     const row: any = licencaToDbRow(lic);
@@ -306,6 +312,7 @@ export async function saveLicenca(lic: LicencaConfig, storeId?: string | null): 
 // ══════════════════════════════════════
 
 export async function fetchCategorias(storeId?: string | null): Promise<CategoriaCustom[]> {
+  const key = cacheKey(CATEGORIAS_BASE, storeId);
   try {
     let query = supabase.from("restaurant_categories").select("*");
     if (storeId) query = query.eq("store_id", storeId);
@@ -321,33 +328,29 @@ export async function fetchCategorias(storeId?: string | null): Promise<Categori
         ordem: r.ordem ?? 0,
         parentId: (r as any).parent_id ?? null,
       }));
-      setLocalCache(CATEGORIAS_CACHE_KEY, cats);
+      setLocalCache(key, cats);
       clearPendingSync("categorias");
       return cats;
     }
 
-    const cached = getLocalCache<CategoriaCustom[]>(CATEGORIAS_CACHE_KEY);
+    const cached = getLocalCache<CategoriaCustom[]>(key);
     return cached ?? [];
   } catch (err) {
     console.error("[configService] erro:", err);
-    const cached = getLocalCache<CategoriaCustom[]>(CATEGORIAS_CACHE_KEY);
+    const cached = getLocalCache<CategoriaCustom[]>(key);
     return cached ?? [];
   }
 }
 
 export async function saveCategorias(cats: CategoriaCustom[], storeId?: string | null): Promise<void> {
-  setLocalCache(CATEGORIAS_CACHE_KEY, cats);
+  const key = cacheKey(CATEGORIAS_BASE, storeId);
+  setLocalCache(key, cats);
 
   try {
-    // Delete all for this store then re-insert
-    let deleteQuery = supabase.from("restaurant_categories").delete();
-    if (storeId) {
-      deleteQuery = deleteQuery.eq("store_id", storeId);
-    } else {
-      deleteQuery = deleteQuery.neq("id", "00000000-0000-0000-0000-000000000000");
-    }
-    await deleteQuery;
+    // Upsert approach: insert or update each category, then delete removed ones
+    const newIds = new Set(cats.map(c => c.id));
 
+    // 1. Upsert all current categories
     if (cats.length > 0) {
       const rows = cats.map((c) => ({
         id: c.id,
@@ -357,8 +360,21 @@ export async function saveCategorias(cats: CategoriaCustom[], storeId?: string |
         parent_id: c.parentId ?? null,
         ...(storeId ? { store_id: storeId } : {}),
       }));
-      await supabase.from("restaurant_categories").insert(rows);
+      const { error: upsertErr } = await supabase.from("restaurant_categories").upsert(rows);
+      if (upsertErr) throw upsertErr;
     }
+
+    // 2. Delete categories that were removed by admin
+    let existingQuery = supabase.from("restaurant_categories").select("id");
+    if (storeId) existingQuery = existingQuery.eq("store_id", storeId);
+    const { data: existingCats } = await existingQuery;
+    if (existingCats) {
+      const toDelete = existingCats.filter(e => !newIds.has(e.id)).map(e => e.id);
+      if (toDelete.length > 0) {
+        await supabase.from("restaurant_categories").delete().in("id", toDelete);
+      }
+    }
+
     clearPendingSync("categorias");
   } catch (err) {
     console.error("[configService] erro:", err);
@@ -374,15 +390,18 @@ export async function syncPending(): Promise<void> {
   try {
     const pending = JSON.parse(localStorage.getItem(SYNC_PENDING_KEY) || "{}");
     if (pending.config) {
-      const config = getLocalCache<SistemaConfig>(CONFIG_CACHE_KEY);
+      const key = cacheKey(CONFIG_BASE);
+      const config = getLocalCache<SistemaConfig>(key);
       if (config) await saveConfig(config);
     }
     if (pending.licenca) {
-      const lic = getLocalCache<LicencaConfig>(LICENCA_CACHE_KEY);
+      const key = cacheKey(LICENCA_BASE);
+      const lic = getLocalCache<LicencaConfig>(key);
       if (lic) await saveLicenca(lic);
     }
     if (pending.categorias) {
-      const cats = getLocalCache<CategoriaCustom[]>(CATEGORIAS_CACHE_KEY);
+      const key = cacheKey(CATEGORIAS_BASE);
+      const cats = getLocalCache<CategoriaCustom[]>(key);
       if (cats) await saveCategorias(cats);
     }
   } catch (err) { console.error("[configService] erro:", err); }
