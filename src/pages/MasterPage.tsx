@@ -473,6 +473,14 @@ const MasterPage = () => {
             </div>
           )}
 
+          <TabsContent value="dashboard" className="mt-4">
+            <AdminDashboard
+              storeId={dashboardStoreId}
+              stores={stores.map(s => ({ id: s.id, name: s.name }))}
+              onSelectStore={setDashboardStoreId}
+            />
+          </TabsContent>
+
           <TabsContent value="pins" className="mt-4">
             {stores.length === 0 ? (
               <p className="text-sm text-muted-foreground py-8 text-center">Nenhuma loja cadastrada.</p>
