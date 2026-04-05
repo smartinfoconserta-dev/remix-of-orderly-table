@@ -24,7 +24,7 @@ const appendEventAndPersist = (
   return [evt, ...eventos].slice(0, 300);
 };
 
-export function useBalcaoActions(setStore: Dispatch<SetStateAction<RestaurantStore>>) {
+export function useBalcaoActions(setStore: Dispatch<SetStateAction<RestaurantStore>>, getStoreSnapshot: () => RestaurantStore) {
   const criarPedidoBalcao = useCallback(async (input: CriarPedidoBalcaoInput): Promise<number> => {
     const sid = getActiveStoreId();
     const fallback = proximoNumeroPedido();
@@ -124,11 +124,9 @@ export function useBalcaoActions(setStore: Dispatch<SetStateAction<RestaurantSto
 
   const fecharContaBalcao = useCallback(async (pedidoId: string, input: FecharContaInput): Promise<{ ok: boolean }> => {
     // Read current store
-    let currentStore: RestaurantStore | null = null;
-    setStore(prev => { currentStore = prev; return prev; });
-    if (!currentStore) return { ok: false };
+    const currentStore = getStoreSnapshot();
 
-    const pedido = (currentStore as RestaurantStore).pedidosBalcao.find((p) => p.id === pedidoId);
+    const pedido = currentStore.pedidosBalcao.find((p) => p.id === pedidoId);
     if (!pedido) return { ok: false };
 
     const now = new Date();
