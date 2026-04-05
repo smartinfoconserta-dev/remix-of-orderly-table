@@ -8,6 +8,7 @@ import {
   syncPending,
 } from "./configService";
 import { supabase } from "@/integrations/supabase/client";
+import { getActiveStoreId } from "./sessionManager";
 
 export interface CategoriaCustom {
   id: string;
