@@ -473,18 +473,21 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         const freshPedidos = (pedidosData as any[]).map(rowToPedido);
         const freshBalcao = freshPedidos.filter(p => (BALCAO_ORIGINS as ReadonlyArray<string>).includes(p.origem));
 
+        const freshBalcaoIds = new Set(freshBalcao.map(p => p.id));
         setStore(prev => {
+          // Update existing, add new, and REMOVE orders no longer in fresh data
+          const updatedBalcao = prev.pedidosBalcao
+            .map(existing => {
+              const fresh = freshBalcao.find(f => f.id === existing.id);
+              return fresh ?? existing;
+            })
+            .filter(p => freshBalcaoIds.has(p.id)); // remove stale
           const existingIds = new Set(prev.pedidosBalcao.map(p => p.id));
           const newOnes = freshBalcao.filter(p => !existingIds.has(p.id));
-          const updatedBalcao = prev.pedidosBalcao.map(existing => {
-            const fresh = freshBalcao.find(f => f.id === existing.id);
-            return fresh ?? existing;
-          });
-          if (newOnes.length > 0) {
-            return { ...prev, pedidosBalcao: [...updatedBalcao, ...newOnes] };
-          }
-          const changed = updatedBalcao.some((p, i) => p.statusBalcao !== prev.pedidosBalcao[i]?.statusBalcao);
-          return changed ? { ...prev, pedidosBalcao: updatedBalcao } : prev;
+          const finalBalcao = [...updatedBalcao, ...newOnes];
+          const changed = finalBalcao.length !== prev.pedidosBalcao.length ||
+            finalBalcao.some((p, i) => p.id !== prev.pedidosBalcao[i]?.id || p.statusBalcao !== prev.pedidosBalcao[i]?.statusBalcao);
+          return changed ? { ...prev, pedidosBalcao: finalBalcao } : prev;
         });
 
         // Skip mesa re-population during debounce window (after fecharCaixaDoDia)
