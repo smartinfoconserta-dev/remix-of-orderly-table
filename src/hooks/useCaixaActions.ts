@@ -36,32 +36,53 @@ export function useCaixaActions(setStore: Dispatch<SetStateAction<RestaurantStor
     }));
   }, [setStore]);
 
-  const fecharCaixaDoDia = useCallback((usuario: OperationalUser, extras?: { diferenca_dinheiro?: number; diferenca_motivo?: string; fundo_proximo?: number }) => {
+  const fecharCaixaDoDia = useCallback(async (usuario: OperationalUser, extras?: { diferenca_dinheiro?: number; diferenca_motivo?: string; fundo_proximo?: number }): Promise<{ ok: boolean }> => {
     try { localStorage.removeItem("obsidian-caixa-operadores-v1"); } catch {}
-    dbUpsertEstadoCaixa(false, 0, usuario.nome, extras);
-    setStore((prev) => {
-      const now = new Date();
-      const pedidosTotemAbertos = prev.pedidosBalcao.filter((p) => p.origem === "totem" && p.statusBalcao !== "pago" && p.statusBalcao !== "cancelado");
-      const fechamentosTotemExtras: FechamentoConta[] = pedidosTotemAbertos.map((p) => {
-        const f: FechamentoConta = {
-          id: `fechamento-totem-auto-${now.getTime()}-${p.id}`, mesaId: p.mesaId, mesaNumero: 0, origem: "totem" as const, total: p.total,
-          formaPagamento: "pix" as const, pagamentos: [{ id: `pag-totem-auto-${now.getTime()}-${p.id}`, formaPagamento: "pix" as const, valor: p.total }],
-          itens: p.itens.map(cloneItem), criadoEm: formatDateTime(now), criadoEmIso: now.toISOString(),
-          caixaId: "totem-auto", caixaNome: "Totem Autoatendimento (fechamento automático)", troco: 0, subtotal: p.total, desconto: 0,
-        };
-        dbInsertFechamento(f);
-        return f;
-      });
-      const mesasReset = prev.mesas.map(m => resetMesa(m));
-      for (const m of mesasReset) { dbSyncEstadoMesa(m); }
-      return {
-        ...prev,
-        mesas: mesasReset,
-        eventos: appendEventAndPersist(prev.eventos, { tipo: "caixa", descricao: `Gerente ${usuario.nome} fechou o caixa do dia`, usuarioId: usuario.id, usuarioNome: usuario.nome, acao: "fechamento_dia" }),
-        movimentacoesCaixa: [], fechamentos: [...fechamentosTotemExtras, ...prev.fechamentos],
-        caixaAberto: false, fundoTroco: 0, pedidosBalcao: [],
+
+    // 1. Persist caixa state FIRST
+    await dbUpsertEstadoCaixa(false, 0, usuario.nome, extras);
+
+    // 2. Read current store state
+    let currentStore: RestaurantStore | null = null;
+    setStore(prev => { currentStore = prev; return prev; });
+    if (!currentStore) return { ok: false };
+
+    const prev = currentStore as RestaurantStore;
+    const now = new Date();
+
+    // 3. Close open totem orders
+    const pedidosTotemAbertos = prev.pedidosBalcao.filter((p) => p.origem === "totem" && p.statusBalcao !== "pago" && p.statusBalcao !== "cancelado");
+    const fechamentosTotemExtras: FechamentoConta[] = [];
+    for (const p of pedidosTotemAbertos) {
+      const f: FechamentoConta = {
+        id: `fechamento-totem-auto-${now.getTime()}-${p.id}`, mesaId: p.mesaId, mesaNumero: 0, origem: "totem" as const, total: p.total,
+        formaPagamento: "pix" as const, pagamentos: [{ id: `pag-totem-auto-${now.getTime()}-${p.id}`, formaPagamento: "pix" as const, valor: p.total }],
+        itens: p.itens.map(cloneItem), criadoEm: formatDateTime(now), criadoEmIso: now.toISOString(),
+        caixaId: "totem-auto", caixaNome: "Totem Autoatendimento (fechamento automático)", troco: 0, subtotal: p.total, desconto: 0,
       };
-    });
+      await dbInsertFechamento(f);
+      fechamentosTotemExtras.push(f);
+    }
+
+    // 4. Reset all mesas and mark mesa orders as paid
+    const mesasReset = prev.mesas.map(m => resetMesa(m));
+    for (const mesa of prev.mesas) {
+      for (const pedido of mesa.pedidos) {
+        await dbUpdatePedido(pedido.id, { status_balcao: "pago" });
+      }
+    }
+    for (const m of mesasReset) { await dbSyncEstadoMesa(m); }
+
+    // 5. NOW update local state
+    setStore((prevState) => ({
+      ...prevState,
+      mesas: mesasReset,
+      eventos: appendEventAndPersist(prevState.eventos, { tipo: "caixa", descricao: `Gerente ${usuario.nome} fechou o caixa do dia`, usuarioId: usuario.id, usuarioNome: usuario.nome, acao: "fechamento_dia" }),
+      movimentacoesCaixa: [], fechamentos: [...fechamentosTotemExtras, ...prevState.fechamentos],
+      caixaAberto: false, fundoTroco: 0, pedidosBalcao: [],
+    }));
+
+    return { ok: true };
   }, [setStore]);
 
   const registrarMovimentacaoCaixa = useCallback((input: MovimentacaoInput) => {

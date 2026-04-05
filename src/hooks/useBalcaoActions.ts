@@ -121,34 +121,50 @@ export function useBalcaoActions(setStore: Dispatch<SetStateAction<RestaurantSto
     }));
   }, [setStore]);
 
-  const fecharContaBalcao = useCallback((pedidoId: string, input: FecharContaInput) => {
-    setStore((prev) => {
-      const pedido = prev.pedidosBalcao.find((p) => p.id === pedidoId);
-      if (!pedido) return prev;
-      const now = new Date();
-      const pagamentos = input.pagamentos.map((p) => ({ ...p }));
-      const resumoPagamento = pagamentos.length === 1 ? pagamentos[0].formaPagamento : `${pagamentos.length} formas de pagamento`;
-      const fechamento: FechamentoConta = {
-        id: `fechamento-${now.getTime()}-${pedido.id}`, numeroComanda: proximoNumeroComanda(),
-        mesaId: pedido.mesaId, mesaNumero: 0,
-        origem: (pedido.origem === "delivery" ? "delivery" : pedido.origem === "totem" ? "totem" : "balcao") as FechamentoConta["origem"],
-        total: Math.max(pedido.total - (input.desconto ?? 0), 0),
-        formaPagamento: pagamentos[0].formaPagamento, pagamentos,
-        itens: pedido.itens.map(cloneItem), criadoEm: formatDateTime(now), criadoEmIso: now.toISOString(),
-        caixaId: input.usuario.id, caixaNome: input.usuario.nome,
-        troco: input.troco ?? 0, subtotal: pedido.total, desconto: input.desconto ?? 0,
-        couvert: input.couvert ?? 0, numeroPessoas: input.numeroPessoas ?? 0,
-        cpfNota: input.cpfNota,
-      };
-      dbInsertFechamento(fechamento);
-      dbUpdatePedido(pedidoId, { status_balcao: "pago" });
-      return {
-        ...prev,
-        pedidosBalcao: prev.pedidosBalcao.filter((p) => p.id !== pedidoId),
-        fechamentos: [fechamento, ...prev.fechamentos],
-        eventos: appendEventAndPersist(prev.eventos, { tipo: "caixa", descricao: `Caixa ${input.usuario.nome} fechou conta ${pedido.origem === "delivery" ? "delivery" : "balcão"} — ${pedido.clienteNome ?? ""} com ${resumoPagamento}`, usuarioId: input.usuario.id, usuarioNome: input.usuario.nome, acao: "fechar_conta", valor: pedido.total }),
-      };
-    });
+  const fecharContaBalcao = useCallback(async (pedidoId: string, input: FecharContaInput): Promise<{ ok: boolean }> => {
+    // Read current store
+    let currentStore: RestaurantStore | null = null;
+    setStore(prev => { currentStore = prev; return prev; });
+    if (!currentStore) return { ok: false };
+
+    const pedido = (currentStore as RestaurantStore).pedidosBalcao.find((p) => p.id === pedidoId);
+    if (!pedido) return { ok: false };
+
+    const now = new Date();
+    const pagamentos = input.pagamentos.map((p) => ({ ...p }));
+    const resumoPagamento = pagamentos.length === 1 ? pagamentos[0].formaPagamento : `${pagamentos.length} formas de pagamento`;
+    const fechamento: FechamentoConta = {
+      id: `fechamento-${now.getTime()}-${pedido.id}`, numeroComanda: proximoNumeroComanda(),
+      mesaId: pedido.mesaId, mesaNumero: 0,
+      origem: (pedido.origem === "delivery" ? "delivery" : pedido.origem === "totem" ? "totem" : "balcao") as FechamentoConta["origem"],
+      total: Math.max(pedido.total - (input.desconto ?? 0), 0),
+      formaPagamento: pagamentos[0].formaPagamento, pagamentos,
+      itens: pedido.itens.map(cloneItem), criadoEm: formatDateTime(now), criadoEmIso: now.toISOString(),
+      caixaId: input.usuario.id, caixaNome: input.usuario.nome,
+      troco: input.troco ?? 0, subtotal: pedido.total, desconto: input.desconto ?? 0,
+      couvert: input.couvert ?? 0, numeroPessoas: input.numeroPessoas ?? 0,
+      cpfNota: input.cpfNota,
+    };
+
+    // 1. Persist fechamento
+    const fechResult = await dbInsertFechamento(fechamento);
+    if (!fechResult.ok) {
+      toast.error("Erro ao salvar fechamento. Tente novamente.");
+      return { ok: false };
+    }
+
+    // 2. Mark order as paid
+    await dbUpdatePedido(pedidoId, { status_balcao: "pago" });
+
+    // 3. Only NOW update local state
+    setStore((prev) => ({
+      ...prev,
+      pedidosBalcao: prev.pedidosBalcao.filter((p) => p.id !== pedidoId),
+      fechamentos: [fechamento, ...prev.fechamentos],
+      eventos: appendEventAndPersist(prev.eventos, { tipo: "caixa", descricao: `Caixa ${input.usuario.nome} fechou conta ${pedido.origem === "delivery" ? "delivery" : "balcão"} — ${pedido.clienteNome ?? ""} com ${resumoPagamento}`, usuarioId: input.usuario.id, usuarioNome: input.usuario.nome, acao: "fechar_conta", valor: pedido.total }),
+    }));
+
+    return { ok: true };
   }, [setStore]);
 
   const confirmarPedidoBalcao = useCallback((pedidoId: string, taxaEntrega?: number) => {

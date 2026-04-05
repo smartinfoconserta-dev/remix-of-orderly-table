@@ -172,41 +172,68 @@ export function useMesaActions(setStore: Dispatch<SetStateAction<RestaurantStore
     }));
   }, [setStore]);
 
-  const fecharConta = useCallback((mesaId: string, input?: FecharContaInput) => {
-    setStore((prev) => {
-      let fechamento: FechamentoConta | null = null;
-      let eventInput: Omit<EventoOperacional, "id" | "criadoEm" | "criadoEmIso"> | null = null;
-      const mesas = prev.mesas.map((mesa) => {
-        if (mesa.id !== mesaId) return mesa;
-        const hasContent = mesa.total > 0 || mesa.pedidos.length > 0 || mesa.carrinho.length > 0;
-        if (!hasContent) return mesa;
-        const now = new Date();
-        if (input?.usuario && input.pagamentos.length > 0) {
-          const pagamentos = input.pagamentos.map((p) => ({ ...p }));
-          const resumoPagamento = pagamentos.length === 1 ? pagamentos[0].formaPagamento : `${pagamentos.length} formas de pagamento`;
-          fechamento = {
-            id: `fechamento-${now.getTime()}-${mesa.id}`, numeroComanda: proximoNumeroComanda(),
-            mesaId, mesaNumero: mesa.numero, origem: (input.origemOverride ?? "mesa") as FechamentoConta["origem"],
-            total: Math.max(mesa.total - (input?.desconto ?? 0), 0), formaPagamento: pagamentos[0].formaPagamento,
-            pagamentos, itens: mesa.pedidos.flatMap((p) => p.itens.map(cloneItem)),
-            criadoEm: formatDateTime(now), criadoEmIso: now.toISOString(),
-            caixaId: input.usuario.id, caixaNome: input.usuario.nome,
-            troco: input.troco ?? 0, subtotal: mesa.total, desconto: input?.desconto ?? 0,
-            couvert: input?.couvert ?? 0, numeroPessoas: input?.numeroPessoas ?? 0,
-            cpfNota: input?.cpfNota,
-          };
-          dbInsertFechamento(fechamento);
-          mesa.pedidos.forEach((pedido) => {
-            dbUpdatePedido(pedido.id, { status_balcao: "pago" });
-          });
-          eventInput = { tipo: "caixa", descricao: `Caixa ${input.usuario.nome} fechou conta da ${formatMesaNumero(mesa.numero)} com ${resumoPagamento}`, mesaId, usuarioId: input.usuario.id, usuarioNome: input.usuario.nome, acao: "fechar_conta", valor: mesa.total };
-        }
-        const reset = resetMesa(mesa);
-        dbSyncEstadoMesa(reset);
-        return reset;
-      });
-      return { ...prev, mesas, fechamentos: fechamento ? [fechamento, ...prev.fechamentos] : prev.fechamentos, eventos: eventInput ? appendEventAndPersist(prev.eventos, eventInput) : prev.eventos };
-    });
+  const fecharConta = useCallback(async (mesaId: string, input?: FecharContaInput): Promise<{ ok: boolean }> => {
+    // Read current mesa from store synchronously
+    let fechamento: FechamentoConta | null = null;
+    let eventInput: Omit<EventoOperacional, "id" | "criadoEm" | "criadoEmIso"> | null = null;
+    let mesaSnapshot: Mesa | null = null;
+
+    // We need to read the current store state first
+    let currentStore: RestaurantStore | null = null;
+    setStore(prev => { currentStore = prev; return prev; });
+    if (!currentStore) return { ok: false };
+
+    const mesa = (currentStore as RestaurantStore).mesas.find(m => m.id === mesaId);
+    if (!mesa) return { ok: false };
+
+    const hasContent = mesa.total > 0 || mesa.pedidos.length > 0 || mesa.carrinho.length > 0;
+    if (!hasContent) return { ok: false };
+
+    const now = new Date();
+    if (input?.usuario && input.pagamentos.length > 0) {
+      const pagamentos = input.pagamentos.map((p) => ({ ...p }));
+      const resumoPagamento = pagamentos.length === 1 ? pagamentos[0].formaPagamento : `${pagamentos.length} formas de pagamento`;
+      fechamento = {
+        id: `fechamento-${now.getTime()}-${mesa.id}`, numeroComanda: proximoNumeroComanda(),
+        mesaId, mesaNumero: mesa.numero, origem: (input.origemOverride ?? "mesa") as FechamentoConta["origem"],
+        total: Math.max(mesa.total - (input?.desconto ?? 0), 0), formaPagamento: pagamentos[0].formaPagamento,
+        pagamentos, itens: mesa.pedidos.flatMap((p) => p.itens.map(cloneItem)),
+        criadoEm: formatDateTime(now), criadoEmIso: now.toISOString(),
+        caixaId: input.usuario.id, caixaNome: input.usuario.nome,
+        troco: input.troco ?? 0, subtotal: mesa.total, desconto: input?.desconto ?? 0,
+        couvert: input?.couvert ?? 0, numeroPessoas: input?.numeroPessoas ?? 0,
+        cpfNota: input?.cpfNota,
+      };
+      eventInput = { tipo: "caixa", descricao: `Caixa ${input.usuario.nome} fechou conta da ${formatMesaNumero(mesa.numero)} com ${resumoPagamento}`, mesaId, usuarioId: input.usuario.id, usuarioNome: input.usuario.nome, acao: "fechar_conta", valor: mesa.total };
+    }
+
+    // 1. Persist fechamento FIRST
+    if (fechamento) {
+      const fechResult = await dbInsertFechamento(fechamento);
+      if (!fechResult.ok) {
+        toast.error("Erro ao salvar fechamento. Tente novamente.");
+        return { ok: false };
+      }
+    }
+
+    // 2. Mark all orders as paid
+    await Promise.all(mesa.pedidos.map(pedido =>
+      dbUpdatePedido(pedido.id, { status_balcao: "pago" })
+    ));
+
+    // 3. Sync mesa reset
+    const reset = resetMesa(mesa);
+    await dbSyncEstadoMesa(reset);
+
+    // 4. Only NOW update local state
+    setStore((prev) => ({
+      ...prev,
+      mesas: prev.mesas.map(m => m.id === mesaId ? reset : m),
+      fechamentos: fechamento ? [fechamento, ...prev.fechamentos] : prev.fechamentos,
+      eventos: eventInput ? appendEventAndPersist(prev.eventos, eventInput) : prev.eventos,
+    }));
+
+    return { ok: true };
   }, [setStore]);
 
   const zerarMesa = useCallback((mesaId: string, audit?: ActionAuditInput) => {
