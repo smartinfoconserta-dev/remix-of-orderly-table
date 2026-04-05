@@ -831,7 +831,6 @@ const CaixaPage = ({ accessMode = "caixa", deliveryOnly = false }: CaixaPageProp
     setBalcaoPaymentValue("");
   };
 
-  const [isClosingBalcao, setIsClosingBalcao] = useState(false);
   const handleFecharBalcao = async () => {
     if (!balcaoPedidoSelecionado || !balcaoPedido) return;
     if (isClosingBalcao) return;
