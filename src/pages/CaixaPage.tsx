@@ -787,7 +787,6 @@ const CaixaPage = ({ accessMode = "caixa", deliveryOnly = false }: CaixaPageProp
     toast.success("Fechamento estornado — registrado no log", { duration: 2500, icon: "↩️" });
   };
 
-  const [isClosingMesa, setIsClosingMesa] = useState(false);
   const handleFechar = async () => {
     if (!mesaSelecionada || !mesa) return;
     if (isClosingMesa) return;
