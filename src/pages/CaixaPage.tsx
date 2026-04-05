@@ -502,7 +502,8 @@ const CaixaPage = ({ accessMode = "caixa", deliveryOnly = false }: CaixaPageProp
     marcarBalcaoRetirado(pedido.id);
     toast.success(`Pedido #${String(numeroBuscado).padStart(3, "0")} retirado!`);
   }, [pedidosBalcao, marcarBalcaoRetirado]);
-
+  const [isClosingMesa, setIsClosingMesa] = useState(false);
+  const [isClosingBalcao, setIsClosingBalcao] = useState(false);
 
   /* ── auto-reopen: useEffect to avoid render-loop ── */
   const [autoReopenDone, setAutoReopenDone] = useState(false);
