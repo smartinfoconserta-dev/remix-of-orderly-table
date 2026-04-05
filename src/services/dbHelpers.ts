@@ -216,44 +216,56 @@ export const dbInsertPedido = async (p: PedidoRealizado) => {
   }
 };
 
-export const dbUpdatePedido = (pedidoId: string, updates: Record<string, any>) => {
+export const dbUpdatePedido = async (pedidoId: string, updates: Record<string, any>): Promise<{ ok: boolean }> => {
   const sid = getActiveStoreId();
-  if (!sid) { console.warn("dbUpdatePedido: storeId is null"); return; }
+  if (!sid) { console.warn("dbUpdatePedido: storeId is null"); return { ok: false }; }
   const params = { _id: pedidoId, _store_id: sid, _updates: updates };
-  Promise.resolve(supabase.rpc("rpc_update_pedido" as any, params)).then(({ error }: any) => {
+  try {
+    const { error } = await supabase.rpc("rpc_update_pedido" as any, params);
     if (error) {
       if (isNetworkError(error)) {
         enqueue("rpc_update_pedido", params, `Atualizar pedido`);
-      } else {
-        console.error("DB update pedido", error);
-        toast.error("Erro ao atualizar pedido");
+        return { ok: true }; // queued
       }
+      console.error("DB update pedido", error);
+      toast.error("Erro ao atualizar pedido");
+      return { ok: false };
     }
-  }).catch((err: any) => {
+    return { ok: true };
+  } catch (err: any) {
     if (isNetworkError(err)) {
       enqueue("rpc_update_pedido", params, `Atualizar pedido`);
+      return { ok: true };
     }
-  });
+    console.error("dbUpdatePedido unexpected", err);
+    return { ok: false };
+  }
 };
 
-export const dbInsertFechamento = (f: FechamentoConta) => {
+export const dbInsertFechamento = async (f: FechamentoConta): Promise<{ ok: boolean }> => {
   const sid = getActiveStoreId();
-  if (!sid) { console.warn("dbInsertFechamento: storeId is null, skipping"); return; }
+  if (!sid) { console.warn("dbInsertFechamento: storeId is null, skipping"); return { ok: false }; }
   const row = fechamentoToRow(f, sid);
-  Promise.resolve(supabase.rpc("rpc_insert_fechamento" as any, { _data: row })).then(({ error }: any) => {
+  try {
+    const { error } = await supabase.rpc("rpc_insert_fechamento" as any, { _data: row });
     if (error) {
       if (isNetworkError(error)) {
         enqueue("rpc_insert_fechamento", { _data: row }, `Fechamento mesa ${f.mesaNumero}`);
-      } else {
-        console.error("DB insert fechamento", error);
-        toast.error("Erro ao salvar fechamento no banco");
+        return { ok: true };
       }
+      console.error("DB insert fechamento", error);
+      toast.error("Erro ao salvar fechamento no banco");
+      return { ok: false };
     }
-  }).catch((err: any) => {
+    return { ok: true };
+  } catch (err: any) {
     if (isNetworkError(err)) {
       enqueue("rpc_insert_fechamento", { _data: row }, `Fechamento mesa ${f.mesaNumero}`);
+      return { ok: true };
     }
-  });
+    console.error("dbInsertFechamento unexpected", err);
+    return { ok: false };
+  }
 };
 
 export const dbUpdateFechamento = (id: string, updates: Record<string, any>) => {

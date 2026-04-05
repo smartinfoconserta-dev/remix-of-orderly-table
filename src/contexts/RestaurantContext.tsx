@@ -107,7 +107,7 @@ interface RestaurantContextType {
   confirmarPedido: (mesaId: string, meta?: PedidoMeta) => Promise<void>;
   chamarGarcom: (mesaId: string) => void;
   dismissChamarGarcom: (mesaId: string) => void;
-  fecharConta: (mesaId: string, input?: FecharContaInput) => void;
+  fecharConta: (mesaId: string, input?: FecharContaInput) => Promise<{ ok: boolean }>;
   estornarFechamento: (fechamentoId: string, motivo: string, operador: OperationalUser) => void;
   zerarMesa: (mesaId: string, audit?: ActionAuditInput) => void;
   ajustarItemPedido: (mesaId: string, pedidoId: string, itemUid: string, delta: number, audit: ActionAuditInput) => void;
@@ -115,14 +115,14 @@ interface RestaurantContextType {
   marcarPedidoPronto: (mesaId: string, pedidoId: string) => void;
   registrarMovimentacaoCaixa: (input: MovimentacaoInput) => void;
   abrirCaixa: (fundoTroco: number, usuario: OperationalUser) => void;
-  fecharCaixaDoDia: (usuario: OperationalUser, extras?: { diferenca_dinheiro?: number; diferenca_motivo?: string; fundo_proximo?: number }) => void;
+  fecharCaixaDoDia: (usuario: OperationalUser, extras?: { diferenca_dinheiro?: number; diferenca_motivo?: string; fundo_proximo?: number }) => Promise<{ ok: boolean }>;
   criarPedidoBalcao: (input: CriarPedidoBalcaoInput) => Promise<number>;
   marcarPedidoBalcaoPronto: (pedidoId: string) => void;
   marcarBalcaoSaiu: (pedidoId: string, motoboyNome: string) => void;
   marcarBalcaoEntregue: (pedidoId: string) => void;
   cancelarEntregaMotoboy: (pedidoId: string, motivo?: string) => void;
   marcarBalcaoPronto: (pedidoId: string) => void;
-  fecharContaBalcao: (pedidoId: string, input: FecharContaInput) => void;
+  fecharContaBalcao: (pedidoId: string, input: FecharContaInput) => Promise<{ ok: boolean }>;
   confirmarPedidoBalcao: (pedidoId: string, taxaEntrega?: number) => void;
   rejeitarPedidoBalcao: (pedidoId: string, motivo: string) => void;
   cancelarPedidoBalcao: (pedidoId: string, motivo: string, operador: OperationalUser) => void;
@@ -396,13 +396,17 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
             ...prev,
             mesas: prev.mesas.map(m => {
               if (m.id !== mesaId) return m;
+              // Only update carrinho/visual state from estado_mesas, NOT pedidos
+              // Pedidos come from the pedidos table (source of truth)
               const carrinho = Array.isArray(row.carrinho) ? row.carrinho.map((it: any, i: number) => normalizeItem(it, i)) : m.carrinho;
-              const pedidos = Array.isArray(row.pedidos) ? (row.pedidos as any[]) as typeof m.pedidos : m.pedidos;
-              const total = typeof row.total === "number" ? row.total : m.total;
               const chamarGarcom = row.chamar_garcom ?? m.chamarGarcom;
               const chamadoEm = row.chamado_em ?? m.chamadoEm;
-              const status = row.status ?? m.status;
-              const updated = { ...m, carrinho, pedidos, total, chamarGarcom, chamadoEm, status };
+              // If estado_mesas says "livre" and has no pedidos, respect it (mesa was reset)
+              if (row.status === "livre") {
+                return { ...m, carrinho: [], pedidos: [], total: 0, chamarGarcom: false, chamadoEm: null, status: "livre" as const };
+              }
+              const updated = { ...m, carrinho, chamarGarcom, chamadoEm };
+              updated.status = derivarStatus(updated);
               return updated;
             }),
           }));
@@ -469,18 +473,21 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         const freshPedidos = (pedidosData as any[]).map(rowToPedido);
         const freshBalcao = freshPedidos.filter(p => (BALCAO_ORIGINS as ReadonlyArray<string>).includes(p.origem));
 
+        const freshBalcaoIds = new Set(freshBalcao.map(p => p.id));
         setStore(prev => {
+          // Update existing, add new, and REMOVE orders no longer in fresh data
+          const updatedBalcao = prev.pedidosBalcao
+            .map(existing => {
+              const fresh = freshBalcao.find(f => f.id === existing.id);
+              return fresh ?? existing;
+            })
+            .filter(p => freshBalcaoIds.has(p.id)); // remove stale
           const existingIds = new Set(prev.pedidosBalcao.map(p => p.id));
           const newOnes = freshBalcao.filter(p => !existingIds.has(p.id));
-          const updatedBalcao = prev.pedidosBalcao.map(existing => {
-            const fresh = freshBalcao.find(f => f.id === existing.id);
-            return fresh ?? existing;
-          });
-          if (newOnes.length > 0) {
-            return { ...prev, pedidosBalcao: [...updatedBalcao, ...newOnes] };
-          }
-          const changed = updatedBalcao.some((p, i) => p.statusBalcao !== prev.pedidosBalcao[i]?.statusBalcao);
-          return changed ? { ...prev, pedidosBalcao: updatedBalcao } : prev;
+          const finalBalcao = [...updatedBalcao, ...newOnes];
+          const changed = finalBalcao.length !== prev.pedidosBalcao.length ||
+            finalBalcao.some((p, i) => p.id !== prev.pedidosBalcao[i]?.id || p.statusBalcao !== prev.pedidosBalcao[i]?.statusBalcao);
+          return changed ? { ...prev, pedidosBalcao: finalBalcao } : prev;
         });
 
         // Skip mesa re-population during debounce window (after fecharCaixaDoDia)
@@ -604,9 +611,9 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     caixaLocalChangeTs.current = Date.now();
     caixaActions.abrirCaixa(...args);
   }, [caixaActions.abrirCaixa]);
-  const wrappedFecharCaixaDoDia = useCallback((...args: Parameters<typeof caixaActions.fecharCaixaDoDia>) => {
+  const wrappedFecharCaixaDoDia = useCallback(async (...args: Parameters<typeof caixaActions.fecharCaixaDoDia>) => {
     caixaLocalChangeTs.current = Date.now();
-    caixaActions.fecharCaixaDoDia(...args);
+    return caixaActions.fecharCaixaDoDia(...args);
   }, [caixaActions.fecharCaixaDoDia]);
 
   return (
