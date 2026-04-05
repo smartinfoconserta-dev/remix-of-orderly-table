@@ -18,7 +18,7 @@ import { toast } from "sonner";
 import { formatPrice, printComanda } from "@/components/caixa/caixaHelpers";
 import { getSistemaConfig } from "@/lib/adminStorage";
 import { playSuccessSound, playAlertSound, vibrateSuccess, vibrateAlert } from "@/lib/sounds";
-
+import OfflineIndicator from "@/components/OfflineIndicator";
 
 const PAYMENT_OPTIONS: { value: PaymentMethod; label: string; icon: typeof CreditCard }[] = [
   { value: "pix", label: "PIX", icon: Smartphone },
