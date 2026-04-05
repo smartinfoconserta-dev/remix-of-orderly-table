@@ -30,6 +30,7 @@ type ConfigSection = "inicio" | "aparencia" | "temas" | "banners" | "redes" | "d
 interface Props {
   storeId: string | null;
   storeName: string;
+  onOpenWizard?: () => void;
 }
 
 const sectionMeta: Record<Exclude<ConfigSection, "inicio">, { icon: React.ElementType; label: string }> = {
@@ -54,7 +55,7 @@ const sections = [
   { id: "sistema" as const, icon: Database, label: "Sistema", desc: "Backup e restauração" },
 ];
 
-const AdminConfig = ({ storeId, storeName }: Props) => {
+const AdminConfig = ({ storeId, storeName, onOpenWizard }: Props) => {
   const { stores } = useStore();
   const [configSection, setConfigSection] = useState<ConfigSection>("inicio");
   const [sistemaConfig, setSistemaConfig] = useState<SistemaConfig>(getSistemaConfig);
