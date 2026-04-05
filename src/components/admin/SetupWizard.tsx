@@ -87,9 +87,9 @@ const SetupWizard = ({ storeId, currentConfig, onComplete }: SetupWizardProps) =
         motoboy: tipo === "fastfood",
       },
       identificacaoFastFood: tipo === "fastfood" ? (identificacao === "nome" ? "nome_cliente" : "codigo") : (currentConfig.identificacaoFastFood ?? "codigo"),
-      impressaoPorSetor: doisSetores && tipo === "fastfood",
-      nomeImpressoraCozinha: doisSetores ? nomeSetor1 : undefined,
-      nomeImpressoraBar: doisSetores ? nomeSetor2 : undefined,
+      impressaoPorSetor: impressoras === "duas",
+      nomeImpressoraCozinha: impressoras === "duas" ? nomeSetor1 : undefined,
+      nomeImpressoraBar: impressoras === "duas" ? nomeSetor2 : undefined,
       setupCompleto: true,
     };
 
@@ -353,21 +353,31 @@ const SetupWizard = ({ storeId, currentConfig, onComplete }: SetupWizardProps) =
                 </div>
                 {impressoras === "uma" && <Check className="h-5 w-5 text-primary ml-auto" />}
               </button>
-              {doisSetores && tipo === "fastfood" && (
-                <button
-                  type="button"
-                  onClick={() => setImpressoras("duas")}
-                  className={`w-full flex items-center gap-4 rounded-2xl border-2 p-5 text-left transition-all ${
-                    impressoras === "duas" ? "border-primary bg-primary/10" : "border-border bg-card hover:border-primary/30"
-                  }`}
-                >
-                  <Printer className="h-6 w-6 text-muted-foreground shrink-0" />
-                  <div>
-                    <p className="text-sm font-black text-foreground">Duas, uma em cada setor</p>
-                    <p className="text-xs text-muted-foreground">{nomeSetor1} e {nomeSetor2} com impressoras separadas</p>
+              <button
+                type="button"
+                onClick={() => setImpressoras("duas")}
+                className={`w-full flex items-center gap-4 rounded-2xl border-2 p-5 text-left transition-all ${
+                  impressoras === "duas" ? "border-primary bg-primary/10" : "border-border bg-card hover:border-primary/30"
+                }`}
+              >
+                <Printer className="h-6 w-6 text-muted-foreground shrink-0" />
+                <div>
+                  <p className="text-sm font-black text-foreground">Duas impressoras separadas</p>
+                  <p className="text-xs text-muted-foreground">Uma pra cada setor (ex: cozinha e bar). Cada setor recebe só os pedidos dele</p>
+                </div>
+                {impressoras === "duas" && <Check className="h-5 w-5 text-primary ml-auto" />}
+              </button>
+              {impressoras === "duas" && !doisSetores && (
+                <div className="flex gap-3 max-w-md mx-auto pt-2">
+                  <div className="flex-1 space-y-1">
+                    <label className="text-xs font-bold text-muted-foreground">Setor 1</label>
+                    <Input className="h-11 rounded-xl" value={nomeSetor1} onChange={e => setNomeSetor1(e.target.value)} placeholder="Ex: Cozinha" />
                   </div>
-                  {impressoras === "duas" && <Check className="h-5 w-5 text-primary ml-auto" />}
-                </button>
+                  <div className="flex-1 space-y-1">
+                    <label className="text-xs font-bold text-muted-foreground">Setor 2</label>
+                    <Input className="h-11 rounded-xl" value={nomeSetor2} onChange={e => setNomeSetor2(e.target.value)} placeholder="Ex: Bar" />
+                  </div>
+                </div>
               )}
             </div>
           </div>
