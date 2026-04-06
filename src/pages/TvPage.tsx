@@ -198,7 +198,15 @@ const TvInner = ({ storeId }: { storeId: string }) => {
         <div className="flex items-center gap-4">
           {logoUrl && <img src={logoUrl} alt="" className="h-10 w-10 rounded-lg object-cover" />}
           <div>
-            <h1 className="text-2xl md:text-3xl font-black uppercase tracking-wide text-foreground">Painel de Pedidos</h1>
+            <h1
+              className="text-2xl md:text-3xl font-black uppercase tracking-wide text-foreground select-none cursor-default"
+              onMouseDown={handleExitStart}
+              onMouseUp={handleExitEnd}
+              onMouseLeave={handleExitEnd}
+              onTouchStart={handleExitStart}
+              onTouchEnd={handleExitEnd}
+              onTouchCancel={handleExitEnd}
+            >Painel de Pedidos</h1>
             <p className="text-sm font-medium text-muted-foreground">{config.nomeRestaurante || "Restaurante"}</p>
           </div>
         </div>
