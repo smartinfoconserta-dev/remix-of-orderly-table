@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel } from "@/components/ui/alert-dialog";
 import { Progress } from "@/components/ui/progress";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import PedidoFlow from "@/components/PedidoFlow";
 import AppLayout from "@/components/AppLayout";
 import MesaCard from "@/components/MesaCard";
@@ -94,6 +94,31 @@ const GarcomPdvPage = () => {
   const [ffPaymentMethod, setFfPaymentMethod] = useState<PaymentMethod | null>(null);
   const [ffNumeroPedido, setFfNumeroPedido] = useState<number | null>(null);
   const [ffSubmitting, setFfSubmitting] = useState(false);
+  const [exitDialogOpen, setExitDialogOpen] = useState(false);
+  const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const navigateExit = useNavigate();
+
+  const handleLongPressStart = useCallback(() => {
+    longPressTimerRef.current = setTimeout(() => {
+      setExitDialogOpen(true);
+    }, 5000);
+  }, []);
+
+  const handleLongPressEnd = useCallback(() => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+  }, []);
+
+  const handleExitSession = useCallback(async () => {
+    setExitDialogOpen(false);
+    sessionStorage.removeItem("obsidian-op-session-v2");
+    localStorage.removeItem("obsidian-op-session-v2-persisted");
+    await logout();
+    navigateExit("/", { replace: true });
+    window.location.reload();
+  }, [logout, navigateExit]);
 
   useRouteLock("/garcom-pdv");
 
@@ -267,6 +292,36 @@ const GarcomPdvPage = () => {
 
   const garcomNome = currentGarcom?.nome ?? (isAdminAccess ? "Administrador" : "");
 
+  const exitDialog = (
+    <AlertDialog open={exitDialogOpen} onOpenChange={setExitDialogOpen}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Finalizar sessão?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Você será desconectado e poderá trocar de garçom neste equipamento.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+          <Button onClick={handleExitSession} variant="destructive">Sim, sair</Button>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+
+  const longPressAvatar = (
+    <div
+      className="w-10 h-10 rounded-full bg-card/80 flex items-center justify-center cursor-pointer select-none border border-border"
+      onPointerDown={handleLongPressStart}
+      onPointerUp={handleLongPressEnd}
+      onPointerLeave={handleLongPressEnd}
+      onContextMenu={(e) => e.preventDefault()}
+      title="Segure 5s para sair"
+    >
+      <span className="text-xs font-bold text-muted-foreground">{garcomNome.charAt(0).toUpperCase()}</span>
+    </div>
+  );
+
   // ===================== FAST FOOD MODE =====================
   if (isFastFood) {
     // Payment selection
@@ -388,6 +443,11 @@ const GarcomPdvPage = () => {
     return (
       <ModuleGate moduleKey="garcomPdv" moduleName="Garçom PDV">
         <OfflineIndicator />
+        {/* Long-press exit zone — top-left corner */}
+        <div className="fixed top-2 left-2 z-50">
+          {longPressAvatar}
+        </div>
+        {exitDialog}
         <PedidoFlow
           modo="balcao"
           clienteNome={garcomNome}
@@ -675,6 +735,7 @@ const GarcomPdvPage = () => {
         title="Garçom PDV"
         headerRight={
           <div className="flex items-center gap-2">
+            {longPressAvatar}
             <span className="text-xs font-bold px-2 py-1 rounded-full bg-primary/10 text-primary">💳 PDV</span>
             <span className="text-sm font-bold tabular-nums text-muted-foreground">{clock}</span>
             {!isAdminAccess && (
@@ -686,6 +747,7 @@ const GarcomPdvPage = () => {
           </div>
         }
       >
+        {exitDialog}
         <div className="mb-4 rounded-xl border border-border bg-card px-4 py-3">
           <p className="text-base font-bold text-foreground">{garcomNome}</p>
           <p className="text-sm text-muted-foreground">
