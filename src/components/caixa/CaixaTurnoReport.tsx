@@ -3,6 +3,7 @@
  * Includes: desktop fullscreen, mobile dialog, and close dialog (both variants).
  * NO logic changes from original.
  */
+import { useEffect } from "react";
 import { LockKeyhole, ReceiptText, Truck, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -92,11 +93,19 @@ const CaixaTurnoReport = ({
   isClosingTurno, dinheiroContado, setDinheiroContado,
   motivoDiferenca, setMotivoDiferenca,
   isDesktop, resumoFinanceiro, fundoTroco,
-  caixaOpenTime, clockStr,
+  caixaAberto, caixaOpenTime, clockStr,
   pedidosBalcao, fechamentos, movimentacoesCaixa,
   resumoDeliveryTurno,
   handleCloseTurno, accessMode, currentOperatorNome,
 }: CaixaTurnoReportProps) => {
+
+  // Safety: auto-close report if caixa is already closed
+  useEffect(() => {
+    if (!caixaAberto && turnoReportOpen) {
+      setTurnoReportOpen(false);
+    }
+  }, [caixaAberto, turnoReportOpen, setTurnoReportOpen]);
+
 
   const openCloseModal = () => {
     setTurnoReportOpen(false);
