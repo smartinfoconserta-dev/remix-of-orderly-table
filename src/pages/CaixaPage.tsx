@@ -56,6 +56,7 @@ import {
 } from "@/components/caixa/caixaHelpers";
 import CaixaDeliveryPanel from "@/components/caixa/CaixaDeliveryPanel";
 import CaixaTotemPanel from "@/components/caixa/CaixaTotemPanel";
+import CaixaPedidosFastFoodPanel from "@/components/caixa/CaixaPedidosFastFoodPanel";
 import CaixaMesaDetail from "@/components/caixa/CaixaMesaDetail";
 import CaixaBalcaoDetail from "@/components/caixa/CaixaBalcaoDetail";
 import CaixaHistoricoTab from "@/components/caixa/CaixaHistoricoTab";
@@ -102,6 +103,7 @@ const CaixaPage = ({ accessMode = "caixa", deliveryOnly = false }: CaixaPageProp
     estornarFechamento,
     marcarBalcaoRetirado,
     cancelarPedidoBalcao,
+    marcarBalcaoPreparando,
   } = useRestaurant();
   const { currentCaixa, currentGerente, logout, verifyManagerAccess, verifyEmployeeAccess, authLevel } = useAuth();
   const isAdminAccess = authLevel === "admin" || authLevel === "master";
@@ -178,8 +180,9 @@ const CaixaPage = ({ accessMode = "caixa", deliveryOnly = false }: CaixaPageProp
   // isFastFoodGlobal backward compat: true when no mesas and has totem/balcao
   const isFastFoodGlobal = !moduloMesas && (moduloTotem || moduloBalcao);
 
-  const [caixaView, setCaixaView] = useState<"mesas" | "delivery" | "totem" | "historico" | "ifood">(() => {
+  const [caixaView, setCaixaView] = useState<"mesas" | "delivery" | "totem" | "historico" | "ifood" | "pedidos">(() => {
     if (deliveryOnly) return "delivery";
+    if (isFastFoodGlobal) return "pedidos";
     if (moduloMesas) return "mesas";
     if (moduloTotem) return "totem";
     if (moduloBalcao) return "delivery";
@@ -1202,6 +1205,23 @@ const CaixaPage = ({ accessMode = "caixa", deliveryOnly = false }: CaixaPageProp
 
               {/* ── Tabs — scrollable on mobile ── */}
               <div className="flex items-end px-2 md:px-3 pt-1 shrink-0 bg-card overflow-x-auto scrollbar-hide">
+                {isFastFoodGlobal && (
+                <button
+                  onClick={() => setCaixaView("pedidos")}
+                  className={`px-3 md:px-4 py-1.5 text-xs font-bold transition-colors border border-border rounded-t -mb-px relative flex items-center gap-1.5 shrink-0 ${
+                    caixaView === "pedidos"
+                      ? "bg-card text-foreground border-b-card z-10"
+                      : "bg-background text-muted-foreground"
+                  }`}
+                >
+                  Pedidos
+                  {pedidosBalcao.filter(p => !p.cancelado && p.statusBalcao !== "cancelado" && p.statusBalcao !== "pago").length > 0 && (
+                    <span className="rounded-full px-1.5 py-0.5 text-[10px] font-black tabular-nums leading-none bg-primary text-primary-foreground">
+                      {pedidosBalcao.filter(p => !p.cancelado && p.statusBalcao !== "cancelado" && p.statusBalcao !== "pago").length}
+                    </span>
+                  )}
+                </button>
+                )}
                 {showMesasTab && (
                 <button
                   onClick={() => setCaixaView("mesas")}
@@ -1277,7 +1297,15 @@ const CaixaPage = ({ accessMode = "caixa", deliveryOnly = false }: CaixaPageProp
 
                 {/* ═══ Full-width content ═══ */}
                 <div className="flex-1 overflow-y-auto p-3 md:p-5 lg:p-6 scrollbar-hide bg-background">
-                {caixaView === "mesas" ? (
+                {caixaView === "pedidos" ? (
+                  <CaixaPedidosFastFoodPanel
+                    pedidos={pedidosBalcao}
+                    marcarBalcaoPreparando={marcarBalcaoPreparando}
+                    marcarBalcaoPronto={marcarBalcaoPronto}
+                    marcarBalcaoRetirado={marcarBalcaoRetirado}
+                    onPagar={handleSelecionarBalcao}
+                  />
+                ) : caixaView === "mesas" ? (
                   <CaixaMesasTab
                     mesas={mesas}
                     pedidosBalcaoSoAtivos={pedidosBalcaoSoAtivos}
@@ -1324,7 +1352,7 @@ const CaixaPage = ({ accessMode = "caixa", deliveryOnly = false }: CaixaPageProp
                     setBalcaoTipo={setBalcaoTipo}
                     setBalcaoOpen={setBalcaoOpen}
                   />
-                ) : (
+                ) : caixaView === "totem" ? (
                   <CaixaTotemPanel
                     pedidosTotem={pedidosTotem}
                     pedidosTotemAtivos={pedidosTotemAtivos}
@@ -1347,7 +1375,7 @@ const CaixaPage = ({ accessMode = "caixa", deliveryOnly = false }: CaixaPageProp
                     totemCancelLoading={totemCancelLoading}
                     setTotemCancelLoading={setTotemCancelLoading}
                   />
-                )}
+                ) : null}
                 {caixaView === "ifood" && (
                   <div className="space-y-4 fade-in p-1">
                     <IfoodPainel />
