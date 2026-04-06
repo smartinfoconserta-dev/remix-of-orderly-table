@@ -175,10 +175,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         module: role,
         pinLabel: user.email ?? null,
       };
+
+      // For garcom, check store mode to decide route
+      let route = moduleRouteMap[role] ?? role;
+      if (role === "garcom") {
+        const { data: cfg } = await supabase
+          .from("restaurant_config")
+          .select("modulos")
+          .eq("store_id", store.id)
+          .maybeSingle();
+        const modulos = (cfg?.modulos as Record<string, boolean>) ?? {};
+        if (modulos.mesas === false) route = "garcom-pdv";
+      }
+
       return {
         level: "operational",
         opSession,
-        redirect: `/${moduleRouteMap[role] ?? role}`,
+        redirect: `/${route}`,
       };
     }
 

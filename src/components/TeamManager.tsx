@@ -176,7 +176,7 @@ const TeamManager = ({ storeId }: Props) => {
       setFormEmail("");
       setFormPassword("");
       setFormPin("");
-      setFormRole(ROLES[0]?.value ?? "garcom");
+      setFormRole("garcom");
       fetchMembers();
     } catch (err: any) {
       toast.error(err?.message || "Erro ao criar membro");
