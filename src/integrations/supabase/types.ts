@@ -1013,6 +1013,7 @@ export type Database = {
           modo_operacao: string
           modo_tv: string | null
           modulos: Json | null
+          nfce_config: Json | null
           nome_impressora_bar: string | null
           nome_impressora_cozinha: string | null
           nome_restaurante: string
@@ -1076,6 +1077,7 @@ export type Database = {
           modo_operacao?: string
           modo_tv?: string | null
           modulos?: Json | null
+          nfce_config?: Json | null
           nome_impressora_bar?: string | null
           nome_impressora_cozinha?: string | null
           nome_restaurante?: string
@@ -1139,6 +1141,7 @@ export type Database = {
           modo_operacao?: string
           modo_tv?: string | null
           modulos?: Json | null
+          nfce_config?: Json | null
           nome_impressora_bar?: string | null
           nome_impressora_cozinha?: string | null
           nome_restaurante?: string
