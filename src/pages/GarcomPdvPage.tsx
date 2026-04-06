@@ -94,6 +94,31 @@ const GarcomPdvPage = () => {
   const [ffPaymentMethod, setFfPaymentMethod] = useState<PaymentMethod | null>(null);
   const [ffNumeroPedido, setFfNumeroPedido] = useState<number | null>(null);
   const [ffSubmitting, setFfSubmitting] = useState(false);
+  const [exitDialogOpen, setExitDialogOpen] = useState(false);
+  const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const navigateExit = useNavigate();
+
+  const handleLongPressStart = useCallback(() => {
+    longPressTimerRef.current = setTimeout(() => {
+      setExitDialogOpen(true);
+    }, 5000);
+  }, []);
+
+  const handleLongPressEnd = useCallback(() => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+  }, []);
+
+  const handleExitSession = useCallback(async () => {
+    setExitDialogOpen(false);
+    sessionStorage.removeItem("obsidian-op-session-v2");
+    localStorage.removeItem("obsidian-op-session-v2-persisted");
+    await logout();
+    navigateExit("/", { replace: true });
+    window.location.reload();
+  }, [logout, navigateExit]);
 
   useRouteLock("/garcom-pdv");
 
