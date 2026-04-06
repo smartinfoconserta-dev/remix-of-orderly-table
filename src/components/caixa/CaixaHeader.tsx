@@ -4,6 +4,7 @@ import {
   Clock,
   LockKeyhole,
   LogOut,
+  Menu,
   QrCode,
   ReceiptText,
   Search,
@@ -49,75 +50,73 @@ const CaixaHeader = ({
 
   return (
     <>
-      {/* ── Windows-style Title Bar ── */}
-      <div className="flex items-center px-4 py-2.5 shrink-0 border-b border-border bg-card">
-        <p className="text-sm font-black text-foreground truncate">
+      {/* ── Title Bar ── */}
+      <div className="flex items-center px-3 md:px-4 py-2 md:py-2.5 shrink-0 border-b border-border bg-card gap-2">
+        <p className="text-xs md:text-sm font-black text-foreground truncate min-w-0">
           {nomeRestaurante || "Orderly"}
         </p>
         <div className="flex-1" />
-        <p className="text-xs text-muted-foreground">
+        <p className="text-[10px] md:text-xs text-muted-foreground hidden sm:block truncate">
           {operadorNome} •{" "}
-          {accessMode === "gerente" ? "Acesso completo" : "Operador de caixa"}
+          {accessMode === "gerente" ? "Acesso completo" : "Operador"}
         </p>
-        <div className="flex-1" />
-        <div className="flex items-center gap-1.5">
-          <Clock className="h-3.5 w-3.5 text-muted-foreground" />
-          <span className="text-sm font-black tabular-nums text-foreground">
+        <div className="flex-1 hidden md:block" />
+        <div className="flex items-center gap-1 shrink-0">
+          <Clock className="h-3 w-3 md:h-3.5 md:w-3.5 text-muted-foreground" />
+          <span className="text-xs md:text-sm font-black tabular-nums text-foreground">
             {clockStr}
           </span>
         </div>
       </div>
 
-      {/* ── Windows-style Toolbar ── */}
-      <div className="flex items-center gap-1 border-b border-border px-3 py-1.5 shrink-0 bg-card">
-        <button
-          onClick={onOpenBalcao}
-          className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded text-xs border border-border bg-secondary text-foreground hover:bg-primary/15 transition-colors"
-          style={{ minWidth: 76 }}
-        >
-          <ReceiptText className="h-5 w-5" />
-          <span className="text-xs font-bold">Novo pedido</span>
-        </button>
-        <button
-          onClick={onOpenMovimentacao}
-          className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded text-xs border border-border bg-secondary text-foreground hover:bg-primary/15 transition-colors"
-          style={{ minWidth: 76 }}
-        >
-          <Banknote className="h-5 w-5" />
-          <span className="text-xs font-bold">Sangria</span>
-        </button>
-        <div className="w-px h-8 mx-1 bg-border" />
+      {/* ── Toolbar — scrollable on mobile ── */}
+      <div className="flex items-center gap-1 border-b border-border px-2 md:px-3 py-1 md:py-1.5 shrink-0 bg-card overflow-x-auto scrollbar-hide">
+        {[
+          { onClick: onOpenBalcao, icon: ReceiptText, label: "Novo pedido" },
+          { onClick: onOpenMovimentacao, icon: Banknote, label: "Sangria" },
+        ].map((btn, i) => (
+          <button
+            key={i}
+            onClick={btn.onClick}
+            className="flex flex-col items-center gap-0.5 px-2 md:px-3 py-1 md:py-1.5 rounded text-xs border border-border bg-secondary text-foreground hover:bg-primary/15 transition-colors shrink-0"
+            style={{ minWidth: 60 }}
+          >
+            <btn.icon className="h-4 w-4 md:h-5 md:w-5" />
+            <span className="text-[10px] md:text-xs font-bold whitespace-nowrap">{btn.label}</span>
+          </button>
+        ))}
+        <div className="w-px h-6 md:h-8 mx-0.5 md:mx-1 bg-border shrink-0" />
         <button
           onClick={onOpenTurnoReport}
-          className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded text-xs border border-destructive/50 bg-secondary text-destructive hover:bg-destructive/15 transition-colors"
-          style={{ minWidth: 76 }}
+          className="flex flex-col items-center gap-0.5 px-2 md:px-3 py-1 md:py-1.5 rounded text-xs border border-destructive/50 bg-secondary text-destructive hover:bg-destructive/15 transition-colors shrink-0"
+          style={{ minWidth: 60 }}
         >
-          <LockKeyhole className="h-5 w-5" />
-          <span className="text-xs font-bold">Fechar turno</span>
+          <LockKeyhole className="h-4 w-4 md:h-5 md:w-5" />
+          <span className="text-[10px] md:text-xs font-bold whitespace-nowrap">Fechar turno</span>
         </button>
         <button
           onClick={onOpenBuscaComanda}
-          className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded text-xs border border-border bg-secondary text-foreground hover:bg-primary/15 transition-colors"
-          style={{ minWidth: 76 }}
+          className="flex flex-col items-center gap-0.5 px-2 md:px-3 py-1 md:py-1.5 rounded text-xs border border-border bg-secondary text-foreground hover:bg-primary/15 transition-colors shrink-0"
+          style={{ minWidth: 60 }}
         >
-          <Search className="h-5 w-5" />
-          <span className="text-xs font-bold">Buscar</span>
+          <Search className="h-4 w-4 md:h-5 md:w-5" />
+          <span className="text-[10px] md:text-xs font-bold">Buscar</span>
         </button>
         <button
           onClick={onOpenQrScanner}
-          className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded text-xs border border-border bg-secondary text-foreground hover:bg-primary/15 transition-colors"
-          style={{ minWidth: 76 }}
+          className="flex flex-col items-center gap-0.5 px-2 md:px-3 py-1 md:py-1.5 rounded text-xs border border-border bg-secondary text-foreground hover:bg-primary/15 transition-colors shrink-0"
+          style={{ minWidth: 60 }}
         >
-          <QrCode className="h-5 w-5" />
-          <span className="text-xs font-bold">QR Code</span>
+          <QrCode className="h-4 w-4 md:h-5 md:w-5" />
+          <span className="text-[10px] md:text-xs font-bold">QR</span>
         </button>
         <button
           onClick={onLogout}
-          className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded text-xs border border-border bg-secondary text-foreground hover:bg-primary/15 transition-colors"
-          style={{ minWidth: 76 }}
+          className="flex flex-col items-center gap-0.5 px-2 md:px-3 py-1 md:py-1.5 rounded text-xs border border-border bg-secondary text-foreground hover:bg-primary/15 transition-colors shrink-0"
+          style={{ minWidth: 60 }}
         >
-          <LogOut className="h-5 w-5" />
-          <span className="text-xs font-bold">Sair</span>
+          <LogOut className="h-4 w-4 md:h-5 md:w-5" />
+          <span className="text-[10px] md:text-xs font-bold">Sair</span>
         </button>
       </div>
     </>
