@@ -1205,6 +1205,23 @@ const CaixaPage = ({ accessMode = "caixa", deliveryOnly = false }: CaixaPageProp
 
               {/* ── Tabs — scrollable on mobile ── */}
               <div className="flex items-end px-2 md:px-3 pt-1 shrink-0 bg-card overflow-x-auto scrollbar-hide">
+                {isFastFoodGlobal && (
+                <button
+                  onClick={() => setCaixaView("pedidos")}
+                  className={`px-3 md:px-4 py-1.5 text-xs font-bold transition-colors border border-border rounded-t -mb-px relative flex items-center gap-1.5 shrink-0 ${
+                    caixaView === "pedidos"
+                      ? "bg-card text-foreground border-b-card z-10"
+                      : "bg-background text-muted-foreground"
+                  }`}
+                >
+                  Pedidos
+                  {pedidosBalcao.filter(p => !p.cancelado && p.statusBalcao !== "cancelado" && p.statusBalcao !== "pago").length > 0 && (
+                    <span className="rounded-full px-1.5 py-0.5 text-[10px] font-black tabular-nums leading-none bg-primary text-primary-foreground">
+                      {pedidosBalcao.filter(p => !p.cancelado && p.statusBalcao !== "cancelado" && p.statusBalcao !== "pago").length}
+                    </span>
+                  )}
+                </button>
+                )}
                 {showMesasTab && (
                 <button
                   onClick={() => setCaixaView("mesas")}
