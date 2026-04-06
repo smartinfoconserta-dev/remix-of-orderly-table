@@ -656,6 +656,16 @@ export default function AdminDashboard({ storeId, stores, onSelectStore }: Props
       {!loading && config && (
         <QuickAccessGrid config={config} />
       )}
+      {!loading && !config && stores && (
+        <div>
+          <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3">Acesso Rápido</h3>
+          <Card className="rounded-2xl shadow-sm">
+            <CardContent className="py-8 text-center">
+              <p className="text-sm text-muted-foreground">Selecione uma loja acima para ver os módulos operacionais.</p>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }
