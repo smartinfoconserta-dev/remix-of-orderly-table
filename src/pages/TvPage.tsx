@@ -192,7 +192,7 @@ const TvInner = ({ storeId }: { storeId: string }) => {
         {/* Preparando */}
         <div className="flex-1 flex flex-col border-r border-border">
           <div className="px-5 py-3 flex items-center gap-3 border-b border-border bg-muted/30">
-            <div className="h-3 w-3 rounded-full bg-yellow-500" />
+            <div className="h-3 w-3 rounded-full bg-amber-500" />
             <h2 className="text-lg font-bold uppercase tracking-wider text-foreground">Preparando</h2>
             {pedidosPreparando.length > 0 && (
               <span className="ml-auto text-sm font-bold text-muted-foreground bg-muted rounded-full px-2.5 py-0.5">{pedidosPreparando.length}</span>
