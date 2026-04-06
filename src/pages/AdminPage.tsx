@@ -119,7 +119,7 @@ const AdminPage = () => {
                   <Menu className="h-4 w-4" />
                 </Button>
               </SheetTrigger>
-              <SheetContent side="left" className="w-[260px] p-0 bg-sidebar-background border-sidebar-border">
+              <SheetContent side="left" className="w-[260px] p-0 bg-sidebar border-sidebar-border">
                 <div className="px-4 py-4 border-b border-sidebar-border">
                   <h2 className="text-sm font-bold text-sidebar-foreground">{nomeRestaurante}</h2>
                   <p className="text-[10px] text-muted-foreground">Painel Administrativo</p>
