@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Monitor, TabletSmartphone, Tv, LockKeyhole, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -49,8 +49,19 @@ const formatCnpjCpf = (v: string) => {
 };
 
 const DeviceGate = ({ type, children }: DeviceGateProps) => {
-  const [status, setStatus] = useState<"loading" | "activate" | "ready" | "blocked">("loading");
-  const [storeId, setStoreId] = useState<string | null>(null);
+  // If we already have a stored device + storeId from a just-completed activation, start as ready
+  const justActivatedRef = useRef(false);
+  const initialStatus = (): "loading" | "activate" | "ready" | "blocked" => {
+    if (justActivatedRef.current) return "ready";
+    const deviceId = getStoredDeviceId();
+    return deviceId ? "loading" : "activate";
+  };
+
+  const [status, setStatus] = useState<"loading" | "activate" | "ready" | "blocked">(initialStatus);
+  const [storeId, setStoreId] = useState<string | null>(() => {
+    const stored = typeof window !== "undefined" ? localStorage.getItem("orderly-device-store-id") : null;
+    return justActivatedRef.current && stored ? stored : null;
+  });
   const [mesaId, setMesaId] = useState<string | null>(null);
 
   // Activation form
@@ -65,6 +76,9 @@ const DeviceGate = ({ type, children }: DeviceGateProps) => {
 
   // On mount, check if device is already registered (with retry on network errors)
   useEffect(() => {
+    // Already ready (e.g. just activated) — skip validation
+    if (status === "ready" && storeId) return;
+
     let cancelled = false;
     let retryTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -85,17 +99,14 @@ const DeviceGate = ({ type, children }: DeviceGateProps) => {
         sessionStorage.setItem("orderly-device-store-id", result.storeId);
         setStatus("ready");
       } else if (result.error?.includes("desativado")) {
-        // Admin desativou o device — limpar
         clearStoredDeviceId();
         setError(result.error);
         setStatus("blocked");
       } else if (result.error?.includes("não encontrado") || result.error?.includes("outro tipo")) {
-        // Device foi removido do banco — limpar
         clearStoredDeviceId();
         setError(result.error ?? null);
         setStatus("activate");
       } else {
-        // Erro de rede ou outro — NÃO limpar, tentar de novo em 5s
         setError("Sem conexão. Tentando reconectar...");
         retryTimer = setTimeout(check, 5000);
       }
@@ -209,8 +220,8 @@ const DeviceGate = ({ type, children }: DeviceGateProps) => {
         return;
       }
 
+      justActivatedRef.current = true;
       setStoreId(foundStoreId);
-      // Persist storeId so RestaurantContext can find it (localStorage survives restarts)
       localStorage.setItem("orderly-device-store-id", foundStoreId);
       sessionStorage.setItem("orderly-device-store-id", foundStoreId);
       setStatus("ready");

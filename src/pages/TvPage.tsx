@@ -131,89 +131,102 @@ const TvInner = ({ storeId }: { storeId: string }) => {
 
   const logoUrl = config.logoBase64 || config.logoUrl || "";
 
-  const CardPedido = ({ p, variant }: { p: PedidoTV; variant: "preparando" | "pronto" }) => {
-    const isPronto = variant === "pronto";
+  // The most recent "pronto" order (last added) should be highlighted
+  const latestPronto = pedidosProntos.length > 0 ? pedidosProntos[pedidosProntos.length - 1] : null;
+
+  const OrderRow = ({ p, isLatest }: { p: PedidoTV; isLatest?: boolean }) => {
     const showName = p.nome && p.nome !== "Totem" && p.nome !== "Balcão";
     return (
-      <div className={`rounded-2xl px-5 py-5 text-center transition-all ${isPronto ? "tv-pulse" : ""}`} style={{ background: isPronto ? "#FF6B00" : "#FFF8F0", border: isPronto ? "2px solid #FF6B00" : "2px solid #FFD4AD" }}>
-        <p className="text-4xl xl:text-5xl font-black tabular-nums" style={{ color: isPronto ? "#FFFFFF" : "#FF6B00" }}>#{String(p.numero).padStart(3, "0")}</p>
-        {showName && <p className="text-sm xl:text-base font-bold mt-2 truncate" style={{ color: isPronto ? "rgba(255,255,255,0.85)" : "#1A1A1A" }}>{p.nome}</p>}
+      <div className={`flex items-center gap-4 rounded-xl px-5 transition-all ${
+        isLatest
+          ? "py-6 bg-primary/10 border-2 border-primary"
+          : "py-4 bg-card border border-border"
+      }`}>
+        <span className={`font-black tabular-nums ${isLatest ? "text-4xl xl:text-5xl" : "text-2xl xl:text-3xl"} text-foreground`}>
+          #{String(p.numero).padStart(3, "0")}
+        </span>
+        {showName && (
+          <span className={`font-semibold truncate text-muted-foreground ${isLatest ? "text-lg" : "text-sm"}`}>{p.nome}</span>
+        )}
+        {isLatest && (
+          <span className="ml-auto text-xs font-bold uppercase tracking-wider text-primary animate-pulse">Novo</span>
+        )}
       </div>
     );
   };
 
   const EmptyCol = ({ text }: { text: string }) => (
     <div className="flex-1 flex items-center justify-center">
-      <p className="text-2xl font-bold" style={{ color: "#D4D4D4" }}>{text}</p>
+      <p className="text-lg font-medium text-muted-foreground/50">{text}</p>
     </div>
   );
 
   if (!modulos.totem && !modulos.balcao && !modulos.garcomPdv) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center" style={{ background: "#FFFFFF" }}>
+      <div className="min-h-screen flex flex-col items-center justify-center bg-background">
         {logoUrl && <img src={logoUrl} alt="" className="h-24 w-24 rounded-2xl object-cover mb-6" />}
-        <h1 className="text-4xl font-black" style={{ color: "#FF6B00" }}>{config.nomeRestaurante || "Restaurante"}</h1>
-        <p className="text-xl font-bold mt-4" style={{ color: "#999" }}>TV em standby</p>
-        <p className="text-base mt-2" style={{ color: "#BBB" }}>Ative o módulo Totem ou Balcão para exibir o painel de retirada</p>
-        <p className="text-3xl font-black tabular-nums mt-8" style={{ color: "#FF6B00" }}>{clock.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</p>
+        <h1 className="text-4xl font-black text-foreground">{config.nomeRestaurante || "Restaurante"}</h1>
+        <p className="text-xl font-medium mt-4 text-muted-foreground">TV em standby</p>
+        <p className="text-base mt-2 text-muted-foreground/60">Ative o módulo Totem ou Balcão para exibir o painel</p>
+        <p className="text-3xl font-black tabular-nums mt-8 text-foreground">{clock.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: "#FFFFFF" }}>
-      <div className="px-8 py-6 flex items-center justify-between" style={{ borderBottom: "3px solid #FF6B00" }}>
+    <div className="min-h-screen flex flex-col bg-background">
+      {/* Header */}
+      <div className="px-6 md:px-8 py-5 flex items-center justify-between border-b border-border">
         <div className="flex items-center gap-4">
-          {logoUrl && <img src={logoUrl} alt="" className="h-12 w-12 rounded-xl object-cover" />}
+          {logoUrl && <img src={logoUrl} alt="" className="h-10 w-10 rounded-lg object-cover" />}
           <div>
-            <h1 className="text-4xl font-black uppercase tracking-wider" style={{ color: "#FF6B00" }}>Painel de Pedidos</h1>
-            <p className="text-lg font-bold mt-0.5" style={{ color: "#1A1A1A", opacity: 0.5 }}>{config.nomeRestaurante || "Restaurante"}</p>
+            <h1 className="text-2xl md:text-3xl font-black uppercase tracking-wide text-foreground">Painel de Pedidos</h1>
+            <p className="text-sm font-medium text-muted-foreground">{config.nomeRestaurante || "Restaurante"}</p>
           </div>
         </div>
-        <div className="text-right">
-          <p className="text-3xl font-black tabular-nums" style={{ color: "#FF6B00" }}>{clock.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</p>
-        </div>
+        <p className="text-2xl md:text-3xl font-black tabular-nums text-foreground">{clock.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</p>
       </div>
 
+      {/* Columns */}
       <div className="flex-1 flex min-h-0">
-        <div className="flex-1 flex flex-col border-r-2" style={{ borderColor: "#F0F0F0" }}>
-          <div className="px-6 py-4 flex items-center gap-3" style={{ background: "#FFFBF5", borderBottom: "2px solid #FFE8CC" }}>
-            <span className="text-2xl">🔥</span>
-            <h2 className="text-2xl font-black uppercase tracking-widest" style={{ color: "#D97706" }}>Preparando</h2>
+        {/* Preparando */}
+        <div className="flex-1 flex flex-col border-r border-border">
+          <div className="px-5 py-3 flex items-center gap-3 border-b border-border bg-muted/30">
+            <div className="h-3 w-3 rounded-full bg-amber-500" />
+            <h2 className="text-lg font-bold uppercase tracking-wider text-foreground">Preparando</h2>
             {pedidosPreparando.length > 0 && (
-              <span className="ml-auto text-lg font-black rounded-full w-9 h-9 flex items-center justify-center" style={{ background: "#FEF3C7", color: "#D97706" }}>{pedidosPreparando.length}</span>
+              <span className="ml-auto text-sm font-bold text-muted-foreground bg-muted rounded-full px-2.5 py-0.5">{pedidosPreparando.length}</span>
             )}
           </div>
-          <div className="flex-1 overflow-y-auto p-5">
+          <div className="flex-1 overflow-y-auto p-4">
             {pedidosPreparando.length === 0 ? <EmptyCol text="Nenhum pedido" /> : (
-              <div className="grid grid-cols-2 xl:grid-cols-3 gap-4">{pedidosPreparando.map((p) => <CardPedido key={p.id} p={p} variant="preparando" />)}</div>
+              <div className="flex flex-col gap-3">
+                {pedidosPreparando.map((p) => <OrderRow key={p.id} p={p} />)}
+              </div>
             )}
           </div>
         </div>
 
+        {/* Pronto */}
         <div className="flex-1 flex flex-col">
-          <div className="px-6 py-4 flex items-center gap-3" style={{ background: "#F0FFF4", borderBottom: "2px solid #BBF7D0" }}>
-            <span className="text-2xl">✅</span>
-            <h2 className="text-2xl font-black uppercase tracking-widest" style={{ color: "#16A34A" }}>Pronto</h2>
+          <div className="px-5 py-3 flex items-center gap-3 border-b border-border bg-muted/30">
+            <div className="h-3 w-3 rounded-full bg-green-500" />
+            <h2 className="text-lg font-bold uppercase tracking-wider text-foreground">Pronto</h2>
             {pedidosProntos.length > 0 && (
-              <span className="ml-auto text-lg font-black rounded-full w-9 h-9 flex items-center justify-center" style={{ background: "#DCFCE7", color: "#16A34A" }}>{pedidosProntos.length}</span>
+              <span className="ml-auto text-sm font-bold text-muted-foreground bg-muted rounded-full px-2.5 py-0.5">{pedidosProntos.length}</span>
             )}
           </div>
-          <div className="flex-1 overflow-y-auto p-5">
+          <div className="flex-1 overflow-y-auto p-4">
             {pedidosProntos.length === 0 ? <EmptyCol text="Nenhum pedido pronto" /> : (
-              <div className="grid grid-cols-2 xl:grid-cols-3 gap-4">{pedidosProntos.map((p) => <CardPedido key={p.id} p={p} variant="pronto" />)}</div>
+              <div className="flex flex-col gap-3">
+                {pedidosProntos.map((p) => (
+                  <OrderRow key={p.id} p={p} isLatest={latestPronto?.id === p.id} />
+                ))}
+              </div>
             )}
           </div>
         </div>
       </div>
-
-      <style>{`
-        @keyframes tv-pulse {
-          0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255,107,0,0.4); }
-          50% { transform: scale(1.02); box-shadow: 0 0 30px 8px rgba(255,107,0,0.15); }
-        }
-        .tv-pulse { animation: tv-pulse 2.5s ease-in-out infinite; }
-      `}</style>
     </div>
   );
 };
