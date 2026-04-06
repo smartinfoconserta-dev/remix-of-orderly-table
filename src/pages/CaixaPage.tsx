@@ -1297,7 +1297,15 @@ const CaixaPage = ({ accessMode = "caixa", deliveryOnly = false }: CaixaPageProp
 
                 {/* ═══ Full-width content ═══ */}
                 <div className="flex-1 overflow-y-auto p-3 md:p-5 lg:p-6 scrollbar-hide bg-background">
-                {caixaView === "mesas" ? (
+                {caixaView === "pedidos" ? (
+                  <CaixaPedidosFastFoodPanel
+                    pedidos={pedidosBalcao}
+                    marcarBalcaoPreparando={marcarBalcaoPreparando}
+                    marcarBalcaoPronto={marcarBalcaoPronto}
+                    marcarBalcaoRetirado={marcarBalcaoRetirado}
+                    onPagar={handleSelecionarBalcao}
+                  />
+                ) : caixaView === "mesas" ? (
                   <CaixaMesasTab
                     mesas={mesas}
                     pedidosBalcaoSoAtivos={pedidosBalcaoSoAtivos}
@@ -1344,7 +1352,7 @@ const CaixaPage = ({ accessMode = "caixa", deliveryOnly = false }: CaixaPageProp
                     setBalcaoTipo={setBalcaoTipo}
                     setBalcaoOpen={setBalcaoOpen}
                   />
-                ) : (
+                ) : caixaView === "totem" ? (
                   <CaixaTotemPanel
                     pedidosTotem={pedidosTotem}
                     pedidosTotemAtivos={pedidosTotemAtivos}
@@ -1367,8 +1375,7 @@ const CaixaPage = ({ accessMode = "caixa", deliveryOnly = false }: CaixaPageProp
                     totemCancelLoading={totemCancelLoading}
                     setTotemCancelLoading={setTotemCancelLoading}
                   />
-                )}
-                {caixaView === "ifood" && (
+                ) : null}
                   <div className="space-y-4 fade-in p-1">
                     <IfoodPainel />
                   </div>
