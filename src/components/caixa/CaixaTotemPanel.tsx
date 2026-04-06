@@ -29,7 +29,7 @@ interface CaixaTotemPanelProps {
   verifyEmployeeAccess: (nome: string, pin: string) => Promise<{ ok: boolean; error?: string; user?: any }>;
   currentCaixa: OperationalUser | null;
   currentGerente: OperationalUser | null;
-  setCaixaView: (v: "mesas" | "delivery" | "totem" | "historico" | "ifood") => void;
+  setCaixaView: (v: "mesas" | "delivery" | "totem" | "historico" | "ifood" | "pedidos") => void;
   totemCancelOpen: string | null;
   setTotemCancelOpen: (v: string | null) => void;
   totemCancelMotivo: string;
