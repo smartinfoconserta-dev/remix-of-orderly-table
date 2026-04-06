@@ -87,6 +87,13 @@ const GarcomPdvPage = () => {
     itens: Array<{ quantidade: number; nome: string; preco: number }>;
     numeroPedido: number;
   } | null>(null);
+  // Fast food flow states
+  const [ffStep, setFfStep] = useState<"menu" | "payment" | "processing" | "done">("menu");
+  const [ffPendingItens, setFfPendingItens] = useState<ItemCarrinho[]>([]);
+  const [ffPendingTotal, setFfPendingTotal] = useState(0);
+  const [ffPaymentMethod, setFfPaymentMethod] = useState<PaymentMethod | null>(null);
+  const [ffNumeroPedido, setFfNumeroPedido] = useState<number | null>(null);
+  const [ffSubmitting, setFfSubmitting] = useState(false);
 
   useRouteLock("/garcom-pdv");
 
