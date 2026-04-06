@@ -38,7 +38,22 @@ const Index = () => {
     if (authLevel === "master") navigate("/master", { replace: true });
     else if (authLevel === "admin") navigate("/admin", { replace: true });
     else if (authLevel === "operational" && operationalSession?.module) {
-      navigate(`/${routeMap[operationalSession.module] ?? operationalSession.module}`, { replace: true });
+      const mod = operationalSession.module;
+      if (mod === "garcom") {
+        // Check store mode to decide garcom vs garcom-pdv
+        supabase
+          .from("restaurant_config")
+          .select("modulos")
+          .eq("store_id", operationalSession.storeId)
+          .maybeSingle()
+          .then(({ data: cfg }) => {
+            const modulos = (cfg?.modulos as Record<string, boolean>) ?? {};
+            const route = modulos.mesas === false ? "garcom-pdv" : "garcom";
+            navigate(`/${route}`, { replace: true });
+          });
+      } else {
+        navigate(`/${routeMap[mod] ?? mod}`, { replace: true });
+      }
     }
   }, [authLevel, operationalSession, isLoading, navigate, suppressAutoRedirect]);
 
