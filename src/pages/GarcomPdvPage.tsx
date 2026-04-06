@@ -733,9 +733,9 @@ const GarcomPdvPage = () => {
       <OfflineIndicator />
       <AppLayout
         title="Garçom PDV"
-        headerLeft={longPressAvatar}
         headerRight={
           <div className="flex items-center gap-2">
+            {longPressAvatar}
             <span className="text-xs font-bold px-2 py-1 rounded-full bg-primary/10 text-primary">💳 PDV</span>
             <span className="text-sm font-bold tabular-nums text-muted-foreground">{clock}</span>
             {!isAdminAccess && (
