@@ -84,7 +84,7 @@ const formatMesaLabel = (mesaId: string) => {
   return `Mesa ${numeroMesa.padStart(2, "0")}`;
 };
 
-const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, onBack, onPedidoConfirmado, deviceStoreId: propStoreId }: PedidoFlowProps) => {
+const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, onBack, onPedidoConfirmado, deviceStoreId: propStoreId, onExitSession }: PedidoFlowProps) => {
   const isTotem = modo === "totem";
   const navigate = useNavigate();
   const isMobile = useIsMobile();
