@@ -34,7 +34,10 @@ const TvInner = ({ storeId }: { storeId: string }) => {
       clearStoredDeviceId();
       sessionStorage.removeItem("orderly-device-store-id");
       localStorage.removeItem("orderly-device-store-id");
+      sessionStorage.removeItem("obsidian-op-session-v2");
+      localStorage.removeItem("obsidian-op-session-v2-persisted");
       navigate("/", { replace: true });
+      window.location.reload();
     }, 5000);
   }, [navigate]);
   const handleExitEnd = useCallback(() => {
