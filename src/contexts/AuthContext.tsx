@@ -273,6 +273,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     const resolved = await resolveSupabaseLevel(data.user);
+    if (resolved.queryFailed) {
+      // DB query failed (timeout/network) — don't sign out, retry later
+      return { ok: false, error: "Erro de conexão ao verificar permissões. Tente novamente." };
+    }
     if (resolved.level === "unauthenticated") {
       await supabase.auth.signOut();
       return { ok: false, error: "Usuário sem permissão de acesso ao sistema" };
