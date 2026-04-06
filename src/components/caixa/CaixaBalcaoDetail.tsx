@@ -172,18 +172,32 @@ const CaixaBalcaoDetail = ({
       <div className="flex flex-col overflow-hidden">
         <div className="flex-1 overflow-y-auto space-y-4 scrollbar-hide">
 
-          {/* Card 1 — Total resumo */}
-          <div className="rounded-2xl border border-border bg-card p-5">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Total do pedido</p>
-                <p className="text-xs text-muted-foreground mt-0.5">{balcaoPedido.itens.length} {balcaoPedido.itens.length === 1 ? "item" : "itens"}</p>
+          {/* Card 1 — ITENS DO PEDIDO */}
+          <div className="rounded-2xl border border-border bg-card p-5 space-y-3">
+            <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Itens do pedido</p>
+            <div className="space-y-1">
+              {balcaoPedido.itens.map((item) => (
+                <div key={item.uid} className="flex items-center justify-between py-1">
+                  <span className="text-sm text-foreground truncate">
+                    <span className="font-bold tabular-nums text-muted-foreground">{item.quantidade}×</span>{" "}
+                    {item.nome}
+                  </span>
+                  <span className="text-sm font-bold tabular-nums text-foreground shrink-0 ml-2">
+                    {formatPrice(item.precoUnitario * item.quantidade)}
+                  </span>
+                </div>
+              ))}
+            </div>
+            <div className="border-t border-border pt-3">
+              <div className="flex items-center justify-between">
+                <span className="text-base font-black text-foreground">Total</span>
+                <span className="text-3xl font-black text-primary tabular-nums">{formatPrice(balcaoTotalConta)}</span>
               </div>
-              <span className="text-3xl font-black text-primary tabular-nums">{formatPrice(balcaoTotalConta)}</span>
+              <p className="text-xs text-muted-foreground mt-0.5">{balcaoPedido.itens.length} {balcaoPedido.itens.length === 1 ? "item" : "itens"}</p>
             </div>
           </div>
 
-          {/* Card 2 — Payment */}
+          {/* Card 2 — PAGAMENTO */}
           {balcaoTotalConta > 0 && (
             <div className="rounded-2xl border border-border bg-card p-5 space-y-4">
               <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Pagamento</p>
@@ -395,7 +409,7 @@ const CaixaBalcaoDetail = ({
             </div>
           )}
 
-          {/* Card 4 — NFC-e badge */}
+          {/* Card 4 — NFC-e badge (only if configured) */}
           <CaixaNfcePlaceholder />
 
           {/* Confirm button */}
