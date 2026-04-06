@@ -27,6 +27,20 @@ const TvInner = ({ storeId }: { storeId: string }) => {
     logoUrl: "",
   });
 
+  // Hidden exit: long-press 5s on title
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const handleExitStart = useCallback(() => {
+    longPressTimer.current = setTimeout(() => {
+      clearStoredDeviceId();
+      sessionStorage.removeItem("orderly-device-store-id");
+      localStorage.removeItem("orderly-device-store-id");
+      navigate("/", { replace: true });
+    }, 5000);
+  }, [navigate]);
+  const handleExitEnd = useCallback(() => {
+    if (longPressTimer.current) { clearTimeout(longPressTimer.current); longPressTimer.current = null; }
+  }, []);
+
   useEffect(() => {
     supabase
       .from("restaurant_config")
