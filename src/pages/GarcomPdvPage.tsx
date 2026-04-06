@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { LogOut, Bell, Search, CreditCard, Smartphone, Wallet, ShoppingBag, Trash2, Plus, Check, Printer, BellRing } from "lucide-react";
+import { LogOut, Bell, Search, CreditCard, Smartphone, Wallet, ShoppingBag, Trash2, Plus, Check, Printer, BellRing, QrCode } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel } from "@/components/ui/alert-dialog";
@@ -14,6 +14,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useRestaurant } from "@/contexts/RestaurantContext";
 import { useRouteLock } from "@/hooks/use-route-lock";
 import type { PaymentMethod, SplitPayment, FiltroMesa } from "@/types/operations";
+import type { ItemCarrinho } from "@/contexts/RestaurantContext";
 import { toast } from "sonner";
 import { formatPrice, printComanda } from "@/components/caixa/caixaHelpers";
 import { getSistemaConfig } from "@/lib/adminStorage";
@@ -27,12 +28,16 @@ const PAYMENT_OPTIONS: { value: PaymentMethod; label: string; icon: typeof Credi
 ];
 
 const GarcomPdvPage = () => {
-  const { mesas, dismissChamarGarcom, fecharConta, caixaAberto } = useRestaurant();
+  const { mesas, dismissChamarGarcom, fecharConta, caixaAberto, criarPedidoBalcao } = useRestaurant();
   const { currentGarcom, logout, authLevel } = useAuth();
   const isAdminAccess = authLevel === "admin" || authLevel === "master";
   const [searchParams, setSearchParams] = useSearchParams();
   const mesaIdSelecionada = searchParams.get("mesa")?.trim() ?? "";
   const [filtro, setFiltro] = useState<FiltroMesa>("todas");
+
+  // Detect fast food mode
+  const config = getSistemaConfig();
+  const isFastFood = config.modulos?.mesas === false;
   const [mesaBusca, setMesaBusca] = useState("");
   const [clock, setClock] = useState(() =>
     new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })

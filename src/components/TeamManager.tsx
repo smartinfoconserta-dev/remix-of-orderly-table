@@ -19,13 +19,34 @@ import {
 import { Plus, ShieldOff, ShieldCheck, Trash2, Users, Search } from "lucide-react";
 import { toast } from "sonner";
 
-const ROLES = [
-  { value: "garcom", label: "Garçom" },
+import { getSistemaConfig } from "@/lib/adminStorage";
+
+const ALL_ROLES = [
+  { value: "garcom", label: "Garçom", fastFoodLabel: "Garçom PDV" },
   { value: "caixa", label: "Caixa" },
   { value: "cozinha", label: "Cozinha" },
   { value: "gerente", label: "Gerente" },
   { value: "motoboy", label: "Motoboy" },
 ];
+
+const getRolesForMode = () => {
+  const config = getSistemaConfig();
+  const isFastFood = config.modulos?.mesas === false;
+  const deliveryAtivo = config.deliveryAtivo !== false && (config.modulos?.delivery === true || config.modulos?.motoboy === true);
+
+  return ALL_ROLES
+    .filter((r) => {
+      // In restaurant mode, hide motoboy if delivery is off
+      if (r.value === "motoboy" && !deliveryAtivo) return false;
+      return true;
+    })
+    .map((r) => ({
+      value: r.value,
+      label: isFastFood && r.fastFoodLabel ? r.fastFoodLabel : r.label,
+    }));
+};
+
+const ROLES = getRolesForMode();
 
 const ROLE_LABELS: Record<string, string> = Object.fromEntries(
   ROLES.map((r) => [r.value, r.label])
