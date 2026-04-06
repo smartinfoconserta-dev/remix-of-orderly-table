@@ -212,12 +212,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   /* ─── Listen to auth state changes ─── */
   useEffect(() => {
+    let initialResolved = false;
+
     // 1. Restore session from storage FIRST
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (session?.user) {
         setSupabaseUser(session.user);
         const resolved = await resolveSupabaseLevel(session.user);
         applyResolved(resolved);
+        initialResolved = true;
       } else {
         const opSession = readOpSession();
         if (opSession) {
@@ -228,8 +231,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setIsLoading(false);
     });
 
-    // 2. Subscribe to subsequent changes — NEVER await inside this callback
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    // 2. Subscribe to subsequent changes — skip INITIAL_SESSION to avoid double resolve
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "INITIAL_SESSION") return; // already handled above
       if (session?.user) {
         setSupabaseUser(session.user);
         resolveSupabaseLevel(session.user).then(applyResolved);
