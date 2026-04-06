@@ -171,21 +171,21 @@ const GerentePage = () => {
   const horaAtual = now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
 
   return (
-    <div className="flex flex-col h-screen bg-background">
+    <div className="flex flex-col min-h-svh md:h-screen bg-background">
       <OfflineIndicator />
-      {/* Title bar — Windows style */}
-      <div className="flex items-center justify-between px-4 py-2.5 shrink-0 border-b border-border bg-card">
-        <span className="text-sm font-bold text-foreground">Gerente — {nomeRestaurante}</span>
-        <span className="text-xs text-muted-foreground">Operador: {effectiveGerente.nome} • {horaAtual}</span>
-        <Button variant="ghost" size="sm" className="h-7 px-2 text-muted-foreground hover:text-foreground hover:bg-secondary text-xs gap-1" onClick={() => logout("gerente")}>
+      {/* Title bar */}
+      <div className="flex items-center justify-between px-3 md:px-4 py-2 md:py-2.5 shrink-0 border-b border-border bg-card gap-2">
+        <span className="text-xs md:text-sm font-bold text-foreground truncate min-w-0">Gerente — {nomeRestaurante}</span>
+        <span className="text-[10px] md:text-xs text-muted-foreground hidden sm:block shrink-0">{effectiveGerente.nome} • {horaAtual}</span>
+        <Button variant="ghost" size="sm" className="h-7 px-2 text-muted-foreground hover:text-foreground hover:bg-secondary text-xs gap-1 shrink-0" onClick={() => logout("gerente")}>
           <LogOut className="h-3.5 w-3.5" />
-          Sair
+          <span className="hidden sm:inline">Sair</span>
         </Button>
       </div>
 
-      {/* Tabs — Windows classic style */}
+      {/* Tabs */}
       <Tabs defaultValue="fechamento" className="flex flex-col flex-1 min-h-0 overflow-hidden">
-        <TabsList className="shrink-0 border-b border-border bg-card px-4 md:px-6 flex h-auto rounded-none p-0">
+        <TabsList className="shrink-0 border-b border-border bg-card px-2 md:px-6 flex h-auto rounded-none p-0 overflow-x-auto scrollbar-hide">
           {[
             { value: "fechamento", icon: LockKeyhole, label: "Fechamento" },
             { value: "relatorio", icon: BarChart3, label: "Relatório" },
@@ -198,17 +198,16 @@ const GerentePage = () => {
               <TabsTrigger
                 key={t.value}
                 value={t.value}
-                className="relative px-5 py-2.5 text-sm font-bold text-muted-foreground border border-border border-b-0 -mb-px bg-background data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:border-t-2 data-[state=active]:border-t-primary data-[state=active]:border-b-card rounded-t-sm gap-1.5"
+                className="relative px-3 md:px-5 py-2 md:py-2.5 text-xs md:text-sm font-bold text-muted-foreground border border-border border-b-0 -mb-px bg-background data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:border-t-2 data-[state=active]:border-t-primary data-[state=active]:border-b-card rounded-t-sm gap-1 md:gap-1.5 shrink-0 whitespace-nowrap"
               >
-                <Icon className="h-4 w-4" />
+                <Icon className="h-3.5 w-3.5 md:h-4 md:w-4" />
                 {t.label}
               </TabsTrigger>
             );
           })}
         </TabsList>
 
-        {/* ═══ TAB 1: Fechamento do Turno ═══ */}
-        <TabsContent value="fechamento" className="flex-1 overflow-y-auto p-4 md:p-6 mt-0">
+        <TabsContent value="fechamento" className="flex-1 overflow-y-auto p-3 md:p-6 mt-0">
           <GerenteFechamento
             pinVerificado={pinVerificado}
             pinGateUI={pinGateUI}
@@ -220,8 +219,7 @@ const GerentePage = () => {
           />
         </TabsContent>
 
-        {/* ═══ TAB 2: Relatórios ═══ */}
-        <TabsContent value="relatorio" className="flex-1 overflow-y-auto p-4 md:p-6 mt-0">
+        <TabsContent value="relatorio" className="flex-1 overflow-y-auto p-3 md:p-6 mt-0">
           <GerenteRelatorio
             pinVerificado={pinVerificado}
             pinGateUI={pinGateUI}
@@ -236,13 +234,11 @@ const GerentePage = () => {
           />
         </TabsContent>
 
-        {/* ═══ TAB 3: Logs de Auditoria ═══ */}
-        <TabsContent value="logs" className="flex-1 overflow-y-auto p-4 md:p-6 mt-0">
+        <TabsContent value="logs" className="flex-1 overflow-y-auto p-3 md:p-6 mt-0">
           <GerenteLogs eventos={eventos} />
         </TabsContent>
 
-        {/* ═══ TAB 4: Equipe ═══ */}
-        <TabsContent value="equipe" className="flex-1 overflow-y-auto p-4 md:p-6 mt-0">
+        <TabsContent value="equipe" className="flex-1 overflow-y-auto p-3 md:p-6 mt-0">
           {!pinVerificado ? pinGateUI : (
           <div className="mx-auto max-w-2xl space-y-6">
             <div>
@@ -258,20 +254,19 @@ const GerentePage = () => {
           )}
         </TabsContent>
 
-        {/* ═══ TAB 5: iFood ═══ */}
-        <TabsContent value="ifood" className="flex-1 overflow-y-auto p-4 md:p-6 mt-0">
+        <TabsContent value="ifood" className="flex-1 overflow-y-auto p-3 md:p-6 mt-0">
           <div className="mx-auto max-w-2xl">
             <IfoodPainel />
           </div>
         </TabsContent>
       </Tabs>
 
-      {/* Status bar — Windows style */}
-      <div className="shrink-0 flex items-center gap-0 border-t border-border bg-card text-[10px] text-muted-foreground">
-        <span className="px-3 py-1 border-r border-border">● Online</span>
-        <span className="px-3 py-1 border-r border-border">Operador: {effectiveGerente.nome}</span>
-        <span className="px-3 py-1 border-r border-border">Fechamentos: {fechamentos.length}</span>
-        <span className="px-3 py-1">Mesas ativas: {mesas.filter(m => m.status === "consumo").length}</span>
+      {/* Status bar */}
+      <div className="shrink-0 flex items-center border-t border-border bg-card text-[10px] text-muted-foreground overflow-x-auto scrollbar-hide">
+        <span className="px-2 md:px-3 py-1 border-r border-border shrink-0">● Online</span>
+        <span className="px-2 md:px-3 py-1 border-r border-border shrink-0 hidden sm:block">{effectiveGerente.nome}</span>
+        <span className="px-2 md:px-3 py-1 border-r border-border shrink-0">F: {fechamentos.length}</span>
+        <span className="px-2 md:px-3 py-1 shrink-0">Mesas: {mesas.filter(m => m.status === "consumo").length}</span>
       </div>
       <LicenseBanner context="gerente" />
     </div>

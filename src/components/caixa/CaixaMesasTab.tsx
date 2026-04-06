@@ -58,8 +58,8 @@ const CaixaMesasTab = ({
 
   return (
     <div
-      className="grid gap-3 fade-in"
-      style={{ gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))" }}
+      className="grid gap-2 md:gap-3 fade-in"
+      style={{ gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))" }}
     >
       {mesas.map((item, i) => (
         <div
