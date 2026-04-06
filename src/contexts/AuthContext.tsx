@@ -139,63 +139,78 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }
 
   const resolveSupabaseLevel = useCallback(async (user: User): Promise<ResolvedAuth> => {
-    // 1. Check user_roles (master / admin)
-    const { data: roles } = await supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", user.id);
+    try {
+      // 1. Check user_roles (master / admin)
+      const { data: roles, error: rolesErr } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id);
 
-    if (roles?.some((r) => r.role === "master")) return { level: "master", redirect: "/master" };
-    if (roles?.some((r) => r.role === "admin")) return { level: "admin", redirect: "/admin" };
-
-    // 2. Check store_members for gerente/caixa/owner
-    const { data: members } = await supabase
-      .from("store_members")
-      .select("store_id, role_in_store, stores(id, name, slug)")
-      .eq("user_id", user.id);
-
-    if (members && members.length > 0) {
-      const sortedMembers = [...members].sort(
-        (a, b) => (STORE_ROLE_PRIORITY[b.role_in_store] ?? 0) - (STORE_ROLE_PRIORITY[a.role_in_store] ?? 0)
-      );
-
-      const m = sortedMembers[0];
-      const store = m.stores as any;
-      const role = m.role_in_store;
-
-      // Owners are treated as admins
-      if (role === "owner" || role === "admin") return { level: "admin", redirect: "/admin" };
-
-      // Gerente, caixa, etc → operational with auto-session
-      const moduleRouteMap: Record<string, string> = { tv_retirada: "tv", cliente: "tablet" };
-      const opSession: OperationalSession = {
-        storeId: store.id,
-        storeSlug: store.slug,
-        storeName: store.name,
-        module: role,
-        pinLabel: user.email ?? null,
-      };
-
-      // For garcom, check store mode to decide route
-      let route = moduleRouteMap[role] ?? role;
-      if (role === "garcom") {
-        const { data: cfg } = await supabase
-          .from("restaurant_config")
-          .select("modulos")
-          .eq("store_id", store.id)
-          .maybeSingle();
-        const modulos = (cfg?.modulos as Record<string, boolean>) ?? {};
-        if (modulos.mesas === false) route = "garcom-pdv";
+      if (rolesErr) {
+        console.error("[AuthContext] erro ao buscar roles:", rolesErr);
+        return { level: "unauthenticated", queryFailed: true };
       }
 
-      return {
-        level: "operational",
-        opSession,
-        redirect: `/${route}`,
-      };
-    }
+      if (roles?.some((r) => r.role === "master")) return { level: "master", redirect: "/master" };
+      if (roles?.some((r) => r.role === "admin")) return { level: "admin", redirect: "/admin" };
 
-    return { level: "unauthenticated" };
+      // 2. Check store_members for gerente/caixa/owner
+      const { data: members, error: membersErr } = await supabase
+        .from("store_members")
+        .select("store_id, role_in_store, stores(id, name, slug)")
+        .eq("user_id", user.id);
+
+      if (membersErr) {
+        console.error("[AuthContext] erro ao buscar members:", membersErr);
+        return { level: "unauthenticated", queryFailed: true };
+      }
+
+      if (members && members.length > 0) {
+        const sortedMembers = [...members].sort(
+          (a, b) => (STORE_ROLE_PRIORITY[b.role_in_store] ?? 0) - (STORE_ROLE_PRIORITY[a.role_in_store] ?? 0)
+        );
+
+        const m = sortedMembers[0];
+        const store = m.stores as any;
+        const role = m.role_in_store;
+
+        // Owners are treated as admins
+        if (role === "owner" || role === "admin") return { level: "admin", redirect: "/admin" };
+
+        // Gerente, caixa, etc → operational with auto-session
+        const moduleRouteMap: Record<string, string> = { tv_retirada: "tv", cliente: "tablet" };
+        const opSession: OperationalSession = {
+          storeId: store.id,
+          storeSlug: store.slug,
+          storeName: store.name,
+          module: role,
+          pinLabel: user.email ?? null,
+        };
+
+        // For garcom, check store mode to decide route
+        let route = moduleRouteMap[role] ?? role;
+        if (role === "garcom") {
+          const { data: cfg } = await supabase
+            .from("restaurant_config")
+            .select("modulos")
+            .eq("store_id", store.id)
+            .maybeSingle();
+          const modulos = (cfg?.modulos as Record<string, boolean>) ?? {};
+          if (modulos.mesas === false) route = "garcom-pdv";
+        }
+
+        return {
+          level: "operational",
+          opSession,
+          redirect: `/${route}`,
+        };
+      }
+
+      return { level: "unauthenticated" };
+    } catch (err) {
+      console.error("[AuthContext] erro em resolveSupabaseLevel:", err);
+      return { level: "unauthenticated", queryFailed: true };
+    }
   }, []);
 
   /* ─── Apply resolved auth ─── */
