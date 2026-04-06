@@ -348,7 +348,15 @@ const DeviceGate = ({ type, children }: DeviceGateProps) => {
 
             <button
               type="button"
-              onClick={() => navigate("/", { replace: true })}
+              onClick={() => {
+                clearStoredDeviceId();
+                sessionStorage.removeItem("orderly-device-store-id");
+                localStorage.removeItem("orderly-device-store-id");
+                sessionStorage.removeItem("obsidian-op-session-v2");
+                localStorage.removeItem("obsidian-op-session-v2-persisted");
+                navigate("/", { replace: true });
+                window.location.reload();
+              }}
               className="w-full text-center text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
             >
               ← Voltar ao login
