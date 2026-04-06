@@ -1376,6 +1376,7 @@ const CaixaPage = ({ accessMode = "caixa", deliveryOnly = false }: CaixaPageProp
                     setTotemCancelLoading={setTotemCancelLoading}
                   />
                 ) : null}
+                {caixaView === "ifood" && (
                   <div className="space-y-4 fade-in p-1">
                     <IfoodPainel />
                   </div>
