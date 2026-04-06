@@ -455,17 +455,25 @@ const AdminCardapio = ({ storeId }: Props) => {
                   )}
                 </div>
                 {/* Setor */}
-                <div className="space-y-1.5 border-t border-border pt-4">
-                  <label className="text-xs font-bold text-muted-foreground">Setor de preparo</label>
-                  <div className="flex gap-2">
-                    {([{ id: "cozinha", label: "🍳 Cozinha" }, { id: "bar", label: "🍹 Bar" }, { id: "ambos", label: "⚡ Ambos" }] as const).map((s) => {
-                      const active = (editProduct?.setor ?? "cozinha") === s.id;
-                      return (<button key={s.id} type="button" onClick={() => setEditProduct((prev) => prev ? { ...prev, setor: s.id } : prev)}
-                        className={`flex-1 rounded-xl px-3 py-2 text-xs font-bold border transition-colors ${active ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground hover:text-foreground"}`}>{s.label}</button>);
-                    })}
-                  </div>
-                  <p className="text-[10px] text-muted-foreground">Define em qual monitor este item aparece na cozinha</p>
-                </div>
+                {(() => {
+                  const cfg = getSistemaConfig();
+                  if (!cfg.impressaoPorSetor) return null;
+                  const nomeCozinha = cfg.nomeImpressoraCozinha || "Cozinha";
+                  const nomeBar = cfg.nomeImpressoraBar || "Bar";
+                  return (
+                    <div className="space-y-1.5 border-t border-border pt-4">
+                      <label className="text-xs font-bold text-muted-foreground">Setor de preparo</label>
+                      <div className="flex gap-2">
+                        {([{ id: "cozinha", label: `🍳 ${nomeCozinha}` }, { id: "bar", label: `🍹 ${nomeBar}` }, { id: "ambos", label: "⚡ Ambos" }] as const).map((s) => {
+                          const active = (editProduct?.setor ?? "cozinha") === s.id;
+                          return (<button key={s.id} type="button" onClick={() => setEditProduct((prev) => prev ? { ...prev, setor: s.id } : prev)}
+                            className={`flex-1 rounded-xl px-3 py-2 text-xs font-bold border transition-colors ${active ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground hover:text-foreground"}`}>{s.label}</button>);
+                        })}
+                      </div>
+                      <p className="text-[10px] text-muted-foreground">Define em qual monitor este item aparece na cozinha</p>
+                    </div>
+                  );
+                })()}
                 {/* Personalização — auto-gerar retirar */}
                 <div className="space-y-3 border-t border-border pt-4">
                   <div className="flex items-center justify-between">
