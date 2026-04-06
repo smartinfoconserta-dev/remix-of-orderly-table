@@ -136,66 +136,80 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     level: AuthLevel;
     opSession?: OperationalSession;
     redirect?: string;
+    queryFailed?: boolean;
   }
 
   const resolveSupabaseLevel = useCallback(async (user: User): Promise<ResolvedAuth> => {
-    // 1. Check user_roles (master / admin)
-    const { data: roles } = await supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", user.id);
+    try {
+      // 1. Check user_roles (master / admin) — if query fails, skip gracefully
+      const { data: roles, error: rolesErr } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id);
 
-    if (roles?.some((r) => r.role === "master")) return { level: "master", redirect: "/master" };
-    if (roles?.some((r) => r.role === "admin")) return { level: "admin", redirect: "/admin" };
-
-    // 2. Check store_members for gerente/caixa/owner
-    const { data: members } = await supabase
-      .from("store_members")
-      .select("store_id, role_in_store, stores(id, name, slug)")
-      .eq("user_id", user.id);
-
-    if (members && members.length > 0) {
-      const sortedMembers = [...members].sort(
-        (a, b) => (STORE_ROLE_PRIORITY[b.role_in_store] ?? 0) - (STORE_ROLE_PRIORITY[a.role_in_store] ?? 0)
-      );
-
-      const m = sortedMembers[0];
-      const store = m.stores as any;
-      const role = m.role_in_store;
-
-      // Owners are treated as admins
-      if (role === "owner" || role === "admin") return { level: "admin", redirect: "/admin" };
-
-      // Gerente, caixa, etc → operational with auto-session
-      const moduleRouteMap: Record<string, string> = { tv_retirada: "tv", cliente: "tablet" };
-      const opSession: OperationalSession = {
-        storeId: store.id,
-        storeSlug: store.slug,
-        storeName: store.name,
-        module: role,
-        pinLabel: user.email ?? null,
-      };
-
-      // For garcom, check store mode to decide route
-      let route = moduleRouteMap[role] ?? role;
-      if (role === "garcom") {
-        const { data: cfg } = await supabase
-          .from("restaurant_config")
-          .select("modulos")
-          .eq("store_id", store.id)
-          .maybeSingle();
-        const modulos = (cfg?.modulos as Record<string, boolean>) ?? {};
-        if (modulos.mesas === false) route = "garcom-pdv";
+      if (rolesErr) {
+        console.warn("[AuthContext] falha ao buscar roles (ignorando):", rolesErr.message);
+      } else {
+        if (roles?.some((r) => r.role === "master")) return { level: "master", redirect: "/master" };
+        if (roles?.some((r) => r.role === "admin")) return { level: "admin", redirect: "/admin" };
       }
 
-      return {
-        level: "operational",
-        opSession,
-        redirect: `/${route}`,
-      };
-    }
+      // 2. Check store_members — if query fails, skip gracefully
+      const { data: members, error: membersErr } = await supabase
+        .from("store_members")
+        .select("store_id, role_in_store, stores(id, name, slug)")
+        .eq("user_id", user.id);
 
-    return { level: "unauthenticated" };
+      if (membersErr) {
+        console.warn("[AuthContext] falha ao buscar members (ignorando):", membersErr.message);
+      } else if (members && members.length > 0) {
+        const sortedMembers = [...members].sort(
+          (a, b) => (STORE_ROLE_PRIORITY[b.role_in_store] ?? 0) - (STORE_ROLE_PRIORITY[a.role_in_store] ?? 0)
+        );
+
+        const m = sortedMembers[0];
+        const store = m.stores as any;
+        const role = m.role_in_store;
+
+        if (role === "owner" || role === "admin") return { level: "admin", redirect: "/admin" };
+
+        const moduleRouteMap: Record<string, string> = { tv_retirada: "tv", cliente: "tablet" };
+        const opSession: OperationalSession = {
+          storeId: store.id,
+          storeSlug: store.slug,
+          storeName: store.name,
+          module: role,
+          pinLabel: user.email ?? null,
+        };
+
+        let route = moduleRouteMap[role] ?? role;
+        if (role === "garcom") {
+          const { data: cfg } = await supabase
+            .from("restaurant_config")
+            .select("modulos")
+            .eq("store_id", store.id)
+            .maybeSingle();
+          const modulos = (cfg?.modulos as Record<string, boolean>) ?? {};
+          if (modulos.mesas === false) route = "garcom-pdv";
+        }
+
+        return {
+          level: "operational",
+          opSession,
+          redirect: `/${route}`,
+        };
+      }
+
+      // If BOTH queries failed, signal queryFailed so login can retry
+      if (rolesErr && membersErr) {
+        return { level: "unauthenticated", queryFailed: true };
+      }
+
+      return { level: "unauthenticated" };
+    } catch (err) {
+      console.error("[AuthContext] erro em resolveSupabaseLevel:", err);
+      return { level: "unauthenticated", queryFailed: true };
+    }
   }, []);
 
   /* ─── Apply resolved auth ─── */
@@ -212,12 +226,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   /* ─── Listen to auth state changes ─── */
   useEffect(() => {
+    let initialResolved = false;
+
     // 1. Restore session from storage FIRST
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (session?.user) {
         setSupabaseUser(session.user);
         const resolved = await resolveSupabaseLevel(session.user);
         applyResolved(resolved);
+        initialResolved = true;
       } else {
         const opSession = readOpSession();
         if (opSession) {
@@ -228,8 +245,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setIsLoading(false);
     });
 
-    // 2. Subscribe to subsequent changes — NEVER await inside this callback
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    // 2. Subscribe to subsequent changes — skip INITIAL_SESSION to avoid double resolve
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "INITIAL_SESSION") return; // already handled above
       if (session?.user) {
         setSupabaseUser(session.user);
         resolveSupabaseLevel(session.user).then(applyResolved);
@@ -247,20 +265,45 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   /* ─── Unified login (new) ─── */
   const loginUnified = useCallback(async (email: string, password: string): Promise<LoginUnifiedResult> => {
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error || !data.user) {
-      return { ok: false, error: error?.message ?? "Credenciais inválidas" };
+    // Retry logic for transient Supabase 504 timeouts
+    let lastError: string | undefined;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      if (attempt > 0) {
+        console.warn(`[AuthContext] tentativa ${attempt + 1} de login...`);
+        await new Promise((r) => setTimeout(r, 1500 * attempt));
+      }
+
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+
+      if (error) {
+        const msg = error.message ?? "";
+        // If it's a timeout/network error, retry
+        if (msg.includes("timeout") || msg.includes("504") || msg.includes("fetch")) {
+          lastError = "Servidor temporariamente indisponível. Tentando novamente...";
+          continue;
+        }
+        return { ok: false, error: msg || "Credenciais inválidas" };
+      }
+
+      if (!data.user) {
+        return { ok: false, error: "Credenciais inválidas" };
+      }
+
+      const resolved = await resolveSupabaseLevel(data.user);
+      if (resolved.queryFailed) {
+        return { ok: false, error: "Erro de conexão ao verificar permissões. Tente novamente." };
+      }
+      if (resolved.level === "unauthenticated") {
+        await supabase.auth.signOut();
+        return { ok: false, error: "Usuário sem permissão de acesso ao sistema" };
+      }
+
+      setSupabaseUser(data.user);
+      applyResolved(resolved);
+      return { ok: true, redirect: resolved.redirect };
     }
 
-    const resolved = await resolveSupabaseLevel(data.user);
-    if (resolved.level === "unauthenticated") {
-      await supabase.auth.signOut();
-      return { ok: false, error: "Usuário sem permissão de acesso ao sistema" };
-    }
-
-    setSupabaseUser(data.user);
-    applyResolved(resolved);
-    return { ok: true, redirect: resolved.redirect };
+    return { ok: false, error: lastError ?? "Falha ao conectar. Verifique sua internet e tente novamente." };
   }, [resolveSupabaseLevel, applyResolved]);
 
   /* ─── Level 1: Master login (legacy) ─── */

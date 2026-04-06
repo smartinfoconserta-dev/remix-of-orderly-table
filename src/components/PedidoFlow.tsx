@@ -59,6 +59,7 @@ interface PedidoFlowProps {
   onBack?: () => void;
   onPedidoConfirmado?: (itens: ItemCarrinho[], paraViagem: boolean) => void;
   deviceStoreId?: string | null;
+  onExitSession?: () => void;
 }
 
 // sysConfig moved inside component as state
@@ -83,7 +84,7 @@ const formatMesaLabel = (mesaId: string) => {
   return `Mesa ${numeroMesa.padStart(2, "0")}`;
 };
 
-const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, onBack, onPedidoConfirmado, deviceStoreId: propStoreId }: PedidoFlowProps) => {
+const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, onBack, onPedidoConfirmado, deviceStoreId: propStoreId, onExitSession }: PedidoFlowProps) => {
   const isTotem = modo === "totem";
   const navigate = useNavigate();
   const isMobile = useIsMobile();
@@ -493,6 +494,14 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
 
   // ── Long-press admin gesture ──
   const handleLogoPointerDown = useCallback(() => {
+    if (modo === "balcao" && onExitSession) {
+      if (longPressTimerRef.current) window.clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = window.setTimeout(() => {
+        longPressTimerRef.current = null;
+        onExitSession();
+      }, LONG_PRESS_DURATION_MS);
+      return;
+    }
     if (modo !== "cliente") return;
     if (longPressTimerRef.current) window.clearTimeout(longPressTimerRef.current);
     longPressTimerRef.current = window.setTimeout(() => {
@@ -504,7 +513,7 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
       setAdminError(null);
       setShowMesaSelector(false);
     }, LONG_PRESS_DURATION_MS);
-  }, [modo]);
+  }, [modo, onExitSession]);
 
   const handleLogoPointerUp = useCallback(() => {
     if (longPressTimerRef.current) {
@@ -946,7 +955,7 @@ const PedidoFlow = ({ modo, mesaId = "__external__", garcomNome, clienteNome, on
         {bannerHeader ? bannerHeader : header}
         {garcomBanner}
         {(isMobile || modo === "garcom" || modo === "delivery" || isTotem) ? mobileContent : desktopContent}
-        <ProductModal produto={produtoSelecionado} onClose={handleCloseProductModal} onAdd={handleAddToCart} isGarcomMobile={isGarcomMobile} skipEmbalagemDefault={modo === "delivery"} />
+        <ProductModal produto={produtoSelecionado} onClose={handleCloseProductModal} onAdd={handleAddToCart} isGarcomMobile={isGarcomMobile || isMobile} skipEmbalagemDefault={modo === "delivery"} />
         {mesa && <MinhaContaDrawer pedidos={mesa.pedidos} total={mesa.total} open={contaOpen} onOpenChange={setContaOpen} />}
         {idleOverlay}
       </div>
