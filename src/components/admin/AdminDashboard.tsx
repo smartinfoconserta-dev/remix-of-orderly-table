@@ -651,6 +651,68 @@ export default function AdminDashboard({ storeId, stores, onSelectStore }: Props
           </CardContent>
         </Card>
       )}
+
+      {/* Quick Access — Módulos Operacionais */}
+      {!loading && config && (
+        <QuickAccessGrid config={config} />
+      )}
+    </div>
+  );
+}
+
+const ALL_MODULES = [
+  { key: "caixa", label: "Caixa", route: "/caixa", icon: Wallet },
+  { key: "garcom", label: "Garçom", route: "/garcom", icon: User },
+  { key: "garcomPdv", label: "Garçom PDV", route: "/garcom-pdv", icon: Smartphone },
+  { key: "cozinha", label: "Cozinha", route: "/cozinha", icon: ChefHat },
+  { key: "gerente", label: "Gerente", route: "/gerente", icon: BarChart2 },
+  { key: "motoboy", label: "Motoboy", route: "/motoboy", icon: Bike },
+  { key: "totem", label: "Totem", route: "/totem", icon: Monitor },
+  { key: "tv", label: "TV Retirada", route: "/tv", icon: Tv },
+  { key: "delivery", label: "Delivery", route: "/delivery", icon: Truck },
+];
+
+function QuickAccessGrid({ config }: { config: SistemaConfig }) {
+  const modulos = config.modulos || {};
+  // caixa and gerente are always available
+  const active = ALL_MODULES.filter((m) => {
+    if (m.key === "caixa" || m.key === "gerente") return true;
+    if (m.key === "garcom" || m.key === "garcomPdv") return modulos.garcom;
+    if (m.key === "cozinha") return modulos.cozinha;
+    if (m.key === "motoboy") return modulos.motoboy;
+    if (m.key === "totem") return modulos.totem;
+    if (m.key === "tv") return modulos.tv;
+    if (m.key === "delivery") return modulos.delivery;
+    return false;
+  });
+
+  if (active.length === 0) return null;
+
+  return (
+    <div>
+      <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3">Acesso Rápido</h3>
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+        {active.map((m) => {
+          const Icon = m.icon;
+          return (
+            <a
+              key={m.key}
+              href={m.route}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group flex items-center gap-3 rounded-2xl border border-border bg-card p-4 hover:border-primary/40 hover:shadow-md transition-all"
+            >
+              <div className="h-10 w-10 rounded-xl bg-primary/15 flex items-center justify-center shrink-0 group-hover:bg-primary/25 transition-colors">
+                <Icon className="h-5 w-5 text-primary" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-bold text-foreground">{m.label}</p>
+              </div>
+              <ExternalLink className="h-3.5 w-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+            </a>
+          );
+        })}
+      </div>
     </div>
   );
 }
