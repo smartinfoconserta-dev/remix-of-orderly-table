@@ -733,6 +733,7 @@ const GarcomPdvPage = () => {
       <OfflineIndicator />
       <AppLayout
         title="Garçom PDV"
+        headerLeft={longPressAvatar}
         headerRight={
           <div className="flex items-center gap-2">
             <span className="text-xs font-bold px-2 py-1 rounded-full bg-primary/10 text-primary">💳 PDV</span>
@@ -746,6 +747,7 @@ const GarcomPdvPage = () => {
           </div>
         }
       >
+        {exitDialog}
         <div className="mb-4 rounded-xl border border-border bg-card px-4 py-3">
           <p className="text-base font-bold text-foreground">{garcomNome}</p>
           <p className="text-sm text-muted-foreground">
