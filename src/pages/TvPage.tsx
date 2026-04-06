@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useRestaurant } from "@/contexts/RestaurantContext";
 import { supabase } from "@/integrations/supabase/client";
 import DeviceGate from "@/components/DeviceGate";
+import { Bell } from "lucide-react";
 
 type PedidoTV = {
   id: string;
@@ -55,7 +56,6 @@ const TvInner = ({ storeId }: { storeId: string }) => {
     const list: string[] = [];
     if (modulos.totem) list.push("totem");
     if (modulos.balcao) list.push("balcao");
-    // garcom_pdv será adicionado no futuro
     return list;
   }, [modulos]);
 
@@ -66,7 +66,6 @@ const TvInner = ({ storeId }: { storeId: string }) => {
         list.push({ id: p.id, numero: p.numeroPedido, nome: p.origem === "totem" ? "Totem" : (p.clienteNome || "Balcão"), origem: p.origem, timestamp: p.criadoEmIso });
       }
     }
-    // Garçom PDV: pedidos de mesa ainda não prontos
     if (modulos.garcomPdv) {
       for (const mesa of mesas) {
         for (const p of mesa.pedidos) {
@@ -76,7 +75,7 @@ const TvInner = ({ storeId }: { storeId: string }) => {
         }
       }
     }
-    list.sort((a, b) => a.timestamp.localeCompare(b.timestamp));
+    list.sort((a, b) => b.timestamp.localeCompare(a.timestamp));
     return list;
   }, [pedidosBalcao, origensTV, modulos.garcomPdv, mesas]);
 
@@ -87,7 +86,6 @@ const TvInner = ({ storeId }: { storeId: string }) => {
         list.push({ id: p.id, numero: p.numeroPedido, nome: p.origem === "totem" ? "Totem" : (p.clienteNome || "Balcão"), origem: p.origem, timestamp: p.criadoEmIso });
       }
     }
-    // Garçom PDV: pedidos de mesa marcados como prontos
     if (modulos.garcomPdv) {
       for (const mesa of mesas) {
         for (const p of mesa.pedidos) {
@@ -101,16 +99,13 @@ const TvInner = ({ storeId }: { storeId: string }) => {
     return list;
   }, [pedidosBalcao, origensTV, modulos.garcomPdv, mesas]);
 
-  // Audio alert when a new pedido becomes "pronto"
+  // Audio alert
   const audioCtxRef = useRef<AudioContext | null>(null);
   const prevProntosCountRef = useRef(pedidosProntos.length);
 
   useEffect(() => {
     if (pedidosProntos.length > prevProntosCountRef.current) {
-      // Play two short beeps at 880Hz
-      if (!audioCtxRef.current) {
-        audioCtxRef.current = new AudioContext();
-      }
+      if (!audioCtxRef.current) audioCtxRef.current = new AudioContext();
       const ctx = audioCtxRef.current;
       const playBeep = (startTime: number) => {
         const osc = ctx.createOscillator();
@@ -130,36 +125,8 @@ const TvInner = ({ storeId }: { storeId: string }) => {
   }, [pedidosProntos.length]);
 
   const logoUrl = config.logoBase64 || config.logoUrl || "";
-
-  // The most recent "pronto" order (last added) should be highlighted
   const latestPronto = pedidosProntos.length > 0 ? pedidosProntos[0] : null;
-
-  const OrderRow = ({ p, isLatest }: { p: PedidoTV; isLatest?: boolean }) => {
-    const showName = p.nome && p.nome !== "Totem" && p.nome !== "Balcão";
-    return (
-      <div className={`flex items-center gap-4 rounded-xl px-5 transition-all ${
-        isLatest
-          ? "py-6 bg-primary/10 border-2 border-primary"
-          : "py-4 bg-card border border-border"
-      }`}>
-        <span className={`font-black tabular-nums ${isLatest ? "text-4xl xl:text-5xl" : "text-2xl xl:text-3xl"} text-foreground`}>
-          #{String(p.numero).padStart(3, "0")}
-        </span>
-        {showName && (
-          <span className={`font-semibold truncate text-muted-foreground ${isLatest ? "text-lg" : "text-sm"}`}>{p.nome}</span>
-        )}
-        {isLatest && (
-          <span className="ml-auto text-xs font-bold uppercase tracking-wider text-primary animate-pulse">Novo</span>
-        )}
-      </div>
-    );
-  };
-
-  const EmptyCol = ({ text }: { text: string }) => (
-    <div className="flex-1 flex items-center justify-center">
-      <p className="text-lg font-medium text-muted-foreground/50">{text}</p>
-    </div>
-  );
+  const fmt = (n: number) => String(n).padStart(3, "0");
 
   if (!modulos.totem && !modulos.balcao && !modulos.garcomPdv) {
     return (
@@ -174,57 +141,123 @@ const TvInner = ({ storeId }: { storeId: string }) => {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
-      {/* Header */}
-      <div className="px-6 md:px-8 py-5 flex items-center justify-between border-b border-border">
-        <div className="flex items-center gap-4">
-          {logoUrl && <img src={logoUrl} alt="" className="h-10 w-10 rounded-lg object-cover" />}
-          <div>
-            <h1 className="text-2xl md:text-3xl font-black uppercase tracking-wide text-foreground">Painel de Pedidos</h1>
-            <p className="text-sm font-medium text-muted-foreground">{config.nomeRestaurante || "Restaurante"}</p>
+    <div className="min-h-screen flex flex-col bg-[hsl(var(--background))] overflow-hidden">
+      {/* ── Top bar ── */}
+      <div className="flex items-stretch">
+        {/* Left: Logo + title */}
+        <div className="flex-1 flex items-center gap-4 px-6 py-4 bg-primary">
+          <Bell className="h-8 w-8 text-primary-foreground" />
+          <div className="flex items-center gap-3">
+            {logoUrl && <img src={logoUrl} alt="" className="h-10 w-10 rounded-lg object-cover" />}
+            <h1 className="text-xl md:text-2xl font-black uppercase tracking-wide text-primary-foreground">
+              Retire seu pedido
+            </h1>
           </div>
         </div>
-        <p className="text-2xl md:text-3xl font-black tabular-nums text-foreground">{clock.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</p>
+
+        {/* Right: Chamando senha */}
+        <div className="flex flex-col items-center justify-center px-8 py-3 bg-card min-w-[280px] border-l-4 border-primary">
+          <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Chamando senha:</span>
+          {latestPronto ? (
+            <span className="text-6xl xl:text-7xl font-black tabular-nums text-primary animate-pulse leading-none mt-1">
+              {fmt(latestPronto.numero)}
+            </span>
+          ) : (
+            <span className="text-3xl font-bold text-muted-foreground/40 mt-1">---</span>
+          )}
+        </div>
       </div>
 
-      {/* Columns */}
+      {/* ── Main content ── */}
       <div className="flex-1 flex min-h-0">
-        {/* Preparando */}
-        <div className="flex-1 flex flex-col border-r border-border">
-          <div className="px-5 py-3 flex items-center gap-3 border-b border-border bg-muted/30">
-            <div className="h-3 w-3 rounded-full bg-amber-500" />
-            <h2 className="text-lg font-bold uppercase tracking-wider text-foreground">Preparando</h2>
-            {pedidosPreparando.length > 0 && (
-              <span className="ml-auto text-sm font-bold text-muted-foreground bg-muted rounded-full px-2.5 py-0.5">{pedidosPreparando.length}</span>
-            )}
+        {/* Left column: Senhas Chamadas (Prontos) */}
+        <div className="flex-1 flex flex-col bg-primary/10">
+          <div className="px-5 py-3 bg-primary/20">
+            <h2 className="text-base font-black uppercase tracking-widest text-center text-foreground">
+              Senhas Chamadas
+            </h2>
           </div>
           <div className="flex-1 overflow-y-auto p-4">
-            {pedidosPreparando.length === 0 ? <EmptyCol text="Nenhum pedido" /> : (
-              <div className="flex flex-col gap-3">
-                {pedidosPreparando.map((p) => <OrderRow key={p.id} p={p} />)}
+            {pedidosProntos.length === 0 ? (
+              <div className="flex-1 flex items-center justify-center h-full">
+                <p className="text-lg font-medium text-muted-foreground/40">Nenhuma senha chamada</p>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center gap-2">
+                {pedidosProntos.map((p, i) => {
+                  const isLatest = latestPronto?.id === p.id;
+                  return (
+                    <div
+                      key={p.id}
+                      className={`w-full max-w-[280px] text-center rounded-lg transition-all ${
+                        isLatest
+                          ? "py-4 bg-primary text-primary-foreground border-2 border-primary shadow-lg"
+                          : i < 3
+                            ? "py-3 bg-card border border-border"
+                            : "py-2 bg-card/60 border border-border/50"
+                      }`}
+                    >
+                      <span className={`font-black tabular-nums ${
+                        isLatest ? "text-5xl xl:text-6xl" : i < 3 ? "text-3xl xl:text-4xl" : "text-2xl"
+                      }`}>
+                        {fmt(p.numero)}
+                      </span>
+                      {p.nome && p.nome !== "Totem" && p.nome !== "Balcão" && (
+                        <p className={`text-xs font-medium mt-0.5 ${isLatest ? "text-primary-foreground/80" : "text-muted-foreground"}`}>
+                          {p.nome}
+                        </p>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>
         </div>
 
-        {/* Pronto */}
-        <div className="flex-1 flex flex-col">
-          <div className="px-5 py-3 flex items-center gap-3 border-b border-border bg-muted/30">
-            <div className="h-3 w-3 rounded-full bg-green-500" />
-            <h2 className="text-lg font-bold uppercase tracking-wider text-foreground">Pronto</h2>
-            {pedidosProntos.length > 0 && (
-              <span className="ml-auto text-sm font-bold text-muted-foreground bg-muted rounded-full px-2.5 py-0.5">{pedidosProntos.length}</span>
-            )}
+        {/* Right column: Próximas Senhas (Preparando) */}
+        <div className="flex-1 flex flex-col bg-accent/10">
+          <div className="px-5 py-3 bg-accent/20">
+            <h2 className="text-base font-black uppercase tracking-widest text-center text-foreground">
+              Próximas Senhas
+            </h2>
           </div>
           <div className="flex-1 overflow-y-auto p-4">
-            {pedidosProntos.length === 0 ? <EmptyCol text="Nenhum pedido pronto" /> : (
-              <div className="flex flex-col gap-3">
-                {pedidosProntos.map((p) => (
-                  <OrderRow key={p.id} p={p} isLatest={latestPronto?.id === p.id} />
+            {pedidosPreparando.length === 0 ? (
+              <div className="flex-1 flex items-center justify-center h-full">
+                <p className="text-lg font-medium text-muted-foreground/40">Nenhum pedido</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-3 auto-rows-min">
+                {pedidosPreparando.map((p) => (
+                  <div
+                    key={p.id}
+                    className="flex flex-col items-center justify-center py-4 rounded-lg bg-card border border-border"
+                  >
+                    <span className="text-3xl xl:text-4xl font-black tabular-nums text-foreground">
+                      {fmt(p.numero)}
+                    </span>
+                    {p.nome && p.nome !== "Totem" && p.nome !== "Balcão" && (
+                      <p className="text-xs font-medium text-muted-foreground mt-0.5">{p.nome}</p>
+                    )}
+                  </div>
                 ))}
               </div>
             )}
           </div>
+        </div>
+      </div>
+
+      {/* ── Bottom bar ── */}
+      <div className="px-6 py-3 bg-primary flex items-center justify-between">
+        <p className="text-sm font-bold text-primary-foreground uppercase tracking-wide">
+          Por favor aguarde sua senha no painel!
+        </p>
+        <div className="flex items-center gap-3">
+          <span className="text-sm font-medium text-primary-foreground/70">{config.nomeRestaurante}</span>
+          <span className="text-sm font-black tabular-nums text-primary-foreground">
+            {clock.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+          </span>
         </div>
       </div>
     </div>
