@@ -409,24 +409,60 @@ const CaixaMesaDetail = ({
           /* ── Payment cards ── */
           <div className="flex-1 overflow-y-auto space-y-4 scrollbar-hide">
 
-            {/* Card 1 — Total resumo */}
-            <div className="rounded-2xl border border-border bg-card p-5 space-y-2">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Total da conta</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    {mesa.pedidos.length} pedido{mesa.pedidos.length !== 1 ? "s" : ""} • {mesa.pedidos.flatMap(p => p.itens).length} itens
-                  </p>
-                </div>
-                <span className="text-3xl font-black text-primary tabular-nums">{formatPrice(totalConta)}</span>
+            {/* Card 1 — ITENS DO PEDIDO */}
+            <div className="rounded-2xl border border-border bg-card p-5 space-y-3">
+              <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Itens do pedido</p>
+              <div className="space-y-1">
+                {mesa.pedidos.flatMap(p => p.itens).map((item) => (
+                  <div key={item.uid} className="flex items-center justify-between py-1">
+                    <span className="text-sm text-foreground truncate">
+                      <span className="font-bold tabular-nums text-muted-foreground">{item.quantidade}×</span>{" "}
+                      {item.nome}
+                    </span>
+                    <span className="text-sm font-bold tabular-nums text-foreground shrink-0 ml-2">
+                      {formatPrice(item.precoUnitario * item.quantidade)}
+                    </span>
+                  </div>
+                ))}
+                {mesa.carrinho.length > 0 && mesa.carrinho.map((item) => (
+                  <div key={item.uid} className="flex items-center justify-between py-1 opacity-60">
+                    <span className="text-sm text-foreground truncate">
+                      <span className="font-bold tabular-nums text-muted-foreground">{item.quantidade}×</span>{" "}
+                      {item.nome} <span className="text-[10px] text-muted-foreground">(pendente)</span>
+                    </span>
+                    <span className="text-sm font-bold tabular-nums text-foreground shrink-0 ml-2">
+                      {formatPrice(item.precoUnitario * item.quantidade)}
+                    </span>
+                  </div>
+                ))}
               </div>
-              {descontoAplicado > 0 && (
-                <p className="text-xs text-primary">Desconto: -{formatPrice(descontoAplicado)}</p>
-              )}
-              {couvertTotal > 0 && (
-                <p className="text-xs text-emerald-500">Couvert ({couvertPessoas}p): +{formatPrice(couvertTotal)}</p>
-              )}
-              <div className="flex items-center gap-3 pt-1">
+
+              <div className="border-t border-border pt-3 space-y-1">
+                {descontoAplicado > 0 && (
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Subtotal</span>
+                    <span className="tabular-nums text-muted-foreground line-through">{formatPrice(mesa.total + descontoAplicado)}</span>
+                  </div>
+                )}
+                {descontoAplicado > 0 && (
+                  <div className="flex items-center justify-between text-sm text-primary">
+                    <span>Desconto</span>
+                    <span className="tabular-nums font-bold">- {formatPrice(descontoAplicado)}</span>
+                  </div>
+                )}
+                {couvertTotal > 0 && (
+                  <div className="flex items-center justify-between text-sm text-emerald-500">
+                    <span>Couvert ({couvertPessoas}p)</span>
+                    <span className="tabular-nums font-bold">+ {formatPrice(couvertTotal)}</span>
+                  </div>
+                )}
+                <div className="flex items-center justify-between pt-1">
+                  <span className="text-base font-black text-foreground">Total</span>
+                  <span className="text-3xl font-black text-primary tabular-nums">{formatPrice(totalConta)}</span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
                 {!descontoAplicado && closingPayments.length === 0 && totalConta > 0 && (
                   <button onClick={() => setDescontoModalOpen(true)}
                     className="flex items-center gap-1.5 text-xs font-bold text-primary hover:text-primary/80 transition-colors">
@@ -489,7 +525,7 @@ const CaixaMesaDetail = ({
               </div>
             )}
 
-            {/* Card 2 — Payment */}
+            {/* Card 2 — PAGAMENTO */}
             {totalConta > 0 && (
               <div className="rounded-2xl border border-border bg-card p-5 space-y-4">
                 <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Pagamento</p>
