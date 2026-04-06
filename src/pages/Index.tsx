@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { LogIn, UtensilsCrossed, Hash, Building2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Input } from "@/components/ui/input";
@@ -12,7 +12,9 @@ type LoginTab = "proprietario" | "funcionario";
 
 const Index = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { authLevel, operationalSession, isLoading, loginUnified, loginByPin } = useAuth();
+  const suppressAutoRedirect = Boolean((location.state as { suppressAutoRedirect?: boolean } | null)?.suppressAutoRedirect);
 
   const [activeTab, setActiveTab] = useState<LoginTab>("proprietario");
 
@@ -31,14 +33,14 @@ const Index = () => {
 
   // Auto-redirect if already logged in
   useEffect(() => {
-    if (isLoading) return;
+    if (isLoading || suppressAutoRedirect) return;
     const routeMap: Record<string, string> = { tv_retirada: "tv", cliente: "tablet", garcom_pdv: "garcom-pdv", "garcom-pdv": "garcom-pdv" };
     if (authLevel === "master") navigate("/master", { replace: true });
     else if (authLevel === "admin") navigate("/admin", { replace: true });
     else if (authLevel === "operational" && operationalSession?.module) {
       navigate(`/${routeMap[operationalSession.module] ?? operationalSession.module}`, { replace: true });
     }
-  }, [authLevel, operationalSession, isLoading, navigate]);
+  }, [authLevel, operationalSession, isLoading, navigate, suppressAutoRedirect]);
 
   // CNPJ mask
   const handleCnpjChange = (value: string) => {
