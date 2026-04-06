@@ -6,6 +6,7 @@ import type { ItemCarrinho, PedidoRealizado, EventoOperacional, FechamentoConta,
 import type { RestaurantStore, ActionAuditInput, PedidoMeta, FecharContaInput } from "@/contexts/RestaurantContext";
 import { supabase } from "@/integrations/supabase/client";
 import { getActiveStoreId } from "@/lib/sessionManager";
+import { emitNfceForFechamento } from "@/lib/nfceService";
 import {
   dbInsertPedido, dbUpdatePedido, dbInsertFechamento, dbSyncEstadoMesa,
   cloneItem, calcularTotalItens, derivarStatus, resetMesa, buildEvent,
@@ -231,6 +232,11 @@ export function useMesaActions(setStore: Dispatch<SetStateAction<RestaurantStore
       fechamentos: fechamento ? [fechamento, ...prev.fechamentos] : prev.fechamentos,
       eventos: eventInput ? appendEventAndPersist(prev.eventos, eventInput) : prev.eventos,
     }));
+
+    // 5. Emit NFC-e asynchronously (non-blocking)
+    if (fechamento) {
+      emitNfceForFechamento(fechamento, getActiveStoreId()).catch(() => {});
+    }
 
     return { ok: true };
   }, [setStore]);

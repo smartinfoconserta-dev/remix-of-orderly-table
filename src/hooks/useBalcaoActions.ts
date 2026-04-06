@@ -6,6 +6,7 @@ import type { ItemCarrinho, PedidoRealizado, EventoOperacional, FechamentoConta 
 import type { RestaurantStore, FecharContaInput, CriarPedidoBalcaoInput } from "@/contexts/RestaurantContext";
 import { supabase } from "@/integrations/supabase/client";
 import { getActiveStoreId } from "@/lib/sessionManager";
+import { emitNfceForFechamento } from "@/lib/nfceService";
 import { getSistemaConfig } from "@/lib/adminStorage";
 import {
   dbInsertPedido, dbUpdatePedido, dbInsertFechamento,
@@ -166,6 +167,9 @@ export function useBalcaoActions(setStore: Dispatch<SetStateAction<RestaurantSto
       fechamentos: [fechamento, ...prev.fechamentos],
       eventos: appendEventAndPersist(prev.eventos, { tipo: "caixa", descricao: `Caixa ${input.usuario.nome} fechou conta ${pedido.origem === "delivery" ? "delivery" : "balcão"} — ${pedido.clienteNome ?? ""} com ${resumoPagamento}`, usuarioId: input.usuario.id, usuarioNome: input.usuario.nome, acao: "fechar_conta", valor: pedido.total }),
     }));
+
+    // Emit NFC-e asynchronously (non-blocking)
+    emitNfceForFechamento(fechamento, getActiveStoreId()).catch(() => {});
 
     return { ok: true };
   }, [setStore]);
