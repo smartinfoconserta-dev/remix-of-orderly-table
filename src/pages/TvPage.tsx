@@ -1,6 +1,8 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useRestaurant } from "@/contexts/RestaurantContext";
 import { supabase } from "@/integrations/supabase/client";
+import { clearStoredDeviceId } from "@/lib/deviceAuth";
 import DeviceGate from "@/components/DeviceGate";
 import ModuleGate from "@/components/ModuleGate";
 
@@ -13,6 +15,7 @@ type PedidoTV = {
 };
 
 const TvInner = ({ storeId }: { storeId: string }) => {
+  const navigate = useNavigate();
   const { pedidosBalcao, mesas } = useRestaurant();
   const [clock, setClock] = useState(() => new Date());
   const [modulos, setModulos] = useState<{ mesas: boolean; balcao: boolean; totem: boolean; garcomPdv: boolean }>({
@@ -23,6 +26,20 @@ const TvInner = ({ storeId }: { storeId: string }) => {
     logoBase64: "",
     logoUrl: "",
   });
+
+  // Hidden exit: long-press 5s on title
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const handleExitStart = useCallback(() => {
+    longPressTimer.current = setTimeout(() => {
+      clearStoredDeviceId();
+      sessionStorage.removeItem("orderly-device-store-id");
+      localStorage.removeItem("orderly-device-store-id");
+      navigate("/", { replace: true });
+    }, 5000);
+  }, [navigate]);
+  const handleExitEnd = useCallback(() => {
+    if (longPressTimer.current) { clearTimeout(longPressTimer.current); longPressTimer.current = null; }
+  }, []);
 
   useEffect(() => {
     supabase
@@ -181,7 +198,15 @@ const TvInner = ({ storeId }: { storeId: string }) => {
         <div className="flex items-center gap-4">
           {logoUrl && <img src={logoUrl} alt="" className="h-10 w-10 rounded-lg object-cover" />}
           <div>
-            <h1 className="text-2xl md:text-3xl font-black uppercase tracking-wide text-foreground">Painel de Pedidos</h1>
+            <h1
+              className="text-2xl md:text-3xl font-black uppercase tracking-wide text-foreground select-none cursor-default"
+              onMouseDown={handleExitStart}
+              onMouseUp={handleExitEnd}
+              onMouseLeave={handleExitEnd}
+              onTouchStart={handleExitStart}
+              onTouchEnd={handleExitEnd}
+              onTouchCancel={handleExitEnd}
+            >Painel de Pedidos</h1>
             <p className="text-sm font-medium text-muted-foreground">{config.nomeRestaurante || "Restaurante"}</p>
           </div>
         </div>
