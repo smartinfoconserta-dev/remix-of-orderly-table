@@ -233,6 +233,11 @@ export function useMesaActions(setStore: Dispatch<SetStateAction<RestaurantStore
       eventos: eventInput ? appendEventAndPersist(prev.eventos, eventInput) : prev.eventos,
     }));
 
+    // 5. Emit NFC-e asynchronously (non-blocking)
+    if (fechamento) {
+      emitNfceForFechamento(fechamento, getActiveStoreId()).catch(() => {});
+    }
+
     return { ok: true };
   }, [setStore]);
 
