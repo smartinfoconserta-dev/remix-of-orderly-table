@@ -413,6 +413,18 @@ const GarcomPdvPage = () => {
     return (
       <ModuleGate moduleKey="garcomPdv" moduleName="Garçom PDV">
         <OfflineIndicator />
+        {/* Long-press exit zone — top-left corner */}
+        <div
+          className="fixed top-2 left-2 z-50 w-10 h-10 rounded-full bg-card/80 flex items-center justify-center cursor-pointer select-none border border-border"
+          onPointerDown={handleLongPressStart}
+          onPointerUp={handleLongPressEnd}
+          onPointerLeave={handleLongPressEnd}
+          onContextMenu={(e) => e.preventDefault()}
+          title="Segure 5s para sair"
+        >
+          <span className="text-xs font-bold text-muted-foreground">{garcomNome.charAt(0).toUpperCase()}</span>
+        </div>
+        {exitDialog}
         <PedidoFlow
           modo="balcao"
           clienteNome={garcomNome}
