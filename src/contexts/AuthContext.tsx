@@ -200,15 +200,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         };
       }
 
-      // If BOTH queries failed, signal queryFailed so login can retry
-      if (rolesErr && membersErr) {
-        return { level: "unauthenticated", queryFailed: true };
-      }
-
       return { level: "unauthenticated" };
     } catch (err) {
       console.error("[AuthContext] erro em resolveSupabaseLevel:", err);
-      return { level: "unauthenticated", queryFailed: true };
+      return { level: "unauthenticated" };
     }
   }, []);
 
