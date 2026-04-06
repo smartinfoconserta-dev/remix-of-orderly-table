@@ -409,52 +409,37 @@ const CaixaMesaDetail = ({
           /* ── Payment cards ── */
           <div className="flex-1 overflow-y-auto space-y-4 scrollbar-hide">
 
-            {/* Card 1 — Items + Total */}
-            <div className="rounded-2xl border border-border bg-card p-5 space-y-3">
-              <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Itens do pedido</p>
-              <div className="space-y-1">
-                {mesa.pedidos.flatMap(p => p.itens).map((item) => (
-                  <div key={item.uid} className="flex items-center justify-between py-0.5">
-                    <span className="text-sm text-foreground">
-                      <span className="font-bold text-muted-foreground">{item.quantidade}×</span> {item.nome}
-                    </span>
-                    <span className="text-sm tabular-nums text-muted-foreground">{formatPrice(item.precoUnitario * item.quantidade)}</span>
-                  </div>
-                ))}
-              </div>
-
-              <div className="border-t border-border pt-3 space-y-1">
-                {descontoAplicado > 0 && (
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-primary font-semibold">Desconto</span>
-                    <span className="text-primary font-bold tabular-nums">- {formatPrice(descontoAplicado)}</span>
-                  </div>
-                )}
-                {couvertTotal > 0 && (
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-emerald-500 font-semibold">Couvert ({couvertPessoas}p)</span>
-                    <span className="text-emerald-500 font-bold tabular-nums">+ {formatPrice(couvertTotal)}</span>
-                  </div>
-                )}
-                <div className="flex items-center justify-between">
-                  <span className="text-base font-black text-foreground">Total</span>
-                  <span className="text-2xl font-black text-primary tabular-nums">{formatPrice(totalConta)}</span>
+            {/* Card 1 — Total resumo */}
+            <div className="rounded-2xl border border-border bg-card p-5 space-y-2">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Total da conta</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {mesa.pedidos.length} pedido{mesa.pedidos.length !== 1 ? "s" : ""} • {mesa.pedidos.flatMap(p => p.itens).length} itens
+                  </p>
                 </div>
+                <span className="text-3xl font-black text-primary tabular-nums">{formatPrice(totalConta)}</span>
               </div>
-
-              {/* Inline discount toggle */}
-              {!descontoAplicado && closingPayments.length === 0 && totalConta > 0 && (
-                <button onClick={() => setDescontoModalOpen(true)}
-                  className="flex items-center gap-1.5 text-xs font-bold text-primary hover:text-primary/80 transition-colors pt-1">
-                  <Percent className="h-3 w-3" /> Aplicar desconto
-                </button>
+              {descontoAplicado > 0 && (
+                <p className="text-xs text-primary">Desconto: -{formatPrice(descontoAplicado)}</p>
               )}
-              {descontoAplicado > 0 && closingPayments.length === 0 && (
-                <button onClick={() => setDescontoAplicado(0)}
-                  className="text-xs text-destructive hover:underline pt-1">
-                  Remover desconto
-                </button>
+              {couvertTotal > 0 && (
+                <p className="text-xs text-emerald-500">Couvert ({couvertPessoas}p): +{formatPrice(couvertTotal)}</p>
               )}
+              <div className="flex items-center gap-3 pt-1">
+                {!descontoAplicado && closingPayments.length === 0 && totalConta > 0 && (
+                  <button onClick={() => setDescontoModalOpen(true)}
+                    className="flex items-center gap-1.5 text-xs font-bold text-primary hover:text-primary/80 transition-colors">
+                    <Percent className="h-3 w-3" /> Aplicar desconto
+                  </button>
+                )}
+                {descontoAplicado > 0 && closingPayments.length === 0 && (
+                  <button onClick={() => setDescontoAplicado(0)}
+                    className="text-xs text-destructive hover:underline">
+                    Remover desconto
+                  </button>
+                )}
+              </div>
             </div>
 
             {/* Para viagem reminder */}
