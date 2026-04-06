@@ -3,6 +3,7 @@
  * Includes: desktop fullscreen, mobile dialog, and close dialog (both variants).
  * NO logic changes from original.
  */
+import { useEffect } from "react";
 import { LockKeyhole, ReceiptText, Truck, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {

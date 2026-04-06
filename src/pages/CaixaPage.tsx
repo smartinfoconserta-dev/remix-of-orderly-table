@@ -977,6 +977,7 @@ const CaixaPage = ({ accessMode = "caixa", deliveryOnly = false }: CaixaPageProp
     
     // motoboy fechamentos now managed in Supabase
     setTurnoModalOpen(false);
+    setTurnoReportOpen(false);
     setIsClosingTurno(false);
     setTurnoManagerName("");
     setTurnoManagerPin("");
