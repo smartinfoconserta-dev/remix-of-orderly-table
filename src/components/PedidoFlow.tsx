@@ -59,6 +59,7 @@ interface PedidoFlowProps {
   onBack?: () => void;
   onPedidoConfirmado?: (itens: ItemCarrinho[], paraViagem: boolean) => void;
   deviceStoreId?: string | null;
+  onExitSession?: () => void;
 }
 
 // sysConfig moved inside component as state
