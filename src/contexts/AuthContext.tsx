@@ -136,6 +136,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     level: AuthLevel;
     opSession?: OperationalSession;
     redirect?: string;
+    queryFailed?: boolean;
   }
 
   const resolveSupabaseLevel = useCallback(async (user: User): Promise<ResolvedAuth> => {
