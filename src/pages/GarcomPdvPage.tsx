@@ -365,6 +365,26 @@ const GarcomPdvPage = () => {
                       setFfStep("done");
                       playSuccessSound();
                       vibrateSuccess();
+
+                      // Auto-print receipt
+                      try {
+                        const now = new Date();
+                        const dataHora = `${String(now.getDate()).padStart(2, "0")}/${String(now.getMonth() + 1).padStart(2, "0")}/${now.getFullYear()} ${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+                        const payLabel = opt.value === "pix" ? "PIX" : opt.value === "credito" ? "Crédito" : "Débito";
+                        printComanda({
+                          tipo: "Garçom PDV",
+                          numero: numeroPedido,
+                          dataHora,
+                          itens: ffPendingItens.map(i => ({ quantidade: i.quantidade, nome: i.nome, preco: i.precoUnitario })),
+                          subtotal: ffPendingItens.reduce((acc, i) => acc + i.precoUnitario * i.quantidade, 0),
+                          total: ffPendingItens.reduce((acc, i) => acc + i.precoUnitario * i.quantidade, 0),
+                          formaPagamento: payLabel,
+                          origem: "balcao",
+                          clienteNome: garcomNome,
+                        }, getSistemaConfig().nomeRestaurante || "Restaurante");
+                      } catch (printErr) {
+                        console.warn("Garçom PDV: erro ao imprimir comanda", printErr);
+                      }
                     } catch (err) {
                       console.error("Garçom PDV FF: erro ao criar pedido", err);
                       toast.error("Erro ao enviar pedido. Tente novamente.");
