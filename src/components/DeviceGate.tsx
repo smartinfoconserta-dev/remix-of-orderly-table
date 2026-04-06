@@ -64,7 +64,7 @@ const DeviceGate = ({ type, children }: DeviceGateProps) => {
     return justActivatedRef.current && stored ? stored : null;
   });
   const [mesaId, setMesaId] = useState<string | null>(null);
-
+  const navigate = useNavigate();
   // Activation form
   const [cnpjInput, setCnpjInput] = useState("");
   const [pin, setPin] = useState("");
