@@ -10,7 +10,6 @@ import { toast } from "sonner";
 
 const MODULES = [
   { value: "garcom", label: "Garçom" },
-  { value: "garcom_pdv", label: "Garçom PDV" },
   { value: "caixa", label: "Caixa" },
   { value: "cozinha", label: "Cozinha" },
   { value: "delivery", label: "Delivery" },
