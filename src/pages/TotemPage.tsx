@@ -7,6 +7,7 @@ import type { ItemCarrinho } from "@/contexts/RestaurantContext";
 import DeviceGate from "@/components/DeviceGate";
 import ModuleGate from "@/components/ModuleGate";
 import type { PaymentMethod } from "@/types/operations";
+import { printComanda } from "@/components/caixa/caixaHelpers";
 
 import TotemNameScreen from "@/components/totem/TotemNameScreen";
 import TotemPaymentScreen from "@/components/totem/TotemPaymentScreen";
@@ -163,6 +164,26 @@ const TotemInner = ({ storeId }: { storeId: string }) => {
       });
       setPedidoConfirmado(numeroPedido);
       setStep("confirmed");
+
+      // Auto-print receipt
+      try {
+        const now = new Date();
+        const dataHora = `${String(now.getDate()).padStart(2, "0")}/${String(now.getMonth() + 1).padStart(2, "0")}/${now.getFullYear()} ${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+        const payLabel = pendingPaymentMethod === "pix" ? "PIX" : pendingPaymentMethod === "credito" ? "Crédito" : pendingPaymentMethod === "debito" ? "Débito" : "Dinheiro";
+        printComanda({
+          tipo: "Totem",
+          numero: numeroPedido,
+          dataHora,
+          itens: pendingItens.map(i => ({ quantidade: i.quantidade, nome: i.nome, preco: i.precoUnitario })),
+          subtotal: pendingItens.reduce((acc, i) => acc + i.precoUnitario * i.quantidade, 0),
+          total: pendingItens.reduce((acc, i) => acc + i.precoUnitario * i.quantidade, 0),
+          formaPagamento: payLabel,
+          origem: "totem",
+          clienteNome: nome !== "Totem" ? nome : undefined,
+        }, nomeRestaurante || "Restaurante");
+      } catch (printErr) {
+        console.warn("Totem: erro ao imprimir comanda", printErr);
+      }
     } catch (err) {
       console.error("Totem: erro ao criar pedido", err);
     } finally {
