@@ -265,45 +265,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   /* ─── Unified login (new) ─── */
   const loginUnified = useCallback(async (email: string, password: string): Promise<LoginUnifiedResult> => {
-    // Retry logic for transient Supabase 504 timeouts
-    let lastError: string | undefined;
-    for (let attempt = 0; attempt < 3; attempt++) {
-      if (attempt > 0) {
-        console.warn(`[AuthContext] tentativa ${attempt + 1} de login...`);
-        await new Promise((r) => setTimeout(r, 1500 * attempt));
-      }
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-
-      if (error) {
-        const msg = error.message ?? "";
-        // If it's a timeout/network error, retry
-        if (msg.includes("timeout") || msg.includes("504") || msg.includes("fetch")) {
-          lastError = "Servidor temporariamente indisponível. Tentando novamente...";
-          continue;
-        }
-        return { ok: false, error: msg || "Credenciais inválidas" };
-      }
-
-      if (!data.user) {
-        return { ok: false, error: "Credenciais inválidas" };
-      }
-
-      const resolved = await resolveSupabaseLevel(data.user);
-      if (resolved.queryFailed) {
-        return { ok: false, error: "Erro de conexão ao verificar permissões. Tente novamente." };
-      }
-      if (resolved.level === "unauthenticated") {
-        await supabase.auth.signOut();
-        return { ok: false, error: "Usuário sem permissão de acesso ao sistema" };
-      }
-
-      setSupabaseUser(data.user);
-      applyResolved(resolved);
-      return { ok: true, redirect: resolved.redirect };
+    if (error || !data.user) {
+      return { ok: false, error: error?.message || "Credenciais inválidas" };
     }
 
-    return { ok: false, error: lastError ?? "Falha ao conectar. Verifique sua internet e tente novamente." };
+    const resolved = await resolveSupabaseLevel(data.user);
+    if (resolved.level === "unauthenticated") {
+      await supabase.auth.signOut();
+      return { ok: false, error: "Usuário sem permissão de acesso ao sistema" };
+    }
+
+    setSupabaseUser(data.user);
+    applyResolved(resolved);
+    return { ok: true, redirect: resolved.redirect };
   }, [resolveSupabaseLevel, applyResolved]);
 
   /* ─── Level 1: Master login (legacy) ─── */
