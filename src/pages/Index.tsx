@@ -120,9 +120,21 @@ const Index = () => {
         return;
       }
 
-      // 4. Redirect to module
+      // 4. Resolve garcom route based on store mode
+      let module = result.module!;
+      if (module === "garcom") {
+        const { data: cfg } = await supabase
+          .from("restaurant_config")
+          .select("modulos")
+          .eq("store_id", store.store_id)
+          .maybeSingle();
+        const modulos = (cfg?.modulos as Record<string, boolean>) ?? {};
+        if (modulos.mesas === false) module = "garcom-pdv";
+      }
+
+      // 5. Redirect to module
       const routeMap: Record<string, string> = { tv_retirada: "tv", cliente: "tablet", garcom_pdv: "garcom-pdv", "garcom-pdv": "garcom-pdv" };
-      const route = routeMap[result.module!] ?? result.module;
+      const route = routeMap[module] ?? module;
       navigate(`/${route}`, { replace: true });
     } catch {
       setError("Erro ao conectar. Tente novamente.");
