@@ -97,7 +97,7 @@ const TvInner = ({ storeId }: { storeId: string }) => {
         }
       }
     }
-    list.sort((a, b) => a.timestamp.localeCompare(b.timestamp));
+    list.sort((a, b) => b.timestamp.localeCompare(a.timestamp));
     return list;
   }, [pedidosBalcao, origensTV, modulos.garcomPdv, mesas]);
 
@@ -132,7 +132,7 @@ const TvInner = ({ storeId }: { storeId: string }) => {
   const logoUrl = config.logoBase64 || config.logoUrl || "";
 
   // The most recent "pronto" order (last added) should be highlighted
-  const latestPronto = pedidosProntos.length > 0 ? pedidosProntos[pedidosProntos.length - 1] : null;
+  const latestPronto = pedidosProntos.length > 0 ? pedidosProntos[0] : null;
 
   const OrderRow = ({ p, isLatest }: { p: PedidoTV; isLatest?: boolean }) => {
     const showName = p.nome && p.nome !== "Totem" && p.nome !== "Balcão";
