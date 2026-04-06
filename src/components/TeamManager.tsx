@@ -22,7 +22,8 @@ import { toast } from "sonner";
 import { getSistemaConfig } from "@/lib/adminStorage";
 
 const ALL_ROLES = [
-  { value: "garcom", label: "Garçom", fastFoodLabel: "Garçom PDV" },
+  { value: "garcom", label: "Garçom", hideInFastFood: true },
+  { value: "garcom_pdv", label: "Garçom PDV", hideInRestaurant: true },
   { value: "caixa", label: "Caixa" },
   { value: "cozinha", label: "Cozinha" },
   { value: "gerente", label: "Gerente" },
@@ -36,13 +37,14 @@ const getRolesForMode = () => {
 
   return ALL_ROLES
     .filter((r) => {
-      // In restaurant mode, hide motoboy if delivery is off
       if (r.value === "motoboy" && !deliveryAtivo) return false;
+      if ((r as any).hideInFastFood && isFastFood) return false;
+      if ((r as any).hideInRestaurant && !isFastFood) return false;
       return true;
     })
     .map((r) => ({
       value: r.value,
-      label: isFastFood && r.fastFoodLabel ? r.fastFoodLabel : r.label,
+      label: r.label,
     }));
 };
 
@@ -177,7 +179,7 @@ const TeamManager = ({ storeId }: Props) => {
       setFormEmail("");
       setFormPassword("");
       setFormPin("");
-      setFormRole("garcom");
+      setFormRole(ROLES[0]?.value ?? "garcom");
       fetchMembers();
     } catch (err: any) {
       toast.error(err?.message || "Erro ao criar membro");
