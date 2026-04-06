@@ -1199,12 +1199,12 @@ const CaixaPage = ({ accessMode = "caixa", deliveryOnly = false }: CaixaPageProp
                 isAdminAccess={isAdminAccess}
               />
 
-              {/* ── Windows-style Tabs ── */}
-              <div className="flex items-end px-3 pt-1 shrink-0 bg-card">
+              {/* ── Tabs — scrollable on mobile ── */}
+              <div className="flex items-end px-2 md:px-3 pt-1 shrink-0 bg-card overflow-x-auto scrollbar-hide">
                 {showMesasTab && (
                 <button
                   onClick={() => setCaixaView("mesas")}
-                  className={`px-4 py-1.5 text-xs font-bold transition-colors border border-border rounded-t -mb-px relative ${
+                  className={`px-3 md:px-4 py-1.5 text-xs font-bold transition-colors border border-border rounded-t -mb-px relative shrink-0 ${
                     caixaView === "mesas"
                       ? "bg-card text-foreground border-b-card z-10"
                       : "bg-background text-muted-foreground"
@@ -1216,7 +1216,7 @@ const CaixaPage = ({ accessMode = "caixa", deliveryOnly = false }: CaixaPageProp
                 {showDeliveryTab && (
                 <button
                   onClick={() => setCaixaView("delivery")}
-                  className={`px-4 py-1.5 text-xs font-bold transition-colors border border-border rounded-t -mb-px relative flex items-center gap-1.5 ${
+                  className={`px-3 md:px-4 py-1.5 text-xs font-bold transition-colors border border-border rounded-t -mb-px relative flex items-center gap-1.5 shrink-0 ${
                     caixaView === "delivery"
                       ? "bg-card text-foreground border-b-card z-10"
                       : "bg-background text-muted-foreground"
@@ -1231,13 +1231,13 @@ const CaixaPage = ({ accessMode = "caixa", deliveryOnly = false }: CaixaPageProp
                 {showTotemTab && (
                 <button
                   onClick={() => setCaixaView("totem")}
-                  className={`px-4 py-1.5 text-xs font-bold transition-colors border border-border rounded-t -mb-px relative flex items-center gap-1.5 ${
+                  className={`px-3 md:px-4 py-1.5 text-xs font-bold transition-colors border border-border rounded-t -mb-px relative flex items-center gap-1.5 shrink-0 ${
                     caixaView === "totem"
                       ? "bg-card text-foreground border-b-card z-10"
                       : "bg-background text-muted-foreground"
                   }`}
                 >
-                  🖥️ Totem
+                  Totem
                   {pedidosTotemAtivos.length > 0 && (
                     <span className="rounded-full px-1.5 py-0.5 text-[10px] font-black tabular-nums leading-none bg-orange-500 text-white">{pedidosTotemAtivos.length}</span>
                   )}
@@ -1246,24 +1246,24 @@ const CaixaPage = ({ accessMode = "caixa", deliveryOnly = false }: CaixaPageProp
                 {showIfoodTab && (
                 <button
                   onClick={() => setCaixaView("ifood")}
-                  className={`px-4 py-1.5 text-xs font-bold transition-colors border border-border rounded-t -mb-px relative flex items-center gap-1.5 ${
+                  className={`px-3 md:px-4 py-1.5 text-xs font-bold transition-colors border border-border rounded-t -mb-px relative flex items-center gap-1.5 shrink-0 ${
                     caixaView === "ifood"
                       ? "bg-card text-foreground border-b-card z-10"
                       : "bg-background text-muted-foreground"
                   }`}
                 >
-                  🔴 iFood
+                  iFood
                 </button>
                 )}
                 <button
                   onClick={() => setCaixaView("historico")}
-                  className={`px-4 py-1.5 text-xs font-bold transition-colors border border-border rounded-t -mb-px relative flex items-center gap-1.5 ${
+                  className={`px-3 md:px-4 py-1.5 text-xs font-bold transition-colors border border-border rounded-t -mb-px relative flex items-center gap-1.5 shrink-0 ${
                     caixaView === "historico"
                       ? "bg-card text-foreground border-b-card z-10"
                       : "bg-background text-muted-foreground"
                   }`}
                 >
-                  📋 Histórico
+                  Histórico
                   {fechamentos.length > 0 && (
                     <span className="rounded-full px-1.5 py-0.5 text-[10px] font-black tabular-nums leading-none bg-primary text-primary-foreground">{fechamentos.length}</span>
                   )}
