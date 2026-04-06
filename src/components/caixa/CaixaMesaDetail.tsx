@@ -1,5 +1,5 @@
 /**
- * CaixaMesaDetail — Ultio-inspired 2-column layout (comanda + payment).
+ * CaixaMesaDetail — Card-based 2-column layout (comanda + payment).
  * Pure visual redesign — NO logic changes.
  */
 import {
@@ -13,6 +13,7 @@ import {
   ShoppingCart,
   Trash2,
   XCircle,
+  Percent,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -139,7 +140,7 @@ const CaixaMesaDetail = ({
 }: CaixaMesaDetailProps) => {
 
   return (
-    <div className="mx-auto grid h-full max-w-[1600px] grid-cols-[2fr_3fr] gap-4 p-4 md:p-5 fade-in">
+    <div className="mx-auto grid h-full max-w-[1600px] grid-cols-1 lg:grid-cols-[2fr_3fr] gap-4 p-4 md:p-5 fade-in">
 
       {/* ═══ LEFT: COMANDA ═══ */}
       <div className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card">
@@ -157,9 +158,7 @@ const CaixaMesaDetail = ({
               {mesa.status === "livre" ? "LIVRE" : mesa.status === "pendente" ? "PENDENTE" : "EM CONSUMO"}
             </span>
           </div>
-          <div className="flex items-center justify-between">
-            <p className="text-xs text-muted-foreground">Operador: <span className="font-bold text-foreground">{currentOperator.nome}</span></p>
-          </div>
+          <p className="text-xs text-muted-foreground">Operador: <span className="font-bold text-foreground">{currentOperator.nome}</span></p>
         </div>
 
         {mesa.pedidos.some((p) => p.paraViagem) && (
@@ -294,13 +293,13 @@ const CaixaMesaDetail = ({
           </div>
           {descontoAplicado > 0 && (
             <div className="flex items-center justify-between text-sm text-primary">
-              <span>🎁 Desconto</span>
+              <span>Desconto</span>
               <span className="tabular-nums font-bold">- {formatPrice(descontoAplicado)}</span>
             </div>
           )}
           {couvertTotal > 0 && (
             <div className="flex items-center justify-between text-sm text-emerald-400">
-              <span>🍽️ Couvert ({couvertPessoas}p)</span>
+              <span>Couvert ({couvertPessoas}p)</span>
               <span className="tabular-nums font-bold">+ {formatPrice(couvertTotal)}</span>
             </div>
           )}
@@ -312,10 +311,10 @@ const CaixaMesaDetail = ({
       </div>
 
       {/* ═══ RIGHT: PAGAMENTO or HISTÓRICO ═══ */}
-      <div className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card">
+      <div className="flex flex-col overflow-hidden">
         {mesaTab === "historico" ? (
           /* ── Histórico tab ── */
-          <div className="flex-1 overflow-y-auto p-4 space-y-3">
+          <div className="flex-1 overflow-y-auto rounded-2xl border border-border bg-card p-4 space-y-3">
             <div className="flex items-center justify-between pb-2 border-b border-border">
               <h3 className="text-base font-black text-foreground">Histórico de fechamentos</h3>
               <Button variant="outline" size="sm" onClick={() => setMesaTab("comanda")}
@@ -357,11 +356,11 @@ const CaixaMesaDetail = ({
                       <button type="button"
                         onClick={() => {
                           const trocoStr = f.troco && f.troco > 0
-                            ? `<div class="print-item"><span>💵 Troco devolvido</span><span>R$ ${f.troco.toFixed(2).replace(".", ",")}</span></div>` : "";
+                            ? `<div class="print-item"><span>Troco devolvido</span><span>R$ ${f.troco.toFixed(2).replace(".", ",")}</span></div>` : "";
                           const descontoStr = f.desconto && f.desconto > 0
-                            ? `<div class="print-item" style="color:#c85b0a"><span>🎁 Desconto aplicado</span><span>- R$ ${f.desconto.toFixed(2).replace(".", ",")}</span></div>` : "";
+                            ? `<div class="print-item" style="color:#c85b0a"><span>Desconto aplicado</span><span>- R$ ${f.desconto.toFixed(2).replace(".", ",")}</span></div>` : "";
                           const couvertStr = f.couvert && f.couvert > 0
-                            ? `<div class="print-item" style="color:#059669"><span>🍽️ Couvert (${f.numeroPessoas ?? 0} pessoa${(f.numeroPessoas ?? 0) !== 1 ? "s" : ""})</span><span>+ R$ ${f.couvert.toFixed(2).replace(".", ",")}</span></div>` : "";
+                            ? `<div class="print-item" style="color:#059669"><span>Couvert (${f.numeroPessoas ?? 0} pessoa${(f.numeroPessoas ?? 0) !== 1 ? "s" : ""})</span><span>+ R$ ${f.couvert.toFixed(2).replace(".", ",")}</span></div>` : "";
                           const pagStr = (f.pagamentos?.length ? f.pagamentos : [{ formaPagamento: f.formaPagamento, valor: f.total }])
                             .map((p: any) => `<div class="print-item"><span>${getPaymentMethodLabel(p.formaPagamento as PaymentMethod)}</span><span>R$ ${p.valor.toFixed(2).replace(".", ",")}</span></div>`).join("");
                           const itensStr = (f.itens || []).map((it: any) =>
@@ -396,7 +395,7 @@ const CaixaMesaDetail = ({
                         );
                       })}
                     {f.troco != null && f.troco > 0 && (
-                      <p className="text-xs text-emerald-400">💵 Troco: {formatPrice(f.troco)}</p>
+                      <p className="text-xs text-emerald-400">Troco: {formatPrice(f.troco)}</p>
                     )}
                   </div>
                   {f.cancelado && f.canceladoMotivo && (
@@ -407,78 +406,71 @@ const CaixaMesaDetail = ({
             )}
           </div>
         ) : (
-          /* ── Payment tab ── */
-          <>
-          <div className="flex-1 overflow-y-auto p-5 space-y-4 scrollbar-hide">
-            {/* Total a pagar + Restante */}
-            <div className="rounded-2xl border border-border bg-secondary/30 p-4 space-y-3">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Total a pagar</p>
-                  <p className="text-3xl font-black tabular-nums text-foreground">{formatPrice(totalConta)}</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
-                    {fechamentoPronto ? "Quitado" : "Restante"}
-                  </p>
-                  <p className={`text-2xl font-black tabular-nums ${fechamentoPronto ? "text-emerald-400" : "text-amber-400"}`}>
-                    {fechamentoPronto ? (
-                      <span className="flex items-center gap-1.5"><Check className="h-5 w-5" /> {formatPrice(0)}</span>
-                    ) : formatPrice(valorRestante)}
-                  </p>
+          /* ── Payment cards ── */
+          <div className="flex-1 overflow-y-auto space-y-4 scrollbar-hide">
+
+            {/* Card 1 — Items + Total */}
+            <div className="rounded-2xl border border-border bg-card p-5 space-y-3">
+              <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Itens do pedido</p>
+              <div className="space-y-1">
+                {mesa.pedidos.flatMap(p => p.itens).map((item) => (
+                  <div key={item.uid} className="flex items-center justify-between py-0.5">
+                    <span className="text-sm text-foreground">
+                      <span className="font-bold text-muted-foreground">{item.quantidade}×</span> {item.nome}
+                    </span>
+                    <span className="text-sm tabular-nums text-muted-foreground">{formatPrice(item.precoUnitario * item.quantidade)}</span>
+                  </div>
+                ))}
+              </div>
+
+              <div className="border-t border-border pt-3 space-y-1">
+                {descontoAplicado > 0 && (
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-primary font-semibold">Desconto</span>
+                    <span className="text-primary font-bold tabular-nums">- {formatPrice(descontoAplicado)}</span>
+                  </div>
+                )}
+                {couvertTotal > 0 && (
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-emerald-500 font-semibold">Couvert ({couvertPessoas}p)</span>
+                    <span className="text-emerald-500 font-bold tabular-nums">+ {formatPrice(couvertTotal)}</span>
+                  </div>
+                )}
+                <div className="flex items-center justify-between">
+                  <span className="text-base font-black text-foreground">Total</span>
+                  <span className="text-2xl font-black text-primary tabular-nums">{formatPrice(totalConta)}</span>
                 </div>
               </div>
 
-              {/* Progress bar */}
-              <CaixaPaymentProgressBar
-                totalPago={totalPago}
-                totalConta={totalConta}
-                progress={paymentProgress}
-                isComplete={fechamentoPronto}
-              />
+              {/* Inline discount toggle */}
+              {!descontoAplicado && closingPayments.length === 0 && totalConta > 0 && (
+                <button onClick={() => setDescontoModalOpen(true)}
+                  className="flex items-center gap-1.5 text-xs font-bold text-primary hover:text-primary/80 transition-colors pt-1">
+                  <Percent className="h-3 w-3" /> Aplicar desconto
+                </button>
+              )}
+              {descontoAplicado > 0 && closingPayments.length === 0 && (
+                <button onClick={() => setDescontoAplicado(0)}
+                  className="text-xs text-destructive hover:underline pt-1">
+                  Remover desconto
+                </button>
+              )}
             </div>
 
             {/* Para viagem reminder */}
             {mesa.pedidos.some((p) => p.paraViagem) && !fechamentoPronto && totalConta > 0 && (
-              <div className="flex items-center gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-2.5">
+              <div className="flex items-center gap-2 rounded-2xl border border-amber-500/30 bg-amber-500/10 px-5 py-3">
                 <ShoppingBag className="h-4 w-4 text-amber-400 shrink-0" />
                 <p className="text-xs font-bold text-amber-400">Lembrar: pedido para levar — verifique a embalagem</p>
               </div>
             )}
 
-            {/* Discount button */}
-            {!descontoAplicado && closingPayments.length === 0 && totalConta > 0 && (
-              <button onClick={() => setDescontoModalOpen(true)}
-                className="flex items-center gap-2 rounded-xl border border-dashed border-border/60 bg-secondary/20 px-4 py-2.5 text-xs font-bold text-muted-foreground hover:text-primary hover:border-primary/30 transition-colors w-full">
-                <span>🎁</span> Aplicar desconto (R$ ou %)
-              </button>
-            )}
-
-            {/* Discount applied */}
-            {descontoAplicado > 0 && (
-              <div className="flex items-center justify-between rounded-xl bg-primary/10 border border-primary/20 px-4 py-2.5">
-                <div className="flex items-center gap-2">
-                  <span>🎁</span>
-                  <div>
-                    <p className="text-xs font-bold text-primary">Desconto aplicado</p>
-                    <p className="text-[10px] text-muted-foreground">Original: {formatPrice(mesa.total)} → {formatPrice(totalConta)}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <span className="text-sm font-black text-primary tabular-nums">- {formatPrice(descontoAplicado)}</span>
-                  {closingPayments.length === 0 && (
-                    <button onClick={() => setDescontoAplicado(0)} className="text-xs text-destructive hover:underline">remover</button>
-                  )}
-                </div>
-              </div>
-            )}
-
             {/* Couvert */}
             {sistemaConfig.couvertAtivo && !couvertDispensado && mesa && !mesa.pedidos.every(p => p.paraViagem) && (
-              <div className="rounded-xl border border-border bg-secondary/30 p-3 space-y-2">
+              <div className="rounded-2xl border border-border bg-card p-4 space-y-2">
                 <div className="flex items-center justify-between">
                   <p className="text-xs font-black text-foreground flex items-center gap-1.5">
-                    🍽️ Couvert
+                    Couvert
                     <span className="text-muted-foreground font-normal">{formatPrice(sistemaConfig.couvertValor ?? 0)}/pessoa</span>
                   </p>
                   {!sistemaConfig.couvertObrigatorio && (
@@ -506,194 +498,196 @@ const CaixaMesaDetail = ({
             )}
 
             {couvertDispensado && (
-              <div className="flex items-center justify-between rounded-xl bg-secondary/40 border border-border px-3 py-2">
-                <span className="text-xs text-muted-foreground">🍽️ Couvert dispensado</span>
+              <div className="flex items-center justify-between rounded-2xl bg-secondary/40 border border-border px-4 py-3">
+                <span className="text-xs text-muted-foreground">Couvert dispensado</span>
                 <button onClick={() => setCouvertDispensado(false)} className="text-xs text-primary font-bold">Reverter</button>
               </div>
             )}
 
-            {/* Payment method grid 2×2 */}
-            {!fechamentoPronto && totalConta > 0 && (
-              <div className="grid grid-cols-2 gap-2.5">
-                {paymentMethodOptions.map((opt) => {
-                  const Icon = opt.icon;
-                  const isSelected = closingPaymentMethod === opt.value;
-                  return (
-                    <button key={opt.value} type="button"
-                      onClick={() => {
-                        setClosingPaymentMethod(opt.value as PaymentMethod);
-                        if (opt.value === "dinheiro") {
-                          setClosingPaymentValue("");
-                        } else {
-                          setClosingPaymentValue(valorRestante.toFixed(2).replace(".", ","));
-                        }
-                      }}
-                      className={`flex items-center justify-center gap-2.5 rounded-2xl border-2 py-3.5 px-4 transition-all ${
-                        isSelected
-                          ? "border-emerald-500/50 bg-emerald-900/40 shadow-[0_0_12px_hsla(142,50%,40%,0.15)]"
-                          : `${opt.idleBorder} ${opt.idleBg} opacity-60 hover:opacity-80`
-                      }`}>
-                      <Icon className={`h-5 w-5 ${isSelected ? "text-white" : "text-muted-foreground"}`} />
-                      <span className={`text-sm font-black ${isSelected ? "text-white" : "text-muted-foreground"}`}>{opt.label}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            )}
+            {/* Card 2 — Payment */}
+            {totalConta > 0 && (
+              <div className="rounded-2xl border border-border bg-card p-5 space-y-4">
+                <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Pagamento</p>
 
-            {/* Value input + quick values */}
-            {!fechamentoPronto && totalConta > 0 && (
-              <div className="space-y-2.5">
-                <div className="flex items-end gap-2">
-                  <div className="flex-1 space-y-1">
-                    <label className="text-xs font-semibold text-muted-foreground">
-                      {closingPaymentMethod === "dinheiro" ? "Valor entregue (R$)" : "Valor"}
-                    </label>
-                    <Input
-                      value={closingPaymentValue}
-                      onChange={(e) => setClosingPaymentValue(e.target.value)}
-                      onKeyDown={(e) => { if (e.key === "Enter") handleAddPayment(); }}
-                      placeholder={closingPaymentMethod === "dinheiro" ? "Ex.: 50,00" : "Ex.: 25,00"}
-                      inputMode="decimal"
-                      autoComplete="off"
-                      className="h-12 rounded-xl text-lg font-bold"
-                    />
+                {/* Payment method grid */}
+                {!fechamentoPronto && (
+                  <div className="grid grid-cols-4 gap-2">
+                    {paymentMethodOptions.map((opt) => {
+                      const Icon = opt.icon;
+                      const isSelected = closingPaymentMethod === opt.value;
+                      return (
+                        <button key={opt.value} type="button"
+                          onClick={() => {
+                            setClosingPaymentMethod(opt.value as PaymentMethod);
+                            if (opt.value === "dinheiro") {
+                              setClosingPaymentValue("");
+                            } else {
+                              setClosingPaymentValue(valorRestante.toFixed(2).replace(".", ","));
+                            }
+                          }}
+                          className={`flex flex-col items-center gap-1.5 rounded-xl border-2 py-3 px-2 transition-all ${
+                            isSelected
+                              ? "border-emerald-500/50 bg-emerald-900/40 shadow-[0_0_12px_hsla(142,50%,40%,0.15)]"
+                              : "border-border bg-secondary/30 opacity-60 hover:opacity-80"
+                          }`}>
+                          <Icon className={`h-5 w-5 ${isSelected ? "text-white" : "text-muted-foreground"}`} />
+                          <span className={`text-xs font-bold ${isSelected ? "text-white" : "text-muted-foreground"}`}>{opt.label}</span>
+                        </button>
+                      );
+                    })}
                   </div>
-                  {(() => {
-                    const entregou = parseCurrencyInput(closingPaymentValue);
-                    const temTroco = closingPaymentMethod === "dinheiro" &&
-                      Number.isFinite(entregou) && entregou > valorRestante;
-                    const troco = temTroco ? entregou - valorRestante : 0;
-                    return (
-                      <Button onClick={handleAddPayment}
-                        className={`rounded-xl font-black h-12 px-5 shrink-0 transition-all ${
-                          temTroco ? "bg-emerald-600 hover:bg-emerald-700 text-white min-w-[160px]" : "bg-primary hover:bg-primary/90"
-                        }`}>
-                        {temTroco ? (
-                          <span className="flex flex-col items-center leading-tight">
-                            <span className="text-[10px] font-bold opacity-80">Troco: {formatPrice(troco)}</span>
-                            <span className="text-sm font-black">✓ Confirmar</span>
-                          </span>
-                        ) : (
-                          <><Plus className="h-4 w-4 mr-1" /> Adicionar</>
-                        )}
-                      </Button>
-                    );
-                  })()}
-                </div>
+                )}
 
-                {/* Quick values */}
-                <div className="flex items-center gap-1.5">
-                  {(closingPaymentMethod === "dinheiro" ? [20, 50, 100, 200] : QUICK_VALUES).map((qv) => (
-                    <Button key={qv} type="button" variant="outline"
-                      className="rounded-xl font-bold tabular-nums flex-1 h-9 text-xs"
-                      onClick={() => setClosingPaymentValue(qv.toFixed(2).replace(".", ","))}>
-                      {closingPaymentMethod === "dinheiro" ? `R$ ${qv}` : `+R$ ${qv}`}
-                    </Button>
-                  ))}
-                  <Button type="button" variant="outline"
-                    className="rounded-xl font-bold flex-1 h-9 text-xs border-primary/30 text-primary hover:bg-primary/10"
-                    onClick={() => setClosingPaymentValue(valorRestante.toFixed(2).replace(".", ","))}>
-                    {closingPaymentMethod === "dinheiro" ? "Exato" : "Restante"}
-                  </Button>
-                </div>
-
-                {/* Troco display for dinheiro */}
-                {closingPaymentMethod === "dinheiro" && (() => {
-                  const entregou = parseCurrencyInput(closingPaymentValue);
-                  if (!Number.isFinite(entregou) || entregou <= valorRestante) return null;
-                  const troco = entregou - valorRestante;
-                  return (
-                    <div className="flex items-center justify-between rounded-xl bg-amber-500/10 border-2 border-amber-500/40 px-4 py-3">
-                      <div>
-                        <p className="text-[10px] font-bold text-amber-300/70 uppercase tracking-widest">Troco para o cliente</p>
-                        <p className="text-xs font-bold text-amber-300">Devolver ao cliente</p>
+                {/* Value input */}
+                {!fechamentoPronto && (
+                  <div className="space-y-2.5">
+                    <div className="flex items-end gap-2">
+                      <div className="flex-1">
+                        <Input
+                          value={closingPaymentValue}
+                          onChange={(e) => setClosingPaymentValue(e.target.value)}
+                          onKeyDown={(e) => { if (e.key === "Enter") handleAddPayment(); }}
+                          placeholder={`Valor (faltam ${formatPrice(valorRestante)})`}
+                          inputMode="decimal"
+                          autoComplete="off"
+                          className="h-12 rounded-xl text-lg font-bold"
+                        />
                       </div>
-                      <span className="text-3xl font-black tabular-nums text-amber-300">{formatPrice(troco)}</span>
+                      {(() => {
+                        const entregou = parseCurrencyInput(closingPaymentValue);
+                        const temTroco = closingPaymentMethod === "dinheiro" &&
+                          Number.isFinite(entregou) && entregou > valorRestante;
+                        const troco = temTroco ? entregou - valorRestante : 0;
+                        return (
+                          <Button onClick={handleAddPayment}
+                            className={`rounded-xl font-black h-12 px-5 shrink-0 transition-all ${
+                              temTroco ? "bg-emerald-600 hover:bg-emerald-700 text-white min-w-[140px]" : "bg-primary hover:bg-primary/90"
+                            }`}>
+                            {temTroco ? (
+                              <span className="flex flex-col items-center leading-tight">
+                                <span className="text-[10px] font-bold opacity-80">Troco: {formatPrice(troco)}</span>
+                                <span className="text-sm font-black">Confirmar</span>
+                              </span>
+                            ) : (
+                              "Adicionar"
+                            )}
+                          </Button>
+                        );
+                      })()}
                     </div>
-                  );
-                })()}
-              </div>
-            )}
 
-            {/* Payment list */}
-            {closingPayments.length > 0 && (
-              <div className="space-y-1.5">
-                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Pagamentos registrados</p>
-                {closingPayments.map((payment) => {
-                  const style = getPaymentMethodStyle(payment.formaPagamento);
-                  const Icon = style.icon;
-                  return (
-                    <div key={payment.id} className={`flex items-center gap-2 rounded-xl border ${style.borderColor} ${style.bgColor} px-3 py-2`}>
-                      <div className={`flex h-7 w-7 items-center justify-center rounded-lg ${style.bgColor} ${style.color}`}>
-                        <Icon className="h-3.5 w-3.5" />
-                      </div>
-                      <p className="flex-1 text-sm font-bold text-foreground">{getPaymentMethodLabel(payment.formaPagamento)}</p>
-                      <span className={`text-sm font-black tabular-nums ${style.color}`}>{formatPrice(payment.valor)}</span>
-                      <Button size="icon" variant="outline" className="h-6 w-6 rounded-lg text-destructive border-destructive/20 hover:bg-destructive/10" onClick={() => handleRemovePayment(payment.id)}>
-                        <Trash2 className="h-3 w-3" />
+                    {/* Quick values */}
+                    <div className="flex items-center gap-1.5">
+                      {(closingPaymentMethod === "dinheiro" ? [20, 50, 100, 200] : QUICK_VALUES).map((qv) => (
+                        <Button key={qv} type="button" variant="outline"
+                          className="rounded-xl font-bold tabular-nums flex-1 h-8 text-xs"
+                          onClick={() => setClosingPaymentValue(qv.toFixed(2).replace(".", ","))}>
+                          {closingPaymentMethod === "dinheiro" ? `R$ ${qv}` : `+R$ ${qv}`}
+                        </Button>
+                      ))}
+                      <Button type="button" variant="outline"
+                        className="rounded-xl font-bold flex-1 h-8 text-xs border-primary/30 text-primary hover:bg-primary/10"
+                        onClick={() => setClosingPaymentValue(valorRestante.toFixed(2).replace(".", ","))}>
+                        {closingPaymentMethod === "dinheiro" ? "Exato" : "Restante"}
                       </Button>
                     </div>
-                  );
-                })}
-                {trocoRegistrado > 0 && (
-                  <div className="flex items-center justify-between rounded-xl border-2 border-emerald-500/40 bg-emerald-500/10 px-4 py-2.5">
-                    <div className="flex items-center gap-2">
-                      <span className="text-lg">💵</span>
-                      <div>
-                        <p className="text-xs font-bold text-emerald-400/70 uppercase tracking-widest">Troco</p>
-                        <p className="text-sm font-bold text-emerald-400">Devolver ao cliente</p>
+
+                    {/* Troco display for dinheiro */}
+                    {closingPaymentMethod === "dinheiro" && (() => {
+                      const entregou = parseCurrencyInput(closingPaymentValue);
+                      if (!Number.isFinite(entregou) || entregou <= valorRestante) return null;
+                      const troco = entregou - valorRestante;
+                      return (
+                        <div className="flex items-center justify-between rounded-xl bg-amber-500/10 border-2 border-amber-500/40 px-4 py-3">
+                          <div>
+                            <p className="text-[10px] font-bold text-amber-300/70 uppercase tracking-widest">Troco para o cliente</p>
+                            <p className="text-xs font-bold text-amber-300">Devolver ao cliente</p>
+                          </div>
+                          <span className="text-3xl font-black tabular-nums text-amber-300">{formatPrice(troco)}</span>
+                        </div>
+                      );
+                    })()}
+                  </div>
+                )}
+
+                {/* Progress bar */}
+                <CaixaPaymentProgressBar
+                  totalPago={totalPago}
+                  totalConta={totalConta}
+                  progress={paymentProgress}
+                  isComplete={fechamentoPronto}
+                />
+
+                {/* Payment list */}
+                {closingPayments.length > 0 && (
+                  <div className="space-y-1.5">
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Pagamentos registrados</p>
+                    {closingPayments.map((payment) => {
+                      const style = getPaymentMethodStyle(payment.formaPagamento);
+                      const Icon = style.icon;
+                      return (
+                        <div key={payment.id} className={`flex items-center gap-2 rounded-xl border ${style.borderColor} ${style.bgColor} px-3 py-2`}>
+                          <div className={`flex h-7 w-7 items-center justify-center rounded-lg ${style.bgColor} ${style.color}`}>
+                            <Icon className="h-3.5 w-3.5" />
+                          </div>
+                          <p className="flex-1 text-sm font-bold text-foreground">{getPaymentMethodLabel(payment.formaPagamento)}</p>
+                          <span className={`text-sm font-black tabular-nums ${style.color}`}>{formatPrice(payment.valor)}</span>
+                          <Button size="icon" variant="outline" className="h-6 w-6 rounded-lg text-destructive border-destructive/20 hover:bg-destructive/10" onClick={() => handleRemovePayment(payment.id)}>
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      );
+                    })}
+                    {trocoRegistrado > 0 && (
+                      <div className="flex items-center justify-between rounded-xl border-2 border-emerald-500/40 bg-emerald-500/10 px-4 py-2.5">
+                        <div className="flex items-center gap-2">
+                          <div>
+                            <p className="text-xs font-bold text-emerald-400/70 uppercase tracking-widest">Troco</p>
+                            <p className="text-sm font-bold text-emerald-400">Devolver ao cliente</p>
+                          </div>
+                        </div>
+                        <span className="text-2xl font-black tabular-nums text-emerald-400">{formatPrice(trocoRegistrado)}</span>
                       </div>
-                    </div>
-                    <span className="text-2xl font-black tabular-nums text-emerald-400">{formatPrice(trocoRegistrado)}</span>
+                    )}
                   </div>
                 )}
               </div>
             )}
-          </div>
 
-          {/* Bottom: CPF + NFC-e + Confirm button */}
-          <div className="border-t border-border px-5 py-3 space-y-3 bg-card">
-            {/* CPF na nota */}
+            {/* Card 3 — CPF na Nota */}
             {sistemaConfig.cpfNotaAtivo && (
-              <div>
-                <button onClick={() => setCpfNotaMesaOpen(!cpfNotaMesaOpen)}
-                  className="text-xs font-bold text-muted-foreground hover:text-foreground transition-colors">
-                  {cpfNotaMesa ? `📄 CPF: ${cpfNotaMesa}` : "📄 CPF na nota?"}
-                </button>
-                {cpfNotaMesaOpen && (
-                  <div className="mt-2">
-                    <Input value={cpfNotaMesa}
-                      onChange={(e) => setCpfNotaMesa(formatCpfMask(e.target.value))}
-                      placeholder="000.000.000-00"
-                      inputMode="numeric"
-                      className="rounded-xl text-sm" />
-                  </div>
-                )}
+              <div className="rounded-2xl border border-border bg-card p-5 space-y-2">
+                <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">CPF na nota (opcional)</p>
+                <Input value={cpfNotaMesa}
+                  onChange={(e) => setCpfNotaMesa(formatCpfMask(e.target.value))}
+                  placeholder="000.000.000-00"
+                  inputMode="numeric"
+                  className="rounded-xl text-sm" />
               </div>
             )}
 
-            {/* NFC-e placeholder */}
+            {/* Card 4 — NFC-e badge (compact, only if configured) */}
             <CaixaNfcePlaceholder />
 
             {/* Confirm button */}
-            <Button onClick={handleFechar}
-              disabled={!fechamentoPronto || closingPayments.length === 0}
-              className={`w-full h-14 rounded-2xl text-lg font-black transition-all ${
-                fechamentoPronto
-                  ? "bg-emerald-600 text-white hover:bg-emerald-700 shadow-[0_0_20px_hsla(142,60%,40%,0.3)]"
-                  : ""
-              }`}>
-              {fechamentoPronto ? <ShieldCheck className="h-5 w-5" /> : <Check className="h-5 w-5" />}
-              Confirmar fechamento
-            </Button>
-            {!fechamentoPronto && totalConta > 0 && (
-              <p className="text-center text-[10px] text-muted-foreground">
-                O fechamento só será liberado quando o total pago for igual ao total da conta.
-              </p>
-            )}
+            <div className="space-y-2 pb-2">
+              <Button onClick={handleFechar}
+                disabled={!fechamentoPronto || closingPayments.length === 0}
+                className={`w-full h-14 rounded-2xl text-lg font-black transition-all ${
+                  fechamentoPronto
+                    ? "bg-emerald-600 text-white hover:bg-emerald-700 shadow-[0_0_20px_hsla(142,60%,40%,0.3)]"
+                    : ""
+                }`}>
+                {fechamentoPronto ? <ShieldCheck className="h-5 w-5 mr-2" /> : <Check className="h-5 w-5 mr-2" />}
+                Fechar Conta — {formatPrice(totalConta)}
+              </Button>
+              {!fechamentoPronto && totalConta > 0 && (
+                <p className="text-center text-[10px] text-muted-foreground">
+                  O fechamento só será liberado quando o total pago for igual ao total da conta.
+                </p>
+              )}
+            </div>
           </div>
-          </>
         )}
       </div>
 
