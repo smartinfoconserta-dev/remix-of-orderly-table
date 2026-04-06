@@ -443,6 +443,10 @@ const GarcomPdvPage = () => {
     return (
       <ModuleGate moduleKey="garcomPdv" moduleName="Garçom PDV">
         <OfflineIndicator />
+        {/* Long-press exit zone — top-left corner */}
+        <div className="fixed top-2 left-2 z-50">
+          {longPressAvatar}
+        </div>
         {exitDialog}
         <PedidoFlow
           modo="balcao"
@@ -457,7 +461,6 @@ const GarcomPdvPage = () => {
               logout("garcom");
             }
           }}
-          onExitSession={() => setExitDialogOpen(true)}
         />
         <LicenseBanner context="operational" />
       </ModuleGate>

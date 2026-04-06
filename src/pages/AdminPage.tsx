@@ -109,7 +109,7 @@ const AdminPage = () => {
   return (
     <div className="flex flex-col min-h-svh bg-background">
       {/* Title bar */}
-      <div className="flex items-center justify-between px-3 md:px-5 py-2.5 shrink-0 bg-sidebar border-b border-sidebar-border">
+      <div className="flex items-center justify-between px-3 md:px-5 py-2.5 shrink-0 bg-sidebar-background border-b border-sidebar-border">
         <div className="flex items-center gap-2 md:gap-3 min-w-0">
           {/* Mobile hamburger */}
           {isMobile && (
@@ -119,7 +119,7 @@ const AdminPage = () => {
                   <Menu className="h-4 w-4" />
                 </Button>
               </SheetTrigger>
-              <SheetContent side="left" className="w-[260px] p-0 bg-sidebar border-sidebar-border">
+              <SheetContent side="left" className="w-[260px] p-0 bg-sidebar-background border-sidebar-border">
                 <div className="px-4 py-4 border-b border-sidebar-border">
                   <h2 className="text-sm font-bold text-sidebar-foreground">{nomeRestaurante}</h2>
                   <p className="text-[10px] text-muted-foreground">Painel Administrativo</p>
@@ -144,7 +144,7 @@ const AdminPage = () => {
       <div className="flex flex-1 min-h-0">
         {/* Sidebar — desktop only */}
         {!isMobile && (
-          <aside className="hidden md:flex w-[220px] shrink-0 flex-col border-r border-sidebar-border bg-sidebar">
+          <aside className="hidden md:flex w-[220px] shrink-0 flex-col border-r border-sidebar-border bg-sidebar-background">
             {sidebarNav}
           </aside>
         )}

@@ -146,7 +146,7 @@ export function buildPedidoFlowHeader(props: PedidoFlowHeaderProps) {
       }`}
     >
       <div className="flex min-w-0 flex-1 items-center gap-3">
-        {modo !== "cliente" && modo !== "delivery" && modo !== "totem" && modo !== "balcao" && (
+        {modo !== "cliente" && modo !== "delivery" && modo !== "totem" && (
           <button
             type="button"
             onClick={onBack}

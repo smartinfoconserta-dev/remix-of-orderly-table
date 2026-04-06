@@ -13,7 +13,7 @@ export const AdminBackButton = () => {
 
   if (authLevel !== "admin" && authLevel !== "master") return null;
 
-  const hiddenRoutes = ["/admin", "/master", "/gerente", "/garcom", "/garcom-pdv", "/"];
+  const hiddenRoutes = ["/admin", "/master", "/gerente", "/"];
   if (hiddenRoutes.some((r) => pathname === r || (r !== "/" && pathname.startsWith(r + "/")))) return null;
 
   return (

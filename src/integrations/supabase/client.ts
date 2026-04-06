@@ -5,13 +5,22 @@ import type { Database } from './types';
 const SUPABASE_URL = "https://xtroaobjlvgprarcubfq.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh0cm9hb2JqbHZncHJhcmN1YmZxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzODE5NDIsImV4cCI6MjA4OTk1Nzk0Mn0.ZJlXyjpt7C1pGxCBT_yHc10e7iJKLi41e8l8cUQIQ3M";
 
+// Generate a unique storage key per tab to isolate sessions completely
+const TAB_ID_KEY = "orderly-tab-id";
+let tabId = sessionStorage.getItem(TAB_ID_KEY);
+if (!tabId) {
+  tabId = `tab-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  sessionStorage.setItem(TAB_ID_KEY, tabId);
+}
+
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: {
-    storage: localStorage,
+    storage: sessionStorage,
     persistSession: true,
     autoRefreshToken: true,
+    storageKey: `sb-xtroaobjlvgprarcubfq-auth-${tabId}`,
   }
 });
