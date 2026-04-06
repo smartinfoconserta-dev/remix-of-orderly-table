@@ -267,6 +267,148 @@ const GarcomPdvPage = () => {
 
   const garcomNome = currentGarcom?.nome ?? (isAdminAccess ? "Administrador" : "");
 
+  // ===================== FAST FOOD MODE =====================
+  if (isFastFood) {
+    // Payment selection
+    if (ffStep === "payment" && ffPendingItens.length > 0) {
+      return (
+        <ModuleGate moduleKey="garcomPdv" moduleName="Garçom PDV">
+          <div className="min-h-svh bg-background flex flex-col items-center justify-center gap-6 p-6">
+            <div className="text-center space-y-2">
+              <h1 className="text-2xl font-black text-foreground">Como o cliente vai pagar?</h1>
+              <p className="text-lg font-bold text-primary">Total: {formatPrice(ffPendingTotal)}</p>
+              <p className="text-xs text-muted-foreground">Garçom: {garcomNome}</p>
+            </div>
+
+            <div className="flex flex-col gap-3 w-full max-w-sm">
+              {([
+                { value: "pix" as PaymentMethod, label: "PIX", icon: QrCode, desc: "QR Code no caixa" },
+                { value: "credito" as PaymentMethod, label: "Crédito", icon: CreditCard, desc: "Maquininha" },
+                { value: "debito" as PaymentMethod, label: "Débito", icon: Wallet, desc: "Maquininha" },
+              ]).map((opt) => (
+                <button
+                  key={opt.value}
+                  onClick={async () => {
+                    if (ffSubmitting) return;
+                    setFfSubmitting(true);
+                    setFfPaymentMethod(opt.value);
+                    setFfStep("processing");
+
+                    try {
+                      const operador = currentGarcom
+                        ? { id: currentGarcom.id, nome: currentGarcom.nome, role: "garcom" as const, criadoEm: currentGarcom.criadoEm || new Date().toISOString() }
+                        : { id: "admin", nome: "Administrador", role: "garcom" as const, criadoEm: new Date().toISOString() };
+
+                      const numeroPedido = await criarPedidoBalcao({
+                        itens: ffPendingItens,
+                        origem: "balcao",
+                        operador,
+                        clienteNome: garcomNome,
+                        formaPagamentoTotem: opt.value,
+                      });
+                      setFfNumeroPedido(numeroPedido);
+                      setFfStep("done");
+                      playSuccessSound();
+                      vibrateSuccess();
+                    } catch (err) {
+                      console.error("Garçom PDV FF: erro ao criar pedido", err);
+                      toast.error("Erro ao enviar pedido. Tente novamente.");
+                      setFfStep("payment");
+                    } finally {
+                      setFfSubmitting(false);
+                    }
+                  }}
+                  disabled={ffSubmitting}
+                  className="flex items-center gap-4 h-16 rounded-2xl border-2 border-border bg-card px-5 transition-all active:scale-[0.98] hover:border-primary/50"
+                >
+                  <div className="h-11 w-11 rounded-xl flex items-center justify-center bg-primary text-primary-foreground">
+                    <opt.icon className="h-5 w-5" />
+                  </div>
+                  <div className="text-left">
+                    <p className="text-base font-black text-foreground">{opt.label}</p>
+                    <p className="text-xs text-muted-foreground">{opt.desc}</p>
+                  </div>
+                </button>
+              ))}
+            </div>
+
+            <button
+              onClick={() => { setFfStep("menu"); setFfPendingItens([]); }}
+              className="text-sm font-bold text-muted-foreground hover:text-foreground transition-colors"
+            >
+              ← Voltar ao cardápio
+            </button>
+          </div>
+        </ModuleGate>
+      );
+    }
+
+    // Processing
+    if (ffStep === "processing") {
+      return (
+        <ModuleGate moduleKey="garcomPdv" moduleName="Garçom PDV">
+          <div className="min-h-svh bg-background flex flex-col items-center justify-center gap-4">
+            <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+            <p className="text-sm font-bold text-muted-foreground">Enviando pedido...</p>
+          </div>
+        </ModuleGate>
+      );
+    }
+
+    // Done
+    if (ffStep === "done" && ffNumeroPedido !== null) {
+      return (
+        <ModuleGate moduleKey="garcomPdv" moduleName="Garçom PDV">
+          <div className="min-h-svh bg-background flex flex-col items-center justify-center p-6 gap-5">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500/15">
+              <Check className="h-8 w-8 text-emerald-400" />
+            </div>
+            <h2 className="text-2xl font-black text-foreground">Pedido enviado!</h2>
+            <p className="text-5xl font-black text-primary tabular-nums">#{String(ffNumeroPedido).padStart(3, "0")}</p>
+            <p className="text-sm text-muted-foreground">
+              Pagamento: {ffPaymentMethod === "pix" ? "PIX" : ffPaymentMethod === "credito" ? "Crédito" : "Débito"}
+            </p>
+            <Button
+              className="h-12 w-full max-w-xs rounded-xl font-black"
+              onClick={() => {
+                setFfStep("menu");
+                setFfPendingItens([]);
+                setFfNumeroPedido(null);
+                setFfPaymentMethod(null);
+              }}
+            >
+              Novo pedido
+            </Button>
+          </div>
+        </ModuleGate>
+      );
+    }
+
+    // Menu (PedidoFlow in balcao mode)
+    return (
+      <ModuleGate moduleKey="garcomPdv" moduleName="Garçom PDV">
+        <OfflineIndicator />
+        <PedidoFlow
+          modo="balcao"
+          clienteNome={garcomNome}
+          onPedidoConfirmado={(itens) => {
+            setFfPendingItens(itens);
+            setFfPendingTotal(itens.reduce((acc, item) => acc + item.precoUnitario * item.quantidade, 0));
+            setFfStep("payment");
+          }}
+          onBack={() => {
+            if (!isAdminAccess) {
+              logout("garcom");
+            }
+          }}
+        />
+        <LicenseBanner context="operational" />
+      </ModuleGate>
+    );
+  }
+
+  // ===================== RESTAURANT MODE (with mesas) =====================
+
   // Tela de pagamento digital
   if (pagamentoOpen && pagamentoMesaId) {
     return (
