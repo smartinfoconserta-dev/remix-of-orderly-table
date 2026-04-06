@@ -7,6 +7,7 @@ import AppLayout from "@/components/AppLayout";
 import MesaCard from "@/components/MesaCard";
 
 import LicenseBanner from "@/components/LicenseBanner";
+import OfflineIndicator from "@/components/OfflineIndicator";
 import ModuleGate from "@/components/ModuleGate";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
