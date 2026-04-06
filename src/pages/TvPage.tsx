@@ -1,6 +1,8 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useRestaurant } from "@/contexts/RestaurantContext";
 import { supabase } from "@/integrations/supabase/client";
+import { clearStoredDeviceId } from "@/lib/deviceAuth";
 import DeviceGate from "@/components/DeviceGate";
 import ModuleGate from "@/components/ModuleGate";
 
