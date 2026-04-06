@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Monitor, TabletSmartphone, Tv, LockKeyhole, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -63,7 +64,7 @@ const DeviceGate = ({ type, children }: DeviceGateProps) => {
     return justActivatedRef.current && stored ? stored : null;
   });
   const [mesaId, setMesaId] = useState<string | null>(null);
-
+  const navigate = useNavigate();
   // Activation form
   const [cnpjInput, setCnpjInput] = useState("");
   const [pin, setPin] = useState("");
@@ -344,6 +345,14 @@ const DeviceGate = ({ type, children }: DeviceGateProps) => {
               )}
               {isActivating ? "Ativando..." : "Ativar dispositivo"}
             </Button>
+
+            <button
+              type="button"
+              onClick={() => navigate("/", { replace: true })}
+              className="w-full text-center text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+            >
+              ← Voltar ao login
+            </button>
           </div>
         </div>
       </div>
