@@ -141,32 +141,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const resolveSupabaseLevel = useCallback(async (user: User): Promise<ResolvedAuth> => {
     try {
-      // 1. Check user_roles (master / admin)
+      // 1. Check user_roles (master / admin) — if query fails, skip gracefully
       const { data: roles, error: rolesErr } = await supabase
         .from("user_roles")
         .select("role")
         .eq("user_id", user.id);
 
       if (rolesErr) {
-        console.error("[AuthContext] erro ao buscar roles:", rolesErr);
-        return { level: "unauthenticated", queryFailed: true };
+        console.warn("[AuthContext] falha ao buscar roles (ignorando):", rolesErr.message);
+      } else {
+        if (roles?.some((r) => r.role === "master")) return { level: "master", redirect: "/master" };
+        if (roles?.some((r) => r.role === "admin")) return { level: "admin", redirect: "/admin" };
       }
 
-      if (roles?.some((r) => r.role === "master")) return { level: "master", redirect: "/master" };
-      if (roles?.some((r) => r.role === "admin")) return { level: "admin", redirect: "/admin" };
-
-      // 2. Check store_members for gerente/caixa/owner
+      // 2. Check store_members — if query fails, skip gracefully
       const { data: members, error: membersErr } = await supabase
         .from("store_members")
         .select("store_id, role_in_store, stores(id, name, slug)")
         .eq("user_id", user.id);
 
       if (membersErr) {
-        console.error("[AuthContext] erro ao buscar members:", membersErr);
-        return { level: "unauthenticated", queryFailed: true };
-      }
-
-      if (members && members.length > 0) {
+        console.warn("[AuthContext] falha ao buscar members (ignorando):", membersErr.message);
+      } else if (members && members.length > 0) {
         const sortedMembers = [...members].sort(
           (a, b) => (STORE_ROLE_PRIORITY[b.role_in_store] ?? 0) - (STORE_ROLE_PRIORITY[a.role_in_store] ?? 0)
         );
@@ -175,10 +171,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const store = m.stores as any;
         const role = m.role_in_store;
 
-        // Owners are treated as admins
         if (role === "owner" || role === "admin") return { level: "admin", redirect: "/admin" };
 
-        // Gerente, caixa, etc → operational with auto-session
         const moduleRouteMap: Record<string, string> = { tv_retirada: "tv", cliente: "tablet" };
         const opSession: OperationalSession = {
           storeId: store.id,
@@ -188,7 +182,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           pinLabel: user.email ?? null,
         };
 
-        // For garcom, check store mode to decide route
         let route = moduleRouteMap[role] ?? role;
         if (role === "garcom") {
           const { data: cfg } = await supabase
@@ -205,6 +198,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           opSession,
           redirect: `/${route}`,
         };
+      }
+
+      // If BOTH queries failed, signal queryFailed so login can retry
+      if (rolesErr && membersErr) {
+        return { level: "unauthenticated", queryFailed: true };
       }
 
       return { level: "unauthenticated" };
