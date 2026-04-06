@@ -1,38 +1,33 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  ClipboardList, Grid3X3, LayoutDashboard, LogOut, Settings, Shield,
-  Users, Wallet, TabletSmartphone, ShoppingBag,
+  ClipboardList, LayoutDashboard, LogOut, Settings, Shield,
+  Truck, Palette, Receipt, Wrench,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useStore } from "@/contexts/StoreContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { getSistemaConfig, getSistemaConfigAsync, getLicenseLevel, type SistemaConfig } from "@/lib/adminStorage";
-import TeamManager from "@/components/TeamManager";
-import MesasManager from "@/components/MesasManager";
-import DevicesManager from "@/components/DevicesManager";
-import DevicePinsManager from "@/components/DevicePinsManager";
-import CaixasSection from "@/components/CaixasSection";
 import LicenseBanner from "@/components/LicenseBanner";
-import IfoodPainel from "@/components/IfoodPainel";
-import { formatPrice } from "@/components/caixa/caixaHelpers";
-import AdminRelatorios from "@/components/admin/AdminRelatorios";
 import AdminDashboard from "@/components/admin/AdminDashboard";
 import AdminCardapio from "@/components/admin/AdminCardapio";
+import AdminOperacao from "@/components/admin/AdminOperacao";
+import AdminDelivery from "@/components/admin/AdminDelivery";
+import AdminAparenciaTab from "@/components/admin/AdminAparenciaTab";
+import AdminFiscal from "@/components/admin/AdminFiscal";
 import AdminConfig from "@/components/admin/AdminConfig";
 import AdminLicenca from "@/components/admin/AdminLicenca";
 import SetupWizard from "@/components/admin/SetupWizard";
 
-type AdminTab = "dashboard" | "cardapio" | "mesas" | "tablets" | "equipe" | "caixas" | "configuracoes" | "licenca" | "ifood";
+type AdminTab = "dashboard" | "cardapio" | "operacao" | "delivery" | "aparencia" | "fiscal" | "configuracoes" | "licenca";
 
 const sidebarSections = [
   { id: "dashboard" as const, label: "Início", icon: LayoutDashboard },
   { id: "cardapio" as const, label: "Cardápio", icon: ClipboardList },
-  { id: "mesas" as const, label: "Mesas", icon: Grid3X3 },
-  { id: "tablets" as const, label: "Dispositivos", icon: TabletSmartphone },
-  { id: "equipe" as const, label: "Equipe", icon: Users },
-  { id: "caixas" as const, label: "Caixas", icon: Wallet },
-  { id: "ifood" as const, label: "iFood", icon: ShoppingBag },
+  { id: "operacao" as const, label: "Operação", icon: Wrench },
+  { id: "delivery" as const, label: "Delivery", icon: Truck },
+  { id: "aparencia" as const, label: "Aparência", icon: Palette },
+  { id: "fiscal" as const, label: "Fiscal", icon: Receipt },
   { id: "configuracoes" as const, label: "Configurações", icon: Settings },
   { id: "licenca" as const, label: "Meu Plano", icon: Shield },
 ];
@@ -47,7 +42,6 @@ const AdminPage = () => {
 
   const nomeRestaurante = currentConfig.nomeRestaurante || "Restaurante";
 
-  // Check if setup wizard should be shown
   useEffect(() => {
     if (!storeId) return;
     getSistemaConfigAsync(storeId).then((cfg) => {
@@ -98,7 +92,7 @@ const AdminPage = () => {
               const active = tab === s.id;
               const licLevel = getLicenseLevel();
               const reportsOnly = licLevel === "reports_only";
-              const allowedInReportsOnly = ["dashboard", "caixas", "licenca"];
+              const allowedInReportsOnly = ["dashboard", "licenca"];
               const isDisabled = reportsOnly && !allowedInReportsOnly.includes(s.id);
               return (
                 <button
@@ -126,23 +120,12 @@ const AdminPage = () => {
         <main className="flex-1 overflow-y-auto p-8 bg-background" key={tab}>
           {tab === "dashboard" && <AdminDashboard storeId={storeId} />}
           {tab === "cardapio" && <AdminCardapio storeId={storeId} />}
-          {tab === "caixas" && <CaixasSection storeId={storeId} formatPrice={formatPrice} />}
+          {tab === "operacao" && <AdminOperacao storeId={storeId} storeName={nomeRestaurante} />}
+          {tab === "delivery" && <AdminDelivery storeId={storeId} />}
+          {tab === "aparencia" && <AdminAparenciaTab storeId={storeId} />}
+          {tab === "fiscal" && <AdminFiscal storeId={storeId} />}
           {tab === "configuracoes" && <AdminConfig storeId={storeId} storeName={nomeRestaurante} onOpenWizard={handleOpenWizard} />}
           {tab === "licenca" && <AdminLicenca storeId={storeId} />}
-          {tab === "mesas" && (
-            storeId ? <MesasManager storeId={storeId} storeName={nomeRestaurante} /> : <p className="text-sm text-muted-foreground py-8 text-center">Loja não identificada.</p>
-          )}
-          {tab === "tablets" && (
-            <div className="space-y-6 fade-in">
-              {storeId ? (<><DevicePinsManager storeId={storeId} /><div className="border-t border-border pt-6"><DevicesManager storeId={storeId} /></div></>) : <p className="text-sm text-muted-foreground py-8 text-center">Loja não identificada.</p>}
-            </div>
-          )}
-          {tab === "equipe" && (
-            <div className="space-y-6 fade-in">
-              {storeId ? <TeamManager storeId={storeId} /> : <p className="text-sm text-muted-foreground py-8 text-center">Loja não identificada.</p>}
-            </div>
-          )}
-          {tab === "ifood" && <div className="space-y-4 fade-in"><IfoodPainel /></div>}
         </main>
       </div>
       <LicenseBanner context="admin" />

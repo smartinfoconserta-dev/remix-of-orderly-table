@@ -1,0 +1,1 @@
+ALTER TABLE restaurant_config ADD COLUMN IF NOT EXISTS nfce_config jsonb DEFAULT '{}'::jsonb;
