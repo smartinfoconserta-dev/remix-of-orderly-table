@@ -307,6 +307,91 @@ const GerenteRelatorio = ({
     return tempos.length > 0 ? Math.round(tempos.reduce((a, b) => a + b, 0) / tempos.length) : 0;
   }, [fechFiltrados, allEventos, dateRange]);
 
+  const periodoLabel = periodo === "hoje" ? "Hoje" : periodo === "semana" ? "Esta semana" : periodo === "mes" ? "Este mês" : `${customInicio || "—"} a ${customFim || "—"}`;
+
+  const exportVendasPdf = useCallback(() => {
+    const cfg = getSistemaConfig();
+    const fechValidos = fechFiltrados.filter(f => !f.cancelado);
+    const doc = createPdf({ nomeRestaurante: cfg.nomeRestaurante || "Restaurante", titulo: "Relatório de Vendas", periodo: periodoLabel });
+
+    addSummaryBox(doc, [
+      { label: "Total faturado", value: brl(relTotalFaturado) },
+      { label: "Comandas fechadas", value: String(relComandasFechadas) },
+      { label: "Ticket médio", value: brl(relTicketMedio) },
+    ], { title: "Resumo" });
+
+    const pmLabels: Record<string, string> = { dinheiro: "Dinheiro", credito: "Crédito", debito: "Débito", pix: "PIX" };
+    addTableToPdf(doc, ["Forma", "Total", "%"], paymentBreakdown.map(p => [p.label, brl(p.total), `${p.pct}%`]), { title: "Formas de Pagamento" });
+
+    const comandaRows = fechValidos.map(f => {
+      const origemLabel = f.origem === "mesa" ? `Mesa ${String(f.mesaNumero).padStart(2, "0")}` : f.origem === "balcao" ? "Balcão" : f.origem === "totem" ? "Totem" : f.origem === "delivery" ? "Delivery" : f.origem === "motoboy" ? "Motoboy" : f.origem === "garcom_pdv" ? "Garçom PDV" : `Mesa ${String(f.mesaNumero).padStart(2, "0")}`;
+      const pgto = f.pagamentos?.length > 1 ? "Múltiplas" : pmLabels[f.formaPagamento] || f.formaPagamento;
+      const hora = f.criadoEm || new Date(f.criadoEmIso).toLocaleString("pt-BR");
+      return [f.numeroComanda ? `#${f.numeroComanda}` : "—", origemLabel, brl(f.total), pgto, hora];
+    });
+    addTableToPdf(doc, ["Comanda", "Origem", "Valor", "Pagamento", "Horário"], comandaRows, { title: "Comandas Fechadas" });
+
+    const today = new Date().toISOString().slice(0, 10);
+    savePdf(doc, `relatorio-vendas-${today}.pdf`);
+    toast.success("PDF de vendas exportado!");
+  }, [fechFiltrados, relTotalFaturado, relComandasFechadas, relTicketMedio, paymentBreakdown, periodoLabel]);
+
+  const exportProdutosPdf = useCallback(() => {
+    const cfg = getSistemaConfig();
+    const doc = createPdf({ nomeRestaurante: cfg.nomeRestaurante || "Restaurante", titulo: "Relatório de Produtos Vendidos", periodo: periodoLabel });
+
+    addSummaryBox(doc, [
+      { label: "Total de produtos diferentes", value: String(topProducts.length) },
+      { label: "Faturamento total", value: brl(relTotalFaturado) },
+    ], { title: "Resumo" });
+
+    const rows = topProducts.map(p => {
+      const pct = relTotalFaturado > 0 ? ((p.total / relTotalFaturado) * 100).toFixed(1) : "0.0";
+      return [p.nome, String(p.qty), brl(p.total), `${pct}%`];
+    });
+    addTableToPdf(doc, ["Produto", "Qtd", "Total", "% Faturamento"], rows, { title: "Produtos (mais vendido → menos vendido)" });
+
+    const today = new Date().toISOString().slice(0, 10);
+    savePdf(doc, `relatorio-produtos-${today}.pdf`);
+    toast.success("PDF de produtos exportado!");
+  }, [topProducts, relTotalFaturado, periodoLabel]);
+
+  const exportCaixaPdf = useCallback(() => {
+    const cfg = getSistemaConfig();
+    const doc = createPdf({ nomeRestaurante: cfg.nomeRestaurante || "Restaurante", titulo: "Relatório de Fechamento de Caixa", periodo: periodoLabel });
+
+    const movFiltradas = allMovimentacoesCaixa.filter(m => {
+      const d = new Date(m.criadoEmIso);
+      return d >= dateRange.start && d <= dateRange.end;
+    });
+    const entradas = movFiltradas.filter(m => m.tipo === "entrada").reduce((a, m) => a + m.valor, 0);
+    const saidas = movFiltradas.filter(m => m.tipo === "saida").reduce((a, m) => a + m.valor, 0);
+
+    addSummaryBox(doc, [
+      { label: "Total faturado", value: brl(relTotalFaturado) },
+      { label: "Entradas manuais", value: brl(entradas) },
+      { label: "Saídas manuais", value: brl(saidas) },
+      { label: "Operador", value: effectiveGerente?.nome || "—" },
+    ], { title: "Resumo do Turno" });
+
+    addTableToPdf(doc, ["Forma", "Total", "%"], paymentBreakdown.map(p => [p.label, brl(p.total), `${p.pct}%`]), { title: "Faturamento por Forma de Pagamento" });
+
+    if (movFiltradas.length > 0) {
+      const movRows = movFiltradas.map(m => [
+        m.tipo === "entrada" ? "Entrada" : "Saída",
+        m.descricao,
+        brl(m.valor),
+        m.usuarioNome,
+        m.criadoEm || new Date(m.criadoEmIso).toLocaleString("pt-BR"),
+      ]);
+      addTableToPdf(doc, ["Tipo", "Descrição", "Valor", "Operador", "Horário"], movRows, { title: "Movimentações" });
+    }
+
+    const today = new Date().toISOString().slice(0, 10);
+    savePdf(doc, `relatorio-caixa-${today}.pdf`);
+    toast.success("PDF de caixa exportado!");
+  }, [allMovimentacoesCaixa, dateRange, relTotalFaturado, paymentBreakdown, effectiveGerente, periodoLabel]);
+
   if (!pinVerificado) return <>{pinGateUI}</>;
 
   return (
