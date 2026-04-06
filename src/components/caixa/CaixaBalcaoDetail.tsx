@@ -172,24 +172,14 @@ const CaixaBalcaoDetail = ({
       <div className="flex flex-col overflow-hidden">
         <div className="flex-1 overflow-y-auto space-y-4 scrollbar-hide">
 
-          {/* Card 1 — Items + Total */}
-          <div className="rounded-2xl border border-border bg-card p-5 space-y-3">
-            <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Itens do pedido</p>
-            <div className="space-y-1">
-              {balcaoPedido.itens.map((item) => (
-                <div key={item.uid} className="flex items-center justify-between py-0.5">
-                  <span className="text-sm text-foreground">
-                    <span className="font-bold text-muted-foreground">{item.quantidade}×</span> {item.nome}
-                  </span>
-                  <span className="text-sm tabular-nums text-muted-foreground">{formatPrice(item.precoUnitario * item.quantidade)}</span>
-                </div>
-              ))}
-            </div>
-            <div className="border-t border-border pt-3">
-              <div className="flex items-center justify-between">
-                <span className="text-base font-black text-foreground">Total</span>
-                <span className="text-2xl font-black text-primary tabular-nums">{formatPrice(balcaoTotalConta)}</span>
+          {/* Card 1 — Total resumo */}
+          <div className="rounded-2xl border border-border bg-card p-5">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Total do pedido</p>
+                <p className="text-xs text-muted-foreground mt-0.5">{balcaoPedido.itens.length} {balcaoPedido.itens.length === 1 ? "item" : "itens"}</p>
               </div>
+              <span className="text-3xl font-black text-primary tabular-nums">{formatPrice(balcaoTotalConta)}</span>
             </div>
           </div>
 
