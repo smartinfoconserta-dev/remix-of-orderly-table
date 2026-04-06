@@ -168,6 +168,9 @@ export function useBalcaoActions(setStore: Dispatch<SetStateAction<RestaurantSto
       eventos: appendEventAndPersist(prev.eventos, { tipo: "caixa", descricao: `Caixa ${input.usuario.nome} fechou conta ${pedido.origem === "delivery" ? "delivery" : "balcão"} — ${pedido.clienteNome ?? ""} com ${resumoPagamento}`, usuarioId: input.usuario.id, usuarioNome: input.usuario.nome, acao: "fechar_conta", valor: pedido.total }),
     }));
 
+    // Emit NFC-e asynchronously (non-blocking)
+    emitNfceForFechamento(fechamento, getActiveStoreId()).catch(() => {});
+
     return { ok: true };
   }, [setStore]);
 
