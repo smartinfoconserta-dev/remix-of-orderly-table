@@ -1048,13 +1048,13 @@ const CaixaPage = ({ accessMode = "caixa", deliveryOnly = false }: CaixaPageProp
             </header>
 
             {/* Mesa detail top bar */}
-            <div className="border-b border-border bg-card/80 backdrop-blur-sm px-4 py-3 md:px-6">
-              <div className="mx-auto flex max-w-5xl items-center justify-between gap-3">
+            <div className="border-b border-border bg-card/80 backdrop-blur-sm px-3 md:px-6 py-2 md:py-3">
+              <div className="mx-auto flex max-w-5xl items-center justify-between gap-2 md:gap-3 flex-wrap">
                 {/* Info da mesa */}
-                <div className="flex items-center gap-3">
-                  <span className="text-2xl font-black tabular-nums text-foreground">{formatPrice(mesa.total)}</span>
+                <div className="flex items-center gap-2 md:gap-3 flex-wrap">
+                  <span className="text-xl md:text-2xl font-black tabular-nums text-foreground">{formatPrice(mesa.total)}</span>
                   <StatusBadge status={mesa.status} />
-                  <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                  <div className="items-center gap-1.5 text-sm text-muted-foreground hidden sm:flex">
                     <User className="h-3.5 w-3.5" />
                     {currentOperator.nome}
                   </div>
