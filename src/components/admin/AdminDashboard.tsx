@@ -4,7 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   TrendingUp, TrendingDown, DollarSign, Clock, Users, Package,
   Activity, Truck, ShoppingBag, ArrowRight, AlertTriangle,
-  BarChart3, Shield,
+  BarChart3, Shield, Wallet, User, Smartphone, ChefHat,
+  BarChart2, Bike, Monitor, Tv, ExternalLink,
 } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip as ReTooltip, ResponsiveContainer,
