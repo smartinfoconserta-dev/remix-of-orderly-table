@@ -1275,7 +1275,7 @@ const CaixaPage = ({ accessMode = "caixa", deliveryOnly = false }: CaixaPageProp
               <div className="flex flex-1 overflow-hidden border-t border-border">
 
                 {/* ═══ Full-width content ═══ */}
-                <div className="flex-1 overflow-y-auto p-5 lg:p-6 scrollbar-hide bg-background">
+                <div className="flex-1 overflow-y-auto p-3 md:p-5 lg:p-6 scrollbar-hide bg-background">
                 {caixaView === "mesas" ? (
                   <CaixaMesasTab
                     mesas={mesas}
