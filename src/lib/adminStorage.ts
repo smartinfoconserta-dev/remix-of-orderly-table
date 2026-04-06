@@ -117,6 +117,16 @@ export interface SistemaConfig {
   totemCardsCor?: string;
   // Sidebar style
   sidebarEstilo?: "icone-texto" | "icone-acima" | "so-texto";
+  // Fiscal NFC-e
+  nfceConfig?: {
+    token?: string;
+    ambiente?: "homologacao" | "producao";
+    inscricaoEstadual?: string;
+    serieNfce?: string;
+    csc?: string;
+    idCsc?: string;
+    certificadoBase64?: string;
+  };
 }
 
 export function getTotemAparencia(config: SistemaConfig): {
