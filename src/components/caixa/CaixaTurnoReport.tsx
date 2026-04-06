@@ -99,6 +99,14 @@ const CaixaTurnoReport = ({
   handleCloseTurno, accessMode, currentOperatorNome,
 }: CaixaTurnoReportProps) => {
 
+  // Safety: auto-close report if caixa is already closed
+  useEffect(() => {
+    if (!caixaAberto && turnoReportOpen) {
+      setTurnoReportOpen(false);
+    }
+  }, [caixaAberto, turnoReportOpen, setTurnoReportOpen]);
+
+
   const openCloseModal = () => {
     setTurnoReportOpen(false);
     setTurnoModalOpen(true);
