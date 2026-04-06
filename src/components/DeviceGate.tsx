@@ -220,8 +220,8 @@ const DeviceGate = ({ type, children }: DeviceGateProps) => {
         return;
       }
 
+      justActivatedRef.current = true;
       setStoreId(foundStoreId);
-      // Persist storeId so RestaurantContext can find it (localStorage survives restarts)
       localStorage.setItem("orderly-device-store-id", foundStoreId);
       sessionStorage.setItem("orderly-device-store-id", foundStoreId);
       setStatus("ready");
