@@ -292,6 +292,36 @@ const GarcomPdvPage = () => {
 
   const garcomNome = currentGarcom?.nome ?? (isAdminAccess ? "Administrador" : "");
 
+  const exitDialog = (
+    <AlertDialog open={exitDialogOpen} onOpenChange={setExitDialogOpen}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Finalizar sessão?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Você será desconectado e poderá trocar de garçom neste equipamento.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+          <Button onClick={handleExitSession} variant="destructive">Sim, sair</Button>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+
+  const longPressAvatar = (
+    <div
+      className="w-10 h-10 rounded-full bg-card/80 flex items-center justify-center cursor-pointer select-none border border-border"
+      onPointerDown={handleLongPressStart}
+      onPointerUp={handleLongPressEnd}
+      onPointerLeave={handleLongPressEnd}
+      onContextMenu={(e) => e.preventDefault()}
+      title="Segure 5s para sair"
+    >
+      <span className="text-xs font-bold text-muted-foreground">{garcomNome.charAt(0).toUpperCase()}</span>
+    </div>
+  );
+
   // ===================== FAST FOOD MODE =====================
   if (isFastFood) {
     // Payment selection
