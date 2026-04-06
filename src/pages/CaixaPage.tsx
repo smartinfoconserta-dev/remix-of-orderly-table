@@ -103,6 +103,7 @@ const CaixaPage = ({ accessMode = "caixa", deliveryOnly = false }: CaixaPageProp
     estornarFechamento,
     marcarBalcaoRetirado,
     cancelarPedidoBalcao,
+    marcarBalcaoPreparando,
   } = useRestaurant();
   const { currentCaixa, currentGerente, logout, verifyManagerAccess, verifyEmployeeAccess, authLevel } = useAuth();
   const isAdminAccess = authLevel === "admin" || authLevel === "master";
@@ -179,8 +180,9 @@ const CaixaPage = ({ accessMode = "caixa", deliveryOnly = false }: CaixaPageProp
   // isFastFoodGlobal backward compat: true when no mesas and has totem/balcao
   const isFastFoodGlobal = !moduloMesas && (moduloTotem || moduloBalcao);
 
-  const [caixaView, setCaixaView] = useState<"mesas" | "delivery" | "totem" | "historico" | "ifood">(() => {
+  const [caixaView, setCaixaView] = useState<"mesas" | "delivery" | "totem" | "historico" | "ifood" | "pedidos">(() => {
     if (deliveryOnly) return "delivery";
+    if (isFastFoodGlobal) return "pedidos";
     if (moduloMesas) return "mesas";
     if (moduloTotem) return "totem";
     if (moduloBalcao) return "delivery";
