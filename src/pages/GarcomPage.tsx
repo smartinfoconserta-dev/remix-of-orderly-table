@@ -68,6 +68,7 @@ const GarcomPage = () => {
 
   return (
     <ModuleGate moduleKey="mesas" moduleName="Mesas">
+    <OfflineIndicator />
     <AppLayout
       title="Mesas"
       headerRight={
