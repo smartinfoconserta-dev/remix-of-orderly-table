@@ -677,11 +677,11 @@ function QuickAccessGrid({ config }: { config: SistemaConfig }) {
   // caixa and gerente are always available
   const active = ALL_MODULES.filter((m) => {
     if (m.key === "caixa" || m.key === "gerente") return true;
-    if (m.key === "garcom" || m.key === "garcomPdv") return modulos.garcom;
+    if (m.key === "garcom" || m.key === "garcomPdv") return modulos.garcomPdv;
     if (m.key === "cozinha") return modulos.cozinha;
     if (m.key === "motoboy") return modulos.motoboy;
     if (m.key === "totem") return modulos.totem;
-    if (m.key === "tv") return modulos.tv;
+    if (m.key === "tv") return modulos.tvRetirada;
     if (m.key === "delivery") return modulos.delivery;
     return false;
   });
