@@ -56,6 +56,7 @@ import {
 } from "@/components/caixa/caixaHelpers";
 import CaixaDeliveryPanel from "@/components/caixa/CaixaDeliveryPanel";
 import CaixaTotemPanel from "@/components/caixa/CaixaTotemPanel";
+import CaixaPedidosFastFoodPanel from "@/components/caixa/CaixaPedidosFastFoodPanel";
 import CaixaMesaDetail from "@/components/caixa/CaixaMesaDetail";
 import CaixaBalcaoDetail from "@/components/caixa/CaixaBalcaoDetail";
 import CaixaHistoricoTab from "@/components/caixa/CaixaHistoricoTab";
