@@ -6,6 +6,7 @@ import type { ItemCarrinho, PedidoRealizado, EventoOperacional, FechamentoConta 
 import type { RestaurantStore, FecharContaInput, CriarPedidoBalcaoInput } from "@/contexts/RestaurantContext";
 import { supabase } from "@/integrations/supabase/client";
 import { getActiveStoreId } from "@/lib/sessionManager";
+import { emitNfceForFechamento } from "@/lib/nfceService";
 import { getSistemaConfig } from "@/lib/adminStorage";
 import {
   dbInsertPedido, dbUpdatePedido, dbInsertFechamento,
