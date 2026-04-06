@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { getActiveStoreId } from "@/lib/sessionManager";
 
 interface ModuleGateProps {
-  moduleKey: "mesas" | "balcao" | "totem" | "delivery" | "motoboy" | "garcomPdv";
+  moduleKey: "mesas" | "balcao" | "totem" | "delivery" | "motoboy" | "garcomPdv" | "tvRetirada";
   moduleName: string;
   children: React.ReactNode;
 }
