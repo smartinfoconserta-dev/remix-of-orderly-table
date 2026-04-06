@@ -345,6 +345,14 @@ const DeviceGate = ({ type, children }: DeviceGateProps) => {
               )}
               {isActivating ? "Ativando..." : "Ativar dispositivo"}
             </Button>
+
+            <button
+              type="button"
+              onClick={() => navigate("/", { replace: true })}
+              className="w-full text-center text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+            >
+              ← Voltar ao login
+            </button>
           </div>
         </div>
       </div>
