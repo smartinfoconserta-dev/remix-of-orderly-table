@@ -22,8 +22,7 @@ import { toast } from "sonner";
 import { getSistemaConfig } from "@/lib/adminStorage";
 
 const ALL_ROLES = [
-  { value: "garcom", label: "Garçom", hideInFastFood: true },
-  { value: "garcom_pdv", label: "Garçom PDV", hideInRestaurant: true },
+  { value: "garcom", label: "Garçom", fastFoodLabel: "Garçom PDV" },
   { value: "caixa", label: "Caixa" },
   { value: "cozinha", label: "Cozinha" },
   { value: "gerente", label: "Gerente" },
@@ -38,13 +37,11 @@ const getRolesForMode = () => {
   return ALL_ROLES
     .filter((r) => {
       if (r.value === "motoboy" && !deliveryAtivo) return false;
-      if ((r as any).hideInFastFood && isFastFood) return false;
-      if ((r as any).hideInRestaurant && !isFastFood) return false;
       return true;
     })
     .map((r) => ({
       value: r.value,
-      label: r.label,
+      label: isFastFood && r.fastFoodLabel ? r.fastFoodLabel : r.label,
     }));
 };
 
@@ -56,7 +53,6 @@ const ROLE_LABELS: Record<string, string> = Object.fromEntries(
 
 const ROLE_COLORS: Record<string, string> = {
   garcom: "bg-blue-500/15 text-blue-400 border-blue-500/30",
-  garcom_pdv: "bg-cyan-500/15 text-cyan-400 border-cyan-500/30",
   caixa: "bg-emerald-500/15 text-emerald-400 border-emerald-500/30",
   cozinha: "bg-amber-500/15 text-amber-400 border-amber-500/30",
   gerente: "bg-purple-500/15 text-purple-400 border-purple-500/30",

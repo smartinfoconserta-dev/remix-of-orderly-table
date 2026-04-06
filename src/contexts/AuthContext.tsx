@@ -167,7 +167,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (role === "owner" || role === "admin") return { level: "admin", redirect: "/admin" };
 
       // Gerente, caixa, etc → operational with auto-session
-      const moduleRouteMap: Record<string, string> = { tv_retirada: "tv", cliente: "tablet", garcom_pdv: "garcom-pdv" };
+      const moduleRouteMap: Record<string, string> = { tv_retirada: "tv", cliente: "tablet" };
       const opSession: OperationalSession = {
         storeId: store.id,
         storeSlug: store.slug,
