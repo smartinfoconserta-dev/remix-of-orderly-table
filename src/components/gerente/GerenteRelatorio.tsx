@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useCallback } from "react";
 import {
   Banknote,
   BarChart3,
@@ -8,6 +8,7 @@ import {
   ClipboardList,
   CreditCard,
   Download,
+  FileDown,
   Monitor,
   Printer,
   ShoppingBag,
@@ -23,6 +24,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { formatPrice } from "@/components/caixa/caixaHelpers";
 import { getSistemaConfig } from "@/lib/adminStorage";
+import { createPdf, addTableToPdf, addSummaryBox, savePdf, brl } from "@/lib/pdfGenerator";
+import { toast } from "sonner";
 import type { FechamentoConta, EventoOperacional, MovimentacaoCaixa, Mesa, PedidoRealizado } from "@/types/restaurant";
 import type { PaymentMethod } from "@/types/operations";
 
