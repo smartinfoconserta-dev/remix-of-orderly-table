@@ -5,6 +5,7 @@ import { useRestaurant } from "@/contexts/RestaurantContext";
 import { supabase } from "@/integrations/supabase/client";
 import type { ItemCarrinho } from "@/contexts/RestaurantContext";
 import DeviceGate from "@/components/DeviceGate";
+import ModuleGate from "@/components/ModuleGate";
 import type { PaymentMethod } from "@/types/operations";
 
 import TotemNameScreen from "@/components/totem/TotemNameScreen";
@@ -258,9 +259,11 @@ const TotemInner = ({ storeId }: { storeId: string }) => {
 };
 
 const TotemPage = () => (
-  <DeviceGate type="totem">
-    {({ storeId }) => <TotemInner storeId={storeId} />}
-  </DeviceGate>
+  <ModuleGate moduleKey="totem" moduleName="Totem de Autoatendimento">
+    <DeviceGate type="totem">
+      {({ storeId }) => <TotemInner storeId={storeId} />}
+    </DeviceGate>
+  </ModuleGate>
 );
 
 export default TotemPage;

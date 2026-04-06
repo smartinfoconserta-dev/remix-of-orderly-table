@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useRestaurant } from "@/contexts/RestaurantContext";
 import DeviceGate from "@/components/DeviceGate";
+import ModuleGate from "@/components/ModuleGate";
 import { getStoredDeviceId, clearStoredDeviceId, updateDeviceMesa, verifyUserBelongsToStore } from "@/lib/deviceAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -281,9 +282,11 @@ const TabletInner = ({ storeId, initialMesaId }: { storeId: string; initialMesaI
 };
 
 const TabletPage = () => (
-  <DeviceGate type="tablet">
-    {({ storeId, mesaId }) => <TabletInner storeId={storeId} initialMesaId={mesaId} />}
-  </DeviceGate>
+  <ModuleGate moduleKey="mesas" moduleName="Mesas">
+    <DeviceGate type="tablet">
+      {({ storeId, mesaId }) => <TabletInner storeId={storeId} initialMesaId={mesaId} />}
+    </DeviceGate>
+  </ModuleGate>
 );
 
 export default TabletPage;

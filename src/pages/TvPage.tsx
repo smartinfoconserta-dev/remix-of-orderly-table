@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useRestaurant } from "@/contexts/RestaurantContext";
 import { supabase } from "@/integrations/supabase/client";
 import DeviceGate from "@/components/DeviceGate";
+import ModuleGate from "@/components/ModuleGate";
 
 type PedidoTV = {
   id: string;
@@ -232,9 +233,11 @@ const TvInner = ({ storeId }: { storeId: string }) => {
 };
 
 const TvPage = () => (
-  <DeviceGate type="tv">
-    {({ storeId }) => <TvInner storeId={storeId} />}
-  </DeviceGate>
+  <ModuleGate moduleKey="tvRetirada" moduleName="TV de Retirada">
+    <DeviceGate type="tv">
+      {({ storeId }) => <TvInner storeId={storeId} />}
+    </DeviceGate>
+  </ModuleGate>
 );
 
 export default TvPage;
