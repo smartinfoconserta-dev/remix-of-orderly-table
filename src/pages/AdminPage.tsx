@@ -144,7 +144,7 @@ const AdminPage = () => {
       <div className="flex flex-1 min-h-0">
         {/* Sidebar — desktop only */}
         {!isMobile && (
-          <aside className="hidden md:flex w-[220px] shrink-0 flex-col border-r border-sidebar-border bg-sidebar-background">
+          <aside className="hidden md:flex w-[220px] shrink-0 flex-col border-r border-sidebar-border bg-sidebar">
             {sidebarNav}
           </aside>
         )}
