@@ -109,7 +109,7 @@ const AdminPage = () => {
   return (
     <div className="flex flex-col min-h-svh bg-background">
       {/* Title bar */}
-      <div className="flex items-center justify-between px-3 md:px-5 py-2.5 shrink-0 bg-sidebar-background border-b border-sidebar-border">
+      <div className="flex items-center justify-between px-3 md:px-5 py-2.5 shrink-0 bg-sidebar border-b border-sidebar-border">
         <div className="flex items-center gap-2 md:gap-3 min-w-0">
           {/* Mobile hamburger */}
           {isMobile && (
