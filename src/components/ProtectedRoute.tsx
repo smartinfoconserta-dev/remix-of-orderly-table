@@ -4,7 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 interface ProtectedRouteProps {
   children: React.ReactNode;
   requiredLevel: "master" | "admin" | "operational";
-  requiredModule?: string;
+  requiredModule?: string | string[];
 }
 
 export const ProtectedRoute = ({ children, requiredLevel, requiredModule }: ProtectedRouteProps) => {
@@ -35,7 +35,8 @@ export const ProtectedRoute = ({ children, requiredLevel, requiredModule }: Prot
     if (authLevel === "admin" || authLevel === "master") {
       // Admin/master têm acesso total a qualquer módulo operacional
     } else if (authLevel === "operational") {
-      if (requiredModule && operationalSession?.module !== requiredModule) {
+      const allowed = Array.isArray(requiredModule) ? requiredModule : (requiredModule ? [requiredModule] : []);
+      if (allowed.length > 0 && !allowed.includes(operationalSession?.module ?? "")) {
         return <Navigate to="/" replace />;
       }
     } else {
