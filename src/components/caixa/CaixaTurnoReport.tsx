@@ -93,7 +93,7 @@ const CaixaTurnoReport = ({
   isClosingTurno, dinheiroContado, setDinheiroContado,
   motivoDiferenca, setMotivoDiferenca,
   isDesktop, resumoFinanceiro, fundoTroco,
-  caixaOpenTime, clockStr,
+  caixaAberto, caixaOpenTime, clockStr,
   pedidosBalcao, fechamentos, movimentacoesCaixa,
   resumoDeliveryTurno,
   handleCloseTurno, accessMode, currentOperatorNome,
