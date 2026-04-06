@@ -24,6 +24,7 @@ import {
   getCategoriasCustom, saveCategoriasCustom,
   getCategoriasCustomAsync, type CategoriaCustom,
 } from "@/lib/adminStorage";
+import { getSistemaConfig } from "@/lib/adminStorage";
 import { formatPrice } from "@/components/caixa/caixaHelpers";
 import { toast } from "sonner";
 
