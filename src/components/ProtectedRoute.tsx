@@ -1,4 +1,4 @@
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 
 interface ProtectedRouteProps {
@@ -9,6 +9,11 @@ interface ProtectedRouteProps {
 
 export const ProtectedRoute = ({ children, requiredLevel, requiredModule }: ProtectedRouteProps) => {
   const { authLevel, operationalSession, isLoading } = useAuth();
+  const location = useLocation();
+  const loginFallbackState = {
+    suppressAutoRedirect: true,
+    intendedPath: location.pathname,
+  };
 
   if (isLoading) {
     return (
@@ -19,11 +24,11 @@ export const ProtectedRoute = ({ children, requiredLevel, requiredModule }: Prot
   }
 
   if (requiredLevel === "master" && authLevel !== "master") {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/" replace state={loginFallbackState} />;
   }
 
   if (requiredLevel === "admin" && authLevel !== "admin" && authLevel !== "master") {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/" replace state={loginFallbackState} />;
   }
 
   if (requiredLevel === "operational") {
