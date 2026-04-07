@@ -490,8 +490,8 @@ const CaixaPage = ({ accessMode = "caixa", deliveryOnly = false }: CaixaPageProp
 
 
   /* ── Print receipt helper (must be before early returns) ── */
-  const handlePrintComanda = useCallback((data: Parameters<typeof import("@/components/caixa/caixaHelpers").printComanda>[0]) => {
-    printComandaFn(data, sistemaConfig.nomeRestaurante || "Restaurante");
+  const handlePrintComanda = useCallback(async (data: Parameters<typeof import("@/components/caixa/caixaHelpers").printComanda>[0]) => {
+    await printComandaFn(data, sistemaConfig.nomeRestaurante || "Restaurante");
   }, [sistemaConfig.nomeRestaurante]);
   const [qrRetiradaPedidoId, setQrRetiradaPedidoId] = useState<string | null>(null);
   const qrRetiradaTimerRef = useRef<number | null>(null);
