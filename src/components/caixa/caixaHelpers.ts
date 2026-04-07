@@ -101,7 +101,7 @@ export interface PrintComandaData {
   cpfNota?: string;
 }
 
-export function printComanda(data: PrintComandaData, nomeRestaurante: string) {
+export async function printComanda(data: PrintComandaData, nomeRestaurante: string) {
   let el = document.getElementById("comanda-print");
   if (!el) {
     el = document.createElement("div");
@@ -132,6 +132,14 @@ export function printComanda(data: PrintComandaData, nomeRestaurante: string) {
   const isBalcaoTotem = data.origem === "balcao" || data.origem === "totem";
   const isDelivery = data.origem === "delivery";
   const cpfHtml = data.cpfNota ? `<p style="text-align:center;font-size:11px;margin-top:8px">CPF: ${data.cpfNota}</p>` : "";
+
+  // Generate QR Code as base64 data URL
+  let qrDataUrl = "";
+  try {
+    qrDataUrl = await QRCode.toDataURL(`RETIRADA:${data.numero}`, { width: 200, margin: 1 });
+  } catch {
+    // fallback: no QR code
+  }
 
   let headerHtml = "";
   if (isDelivery) {
@@ -164,6 +172,10 @@ export function printComanda(data: PrintComandaData, nomeRestaurante: string) {
     `;
   }
 
+  const qrHtml = qrDataUrl
+    ? `<div style="text-align:center;margin:12px 0"><img src="${qrDataUrl}" style="width:120px;height:120px" /><p style="font-size:10px;margin-top:4px">Apresente para retirar</p></div>`
+    : "";
+
   el.innerHTML = `
     ${headerHtml}
     ${paraLevarHtml}
@@ -175,7 +187,7 @@ export function printComanda(data: PrintComandaData, nomeRestaurante: string) {
     <div class="print-total"><span>TOTAL</span><span>R$ ${data.total.toFixed(2).replace(".", ",")}</span></div>
     ${SEP}
     ${pagHtml}
-    <div style="text-align:center;margin:12px 0"><img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=RETIRADA:${data.numero}" style="width:120px;height:120px" /><p style="font-size:10px;margin-top:4px">Apresente para retirar</p></div>
+    ${qrHtml}
     ${cpfHtml}
     <div class="print-footer">${footerDate}</div>
     <div class="print-footer">Obrigado pela preferencia!</div>
