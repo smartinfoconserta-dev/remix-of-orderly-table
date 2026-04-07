@@ -86,9 +86,18 @@ export function useCaixaBalcaoState(pedidosBalcao: PedidoRealizado[]) {
   }, []);
 
   /* ── payment math (balcão) ── */
-  const balcaoPedido = balcaoPedidoSelecionado
+  const balcaoPedidoFromList = balcaoPedidoSelecionado
     ? pedidosBalcao.find((p) => p.id === balcaoPedidoSelecionado) ?? null
     : null;
+  // Keep a snapshot so the order doesn't vanish mid-payment if polling updates the list
+  const balcaoPedidoSnapshotRef = useRef<PedidoRealizado | null>(null);
+  if (balcaoPedidoFromList) {
+    balcaoPedidoSnapshotRef.current = balcaoPedidoFromList;
+  }
+  if (!balcaoPedidoSelecionado) {
+    balcaoPedidoSnapshotRef.current = null;
+  }
+  const balcaoPedido = balcaoPedidoFromList ?? balcaoPedidoSnapshotRef.current;
   const balcaoTotalConta = balcaoPedido?.total ?? 0;
   const balcaoTotalContaCents = toCents(balcaoTotalConta);
   const balcaoTotalPago = useMemo(() => balcaoPayments.reduce((acc, p) => acc + p.valor, 0), [balcaoPayments]);
