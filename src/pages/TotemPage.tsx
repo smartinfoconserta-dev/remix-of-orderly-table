@@ -170,7 +170,7 @@ const TotemInner = ({ storeId }: { storeId: string }) => {
         const now = new Date();
         const dataHora = `${String(now.getDate()).padStart(2, "0")}/${String(now.getMonth() + 1).padStart(2, "0")}/${now.getFullYear()} ${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
         const payLabel = pendingPaymentMethod === "pix" ? "PIX" : pendingPaymentMethod === "credito" ? "Crédito" : pendingPaymentMethod === "debito" ? "Débito" : "Dinheiro";
-        printComanda({
+        await printComanda({
           tipo: "Totem",
           numero: numeroPedido,
           dataHora,
