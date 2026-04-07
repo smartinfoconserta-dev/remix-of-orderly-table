@@ -85,7 +85,8 @@ const Index = () => {
       setLoading(false);
       return;
     }
-    if (result.redirect) navigate(result.redirect);
+    setLoading(false);
+    if (result.redirect) navigate(result.redirect, { replace: true });
   };
 
   // Funcionário login (CNPJ + PIN)
