@@ -173,21 +173,41 @@ const CaixaPage = ({ accessMode = "caixa", deliveryOnly = false }: CaixaPageProp
     pedidosBalcaoSoAtivos, pedidosTotem, pedidosTotemAtivos,
     pedidosParaRetirar, pedidosEmRota, pedidosDevolvidos, pedidosEntregues, motoboyAtivos,
   } = balcao;
-  const globalModulos = useMemo(() => getSistemaConfig()?.modulos ?? {}, []);
+  const localModulos = useMemo(() => getSistemaConfig()?.modulos ?? {}, []);
+  const [dbModulos, setDbModulos] = useState<Record<string, boolean> | null>(null);
+
+  // Fetch modulos from DB to avoid stale localStorage
+  useEffect(() => {
+    const storeId = getActiveStoreId();
+    if (!storeId) return;
+    supabase
+      .from("restaurant_config")
+      .select("modulos")
+      .eq("store_id", storeId)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data?.modulos) setDbModulos(data.modulos as Record<string, boolean>);
+      });
+  }, []);
+
+  const globalModulos = dbModulos ?? localModulos;
   const moduloMesas = globalModulos.mesas !== false;
   const moduloTotem = globalModulos.totem === true;
   const moduloBalcao = globalModulos.balcao === true;
   // isFastFoodGlobal backward compat: true when no mesas and has totem/balcao
   const isFastFoodGlobal = !moduloMesas && (moduloTotem || moduloBalcao);
 
-  const [caixaView, setCaixaView] = useState<"mesas" | "delivery" | "totem" | "historico" | "ifood" | "pedidos">(() => {
-    if (deliveryOnly) return "delivery";
-    if (isFastFoodGlobal) return "pedidos";
-    if (moduloMesas) return "mesas";
-    if (moduloTotem) return "totem";
-    if (moduloBalcao) return "delivery";
-    return "delivery";
-  });
+  const [caixaView, setCaixaView] = useState<"mesas" | "delivery" | "totem" | "historico" | "ifood" | "pedidos">("mesas");
+
+  // Update default tab when config loads from DB
+  useEffect(() => {
+    if (deliveryOnly) { setCaixaView("delivery"); return; }
+    if (isFastFoodGlobal) { setCaixaView("pedidos"); return; }
+    if (moduloMesas) { setCaixaView("mesas"); return; }
+    if (moduloTotem) { setCaixaView("totem"); return; }
+    if (moduloBalcao) { setCaixaView("delivery"); return; }
+    setCaixaView("delivery");
+  }, [isFastFoodGlobal, moduloMesas, moduloTotem, moduloBalcao, deliveryOnly]);
   const [mostrarEntregues, setMostrarEntregues] = useState(false);
   const [filtroMotoboy, setFiltroMotoboy] = useState<string | null>(null);
   const [fechamentosPendentes, setFechamentosPendentes] = useState<any[]>([]);

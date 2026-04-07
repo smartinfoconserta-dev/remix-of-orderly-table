@@ -9,6 +9,7 @@ import {
   Smartphone,
   Wallet,
 } from "lucide-react";
+import QRCode from "qrcode";
 import type { PaymentMethod } from "@/types/operations";
 
 export const normStr = (s: string) =>
