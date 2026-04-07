@@ -256,12 +256,12 @@ const GarcomPdvPage = () => {
     setProcessando(false);
   }, [pagamentoMesaId, pagamentos, mesas, fecharConta, currentGarcom, fechamentoPronto, processando]);
 
-  const handlePrintReceipt = useCallback(() => {
+  const handlePrintReceipt = useCallback(async () => {
     if (!receiptData) return;
     const nomeRest = getSistemaConfig().nomeRestaurante || "Restaurante";
     const now = new Date();
     const dataHora = `${String(now.getDate()).padStart(2,"0")}/${String(now.getMonth()+1).padStart(2,"0")}/${now.getFullYear()} ${String(now.getHours()).padStart(2,"0")}:${String(now.getMinutes()).padStart(2,"0")}`;
-    printComanda({
+    await printComanda({
       tipo: `Mesa ${String(receiptData.mesaNumero).padStart(2, "0")}`,
       numero: receiptData.numeroPedido,
       dataHora,
@@ -371,7 +371,7 @@ const GarcomPdvPage = () => {
                         const now = new Date();
                         const dataHora = `${String(now.getDate()).padStart(2, "0")}/${String(now.getMonth() + 1).padStart(2, "0")}/${now.getFullYear()} ${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
                         const payLabel = opt.value === "pix" ? "PIX" : opt.value === "credito" ? "Crédito" : "Débito";
-                        printComanda({
+                        await printComanda({
                           tipo: "Garçom PDV",
                           numero: numeroPedido,
                           dataHora,
