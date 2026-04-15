@@ -1,65 +1,70 @@
 
 
-# Plano: Gerar Relatório Técnico Completo do PDV
+# Plano: Exportação Complementar — Edge Functions, RPCs, Seeds, Assets e Screenshots
 
-## Resumo
+## O que será gerado
 
-Gerar um único arquivo Markdown em `/mnt/documents/relatorio_completo_pdv.md` contendo documentação técnica exaustiva do projeto "Orderly Table" — cobrindo todas as 36 seções solicitadas, sem resumir.
+Um único arquivo Markdown em `/mnt/documents/exportacao_complementar_pdv.md` contendo as 5 seções textuais, mais screenshots de cada módulo.
 
-## O que será feito
+---
 
-Executar um script Python que escreve o arquivo Markdown com todo o conteúdo baseado na análise completa do código-fonte e banco de dados. O script NÃO altera código do projeto.
+## Seção 1: Edge Functions (código completo)
 
-## Conteúdo do relatório (todas as 36 seções)
+Já tenho o código de todas as 5 Edge Functions. Serão incluídas na íntegra:
 
-### Multi-tenancy e acesso (seções 1-6)
-- **stores**: 6 colunas documentadas, RLS policies listadas
-- **user_roles**: enum `app_role` (master), RLS
-- **store_members**: roles por loja (owner/admin/gerente/caixa/etc), RLS
-- **module_pins**: hash bcrypt via `create_module_pin`, verificação via `verify_pin`, pin_plain armazenado
-- **tablets/devices**: vinculação a mesa, DeviceGate, ativação
-- **restaurant_license**: planos (basico/restaurante/fastfood/completo), vencimento
+| Função | Arquivo | Linhas | Descrição |
+|--------|---------|--------|-----------|
+| `create-admin-account` | index.ts | 126 | Cria usuário Auth + store + membership + config + license |
+| `create-team-member` | index.ts | 184 | Cria membro da equipe com PIN e sync motoboy |
+| `update-admin-account` | index.ts | 92 | Atualiza email/senha (Master only) |
+| `emit-nfce` | index.ts | 131 | Emissão NFC-e via Focus NFe API |
+| `ifood-sync` | index.ts | 188 | Polling de pedidos iFood |
 
-### Configuração (seção 7)
-- **restaurant_config**: TODAS as 50+ colunas documentadas com status de uso na UI
+**WhatsApp**: NÃO existe Edge Function. O arquivo `whatsappNotify.ts` é client-side e apenas abre `wa.me` deeplinks.
 
-### Cardápio (seções 8-9)
-- **restaurant_categories**: parent_id (adicionado para subcategorias, NÃO usado na UI ainda)
-- **produtos**: TODAS as colunas, JSONB de grupos/adicionais/ingredientes, estoque (campo existe mas NÃO funcional)
+## Seção 2: RPCs (SQL completo)
 
-### Operação (seções 10-15)
-- **mesas**, **pedidos**, **fechamentos**, **estado_caixa**, **movimentacoes_caixa**, **eventos_operacionais** — cada tabela com todas as colunas, JSONB formats, status possíveis
+Todas as 27 RPCs já estão disponíveis no contexto. Serão listadas com `CREATE OR REPLACE FUNCTION` completo.
 
-### Módulos (seções 16-25)
-Para cada módulo: arquivo principal, linhas de código, fluxo de acesso, todas as telas, botões e ações com funções chamadas
+## Seção 3: Seed / Dados de Exemplo
 
-### Integrações (seções 26-29)
-- WhatsApp: wa.me deeplink (NÃO é API real)
-- Impressão: window.print() no browser, comanda térmica
-- NFC-e: Edge Function real chamando Focus NFe
-- Pagamento: NENHUM gateway implementado
+O arquivo `src/scripts/seedMenu.ts` será incluído na íntegra (6 categorias, 20 produtos com adicionais, ingredientes removíveis, combos e promoções). Também será gerado o equivalente em INSERT SQL.
 
-### Enums e constantes (seção 30)
-Todos os valores exatos de status, origens, módulos, roles, formas de pagamento
+## Seção 4: Edge Functions Secrets
 
-### Bugs e features incompletas (seção 31)
-Lista honesta de tudo que está quebrado ou pela metade
+9 secrets configurados:
+- `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_DB_URL`
+- `IFOOD_CLIENT_ID`, `IFOOD_CLIENT_SECRET`, `IFOOD_MERCHANT_ID`
+- `LOVABLE_API_KEY`
 
-### Credenciais e RPCs (seções 32-35)
-- .env completo
-- Todas as 22 RPCs com código SQL completo
-- Todas as RLS policies por tabela
+## Seção 5: Assets Visuais e Identidade
 
-### Versão (seção 36)
-Estado atual e últimas alterações
+**Arquivos em `src/assets/`** (12 arquivos): banners temáticos Obsidian (combo, happy hour, Instagram, WiFi, avisos), backgrounds para cards Instagram/WiFi, QR codes premium (SVG + PNG).
 
-## Limitações
+**Paleta/Temas**: 14 presets documentados (Obsidian, Italiano, Sorveteria, Dark Roxo, Hamburgueria, Teal, Açaí, Pizzaria, Cafeteria, Japonês, Bar, Padaria, Churrascaria, Saudável) com cores hex completas.
 
-- **ZIP do projeto**: o sandbox não permite criar ZIPs do repositório completo — instruções serão incluídas no relatório
-- **Dump SQL**: requer acesso ao dashboard do Supabase — instruções incluídas
-- **Service role key**: está configurada como secret no Supabase, acessível pelo dashboard
+**Tipografia**: System fonts (sem custom fonts). Headings e body usam font stack padrão do Tailwind.
+
+## Seção 6: Screenshots dos Módulos
+
+Navegarei pelo app usando as ferramentas de browser para capturar screenshots de cada módulo. Como requer login e dados no banco, capturarei o que for acessível:
+
+1. Tela de Login
+2. Admin (se logado)
+3. Caixa (restaurante / fast food)
+4. Totem
+5. Cozinha (KDS)
+6. TV de retirada
+7. Garçom
+8. Delivery
+
+**Nota**: Módulos protegidos por PIN/login podem mostrar apenas a tela de acesso se não houver sessão ativa.
+
+---
 
 ## Execução
 
-Um único `code--exec` com script Python que escreve o Markdown completo em `/mnt/documents/relatorio_completo_pdv.md`.
+1. Script Python gerando o `.md` com seções 1-5 completas
+2. Navegação no browser para capturar screenshots dos módulos
+3. Screenshots salvos em `/mnt/documents/screenshots/`
 
